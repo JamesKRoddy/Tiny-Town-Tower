@@ -28,7 +28,7 @@ public interface IInteractive<out T> : IInteractiveBase
  * 
  * 
  * 
- * 
+ * TODO set out tasks for settler NPCs
  * TODO Construction sites for buildings
  * TODO Building functionality
  * TODO start looking at levels to spawn in enemies

@@ -219,7 +219,7 @@ public class PlayerController : HumanCharacterController, IControllerInput
         else if (!isAttacking)
         {
             float inputMagnitude = movementInput.magnitude;
-            float speed = isDashing ? dashSpeed : moveSpeed;
+            float speed = isDashing ? dashSpeed : moveMaxSpeed;
 
             // If dashing, smoothly change direction
             if (isDashing)
@@ -300,8 +300,8 @@ public class PlayerController : HumanCharacterController, IControllerInput
 
     protected override void UpdateAnimations()
     {
-        float maxSpeed = isDashing ? dashSpeed : moveSpeed;
-        float currentSpeedNormalized = movementInput.magnitude * moveSpeed / maxSpeed;
+        float maxSpeed = isDashing ? dashSpeed : moveMaxSpeed;
+        float currentSpeedNormalized = movementInput.magnitude * moveMaxSpeed / maxSpeed;
 
         animator.SetFloat("Speed", currentSpeedNormalized);
     }
