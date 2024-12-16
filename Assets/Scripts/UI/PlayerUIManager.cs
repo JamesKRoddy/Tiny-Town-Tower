@@ -1,0 +1,76 @@
+using UnityEngine;
+using TMPro;
+
+public class PlayerUIManager : MonoBehaviour
+{
+
+    // Static instance of the PlayerUIManager class
+    private static PlayerUIManager _instance;
+
+    // Public property to access the instance
+    public static PlayerUIManager Instance
+    {
+        get
+        {
+            // Check if the instance is null
+            if (_instance == null)
+            {
+                // Try to find the PlayerCombat in the scene
+                _instance = FindFirstObjectByType<PlayerUIManager>();
+
+                // If not found, log a warning
+                if (_instance == null)
+                {
+                    Debug.LogWarning("PlayerUIManager instance not found in the scene!");
+                }
+            }
+            return _instance;
+        }
+    }
+
+    [Header("UI References")]
+    [SerializeField] MenuBase buildMenu; 
+    [SerializeField] MenuBase narrativeSystem;
+    [SerializeField] MenuBase playerInventoryMenu;
+    [SerializeField] MenuBase utilityMenu;
+
+    [Header("Interaction")]
+    [SerializeField] UIPanelController interactionPromptUI; // UI text for interactionPromptUI //TODO because ill be using panels with text being displayed might be an idea to create a separate class for all this stuff
+
+    // Ensure that there is only one instance of PlayerCombat
+    private void Awake()
+    {
+        if (_instance != null && _instance != this)
+        {
+            Destroy(gameObject); // Destroy duplicate instances
+        }
+        else
+        {
+            _instance = this; // Set the instance
+            DontDestroyOnLoad(gameObject); // Optionally persist across scenes
+        }
+
+        buildMenu.Setup();
+        narrativeSystem.Setup();
+        playerInventoryMenu.Setup();
+        utilityMenu.Setup();
+    }
+
+    public void InteractionPrompt(string text)
+    {
+        interactionPromptUI.ShowPanel(text);
+    }
+
+    public void HideInteractionPropt()
+    {
+        interactionPromptUI.HidePanel();
+    }
+
+    public void HideMenus()
+    {
+        buildMenu.SetScreenActive(false);
+        narrativeSystem.SetScreenActive(false);
+        playerInventoryMenu.SetScreenActive(false);
+        utilityMenu.SetScreenActive(false);
+    }
+}
