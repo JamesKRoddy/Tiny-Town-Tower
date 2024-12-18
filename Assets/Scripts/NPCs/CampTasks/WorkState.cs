@@ -3,19 +3,21 @@ using UnityEngine.AI;
 
 public enum WorkType
 {
-    FARMING,
+    NONE,
+    FARMING, //TODO might have to break this down into several parts
     GATHER_WOOD,
     GATHER_ROCK,
     WEAVE_FABRIC,
     MAKE_AMMO,
     GENERATE_ELECTRICITY,
-    BUILD_STRUCTURE,    
+    BUILD_STRUCTURE,
 }
 
 public class WorkState : _TaskState
 {
     private NavMeshAgent agent;
     private WorkTask assignedTask;
+    private bool isTaskBeingPerformed;
 
     private void Start()
     {
@@ -31,25 +33,65 @@ public class WorkState : _TaskState
         // Work state logic can be added here
         Debug.Log("Starting Work task");
 
-        // If a task is assigned, perform it
+        // If a task is assigned, move to the closest reachable position near the task
         if (assignedTask != null)
         {
-            assignedTask.PerformTask(npc);
+            Transform taskTransform = assignedTask.WorkTaskTransform();
+            if (taskTransform != null)
+            {
+                // Try to find the closest reachable point on the NavMesh to the task location
+                NavMeshHit hit;
+                if (NavMesh.SamplePosition(taskTransform.position, out hit, 1f, NavMesh.AllAreas))
+                {
+                    // Move NPC to the closest reachable position
+                    agent.SetDestination(hit.position);
+                }
+                else
+                {
+                    // If no reachable position is found, stop the agent (or handle this case appropriately)
+                    Debug.LogWarning("No reachable position found near the work task.");
+                }
+            }
         }
+
+        assignedTask.StopWork += StopWork;
     }
 
     public override void OnExitState()
     {
         // Exit work state logic
         Debug.Log("Exiting Work task");
-        assignedTask = null; // Reset task
+        npc.animator.SetInteger("WorkType", 0);
+        assignedTask.StopWork -= StopWork;
+        assignedTask = null; // Reset task        
     }
 
     public override void UpdateState()
     {
         if (assignedTask != null)
         {
-            assignedTask.PerformTask(npc); // Continue performing the task
+            float distanceToTask = Vector3.Distance(agent.transform.position, assignedTask.WorkTaskTransform().position);
+
+            // Only check if the NPC has reached the task location
+            if (distanceToTask <= agent.stoppingDistance)
+            {
+                // Perform the task only once if the NPC has arrived at the location
+                if (!isTaskBeingPerformed)
+                {
+                    assignedTask.PerformTask(npc);
+                    npc.animator.SetInteger("WorkType", (int)assignedTask.workType);  // Set animator for the task
+                    isTaskBeingPerformed = true;  // Prevent multiple task starts
+                }
+            }
+            else
+            {
+                // Reset animator when the NPC leaves the task location
+                if (isTaskBeingPerformed)
+                {
+                    npc.animator.SetInteger("WorkType", 0);  // Reset the WorkType
+                    isTaskBeingPerformed = false;  // Reset task flag
+                }
+            }
         }
     }
 
@@ -63,35 +105,15 @@ public class WorkState : _TaskState
         return TaskType.WORK; // TaskType for this state
     }
 
-    //TODO call this to assign work manually
-    public void AssignTask(WorkTask task)
+    // Assign work manually
+    public void AssignWork(WorkTask task)
     {
         assignedTask = task; // Assign a task to the NPC
         npc.ChangeTask(TaskType.WORK);
     }
 
-    //TODO call this to assign work automatically
-    public void AutoAssignTask()
+    public void StopWork()
     {
-        // Example of auto-assigning a task based on priority
-        WorkTask[] availableTasks = FindObjectsOfType<WorkTask>(); // Find all work tasks in the scene
-
-        WorkTask highestPriorityTask = null;
-
-        // Determine which task to pick based on priority
-        foreach (var task in availableTasks)
-        {
-            if (highestPriorityTask == null || task.workType < highestPriorityTask.workType)
-            {
-                highestPriorityTask = task;
-            }
-        }
-
-        // Assign the highest priority task to the NPC
-        if (highestPriorityTask != null)
-        {
-            AssignTask(highestPriorityTask);
-            Debug.Log($"Assigned task: {highestPriorityTask.workType}");
-        }
+        npc.ChangeTask(TaskType.WANDER);
     }
 }

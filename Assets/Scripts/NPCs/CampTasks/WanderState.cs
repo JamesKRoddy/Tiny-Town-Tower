@@ -36,6 +36,7 @@ public class WanderState : _TaskState
             agent.speed = MaxSpeed(); // Reduce speed for wandering
             agent.angularSpeed = npc.rotationSpeed / 2f; // Reduce rotation speed for wandering
             npc.StartCoroutine(WanderCoroutine()); // Start the wandering coroutine
+            WorkManager.Instance.OnTaskAssigned += WorkAvalible;
         }
     }
 
@@ -47,12 +48,18 @@ public class WanderState : _TaskState
             npc.StopCoroutine(WanderCoroutine()); // Stop the wandering coroutine
             agent.speed = npc.moveMaxSpeed; // Reset speed
             agent.angularSpeed = npc.rotationSpeed; // Reset rotation speed
+            WorkManager.Instance.OnTaskAssigned -= WorkAvalible;
         }
     }
 
     public override void UpdateState()
     {
         
+    }
+
+    private void WorkAvalible(WorkTask newTask)
+    {
+        npc.AssignWork(newTask);
     }
 
     private IEnumerator WanderCoroutine()

@@ -15,6 +15,7 @@ public class BuildingScriptableObj : ScriptableObject
     [Header("Construction Parameters")]
     public float constructionTime = 10.0f;
     public GameObject constructionSite;
+    public Vector2 constructionSize; //TODO have to implement this, itll be used to block off areas of the build grid so that these are in use
     //TODO put in unlock requirements in here to check if the player is able to build this at their current level or whatever
 }
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -68,6 +69,11 @@ public class SettlerNPC : HumanCharacterController
 
         // Adjust the agent's speed according to the new state's requirements
         agent.speed = currentState.MaxSpeed();
+    }
+
+    internal void AssignWork(WorkTask newTask)
+    {
+        (taskStates[TaskType.WORK] as WorkState).AssignWork(newTask);
     }
 
     // Method to change task and update state
