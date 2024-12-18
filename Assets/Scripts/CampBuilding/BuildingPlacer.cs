@@ -38,7 +38,7 @@ public class BuildingPlacer : MonoBehaviour
     public Material invalidPlacementMaterial;
 
     private GameObject currentPreview;
-    private GameObject selectedBuildingPrefab;
+    private BuildingScriptableObj selectedBuildingObj;
     private Vector3 currentGridPosition;
     private float gridSize = 1f; // Size of each grid cell
 
@@ -79,10 +79,10 @@ public class BuildingPlacer : MonoBehaviour
         }
     }
 
-    public void StartPlacement(GameObject buildingPrefab)
+    public void StartPlacement(BuildingScriptableObj buildingObj)
     {
-        selectedBuildingPrefab = buildingPrefab;
-        currentPreview = Instantiate(buildingPrefab);
+        selectedBuildingObj = buildingObj;
+        currentPreview = Instantiate(buildingObj.buildingPrefab);
         SetPreviewMaterial(validPlacementMaterial);
         currentGridPosition = SnapToGrid(transform.position); // Start at player's position
         currentPreview.transform.position = currentGridPosition;
@@ -127,7 +127,10 @@ public class BuildingPlacer : MonoBehaviour
 
         if (IsValidPlacement(currentPreview.transform.position))
         {
-            Instantiate(selectedBuildingPrefab, currentPreview.transform.position, Quaternion.identity);
+            GameObject constructionSite = Instantiate(selectedBuildingObj.constructionSite, currentPreview.transform.position, Quaternion.identity);
+
+            constructionSite.GetComponent<ConstructionSite>().SetupConstruction(selectedBuildingObj);
+
             CancelPlacement(); // End placement after building is placed
         }
     }

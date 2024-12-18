@@ -1,125 +1,90 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
 public enum TaskType
 {
     NONE,
-    MAKE_AMMO,
-    GENERATE_ELECTRICITY,
-    TEND_CROPS,
-    BUILD_STRUCTURE,
-    WANDER
+    WORK,
+    WANDER,
+    ATTACK,
+    TEND_CROPS
 }
 
 public class SettlerNPC : HumanCharacterController
 {
-    public NavMeshAgent agent;
-    public float wanderRadius = 10f;
-    public float wanderIntervalMin = 5f;
-    public float wanderIntervalMax = 10f;
+    private _TaskState currentState;
+    private NavMeshAgent agent; // Reference to NavMeshAgent
 
-    public TaskType currentTask = TaskType.WANDER; // Start with the wander task
-    private bool isWandering = false; // Track if the wandering coroutine is running
+    // Dictionary that maps TaskType to TaskState
+    Dictionary<TaskType, _TaskState> taskStates = new Dictionary<TaskType, _TaskState>();
+
+    private void Awake()
+    {
+        // Store the reference to NavMeshAgent once
+        agent = GetComponent<NavMeshAgent>();
+
+        // Get all TaskState components attached to the SettlerNPC GameObject
+        _TaskState[] states = GetComponents<_TaskState>();
+
+        // Populate the dictionary with TaskType -> TaskState mappings
+        foreach (var state in states)
+        {
+            taskStates.Add(state.GetTaskType(), state);
+        }
+    }
 
     private void Start()
     {
-        // Start wandering only if the task is WANDER
-        if (currentTask == TaskType.WANDER)
-            StartWandering();
+        // Ensure NPC reference is set for each state component
+        // Default to WanderState
+        if (taskStates.ContainsKey(TaskType.WANDER))
+        {
+            ChangeState(taskStates[TaskType.WANDER]);
+        }
     }
 
     private void Update()
     {
-        // Update the animator's speed based on the agent's velocity
-        animator.SetFloat("Speed", agent.velocity.magnitude / 3.5f);
+        animator.SetFloat("Speed", agent.velocity.magnitude / 3.5f); //TODO have to work out this ratio a bit better
 
-        // If the task changes to something else, stop wandering
-        if (currentTask != TaskType.WANDER)
+        if (currentState != null)
         {
-            if (isWandering)
-            {
-                StopWandering();
-            }
-            agent.ResetPath(); // Stop the agent from moving
-            agent.speed = moveMaxSpeed; // Restore the original speed
-            agent.angularSpeed = rotationSpeed; // Restore original rotation speed
-        }
-        else if (currentTask == TaskType.WANDER && !isWandering)
-        {
-            StartWandering(); // Start wandering if it's not already running
+            currentState.UpdateState(); // Call UpdateState on the current state
         }
     }
 
-    private void StartWandering()
+    // Method to change states
+    public void ChangeState(_TaskState newState)
     {
-        // Make sure the coroutine only starts once
-        if (!isWandering)
+        if (currentState != null)
         {
-            isWandering = true;
-            agent.speed = moveMaxSpeed * 0.5f; // Reduce speed by half while wandering
-            agent.angularSpeed = rotationSpeed / 2f; // Reduce rotation speed by half while wandering
-            StartCoroutine(WanderCoroutine());
+            currentState.OnExitState(); // Exit the old state
         }
+
+        currentState = newState;
+        currentState.OnEnterState(); // Enter the new state
+
+        // Adjust the agent's speed according to the new state's requirements
+        agent.speed = currentState.MaxSpeed();
     }
 
-    private void StopWandering()
-    {
-        // Stop the coroutine if it's already running
-        if (isWandering)
-        {
-            isWandering = false;
-            StopCoroutine(WanderCoroutine());
-            agent.speed = moveMaxSpeed; // Restore the original speed after stopping wandering
-            agent.angularSpeed = rotationSpeed; // Restore original rotation speed
-        }
-    }
-
-    private IEnumerator WanderCoroutine()
-    {
-        while (currentTask == TaskType.WANDER)
-        {
-            // Wait for a random amount of time between wander intervals
-            float waitTime = Random.Range(wanderIntervalMin, wanderIntervalMax);
-            yield return new WaitForSeconds(waitTime);
-
-            // Only set a new wander point if the agent has finished its current path
-            if (!agent.pathPending && agent.remainingDistance <= 0.5f)
-            {
-                SetNewWanderPoint();
-            }
-        }
-    }
-
-    private void SetNewWanderPoint()
-    {
-        // Pick a random point within the specified radius
-        Vector3 randomDirection = Random.insideUnitSphere * wanderRadius;
-        randomDirection += transform.position;
-
-        NavMeshHit hit;
-        if (NavMesh.SamplePosition(randomDirection, out hit, wanderRadius, NavMesh.AllAreas))
-        {
-            // Set the new destination for the agent
-            agent.SetDestination(hit.position);
-        }
-    }
-
-    // Method to change tasks from outside
+    // Method to change task and update state
     public void ChangeTask(TaskType newTask)
     {
-        currentTask = newTask;
-
-        // If the new task is not wandering, stop wandering
-        if (newTask != TaskType.WANDER)
+        if (taskStates.ContainsKey(newTask))
         {
-            StopWandering();
-            agent.ResetPath();
+            ChangeState(taskStates[newTask]);
         }
-        // If the new task is wandering, start wandering again
         else
         {
-            StartWandering();
+            Debug.LogWarning($"TaskType {newTask} does not exist in taskStates dictionary.");
         }
+    }
+
+    public NavMeshAgent GetAgent()
+    {
+        return agent; // Return the stored NavMeshAgent reference
     }
 }

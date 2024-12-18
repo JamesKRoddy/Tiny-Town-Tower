@@ -45,7 +45,7 @@ public class BuildingPreviewBtn : MonoBehaviour, IPointerEnterHandler, IPointerE
                 PlayerInventory.Instance.RemoveItem(requiredItem.resource, requiredItem.count);
             }
 
-            BuildingPlacer.Instance.StartPlacement(buildingPrefab);
+            BuildingPlacer.Instance.StartPlacement(buildingObj);
             BuildMenu.Instance.SetScreenActive(false);
         }
         else

@@ -28,12 +28,13 @@ public interface IInteractive<out T> : IInteractiveBase
  * 
  * 
  * 
- * TODO set out tasks for settler NPCs
- * TODO Construction sites for buildings
- * TODO Building functionality
- * TODO start looking at levels to spawn in enemies
- * TODO set up screen for merchants
- * 
+ * TODO 
+ * set out tasks for settler NPCs
+ * Flesh out construction sites for buildings
+ * Building functionality
+ * start looking at levels to spawn in enemies
+ * set up screen for merchants
+ * Create a screen to assign a settler to a work task, in this screen show all settlers and what their current task is
  * 
  * 
  * 

@@ -10,7 +10,7 @@ public class HumanCharacterController : MonoBehaviour
 
     protected bool isAttacking; // Whether the player is currently attacking
 
-    [SerializeField] protected Animator animator;
+    public Animator animator;
     protected CharacterCombat characterCombat;
 
     public void EquipMeleeWeapon(int equipped)
@@ -20,6 +20,6 @@ public class HumanCharacterController : MonoBehaviour
 
     protected virtual void UpdateAnimations()
     {
-        //TODO fill this out for AI characters to use a nav agent in a different child class
+        
     }
 }
