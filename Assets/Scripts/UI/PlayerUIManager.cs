@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using System.Collections;
 
 public class PlayerUIManager : MonoBehaviour
 {
@@ -37,6 +38,8 @@ public class PlayerUIManager : MonoBehaviour
     [Header("Interaction")]
     [SerializeField] UIPanelController interactionPromptUI; // UI text for interactionPromptUI //TODO because ill be using panels with text being displayed might be an idea to create a separate class for all this stuff
 
+    private Coroutine openingMenu;
+
     // Ensure that there is only one instance of PlayerCombat
     private void Awake()
     {
@@ -72,5 +75,27 @@ public class PlayerUIManager : MonoBehaviour
         narrativeSystem.SetScreenActive(false);
         playerInventoryMenu.SetScreenActive(false);
         utilityMenu.SetScreenActive(false);
+    }
+
+
+    public void SetScreenActive(MenuBase menu, bool active, float delay = 0.0f)
+    {
+        Debug.Log($"{active}  {delay}");
+        if(delay > 0.0f)
+        {
+            if (openingMenu == null)
+                openingMenu = StartCoroutine(EnableBuildMenuAfterDelay(menu, active, delay));
+        }
+        else
+        {
+            menu.gameObject.SetActive(active);
+        }
+    }
+
+    private IEnumerator EnableBuildMenuAfterDelay(MenuBase menu, bool active, float delay) //This delay is needed to stop the build menu from appearing and disappearing quickly from the ui building button being pressed
+    {
+        yield return new WaitForSeconds(delay); // Add a slight delay
+        menu.gameObject.SetActive(active);
+        openingMenu = null;
     }
 }

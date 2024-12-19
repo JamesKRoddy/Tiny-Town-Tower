@@ -143,15 +143,10 @@ public class BuildingPlacer : MonoBehaviour
             currentPreview = null;
         }
 
-        // Delay menu activation to the next frame or a small duration
-        StartCoroutine(EnableBuildMenuAfterDelay());
+        UtilityMenu.Instance.EnableBuildMenu();
     }
 
-    private IEnumerator EnableBuildMenuAfterDelay() //This delay is needed to stop the build menu from appearing and disappearing quickly from the ui building button being pressed
-    {
-        yield return new WaitForSeconds(0.5f); // Add a slight delay
-        BuildMenu.Instance.SetScreenActive(true);
-    }
+    
 
     private Vector3 SnapToGrid(Vector3 position)
     {

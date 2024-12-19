@@ -192,7 +192,7 @@ public class NarrativeSystem : MenuBase
     }
 
     //TODO possibly implement this??
-    public override void SetScreenActive(bool active)
+    public override void SetScreenActive(bool active, float delay = 0.0f)
     {
         
     }

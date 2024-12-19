@@ -46,7 +46,7 @@ public class BuildingPreviewBtn : MonoBehaviour, IPointerEnterHandler, IPointerE
             }
 
             BuildingPlacer.Instance.StartPlacement(buildingObj);
-            BuildMenu.Instance.SetScreenActive(false);
+            BuildMenu.Instance.SetScreenActive(false, 0.05f);
         }
         else
         {

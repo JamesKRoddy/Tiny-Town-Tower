@@ -56,15 +56,16 @@ public class PlayerInventoryMenu : PreviewListMenuBase<ResourceCategory, Resourc
             case PlayerControlType.IN_MENU:
                 PlayerInput.Instance.OnRBPressed += rightScreenBtn.onClick.Invoke;
                 PlayerInput.Instance.OnLBPressed += leftScreenBtn.onClick.Invoke;
+                PlayerInput.Instance.OnBPressed += () => UtilityMenu.Instance.EnableUtilityMenu();
                 break;
             default:
                 break;
         }
     }
 
-    public override void SetScreenActive(bool active)
+    public override void SetScreenActive(bool active, float delay = 0.0f)
     {
-        gameObject.SetActive(active);
+        PlayerUIManager.Instance.SetScreenActive(this, active, delay);
     }
 
     // Retrieve the player's inventory, returning the `ResourceScriptableObj` directly

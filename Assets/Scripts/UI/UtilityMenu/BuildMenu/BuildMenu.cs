@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -67,16 +68,16 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
             case PlayerControlType.IN_MENU:
                 PlayerInput.Instance.OnRBPressed += rightScreenBtn.onClick.Invoke;
                 PlayerInput.Instance.OnLBPressed += leftScreenBtn.onClick.Invoke;
-                PlayerInput.Instance.OnBPressed += () => SetScreenActive(false);
+                PlayerInput.Instance.OnBPressed += () => UtilityMenu.Instance.EnableUtilityMenu();
                 break;
             default:
                 break;
         }
     }
 
-    public override void SetScreenActive(bool active)
+    public override void SetScreenActive(bool active, float delay = 0.0f)
     {
-        gameObject.SetActive(active);
+        PlayerUIManager.Instance.SetScreenActive(this, active, delay);     
     }
 
     public override IEnumerable<BuildingScriptableObj> GetItems()

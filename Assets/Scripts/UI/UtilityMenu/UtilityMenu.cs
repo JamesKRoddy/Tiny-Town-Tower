@@ -40,6 +40,8 @@ public class UtilityMenu : MenuBase, IControllerInput
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
 
+    private PlayerControlType returnToControls; //Used for when the menu is closed which controlls are gonna be used
+
     public void OnEnable()
     {
         PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
@@ -58,24 +60,39 @@ public class UtilityMenu : MenuBase, IControllerInput
     [SerializeField] Button playerInventoryBtn;
     [SerializeField] Button buildMenuBtn;
 
-    public override void SetScreenActive(bool active)
+    public override void SetScreenActive(bool active, float delay = 0.0f)
     {
         gameObject.SetActive(active);
 
-        if (!active)
-            PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_MOVEMENT); //TODO figure out which controls to go back to combat or camp movement
+        if (active)
+        {
+            PlayerControlType controlType = PlayerInput.Instance.currentControlType;
+
+            if (controlType == PlayerControlType.CAMP_MOVEMENT || controlType == PlayerControlType.COMBAT_MOVEMENT)
+                returnToControls = controlType;
+        }
+        else
+        {
+            PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_MOVEMENT);
+        }
     }
 
-    void EnablePlayerInventory()
+    public void EnableUtilityMenu()
     {
         PlayerUIManager.Instance.HideMenus();
-        PlayerInventoryMenu.Instance.SetScreenActive(true);
+        SetScreenActive(true, 0.1f);
     }
 
-    void EnableBuildMenu()
+    public void EnablePlayerInventory()
     {
         PlayerUIManager.Instance.HideMenus();
-        BuildMenu.Instance.SetScreenActive(true);
+        PlayerInventoryMenu.Instance.SetScreenActive(true, 0.1f);
+    }
+
+    public void EnableBuildMenu()
+    {
+        PlayerUIManager.Instance.HideMenus();
+        BuildMenu.Instance.SetScreenActive(true, 0.1f);
     }
 
     public void SetPlayerControlType(PlayerControlType controlType)

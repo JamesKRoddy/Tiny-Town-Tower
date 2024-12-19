@@ -35,7 +35,7 @@ public interface IInteractive<out T> : IInteractiveBase
  * start looking at levels to spawn in enemies
  * set up screen for merchants
  * Create a screen to assign a settler to a work task, in this screen show all settlers and what their current task is
- * Theres a bug where it will place the building soon as the sreen opens!!!!!!!!
+ * Add ability to close utility menu
  * 
  * 
  */
