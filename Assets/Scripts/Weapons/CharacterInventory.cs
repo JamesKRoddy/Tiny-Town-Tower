@@ -49,19 +49,7 @@ public class CharacterInventory : MonoBehaviour
 
         // Find and activate the new weapon in the player's weapon holder
         foreach (var prefabWeapon in prefabWeapons)
-        {
-            if(weapon == null)
-            {
-                Debug.Log("1");
-            }
-            if (weapon.weaponScriptableObj == null)
-            {
-                Debug.Log("2");
-            }
-            if (weapon.weaponScriptableObj.resourceName == null)
-            {
-                Debug.Log("3");
-            }
+        {            
             if (prefabWeapon.weaponScriptableObj.resourceName == weapon.weaponScriptableObj.resourceName)
             {
                 prefabWeapon.gameObject.SetActive(true);

@@ -47,6 +47,7 @@ public class UtilityMenu : MenuBase, IControllerInput
         PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
 
         EventSystem.current.SetSelectedGameObject(playerInventoryBtn.gameObject);
+
     }
 
     void OnDestroy()
@@ -97,9 +98,14 @@ public class UtilityMenu : MenuBase, IControllerInput
 
     public void SetPlayerControlType(PlayerControlType controlType)
     {
-        PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.HideMenus();
-
-        return;
+        switch (controlType)
+        {
+            case PlayerControlType.IN_MENU:
+                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.HideMenus();
+                break;
+            default:
+                break;
+        }
     }
 
     internal void OpenMenu(PlayerControlType playerControlType) //TODO need to figure out how to differenciate if the player is in combat or in camp

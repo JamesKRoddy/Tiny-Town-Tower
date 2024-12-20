@@ -182,7 +182,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     public void SetPlayerControlType(PlayerControlType controlType)
     {
-        Debug.Log("SetPlayerControlType");
+        Debug.Log($"SetPlayerControlType {controlType.ToString()}");
         switch (controlType)
         {
             case PlayerControlType.COMBAT_MOVEMENT:

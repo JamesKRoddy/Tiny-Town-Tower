@@ -9,7 +9,8 @@ public enum PlayerControlType
     CAMP_MOVEMENT, //Players movement in the camp
     BUILDING, //Placing a building from the build menu
     IN_CONVERSATION, //Talking to an NPC
-    IN_MENU // In any menu
+    IN_MENU, // In any menu
+    TURRET
 }
 
 public class PlayerInput : MonoBehaviour
@@ -71,16 +72,20 @@ public class PlayerInput : MonoBehaviour
             _instance = this; // Set the instance
             DontDestroyOnLoad(gameObject); // Optionally persist across scenes
         }
+
+        GameManager.Instance.OnGameModeChanged += UpdatePlayerControls;
     }
 
     private void OnDestroy()
     {
         UnsubscribeAll();
+
+        GameManager.Instance.OnGameModeChanged -= UpdatePlayerControls;
     }
 
     public void Start()
     {
-        UpdatePlayerControls(currentControlType);
+        UpdatePlayerControls(currentControlType);        
     }
 
     private void Update()
@@ -138,6 +143,31 @@ public class PlayerInput : MonoBehaviour
 
         OnUpdatePlayerControls?.Invoke(currentControlType);
     }
+
+    // This method will be called when the game mode changes
+    public void UpdatePlayerControls(CurrentGameMode gameMode)
+    {
+        // Logic to update the control type based on game mode
+        switch (gameMode)
+        {
+            case CurrentGameMode.ROGUE_LITE:
+                currentControlType = PlayerControlType.COMBAT_MOVEMENT;
+                break;
+            case CurrentGameMode.CAMP:
+                currentControlType = PlayerControlType.CAMP_MOVEMENT;
+                break;
+            case CurrentGameMode.TURRET:
+                currentControlType = PlayerControlType.TURRET;
+                break;
+            default:
+                currentControlType = PlayerControlType.NONE;
+                break;
+        }
+
+        // Notify any listeners of the updated control type
+        OnUpdatePlayerControls?.Invoke(currentControlType);
+    }
+
 
     /// <summary>
     /// Unsubscribes all listeners from all actions.
