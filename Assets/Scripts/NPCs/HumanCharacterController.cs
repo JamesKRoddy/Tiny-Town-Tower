@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[RequireComponent(typeof(UnityEngine.AI.NavMeshAgent))]
+
 
 public class HumanCharacterController : MonoBehaviour
 {

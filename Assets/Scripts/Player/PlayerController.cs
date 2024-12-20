@@ -40,7 +40,6 @@ public class PlayerController : HumanCharacterController, IControllerInput
         playerCollider = GetComponent<Collider>();
         playerCombat = GetComponent<PlayerCombat>();
 
-        SetPlayerControlType(PlayerInput.Instance.currentControlType);
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
 

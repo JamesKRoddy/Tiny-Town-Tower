@@ -36,7 +36,7 @@ public class PlayerInput : MonoBehaviour
         }
     }
 
-    public PlayerControlType currentControlType = PlayerControlType.CAMP_MOVEMENT;
+    public PlayerControlType currentControlType = PlayerControlType.COMBAT_MOVEMENT;
 
     public event Action<PlayerControlType> OnUpdatePlayerControls;
 
@@ -78,6 +78,11 @@ public class PlayerInput : MonoBehaviour
         UnsubscribeAll();
     }
 
+    public void Start()
+    {
+        UpdatePlayerControls(currentControlType);
+    }
+
     private void Update()
     {
         // Movement input (Left joystick)
@@ -99,13 +104,11 @@ public class PlayerInput : MonoBehaviour
         // Bumpers
         if (Input.GetButtonDown("RB"))
         {
-            Debug.Log("RB pressed");
             OnRBPressed?.Invoke();
         }
 
         if (Input.GetButtonDown("LB"))
         {
-            Debug.Log("LB pressed");
             OnLBPressed?.Invoke();
         }
 

@@ -35,7 +35,7 @@ public interface IInteractive<out T> : IInteractiveBase
  * start looking at levels to spawn in enemies
  * set up screen for merchants
  * Create a screen to assign a settler to a work task, in this screen show all settlers and what their current task is
- * Add ability to close utility menu
+ * Have to refactor the weapon inventory system because its stupid, get rid of the weapon class on the prefab and just use scrptable obj, have it spawn in on the players hand correctly
  * 
  * 
  */

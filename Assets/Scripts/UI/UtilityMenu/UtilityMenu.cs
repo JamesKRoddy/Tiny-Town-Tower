@@ -97,6 +97,8 @@ public class UtilityMenu : MenuBase, IControllerInput
 
     public void SetPlayerControlType(PlayerControlType controlType)
     {
+        PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.HideMenus();
+
         return;
     }
 

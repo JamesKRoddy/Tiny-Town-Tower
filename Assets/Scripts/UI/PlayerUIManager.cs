@@ -80,7 +80,6 @@ public class PlayerUIManager : MonoBehaviour
 
     public void SetScreenActive(MenuBase menu, bool active, float delay = 0.0f)
     {
-        Debug.Log($"{active}  {delay}");
         if(delay > 0.0f)
         {
             if (openingMenu == null)

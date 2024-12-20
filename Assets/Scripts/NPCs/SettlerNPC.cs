@@ -13,6 +13,8 @@ public enum TaskType
     TEND_CROPS
 }
 
+[RequireComponent(typeof(UnityEngine.AI.NavMeshAgent))]
+
 public class SettlerNPC : HumanCharacterController
 {
     private _TaskState currentState;

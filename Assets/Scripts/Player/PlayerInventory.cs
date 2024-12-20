@@ -156,6 +156,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     private void HandleInteraction()
     {
+        Debug.Log("HandleInteraction");
         if (currentInteractive != null && currentInteractive.CanInteract())
         {
             object interactReturnObj = currentInteractive.Interact();
@@ -181,6 +182,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     public void SetPlayerControlType(PlayerControlType controlType)
     {
+        Debug.Log("SetPlayerControlType");
         switch (controlType)
         {
             case PlayerControlType.COMBAT_MOVEMENT:
