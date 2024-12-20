@@ -328,6 +328,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 265055725}
+  - component: {fileID: 265055726}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -352,6 +353,18 @@ Transform:
   - {fileID: 2114570005}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &265055726
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 265055724}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98d2e6833a44b1d428a19f0d0fc29b9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -484,6 +497,10 @@ PrefabInstance:
     - target: {fileID: 1108052112129980, guid: e2d415ab74b8cd44d997ab29bd081294, type: 3}
       propertyPath: m_Name
       value: SM_Chr_Cool_Male_01
+      objectReference: {fileID: 0}
+    - target: {fileID: 1108052112129980, guid: e2d415ab74b8cd44d997ab29bd081294, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4106895909508856, guid: e2d415ab74b8cd44d997ab29bd081294, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1293,13 +1310,17 @@ PrefabInstance:
       propertyPath: m_Name
       value: SM_Prop_Crate_Open_05
       objectReference: {fileID: 0}
+    - target: {fileID: 1343672823087468, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4014087072882898, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
       propertyPath: m_LocalPosition.x
       value: 8.209258
       objectReference: {fileID: 0}
     - target: {fileID: 4014087072882898, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 0.58
       objectReference: {fileID: 0}
     - target: {fileID: 4014087072882898, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
       propertyPath: m_LocalPosition.z
@@ -6179,7 +6200,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3801556061967502168, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 2.1
       objectReference: {fileID: 0}
     - target: {fileID: 3801556061967502168, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: m_LocalPosition.y
@@ -6187,7 +6208,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3801556061967502168, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -0.96
       objectReference: {fileID: 0}
     - target: {fileID: 3801556061967502168, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: m_LocalRotation.w
@@ -6217,37 +6238,9 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 6156078157849597995, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6554337497798657960, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
-      propertyPath: inventoryList.Array.size
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 6554337497798657960, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
-      propertyPath: inventoryList.Array.data[0].count
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 6554337497798657960, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
-      propertyPath: inventoryList.Array.data[1].count
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 6554337497798657960, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
-      propertyPath: inventoryList.Array.data[0].resource
-      value: 
-      objectReference: {fileID: 11400000, guid: e9e256aa3d595cc46bfcc1c42f699df0, type: 2}
-    - target: {fileID: 6554337497798657960, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
-      propertyPath: inventoryList.Array.data[1].resource
-      value: 
-      objectReference: {fileID: 11400000, guid: e6fde83523c7216478e945d81aedf237, type: 2}
     - target: {fileID: 9124372233556808277, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: m_Name
       value: Player
-      objectReference: {fileID: 0}
-    - target: {fileID: 9124372233556808277, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
-      propertyPath: m_IsActive
-      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

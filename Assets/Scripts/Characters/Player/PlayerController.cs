@@ -3,11 +3,35 @@ using UnityEngine;
 
 public class PlayerController : HumanCharacterController, IControllerInput
 {
-    [Header("Movement Parameters")]    
+    // Static instance of the PlayerUIManager class
+    private static PlayerController _instance;
+
+    // Public property to access the instance
+    public static PlayerController Instance
+    {
+        get
+        {
+            // Check if the instance is null
+            if (_instance == null)
+            {
+                // Try to find the PlayerCombat in the scene
+                _instance = FindFirstObjectByType<PlayerController>();
+
+                // If not found, log a warning
+                if (_instance == null)
+                {
+                    Debug.LogWarning("PlayerController instance not found in the scene!");
+                }
+            }
+            return _instance;
+        }
+    }
+
+    [Header("Movement Parameters")]
     public float dashSpeed = 20f; // Speed during a dash
     public float dashDuration = 0.2f; // How long a dash lasts
     public float dashCooldown = 1.0f; // Cooldown time between dashes
-    
+
 
     [Header("Vault Parameters")]
     public float vaultSpeed = 5f; // Slower speed for vaulting
@@ -37,9 +61,22 @@ public class PlayerController : HumanCharacterController, IControllerInput
 
     private void Awake()
     {
+        if (_instance != null && _instance != this)
+        {
+            Destroy(gameObject); // Destroy duplicate instances
+        }
+        else
+        {
+            _instance = this; // Set the instance
+            DontDestroyOnLoad(gameObject); // Optionally persist across scenes
+        }
+
         playerCollider = GetComponent<Collider>();
         playerCombat = GetComponent<PlayerCombat>();
+    }
 
+    void Start()
+    {
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
 

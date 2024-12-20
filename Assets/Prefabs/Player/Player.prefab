@@ -491,7 +491,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8623816803197322479}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0.933, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -512,6 +512,8 @@ GameObject:
   - component: {fileID: 3986631171285951144}
   - component: {fileID: 2647236387963753532}
   - component: {fileID: 641597584739934553}
+  - component: {fileID: 5445671924862257595}
+  - component: {fileID: 7000275051264364189}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -600,6 +602,41 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e2434c58294ac18428d4e3d49852a163, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentControlType: 2
+--- !u!114 &5445671924862257595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9124372233556808277}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b7d717e4a3748942ac73353fb97a4f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  equippedWeapon: {fileID: 0}
+  weaponHolder: {fileID: 2596541557469249145}
+  inventoryList:
+  - resource: {fileID: 11400000, guid: e9e256aa3d595cc46bfcc1c42f699df0, type: 2}
+    count: 10
+  - resource: {fileID: 11400000, guid: e6fde83523c7216478e945d81aedf237, type: 2}
+    count: 10
+  interactionRange: 3
+  geneticMutation: 0
+  dashElement: 0
+--- !u!114 &7000275051264364189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9124372233556808277}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cbf6d617d6c174e41ba05b422f66cbaa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1001 &148858431013183315
@@ -924,15 +961,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4557240161818442, guid: 7126961e40fcaf34297e9547d17c2f70, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4557240161818442, guid: 7126961e40fcaf34297e9547d17c2f70, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4557240161818442, guid: 7126961e40fcaf34297e9547d17c2f70, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4557240161818442, guid: 7126961e40fcaf34297e9547d17c2f70, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -957,7 +994,7 @@ PrefabInstance:
       insertIndex: 0
       addedObject: {fileID: 686703251752030279}
     - targetCorrespondingSourceObject: {fileID: 4557240161818442, guid: 7126961e40fcaf34297e9547d17c2f70, type: 3}
-      insertIndex: -1
+      insertIndex: 1
       addedObject: {fileID: 1722219343501954215}
     - targetCorrespondingSourceObject: {fileID: 4153014068000536, guid: 7126961e40fcaf34297e9547d17c2f70, type: 3}
       insertIndex: -1
@@ -968,16 +1005,10 @@ PrefabInstance:
       addedObject: {fileID: 6156078157849597995}
     - targetCorrespondingSourceObject: {fileID: 1564443653002224, guid: 7126961e40fcaf34297e9547d17c2f70, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 6265443476941145066}
+      addedObject: {fileID: 1339746580298040525}
     - targetCorrespondingSourceObject: {fileID: 1564443653002224, guid: 7126961e40fcaf34297e9547d17c2f70, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 8858713584032666893}
-    - targetCorrespondingSourceObject: {fileID: 1564443653002224, guid: 7126961e40fcaf34297e9547d17c2f70, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 8633598616412922260}
-    - targetCorrespondingSourceObject: {fileID: 1564443653002224, guid: 7126961e40fcaf34297e9547d17c2f70, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 6554337497798657960}
+      addedObject: {fileID: 4618818335320924471}
   m_SourcePrefab: {fileID: 100100000, guid: 7126961e40fcaf34297e9547d17c2f70, type: 3}
 --- !u!1 &5638642560065140137 stripped
 GameObject:
@@ -1007,7 +1038,7 @@ CapsuleCollider:
   m_Height: 1.75
   m_Direction: 1
   m_Center: {x: 0, y: 1, z: 0}
---- !u!114 &6265443476941145066
+--- !u!114 &1339746580298040525
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1019,7 +1050,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 727571160fa946f479894a0ce46137b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 10
+  moveMaxSpeed: 10
   rotationSpeed: 720
   animator: {fileID: 5697498045251178901}
   dashSpeed: 30
@@ -1036,7 +1067,7 @@ MonoBehaviour:
   capsuleCastRadius: 0.2
   vaultHeight: 1
   vaultOffset: 2
---- !u!114 &8858713584032666893
+--- !u!114 &4618818335320924471
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1054,40 +1085,6 @@ MonoBehaviour:
   verticalUpVfx: {fileID: 8404910507423951985}
   dashVfx: {fileID: 1068890609441434409}
   dashVfxPoint: {fileID: 1722219343501954215}
---- !u!114 &8633598616412922260
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5638642560065140137}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cbf6d617d6c174e41ba05b422f66cbaa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &6554337497798657960
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5638642560065140137}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1b7d717e4a3748942ac73353fb97a4f6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  equippedWeapon: {fileID: 0}
-  weaponHolder: {fileID: 2596541557469249145}
-  inventoryList:
-  - resource: {fileID: 11400000, guid: e9e256aa3d595cc46bfcc1c42f699df0, type: 2}
-    count: 10
-  - resource: {fileID: 11400000, guid: e6fde83523c7216478e945d81aedf237, type: 2}
-    count: 10
-  interactionRange: 3
-  geneticMutation: 0
-  dashElement: 0
 --- !u!4 &5641660639696163137 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4153014068000536, guid: 7126961e40fcaf34297e9547d17c2f70, type: 3}

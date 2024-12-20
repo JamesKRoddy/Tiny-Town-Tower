@@ -22,4 +22,10 @@ public class HumanCharacterController : MonoBehaviour
     {
         
     }
+
+    //Called from animator
+    public void StopAttacking()
+    {
+        isAttacking = false;
+    }
 }

@@ -29,13 +29,11 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         }
     }
 
-    PlayerController playerController;
-
-    //Chest handling
+    [Header ("Chest handling")]
     private IInteractive<object> currentInteractive; // The interaction the player is currently looking at
     public float interactionRange = 3f; // Distance to detect weapons    
 
-    //Players currently equipped items
+    [Header("Players currently equipped items")] 
     public GeneticMutation geneticMutation = GeneticMutation.NONE;
     public WeaponElement dashElement = WeaponElement.NONE;
 
@@ -62,8 +60,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     public override void Start()
     {
         base.Start();
-
-        playerController = GetComponent<PlayerController>();
     }
 
 
@@ -96,7 +92,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 if (equippedWeapon == null)
                 {
                     EquipWeapon(weaponBase);
-                    playerController.EquipMeleeWeapon((int)equippedWeapon.weaponScriptableObj.animationType);
+                    PlayerController.Instance.EquipMeleeWeapon((int)equippedWeapon.weaponScriptableObj.animationType);
                 }
                 else
                 {
@@ -128,7 +124,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     private void DetectInteraction()
     {
         RaycastHit hit;
-        if (Physics.Raycast(transform.position + new Vector3(0f, 0.5f, 0f), transform.forward, out hit, interactionRange))
+        if (Physics.Raycast(PlayerController.Instance.transform.position + Vector3.up, PlayerController.Instance.transform.transform.forward, out hit, interactionRange))
         {
             IInteractiveBase interactive = hit.collider.GetComponent<IInteractiveBase>();
 

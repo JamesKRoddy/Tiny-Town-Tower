@@ -17,3 +17,6 @@ MonoBehaviour:
   resourceCategory: 4
   resourceSprite: {fileID: 0}
   weaponPrefab: {fileID: 1079387494257586, guid: 27af943660497544a943e5dc2595eea7, type: 3}
+  animationType: 1
+  damage: 10
+  weaponElement: 0

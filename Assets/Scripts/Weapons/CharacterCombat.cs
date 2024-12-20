@@ -11,12 +11,11 @@ public class CharacterCombat : MonoBehaviour
 
     private CharacterInventory characterInventory;
 
-    public virtual void Start()
+    public virtual void Start() //TODO add this to the event for when a player takes over an NPC
     {
-        characterInventory = GetComponent<CharacterInventory>();
+        characterInventory = GetComponentInParent<CharacterInventory>();
     }
 
-    //Called from attack animations!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     public void AttackVFX(int attackDirection)
     {
         WeaponBase equippedWeapon = characterInventory.equippedWeapon;
