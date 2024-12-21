@@ -1,11 +1,16 @@
 using UnityEngine;
 
-public class PlayerAnimationState : StateMachineBehaviour
+public class CombatAnimationState : StateMachineBehaviour
 {
+    HumanCharacterController humanCharacterController;
+
     // OnStateEnter is called when a transition starts and the state machine starts to evaluate this state
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        animator.gameObject.GetComponentInParent<HumanCharacterController>().StopAttacking();
+        if (humanCharacterController == null)
+            humanCharacterController = animator.gameObject.GetComponentInParent<HumanCharacterController>();
+
+        humanCharacterController.StopAttacking();
         animator.ResetTrigger("LightAttack");
     }
 

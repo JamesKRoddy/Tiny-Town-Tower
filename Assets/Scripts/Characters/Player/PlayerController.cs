@@ -75,7 +75,7 @@ public class PlayerController : HumanCharacterController, IControllerInput
         }
 
         playerCollider = possesedNPC.GetComponent<Collider>();
-        playerCombat = possesedNPC.GetComponent<PlayerCombat>();
+        playerCombat = GetComponent<PlayerCombat>();
     }
 
     void Start()
