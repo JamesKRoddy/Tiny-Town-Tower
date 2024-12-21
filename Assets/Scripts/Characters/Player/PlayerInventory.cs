@@ -124,7 +124,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     private void DetectInteraction()
     {
         RaycastHit hit;
-        if (Physics.Raycast(PlayerController.Instance.transform.position + Vector3.up, PlayerController.Instance.transform.transform.forward, out hit, interactionRange))
+        if (Physics.Raycast(PlayerController.Instance.possesedNPC.transform.position + Vector3.up, PlayerController.Instance.possesedNPC.transform.transform.forward, out hit, interactionRange))
         {
             IInteractiveBase interactive = hit.collider.GetComponent<IInteractiveBase>();
 

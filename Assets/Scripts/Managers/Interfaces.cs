@@ -36,6 +36,6 @@ public interface IInteractive<out T> : IInteractiveBase
  * set up screen for merchants
  * Create a screen to assign a settler to a work task, in this screen show all settlers and what their current task is
  * Have to refactor the weapon inventory system because its stupid, get rid of the weapon class on the prefab and just use scrptable obj, have it spawn in on the players hand correctly
- * Swap player Controlls over to another NPC, fix AttackVFX CharacterCombat
- * 
+ * Swap player Controlls over to another NPC
+ * Get Player controls off model, create prefab of dash stuff and weapon point
  */
