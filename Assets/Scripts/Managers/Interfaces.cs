@@ -37,5 +37,6 @@ public interface IInteractive<out T> : IInteractiveBase
  * Create a screen to assign a settler to a work task, in this screen show all settlers and what their current task is
  * Have to refactor the weapon inventory system because its stupid, get rid of the weapon class on the prefab and just use scrptable obj, have it spawn in on the players hand correctly
  * Swap player Controlls over to another NPC
- * Get Player controls off model, create prefab of dash stuff and weapon point
+ * Create prefab of dash stuff and weapon point
+ * On PlayerSwitchMenu use image as a render texture that follows the currently selected player
  */

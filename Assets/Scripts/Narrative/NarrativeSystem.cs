@@ -35,6 +35,8 @@ public class NarrativeSystem : MenuBase
     private DialogueData currentDialogue;
     private Dictionary<string, DialogueLine> dialogueLinesMap;
 
+    private PlayerControlType returnToControls; //Used for when the menu is closed which controlls are gonna be used
+
     private void Awake()
     {
         Setup();
@@ -181,7 +183,7 @@ public class NarrativeSystem : MenuBase
 
     public void EndConversation()
     {
-        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.COMBAT_MOVEMENT); //TODO figure out which controls to go back to combat or camp movement
+        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.COMBAT_MOVEMENT); //TODO figure out which controls to go back to combat or camp movement, TEST IF this works
         dialoguePanel.SetActive(false);
     }
 
@@ -191,9 +193,18 @@ public class NarrativeSystem : MenuBase
         EndConversation();
     }
 
-    //TODO possibly implement this??
-    public override void SetScreenActive(bool active, float delay = 0.0f)
+    public override void SetScreenActive(bool active, float delay = 0.0f) //TODO figure out which controls to go back to combat or camp movement, TEST IF this works
     {
-        
+        if (active)
+        {
+            PlayerControlType controlType = PlayerInput.Instance.currentControlType;
+
+            if (controlType == PlayerControlType.CAMP_MOVEMENT || controlType == PlayerControlType.COMBAT_MOVEMENT)
+                returnToControls = controlType;
+        }
+        else
+        {
+            PlayerInput.Instance.UpdatePlayerControls(returnToControls);
+        }
     }
 }

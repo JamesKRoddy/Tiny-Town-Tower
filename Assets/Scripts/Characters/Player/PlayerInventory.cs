@@ -159,7 +159,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
             switch (interactReturnObj)
             {
-                //TODO put in interationg with a pickupable item here
                 case ResourcePickup resourcePickup:
                     AddToCharacterInventory(resourcePickup);
                     break;

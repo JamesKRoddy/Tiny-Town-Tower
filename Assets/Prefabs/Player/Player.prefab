@@ -509,9 +509,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3801556061967502168}
-  - component: {fileID: 3986631171285951144}
-  - component: {fileID: 2647236387963753532}
   - component: {fileID: 641597584739934553}
+  - component: {fileID: 7394057616191428834}
+  - component: {fileID: 1753517641701161209}
   - component: {fileID: 5445671924862257595}
   - component: {fileID: 7000275051264364189}
   m_Layer: 0
@@ -539,59 +539,6 @@ Transform:
   - {fileID: 5644634981199376659}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &3986631171285951144
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9124372233556808277}
-  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &2647236387963753532
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9124372233556808277}
-  m_Enabled: 0
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!114 &641597584739934553
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -605,6 +552,54 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentControlType: 2
+--- !u!114 &7394057616191428834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9124372233556808277}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 727571160fa946f479894a0ce46137b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveMaxSpeed: 10
+  rotationSpeed: 720
+  animator: {fileID: 5697498045251178901}
+  possesedNPC: {fileID: 5638642560065140137}
+  dashSpeed: 30
+  dashDuration: 0.4
+  dashCooldown: 1
+  vaultSpeed: 5
+  vaultDetectionRange: 1.5
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  vaultLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  capsuleCastRadius: 0.2
+  vaultHeight: 1
+  vaultOffset: 2
+--- !u!114 &1753517641701161209
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9124372233556808277}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec197ca81624d044eb0b1832ce1d54eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  horizontalLeftVfx: {fileID: 6545484627116626282}
+  horizontalRightVfx: {fileID: 8759059330613288784}
+  verticalDownVfx: {fileID: 2503260131712687447}
+  verticalUpVfx: {fileID: 8404910507423951985}
+  dashVfx: {fileID: 1068890609441434409}
+  dashVfxPoint: {fileID: 1722219343501954215}
 --- !u!114 &5445671924862257595
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1005,10 +1000,7 @@ PrefabInstance:
       addedObject: {fileID: 6156078157849597995}
     - targetCorrespondingSourceObject: {fileID: 1564443653002224, guid: 7126961e40fcaf34297e9547d17c2f70, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1339746580298040525}
-    - targetCorrespondingSourceObject: {fileID: 1564443653002224, guid: 7126961e40fcaf34297e9547d17c2f70, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 4618818335320924471}
+      addedObject: {fileID: 3289334647651337905}
   m_SourcePrefab: {fileID: 100100000, guid: 7126961e40fcaf34297e9547d17c2f70, type: 3}
 --- !u!1 &5638642560065140137 stripped
 GameObject:
@@ -1038,7 +1030,7 @@ CapsuleCollider:
   m_Height: 1.75
   m_Direction: 1
   m_Center: {x: 0, y: 1, z: 0}
---- !u!114 &1339746580298040525
+--- !u!114 &3289334647651337905
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1047,44 +1039,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 5638642560065140137}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 727571160fa946f479894a0ce46137b3, type: 3}
+  m_Script: {fileID: 11500000, guid: 8cdfbceb3c91a894d88c2ce9d8d2e34b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveMaxSpeed: 10
-  rotationSpeed: 720
-  animator: {fileID: 5697498045251178901}
-  dashSpeed: 30
-  dashDuration: 0.4
-  dashCooldown: 1
-  vaultSpeed: 5
-  vaultDetectionRange: 1.5
-  obstacleLayer:
-    serializedVersion: 2
-    m_Bits: 64
-  vaultLayer:
-    serializedVersion: 2
-    m_Bits: 128
-  capsuleCastRadius: 0.2
-  vaultHeight: 1
-  vaultOffset: 2
---- !u!114 &4618818335320924471
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5638642560065140137}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ec197ca81624d044eb0b1832ce1d54eb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  horizontalLeftVfx: {fileID: 6545484627116626282}
-  horizontalRightVfx: {fileID: 8759059330613288784}
-  verticalDownVfx: {fileID: 2503260131712687447}
-  verticalUpVfx: {fileID: 8404910507423951985}
-  dashVfx: {fileID: 1068890609441434409}
-  dashVfxPoint: {fileID: 1722219343501954215}
+  characterCombat: {fileID: 0}
 --- !u!4 &5641660639696163137 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4153014068000536, guid: 7126961e40fcaf34297e9547d17c2f70, type: 3}

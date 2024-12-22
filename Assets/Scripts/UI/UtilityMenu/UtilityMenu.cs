@@ -36,6 +36,7 @@ public class UtilityMenu : MenuBase, IControllerInput
 
         playerInventoryBtn.onClick.AddListener(EnablePlayerInventory);
         buildMenuBtn.onClick.AddListener(EnableBuildMenu);
+        settlerNPCBtn.onClick.AddListener(EnableSettlerNPCMenu);
 
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
@@ -54,12 +55,14 @@ public class UtilityMenu : MenuBase, IControllerInput
     {
         playerInventoryBtn.onClick.RemoveAllListeners();
         buildMenuBtn.onClick.RemoveAllListeners();
+        settlerNPCBtn.onClick.RemoveAllListeners();
 
         PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
     }
 
     [SerializeField] Button playerInventoryBtn;
     [SerializeField] Button buildMenuBtn;
+    [SerializeField] Button settlerNPCBtn;
 
     public override void SetScreenActive(bool active, float delay = 0.0f)
     {
@@ -74,7 +77,7 @@ public class UtilityMenu : MenuBase, IControllerInput
         }
         else
         {
-            PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_MOVEMENT);
+            PlayerInput.Instance.UpdatePlayerControls(returnToControls);
         }
     }
 
@@ -96,6 +99,13 @@ public class UtilityMenu : MenuBase, IControllerInput
         BuildMenu.Instance.SetScreenActive(true, 0.1f);
     }
 
+
+    private void EnableSettlerNPCMenu()
+    {
+        PlayerUIManager.Instance.HideMenus();
+        SettlerNPCMenu.Instance.SetScreenActive(true, 0.1f);
+    }
+
     public void SetPlayerControlType(PlayerControlType controlType)
     {
         switch (controlType)
@@ -108,10 +118,11 @@ public class UtilityMenu : MenuBase, IControllerInput
         }
     }
 
-    internal void OpenMenu(PlayerControlType playerControlType) //TODO need to figure out how to differenciate if the player is in combat or in camp
+    internal void OpenMenu(PlayerControlType playerControlType) //TODO need to figure out how to differenciate if the player is in combat or in camp, use returnToControls above
     {
         playerInventoryBtn.gameObject.SetActive(false);
         buildMenuBtn.gameObject.SetActive(false);
+        settlerNPCBtn.gameObject.SetActive(false);
 
         switch (playerControlType)
         {
@@ -121,6 +132,7 @@ public class UtilityMenu : MenuBase, IControllerInput
             case PlayerControlType.CAMP_MOVEMENT:
                 playerInventoryBtn.gameObject.SetActive(true);
                 buildMenuBtn.gameObject.SetActive(true);
+                settlerNPCBtn.gameObject.SetActive(true);
                 break;
             default:
                 break;

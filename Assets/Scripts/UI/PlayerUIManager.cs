@@ -33,10 +33,11 @@ public class PlayerUIManager : MonoBehaviour
     [SerializeField] MenuBase buildMenu; 
     [SerializeField] MenuBase narrativeSystem;
     [SerializeField] MenuBase playerInventoryMenu;
+    [SerializeField] MenuBase settlerNPCMenu;
     [SerializeField] MenuBase utilityMenu;
 
     [Header("Interaction")]
-    [SerializeField] UIPanelController interactionPromptUI; // UI text for interactionPromptUI //TODO because ill be using panels with text being displayed might be an idea to create a separate class for all this stuff
+    [SerializeField] UIPanelController interactionPromptUI; // UI text for interactionPromptUI //TODO because ill be using panels with text being displayed (talk to, pickup, open etc.) might be an idea to create a separate class for all this stuff
 
     private Coroutine openingMenu;
 
@@ -56,6 +57,7 @@ public class PlayerUIManager : MonoBehaviour
         buildMenu.Setup();
         narrativeSystem.Setup();
         playerInventoryMenu.Setup();
+        settlerNPCMenu.Setup();
         utilityMenu.Setup();
     }
 
@@ -74,6 +76,7 @@ public class PlayerUIManager : MonoBehaviour
         buildMenu.SetScreenActive(false);
         narrativeSystem.SetScreenActive(false);
         playerInventoryMenu.SetScreenActive(false);
+        settlerNPCMenu.SetScreenActive(false);
         utilityMenu.SetScreenActive(false);
     }
 

@@ -17,6 +17,7 @@ public enum TaskType
 
 public class SettlerNPC : HumanCharacterController
 {
+    public SettlerNPCScriptableObj NPCData;
     private _TaskState currentState;
     private NavMeshAgent agent; // Reference to NavMeshAgent
 
