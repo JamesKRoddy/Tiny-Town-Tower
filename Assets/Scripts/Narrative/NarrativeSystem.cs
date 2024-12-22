@@ -51,7 +51,6 @@ public class NarrativeSystem : MenuBase
         else
         {
             _instance = this;
-            DontDestroyOnLoad(gameObject);
         }
     }
 

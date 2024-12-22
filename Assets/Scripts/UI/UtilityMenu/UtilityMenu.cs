@@ -120,6 +120,7 @@ public class UtilityMenu : MenuBase, IControllerInput
 
     internal void OpenMenu(PlayerControlType playerControlType) //TODO need to figure out how to differenciate if the player is in combat or in camp, use returnToControls above
     {
+        Debug.Log($"Open Menu: {playerControlType}");
         playerInventoryBtn.gameObject.SetActive(false);
         buildMenuBtn.gameObject.SetActive(false);
         settlerNPCBtn.gameObject.SetActive(false);

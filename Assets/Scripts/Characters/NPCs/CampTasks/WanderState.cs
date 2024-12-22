@@ -12,7 +12,7 @@ public class WanderState : _TaskState
 
     private NavMeshAgent agent;
 
-    private void Start()
+    private void Awake()
     {
         // Ensure NPC reference is set when the state starts
         if (npc == null)

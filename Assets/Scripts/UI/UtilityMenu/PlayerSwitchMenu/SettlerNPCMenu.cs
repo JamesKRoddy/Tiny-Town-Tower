@@ -71,12 +71,17 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, SettlerNPCScriptableOb
     // Retrieve all NPCs in the scene that inherit from SettlerNPC
     public override IEnumerable<SettlerNPCScriptableObj> GetItems()
     {
-        var npcs = FindObjectsOfType<SettlerNPC>();
+        var npcs = FindObjectsByType<SettlerNPC>(FindObjectsSortMode.None);
+
         foreach (var npc in npcs)
         {
             if (npc.NPCData != null)
             {
                 yield return npc.NPCData;
+            }
+            else
+            {
+                Debug.LogWarning($"Settler {npc.gameObject.name} has no NPCData!");
             }
         }
     }

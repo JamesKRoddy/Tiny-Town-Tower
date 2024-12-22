@@ -72,6 +72,6 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         // Example usage: Setting the initial game mode
-        CurrentGameMode = CurrentGameMode.ROGUE_LITE;
+        //CurrentGameMode = CurrentGameMode.ROGUE_LITE;
     }
 }

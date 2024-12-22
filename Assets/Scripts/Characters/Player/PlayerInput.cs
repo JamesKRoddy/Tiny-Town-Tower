@@ -52,14 +52,14 @@ public class PlayerInput : MonoBehaviour
     public event Action OnRBPressed;
     public event Action OnLBPressed;
 
-    public event Action<float> OnRTPressed; // Right Trigger (returns a float value for trigger intensity)
-    public event Action<float> OnLTPressed; // Left Trigger (returns a float value for trigger intensity)
+    //public event Action<float> OnRTPressed; // Right Trigger (returns a float value for trigger intensity)
+    //public event Action<float> OnLTPressed; // Left Trigger (returns a float value for trigger intensity)
 
-    public event Action OnStartPressed;
+    //public event Action OnStartPressed;
     public event Action OnSelectPressed;
 
-    public event Action OnLeftStickPressed;
-    public event Action OnRightStickPressed;
+    //public event Action OnLeftStickPressed;
+    //public event Action OnRightStickPressed;
 
     private void Awake()
     {
@@ -137,6 +137,8 @@ public class PlayerInput : MonoBehaviour
 
     public void UpdatePlayerControls(PlayerControlType playerControlType)
     {
+        Debug.Log($"Update Controls: {playerControlType}");
+
         currentControlType = playerControlType;
 
         UnsubscribeAll();
@@ -145,8 +147,12 @@ public class PlayerInput : MonoBehaviour
     }
 
     // This method will be called when the game mode changes
-    public void UpdatePlayerControls(CurrentGameMode gameMode)
+    public void UpdatePlayerControls(CurrentGameMode gameMode) //TODO refactor this to call public void UpdatePlayerControls(PlayerControlType playerControlType) so its all happening in one place and only if the gamemode is different to the current controls
     {
+        Debug.Log($"Update Controls: {gameMode}");
+
+        UnsubscribeAll();
+
         // Logic to update the control type based on game mode
         switch (gameMode)
         {
@@ -185,13 +191,13 @@ public class PlayerInput : MonoBehaviour
         OnRBPressed = null;
         OnLBPressed = null;
 
-        OnRTPressed = null;
-        OnLTPressed = null;
+        //OnRTPressed = null;
+        //OnLTPressed = null;
 
-        OnStartPressed = null;
+        //OnStartPressed = null;
         OnSelectPressed = null;
 
-        OnLeftStickPressed = null;
-        OnRightStickPressed = null;
+        //OnLeftStickPressed = null;
+        //OnRightStickPressed = null;
     }
 }

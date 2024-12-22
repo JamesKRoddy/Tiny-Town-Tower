@@ -5,13 +5,15 @@ public class AttackState : _TaskState
 {
     private NavMeshAgent agent;
 
-    private void Start()
+    private void Awake()
     {
+        // Ensure NPC reference is set when the state starts
         if (npc == null)
         {
             SetNPCReference(GetComponent<SettlerNPC>());
         }
-        agent = npc.GetAgent();
+
+        agent = npc.GetAgent(); // Store reference to NavMeshAgent
     }
 
     public override void OnEnterState()

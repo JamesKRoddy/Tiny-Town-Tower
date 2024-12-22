@@ -173,12 +173,6 @@ public class PlayerController : HumanCharacterController, IControllerInput
         }
     }
 
-    //Called from animator
-    public void StopAttacking()
-    {
-        isAttacking = false;
-    }
-
     private void HandleDash()
     {
         if (isDashing && Time.time >= dashTime)
