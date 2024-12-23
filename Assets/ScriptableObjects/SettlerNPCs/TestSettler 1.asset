@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d7d206e92b2d67342b83c6c5aeb21641, type: 3}
-  m_Name: TestSettler
+  m_Name: TestSettler 1
   m_EditorClassIdentifier: 
-  nPCName: Player
+  nPCName: Steve
   nPCAge: 30
   nPCDescription: Test guy

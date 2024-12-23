@@ -1,8 +1,10 @@
 using UnityEngine;
+using UnityEngine.AI;
 
 public abstract class _TaskState : MonoBehaviour
 {
     protected SettlerNPC npc;
+    protected NavMeshAgent agent;
 
     // This method will be called to set the NPC reference once the state is added to the NPC
     public void SetNPCReference(SettlerNPC npc)

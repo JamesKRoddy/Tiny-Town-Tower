@@ -66,8 +66,6 @@ public class UtilityMenu : MenuBase, IControllerInput
 
     public override void SetScreenActive(bool active, float delay = 0.0f)
     {
-        gameObject.SetActive(active);
-
         if (active)
         {
             PlayerControlType controlType = PlayerInput.Instance.currentControlType;
@@ -77,8 +75,16 @@ public class UtilityMenu : MenuBase, IControllerInput
         }
         else
         {
-            PlayerInput.Instance.UpdatePlayerControls(returnToControls);
+            if (gameObject.activeInHierarchy == true)
+                ReturnToGame();
         }
+
+        gameObject.SetActive(active);
+    }
+
+    public void ReturnToGame()
+    {
+        PlayerInput.Instance.UpdatePlayerControls(returnToControls);
     }
 
     public void EnableUtilityMenu()
@@ -120,7 +126,6 @@ public class UtilityMenu : MenuBase, IControllerInput
 
     internal void OpenMenu(PlayerControlType playerControlType) //TODO need to figure out how to differenciate if the player is in combat or in camp, use returnToControls above
     {
-        Debug.Log($"Open Menu: {playerControlType}");
         playerInventoryBtn.gameObject.SetActive(false);
         buildMenuBtn.gameObject.SetActive(false);
         settlerNPCBtn.gameObject.SetActive(false);
@@ -139,6 +144,6 @@ public class UtilityMenu : MenuBase, IControllerInput
                 break;
         }
 
-        SetScreenActive(true);
+        SetScreenActive(true, 0.1f);
     }
 }

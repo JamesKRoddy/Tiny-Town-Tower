@@ -86,7 +86,7 @@ public class PlayerUIManager : MonoBehaviour
         if(delay > 0.0f)
         {
             if (openingMenu == null)
-                openingMenu = StartCoroutine(EnableBuildMenuAfterDelay(menu, active, delay));
+                openingMenu = StartCoroutine(EnableMenuAfterDelay(menu, active, delay));
         }
         else
         {
@@ -94,7 +94,7 @@ public class PlayerUIManager : MonoBehaviour
         }
     }
 
-    private IEnumerator EnableBuildMenuAfterDelay(MenuBase menu, bool active, float delay) //This delay is needed to stop the build menu from appearing and disappearing quickly from the ui building button being pressed
+    private IEnumerator EnableMenuAfterDelay(MenuBase menu, bool active, float delay) //This delay is needed to stop the build menu from appearing and disappearing quickly from the ui building button being pressed
     {
         yield return new WaitForSeconds(delay); // Add a slight delay
         menu.gameObject.SetActive(active);

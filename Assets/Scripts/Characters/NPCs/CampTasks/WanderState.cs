@@ -7,10 +7,10 @@ public class WanderState : _TaskState
     private bool isWandering = false;
     private float wanderIntervalMin = 5f;
     private float wanderIntervalMax = 10f;
+    private Coroutine wanderCoroutine;
+
 
     public float wanderRadius = 10f; // Allow wander radius to be modified in the Inspector
-
-    private NavMeshAgent agent;
 
     private void Awake()
     {
@@ -23,6 +23,11 @@ public class WanderState : _TaskState
         agent = npc.GetAgent(); // Store reference to NavMeshAgent
     }
 
+    private void OnDisable() //TODO do this for all states
+    {
+        OnExitState();
+    }
+
     public override TaskType GetTaskType()
     {
         return TaskType.WANDER; // Return the task type associated with this state
@@ -30,12 +35,17 @@ public class WanderState : _TaskState
 
     public override void OnEnterState()
     {
+        if (agent == null)
+        {
+            agent = npc.GetAgent(); // Store reference to NavMeshAgent
+        }
+
         if (!isWandering)
         {
             isWandering = true;
             agent.speed = MaxSpeed(); // Reduce speed for wandering
             agent.angularSpeed = npc.rotationSpeed / 2f; // Reduce rotation speed for wandering
-            npc.StartCoroutine(WanderCoroutine()); // Start the wandering coroutine
+            wanderCoroutine = npc.StartCoroutine(WanderCoroutine()); // Start the wandering coroutine
             WorkManager.Instance.OnTaskAssigned += WorkAvalible;
         }
     }
@@ -45,7 +55,7 @@ public class WanderState : _TaskState
         if (isWandering)
         {
             isWandering = false;
-            npc.StopCoroutine(WanderCoroutine()); // Stop the wandering coroutine
+            npc.StopCoroutine(wanderCoroutine); // Stop the wandering coroutine
             agent.speed = npc.moveMaxSpeed; // Reset speed
             agent.angularSpeed = npc.rotationSpeed; // Reset rotation speed
             WorkManager.Instance.OnTaskAssigned -= WorkAvalible;

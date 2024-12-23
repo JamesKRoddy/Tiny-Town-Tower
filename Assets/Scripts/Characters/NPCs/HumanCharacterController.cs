@@ -1,6 +1,5 @@
 using UnityEngine;
-
-
+using UnityEngine.AI;
 
 public class HumanCharacterController : MonoBehaviour
 {
@@ -12,6 +11,34 @@ public class HumanCharacterController : MonoBehaviour
 
     public Animator animator;
     protected CharacterCombat characterCombat;
+
+    /// <summary>
+    /// Used to switch player controls to a new npc
+    /// </summary>
+    /// <param name="isAIControlled"></param>
+    public void ToggleNPCComponents(bool isAIControlled, GameObject npc)
+    {
+        npc.GetComponent<NavMeshAgent>().enabled = isAIControlled;
+        npc.GetComponent<NarrativeInteractive>().enabled = isAIControlled;
+        npc.GetComponent<SettlerNPC>().enabled = isAIControlled;
+
+        foreach (var item in npc.GetComponents<_TaskState>())
+        {
+            item.enabled = isAIControlled;
+        }
+
+        if (isAIControlled)
+        {
+            npc.transform.SetParent(null);
+        }
+        else
+        {
+            transform.parent = PlayerController.Instance.gameObject.transform;
+            PlayerController.Instance.animator = npc.GetComponent<Animator>();
+            PlayerController.Instance.playerCamera.target = npc.transform;
+            PlayerController.Instance.possesedNPC = npc;
+        }
+    }
 
     public void EquipMeleeWeapon(int equipped)
     {

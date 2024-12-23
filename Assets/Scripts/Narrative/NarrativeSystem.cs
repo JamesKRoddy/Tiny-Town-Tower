@@ -52,11 +52,8 @@ public class NarrativeSystem : MenuBase
         {
             _instance = this;
         }
-    }
 
-    private void Start()
-    {
-        dialoguePanel = gameObject;
+        dialoguePanel = gameObject; //TODO can i get rid of dialoguePanel?
         dialoguePanel.SetActive(false);
     }
 
@@ -192,7 +189,7 @@ public class NarrativeSystem : MenuBase
         EndConversation();
     }
 
-    public override void SetScreenActive(bool active, float delay = 0.0f) //TODO figure out which controls to go back to combat or camp movement, TEST IF this works
+    public override void SetScreenActive(bool active, float delay = 0.0f)
     {
         if (active)
         {
@@ -203,7 +200,8 @@ public class NarrativeSystem : MenuBase
         }
         else
         {
-            PlayerInput.Instance.UpdatePlayerControls(returnToControls);
+            if(dialoguePanel.activeInHierarchy == true)
+                PlayerInput.Instance.UpdatePlayerControls(returnToControls);
         }
     }
 }

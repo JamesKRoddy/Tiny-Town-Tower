@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class InventoryPreviewBtn : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
+public class InventoryPreviewBtn : MonoBehaviour
 {
     [SerializeField] Button button;
     [SerializeField] Image InventoryImage;
@@ -14,26 +14,6 @@ public class InventoryPreviewBtn : MonoBehaviour, IPointerEnterHandler, IPointer
     void OnDestroy()
     {
         button.onClick.RemoveAllListeners();
-    }
-
-    public void OnPointerEnter(PointerEventData eventData)
-    {
-        PlayerInventoryMenu.Instance.UpdatePreview(buildingObj);
-    }
-
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        PlayerInventoryMenu.Instance.UpdatePreview();
-    }
-
-    public void OnSelect(BaseEventData eventData)
-    {
-        PlayerInventoryMenu.Instance.UpdatePreview(buildingObj);
-    }
-
-    public void OnDeselect(BaseEventData eventData)
-    {
-        PlayerInventoryMenu.Instance.UpdatePreview();
     }
 
     public void SetupButton(ResourceScriptableObj resourceObjRef)

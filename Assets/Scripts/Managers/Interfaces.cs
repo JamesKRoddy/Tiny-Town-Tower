@@ -38,6 +38,12 @@ public interface IInteractive<out T> : IInteractiveBase
  * Have to refactor the weapon inventory system because its stupid, get rid of the weapon class on the prefab and just use scrptable obj, have it spawn in on the players hand correctly
  * Swap player Controlls over to another NPC
  * Create prefab of dash stuff and weapon point
- * Exiting Utility screen controls still not avalible
  * On PlayerSwitchMenu use image as a render texture that follows the currently selected player
+ * 
+ * 
+ * AFTER BREAK!!!!!!!!
+ * Issue after sapping npcs, old npc wont go back to wander
+ * Have to create an event for the swap its too messy with references at the moment
+ * Closing out of settler menu how to properly reset the player controls to in game
+ *  
  */

@@ -3,8 +3,6 @@ using UnityEngine.AI;
 
 public class AttackState : _TaskState
 {
-    private NavMeshAgent agent;
-
     private void Awake()
     {
         // Ensure NPC reference is set when the state starts
@@ -18,6 +16,11 @@ public class AttackState : _TaskState
 
     public override void OnEnterState()
     {
+        if (agent == null)
+        {
+            agent = npc.GetAgent(); // Store reference to NavMeshAgent
+        }
+
         Debug.Log("Starting Attack task");
     }
 

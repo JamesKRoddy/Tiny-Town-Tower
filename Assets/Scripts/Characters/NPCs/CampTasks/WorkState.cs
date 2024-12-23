@@ -15,7 +15,6 @@ public enum WorkType
 
 public class WorkState : _TaskState
 {
-    private NavMeshAgent agent;
     private WorkTask assignedTask;
     private bool isTaskBeingPerformed;
 
@@ -32,6 +31,11 @@ public class WorkState : _TaskState
 
     public override void OnEnterState()
     {
+        if(agent == null)
+        {
+            agent = npc.GetAgent(); // Store reference to NavMeshAgent
+        }
+
         // Work state logic can be added here
         Debug.Log("Starting Work task");
 

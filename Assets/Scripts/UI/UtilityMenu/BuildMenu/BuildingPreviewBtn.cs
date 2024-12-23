@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-public class BuildingPreviewBtn : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
+public class BuildingPreviewBtn : MonoBehaviour
 {
     [SerializeField] Button button;
     [SerializeField] Image buildingImage;
@@ -53,27 +53,6 @@ public class BuildingPreviewBtn : MonoBehaviour, IPointerEnterHandler, IPointerE
             Debug.Log("Not enough resources to build this structure!");
             // Optionally, display a UI message to the player.
         }
-    }
-
-
-    public void OnPointerEnter(PointerEventData eventData)
-    {
-        BuildMenu.Instance.UpdatePreview(buildingObj);
-    }
-
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        BuildMenu.Instance.UpdatePreview();
-    }
-
-    public void OnSelect(BaseEventData eventData)
-    {
-        BuildMenu.Instance.UpdatePreview(buildingObj);
-    }
-
-    public void OnDeselect(BaseEventData eventData)
-    {
-        BuildMenu.Instance.UpdatePreview();
     }
 
     public void SetupButton(BuildingScriptableObj buildingObjRef)

@@ -30,6 +30,9 @@ public class PlayerController : HumanCharacterController, IControllerInput
     [Header("NPC Possesion")]
     public GameObject possesedNPC;
 
+    [Header("Camera")]
+    public CameraFollow playerCamera;
+
     [Header("Movement Parameters")]
     public float dashSpeed = 20f; // Speed during a dash
     public float dashDuration = 0.2f; // How long a dash lasts
@@ -80,12 +83,20 @@ public class PlayerController : HumanCharacterController, IControllerInput
 
     void Start()
     {
+        if(possesedNPC != null)
+            ToggleNPCComponents(false, possesedNPC);
+
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
 
     private void OnDestroy()
     {
         PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
+    }
+
+    public void ToggleNPCComponents(bool isAIControlled)
+    {
+        base.ToggleNPCComponents(isAIControlled, possesedNPC);
     }
 
     private void Update()
