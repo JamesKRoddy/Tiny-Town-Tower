@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
@@ -61,6 +62,15 @@ public class SettlerPreviewBtn : MonoBehaviour, IPointerEnterHandler, IPointerEx
     {
         //TODO swap player controlls to npc, make it a child of the player, disable NPC stuff, exit current state, clear work, disable nav agent, enable CharacterAnimationEvents
 
-        //npc.game
+        npc.GetComponent<NavMeshAgent>().enabled = false;
+        npc.GetComponent<NarrativeInteractive>().enabled = false;
+        npc.GetComponent<SettlerNPC>().enabled = false;
+
+        foreach (var item in npc.GetComponents<_TaskState>())
+        {
+            item.enabled = false;
+        }
+
+        PlayerController.Instance.possesedNPC = npc.gameObject; //TODO move this to a function on the player controller and also assign the animator make it a child of the playercontroller gameobj, also unassign the current npc and go through all their stuff
     }
 }
