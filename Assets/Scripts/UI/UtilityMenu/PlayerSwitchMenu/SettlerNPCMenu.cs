@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SettlerNPCMenu : PreviewListMenuBase<string, SettlerNPCScriptableObj>, IControllerInput
+public class SettlerNPCMenu : PreviewListMenuBase<string, SettlerNPC>, IControllerInput
 {
     private static SettlerNPCMenu _instance;
 
@@ -69,15 +69,15 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, SettlerNPCScriptableOb
     }
 
     // Retrieve all NPCs in the scene that inherit from SettlerNPC
-    public override IEnumerable<SettlerNPCScriptableObj> GetItems()
+    public override IEnumerable<SettlerNPC> GetItems()
     {
         var npcs = FindObjectsByType<SettlerNPC>(FindObjectsSortMode.None);
 
         foreach (var npc in npcs)
         {
-            if (npc.NPCData != null)
+            if (npc.nPCDataObj != null)
             {
-                yield return npc.NPCData;
+                yield return npc;
             }
             else
             {
@@ -86,40 +86,40 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, SettlerNPCScriptableOb
         }
     }
 
-    public override string GetItemCategory(SettlerNPCScriptableObj item)
+    public override string GetItemCategory(SettlerNPC item)
     {
         return "Default"; // Grouping not relevant; returning default category
     }
 
-    public override void SetupItemButton(SettlerNPCScriptableObj item, GameObject button)
+    public override void SetupItemButton(SettlerNPC item, GameObject button)
     {
         var buttonComponent = button.GetComponent<SettlerPreviewBtn>();
         buttonComponent.SetupButton(item);
     }
 
-    public override string GetPreviewName(SettlerNPCScriptableObj item)
+    public override string GetPreviewName(SettlerNPC item)
     {
-        return item.nPCName;
+        return item.nPCDataObj.nPCName;
     }
 
-    public override Sprite GetPreviewSprite(SettlerNPCScriptableObj item)
+    public override Sprite GetPreviewSprite(SettlerNPC item)
     {
         return null; // Assuming no sprite for NPCs; modify if sprites exist
     }
 
-    public override string GetPreviewDescription(SettlerNPCScriptableObj item)
+    public override string GetPreviewDescription(SettlerNPC item)
     {
-        return item.nPCDescription;
+        return item.nPCDataObj.nPCDescription;
     }
 
-    public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(SettlerNPCScriptableObj item)
+    public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(SettlerNPC item)
     {
         yield break; // No resource costs for NPCs
     }
 
-    public override void UpdatePreviewSpecifics(SettlerNPCScriptableObj item)
+    public override void UpdatePreviewSpecifics(SettlerNPC item)
     {
-        Debug.Log($"Displaying details for NPC: {item.nPCName}");
+        Debug.Log($"Displaying details for NPC: {item.nPCDataObj.nPCName}");
     }
 
     public override void DestroyPreviewSpecifics()

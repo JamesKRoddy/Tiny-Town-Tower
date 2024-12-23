@@ -38,5 +38,6 @@ public interface IInteractive<out T> : IInteractiveBase
  * Have to refactor the weapon inventory system because its stupid, get rid of the weapon class on the prefab and just use scrptable obj, have it spawn in on the players hand correctly
  * Swap player Controlls over to another NPC
  * Create prefab of dash stuff and weapon point
+ * Exiting Utility screen controls still not avalible
  * On PlayerSwitchMenu use image as a render texture that follows the currently selected player
  */

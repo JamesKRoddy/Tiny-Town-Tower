@@ -10,7 +10,7 @@ public class SettlerPreviewBtn : MonoBehaviour, IPointerEnterHandler, IPointerEx
     //[SerializeField] private TMP_Text descriptionText;
     [SerializeField] private Button button;
 
-    private SettlerNPCScriptableObj npcData;
+    private SettlerNPC npc;
 
     void OnDestroy()
     {
@@ -19,7 +19,7 @@ public class SettlerPreviewBtn : MonoBehaviour, IPointerEnterHandler, IPointerEx
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        SettlerNPCMenu.Instance.UpdatePreview(npcData);
+        SettlerNPCMenu.Instance.UpdatePreview(npc);
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -29,7 +29,7 @@ public class SettlerPreviewBtn : MonoBehaviour, IPointerEnterHandler, IPointerEx
 
     public void OnSelect(BaseEventData eventData)
     {
-        SettlerNPCMenu.Instance.UpdatePreview(npcData);
+        SettlerNPCMenu.Instance.UpdatePreview(npc);
     }
 
     public void OnDeselect(BaseEventData eventData)
@@ -37,13 +37,13 @@ public class SettlerPreviewBtn : MonoBehaviour, IPointerEnterHandler, IPointerEx
         SettlerNPCMenu.Instance.UpdatePreview();
     }
 
-    public void SetupButton(SettlerNPCScriptableObj npc)
+    public void SetupButton(SettlerNPC settlerNPC)
     {
-        npcData = npc;
+        npc = settlerNPC;
 
-        if (npcData != null)
+        if (npc != null)
         {
-            nameText.text = npcData.nPCName;
+            nameText.text = npc.nPCDataObj.nPCName;
             //ageText.text = $"Age: {npcData.nPCAge}";
             //descriptionText.text = npcData.nPCDescription;
         }
@@ -60,5 +60,7 @@ public class SettlerPreviewBtn : MonoBehaviour, IPointerEnterHandler, IPointerEx
     private void OnButtonClicked()
     {
         //TODO swap player controlls to npc, make it a child of the player, disable NPC stuff, exit current state, clear work, disable nav agent, enable CharacterAnimationEvents
+
+        //npc.game
     }
 }
