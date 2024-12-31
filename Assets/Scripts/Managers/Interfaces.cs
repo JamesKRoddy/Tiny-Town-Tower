@@ -42,8 +42,9 @@ public interface IInteractive<out T> : IInteractiveBase
  * 
  * 
  * AFTER BREAK!!!!!!!!
- * Issue after sapping npcs, old npc wont go back to wander
+ * Issue after swapping npcs, old npc wont go back to wander
  * Have to create an event for the swap its too messy with references at the moment
  * Closing out of settler menu how to properly reset the player controls to in game
+ * After swapping a player and when equipping a weapon the asset is enabled on the original player
  *  
  */
