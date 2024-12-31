@@ -82,17 +82,11 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         switch (resourceItem)
         {
             case WeaponScriptableObj weapon:
-                var weaponBase = weapon.weaponPrefab.GetComponent<WeaponBase>();
-                if (weaponBase == null)
-                {
-                    Debug.LogError($"WeaponPrefab does not have a WeaponBase component attached. Please check the prefab: {weapon.weaponPrefab.name}");
-                    return;
-                }
 
                 if (equippedWeapon == null)
                 {
-                    EquipWeapon(weaponBase);
-                    PlayerController.Instance.EquipMeleeWeapon((int)equippedWeapon.weaponScriptableObj.animationType);
+                    EquipWeapon(weapon);
+                    PlayerController.Instance.EquipMeleeWeapon((int)weapon.animationType);
                 }
                 else
                 {

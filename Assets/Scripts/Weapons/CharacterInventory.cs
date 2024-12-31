@@ -12,9 +12,8 @@ public class InventoryItem
 public class CharacterInventory : MonoBehaviour
 {
     [Header("Equipment")]
-    public WeaponBase equippedWeapon;
-    protected WeaponBase[] prefabWeapons; // Array of all available weapons that the player could equip
-    public Transform weaponHolder; // Parent object containing all weapons
+    public WeaponScriptableObj equippedWeapon;
+    public Transform weaponHolder; // Transform where the weapon will be instantiated
 
     [Header("Inventory")]
     [SerializeField]
@@ -22,43 +21,30 @@ public class CharacterInventory : MonoBehaviour
 
     public virtual void Start()
     {
-        // Cache all weapons under the weapon holder
-        if (weaponHolder != null)
-        {
-            prefabWeapons = weaponHolder.GetComponentsInChildren<WeaponBase>(true);
-        }
-        else
+        if (weaponHolder == null)
         {
             Debug.LogError("WeaponHolder not assigned!");
         }
-
-        // Ensure all weapons are disabled at start
-        foreach (var weapon in prefabWeapons)
-        {
-            weapon.gameObject.SetActive(false);
-        }
     }
 
-    public virtual void EquipWeapon(WeaponBase weapon)
+    public virtual void EquipWeapon(WeaponScriptableObj weaponScriptableObj)
     {
-        // Disable the currently active weapon
-        if (equippedWeapon != null)
+        // Unequip the currently equipped weapon
+        if (equippedWeapon != null && weaponHolder.childCount > 0)
         {
-            equippedWeapon.gameObject.SetActive(false);
+            Destroy(weaponHolder.GetChild(0).gameObject);
         }
 
-        // Find and activate the new weapon in the player's weapon holder
-        foreach (var prefabWeapon in prefabWeapons)
-        {            
-            if (prefabWeapon.weaponScriptableObj.resourceName == weapon.weaponScriptableObj.resourceName)
-            {
-                prefabWeapon.gameObject.SetActive(true);
-                equippedWeapon = prefabWeapon;
-                return;
-            }
+        // Instantiate the new weapon and set it as equipped
+        if (weaponScriptableObj != null && weaponScriptableObj.weaponPrefab != null)
+        {
+            Instantiate(weaponScriptableObj.weaponPrefab, weaponHolder);
+            equippedWeapon = weaponScriptableObj;
         }
-
-        Debug.LogWarning($"Weapon {weapon.weaponScriptableObj.resourceName} not found in weapon holder!");
+        else
+        {
+            Debug.LogWarning("Attempted to equip a null weapon scriptable object or prefab!");
+        }
     }
 
     public void AddItem(ResourceScriptableObj item, int count = 1)

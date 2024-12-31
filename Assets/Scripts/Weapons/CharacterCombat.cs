@@ -18,7 +18,7 @@ public class CharacterCombat : MonoBehaviour
 
     public void AttackVFX(int attackDirection)
     {
-        WeaponBase equippedWeapon = characterInventory.equippedWeapon;
+        WeaponScriptableObj equippedWeapon = characterInventory.equippedWeapon;
 
         if (equippedWeapon == null)
         {
@@ -26,7 +26,7 @@ public class CharacterCombat : MonoBehaviour
             return;
         }
 
-        switch (equippedWeapon)
+        switch (equippedWeapon.weaponPrefab.GetComponent<WeaponBase>())
         {
             case MeleeWeapon meleeWeapon:
                 MeleeAttackVFX((MeleeAttackDirection)attackDirection, meleeWeapon);

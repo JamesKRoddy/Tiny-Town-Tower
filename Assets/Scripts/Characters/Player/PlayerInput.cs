@@ -80,7 +80,8 @@ public class PlayerInput : MonoBehaviour
     {
         UnsubscribeAll();
 
-        GameManager.Instance.OnGameModeChanged -= UpdatePlayerControls;
+        if(GameManager.Instance)
+            GameManager.Instance.OnGameModeChanged -= UpdatePlayerControls;
     }
 
     public void Start()
