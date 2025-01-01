@@ -67,7 +67,6 @@ public class UtilityMenu : MenuBase, IControllerInput
 
     public override void SetScreenActive(bool active, float delay = 0.0f)
     {
-        Debug.Log($"Active {active}");
         if (active)
         {
             PlayerControlType controlType = PlayerInput.Instance.currentControlType;

@@ -29,8 +29,11 @@ public class PlayerUIManager : MonoBehaviour
         }
     }
 
+    [Header("Misc UI")]
+    [SerializeField] TMP_Text errorMessage;
+
     [Header("UI References")]
-    public MenuBase currentMenu;
+    [HideInInspector] public MenuBase currentMenu;
     [SerializeField] MenuBase buildMenu; 
     [SerializeField] MenuBase narrativeSystem;
     [SerializeField] MenuBase playerInventoryMenu;
@@ -60,6 +63,22 @@ public class PlayerUIManager : MonoBehaviour
         playerInventoryMenu.Setup();
         settlerNPCMenu.Setup();
         utilityMenu.Setup();
+    }
+
+    public void DisplayUIErrorMessage(string message, float duration = 2.0f)
+    {
+        errorMessage.gameObject.SetActive(true);
+        errorMessage.text = message;
+        PlayerInput.Instance.DisablePlayerInput(true);
+        StartCoroutine(HideErrorMessageAfterDelay(duration));
+    }
+
+    private IEnumerator HideErrorMessageAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        errorMessage.gameObject.SetActive(false);
+        errorMessage.text = "";
+        PlayerInput.Instance.DisablePlayerInput(false);
     }
 
     public void InteractionPrompt(string text)

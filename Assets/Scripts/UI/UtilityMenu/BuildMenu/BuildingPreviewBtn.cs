@@ -50,7 +50,7 @@ public class BuildingPreviewBtn : MonoBehaviour
         }
         else
         {
-            Debug.Log("Not enough resources to build this structure!");
+            BuildMenu.Instance.DisplayErrorMessage("Not enough resources to build this structure!");
             // Optionally, display a UI message to the player.
         }
     }

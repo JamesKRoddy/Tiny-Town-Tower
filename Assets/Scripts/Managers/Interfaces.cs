@@ -38,6 +38,7 @@ public interface IInteractive<out T> : IInteractiveBase
  * Swap player Controlls over to another NPC
  * Create prefab of dash stuff and weapon point
  * On PlayerSwitchMenu use image as a render texture that follows the currently selected player
+ * When the error message is displayed on the building menu for not enough resources, we can still select different buttons
  * 
  * 
  * AFTER BREAK!!!!!!!!

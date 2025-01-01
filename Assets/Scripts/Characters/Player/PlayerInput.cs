@@ -61,6 +61,8 @@ public class PlayerInput : MonoBehaviour
     //public event Action OnLeftStickPressed;
     //public event Action OnRightStickPressed;
 
+    bool playerInputDisabled = false;
+
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -74,6 +76,11 @@ public class PlayerInput : MonoBehaviour
         }
 
         GameManager.Instance.OnGameModeChanged += UpdatePlayerControls;
+    }
+
+    internal void DisablePlayerInput(bool disable)
+    {
+        playerInputDisabled = disable;
     }
 
     private void OnDestroy()
@@ -91,6 +98,9 @@ public class PlayerInput : MonoBehaviour
 
     private void Update()
     {
+        if (playerInputDisabled)
+            return;
+
         // Movement input (Left joystick)
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
