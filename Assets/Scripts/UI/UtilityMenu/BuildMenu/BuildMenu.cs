@@ -58,11 +58,15 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
 
     public void OnDestroy()
     {
-        PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
+        if(PlayerInput.Instance != null)
+            PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
     }
 
     public void SetPlayerControlType(PlayerControlType controlType)
     {
+        if (PlayerUIManager.Instance.currentMenu != this)
+            return;
+
         switch (controlType)
         {
             case PlayerControlType.IN_MENU:

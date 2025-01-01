@@ -30,6 +30,7 @@ public class HumanCharacterController : MonoBehaviour
         if (isAIControlled)
         {
             npc.transform.SetParent(null);
+            npc.GetComponent<SettlerNPC>().ChangeTask(TaskType.WANDER);
         }
         else
         {

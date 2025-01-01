@@ -25,7 +25,7 @@ public class GameManager : MonoBehaviour
                 _instance = FindFirstObjectByType<GameManager>();
                 if (_instance == null)
                 {
-                    Debug.LogError("GameManager instance not found in the scene!");
+                    Debug.LogWarning("GameManager instance not found in the scene!");
                 }
             }
             return _instance;

@@ -30,6 +30,7 @@ public class PlayerUIManager : MonoBehaviour
     }
 
     [Header("UI References")]
+    public MenuBase currentMenu;
     [SerializeField] MenuBase buildMenu; 
     [SerializeField] MenuBase narrativeSystem;
     [SerializeField] MenuBase playerInventoryMenu;
@@ -39,7 +40,7 @@ public class PlayerUIManager : MonoBehaviour
     [Header("Interaction")]
     [SerializeField] UIPanelController interactionPromptUI; // UI text for interactionPromptUI //TODO because ill be using panels with text being displayed (talk to, pickup, open etc.) might be an idea to create a separate class for all this stuff
 
-    private Coroutine openingMenu;
+    private Coroutine openingMenuCoroutine;
 
     // Ensure that there is only one instance of PlayerCombat
     private void Awake()
@@ -85,8 +86,8 @@ public class PlayerUIManager : MonoBehaviour
     {
         if(delay > 0.0f)
         {
-            if (openingMenu == null)
-                openingMenu = StartCoroutine(EnableMenuAfterDelay(menu, active, delay));
+            if (openingMenuCoroutine == null)
+                openingMenuCoroutine = StartCoroutine(EnableMenuAfterDelay(menu, active, delay));
         }
         else
         {
@@ -97,7 +98,8 @@ public class PlayerUIManager : MonoBehaviour
     private IEnumerator EnableMenuAfterDelay(MenuBase menu, bool active, float delay) //This delay is needed to stop the build menu from appearing and disappearing quickly from the ui building button being pressed
     {
         yield return new WaitForSeconds(delay); // Add a slight delay
+        currentMenu = menu;
         menu.gameObject.SetActive(active);
-        openingMenu = null;
+        openingMenuCoroutine = null;
     }
 }

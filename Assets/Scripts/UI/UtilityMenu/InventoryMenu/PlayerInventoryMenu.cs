@@ -51,6 +51,9 @@ public class PlayerInventoryMenu : PreviewListMenuBase<ResourceCategory, Resourc
 
     public void SetPlayerControlType(PlayerControlType controlType)
     {
+        if (PlayerUIManager.Instance.currentMenu != this)
+            return;
+
         switch (controlType)
         {
             case PlayerControlType.IN_MENU:

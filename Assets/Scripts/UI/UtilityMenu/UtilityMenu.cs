@@ -57,7 +57,8 @@ public class UtilityMenu : MenuBase, IControllerInput
         buildMenuBtn.onClick.RemoveAllListeners();
         settlerNPCBtn.onClick.RemoveAllListeners();
 
-        PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
+        if(PlayerInput.Instance != null)
+            PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
     }
 
     [SerializeField] Button playerInventoryBtn;
@@ -66,6 +67,7 @@ public class UtilityMenu : MenuBase, IControllerInput
 
     public override void SetScreenActive(bool active, float delay = 0.0f)
     {
+        Debug.Log($"Active {active}");
         if (active)
         {
             PlayerControlType controlType = PlayerInput.Instance.currentControlType;
@@ -114,6 +116,9 @@ public class UtilityMenu : MenuBase, IControllerInput
 
     public void SetPlayerControlType(PlayerControlType controlType)
     {
+        if (PlayerUIManager.Instance.currentMenu != this)
+            return;
+
         switch (controlType)
         {
             case PlayerControlType.IN_MENU:

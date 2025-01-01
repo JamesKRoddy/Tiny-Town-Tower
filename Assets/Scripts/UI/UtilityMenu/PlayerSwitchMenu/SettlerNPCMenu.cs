@@ -51,6 +51,9 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, SettlerNPC>, IControll
 
     public void SetPlayerControlType(PlayerControlType controlType)
     {
+        if (PlayerUIManager.Instance.currentMenu != this)
+            return;
+
         switch (controlType)
         {
             case PlayerControlType.IN_MENU:
@@ -119,7 +122,7 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, SettlerNPC>, IControll
 
     public override void UpdatePreviewSpecifics(SettlerNPC item)
     {
-        Debug.Log($"Displaying details for NPC: {item.nPCDataObj.nPCName}");
+        //Debug.Log($"Displaying details for NPC: {item.nPCDataObj.nPCName}");
     }
 
     public override void DestroyPreviewSpecifics()

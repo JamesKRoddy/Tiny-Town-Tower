@@ -138,8 +138,6 @@ public class PlayerInput : MonoBehaviour
 
     public void UpdatePlayerControls(PlayerControlType playerControlType)
     {
-        Debug.Log($"Update Controls: {playerControlType}");
-
         currentControlType = playerControlType;
 
         UnsubscribeAll();
