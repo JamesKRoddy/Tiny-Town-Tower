@@ -14,11 +14,19 @@ public class Zombie : EnemyBase
         agent.updatePosition = false;
     }
 
+    private void Start()
+    {
+        navMeshTarget = PlayerController.Instance.possesedNPC.transform;
+    }
+
     protected virtual void Update()
     {
+        if (navMeshTarget == null)
+            return;
+
         MoveTowardsPlayer();
 
-        if (Vector3.Distance(transform.position, player.position) <= attackRange && !isAttacking)
+        if (Vector3.Distance(transform.position, navMeshTarget.position) <= attackRange && !isAttacking)
         {
             StartAttack();
         }
@@ -51,7 +59,7 @@ public class Zombie : EnemyBase
         if (!isAttacking)
         {
             // The NavMeshAgent moves the zombie, but root motion from animation drives actual movement
-            agent.SetDestination(player.position);
+            agent.SetDestination(navMeshTarget.position);
         }
     }
 

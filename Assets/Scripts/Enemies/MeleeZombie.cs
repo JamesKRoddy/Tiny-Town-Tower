@@ -15,10 +15,10 @@ public class MeleeZombie : Zombie
     // Called by animation event or timing logic
     public void MeleeAttack()
     {
-        if (Vector3.Distance(transform.position, player.position) <= attackRange)
+        if (Vector3.Distance(transform.position, navMeshTarget.position) <= attackRange)
         {
             // Damage the player if in range during melee attack
-            player.GetComponent<PlayerHealth>().TakeDamage(meleeDamage);
+            navMeshTarget.GetComponent<PlayerHealth>().TakeDamage(meleeDamage);
             Debug.Log("Player hit by melee attack");
         }
     }

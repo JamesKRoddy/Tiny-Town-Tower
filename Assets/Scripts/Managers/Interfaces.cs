@@ -39,10 +39,10 @@ public interface IInteractive<out T> : IInteractiveBase
  * Create prefab of dash stuff and weapon point
  * On PlayerSwitchMenu use image as a render texture that follows the currently selected player
  * When the error message is displayed on the building menu for not enough resources, we can still select different buttons
- * 
- * 
- * AFTER BREAK!!!!!!!!
  * Have to create an event for the swap its too messy with references at the moment
  * Closing out of settler menu how to properly reset the player controls to in game
+ * Setup zombie idle animations
+ * 
+ * Player not moving after attacking
  *  
  */

@@ -6,7 +6,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
 {
     protected NavMeshAgent agent;
     protected Animator animator;
-    protected Transform player;
+    protected Transform navMeshTarget;
 
     public float Health { get; set; }
     public float MaxHealth { get; set; }

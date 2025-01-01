@@ -2,16 +2,23 @@ using UnityEngine;
 
 public class CharacterAnimationEvents : MonoBehaviour
 {
-    public CharacterCombat characterCombat;
+    public CharacterCombat playerCombat;
+    public HumanCharacterController playerController;
 
-    private void Start()
+    public void Setup(CharacterCombat characterCombat =  null, HumanCharacterController characterController = null) //TOD add this to the npc swap event, this also might be stupid
     {
-        characterCombat = GetComponentInParent<CharacterCombat>();
+        playerCombat = characterCombat;
+        playerController = characterController;
     }
 
     public void AttackVFX(int attackDirection)
     {
-        if(characterCombat != null)
-            characterCombat.AttackVFX(attackDirection);
+        if(playerCombat != null)
+            playerCombat.AttackVFX(attackDirection);
+    }
+
+    public void StopAttacking()
+    {
+        playerController.StopAttacking();
     }
 }

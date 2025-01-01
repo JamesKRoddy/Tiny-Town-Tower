@@ -31,12 +31,14 @@ public class HumanCharacterController : MonoBehaviour
         {
             npc.transform.SetParent(null);
             npc.GetComponent<SettlerNPC>().ChangeTask(TaskType.WANDER);
-        }
+            npc.GetComponent<CharacterAnimationEvents>().Setup();
+}
         else
         {
             transform.parent = PlayerController.Instance.gameObject.transform;
             PlayerController.Instance.animator = npc.GetComponent<Animator>();
             PlayerController.Instance.playerCamera.target = npc.transform;
+            npc.GetComponent<CharacterAnimationEvents>().Setup(PlayerCombat.Instance, PlayerController.Instance);
             PlayerController.Instance.possesedNPC = npc;
         }
     }
@@ -51,9 +53,10 @@ public class HumanCharacterController : MonoBehaviour
         
     }
 
-    //Called from animator
+    //Called from animator state class CombatAnimationState
     public void StopAttacking()
     {
+        Debug.Log("StopAttacking()" + gameObject.name);
         isAttacking = false;
     }
 }
