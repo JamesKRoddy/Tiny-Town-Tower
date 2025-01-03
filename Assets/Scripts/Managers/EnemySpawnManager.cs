@@ -1,13 +1,16 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemySpawnManager : MonoBehaviour
 {
-    public EnemyWaveConfig waveConfig;
+    public EnemyWaveConfig waveConfig; // Current wave configuration
 
     private List<EnemySpawnPoint> spawnPoints;
     private int currentWave = 0;
-    private List<GameObject> activeEnemies = new List<GameObject>();
+    private int totalEnemiesInWave; // Total enemies for the current wave
+    private int enemiesSpawned; // Number of enemies spawned so far
+    private List<GameObject> activeEnemies = new List<GameObject>(); // List of active enemies
 
     void Start()
     {
@@ -21,7 +24,7 @@ public class EnemySpawnManager : MonoBehaviour
         }
 
         // Get all spawn points in the scene
-        spawnPoints = new List<EnemySpawnPoint>(FindObjectsOfType<EnemySpawnPoint>());
+        spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
         if (spawnPoints.Count == 0)
         {
             Debug.LogError("No spawn points found!");
@@ -41,9 +44,12 @@ public class EnemySpawnManager : MonoBehaviour
 
         currentWave++;
         Debug.Log($"Starting Wave {currentWave}");
-        int enemiesToSpawn = Random.Range(waveConfig.minEnemiesPerWave, waveConfig.maxEnemiesPerWave + 1);
 
-        SpawnWave(enemiesToSpawn);
+        // Determine the number of enemies to spawn in this wave
+        totalEnemiesInWave = Random.Range(waveConfig.minEnemiesPerWave, waveConfig.maxEnemiesPerWave + 1);
+        enemiesSpawned = 0; // Reset for the new wave
+
+        SpawnWave(totalEnemiesInWave);
     }
 
     void SpawnWave(int enemyCount)
@@ -59,8 +65,31 @@ public class EnemySpawnManager : MonoBehaviour
         if (spawnPoints.Count == 0 || waveConfig.enemyPrefabs.Length == 0)
             return;
 
-        // Random spawn point and enemy
-        EnemySpawnPoint spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Count)];
+        StartCoroutine(SpawnEnemyWithRetry());
+    }
+
+    private IEnumerator SpawnEnemyWithRetry()
+    {
+        EnemySpawnPoint spawnPoint = null;
+
+        // Wait until a spawn point becomes available
+        while (spawnPoint == null)
+        {
+            foreach (var potentialSpawnPoint in spawnPoints)
+            {
+                if (potentialSpawnPoint != null && potentialSpawnPoint.SpawnEnemy(null) == null)
+                {
+                    spawnPoint = potentialSpawnPoint;
+                    break;
+                }
+            }
+
+            if (spawnPoint == null)
+            {
+                yield return new WaitForSeconds(0.1f); // Small delay before checking again
+            }
+        }
+
         GameObject enemyPrefab = waveConfig.enemyPrefabs[Random.Range(0, waveConfig.enemyPrefabs.Length)];
 
         // Delegate spawning to the spawn point
@@ -69,6 +98,7 @@ public class EnemySpawnManager : MonoBehaviour
         if (enemy != null)
         {
             activeEnemies.Add(enemy);
+            enemiesSpawned++; // Track the number of enemies spawned
 
             // Add listener to remove the enemy when it's destroyed
             enemy.GetComponent<EnemyBase>().OnEnemyKilled += () =>
@@ -81,7 +111,8 @@ public class EnemySpawnManager : MonoBehaviour
 
     void CheckForWaveCompletion()
     {
-        if (activeEnemies.Count == 0)
+        // Check if all enemies have been spawned and all active enemies are killed
+        if (enemiesSpawned >= totalEnemiesInWave && activeEnemies.Count == 0)
         {
             Debug.Log("Wave Complete!");
             StartNextWave();
