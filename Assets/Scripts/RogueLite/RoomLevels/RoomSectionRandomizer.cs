@@ -3,6 +3,14 @@ using System.Collections.Generic;
 using Unity.AI.Navigation;
 using UnityEngine;
 
+public enum RoomPosition
+{
+    FRONT,
+    BACK,
+    LEFT,
+    RIGHT
+}
+
 public class RoomSectionRandomizer : MonoBehaviour
 {
     [Header("Central Piece")]
@@ -34,10 +42,10 @@ public class RoomSectionRandomizer : MonoBehaviour
         ClearPropsOnCenterPiece();
 
         // Instantiate a random room for each direction
-        InstantiateRoom(frontTransform);
-        InstantiateRoom(backTransform);
-        InstantiateRoom(leftTransform);
-        InstantiateRoom(rightTransform);
+        InstantiateRoom(frontTransform, RoomPosition.FRONT);
+        InstantiateRoom(backTransform, RoomPosition.BACK);
+        InstantiateRoom(leftTransform, RoomPosition.LEFT);
+        InstantiateRoom(rightTransform, RoomPosition.RIGHT);
 
         RandomizePropsInSection(centerPiece);
 
@@ -84,13 +92,21 @@ public class RoomSectionRandomizer : MonoBehaviour
         }
     }
 
-    private void InstantiateRoom(Transform targetTransform)
+    private void InstantiateRoom(Transform targetTransform, RoomPosition roomPosition)
     {
         // Select a random prefab from the list
         GameObject randomPrefab = roomPrefabs[Random.Range(0, roomPrefabs.Count)];
 
+        if (!randomPrefab.GetComponent<RogueLiteRoom>())
+        {
+            Debug.LogError($"{randomPrefab.name} has no RogueLiteRoom Component");
+            return;
+        }
+
         // Instantiate the prefab at the position and rotation of the target transform
         GameObject room = Instantiate(randomPrefab, targetTransform.position, targetTransform.rotation);
+
+        room.GetComponent<RogueLiteRoom>().Setup(roomPosition);
 
         // Set the instantiated room as a child of the target transform
         room.transform.SetParent(targetTransform);

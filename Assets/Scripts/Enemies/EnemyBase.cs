@@ -11,6 +11,8 @@ public class EnemyBase : MonoBehaviour, IDamageable
     public float Health { get; set; }
     public float MaxHealth { get; set; }
 
+    public event Action OnEnemyKilled;
+
     protected virtual void Awake()
     {
         // Initialize the NavMeshAgent and Animator
@@ -18,6 +20,11 @@ public class EnemyBase : MonoBehaviour, IDamageable
         animator = GetComponent<Animator>();
 
         // Find the player in the scene
+    }
+
+    internal void Setup(Transform navAgentTarget)
+    {
+        agent.SetDestination(navAgentTarget.position);
     }
 
     private void Start()
@@ -45,6 +52,6 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     public void Die()
     {
-        throw new NotImplementedException();
+        OnEnemyKilled?.Invoke();
     }
 }
