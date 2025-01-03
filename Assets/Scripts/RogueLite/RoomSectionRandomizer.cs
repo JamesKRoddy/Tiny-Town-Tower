@@ -1,64 +1,109 @@
+using System.Collections;
+using System.Collections.Generic;
 using Unity.AI.Navigation;
 using UnityEngine;
 
 public class RoomSectionRandomizer : MonoBehaviour
 {
-    [Header("Section Parents")]
-    public GameObject centre;
-    public GameObject frontSection;
-    public GameObject backSection;
-    public GameObject leftSection;
-    public GameObject rightSection;
+    [Header("Central Piece")]
+    public Transform centerPiece;
+
+    [Header("Surrounding Transforms")]
+    public Transform frontTransform;
+    public Transform backTransform;
+    public Transform leftTransform;
+    public Transform rightTransform;
+
+    [Header("Room Prefabs")]
+    public List<GameObject> roomPrefabs;
 
     private NavMeshSurface navMeshSurface;
 
-    public void GenerateRoom()
+    private void GenerateRandomRooms()
     {
-        // Randomize each section
-        RandomizeSection(frontSection);
-        RandomizeSection(backSection);
-        RandomizeSection(leftSection);
-        RandomizeSection(rightSection);
-        RandomizePropsInSection(centre);
+        if (roomPrefabs == null || roomPrefabs.Count == 0)
+        {
+            Debug.LogError("No room prefabs assigned!");
+            return;
+        }
+
+        // Clear existing rooms
+        ClearExistingRooms();
+
+        // Clear props on the center piece
+        ClearPropsOnCenterPiece();
+
+        // Instantiate a random room for each direction
+        InstantiateRoom(frontTransform);
+        InstantiateRoom(backTransform);
+        InstantiateRoom(leftTransform);
+        InstantiateRoom(rightTransform);
+
+        RandomizePropsInSection(centerPiece);
 
         if (navMeshSurface == null)
         {
             navMeshSurface = FindAnyObjectByType<NavMeshSurface>();
         }
 
-        BakeNavMesh();
+        StartCoroutine(DelayedBakeNavMesh());
     }
 
-    void RandomizeSection(GameObject sectionParent)
+    private void ClearExistingRooms()
     {
-        if (sectionParent == null) return;
-
-        // Get only direct children of the section parent
-        Transform[] sections = GetDirectChildren(sectionParent);
-
-        if (sections.Length == 0) return;
-
-        // Disable all child sections
-        foreach (Transform child in sections)
+        foreach (Transform child in frontTransform)
         {
-            child.gameObject.SetActive(false);
+            Destroy(child.gameObject);
         }
-
-        // Enable one random child (section variant)
-        int randomIndex = Random.Range(0, sections.Length);
-        GameObject selectedSection = sections[randomIndex].gameObject;
-        selectedSection.SetActive(true);
-
-        // Randomize props within the active section
-        RandomizePropsInSection(selectedSection);
+        foreach (Transform child in backTransform)
+        {
+            Destroy(child.gameObject);
+        }
+        foreach (Transform child in leftTransform)
+        {
+            Destroy(child.gameObject);
+        }
+        foreach (Transform child in rightTransform)
+        {
+            Destroy(child.gameObject);
+        }
     }
 
-    void RandomizePropsInSection(GameObject section)
+    private void ClearPropsOnCenterPiece()
     {
-        if (section == null) return;
+        PropRandomizer propRandomizer = centerPiece.GetComponentInChildren<PropRandomizer>();
+        if (propRandomizer != null)
+        {
+            foreach (Transform child in propRandomizer.transform)
+            {
+                if (child != propRandomizer.transform)
+                {
+                    Destroy(child.gameObject);
+                }
+            }
+        }
+    }
+
+    private void InstantiateRoom(Transform targetTransform)
+    {
+        // Select a random prefab from the list
+        GameObject randomPrefab = roomPrefabs[Random.Range(0, roomPrefabs.Count)];
+
+        // Instantiate the prefab at the position and rotation of the target transform
+        GameObject room = Instantiate(randomPrefab, targetTransform.position, targetTransform.rotation);
+
+        // Set the instantiated room as a child of the target transform
+        room.transform.SetParent(targetTransform);
+
+        RandomizePropsInSection(room.transform);
+    }
+
+    private void RandomizePropsInSection(Transform sectionTransform)
+    {
+        if (sectionTransform == null) return;
 
         // Find all PropRandomizer components within the section
-        PropRandomizer[] propRandomizers = section.GetComponentsInChildren<PropRandomizer>();
+        PropRandomizer[] propRandomizers = sectionTransform.GetComponentsInChildren<PropRandomizer>();
 
         foreach (PropRandomizer propRandomizer in propRandomizers)
         {
@@ -66,18 +111,10 @@ public class RoomSectionRandomizer : MonoBehaviour
         }
     }
 
-    Transform[] GetDirectChildren(GameObject parent)
+    private IEnumerator DelayedBakeNavMesh()
     {
-        Transform[] directChildren = new Transform[parent.transform.childCount];
-        for (int i = 0; i < parent.transform.childCount; i++)
-        {
-            directChildren[i] = parent.transform.GetChild(i);
-        }
-        return directChildren;
-    }
+        yield return null; // Wait for the next frame
 
-    public void BakeNavMesh()
-    {
         if (navMeshSurface != null)
         {
             navMeshSurface.BuildNavMesh();
