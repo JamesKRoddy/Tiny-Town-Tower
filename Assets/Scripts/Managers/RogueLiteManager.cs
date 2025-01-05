@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -41,6 +42,8 @@ public class RogueLiteManager : MonoBehaviour
 
     public BuildingType currentBuilding;
     public int currentFloor;
+
+    public Action OnLevelReady;
 
     public EnemyWaveConfig GetWaveConfig()
     {

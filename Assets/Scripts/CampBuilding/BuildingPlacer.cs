@@ -51,7 +51,8 @@ public class BuildingPlacer : MonoBehaviour
 
     private void OnEnable()
     {
-        PlayerInput.Instance.OnUpdatePlayerControls += HandleControlTypeUpdate;
+        if (PlayerInput.Instance != null)
+            PlayerInput.Instance.OnUpdatePlayerControls += HandleControlTypeUpdate;
     }
 
     private void OnDisable()

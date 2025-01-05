@@ -12,7 +12,19 @@ public class EnemySpawnManager : MonoBehaviour
     private int enemiesSpawned; // Number of enemies spawned so far
     private List<GameObject> activeEnemies = new List<GameObject>(); // List of active enemies
 
-    void Start()
+    private void Start()
+    {
+        // Subscribe to RogueLiteManager event
+        RogueLiteManager.Instance.OnLevelReady += StartSpawningEnemies;
+    }
+
+    private void OnDestroy()
+    {
+        // Unsubscribe from RogueLiteManager event
+        RogueLiteManager.Instance.OnLevelReady -= StartSpawningEnemies;
+    }
+
+    public void StartSpawningEnemies()
     {
         // Get the waveConfig from the RogueLiteManager
         waveConfig = RogueLiteManager.Instance.GetWaveConfig();
@@ -34,7 +46,7 @@ public class EnemySpawnManager : MonoBehaviour
         StartNextWave();
     }
 
-    void StartNextWave()
+    private void StartNextWave()
     {
         if (currentWave >= waveConfig.maxWaves)
         {
@@ -52,7 +64,7 @@ public class EnemySpawnManager : MonoBehaviour
         SpawnWave(totalEnemiesInWave);
     }
 
-    void SpawnWave(int enemyCount)
+    private void SpawnWave(int enemyCount)
     {
         for (int i = 0; i < enemyCount; i++)
         {
@@ -60,7 +72,7 @@ public class EnemySpawnManager : MonoBehaviour
         }
     }
 
-    void SpawnEnemy()
+    private void SpawnEnemy()
     {
         if (spawnPoints.Count == 0 || waveConfig.enemyPrefabs.Length == 0)
             return;
@@ -77,7 +89,7 @@ public class EnemySpawnManager : MonoBehaviour
         {
             foreach (var potentialSpawnPoint in spawnPoints)
             {
-                if (potentialSpawnPoint != null && potentialSpawnPoint.SpawnEnemy(null) == null)
+                if (potentialSpawnPoint != null && potentialSpawnPoint.IsAvailable())
                 {
                     spawnPoint = potentialSpawnPoint;
                     break;
@@ -109,7 +121,7 @@ public class EnemySpawnManager : MonoBehaviour
         }
     }
 
-    void CheckForWaveCompletion()
+    private void CheckForWaveCompletion()
     {
         // Check if all enemies have been spawned and all active enemies are killed
         if (enemiesSpawned >= totalEnemiesInWave && activeEnemies.Count == 0)

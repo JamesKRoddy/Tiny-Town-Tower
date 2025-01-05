@@ -14,11 +14,6 @@ public class Zombie : EnemyBase
         agent.updatePosition = false;
     }
 
-    private void Start()
-    {
-        navMeshTarget = PlayerController.Instance.possesedNPC.transform;
-    }
-
     protected virtual void Update()
     {
         if (navMeshTarget == null)

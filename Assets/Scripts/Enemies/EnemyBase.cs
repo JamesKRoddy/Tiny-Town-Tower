@@ -22,17 +22,17 @@ public class EnemyBase : MonoBehaviour, IDamageable
         // Find the player in the scene
     }
 
-    internal void Setup(Transform navAgentTarget)
-    {
-        agent.SetDestination(navAgentTarget.position);
-    }
-
     private void Start()
     {
         if(MaxHealth == 0)
             MaxHealth = 100f;
 
         Health = MaxHealth;
+    }
+
+    internal void Setup(Transform navAgentTarget)
+    {
+        navMeshTarget = navAgentTarget;
     }
 
     public void Heal(float amount)

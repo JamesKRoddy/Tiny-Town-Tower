@@ -1,10 +1,24 @@
 using System.Collections;
 using UnityEngine;
 
+public enum EnemyTargetType
+{
+    NONE,
+    PLAYER,
+    CLOSEST_NPC,
+    TURRET_END
+}
+
 public class EnemySpawnPoint : MonoBehaviour
 {
-    private bool isAvailable = true; // Tracks if the spawn point is available
-    public float cooldownDuration = 2f; // Cooldown duration in seconds
+    public EnemyTargetType enemyTargetType;
+    private bool isAvailable = true;
+    public float cooldownDuration = 2f;
+
+    public bool IsAvailable()
+    {
+        return isAvailable;
+    }
 
     public GameObject SpawnEnemy(GameObject enemyPrefab)
     {
@@ -20,14 +34,31 @@ public class EnemySpawnPoint : MonoBehaviour
             return null;
         }
 
-        // Mark spawn point as unavailable
-        isAvailable = false;
-
-        // Start cooldown timer
-        StartCoroutine(StartCooldown());
+        isAvailable = false; // Mark spawn point as unavailable
+        StartCoroutine(StartCooldown()); // Start cooldown
 
         // Instantiate the enemy at this spawn point's position and rotation
         GameObject enemy = Instantiate(enemyPrefab, transform.position, transform.rotation);
+
+        Transform enemyTarget;
+        EnemyBase enemyBase = enemy.GetComponent<EnemyBase>();
+
+        switch (enemyTargetType)
+        {
+            case EnemyTargetType.NONE:
+                Debug.LogError("EnemySpawnPoint incorrectly setup");
+                return null;
+            case EnemyTargetType.PLAYER:
+                enemyTarget = PlayerController.Instance.possesedNPC.transform;
+                enemyBase.Setup(enemyTarget);
+                break;
+            case EnemyTargetType.CLOSEST_NPC: //TODO set this up for the enemy to attack whatevers closest
+                return null;
+            case EnemyTargetType.TURRET_END: //TODO set this up for the turret section
+                return null;
+            default:
+                return null;
+        }
 
         return enemy;
     }

@@ -43,6 +43,16 @@ public interface IInteractive<out T> : IInteractiveBase
  * Closing out of settler menu how to properly reset the player controls to in game
  * Setup zombie idle animations
  * 
+ * TODAY 04/01/25
+ * Check enemy spawning
+ * Player damaging/killing zombies
+ * Zombie damage/death animations
+ * Entering/exiting levels
+ * Spawning picking/chests in rooms
+ * 
+ * 
+ * 
+ * 
  * Next Large things to move onto
  * Genetic mutations
  * Turrets
