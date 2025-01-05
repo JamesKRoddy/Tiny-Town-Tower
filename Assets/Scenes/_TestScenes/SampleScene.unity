@@ -1768,10 +1768,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: BasicZombie
       objectReference: {fileID: 0}
-    - target: {fileID: 6477775522615659138, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

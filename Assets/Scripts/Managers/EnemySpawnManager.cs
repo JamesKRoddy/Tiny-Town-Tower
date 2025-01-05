@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class EnemySpawnManager : MonoBehaviour
 {
-    public EnemyWaveConfig waveConfig; // Current wave configuration
+    private EnemyWaveConfig waveConfig; // Current wave configuration
 
     private List<EnemySpawnPoint> spawnPoints;
     private int currentWave = 0;

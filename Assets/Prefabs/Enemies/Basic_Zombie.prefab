@@ -2899,7 +2899,7 @@ GameObject:
   - component: {fileID: 5237491215696526443}
   - component: {fileID: 1501960958168938100}
   m_Layer: 0
-  m_Name: BasicZombie
+  m_Name: Basic_Zombie
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
