@@ -85,8 +85,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
                 if (equippedWeapon == null)
                 {
-                    EquipWeapon(weapon);
-                    PlayerController.Instance.EquipMeleeWeapon((int)weapon.animationType);
+                    EquipWeapon(weapon);                    
                 }
                 else
                 {

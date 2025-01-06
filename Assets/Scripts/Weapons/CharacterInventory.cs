@@ -25,6 +25,11 @@ public class CharacterInventory : MonoBehaviour
         {
             Debug.LogError("WeaponHolder not assigned!");
         }
+
+        if(equippedWeapon != null)
+        {
+            EquipWeapon(equippedWeapon);
+        }
     }
 
     public virtual void EquipWeapon(WeaponScriptableObj weaponScriptableObj)
@@ -40,6 +45,7 @@ public class CharacterInventory : MonoBehaviour
         {
             Instantiate(weaponScriptableObj.weaponPrefab, weaponHolder);
             equippedWeapon = weaponScriptableObj;
+            PlayerController.Instance.EquipMeleeWeapon((int)weaponScriptableObj.animationType);
         }
         else
         {
