@@ -76,4 +76,9 @@ public class RangedWeapon : WeaponBase
     {
         currentAmmo = maxAmmo;
     }
+
+    public override void StopUse()
+    {
+        throw new System.NotImplementedException();
+    }
 }

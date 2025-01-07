@@ -18,7 +18,7 @@ public class CharacterCombat : MonoBehaviour
 
     public void AttackVFX(int attackDirection)
     {
-        WeaponScriptableObj equippedWeapon = characterInventory.equippedWeapon;
+        WeaponScriptableObj equippedWeapon = characterInventory.equippedWeaponScriptObj;
 
         if (equippedWeapon == null)
         {
@@ -87,6 +87,12 @@ public class CharacterCombat : MonoBehaviour
     private void ThrowableWeaponVFX(ThrowableWeapon throwableWeaponVFX)
     {
         throw new NotImplementedException();
+    }
+
+    public void StopAttacking()
+    {
+        if (characterInventory.equippedWeaponBase != null)
+            characterInventory.equippedWeaponBase.StopUse();
     }
 }
 

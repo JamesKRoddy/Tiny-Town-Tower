@@ -38,7 +38,7 @@ public class HumanCharacterController : MonoBehaviour
             transform.parent = PlayerController.Instance.gameObject.transform;
             PlayerController.Instance.animator = npc.GetComponent<Animator>();
             PlayerController.Instance.playerCamera.target = npc.transform;
-            npc.GetComponent<CharacterAnimationEvents>().Setup(PlayerCombat.Instance, PlayerController.Instance);
+            npc.GetComponent<CharacterAnimationEvents>().Setup(PlayerCombat.Instance, PlayerController.Instance, PlayerInventory.Instance);
             PlayerController.Instance.possesedNPC = npc;
         }
     }
@@ -56,7 +56,8 @@ public class HumanCharacterController : MonoBehaviour
     //Called from animator state class CombatAnimationState
     public void StopAttacking()
     {
-        Debug.Log("StopAttacking()" + gameObject.name);
         isAttacking = false;
+        if(characterCombat != null)
+            characterCombat.StopAttacking();
     }
 }

@@ -159,7 +159,7 @@ public class PlayerController : HumanCharacterController, IControllerInput
 
     private void HandleAInput()
     {
-        if (!isDashing && !isVaulting && PlayerInventory.Instance.equippedWeapon != null && PlayerInput.Instance.currentControlType == PlayerControlType.COMBAT_MOVEMENT)
+        if (!isDashing && !isVaulting && PlayerInventory.Instance.equippedWeaponScriptObj != null && PlayerInput.Instance.currentControlType == PlayerControlType.COMBAT_MOVEMENT)
         {
             isAttacking = true;
             animator.SetBool("LightAttack", true);

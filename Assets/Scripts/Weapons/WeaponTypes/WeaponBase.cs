@@ -8,6 +8,8 @@ public abstract class WeaponBase : MonoBehaviour, IPickupableItem
     // Virtual method to override in child classes
     public abstract void Use();
 
+    public abstract void StopUse();
+
     public abstract void OnEquipped();
 
     public string GetItemName() => weaponScriptableObj.resourceName;

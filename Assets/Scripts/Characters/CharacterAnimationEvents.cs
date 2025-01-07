@@ -4,11 +4,13 @@ public class CharacterAnimationEvents : MonoBehaviour
 {
     public CharacterCombat playerCombat;
     public HumanCharacterController playerController;
+    public CharacterInventory playerInventory;
 
-    public void Setup(CharacterCombat characterCombat =  null, HumanCharacterController characterController = null) //TOD add this to the npc swap event, this also might be stupid
+    public void Setup(CharacterCombat characterCombat =  null, HumanCharacterController characterController = null, CharacterInventory characterInventory = null) //TOD add this to the npc swap event, this also might be stupid
     {
         playerCombat = characterCombat;
         playerController = characterController;
+        playerInventory = characterInventory;
     }
 
     public void AttackVFX(int attackDirection)
@@ -17,8 +19,17 @@ public class CharacterAnimationEvents : MonoBehaviour
             playerCombat.AttackVFX(attackDirection);
     }
 
-    public void StopAttacking()
+    //Called from animator
+    public void UseWeapon()
     {
-        playerController.StopAttacking();
+        Debug.Log("***** UseWeapon");
+        if (playerInventory.equippedWeaponScriptObj != null)
+            playerInventory.equippedWeaponBase.Use();
+    }
+
+    public void StopWeapon()
+    {
+        if (playerInventory.equippedWeaponScriptObj != null)
+            playerInventory.equippedWeaponBase.StopUse();
     }
 }

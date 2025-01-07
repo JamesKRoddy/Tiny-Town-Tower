@@ -2898,6 +2898,7 @@ GameObject:
   - component: {fileID: 4816306560198809998}
   - component: {fileID: 5237491215696526443}
   - component: {fileID: 1501960958168938100}
+  - component: {fileID: -6610119119996104940}
   m_Layer: 0
   m_Name: Basic_Zombie
   m_TagString: Untagged
@@ -3001,6 +3002,29 @@ MonoBehaviour:
   attackRange: 2
   damage: 10
   meleeDamage: 20
+--- !u!136 &-6610119119996104940
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6477775522615659138}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.24
+  m_Height: 1.73
+  m_Direction: 1
+  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1 &6616253873932381118
 GameObject:
   m_ObjectHideFlags: 0

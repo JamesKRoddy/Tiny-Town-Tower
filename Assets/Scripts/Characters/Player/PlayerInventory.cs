@@ -83,7 +83,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         {
             case WeaponScriptableObj weapon:
 
-                if (equippedWeapon == null)
+                if (equippedWeaponScriptObj == null)
                 {
                     EquipWeapon(weapon);                    
                 }

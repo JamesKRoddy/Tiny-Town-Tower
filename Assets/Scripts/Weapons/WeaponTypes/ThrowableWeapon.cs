@@ -11,6 +11,11 @@ public class ThrowableWeapon : WeaponBase
         Debug.Log("UNIMPLEMENTED FUNCTION");
     }
 
+    public override void StopUse()
+    {
+        throw new System.NotImplementedException();
+    }
+
     public override void Use()
     {
         Throw();
