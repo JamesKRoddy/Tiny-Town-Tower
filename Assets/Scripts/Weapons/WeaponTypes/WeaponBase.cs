@@ -10,7 +10,7 @@ public abstract class WeaponBase : MonoBehaviour, IPickupableItem
 
     public abstract void StopUse();
 
-    public abstract void OnEquipped();
+    public abstract void OnEquipped(Transform character);
 
     public string GetItemName() => weaponScriptableObj.resourceName;
 

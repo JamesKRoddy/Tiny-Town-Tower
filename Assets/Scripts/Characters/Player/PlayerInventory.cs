@@ -182,4 +182,9 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 break;
         }
     }
+
+    protected override Transform GetCharacterTransform()
+    {
+        return PlayerController.Instance.possesedNPC.transform;
+    }
 }

@@ -6,7 +6,7 @@ public class ThrowableWeapon : WeaponBase
     public GameObject throwablePrefab;
     public float throwForce = 10f;
 
-    public override void OnEquipped()
+    public override void OnEquipped(Transform character)
     {
         Debug.Log("UNIMPLEMENTED FUNCTION");
     }

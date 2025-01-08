@@ -42,6 +42,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     public void TakeDamage(float amount)
     {
+        Destroy(gameObject);
         Health -= amount;
 
         if (Health <= 0)

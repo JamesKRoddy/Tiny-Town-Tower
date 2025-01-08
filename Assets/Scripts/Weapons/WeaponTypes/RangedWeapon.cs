@@ -20,7 +20,7 @@ public class RangedWeapon : WeaponBase
         currentAmmo = maxAmmo;
     }
 
-    public override void OnEquipped()
+    public override void OnEquipped(Transform character)
     {
         Debug.Log("UNIMPLEMENTED FUNCTION");
     }

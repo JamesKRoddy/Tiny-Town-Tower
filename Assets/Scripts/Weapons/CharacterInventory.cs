@@ -48,11 +48,16 @@ public class CharacterInventory : MonoBehaviour
         // Instantiate and equip the new weapon
         GameObject weapon = Instantiate(weaponScriptableObj.weaponPrefab, weaponHolder);
         equippedWeaponBase = weapon.GetComponent<WeaponBase>();
-        equippedWeaponBase.OnEquipped();
+        equippedWeaponBase.OnEquipped(GetCharacterTransform());
         equippedWeaponScriptObj = weaponScriptableObj;
 
         // Handle weapon-specific setup
         HandleWeaponType(weapon, weaponScriptableObj.animationType);
+    }
+
+    protected virtual Transform GetCharacterTransform()
+    {
+        return this.transform;
     }
 
     private void UnequipCurrentWeapon()
@@ -72,7 +77,6 @@ public class CharacterInventory : MonoBehaviour
 
         GameObject prefab = weaponScriptableObj.weaponPrefab;
         return prefab.GetComponent<WeaponBase>() != null &&
-               prefab.GetComponent<Rigidbody>() != null &&
                prefab.GetComponent<Collider>() != null;
     }
 

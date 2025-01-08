@@ -5,63 +5,95 @@ public class MeleeWeapon : WeaponBase
 {
     [Header("Melee Weapon Stats")]
     public LayerMask targetLayer;
+    public float boxCastDistance = 2f; // Distance in front of the player for the BoxCast
+    public Vector3 boxSize = new Vector3(1f, 1f, 1f); // Public size of the box for visualization and adjustment
+    public Vector3 boxOffset = new Vector3(0f, 1f, 0f); // Offset for the box origin (relative to player)
 
     private bool isAttacking = false;
     private HashSet<Collider> hitTargets = new HashSet<Collider>();
+    private Transform characterTransform;
 
-    public override void OnEquipped()
+    public override void OnEquipped(Transform character)
     {
-        // Cache components
-        Collider collider = GetComponent<Collider>();
-        Rigidbody rigidbody = GetComponent<Rigidbody>();
+        // Initialize the character's Transform
+        characterTransform = character;
 
-        // Ensure components exist
-        if (collider == null || rigidbody == null)
+        if (characterTransform == null)
         {
-            Debug.LogError("OnEquipped failed: Missing required components (Collider or Rigidbody).");
+            Debug.LogError("Character Transform is null! Ensure the OnEquipped function receives a valid Transform.");
             return;
         }
 
-        // Configure Collider and Rigidbody
-        collider.isTrigger = true;
-        rigidbody.isKinematic = true;
-        rigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        Debug.Log("MeleeWeapon equipped for character: " + characterTransform.name);
     }
-
 
     public override void Use()
     {
-        // Begin the attack phase
-        isAttacking = true;
-        hitTargets.Clear();
+        if (characterTransform == null)
+        {
+            Debug.LogError("Character Transform is not set!");
+            return;
+        }
 
-        // Optionally set a timed window to automatically disable the attack after a duration
-        Invoke(nameof(StopUse), 0.5f); // Safety just to make sure the collider is disabled
+        isAttacking = true;
+        hitTargets.Clear(); // Clear hit tracking for this attack
+        Debug.Log("Attack started.");
     }
 
     public override void StopUse()
     {
-        // End the attack phase
         isAttacking = false;
+        Debug.Log("Attack stopped.");
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void FixedUpdate()
     {
-        if (!isAttacking) return;
-        // Check if the collider is in the target layer
-        if ((1 << other.gameObject.layer & targetLayer) != 0)
+        if (isAttacking)
         {
-            if (!hitTargets.Contains(other))
-            {
-                hitTargets.Add(other);
+            PerformBoxCast();
+        }
+    }
 
-                var target = other.GetComponent<IDamageable>();
+    private void PerformBoxCast()
+    {
+        // Calculate the BoxCast origin, applying the offset relative to the character's local space
+        Vector3 boxOrigin = characterTransform.position +
+                            characterTransform.forward * boxCastDistance +
+                            characterTransform.TransformDirection(boxOffset);
+
+        Vector3 boxDirection = characterTransform.forward;
+
+        // Perform the BoxCast
+        RaycastHit[] hits = Physics.BoxCastAll(boxOrigin, boxSize * 0.5f, boxDirection, characterTransform.rotation, 0, targetLayer);
+
+        foreach (RaycastHit hit in hits)
+        {
+            if (!hitTargets.Contains(hit.collider))
+            {
+                hitTargets.Add(hit.collider);
+
+                var target = hit.collider.GetComponent<IDamageable>();
                 if (target != null)
                 {
+                    Debug.Log($"Hit target: {hit.collider.name}");
                     target.TakeDamage(weaponScriptableObj.damage);
-                    Debug.Log($"Hit {other.name}!");
                 }
             }
         }
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (characterTransform == null) return;
+
+        // Visualize the BoxCast in the Scene view
+        Gizmos.color = Color.red;
+
+        Vector3 boxOrigin = characterTransform.position +
+                            characterTransform.forward * boxCastDistance +
+                            characterTransform.TransformDirection(boxOffset);
+
+        Gizmos.matrix = Matrix4x4.TRS(boxOrigin, characterTransform.rotation, Vector3.one);
+        Gizmos.DrawWireCube(Vector3.zero, boxSize);
     }
 }

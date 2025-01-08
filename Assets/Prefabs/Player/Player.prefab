@@ -267,7 +267,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1b7d717e4a3748942ac73353fb97a4f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  equippedWeapon: {fileID: 0}
+  equippedWeaponScriptObj: {fileID: 0}
+  equippedWeaponBase: {fileID: 0}
   weaponHolder: {fileID: 7100866984520285839}
   inventoryList:
   - resource: {fileID: 11400000, guid: e9e256aa3d595cc46bfcc1c42f699df0, type: 2}
@@ -440,7 +441,8 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 9100000, guid: 66fd4060b2cc9d84da560ca833d55ce4, type: 2}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 5211411327598385378, guid: 7126961e40fcaf34297e9547d17c2f70, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7126961e40fcaf34297e9547d17c2f70, type: 3}
