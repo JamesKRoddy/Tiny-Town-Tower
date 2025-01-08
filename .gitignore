@@ -73,5 +73,7 @@ crashlytics-build.properties
 
 
 # To decrease size on repo
-/Assets/Animation/
+/Assets/Animation/CLazyRunnerActionAnimPack/
+/Assets/Animation/DoubleL/
+/Assets/Animation/FBX_Zombie_27_Basic/
 /Assets/SyntyAssets/
