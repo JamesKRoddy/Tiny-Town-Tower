@@ -22,7 +22,6 @@ public class CharacterAnimationEvents : MonoBehaviour
     //Called from animator
     public void UseWeapon()
     {
-        Debug.Log("***** UseWeapon");
         if (playerInventory.equippedWeaponScriptObj != null)
             playerInventory.equippedWeaponBase.Use();
     }
