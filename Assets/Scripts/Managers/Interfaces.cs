@@ -44,8 +44,8 @@ public interface IInteractive<out T> : IInteractiveBase
  * Setup zombie idle animations
  * 
  * TODAY 04/01/25
- * Player damaging/killing zombies
- * Zombie damage/death animations
+ * Player killing zombies
+ * Zombie death animations
  * Entering/exiting levels
  * Spawning picking/chests in rooms
  * 

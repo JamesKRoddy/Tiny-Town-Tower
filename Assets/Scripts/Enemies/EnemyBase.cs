@@ -41,9 +41,9 @@ public class EnemyBase : MonoBehaviour, IDamageable
     }
 
     public void TakeDamage(float amount)
-    {
+    {        
         Health -= amount;
-
+        animator.SetTrigger("Damaged");
         if (Health <= 0)
         {
             Die();
@@ -53,5 +53,6 @@ public class EnemyBase : MonoBehaviour, IDamageable
     public void Die()
     {
         OnEnemyKilled?.Invoke();
+        animator.SetTrigger("Dead");
     }
 }
