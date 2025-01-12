@@ -8,7 +8,7 @@ public class LootTableScriptableObj : ScriptableObject
 
     public ResourcePickup GetLootByRarity(ResourceRarity rarity)
     {
-        List<ResourcePickup> filteredLoot = lootItems.FindAll(loot => loot.GetResourceObj().resourceCategory.ToString() == rarity.ToString());
+        List<ResourcePickup> filteredLoot = lootItems.FindAll(loot => loot.GetResourceObj().resourceRarity == rarity);
         if (filteredLoot.Count == 0) return null;
 
         return filteredLoot[Random.Range(0, filteredLoot.Count)];
