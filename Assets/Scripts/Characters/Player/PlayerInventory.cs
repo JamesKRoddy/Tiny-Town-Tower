@@ -158,6 +158,8 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 case NarrativeAsset narrative:
                     NarrativeSystem.Instance.StartConversation(narrative);
                     break;
+                case RogueLiteDoor rogueLiteDoor:
+                    RogueLiteManager.Instance.EnterRoom(rogueLiteDoor);
                 case null:
                     Debug.Log($"Cannot interact with {currentInteractive.GetType().Name}");
                     break;

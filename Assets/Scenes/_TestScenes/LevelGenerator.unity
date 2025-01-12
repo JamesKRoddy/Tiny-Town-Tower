@@ -1042,6 +1042,48 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 325498881}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &337945035
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 337945036}
+  m_Layer: 0
+  m_Name: Chest
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &337945036
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 337945035}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -16.231394, y: -1.0660578, z: -18.601307}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &343447158 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6945657278055493532, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+  m_PrefabInstance: {fileID: 787202513}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4362f965b1725845a99fd80b277094f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &385213581
 GameObject:
   m_ObjectHideFlags: 0
@@ -4791,9 +4833,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1771456247}
-        m_TargetAssemblyTypeName: RoomSectionRandomizer, Assembly-CSharp
-        m_MethodName: GenerateRandomRooms
+      - m_Target: {fileID: 343447158}
+        m_TargetAssemblyTypeName: RogueLiteManager, Assembly-CSharp
+        m_MethodName: SetupLevel
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -6088,17 +6130,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1756247498}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &1771456247 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4763414833106662439, guid: d39e3a580096e404a9efd86f03d7c2d7, type: 3}
-  m_PrefabInstance: {fileID: 2822311931144921227}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 85e0ea172e2b7a749a822d404e524943, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1779739176
 GameObject:
   m_ObjectHideFlags: 0
@@ -7269,3 +7300,4 @@ SceneRoots:
   - {fileID: 2822311931144921227}
   - {fileID: 1137487835}
   - {fileID: 1472491148}
+  - {fileID: 337945036}

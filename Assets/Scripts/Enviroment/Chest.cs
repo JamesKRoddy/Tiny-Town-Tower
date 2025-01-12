@@ -1,17 +1,20 @@
+// Updated Chest Script
 using System.Collections;
 using UnityEngine;
 
 public class Chest : MonoBehaviour, IInteractive<ResourcePickup>
 {
-    [Header("Chest Contents")]
-    [SerializeField] private ResourcePickup chestContents;
-    public bool isOpened = false; // Whether the chest is already opened
+    [Header("Chest Loot Settings")]
+    [SerializeField] private LootTableScriptableObj lootTableScriptableObj; // Reference to the LootTableScriptableObj
+    private ResourcePickup chestContents;
+
+    public bool isOpened = false;
 
     [Header("Chest Animation Settings")]
-    [SerializeField] private Transform door; // The lid or door of the chest
-    [SerializeField] private Vector3 rotationAxis = Vector3.right; // Axis of rotation
-    [SerializeField] private float openAngle = 90f; // Angle to rotate when opened
-    [SerializeField] private float openSpeed = 2f; // Speed of opening/closing
+    [SerializeField] private Transform door;
+    [SerializeField] private Vector3 rotationAxis = Vector3.right;
+    [SerializeField] private float openAngle = 90f;
+    [SerializeField] private float openSpeed = 2f;
 
     private Quaternion closedRotation;
     private Quaternion openRotation;
@@ -28,6 +31,27 @@ public class Chest : MonoBehaviour, IInteractive<ResourcePickup>
         // Initialize closed and open rotations
         closedRotation = door.localRotation;
         openRotation = door.localRotation * Quaternion.Euler(rotationAxis * openAngle);
+    }
+
+    public void AssignChestLoot(int roomDifficulty)
+    {
+        if (lootTableScriptableObj == null)
+        {
+            Debug.LogError("LootTableScriptableObj is not assigned! Please assign a LootTableScriptableObj.");
+            return;
+        }
+
+        ResourceRarity rarity = DifficultyRarityMapper.GetResourceRarity(roomDifficulty);
+        chestContents = lootTableScriptableObj.GetLootByRarity(rarity);
+
+        if (chestContents != null)
+        {
+            Debug.Log($"Chest {name} contains {chestContents.GetResourceObj().resourceName} (x{chestContents.count}), Rarity: {rarity}.");
+        }
+        else
+        {
+            Debug.Log($"Chest {name} is empty.");
+        }
     }
 
     public void CloseChest()
@@ -98,6 +122,3 @@ public class Chest : MonoBehaviour, IInteractive<ResourcePickup>
 
     public bool CanInteract() => !isOpened;
 }
-
-
-

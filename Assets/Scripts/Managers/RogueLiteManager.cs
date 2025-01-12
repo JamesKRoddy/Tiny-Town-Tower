@@ -1,6 +1,8 @@
-using System;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
+using Random = UnityEngine.Random;
 
 public class RogueLiteManager : MonoBehaviour
 {
@@ -41,17 +43,41 @@ public class RogueLiteManager : MonoBehaviour
     public List<EnemyWaveConfig> waveConfigs; // List of all possible wave configurations
 
     public BuildingType currentBuilding;
-    public int currentFloor;
+    public int buildingDifficulty; //The difficulty of the current building
+    public int currentRoom; //The current room the player is in
+    int currentRoomDifficulty; //The difficulty of the current room
 
+    public Action StartSpawningLevel;
     public Action OnLevelReady;
+
+    Transform playerSpawnPoint; //The door the player will spawn infront of;
+
+
+    private void Start()
+    {
+        OnLevelReady += SetupPlayer;
+    }
+
+    public void EnterRoom(RogueLiteDoor rogueLiteDoor)
+    {
+        currentRoomDifficulty = rogueLiteDoor.doorRoomDifficulty;
+        currentRoom++;
+    }
+
+    public int GetCurrentRoomDifficulty() //TODO this is going to require a lot of testing
+    {
+        int baseDifficulty = currentRoom * buildingDifficulty;
+        int adjustedDifficulty = baseDifficulty + currentRoomDifficulty;
+        return adjustedDifficulty;
+    }
 
     public EnemyWaveConfig GetWaveConfig()
     {
-        foreach (var config in waveConfigs)
+        foreach (var config in waveConfigs) //TODO pick a wave config based on difficulty
         {
             // Match building, environment, and floor
             if (config.buildingType == currentBuilding &&
-                config.floor == currentFloor)
+                config.floor == currentRoom)
             {
                 return config;
             }
@@ -60,5 +86,91 @@ public class RogueLiteManager : MonoBehaviour
         // Return a default or null if no exact match is found
         Debug.LogWarning("No matching waveConfig found. Returning null.");
         return null;
+    }
+
+    public void SetupLevel()
+    {
+        FindFirstObjectByType<RoomSectionRandomizer>().GenerateRandomRooms();
+        SetupDoors();
+    }
+
+    private void SetupDoors()
+    {
+        List<RogueLiteDoor> doors = new List<RogueLiteDoor>(FindObjectsByType<RogueLiteDoor>(FindObjectsSortMode.None));
+
+        if (doors == null || doors.Count == 0)
+        {
+            Debug.LogWarning("No doors found in the scene.");
+            return;
+        }
+
+        // Assign a random door as the entrance
+        int entranceIndex = Random.Range(0, doors.Count);
+        playerSpawnPoint = doors[entranceIndex].playerSpawn;
+        doors[entranceIndex].doorType = DoorType.ENTRANCE;
+
+        // Remove the entrance from the list
+        doors.RemoveAt(entranceIndex);
+
+        // Determine the number of exit doors (between 1 and 3, but not exceeding the remaining doors)
+        int exitCount = Mathf.Clamp(Random.Range(1, 4), 1, doors.Count);
+
+        // Randomly assign exit doors
+        for (int i = 0; i < exitCount; i++)
+        {
+            int randomIndex = Random.Range(0, doors.Count);
+            doors[randomIndex].doorType = DoorType.EXIT;
+            doors.RemoveAt(randomIndex);
+        }
+
+        // Set remaining doors as locked and apply a 75% chance to disable their GameObjects
+        foreach (var door in doors)
+        {
+            door.doorType = DoorType.LOCKED;
+
+            // 75% chance to disable the GameObject
+            if (Random.value < 0.75f)
+            {
+                door.gameObject.SetActive(false);
+            }
+        }
+
+        Debug.Log("Doors have been spawned and assigned.");
+    }
+
+    public void SetupChests()
+    {
+        // Find all chests in the scene
+        List<ChestParent> chests = new List<ChestParent>(FindObjectsByType<ChestParent>(FindObjectsSortMode.None));
+
+        if (chests == null || chests.Count == 0)
+        {
+            Debug.LogWarning("No chests found in the scene.");
+            return;
+        }
+
+        foreach (var chest in chests)
+        {
+            // 75% chance to disable the chest
+            if (Random.value < 0.75f)
+            {
+                chest.gameObject.SetActive(false);
+                Debug.Log($"Chest {chest.name} is disabled.");
+                continue; // Skip assigning loot to disabled chests
+            }
+
+            chest.SetupChest(GetCurrentRoomDifficulty());
+        }
+
+        Debug.Log("Chests have been setup.");
+    }
+
+
+    private void SetupPlayer()
+    {
+        if(PlayerController.Instance != null && PlayerController.Instance.possesedNPC != null)
+        {
+            PlayerController.Instance.possesedNPC.transform.position = playerSpawnPoint.transform.position;
+        }
     }
 }

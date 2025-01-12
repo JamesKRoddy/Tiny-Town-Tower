@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using Unity.AI.Navigation;
 using UnityEngine;
 
+//TODO in this class have to generate the room exits, chest spawns and contents, enemy spawn points that are enabled
+
 public enum RoomPosition
 {
     FRONT,
@@ -27,7 +29,7 @@ public class RoomSectionRandomizer : MonoBehaviour
 
     private NavMeshSurface navMeshSurface;
 
-    private void GenerateRandomRooms()
+    public void GenerateRandomRooms()
     {
         if (roomPrefabs == null || roomPrefabs.Count == 0)
         {
@@ -135,7 +137,7 @@ public class RoomSectionRandomizer : MonoBehaviour
         {
             navMeshSurface.BuildNavMesh();            
             Debug.Log("NavMesh baked at runtime.");
-            RogueLiteManager.Instance.OnLevelReady.Invoke(); //Doing this here for the moment because its the last thisng that happens building a level
+            RogueLiteManager.Instance.OnLevelReady.Invoke(); //Doing this here for the moment because its the last thing that happens building a level
         }
         else
         {
