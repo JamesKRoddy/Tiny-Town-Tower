@@ -4,7 +4,9 @@ using UnityEngine;
 
 public class ChestParent : MonoBehaviour
 {
+    [Header("Chest Loot Settings")]
     [SerializeField] private List<Chest> chests;
+    [SerializeField] private LootTableScriptableObj lootTableScriptableObj; // Reference to the LootTableScriptableObj
     private Chest enabledChest;
 
     public void SetupChest(int roomDifficulty)
@@ -17,6 +19,6 @@ public class ChestParent : MonoBehaviour
 
         // Pick a random chest to enable
         enabledChest = chests[Random.Range(0, chests.Count)];
-        enabledChest.AssignChestLoot(roomDifficulty);
+        enabledChest.AssignChestLoot(roomDifficulty, lootTableScriptableObj);
     }
 }

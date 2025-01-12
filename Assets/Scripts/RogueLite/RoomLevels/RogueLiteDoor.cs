@@ -47,7 +47,8 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>
 
     public bool CanInteract()
     {
-        //TODO check if all the enemies are dead!!!!
+        if (RogueLiteManager.Instance.GetRoomState() == RoomSetupState.ROOM_CLEARED)
+            return false;
 
         switch (doorType)
         {

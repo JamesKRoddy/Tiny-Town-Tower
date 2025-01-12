@@ -4,8 +4,7 @@ using UnityEngine;
 
 public class Chest : MonoBehaviour, IInteractive<ResourcePickup>
 {
-    [Header("Chest Loot Settings")]
-    [SerializeField] private LootTableScriptableObj lootTableScriptableObj; // Reference to the LootTableScriptableObj
+
     private ResourcePickup chestContents;
 
     public bool isOpened = false;
@@ -33,7 +32,7 @@ public class Chest : MonoBehaviour, IInteractive<ResourcePickup>
         openRotation = door.localRotation * Quaternion.Euler(rotationAxis * openAngle);
     }
 
-    public void AssignChestLoot(int roomDifficulty)
+    public void AssignChestLoot(int roomDifficulty, LootTableScriptableObj lootTableScriptableObj)
     {
         if (lootTableScriptableObj == null)
         {

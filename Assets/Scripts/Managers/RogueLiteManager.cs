@@ -4,6 +4,15 @@ using UnityEngine;
 using System;
 using Random = UnityEngine.Random;
 
+public enum RoomSetupState
+{
+    NONE,
+    ENTERING_ROOM,
+    PRE_ENEMY_SPAWNING,
+    ENEMIES_SPAWNED,
+    ROOM_CLEARED
+}
+
 public class RogueLiteManager : MonoBehaviour
 {
     // Singleton instance
@@ -40,6 +49,8 @@ public class RogueLiteManager : MonoBehaviour
         }
     }
 
+    private RoomSetupState roomSetupState;
+
     public List<EnemyWaveConfig> waveConfigs; // List of all possible wave configurations //TODO move this to a separate container with all the
 
     public BuildingType currentBuilding;
@@ -47,19 +58,49 @@ public class RogueLiteManager : MonoBehaviour
     public int currentRoom; //The current room the player is in
     int currentRoomDifficulty; //The difficulty of the current room
 
-    public Action StartSpawningLevel;
-    public Action OnLevelReady;
+    /// <summary>
+    /// All actions relating to roguelite gameplay loop
+    /// </summary>
+    public Action<RoomSetupState> OnSetupStateChanged;
 
     Transform playerSpawnPoint; //The door the player will spawn infront of;
 
+    /// <summary>
+    /// Property to encapsulate roomSetupState and invoke OnSetupStateChanged
+    /// whenever it changes.
+    /// </summary>
+    private RoomSetupState RoomSetupState
+    {
+        get => roomSetupState;
+        set
+        {
+            if (roomSetupState != value)
+            {
+                roomSetupState = value;
+                OnSetupStateChanged?.Invoke(roomSetupState); // Invoke the event with the new state
+            }
+        }
+    }
+
+    //Call this whenever the state needs to be changed
+    public void SetRoomState(RoomSetupState newState)
+    {
+        RoomSetupState = newState;
+    }
+
+    public RoomSetupState GetRoomState()
+    {
+        return RoomSetupState;
+    }
 
     private void Start()
     {
-        OnLevelReady += SetupPlayer;
+        OnSetupStateChanged += SetupPlayer;
     }
 
     public void EnterRoom(RogueLiteDoor rogueLiteDoor)
     {
+        SetRoomState(RoomSetupState.ENTERING_ROOM);
         currentRoomDifficulty = rogueLiteDoor.doorRoomDifficulty;
         currentRoom++;
     }
@@ -167,8 +208,11 @@ public class RogueLiteManager : MonoBehaviour
     }
 
 
-    private void SetupPlayer()
+    private void SetupPlayer(RoomSetupState newState)
     {
+        if (newState != RoomSetupState.PRE_ENEMY_SPAWNING)
+            return;
+
         if(PlayerController.Instance != null && PlayerController.Instance.possesedNPC != null)
         {
             PlayerController.Instance.possesedNPC.transform.position = playerSpawnPoint.transform.position;

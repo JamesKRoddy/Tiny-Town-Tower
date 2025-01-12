@@ -15,17 +15,21 @@ public class EnemySpawnManager : MonoBehaviour
     private void Start()
     {
         // Subscribe to RogueLiteManager event
-        RogueLiteManager.Instance.OnLevelReady += StartSpawningEnemies;
+        RogueLiteManager.Instance.OnSetupStateChanged += StartSpawningEnemies;
     }
 
     private void OnDestroy()
     {
         // Unsubscribe from RogueLiteManager event
-        RogueLiteManager.Instance.OnLevelReady -= StartSpawningEnemies;
+        RogueLiteManager.Instance.OnSetupStateChanged -= StartSpawningEnemies;
     }
 
-    public void StartSpawningEnemies()
+    public void StartSpawningEnemies(RoomSetupState newState)
     {
+        if (newState != RoomSetupState.PRE_ENEMY_SPAWNING)
+            return;
+
+        RogueLiteManager.Instance.SetRoomState(RoomSetupState.ENEMIES_SPAWNED);
         // Get the waveConfig from the RogueLiteManager
         waveConfig = RogueLiteManager.Instance.GetWaveConfig();
 
@@ -51,6 +55,7 @@ public class EnemySpawnManager : MonoBehaviour
         if (currentWave >= waveConfig.maxWaves)
         {
             Debug.Log("All waves completed!");
+            RogueLiteManager.Instance.SetRoomState(RoomSetupState.ROOM_CLEARED);
             return;
         }
 
