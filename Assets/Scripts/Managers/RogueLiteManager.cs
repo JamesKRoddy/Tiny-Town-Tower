@@ -40,7 +40,7 @@ public class RogueLiteManager : MonoBehaviour
         }
     }
 
-    public List<EnemyWaveConfig> waveConfigs; // List of all possible wave configurations
+    public List<EnemyWaveConfig> waveConfigs; // List of all possible wave configurations //TODO move this to a separate container with all the
 
     public BuildingType currentBuilding;
     public int buildingDifficulty; //The difficulty of the current building
@@ -92,6 +92,7 @@ public class RogueLiteManager : MonoBehaviour
     {
         FindFirstObjectByType<RoomSectionRandomizer>().GenerateRandomRooms();
         SetupDoors();
+        SetupChests();
     }
 
     private void SetupDoors()

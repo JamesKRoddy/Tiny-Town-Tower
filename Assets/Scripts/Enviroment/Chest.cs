@@ -108,7 +108,7 @@ public class Chest : MonoBehaviour, IInteractive<ResourcePickup>
         // Start the door opening animation
         StartDoorAnimation(openRotation);
 
-        if (chestContents.GetResourceObj() == null)
+        if (chestContents == null || chestContents.GetResourceObj() == null)
         {
             Debug.Log("Chest is empty!");
             return null;

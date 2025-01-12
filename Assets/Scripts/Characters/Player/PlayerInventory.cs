@@ -160,6 +160,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                     break;
                 case RogueLiteDoor rogueLiteDoor:
                     RogueLiteManager.Instance.EnterRoom(rogueLiteDoor);
+                    break;
                 case null:
                     Debug.Log($"Cannot interact with {currentInteractive.GetType().Name}");
                     break;

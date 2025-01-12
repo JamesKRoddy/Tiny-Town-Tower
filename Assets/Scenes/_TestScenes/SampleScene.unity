@@ -544,6 +544,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerCombat: {fileID: 0}
   playerController: {fileID: 0}
+  playerInventory: {fileID: 0}
 --- !u!114 &452667486 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3065089566355071980, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
@@ -889,79 +890,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95ac27fec49c4234d816c494fc2459c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!1001 &1126935430
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1343672823087468, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
-      propertyPath: m_Name
-      value: SM_Prop_Crate_Open_05
-      objectReference: {fileID: 0}
-    - target: {fileID: 1343672823087468, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4014087072882898, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 8.209258
-      objectReference: {fileID: 0}
-    - target: {fileID: 4014087072882898, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.58
-      objectReference: {fileID: 0}
-    - target: {fileID: 4014087072882898, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0.39129448
-      objectReference: {fileID: 0}
-    - target: {fileID: 4014087072882898, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.0000030696388
-      objectReference: {fileID: 0}
-    - target: {fileID: 4014087072882898, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4014087072882898, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4014087072882898, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4014087072882898, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4014087072882898, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 180
-      objectReference: {fileID: 0}
-    - target: {fileID: 4014087072882898, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8311412980704575001, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
-      propertyPath: openAngle
-      value: -90
-      objectReference: {fileID: 0}
-    - target: {fileID: 8311412980704575001, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
-      propertyPath: chestContents.chestItem
-      value: 
-      objectReference: {fileID: 5542988725590770899, guid: 84f285c91a59a964c841421bc3a38227, type: 3}
-    - target: {fileID: 8311412980704575001, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
-      propertyPath: chestContents.resourceScriptableObj
-      value: 
-      objectReference: {fileID: 11400000, guid: e6fde83523c7216478e945d81aedf237, type: 2}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
 --- !u!114 &1458389104 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1270345140197587669, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
@@ -1642,7 +1570,6 @@ SceneRoots:
   - {fileID: 1570439098}
   - {fileID: 965172025}
   - {fileID: 7298901179448090774}
-  - {fileID: 1126935430}
   - {fileID: 412939986}
   - {fileID: 1915334674}
   - {fileID: 2769032608674028835}
