@@ -2,24 +2,24 @@ using UnityEngine;
 
 public class PlayerHealth : MonoBehaviour, IDamageable
 {
-    public float Health { get; set; }
-    public float MaxHealth { get; set; }
+    public float health { get; set; }
+    public float maxHealth { get; set; }
 
     public void Heal(float healAmount)
     {
-        Health += healAmount;
-        if (Health > MaxHealth)
+        health += healAmount;
+        if (health > maxHealth)
         {
-            Health = MaxHealth;
+            health = maxHealth;
         }
     }
 
     public void TakeDamage(float damageAmount)
     {
-        Health -= damageAmount;
-        if (Health <= 0)
+        health -= damageAmount;
+        if (health <= 0)
         {
-            Health = 0;
+            health = 0;
             Die();
         }
     }

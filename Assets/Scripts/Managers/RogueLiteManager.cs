@@ -42,7 +42,7 @@ public class RogueLiteManager : MonoBehaviour
 
     private RoomSetupState roomSetupState;
 
-    public List<EnemyWaveConfig> waveConfigs; // List of all possible wave configurations //TODO move this to a separate container with all the
+    public List<EnemyWaveConfig> waveConfigs; // List of all possible wave configurations //TODO move this to a separate container with all the waves divided up into different buildings
 
     public BuildingType currentBuilding;
     public int buildingDifficulty; //The difficulty of the current building
@@ -67,6 +67,7 @@ public class RogueLiteManager : MonoBehaviour
         {
             if (roomSetupState != value)
             {
+                Debug.Log($"Updating RoomSetupState to {value}");
                 roomSetupState = value;
                 OnSetupStateChanged?.Invoke(roomSetupState); // Invoke the event with the new state
             }
@@ -87,6 +88,7 @@ public class RogueLiteManager : MonoBehaviour
     private void Start()
     {
         OnSetupStateChanged += SetupPlayer;
+        roomSetupState = RoomSetupState.ROOM_CLEARED; //TODO this is just for testing
     }
 
     public void EnterRoom(RogueLiteDoor rogueLiteDoor)
@@ -94,6 +96,7 @@ public class RogueLiteManager : MonoBehaviour
         SetRoomState(RoomSetupState.ENTERING_ROOM);
         currentRoomDifficulty = rogueLiteDoor.doorRoomDifficulty;
         currentRoom++;
+        SetupLevel();
     }
 
     public int GetCurrentRoomDifficulty() //TODO this is going to require a lot of testing
@@ -107,12 +110,7 @@ public class RogueLiteManager : MonoBehaviour
     {
         foreach (var config in waveConfigs) //TODO pick a wave config based on difficulty
         {
-            // Match building, environment, and floor
-            if (config.buildingType == currentBuilding &&
-                config.floor == currentRoom)
-            {
-                return config;
-            }
+            return config; //TODO ********************************************************* this will only return the first wave, doing now for testing
         }
 
         // Return a default or null if no exact match is found

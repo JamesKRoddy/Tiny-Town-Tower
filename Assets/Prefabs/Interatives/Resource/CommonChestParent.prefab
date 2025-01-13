@@ -47,6 +47,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   chests:
   - {fileID: 5743781068077125176}
+  lootTableScriptableObj: {fileID: 11400000, guid: 681b939ea02b0fb408e38b6647a144b0, type: 2}
 --- !u!1001 &4390464703821688865
 PrefabInstance:
   m_ObjectHideFlags: 0

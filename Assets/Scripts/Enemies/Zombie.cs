@@ -16,7 +16,7 @@ public class Zombie : EnemyBase
 
     protected virtual void Update()
     {
-        if (Health > 0 && navMeshTarget == null)
+        if (health > 0 && navMeshTarget == null)
             return;
 
         MoveTowardsPlayer();
@@ -35,7 +35,7 @@ public class Zombie : EnemyBase
     void OnAnimatorMove()
     {
         // Use root motion to move the zombie instead of the NavMeshAgent's movement
-        if (Health > 0 && agent.isOnNavMesh)
+        if (health > 0 && agent.isOnNavMesh)
         {
             // If you want to keep NavMeshAgent's pathfinding active but control movement through root motion:
             Vector3 rootMotion = animator.deltaPosition; // Get the root motion delta (movement from animation)

@@ -73,10 +73,10 @@ public enum CurrentGameMode
 public enum RoomSetupState
 {
     NONE,
-    ENTERING_ROOM,
-    PRE_ENEMY_SPAWNING,
-    ENEMIES_SPAWNED,
-    ROOM_CLEARED
+    ENTERING_ROOM, //Player choses to open a door
+    PRE_ENEMY_SPAWNING, //Period when the new room is spawned in, props, chests etc. are spawned in and nav mesh is baked
+    ENEMIES_SPAWNED, //The room game play has started
+    ROOM_CLEARED // enemies are all dea, player is free the move around and choose the next path
 }
 
 // =========================
@@ -100,9 +100,9 @@ public enum WallType
 
 public enum DoorType
 {
-    LOCKED,
-    ENTRANCE,
-    EXIT
+    LOCKED, //Door is locked unable to pass through
+    ENTRANCE, //Door opens, the player can paass through when the level is cleared
+    EXIT //Door the player spawns infront of, unable to pass through
 }
 
 // =========================

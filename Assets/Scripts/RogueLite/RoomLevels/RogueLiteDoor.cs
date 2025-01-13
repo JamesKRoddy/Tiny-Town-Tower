@@ -40,7 +40,7 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>
 
     public bool CanInteract()
     {
-        if (RogueLiteManager.Instance.GetRoomState() == RoomSetupState.ROOM_CLEARED)
+        if (RogueLiteManager.Instance.GetRoomState() != RoomSetupState.ROOM_CLEARED)
             return false;
 
         switch (doorType)
