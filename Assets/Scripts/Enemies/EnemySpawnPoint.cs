@@ -1,14 +1,6 @@
 using System.Collections;
 using UnityEngine;
 
-public enum EnemyTargetType
-{
-    NONE,
-    PLAYER,
-    CLOSEST_NPC,
-    TURRET_END
-}
-
 public class EnemySpawnPoint : MonoBehaviour
 {
     public EnemyTargetType enemyTargetType;

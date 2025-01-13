@@ -1,18 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI;
 
-public enum WorkType
-{
-    NONE,
-    FARMING, //TODO might have to break this down into several parts
-    GATHER_WOOD,
-    GATHER_ROCK,
-    WEAVE_FABRIC,
-    MAKE_AMMO,
-    GENERATE_ELECTRICITY,
-    BUILD_STRUCTURE,
-}
-
 public class WorkState : _TaskState
 {
     private WorkTask assignedTask;

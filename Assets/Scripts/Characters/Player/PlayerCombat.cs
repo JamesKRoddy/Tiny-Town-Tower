@@ -54,9 +54,3 @@ public class PlayerCombat : CharacterCombat
         dashVfx.Play(PlayerInventory.Instance.dashElement, dashVfxPoint);
     }
 }
-
-
-public enum GeneticMutation
-{
-    NONE
-}

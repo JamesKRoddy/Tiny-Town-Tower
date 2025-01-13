@@ -53,16 +53,16 @@ public class CharacterCombat : MonoBehaviour
 
         switch (attackDirection)
         {
-            case MeleeAttackDirection.HorizontalLeft:
+            case MeleeAttackDirection.HORIZONTAL_LEFT:
                 horizontalLeftVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
                 break;
-            case MeleeAttackDirection.HorizontalRight:
+            case MeleeAttackDirection.HORIZONTAL_RIGHT:
                 horizontalRightVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
                 break;
-            case MeleeAttackDirection.VerticalDown:
+            case MeleeAttackDirection.VERTICAL_DOWN:
                 verticalDownVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
                 break;
-            case MeleeAttackDirection.VerticalUp:
+            case MeleeAttackDirection.VERTICAL_UP:
                 verticalUpVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
                 break;
             default:
@@ -94,13 +94,4 @@ public class CharacterCombat : MonoBehaviour
         if (characterInventory.equippedWeaponBase != null)
             characterInventory.equippedWeaponBase.StopUse();
     }
-}
-
-
-public enum MeleeAttackDirection
-{
-    HorizontalLeft,
-    HorizontalRight,
-    VerticalDown,
-    VerticalUp
 }

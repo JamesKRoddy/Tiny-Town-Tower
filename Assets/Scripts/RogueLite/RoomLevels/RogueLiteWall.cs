@@ -1,12 +1,5 @@
 using UnityEngine;
 
-public enum WallType
-{
-    ENABLED, //Model can be seen, collider enabled
-    DISABLED, //Model and collider disabled
-    HIDDEN //Model disabled, collider enabled
-}
-
 public class RogueLiteWall : MonoBehaviour
 {
     public GameObject wallWithModel;

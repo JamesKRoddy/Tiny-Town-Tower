@@ -3,16 +3,6 @@ using System.Collections.Generic;
 using Unity.AI.Navigation;
 using UnityEngine;
 
-//TODO in this class have to generate the room exits, chest spawns and contents, enemy spawn points that are enabled
-
-public enum RoomPosition
-{
-    FRONT,
-    BACK,
-    LEFT,
-    RIGHT
-}
-
 public class RoomSectionRandomizer : MonoBehaviour
 {
     [Header("Central Piece")]

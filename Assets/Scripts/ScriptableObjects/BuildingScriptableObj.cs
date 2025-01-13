@@ -18,14 +18,3 @@ public class BuildingScriptableObj : ScriptableObject
     public Vector2 constructionSize; //TODO have to implement this, itll be used to block off areas of the build grid so that these are in use
     //TODO put in unlock requirements in here to check if the player is able to build this at their current level or whatever
 }
-
-[System.Serializable]
-public enum BuildingCategory
-{
-    GENERAL,
-    FOOD,
-    ELECTRICITY,
-    DECORATION,
-    WEAPONS,
-    CAMP_UPKEEP
-}

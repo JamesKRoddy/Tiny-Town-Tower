@@ -1,18 +1,6 @@
 using UnityEngine;
 using System;
 
-
-public enum PlayerControlType
-{
-    NONE, //default
-    COMBAT_MOVEMENT, //In combat during roguelike sections
-    CAMP_MOVEMENT, //Players movement in the camp
-    BUILDING, //Placing a building from the build menu
-    IN_CONVERSATION, //Talking to an NPC
-    IN_MENU, // In any menu
-    TURRET
-}
-
 public class PlayerInput : MonoBehaviour
 {
     private static PlayerInput _instance;

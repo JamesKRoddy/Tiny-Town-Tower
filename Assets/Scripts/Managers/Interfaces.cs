@@ -46,8 +46,8 @@ public interface IInteractive<out T> : IInteractiveBase
  * TODAY 04/01/25
  * Player killing zombies
  * Zombie death animations
- * Entering/exiting levels
- * Spawning picking/chests in rooms
+ * Check room events working ok
+ * 
  * 
  * 
  * 

@@ -1,13 +1,5 @@
 using UnityEngine;
 
-public enum BuildingType
-{
-    Dungeon,
-    Tower,
-    Castle,
-    Cave
-}
-
 [CreateAssetMenu(fileName = "EnemyWaveConfig", menuName = "Scriptable Objects/Enemies/EnemyWaveConfig", order = 1)]
 public class EnemyWaveConfig : ScriptableObject
 {

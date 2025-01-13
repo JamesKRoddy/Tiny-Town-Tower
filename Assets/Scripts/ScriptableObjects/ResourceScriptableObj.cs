@@ -12,28 +12,6 @@ public class ResourceScriptableObj : ScriptableObject
     public Sprite resourceSprite; // Sprite for the UI representation
 }
 
-[System.Serializable]
-public enum ResourceCategory
-{
-    GENERAL,
-    FOOD,
-    ELECTRICITY,
-    DECORATION,
-    WEAPONS,
-    BASIC_BUILDING_MATERIAL,
-    AMMO,
-    QUEST_ITEM
-}
-
-// Define Loot Rarity and Difficulty Mapper
-public enum ResourceRarity
-{
-    COMMON,
-    RARE,
-    EPIC,
-    LEGENDARY
-}
-
 public static class DifficultyRarityMapper
 {
     public static ResourceRarity GetResourceRarity(int roomDifficulty)

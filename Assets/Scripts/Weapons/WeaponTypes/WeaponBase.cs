@@ -18,20 +18,3 @@ public abstract class WeaponBase : MonoBehaviour, IPickupableItem
 
     public Sprite GetItemImage() => weaponScriptableObj.resourceSprite;
 }
-
-public enum WeaponElement
-{
-    NONE,
-    BASIC,
-    FIE,
-    ELECTRIC,
-    BLEED,
-    HOLY
-}
-
-public enum WeaponAnimationType
-{
-    NONE,
-    ONE_HANDED,
-    TWO_HANDED
-}

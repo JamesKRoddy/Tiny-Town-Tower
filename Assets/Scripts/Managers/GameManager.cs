@@ -1,14 +1,6 @@
 using UnityEngine;
 using System;
 
-public enum CurrentGameMode
-{
-    NONE,
-    ROGUE_LITE,
-    CAMP,
-    TURRET
-}
-
 public class GameManager : MonoBehaviour
 {
     // Singleton instance

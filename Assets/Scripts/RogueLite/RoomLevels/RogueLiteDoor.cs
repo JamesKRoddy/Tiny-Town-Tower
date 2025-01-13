@@ -1,12 +1,5 @@
 using UnityEngine;
 
-public enum DoorType
-{
-    LOCKED,
-    ENTRANCE,
-    EXIT
-}
-
 public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>
 {
     public GameObject doorModel; // TODO: Door models will change based on room difficulty and loot. GetCurrentRoomDifficulty

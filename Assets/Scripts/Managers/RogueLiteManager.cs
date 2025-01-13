@@ -4,15 +4,6 @@ using UnityEngine;
 using System;
 using Random = UnityEngine.Random;
 
-public enum RoomSetupState
-{
-    NONE,
-    ENTERING_ROOM,
-    PRE_ENEMY_SPAWNING,
-    ENEMIES_SPAWNED,
-    ROOM_CLEARED
-}
-
 public class RogueLiteManager : MonoBehaviour
 {
     // Singleton instance

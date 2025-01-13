@@ -4,15 +4,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public enum TaskType
-{
-    NONE,
-    WORK,
-    WANDER,
-    ATTACK,
-    TEND_CROPS
-}
-
 [RequireComponent(typeof(UnityEngine.AI.NavMeshAgent))]
 
 public class SettlerNPC : HumanCharacterController
