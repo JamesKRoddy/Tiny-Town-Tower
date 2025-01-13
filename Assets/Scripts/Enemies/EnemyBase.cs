@@ -8,8 +8,8 @@ public class EnemyBase : MonoBehaviour, IDamageable
     protected Animator animator;
     protected Transform navMeshTarget;
 
-    public float health { get; set; }
-    public float maxHealth { get; set; }
+    [SerializeField] public float Health { get; set; }
+    [SerializeField] public float MaxHealth { get; set; }
 
     public event Action OnEnemyKilled;
 
@@ -24,10 +24,10 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     private void Start()
     {
-        if(maxHealth == 0)
-            maxHealth = 100f;
+        if(MaxHealth == 0)
+            MaxHealth = 10f;
 
-        health = maxHealth;
+        Health = MaxHealth;
     }
 
     internal void Setup(Transform navAgentTarget)
@@ -37,14 +37,14 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     public void Heal(float amount)
     {
-        health = Mathf.Min(health + amount, maxHealth);
+        Health = Mathf.Min(Health + amount, MaxHealth);
     }
 
     public void TakeDamage(float amount)
     {        
-        health -= amount;
+        Health -= amount;
         animator.SetTrigger("Damaged");
-        if (health <= 0)
+        if (Health <= 0)
         {
             Die();
         }
@@ -54,5 +54,6 @@ public class EnemyBase : MonoBehaviour, IDamageable
     {
         OnEnemyKilled?.Invoke();
         animator.SetTrigger("Dead");
+        Destroy(gameObject); //TODO testing purpose
     }
 }

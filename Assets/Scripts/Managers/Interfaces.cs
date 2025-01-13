@@ -43,10 +43,11 @@ public interface IInteractive<out T> : IInteractiveBase
  * Closing out of settler menu how to properly reset the player controls to in game
  * Setup zombie idle animations
  * 
- * TODAY 04/01/25
- * Player killing zombies
+ * TODAY 04/01/25 
  * Zombie death animations
- * Check room events working ok
+ * Cleanup and moving onto new rooms
+ * Look at implementing difficulty system
+ * 
  * 
  * 
  * 

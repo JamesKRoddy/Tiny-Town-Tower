@@ -4,8 +4,6 @@ public class MeleeZombie : Zombie
 {
     public float meleeDamage = 20f;
 
-
-
     protected override void StartAttack()
     {
         base.StartAttack();
