@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "EnemyWaveConfig", menuName = "Scriptable Objects/Enemies/EnemyWaveConfig", order = 1)]
+[CreateAssetMenu(fileName = "EnemyWaveConfig", menuName = "Scriptable Objects/Roguelite/Enemies/EnemyWaveConfig", order = 1)]
 public class EnemyWaveConfig : ScriptableObject
 {
     public GameObject[] enemyPrefabs;  // Array of enemy prefabs

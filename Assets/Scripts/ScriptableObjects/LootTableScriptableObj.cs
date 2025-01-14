@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "LootTableScriptableObj", menuName = "Scriptable Objects/LootTable")]
+[CreateAssetMenu(fileName = "LootTableScriptableObj", menuName = "Scriptable Objects/Camp/LootTable")]
 public class LootTableScriptableObj : ScriptableObject
 {
     [SerializeField] private List<ResourcePickup> lootItems;

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "BuildingScriptableObj", menuName = "Scriptable Objects/BuildingScriptableObj")]
+[CreateAssetMenu(fileName = "BuildingScriptableObj", menuName = "Scriptable Objects/Camp/BuildingScriptableObj")]
 public class BuildingScriptableObj : ScriptableObject
 {
     [Header("Building Parameters")]
