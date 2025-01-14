@@ -4,8 +4,9 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>
 {
     public GameObject doorModel; // TODO: Door models will change based on room difficulty and loot. GetCurrentRoomDifficulty
     public Transform playerSpawn;
-    public DoorType doorType;
+    public DoorStatus doorType;
     public int doorRoomDifficulty;
+    internal BuildingType buildingType; //The type of room this door leads to
 
     // Draw a gizmo arrow to show the door's local forward direction
     private void OnDrawGizmos()
@@ -13,13 +14,13 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>
         // Set the color based on the door type
         switch (doorType)
         {
-            case DoorType.ENTRANCE:
+            case DoorStatus.ENTRANCE:
                 Gizmos.color = Color.green;
                 break;
-            case DoorType.EXIT:
+            case DoorStatus.EXIT:
                 Gizmos.color = Color.blue;
                 break;
-            case DoorType.LOCKED:
+            case DoorStatus.LOCKED:
                 Gizmos.color = Color.red;
                 break;
         }
@@ -45,11 +46,11 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>
 
         switch (doorType)
         {
-            case DoorType.LOCKED:
+            case DoorStatus.LOCKED:
                 return false;
-            case DoorType.ENTRANCE:
+            case DoorStatus.ENTRANCE:
                 return true;
-            case DoorType.EXIT:
+            case DoorStatus.EXIT:
                 return false;
             default:
                 return false;
@@ -60,11 +61,11 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>
     {
         switch (doorType)
         {
-            case DoorType.LOCKED:
+            case DoorStatus.LOCKED:
                 return "Door Locked";
-            case DoorType.ENTRANCE:
+            case DoorStatus.ENTRANCE:
                 return "Enter Room";
-            case DoorType.EXIT:
+            case DoorStatus.EXIT:
                 return "Cant Go Back";
             default:
                 return "INVALID";

@@ -98,7 +98,7 @@ public enum WallType
     HIDDEN // Model disabled, collider enabled
 }
 
-public enum DoorType
+public enum DoorStatus
 {
     LOCKED, //Door is locked unable to pass through
     ENTRANCE, //Door opens, the player can paass through when the level is cleared

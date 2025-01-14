@@ -11,5 +11,5 @@ public class EnemyWaveConfig : ScriptableObject
 
     // Contextual variables
     public BuildingType buildingType;
-    public int floor; // The specific floor this config is designed for
+    public int enemyWaveDifficulty; // The specific floor this config is designed for
 }

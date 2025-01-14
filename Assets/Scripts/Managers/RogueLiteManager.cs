@@ -41,10 +41,10 @@ public class RogueLiteManager : MonoBehaviour
     }
 
     private RoomSetupState roomSetupState;
-
+    public List<BuildingDataScriptableObj> buildingDataScriptableObjs;
     public List<EnemyWaveConfig> waveConfigs; // List of all possible wave configurations //TODO move this to a separate container with all the waves divided up into different buildings
-
-    public BuildingType currentBuilding;
+    public BuildingType currentBuilding = BuildingType.NONE;
+    private GameObject currentbuildingParent;
     public int buildingDifficulty; //The difficulty of the current building
     public int currentRoom; //The current room the player is in
     int currentRoomDifficulty; //The difficulty of the current room
@@ -96,7 +96,13 @@ public class RogueLiteManager : MonoBehaviour
         SetRoomState(RoomSetupState.ENTERING_ROOM);
         currentRoomDifficulty = rogueLiteDoor.doorRoomDifficulty;
         currentRoom++;
-        SetupLevel();
+
+        if(currentBuilding == BuildingType.NONE)
+        {
+            currentBuilding = rogueLiteDoor.buildingType;
+        }
+
+        SetupLevel(currentBuilding);
     }
 
     public int GetCurrentRoomDifficulty() //TODO this is going to require a lot of testing
@@ -118,11 +124,33 @@ public class RogueLiteManager : MonoBehaviour
         return null;
     }
 
-    public void SetupLevel()
+    public void SetupLevel(BuildingType buildingType)
     {
-        FindFirstObjectByType<RoomSectionRandomizer>().GenerateRandomRooms();
-        SetupDoors();
-        SetupChests();
+        if(buildingDataScriptableObjs == null)
+        {
+            Debug.LogError("RogueLiteManager BuildingDataScriptableObjs are null");
+        }
+
+        if(currentbuildingParent != null)
+        {
+            Destroy(currentbuildingParent);
+        }
+
+        foreach (var building in buildingDataScriptableObjs)
+        {
+            if(building.buildingType == buildingType)
+            {
+                currentbuildingParent = GameObject.Instantiate(building.GetBuildingParent(GetCurrentRoomDifficulty()), Vector3.zero, Quaternion.identity);
+
+                currentbuildingParent.GetComponent<RoomSectionRandomizer>().GenerateRandomRooms(building);
+                SetupDoors();
+                SetupChests();
+                return;
+            }
+        }
+
+        Debug.LogError($"No building data for type {buildingType}");
+
     }
 
     private void SetupDoors()
@@ -138,7 +166,7 @@ public class RogueLiteManager : MonoBehaviour
         // Assign a random door as the entrance
         int entranceIndex = Random.Range(0, doors.Count);
         playerSpawnPoint = doors[entranceIndex].playerSpawn;
-        doors[entranceIndex].doorType = DoorType.ENTRANCE;
+        doors[entranceIndex].doorType = DoorStatus.ENTRANCE;
 
         // Remove the entrance from the list
         doors.RemoveAt(entranceIndex);
@@ -150,14 +178,14 @@ public class RogueLiteManager : MonoBehaviour
         for (int i = 0; i < exitCount; i++)
         {
             int randomIndex = Random.Range(0, doors.Count);
-            doors[randomIndex].doorType = DoorType.EXIT;
+            doors[randomIndex].doorType = DoorStatus.EXIT;
             doors.RemoveAt(randomIndex);
         }
 
         // Set remaining doors as locked and apply a 75% chance to disable their GameObjects
         foreach (var door in doors)
         {
-            door.doorType = DoorType.LOCKED;
+            door.doorType = DoorStatus.LOCKED;
 
             // 75% chance to disable the GameObject
             if (Random.value < 0.75f)

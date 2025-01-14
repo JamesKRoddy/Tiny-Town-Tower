@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.AI.Navigation;
 using UnityEngine;
+using System.Linq;
 
 public class RoomSectionRandomizer : MonoBehaviour
 {
@@ -14,18 +15,21 @@ public class RoomSectionRandomizer : MonoBehaviour
     public Transform leftTransform;
     public Transform rightTransform;
 
-    [Header("Room Prefabs")]
-    public List<GameObject> roomPrefabs;
+    private List<GameObject> roomPrefabs;
 
     private NavMeshSurface navMeshSurface;
 
-    public void GenerateRandomRooms()
+    public void GenerateRandomRooms(BuildingDataScriptableObj buildingScriptableObj)
     {
-        if (roomPrefabs == null || roomPrefabs.Count == 0)
+        List<GameObject> roomsScriptObj = buildingScriptableObj.buildingRooms.Select(room => room.buildingRoom).ToList();
+
+        if (roomsScriptObj == null || roomsScriptObj.Count == 0)
         {
             Debug.LogError("No room prefabs assigned!");
             return;
         }
+
+        roomPrefabs = roomsScriptObj;
 
         // Clear existing rooms
         ClearExistingRooms();

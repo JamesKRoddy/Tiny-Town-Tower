@@ -500,7 +500,6 @@ MonoBehaviour:
   backTransform: {fileID: 0}
   leftTransform: {fileID: 0}
   rightTransform: {fileID: 0}
-  roomPrefabs: []
 --- !u!64 &160089010
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -2362,6 +2361,10 @@ PrefabInstance:
     - target: {fileID: 4686915863895893509, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6945657278055493532, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: buildingDataScriptableObjs.Array.size
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7672865418307153838, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: waveConfigs.Array.size
