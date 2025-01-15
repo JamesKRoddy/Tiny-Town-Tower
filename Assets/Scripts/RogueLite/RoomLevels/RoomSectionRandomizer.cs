@@ -15,6 +15,8 @@ public class RoomSectionRandomizer : MonoBehaviour
     public Transform leftTransform;
     public Transform rightTransform;
 
+    Transform playerSpawnPoint; //The door the player will spawn infront of;
+
     private List<GameObject> roomPrefabs;
 
     private NavMeshSurface navMeshSurface;
@@ -43,7 +45,10 @@ public class RoomSectionRandomizer : MonoBehaviour
         InstantiateRoom(leftTransform, RoomPosition.LEFT);
         InstantiateRoom(rightTransform, RoomPosition.RIGHT);
 
-        RandomizePropsInSection(centerPiece);
+        RandomizePropsInSection(centerPiece); //Just to setup centre piece too
+
+        SetupDoors();
+        SetupChests();
 
         if (navMeshSurface == null)
         {
@@ -137,5 +142,81 @@ public class RoomSectionRandomizer : MonoBehaviour
         {
             Debug.LogError("NavMeshSurface is not assigned.");
         }
+    }
+
+    private void SetupDoors()
+    {
+        List<RogueLiteDoor> doors = new List<RogueLiteDoor>(FindObjectsByType<RogueLiteDoor>(FindObjectsSortMode.None));
+
+        if (doors == null || doors.Count == 0)
+        {
+            Debug.LogWarning("No doors found in the scene.");
+            return;
+        }
+
+        // Assign a random door as the entrance
+        int entranceIndex = Random.Range(0, doors.Count);
+        playerSpawnPoint = doors[entranceIndex].playerSpawn;
+        doors[entranceIndex].doorType = DoorStatus.EXIT;
+
+        // Remove the entrance from the list
+        doors.RemoveAt(entranceIndex);
+
+        // Determine the number of exit doors (between 1 and 3, but not exceeding the remaining doors)
+        int exitCount = Mathf.Clamp(Random.Range(1, 4), 1, doors.Count);
+
+        // Randomly assign exit doors
+        for (int i = 0; i < exitCount; i++)
+        {
+            int randomIndex = Random.Range(0, doors.Count);
+            doors[randomIndex].doorType = DoorStatus.ENTRANCE;
+            doors.RemoveAt(randomIndex);
+        }
+
+        // Set remaining doors as locked and apply a 75% chance to disable their GameObjects
+        foreach (var door in doors)
+        {
+            door.doorType = DoorStatus.LOCKED;
+
+            // 75% chance to disable the GameObject
+            if (Random.value < 0.75f)
+            {
+                door.gameObject.SetActive(false);
+            }
+        }
+
+        Debug.Log("Doors have been spawned and assigned.");
+    }
+
+    internal Vector3 GetPlayerSpawnPoint()
+    {
+        return playerSpawnPoint.position;
+    }
+
+    public void SetupChests()
+    {
+        // Find all chests in the scene
+        List<ChestParent> chests = new List<ChestParent>(FindObjectsByType<ChestParent>(FindObjectsSortMode.None));
+
+        if (chests == null || chests.Count == 0)
+        {
+            Debug.LogWarning("No chests found in the scene.");
+            return;
+        }
+
+        foreach (var chest in chests)
+        {
+            // 75% chance to disable the chest
+            if (Random.value < 0.75f)
+            {
+                chest.gameObject.SetActive(false);
+                Debug.Log($"Chest {chest.name} is disabled.");
+                continue; // Skip assigning loot to disabled chests
+            }
+
+            chest.SetupChest(RogueLiteManager.Instance.GetCurrentRoomDifficulty());
+        }
+
+        Debug.Log("Chests have been setup.");
     }
 }
