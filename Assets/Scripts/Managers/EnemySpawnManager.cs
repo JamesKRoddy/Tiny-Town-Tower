@@ -15,20 +15,43 @@ public class EnemySpawnManager : MonoBehaviour
     private void Start()
     {
         // Subscribe to RogueLiteManager event
-        RogueLiteManager.Instance.OnSetupStateChanged += StartSpawningEnemies;
+        RogueLiteManager.Instance.OnRoomSetupStateChanged += RoomSetupStateChanged;
     }
 
     private void OnDestroy()
     {
         // Unsubscribe from RogueLiteManager event
-        RogueLiteManager.Instance.OnSetupStateChanged -= StartSpawningEnemies;
+        RogueLiteManager.Instance.OnRoomSetupStateChanged -= RoomSetupStateChanged;
     }
 
-    public void StartSpawningEnemies(RoomSetupState newState)
+    private void RoomSetupStateChanged(RoomSetupState newState)
     {
-        if (newState != RoomSetupState.PRE_ENEMY_SPAWNING)
-            return;
+        switch (newState)
+        {
+            case RoomSetupState.NONE:
+                break;
+            case RoomSetupState.ENTERING_ROOM:
+                ResetWaveCount();
+                break;
+            case RoomSetupState.PRE_ENEMY_SPAWNING:
+                StartSpawningEnemies();
+                break;
+            case RoomSetupState.ENEMIES_SPAWNED:
+                break;
+            case RoomSetupState.ROOM_CLEARED:
+                break;
+            default:
+                break;
+        }
+    }
 
+    private void ResetWaveCount()
+    {
+        currentWave = 0;
+    }
+
+    private void StartSpawningEnemies()
+    {
         RogueLiteManager.Instance.SetRoomState(RoomSetupState.ENEMIES_SPAWNED);
         // Get the waveConfig from the RogueLiteManager
         waveConfig = RogueLiteManager.Instance.GetWaveConfig();

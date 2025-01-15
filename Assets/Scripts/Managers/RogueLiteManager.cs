@@ -52,7 +52,7 @@ public class RogueLiteManager : MonoBehaviour
     /// <summary>
     /// All actions relating to roguelite gameplay loop
     /// </summary>
-    public Action<RoomSetupState> OnSetupStateChanged;
+    public Action<RoomSetupState> OnRoomSetupStateChanged;
 
     Transform playerSpawnPoint; //The door the player will spawn infront of;
 
@@ -69,7 +69,7 @@ public class RogueLiteManager : MonoBehaviour
             {
                 Debug.Log($"Updating RoomSetupState to {value}");
                 roomSetupState = value;
-                OnSetupStateChanged?.Invoke(roomSetupState); // Invoke the event with the new state
+                OnRoomSetupStateChanged?.Invoke(roomSetupState); // Invoke the event with the new state
             }
         }
     }
@@ -87,8 +87,33 @@ public class RogueLiteManager : MonoBehaviour
 
     private void Start()
     {
-        OnSetupStateChanged += SetupPlayer;
+        OnRoomSetupStateChanged += RoomSetupStateChanged;
         roomSetupState = RoomSetupState.ROOM_CLEARED; //TODO this is just for testing
+    }
+
+    private void OnDestroy()
+    {
+        OnRoomSetupStateChanged -= RoomSetupStateChanged;
+    }
+
+    private void RoomSetupStateChanged(RoomSetupState newState)
+    {
+        switch (newState)
+        {
+            case RoomSetupState.NONE:
+                break;
+            case RoomSetupState.ENTERING_ROOM:
+                break;
+            case RoomSetupState.PRE_ENEMY_SPAWNING:
+                SetupPlayer();
+                break;
+            case RoomSetupState.ENEMIES_SPAWNED:
+                break;
+            case RoomSetupState.ROOM_CLEARED:
+                break;
+            default:
+                break;
+        }
     }
 
     public void EnterRoom(RogueLiteDoor rogueLiteDoor)
@@ -225,11 +250,8 @@ public class RogueLiteManager : MonoBehaviour
     }
 
 
-    private void SetupPlayer(RoomSetupState newState)
+    private void SetupPlayer()
     {
-        if (newState != RoomSetupState.PRE_ENEMY_SPAWNING)
-            return;
-
         if(PlayerController.Instance != null && PlayerController.Instance.possesedNPC != null)
         {
             PlayerController.Instance.possesedNPC.transform.position = playerSpawnPoint.transform.position;
