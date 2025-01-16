@@ -42,8 +42,6 @@ public interface IInteractive<out T> : IInteractiveBase
  * Have to create an event for the swap its too messy with references at the moment
  * Closing out of settler menu how to properly reset the player controls to in game
  * Setup zombie idle animations
- * 
- * TODAY 04/01/25 
  * Zombie death animations
  * Cleanup and moving onto new rooms
  * Look at implementing difficulty system
