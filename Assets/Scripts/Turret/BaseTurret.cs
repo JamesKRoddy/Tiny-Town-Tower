@@ -136,11 +136,14 @@ public abstract class BaseTurret : MonoBehaviour
 
     protected virtual bool CanAffordUpgrade()
     {
-        return GoldManager.Instance.HasEnoughGold(upgradeData.upgradeCost);
+        //TODO figure out cost system, maybe use specific resources to upgrade specific turrets eg. electric components for tech turrets
+        return true;
+        //return GoldManager.Instance.HasEnoughGold(upgradeData.upgradeCost);
     }
 
     protected virtual void DeductGold(int amount)
     {
-        GoldManager.Instance.DeductGold(amount);
+        //TODO figure out cost system, maybe use specific resources to upgrade specific turrets eg. electric components for tech turrets
+        //GoldManager.Instance.DeductGold(amount);
     }
 }
