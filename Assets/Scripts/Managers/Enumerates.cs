@@ -55,7 +55,7 @@ public enum PlayerControlType
     BUILDING, // Placing a building from the build menu
     IN_CONVERSATION, // Talking to an NPC
     IN_MENU, // In any menu
-    TURRET
+    TURRET_PLACEMENT // Placing a turret from the turret menu
 }
 
 // =========================

@@ -16,28 +16,44 @@ public class TurretPreviewBtn : MonoBehaviour
         button.onClick.RemoveAllListeners();
     }
 
-    void InstantiateTurretPlacement()
+    void InstantiateTurretConstruction()
     {
         // Initialize canPlace to true and set it to false if a requirement isn't met.
         bool canPlace = true;
 
-        // Example: Check placement requirements, if any (adjust logic as necessary).
-        // Placeholder logic: Add specific turret placement constraints here if needed.
+        // Loop through each required resource and check the player's inventory.
+        foreach (var requiredItem in turretObj.turretResourceCost)
+        {
+            // Check how many of this resource the player currently has.
+            int playerCount = PlayerInventory.Instance.GetItemCount(requiredItem.resource);
+
+            // If the player doesn't have enough of this resource, they can't place the turret.
+            if (playerCount < requiredItem.count)
+            {
+                canPlace = false;
+                break;
+            }
+        }
 
         // If canPlace is true, proceed with turret placement. Otherwise, show an error or refuse placement.
         if (canPlace)
         {
-            // Optionally, deduct placement cost or perform other actions here.
+            // Deduct the required resources from the player's inventory.
+            foreach (var requiredItem in turretObj.turretResourceCost)
+            {
+                PlayerInventory.Instance.RemoveItem(requiredItem.resource, requiredItem.count);
+            }
 
             TurretPlacer.Instance.StartPlacement(turretObj);
             TurretMenu.Instance.SetScreenActive(false, 0.05f);
         }
         else
         {
-            TurretMenu.Instance.DisplayErrorMessage("Cannot place this turret at the selected location!");
+            TurretMenu.Instance.DisplayErrorMessage("Not enough resources to place this turret!");
             // Optionally, display a UI message to the player.
         }
     }
+
 
     public void SetupButton(TurretScriptableObject turretObjRef)
     {

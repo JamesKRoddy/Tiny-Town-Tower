@@ -107,7 +107,7 @@ public abstract class BaseTurret : MonoBehaviour
     {
         if (isUpgrading || !CanAffordUpgrade()) return;
 
-        DeductGold(upgradeData.upgradeCost);
+        DeductResource(upgradeData.upgradeCost);
         StartCoroutine(UpgradeRoutine());
     }
 
@@ -139,7 +139,7 @@ public abstract class BaseTurret : MonoBehaviour
         //return GoldManager.Instance.HasEnoughGold(upgradeData.upgradeCost);
     }
 
-    protected virtual void DeductGold(int amount)
+    protected virtual void DeductResource(int amount) 
     {
         //TODO figure out cost system, maybe use specific resources to upgrade specific turrets eg. electric components for tech turrets
         //GoldManager.Instance.DeductGold(amount);
