@@ -177,6 +177,15 @@ public enum GeneticMutation
 }
 
 // =========================
+// TURRET ENUMS
+// =========================
+
+public enum TurretCategory
+{
+    NONE
+}
+
+// =========================
 // MISCELLANEOUS ENUMS
 // =========================
 

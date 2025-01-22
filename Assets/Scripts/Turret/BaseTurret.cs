@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,18 +15,15 @@ public class UpgradeData
     public string description = "Upgrade the turret for increased stats.";
 }
 
+[RequireComponent(typeof(Collider))]
 public abstract class BaseTurret : MonoBehaviour
 {
     [Header("Turret Settings")]
     public float range = 10f;
     public float fireRate = 1f;
-    public Transform turretHead;
+    public Transform turretTop;
     public Transform firePoint;
     public UpgradeData upgradeData;
-
-    [Header("References")]
-    public Button upgradeButton;
-    public Text upgradeButtonText;
 
     private float fireCooldown = 0f;
     private Transform target;
@@ -34,7 +32,7 @@ public abstract class BaseTurret : MonoBehaviour
 
     private void Start()
     {
-        upgradeButton.onClick.AddListener(StartUpgrade);
+        //upgradeButton.onClick.AddListener(StartUpgrade);
     }
 
     private void Update()
@@ -87,10 +85,10 @@ public abstract class BaseTurret : MonoBehaviour
 
     private void RotateToTarget()
     {
-        Vector3 direction = target.position - turretHead.position;
+        Vector3 direction = target.position - turretTop.position;
         Quaternion lookRotation = Quaternion.LookRotation(direction);
-        Vector3 rotation = Quaternion.Lerp(turretHead.rotation, lookRotation, Time.deltaTime * 5f).eulerAngles;
-        turretHead.rotation = Quaternion.Euler(0f, rotation.y, 0f);
+        Vector3 rotation = Quaternion.Lerp(turretTop.rotation, lookRotation, Time.deltaTime * 5f).eulerAngles;
+        turretTop.rotation = Quaternion.Euler(0f, rotation.y, 0f);
     }
 
     private void HandleFiring()
@@ -116,15 +114,15 @@ public abstract class BaseTurret : MonoBehaviour
     private IEnumerator UpgradeRoutine()
     {
         isUpgrading = true;
-        upgradeButton.interactable = false;
-        upgradeButtonText.text = "Upgrading...";
+        //upgradeButton.interactable = false;
+        //upgradeButtonText.text = "Upgrading...";
 
         yield return new WaitForSeconds(upgradeData.upgradeTime);
 
         UpgradeTurret();
         isUpgrading = false;
-        upgradeButton.interactable = true;
-        upgradeButtonText.text = "Upgrade";
+        //upgradeButton.interactable = true;
+        //upgradeButtonText.text = "Upgrade";
     }
 
     protected virtual void UpgradeTurret()
@@ -145,5 +143,10 @@ public abstract class BaseTurret : MonoBehaviour
     {
         //TODO figure out cost system, maybe use specific resources to upgrade specific turrets eg. electric components for tech turrets
         //GoldManager.Instance.DeductGold(amount);
+    }
+
+    internal void SetupTurret()
+    {
+        throw new NotImplementedException();
     }
 }
