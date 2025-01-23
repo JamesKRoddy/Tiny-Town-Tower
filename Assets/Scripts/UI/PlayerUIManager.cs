@@ -38,6 +38,7 @@ public class PlayerUIManager : MonoBehaviour
     [SerializeField] MenuBase narrativeSystem;
     [SerializeField] MenuBase playerInventoryMenu;
     [SerializeField] MenuBase settlerNPCMenu;
+    [SerializeField] MenuBase turretMenu;
     [SerializeField] MenuBase utilityMenu;
 
     [Header("Interaction")]
@@ -97,6 +98,7 @@ public class PlayerUIManager : MonoBehaviour
         narrativeSystem.SetScreenActive(false);
         playerInventoryMenu.SetScreenActive(false);
         settlerNPCMenu.SetScreenActive(false);
+        turretMenu.SetScreenActive(false);
         utilityMenu.SetScreenActive(false);
     }
 

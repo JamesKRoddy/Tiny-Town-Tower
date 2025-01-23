@@ -93,13 +93,13 @@ public class TurretMenu : PreviewListMenuBase<TurretCategory, TurretScriptableOb
     public override TurretCategory GetItemCategory(TurretScriptableObject item)
     {
         // Assuming TurretCategory is part of the TurretScriptableObject or deduced elsewhere
-        return TurretCategory.Basic; // Placeholder if no specific category exists
+        return TurretCategory.NONE; // Placeholder if no specific category exists
     }
 
     public override void SetupItemButton(TurretScriptableObject item, GameObject button)
     {
-        var buttonComponent = button.GetComponent<BuildingPreviewBtn>();
-        buttonComponent.SetupButton(item.turretName, item.turretSprite); // Adjust SetupButton logic
+        var buttonComponent = button.GetComponent<TurretPreviewBtn>();
+        buttonComponent.SetupButton(item);
     }
 
     public override string GetPreviewName(TurretScriptableObject item)

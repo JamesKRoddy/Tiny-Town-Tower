@@ -16,7 +16,7 @@ public class TurretPreviewBtn : MonoBehaviour
         button.onClick.RemoveAllListeners();
     }
 
-    void InstantiateTurretConstruction()
+    void InstantiateTurretPlacement()
     {
         // Initialize canPlace to true and set it to false if a requirement isn't met.
         bool canPlace = true;

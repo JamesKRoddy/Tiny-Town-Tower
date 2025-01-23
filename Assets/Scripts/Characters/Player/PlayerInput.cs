@@ -160,7 +160,7 @@ public class PlayerInput : MonoBehaviour
                 currentControlType = PlayerControlType.CAMP_MOVEMENT;
                 break;
             case CurrentGameMode.TURRET:
-                currentControlType = PlayerControlType.TURRET;
+                currentControlType = PlayerControlType.TURRET_PLACEMENT;
                 break;
             default:
                 currentControlType = PlayerControlType.NONE;
