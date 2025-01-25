@@ -23,11 +23,9 @@ public class TurretMenu : PreviewListMenuBase<TurretCategory, TurretScriptableOb
         }
     }
 
-    [Header("Turret Menu UI")]
-    [SerializeField] GameObject previewResourceCostPrefab; // Optional if resources apply to turrets
-    [SerializeField] RectTransform previewResourceCostParent; // Optional if resources apply to turrets
-    [SerializeField] private Button upgradeButton;
-    [SerializeField] private TMP_Text upgradeButtonText;
+    [Header("Turret Menu Preview UI")]
+    [SerializeField] GameObject previewResourceCostPrefab;
+    [SerializeField] RectTransform previewResourceCostParent;
 
     [Header("Full list of Turret Scriptable Objects")]
     public TurretScriptableObject[] turretScriptableObjs;
@@ -92,7 +90,6 @@ public class TurretMenu : PreviewListMenuBase<TurretCategory, TurretScriptableOb
 
     public override TurretCategory GetItemCategory(TurretScriptableObject item)
     {
-        // Assuming TurretCategory is part of the TurretScriptableObject or deduced elsewhere
         return TurretCategory.NONE; // Placeholder if no specific category exists
     }
 
@@ -119,8 +116,14 @@ public class TurretMenu : PreviewListMenuBase<TurretCategory, TurretScriptableOb
 
     public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(TurretScriptableObject item)
     {
-        // Placeholder: Implement if turrets have a resource cost
-        yield break;
+        foreach (var resourceCost in item.turretResourceCost)
+        {
+            yield return (
+                resourceCost.resource.resourceName,
+                resourceCost.count,
+                PlayerInventory.Instance.GetItemCount(resourceCost.resource)
+            );
+        }
     }
 
     public override void UpdatePreviewSpecifics(TurretScriptableObject item)
@@ -130,20 +133,11 @@ public class TurretMenu : PreviewListMenuBase<TurretCategory, TurretScriptableOb
             Destroy(child.gameObject);
         }
 
-        // Populate UI elements with turret-specific details
-        if (previewResourceCostPrefab != null && previewResourceCostParent != null)
+        foreach (var (resourceName, requiredCount, playerCount) in GetPreviewResourceCosts(item))
         {
-            // Example: Populate resource costs if relevant
-            foreach (var (resourceName, requiredCount, playerCount) in GetPreviewResourceCosts(item))
-            {
-                GameObject resourceCostUI = Instantiate(previewResourceCostPrefab, previewResourceCostParent);
-                resourceCostUI.GetComponentInChildren<TMP_Text>().text = $"{resourceName} : {requiredCount} ({playerCount})";
-            }
+            GameObject resourceCostUI = Instantiate(previewResourceCostPrefab, previewResourceCostParent);
+            resourceCostUI.GetComponentInChildren<TMP_Text>().text = $"{resourceName} : {requiredCount} ({playerCount})";
         }
-
-        // Update upgrade button specifics (if applicable)
-        upgradeButton.interactable = CanUpgrade(item); // Implement CanUpgrade logic
-        upgradeButtonText.text = GetUpgradeText(item); // Implement GetUpgradeText logic
     }
 
     public override void DestroyPreviewSpecifics()
@@ -152,17 +146,5 @@ public class TurretMenu : PreviewListMenuBase<TurretCategory, TurretScriptableOb
         {
             Destroy(child.gameObject);
         }
-    }
-
-    private bool CanUpgrade(TurretScriptableObject item)
-    {
-        // Add logic to determine if the turret can be upgraded
-        return true; // Placeholder
-    }
-
-    private string GetUpgradeText(TurretScriptableObject item)
-    {
-        // Add logic to get appropriate upgrade text
-        return "Upgrade Available"; // Placeholder
     }
 }

@@ -39,6 +39,7 @@ public class PlayerUIManager : MonoBehaviour
     [SerializeField] MenuBase playerInventoryMenu;
     [SerializeField] MenuBase settlerNPCMenu;
     [SerializeField] MenuBase turretMenu;
+    [SerializeField] MenuBase turretUpgradeMenu;
     [SerializeField] MenuBase utilityMenu;
 
     [Header("Interaction")]
@@ -62,7 +63,9 @@ public class PlayerUIManager : MonoBehaviour
         buildMenu.Setup();
         narrativeSystem.Setup();
         playerInventoryMenu.Setup();
-        settlerNPCMenu.Setup();
+        settlerNPCMenu.Setup(); 
+        turretMenu.Setup();
+        turretUpgradeMenu.Setup();
         utilityMenu.Setup();
     }
 
@@ -99,6 +102,7 @@ public class PlayerUIManager : MonoBehaviour
         playerInventoryMenu.SetScreenActive(false);
         settlerNPCMenu.SetScreenActive(false);
         turretMenu.SetScreenActive(false);
+        turretUpgradeMenu.SetScreenActive(false);
         utilityMenu.SetScreenActive(false);
     }
 
