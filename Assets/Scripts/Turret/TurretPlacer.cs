@@ -31,7 +31,7 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
 
     protected override bool IsValidPlacement(Vector3 position)
     {
-        return true; // Add turret-specific validation logic
+        return true; //TODO Add turret-specific validation logic
     }
 
     protected override GameObject GetPrefabFromObject(TurretScriptableObject obj)

@@ -31,7 +31,7 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
 
     protected override bool IsValidPlacement(Vector3 position)
     {
-        return true; // Add specific validation logic
+        return true; //TODO Add specific validation logic
     }
 
     protected override GameObject GetPrefabFromObject(BuildingScriptableObj obj)

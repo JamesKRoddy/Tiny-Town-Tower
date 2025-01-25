@@ -46,14 +46,13 @@ public interface IInteractive<out T> : IInteractiveBase
  * Cleanup and moving onto new rooms
  * Look at implementing difficulty system
  * 
- * 
+ * CURRENT  WORK TURRETS
  * 
  * 
  * 
  * 
  * Next Large things to move onto
  * Genetic mutations
- * Turrets
  * Over world
  *  
  */

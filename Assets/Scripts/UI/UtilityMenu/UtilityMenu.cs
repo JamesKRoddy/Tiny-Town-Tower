@@ -34,9 +34,10 @@ public class UtilityMenu : MenuBase, IControllerInput
             _instance = this;
         }
 
-        playerInventoryBtn.onClick.AddListener(EnablePlayerInventory);
+        playerInventoryBtn.onClick.AddListener(EnablePlayerInventoryMenu);
         buildMenuBtn.onClick.AddListener(EnableBuildMenu);
         settlerNPCBtn.onClick.AddListener(EnableSettlerNPCMenu);
+        turretBuildBtn.onClick.AddListener(EnableTurretBuildMenu);
 
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
@@ -56,14 +57,16 @@ public class UtilityMenu : MenuBase, IControllerInput
         playerInventoryBtn.onClick.RemoveAllListeners();
         buildMenuBtn.onClick.RemoveAllListeners();
         settlerNPCBtn.onClick.RemoveAllListeners();
+        turretBuildBtn.onClick.RemoveAllListeners();
 
-        if(PlayerInput.Instance != null)
+        if (PlayerInput.Instance != null)
             PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
     }
 
     [SerializeField] Button playerInventoryBtn;
     [SerializeField] Button buildMenuBtn;
     [SerializeField] Button settlerNPCBtn;
+    [SerializeField] Button turretBuildBtn;
 
     public override void SetScreenActive(bool active, float delay = 0.0f)
     {
@@ -94,7 +97,7 @@ public class UtilityMenu : MenuBase, IControllerInput
         SetScreenActive(true, 0.1f);
     }
 
-    public void EnablePlayerInventory()
+    public void EnablePlayerInventoryMenu()
     {
         PlayerUIManager.Instance.HideMenus();
         PlayerInventoryMenu.Instance.SetScreenActive(true, 0.1f);
@@ -111,6 +114,12 @@ public class UtilityMenu : MenuBase, IControllerInput
     {
         PlayerUIManager.Instance.HideMenus();
         SettlerNPCMenu.Instance.SetScreenActive(true, 0.1f);
+    }
+
+    private void EnableTurretBuildMenu()
+    {
+        PlayerUIManager.Instance.HideMenus();
+        TurretMenu.Instance.SetScreenActive(true, 0.1f);
     }
 
     public void SetPlayerControlType(PlayerControlType controlType)
@@ -133,6 +142,7 @@ public class UtilityMenu : MenuBase, IControllerInput
         playerInventoryBtn.gameObject.SetActive(false);
         buildMenuBtn.gameObject.SetActive(false);
         settlerNPCBtn.gameObject.SetActive(false);
+        turretBuildBtn.gameObject.SetActive(false);
 
         switch (playerControlType)
         {
@@ -143,6 +153,9 @@ public class UtilityMenu : MenuBase, IControllerInput
                 playerInventoryBtn.gameObject.SetActive(true);
                 buildMenuBtn.gameObject.SetActive(true);
                 settlerNPCBtn.gameObject.SetActive(true);
+                break;
+            case PlayerControlType.TURRET_PLACEMENT:
+                turretBuildBtn.gameObject.SetActive(true);
                 break;
             default:
                 break;
