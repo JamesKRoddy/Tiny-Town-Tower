@@ -48,7 +48,7 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
     {
         if (controlType == PlayerControlType.TURRET_PLACEMENT)
         {
-            EnableGrid();
+            EnableGrid(TurretManager.Instance.GetXBounds(), TurretManager.Instance.GetZBounds());
             PlayerInput.Instance.OnLeftJoystick += HandleJoystickMovement;
             PlayerInput.Instance.OnAPressed += PlaceObject;
             PlayerInput.Instance.OnBPressed += CancelPlacement;

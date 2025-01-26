@@ -44,6 +44,7 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
         SetPreviewMaterial(validPlacementMaterial);
         currentGridPosition = SnapToGrid(transform.position);
         currentPreview.transform.position = currentGridPosition;
+        PlayerController.Instance.playerCamera.UpdateTarget(currentPreview.transform);
 
         NotifyControlTypeChange();
     }
@@ -108,15 +109,15 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
         }
     }
 
-    protected void EnableGrid()
+    protected void EnableGrid(Vector2 xBounds, Vector2 zBounds)
     {
         if (gridObjects == null)
         {
             gridObjects = new Dictionary<Vector3, GameObject>();
 
-            for (float x = gridOrigin.x; x < gridOrigin.x + gridDimensions.x; x += gridSize)
+            for (float x = xBounds.x; x < xBounds.y; x += gridSize)
             {
-                for (float z = gridOrigin.z; z < gridOrigin.z + gridDimensions.y; z += gridSize)
+                for (float z = zBounds.x; z < zBounds.y; z += gridSize)
                 {
                     Vector3 gridPosition = new Vector3(x, gridOrigin.y, z);
                     GameObject gridSection = Instantiate(gridPrefab, gridPosition, Quaternion.identity, gridParent);
@@ -131,6 +132,7 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
             gridSection.SetActive(true);
         }
     }
+
 
     protected void DisableGrid()
     {

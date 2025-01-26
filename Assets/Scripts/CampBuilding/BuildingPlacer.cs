@@ -48,7 +48,7 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
     {
         if (controlType == PlayerControlType.BUILDING_PLACEMENT)
         {
-            EnableGrid();
+            EnableGrid(BuildManager.Instance.GetXBounds(), BuildManager.Instance.GetZBounds());
             PlayerInput.Instance.OnLeftJoystick += HandleJoystickMovement;
             PlayerInput.Instance.OnAPressed += PlaceObject;
             PlayerInput.Instance.OnBPressed += CancelPlacement;

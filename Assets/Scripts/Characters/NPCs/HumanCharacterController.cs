@@ -37,7 +37,7 @@ public class HumanCharacterController : MonoBehaviour
         {
             transform.parent = PlayerController.Instance.gameObject.transform;
             PlayerController.Instance.animator = npc.GetComponent<Animator>();
-            PlayerController.Instance.playerCamera.target = npc.transform;
+            PlayerController.Instance.playerCamera.UpdateTarget(npc.transform);
             npc.GetComponent<CharacterAnimationEvents>().Setup(PlayerCombat.Instance, PlayerController.Instance, PlayerInventory.Instance);
             PlayerController.Instance.PossessNPC(npc);
         }

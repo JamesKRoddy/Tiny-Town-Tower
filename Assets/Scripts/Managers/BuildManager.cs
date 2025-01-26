@@ -1,23 +1,22 @@
-using System;
 using UnityEngine;
 
-public class TurretManager : MonoBehaviour
+public class BuildManager : MonoBehaviour
 {
     // Singleton instance
-    private static TurretManager _instance;
+    private static BuildManager _instance;
 
     // Singleton property to get the instance
-    public static TurretManager Instance
+    public static BuildManager Instance
     {
         get
         {
             if (_instance == null)
             {
                 // Find the GameManager instance if it hasn't been assigned
-                _instance = FindFirstObjectByType<TurretManager>();
+                _instance = FindFirstObjectByType<BuildManager>();
                 if (_instance == null)
                 {
-                    Debug.LogWarning("TurretManager instance not found in the scene!");
+                    Debug.LogWarning("BuildManager instance not found in the scene!");
                 }
             }
             return _instance;
@@ -37,7 +36,7 @@ public class TurretManager : MonoBehaviour
         }
     }
 
-    [Header("Turret Grid")]
+    [Header("Build Grid")]
     [SerializeField] private Vector2 xBounds = new Vector2(-25f, 25f); // X-axis bounds for turret grid
     [SerializeField] private Vector2 zBounds = new Vector2(-25f, 25f); // Z-axis bounds for turret grid
     [SerializeField] bool showGridBounds;
