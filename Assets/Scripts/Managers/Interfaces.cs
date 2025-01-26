@@ -44,7 +44,9 @@ public interface IInteractive<out T> : IInteractiveBase
  * Setup zombie idle animations
  * Zombie death animations
  * Cleanup and moving onto new rooms
- * Look at implementing difficulty system
+ * Look at implementing difficulty system in roguelike controlled by buildings and floors
+ * survivour infection level, once filled they turn harming other npcs, drugs found during the day can reduce infection, slow it down or cure them
+ * 
  * 
  * CURRENT  WORK TURRETS
  * 

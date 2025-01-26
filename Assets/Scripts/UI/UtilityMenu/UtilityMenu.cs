@@ -74,7 +74,7 @@ public class UtilityMenu : MenuBase, IControllerInput
         {
             PlayerControlType controlType = PlayerInput.Instance.currentControlType;
 
-            if (controlType == PlayerControlType.CAMP_MOVEMENT || controlType == PlayerControlType.COMBAT_MOVEMENT)
+            if (controlType == PlayerControlType.CAMP_MOVEMENT || controlType == PlayerControlType.COMBAT_MOVEMENT || controlType == PlayerControlType.TURRET_PLACEMENT)
                 returnToControls = controlType;
         }
         else

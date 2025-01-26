@@ -28,7 +28,7 @@ public class PlayerController : HumanCharacterController, IControllerInput
     }
 
     [Header("NPC Possesion")]
-    public GameObject possesedNPC;
+    public GameObject possessedNPC;
 
     [Header("Camera")]
     public CameraFollow playerCamera;
@@ -77,26 +77,25 @@ public class PlayerController : HumanCharacterController, IControllerInput
             DontDestroyOnLoad(gameObject); // Optionally persist across scenes
         }
 
-        playerCollider = possesedNPC.GetComponent<Collider>();
+        playerCollider = possessedNPC.GetComponent<Collider>();
         playerCombat = GetComponent<PlayerCombat>();
     }
 
     void Start()
     {
-        if(possesedNPC != null)
-            ToggleNPCComponents(false, possesedNPC);
-
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
+        GameManager.Instance.OnGameModeChanged += OnGameModeChanged;
     }
 
     private void OnDestroy()
     {
         PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
+        GameManager.Instance.OnGameModeChanged -= OnGameModeChanged;
     }
 
     public void ToggleNPCComponents(bool isAIControlled)
     {
-        base.ToggleNPCComponents(isAIControlled, possesedNPC);
+        base.ToggleNPCComponents(isAIControlled, possessedNPC);
     }
 
     private void Update()
@@ -133,6 +132,29 @@ public class PlayerController : HumanCharacterController, IControllerInput
                     PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
                     PlayerInput.Instance.OnSelectPressed += OpenCampUtilityMenu;
                 }
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void OnGameModeChanged(CurrentGameMode currentGameMode)
+    {
+        switch (currentGameMode)
+        {
+            case CurrentGameMode.NONE:
+                break;
+            case CurrentGameMode.ROGUE_LITE:
+                if (possessedNPC != null)
+                    ToggleNPCComponents(false, possessedNPC);
+                break;
+            case CurrentGameMode.CAMP:
+                if (possessedNPC != null)
+                    ToggleNPCComponents(false, possessedNPC);
+                break;
+            case CurrentGameMode.TURRET:
+                if(possessedNPC != null)
+                    ToggleNPCComponents(true, possessedNPC);
                 break;
             default:
                 break;
@@ -196,10 +218,10 @@ public class PlayerController : HumanCharacterController, IControllerInput
     private bool CanVault(out RaycastHit hitInfo)
     {
         // Cast a ray from the player's chest height to detect obstacles suitable for vaulting
-        Vector3 rayOrigin = possesedNPC.transform.position + Vector3.up * vaultHeight;
+        Vector3 rayOrigin = possessedNPC.transform.position + Vector3.up * vaultHeight;
 
         // Cast a ray forward to see if there's an object to vault over
-        if (Physics.Raycast(rayOrigin, possesedNPC.transform.forward, out hitInfo, vaultDetectionRange, vaultLayer))
+        if (Physics.Raycast(rayOrigin, possessedNPC.transform.forward, out hitInfo, vaultDetectionRange, vaultLayer))
         {
             // Only consider vaulting if the player is actively moving towards the object
             if (movementInput.magnitude > 0.1f)
@@ -215,8 +237,8 @@ public class PlayerController : HumanCharacterController, IControllerInput
     private void CalculateVaultTarget(RaycastHit hitInfo)
     {
         // Calculate the vault target position by moving past the hit point in the player's forward direction
-        vaultTargetPosition = hitInfo.point + possesedNPC.transform.forward * vaultOffset;
-        vaultTargetPosition.y = possesedNPC.transform.position.y; // Keep the target position at player's current y level
+        vaultTargetPosition = hitInfo.point + possessedNPC.transform.forward * vaultOffset;
+        vaultTargetPosition.y = possessedNPC.transform.position.y; // Keep the target position at player's current y level
     }
 
     private void StartDash()
@@ -251,12 +273,12 @@ public class PlayerController : HumanCharacterController, IControllerInput
         {
             // Move player towards the vault target position during vaulting
             float step = vaultSpeed * Time.deltaTime;
-            possesedNPC.transform.position = Vector3.Lerp(possesedNPC.transform.position, vaultTargetPosition, step);
+            possessedNPC.transform.position = Vector3.Lerp(possessedNPC.transform.position, vaultTargetPosition, step);
 
             // Snap player to the target vault position and end vault if close enough
-            if (Vector3.Distance(possesedNPC.transform.position, vaultTargetPosition) < 0.1f)
+            if (Vector3.Distance(possessedNPC.transform.position, vaultTargetPosition) < 0.1f)
             {
-                possesedNPC.transform.position = vaultTargetPosition; // Snap to position
+                possessedNPC.transform.position = vaultTargetPosition; // Snap to position
                 FinishVault();
             }
         }
@@ -295,11 +317,11 @@ public class PlayerController : HumanCharacterController, IControllerInput
                 }
                 else
                 {
-                    possesedNPC.transform.position += targetMovement;
+                    possessedNPC.transform.position += targetMovement;
 
                     // Rotate player towards the current direction
                     Quaternion targetRotation = Quaternion.LookRotation(currentDirection);
-                    possesedNPC.transform.rotation = Quaternion.RotateTowards(possesedNPC.transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+                    possessedNPC.transform.rotation = Quaternion.RotateTowards(possessedNPC.transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
                 }
             }
             else
@@ -309,13 +331,13 @@ public class PlayerController : HumanCharacterController, IControllerInput
 
                 if (!IsObstacleInPath(targetMovement, out RaycastHit hitInfo))
                 {
-                    possesedNPC.transform.position += targetMovement;
+                    possessedNPC.transform.position += targetMovement;
 
                     // Rotate player towards the input direction
                     if (movementInput != Vector3.zero && !isVaulting)
                     {
                         Quaternion targetRotation = Quaternion.LookRotation(movementInput);
-                        possesedNPC.transform.rotation = Quaternion.RotateTowards(possesedNPC.transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+                        possessedNPC.transform.rotation = Quaternion.RotateTowards(possessedNPC.transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
                     }
                 }
                 else
@@ -329,8 +351,8 @@ public class PlayerController : HumanCharacterController, IControllerInput
 
     private bool IsObstacleInPath(Vector3 direction, out RaycastHit hitInfo)
     {
-        Vector3 capsuleBottom = possesedNPC.transform.position + Vector3.up * 0.1f; // Slightly above ground to avoid terrain issues
-        Vector3 capsuleTop = possesedNPC.transform.position + Vector3.up * playerCollider.bounds.size.y;
+        Vector3 capsuleBottom = possessedNPC.transform.position + Vector3.up * 0.1f; // Slightly above ground to avoid terrain issues
+        Vector3 capsuleTop = possessedNPC.transform.position + Vector3.up * playerCollider.bounds.size.y;
 
         // Perform a capsule cast to detect obstacles in the path using obstacleLayer
         if (Physics.CapsuleCast(capsuleBottom, capsuleTop, capsuleCastRadius, direction.normalized, out hitInfo, capsuleCastRadius, obstacleLayer | vaultLayer))
@@ -354,9 +376,9 @@ public class PlayerController : HumanCharacterController, IControllerInput
     {
         // Vault detection raycast visualization
         Gizmos.color = Color.cyan;
-        Vector3 rayOrigin = possesedNPC.transform.position + Vector3.up * vaultHeight;
-        Gizmos.DrawLine(rayOrigin, rayOrigin + possesedNPC.transform.forward * vaultDetectionRange);
-        Gizmos.DrawWireSphere(rayOrigin + possesedNPC.transform.forward * vaultDetectionRange, 0.1f);
+        Vector3 rayOrigin = possessedNPC.transform.position + Vector3.up * vaultHeight;
+        Gizmos.DrawLine(rayOrigin, rayOrigin + possessedNPC.transform.forward * vaultDetectionRange);
+        Gizmos.DrawWireSphere(rayOrigin + possessedNPC.transform.forward * vaultDetectionRange, 0.1f);
 
         // Vault target position visualization
         if (isVaulting)
@@ -370,8 +392,8 @@ public class PlayerController : HumanCharacterController, IControllerInput
 
         if (playerCollider != null)
         {
-            Vector3 capsuleBottom = possesedNPC.transform.position + Vector3.up * 0.1f; // Slightly above ground
-            Vector3 capsuleTop = possesedNPC.transform.position + Vector3.up * playerCollider.bounds.size.y;
+            Vector3 capsuleBottom = possessedNPC.transform.position + Vector3.up * 0.1f; // Slightly above ground
+            Vector3 capsuleTop = possessedNPC.transform.position + Vector3.up * playerCollider.bounds.size.y;
 
             Gizmos.DrawWireSphere(capsuleBottom, capsuleCastRadius);
             Gizmos.DrawWireSphere(capsuleTop, capsuleCastRadius);
