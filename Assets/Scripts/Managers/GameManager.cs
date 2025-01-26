@@ -28,7 +28,7 @@ public class GameManager : MonoBehaviour
     public event Action<CurrentGameMode> OnGameModeChanged;
 
     // Private backing field for the current game mode
-    private CurrentGameMode _currentGameMode = CurrentGameMode.NONE;
+    [SerializeField] private CurrentGameMode _currentGameMode = CurrentGameMode.NONE;
 
     // Property to get and set the current game mode
     public CurrentGameMode CurrentGameMode
@@ -63,7 +63,6 @@ public class GameManager : MonoBehaviour
     // Start is called once before the first execution of Update
     void Start()
     {
-        // Example usage: Setting the initial game mode
-        //CurrentGameMode = CurrentGameMode.ROGUE_LITE;
+        OnGameModeChanged(_currentGameMode);
     }
 }

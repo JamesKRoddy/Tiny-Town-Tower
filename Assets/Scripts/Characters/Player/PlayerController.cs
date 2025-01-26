@@ -39,7 +39,7 @@ public class PlayerController : HumanCharacterController, IControllerInput
     }
 
     [Header("Camera")]
-    public CameraFollow playerCamera;
+    public PlayerCamera playerCamera;
 
     [Header("Movement Parameters")]
     public float dashSpeed = 20f; // Speed during a dash
@@ -151,6 +151,11 @@ public class PlayerController : HumanCharacterController, IControllerInput
                 {
                     PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
                     PlayerInput.Instance.OnSelectPressed += OpenCampUtilityMenu;
+                }
+                break;
+            case PlayerControlType.TURRET_MOVEMENT:
+                {
+
                 }
                 break;
             default:

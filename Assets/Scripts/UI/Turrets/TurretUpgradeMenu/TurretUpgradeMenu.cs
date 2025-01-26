@@ -57,6 +57,13 @@ public class TurretUpgradeMenu : MenuBase, IControllerInput
         }
     }
 
+    public void OnDestroy()
+    {
+        if (PlayerInput.Instance != null)
+            PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
+    }
+
+
     public override void SetScreenActive(bool active, float delay = 0)
     {
         PlayerUIManager.Instance.SetScreenActive(this, active, delay);

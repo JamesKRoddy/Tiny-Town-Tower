@@ -41,12 +41,12 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
 
     protected override void NotifyControlTypeChange()
     {
-        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.BUILDING);
+        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.BUILDING_PLACEMENT);
     }
 
     protected override void HandleControlTypeUpdate(PlayerControlType controlType)
     {
-        if (controlType == PlayerControlType.BUILDING)
+        if (controlType == PlayerControlType.BUILDING_PLACEMENT)
         {
             EnableGrid();
             PlayerInput.Instance.OnLeftJoystick += HandleJoystickMovement;

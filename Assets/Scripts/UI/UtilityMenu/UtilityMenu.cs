@@ -154,7 +154,7 @@ public class UtilityMenu : MenuBase, IControllerInput
                 buildMenuBtn.gameObject.SetActive(true);
                 settlerNPCBtn.gameObject.SetActive(true);
                 break;
-            case PlayerControlType.TURRET_PLACEMENT:
+            case PlayerControlType.TURRET_MOVEMENT:
                 turretBuildBtn.gameObject.SetActive(true);
                 break;
             default:

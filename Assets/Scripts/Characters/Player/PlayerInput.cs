@@ -160,7 +160,7 @@ public class PlayerInput : MonoBehaviour
                 UpdatePlayerControls(PlayerControlType.CAMP_MOVEMENT);
                 break;
             case CurrentGameMode.TURRET:
-                UpdatePlayerControls(PlayerControlType.TURRET_PLACEMENT);
+                UpdatePlayerControls(PlayerControlType.TURRET_MOVEMENT);
                 break;
             default:
                 UpdatePlayerControls(PlayerControlType.NONE);

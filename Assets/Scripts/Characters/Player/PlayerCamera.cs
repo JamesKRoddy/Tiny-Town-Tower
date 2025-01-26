@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class CameraFollow : MonoBehaviour
+public class PlayerCamera : MonoBehaviour
 {
     public Transform target;          // The player or target to follow
     public Vector3 offset = new Vector3(0, 10, -10);  // Default offset position
