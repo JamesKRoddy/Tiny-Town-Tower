@@ -65,6 +65,9 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     private void Update()
     {
+        if (PlayerController.Instance.PossessedNPC == null)
+            return;
+
         if (PlayerInput.Instance.currentControlType != PlayerControlType.IN_CONVERSATION)
             DetectInteraction(); // Detect if the player is looking at a chest
         else

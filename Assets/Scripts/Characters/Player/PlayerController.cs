@@ -117,6 +117,9 @@ public class PlayerController : HumanCharacterController, IControllerInput
 
     private void Update()
     {
+        if (PlayerController.Instance.PossessedNPC == null)
+            return;
+
         HandleDash();
         MoveCharacter();
         UpdateAnimations();
