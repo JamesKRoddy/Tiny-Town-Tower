@@ -117,7 +117,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     private void DetectInteraction()
     {
         RaycastHit hit;
-        if (Physics.Raycast(PlayerController.Instance.possessedNPC.transform.position + Vector3.up, PlayerController.Instance.possessedNPC.transform.transform.forward, out hit, interactionRange))
+        if (Physics.Raycast(PlayerController.Instance.PossessedNPC.transform.position + Vector3.up, PlayerController.Instance.PossessedNPC.transform.transform.forward, out hit, interactionRange))
         {
             IInteractiveBase interactive = hit.collider.GetComponent<IInteractiveBase>();
 
@@ -188,6 +188,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     protected override Transform GetCharacterTransform()
     {
-        return PlayerController.Instance.possessedNPC.transform;
+        return PlayerController.Instance.PossessedNPC.transform;
     }
 }

@@ -41,7 +41,7 @@ public class EnemySpawnPoint : MonoBehaviour
                 Debug.LogError("EnemySpawnPoint incorrectly setup");
                 return null;
             case EnemyTargetType.PLAYER:
-                enemyTarget = PlayerController.Instance.possessedNPC.transform;
+                enemyTarget = PlayerController.Instance.PossessedNPC.transform;
                 enemyBase.Setup(enemyTarget);
                 break;
             case EnemyTargetType.CLOSEST_NPC: //TODO set this up for the enemy to attack whatevers closest

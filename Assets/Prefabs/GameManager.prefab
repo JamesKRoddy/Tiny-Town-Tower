@@ -126,10 +126,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   validPlacementMaterial: {fileID: 0}
   invalidPlacementMaterial: {fileID: 0}
-  gridPrefab: {fileID: 379150908590785279}
+  gridPrefab: {fileID: 1649997278618206, guid: 4ed3355cdb3d9424f8f80b2a79da3543, type: 3}
   gridDimensions: {x: 20, y: 20}
   gridOrigin: {x: 0, y: 0, z: 0}
-  gridParent: {fileID: 4068987886524942, guid: 4ed3355cdb3d9424f8f80b2a79da3543, type: 3}
+  gridParent: {fileID: 4644746889367459830}
 --- !u!1 &5052584228449062672
 GameObject:
   m_ObjectHideFlags: 0
