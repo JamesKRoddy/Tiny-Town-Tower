@@ -40,6 +40,12 @@ public class WanderState : _TaskState
             agent = npc.GetAgent(); // Store reference to NavMeshAgent
         }
 
+        if (!agent.isOnNavMesh)
+        {
+            Debug.LogWarning($"Agent {gameObject.name} not on a Navmesh", this);
+            return;
+        }
+
         if (!isWandering)
         {
             isWandering = true;
