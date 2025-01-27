@@ -155,7 +155,7 @@ public class PlayerController : HumanCharacterController, IControllerInput
                 break;
             case PlayerControlType.TURRET_MOVEMENT:
                 {
-
+                    PlayerInput.Instance.OnSelectPressed += OpenTurretUtilityMenu;
                 }
                 break;
             default:
@@ -198,6 +198,11 @@ public class PlayerController : HumanCharacterController, IControllerInput
     private void OpenCombatUtilityMenu()
     {
         UtilityMenu.Instance.OpenMenu(PlayerControlType.COMBAT_MOVEMENT);
+    }
+
+    private void OpenTurretUtilityMenu()
+    {
+        UtilityMenu.Instance.OpenMenu(PlayerControlType.TURRET_MOVEMENT);
     }
 
     private void HandleLeftJoystick(Vector2 input)

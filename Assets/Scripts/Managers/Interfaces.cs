@@ -46,6 +46,7 @@ public interface IInteractive<out T> : IInteractiveBase
  * Cleanup and moving onto new rooms
  * Look at implementing difficulty system in roguelike controlled by buildings and floors
  * survivour infection level, once filled they turn harming other npcs, drugs found during the day can reduce infection, slow it down or cure them
+ * Have to implement a system to move around buildings/turrets
  * 
  * 
  * CURRENT  WORK TURRETS

@@ -49,7 +49,6 @@ public class UtilityMenu : MenuBase, IControllerInput
         PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
 
         EventSystem.current.SetSelectedGameObject(playerInventoryBtn.gameObject);
-
     }
 
     void OnDestroy()
@@ -155,6 +154,7 @@ public class UtilityMenu : MenuBase, IControllerInput
                 settlerNPCBtn.gameObject.SetActive(true);
                 break;
             case PlayerControlType.TURRET_MOVEMENT:
+                playerInventoryBtn.gameObject.SetActive(true);
                 turretBuildBtn.gameObject.SetActive(true);
                 break;
             default:

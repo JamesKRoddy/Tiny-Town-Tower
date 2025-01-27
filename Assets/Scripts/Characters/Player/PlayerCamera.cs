@@ -35,17 +35,12 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
         switch (controlType)
         {
             case PlayerControlType.TURRET_PLACEMENT:
+                break;
             case PlayerControlType.TURRET_MOVEMENT:
                 target = null; // Detach from target to allow free camera movement
                 PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystickInput; // Subscribe to joystick input
                 break;
-
             default:
-                // Default behavior for other control types
-                if (target != null)
-                {
-                    PlayerInput.Instance.OnLeftJoystick -= HandleLeftJoystickInput; // Unsubscribe if not in turret modes
-                }
                 break;
         }
     }
