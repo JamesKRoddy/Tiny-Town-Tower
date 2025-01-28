@@ -19,6 +19,7 @@ public class SettlerNPC : HumanCharacterController
     {
         // Store the reference to NavMeshAgent once
         agent = GetComponent<NavMeshAgent>();
+        animator = GetComponent<Animator>();
 
         // Get all TaskState components attached to the SettlerNPC GameObject
         _TaskState[] states = GetComponents<_TaskState>();
@@ -39,8 +40,9 @@ public class SettlerNPC : HumanCharacterController
             ChangeState(taskStates[TaskType.WANDER]);
         }
 
-        if (PlayerController.Instance.PossessedNPC != gameObject)
+        if (PlayerController.Instance._possessedNPC != gameObject)
             ToggleNPCComponents(true, gameObject);
+
     }
 
     private void Update()

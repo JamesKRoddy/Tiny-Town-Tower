@@ -36,7 +36,6 @@ public class RogueLiteManager : MonoBehaviour
         else
         {
             _instance = this; // Set the instance
-            DontDestroyOnLoad(gameObject); // Optionally persist across scenes
         }
     }
 
@@ -177,9 +176,9 @@ public class RogueLiteManager : MonoBehaviour
 
     private void SetupPlayer()
     {
-        if (PlayerController.Instance != null && PlayerController.Instance.PossessedNPC != null)
+        if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null)
         {
-            PlayerController.Instance.PossessedNPC.transform.position = currentbuildingParent.GetComponent<RoomSectionRandomizer>().GetPlayerSpawnPoint();
+            PlayerController.Instance._possessedNPC.transform.position = currentbuildingParent.GetComponent<RoomSectionRandomizer>().GetPlayerSpawnPoint();
         }
     }
 }

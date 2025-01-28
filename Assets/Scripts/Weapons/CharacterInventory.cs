@@ -29,17 +29,15 @@ public class CharacterInventory : MonoBehaviour
     }
 
     public virtual void EquipWeapon(WeaponScriptableObj weaponScriptableObj)
-    {       
+    {
         // Validate the new weapon
         if (!IsValidWeaponPrefab(weaponScriptableObj))
         {
             Debug.LogWarning("Attempted to equip an invalid or null weapon scriptable object or prefab!");
             return;
         }
-
         // Unequip the currently equipped weapon
         UnequipCurrentWeapon();
-
         // Instantiate and equip the new weapon
         GameObject weapon = Instantiate(weaponScriptableObj.weaponPrefab, weaponHolder);
         equippedWeaponBase = weapon.GetComponent<WeaponBase>();

@@ -29,14 +29,14 @@ public class PlayerController : HumanCharacterController, IControllerInput
 
     [Header("NPC Possesion")]
     // Backing field
-    private GameObject _possessedNPC;
+    //private GameObject _possessedNPC;
 
     // Public property with a getter but private setter
-    public GameObject PossessedNPC
-    {
-        get { return _possessedNPC; }
-        private set { _possessedNPC = value; }
-    }
+    public GameObject _possessedNPC;
+    //{
+    //    get { return _possessedNPC; }
+    //    private set { _possessedNPC = value; }
+    //}
 
     [Header("Camera")]
     public PlayerCamera playerCamera;
@@ -92,6 +92,12 @@ public class PlayerController : HumanCharacterController, IControllerInput
     {
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
         GameManager.Instance.OnGameModeChanged += OnGameModeChanged;
+
+        //if(transform.GetComponentInChildren<SettlerNPC>() != null)
+        //{
+        //    PossessNPC(transform.GetComponentInChildren<SettlerNPC>().gameObject);
+            ToggleNPCComponents(false);
+        //}
     }
 
     private void OnDestroy()
@@ -117,7 +123,7 @@ public class PlayerController : HumanCharacterController, IControllerInput
 
     private void Update()
     {
-        if (PlayerController.Instance.PossessedNPC == null)
+        if (PlayerController.Instance._possessedNPC == null)
             return;
 
         HandleDash();

@@ -33,7 +33,6 @@ public class TurretManager : MonoBehaviour
         else
         {
             _instance = this; // Set the instance
-            DontDestroyOnLoad(gameObject); // Optionally persist across scenes
         }
     }
 

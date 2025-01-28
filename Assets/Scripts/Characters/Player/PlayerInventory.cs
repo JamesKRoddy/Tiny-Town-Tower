@@ -65,7 +65,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     private void Update()
     {
-        if (PlayerController.Instance.PossessedNPC == null)
+        if (PlayerController.Instance._possessedNPC == null)
             return;
 
         if (PlayerInput.Instance.currentControlType != PlayerControlType.IN_CONVERSATION)
@@ -120,7 +120,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     private void DetectInteraction()
     {
         RaycastHit hit;
-        if (Physics.Raycast(PlayerController.Instance.PossessedNPC.transform.position + Vector3.up, PlayerController.Instance.PossessedNPC.transform.transform.forward, out hit, interactionRange))
+        if (Physics.Raycast(PlayerController.Instance._possessedNPC.transform.position + Vector3.up, PlayerController.Instance._possessedNPC.transform.transform.forward, out hit, interactionRange))
         {
             IInteractiveBase interactive = hit.collider.GetComponent<IInteractiveBase>();
 
@@ -191,6 +191,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     protected override Transform GetCharacterTransform()
     {
-        return PlayerController.Instance.PossessedNPC.transform;
+        return PlayerController.Instance._possessedNPC.transform;
     }
 }
