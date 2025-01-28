@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2686641998464454413}
+  - component: {fileID: 4263922213240884375}
   m_Layer: 0
   m_Name: AttackVFX
   m_TagString: Untagged
@@ -29,12 +30,28 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 2778890788061940017}
   - {fileID: 4573978088541020853}
+  - {fileID: 2778890788061940017}
   - {fileID: 4749021119175381470}
   - {fileID: 214912892486926426}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4263922213240884375
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8217325088818768309}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d874515f07b78f45a8a79d24ca7378d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  horizontalLeftVfx: {fileID: 780586559784655579}
+  horizontalRightVfx: {fileID: 7392040141348495613}
+  verticalDownVfx: {fileID: 5271461225757467525}
+  verticalUpVfx: {fileID: 8588038562099722752}
 --- !u!1001 &3566041179973685196
 PrefabInstance:
   m_ObjectHideFlags: 0

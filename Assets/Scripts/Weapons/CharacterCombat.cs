@@ -10,6 +10,7 @@ public class CharacterCombat : MonoBehaviour
     public virtual void Start() //TODO add this to the event for when a player takes over an NPC
     {
         characterInventory = GetComponentInParent<CharacterInventory>();
+        attackVFXHolder = GetComponentInChildren<AttackVFXHolder>();
     }
 
     public void AttackVFX(int attackDirection)
