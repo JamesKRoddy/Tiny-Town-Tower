@@ -22,11 +22,6 @@ public class CharacterInventory : MonoBehaviour
 
     public virtual void Start()
     {
-        if (weaponHolder == null)
-        {
-            Debug.LogError("WeaponHolder not assigned!");
-        }
-
         if(equippedWeaponScriptObj != null)
         {
             EquipWeapon(equippedWeaponScriptObj);

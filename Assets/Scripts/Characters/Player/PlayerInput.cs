@@ -136,6 +136,8 @@ public class PlayerInput : MonoBehaviour
 
     public void UpdatePlayerControls(PlayerControlType playerControlType)
     {
+        Debug.Log($"Update Controls playerControlType : {playerControlType}");
+
         currentControlType = playerControlType;
 
         UnsubscribeAll();
@@ -144,31 +146,26 @@ public class PlayerInput : MonoBehaviour
     }
 
     // This method will be called when the game mode changes
-    public void UpdatePlayerControls(CurrentGameMode gameMode) //TODO refactor this to call public void UpdatePlayerControls(PlayerControlType playerControlType) so its all happening in one place and only if the gamemode is different to the current controls
+    public void UpdatePlayerControls(CurrentGameMode gameMode)
     {
-        Debug.Log($"Update Controls: {gameMode}");
-
-        UnsubscribeAll();
+        Debug.Log($"Update Controls gameMode : {gameMode}");
 
         // Logic to update the control type based on game mode
         switch (gameMode)
         {
             case CurrentGameMode.ROGUE_LITE:
-                currentControlType = PlayerControlType.COMBAT_MOVEMENT;
+                UpdatePlayerControls(PlayerControlType.COMBAT_MOVEMENT);
                 break;
             case CurrentGameMode.CAMP:
-                currentControlType = PlayerControlType.CAMP_MOVEMENT;
+                UpdatePlayerControls(PlayerControlType.CAMP_MOVEMENT);
                 break;
             case CurrentGameMode.TURRET:
-                currentControlType = PlayerControlType.TURRET;
+                UpdatePlayerControls(PlayerControlType.TURRET_MOVEMENT);
                 break;
             default:
-                currentControlType = PlayerControlType.NONE;
+                UpdatePlayerControls(PlayerControlType.NONE);
                 break;
         }
-
-        // Notify any listeners of the updated control type
-        OnUpdatePlayerControls?.Invoke(currentControlType);
     }
 
 

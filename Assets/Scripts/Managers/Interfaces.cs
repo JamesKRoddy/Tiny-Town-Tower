@@ -42,20 +42,20 @@ public interface IInteractive<out T> : IInteractiveBase
  * Have to create an event for the swap its too messy with references at the moment
  * Closing out of settler menu how to properly reset the player controls to in game
  * Setup zombie idle animations
- * 
- * TODAY 04/01/25 
  * Zombie death animations
  * Cleanup and moving onto new rooms
- * Look at implementing difficulty system
+ * Look at implementing difficulty system in roguelike controlled by buildings and floors
+ * survivour infection level, once filled they turn harming other npcs, drugs found during the day can reduce infection, slow it down or cure them
+ * Have to implement a system to move around buildings/turrets
  * 
  * 
+ * CURRENT  WORK TURRETS
  * 
  * 
  * 
  * 
  * Next Large things to move onto
  * Genetic mutations
- * Turrets
  * Over world
  *  
  */

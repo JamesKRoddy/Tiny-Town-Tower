@@ -52,10 +52,11 @@ public enum PlayerControlType
     NONE, // Default
     COMBAT_MOVEMENT, // In combat during roguelike sections
     CAMP_MOVEMENT, // Player's movement in the camp
-    BUILDING, // Placing a building from the build menu
+    BUILDING_PLACEMENT, // Placing a building from the build menu
     IN_CONVERSATION, // Talking to an NPC
     IN_MENU, // In any menu
-    TURRET
+    TURRET_MOVEMENT, //Default
+    TURRET_PLACEMENT // Placing a turret from the turret menu
 }
 
 // =========================
@@ -172,6 +173,15 @@ public enum WeaponAnimationType
 }
 
 public enum GeneticMutation
+{
+    NONE
+}
+
+// =========================
+// TURRET ENUMS
+// =========================
+
+public enum TurretCategory
 {
     NONE
 }

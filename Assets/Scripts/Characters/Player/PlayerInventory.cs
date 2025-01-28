@@ -65,6 +65,9 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     private void Update()
     {
+        if (PlayerController.Instance.PossessedNPC == null)
+            return;
+
         if (PlayerInput.Instance.currentControlType != PlayerControlType.IN_CONVERSATION)
             DetectInteraction(); // Detect if the player is looking at a chest
         else
@@ -117,7 +120,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     private void DetectInteraction()
     {
         RaycastHit hit;
-        if (Physics.Raycast(PlayerController.Instance.possesedNPC.transform.position + Vector3.up, PlayerController.Instance.possesedNPC.transform.transform.forward, out hit, interactionRange))
+        if (Physics.Raycast(PlayerController.Instance.PossessedNPC.transform.position + Vector3.up, PlayerController.Instance.PossessedNPC.transform.transform.forward, out hit, interactionRange))
         {
             IInteractiveBase interactive = hit.collider.GetComponent<IInteractiveBase>();
 
@@ -188,6 +191,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     protected override Transform GetCharacterTransform()
     {
-        return PlayerController.Instance.possesedNPC.transform;
+        return PlayerController.Instance.PossessedNPC.transform;
     }
 }

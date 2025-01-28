@@ -39,7 +39,7 @@ public class SettlerNPC : HumanCharacterController
             ChangeState(taskStates[TaskType.WANDER]);
         }
 
-        if (PlayerController.Instance.possesedNPC != gameObject)
+        if (PlayerController.Instance.PossessedNPC != gameObject)
             ToggleNPCComponents(true, gameObject);
     }
 

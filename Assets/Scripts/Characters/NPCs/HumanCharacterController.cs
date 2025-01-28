@@ -32,14 +32,14 @@ public class HumanCharacterController : MonoBehaviour
             npc.transform.SetParent(null);
             npc.GetComponent<SettlerNPC>().ChangeTask(TaskType.WANDER);
             npc.GetComponent<CharacterAnimationEvents>().Setup();
-}
+        }
         else
         {
             transform.parent = PlayerController.Instance.gameObject.transform;
             PlayerController.Instance.animator = npc.GetComponent<Animator>();
-            PlayerController.Instance.playerCamera.target = npc.transform;
+            PlayerController.Instance.playerCamera.UpdateTarget(npc.transform);
             npc.GetComponent<CharacterAnimationEvents>().Setup(PlayerCombat.Instance, PlayerController.Instance, PlayerInventory.Instance);
-            PlayerController.Instance.possesedNPC = npc;
+            PlayerController.Instance.PossessNPC(npc);
         }
     }
 
