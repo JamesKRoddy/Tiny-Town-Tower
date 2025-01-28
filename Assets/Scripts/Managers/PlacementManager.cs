@@ -16,7 +16,7 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
     protected GameObject currentPreview;
     protected T selectedObject;
     protected Vector3 currentGridPosition;
-    protected float gridSize = 1f;
+    protected float gridSize = 2f;
 
     private Dictionary<Vector3, GameObject> gridObjects;
 
