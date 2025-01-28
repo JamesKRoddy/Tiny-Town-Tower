@@ -3,11 +3,7 @@ using UnityEngine;
 
 public class CharacterCombat : MonoBehaviour
 {
-    [Header("Melee VFX")]
-    public MeleeAttackVFX horizontalLeftVfx;
-    public MeleeAttackVFX horizontalRightVfx;
-    public MeleeAttackVFX verticalDownVfx;
-    public MeleeAttackVFX verticalUpVfx;
+    private AttackVFXHolder attackVFXHolder;
 
     private CharacterInventory characterInventory;
 
@@ -54,16 +50,16 @@ public class CharacterCombat : MonoBehaviour
         switch (attackDirection)
         {
             case MeleeAttackDirection.HORIZONTAL_LEFT:
-                horizontalLeftVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
+                attackVFXHolder.horizontalLeftVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
                 break;
             case MeleeAttackDirection.HORIZONTAL_RIGHT:
-                horizontalRightVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
+                attackVFXHolder.horizontalRightVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
                 break;
             case MeleeAttackDirection.VERTICAL_DOWN:
-                verticalDownVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
+                attackVFXHolder.verticalDownVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
                 break;
             case MeleeAttackDirection.VERTICAL_UP:
-                verticalUpVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
+                attackVFXHolder.verticalUpVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
                 break;
             default:
                 Debug.LogWarning("Invalid attack direction.");
@@ -73,10 +69,10 @@ public class CharacterCombat : MonoBehaviour
 
     private void StopAllMeleeVFX(MeleeWeapon meleeWeapon)
     {
-        horizontalLeftVfx.Stop(meleeWeapon.weaponScriptableObj.weaponElement);
-        horizontalRightVfx.Stop(meleeWeapon.weaponScriptableObj.weaponElement);
-        verticalDownVfx.Stop(meleeWeapon.weaponScriptableObj.weaponElement);
-        verticalUpVfx.Stop(meleeWeapon.weaponScriptableObj.weaponElement);
+        attackVFXHolder.horizontalLeftVfx.Stop(meleeWeapon.weaponScriptableObj.weaponElement);
+        attackVFXHolder.horizontalRightVfx.Stop(meleeWeapon.weaponScriptableObj.weaponElement);
+        attackVFXHolder.verticalDownVfx.Stop(meleeWeapon.weaponScriptableObj.weaponElement);
+        attackVFXHolder.verticalUpVfx.Stop(meleeWeapon.weaponScriptableObj.weaponElement);
     }
 
     private void RangedAttackVFX(RangedWeapon rangedWeapon)

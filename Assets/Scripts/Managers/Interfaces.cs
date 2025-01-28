@@ -49,7 +49,11 @@ public interface IInteractive<out T> : IInteractiveBase
  * Have to implement a system to move around buildings/turrets
  * 
  * 
- * CURRENT  WORK TURRETS
+ * CURRENT  WORK TURRETS ******* PUT On HOLD *******
+ * 
+ * 
+ * Curent work refactoring player
+ * melee weapon vfx references not updating
  * 
  * 
  * 
