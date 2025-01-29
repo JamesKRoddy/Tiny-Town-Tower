@@ -12,7 +12,7 @@ public class CharacterCombat : MonoBehaviour
 
     protected virtual void Awake()
     {
-        characterInventory = GetComponentInParent<CharacterInventory>();
+        characterInventory = GetComponent<CharacterInventory>();
         attackVFXHolder = GetComponentInChildren<AttackVFXHolder>();
         dashVfx = GetComponentInChildren<DashVFX>();
         dashVfxPoint = attackVFXHolder.GetDashTransform();
