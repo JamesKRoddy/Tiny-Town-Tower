@@ -6,24 +6,13 @@ public class WorkState : _TaskState
     private WorkTask assignedTask;
     private bool isTaskBeingPerformed;
 
-    private void Awake()
+    protected override void Awake()
     {
-        // Ensure NPC reference is set when the state starts
-        if (npc == null)
-        {
-            SetNPCReference(GetComponent<SettlerNPC>());
-        }
-
-        agent = npc.GetAgent(); // Store reference to NavMeshAgent
+        base.Awake();
     }
 
     public override void OnEnterState()
     {
-        if(agent == null)
-        {
-            agent = npc.GetAgent(); // Store reference to NavMeshAgent
-        }
-
         // Work state logic can be added here
         Debug.Log("Starting Work task");
 
@@ -55,7 +44,7 @@ public class WorkState : _TaskState
     {
         // Exit work state logic
         Debug.Log("Exiting Work task");
-        npc.animator.SetInteger("WorkType", 0);
+        animator.SetInteger("WorkType", 0);
         assignedTask.StopWork -= StopWork;
         assignedTask = null; // Reset task        
     }
@@ -73,7 +62,7 @@ public class WorkState : _TaskState
                 if (!isTaskBeingPerformed)
                 {
                     assignedTask.PerformTask(npc);
-                    npc.animator.SetInteger("WorkType", (int)assignedTask.workType);  // Set animator for the task
+                    animator.SetInteger("WorkType", (int)assignedTask.workType);  // Set animator for the task
                     isTaskBeingPerformed = true;  // Prevent multiple task starts
                 }
             }
@@ -82,7 +71,7 @@ public class WorkState : _TaskState
                 // Reset animator when the NPC leaves the task location
                 if (isTaskBeingPerformed)
                 {
-                    npc.animator.SetInteger("WorkType", 0);  // Reset the WorkType
+                    animator.SetInteger("WorkType", 0);  // Reset the WorkType
                     isTaskBeingPerformed = false;  // Reset task flag
                 }
             }

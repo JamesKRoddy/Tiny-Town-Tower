@@ -92,4 +92,9 @@ public class SettlerNPC : HumanCharacterController
     {
         return agent; // Return the stored NavMeshAgent reference
     }
+
+    public Animator GetAnimator()
+    {
+        return animator;
+    }
 }

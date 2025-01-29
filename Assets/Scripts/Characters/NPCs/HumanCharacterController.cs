@@ -9,7 +9,7 @@ public class HumanCharacterController : MonoBehaviour
 
     protected bool isAttacking; // Whether the player is currently attacking
 
-    public Animator animator;
+    protected Animator animator;
     protected CharacterCombat characterCombat;
 
     /// <summary>

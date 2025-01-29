@@ -12,15 +12,9 @@ public class WanderState : _TaskState
 
     public float wanderRadius = 10f; // Allow wander radius to be modified in the Inspector
 
-    private void Awake()
+    protected override void Awake()
     {
-        // Ensure NPC reference is set when the state starts
-        if (npc == null)
-        {
-            SetNPCReference(GetComponent<SettlerNPC>());
-        }
-
-        agent = npc.GetAgent(); // Store reference to NavMeshAgent
+        base.Awake();
     }
 
     private void OnDisable() //TODO do this for all states

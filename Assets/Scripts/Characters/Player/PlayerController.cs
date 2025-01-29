@@ -28,15 +28,8 @@ public class PlayerController : HumanCharacterController, IControllerInput
     }
 
     [Header("NPC Possesion")]
-    // Backing field
-    //private GameObject _possessedNPC;
-
-    // Public property with a getter but private setter
     public GameObject _possessedNPC;
-    //{
-    //    get { return _possessedNPC; }
-    //    private set { _possessedNPC = value; }
-    //}
+
 
     [Header("Camera")]
     public PlayerCamera playerCamera;
@@ -119,6 +112,7 @@ public class PlayerController : HumanCharacterController, IControllerInput
     public void PossessNPC(GameObject npc)
     {
         _possessedNPC = npc;
+        animator = _possessedNPC.GetComponent<Animator>();
     }
 
     private void Update()
