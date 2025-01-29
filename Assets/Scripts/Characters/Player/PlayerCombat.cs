@@ -26,12 +26,7 @@ public class PlayerCombat : CharacterCombat
         }
     }
 
-
-    [Header("Dash VFX")]
-    public DashVFX dashVfx;
-    public Transform dashVfxPoint;
-
-    private void Awake()
+    protected override void Awake()
     {
         if (_instance != null && _instance != this)
         {
@@ -42,15 +37,13 @@ public class PlayerCombat : CharacterCombat
             _instance = this; // Set the instance
             DontDestroyOnLoad(gameObject); // Optionally persist across scenes
         }
+
+        base.Awake();
     }
 
-    public override void Start()
+    private void OnDisable()
     {
-        base.Start();
-    }
-
-    public void DashVFX()
-    {
-        dashVfx.Play(PlayerInventory.Instance.dashElement, dashVfxPoint);
+        Debug.Log("*****");
+        Debug.Log("*****");
     }
 }

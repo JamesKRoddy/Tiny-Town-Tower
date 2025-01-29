@@ -7,10 +7,15 @@ public class CharacterCombat : MonoBehaviour
 
     private CharacterInventory characterInventory;
 
-    public virtual void Start() //TODO add this to the event for when a player takes over an NPC
+    private DashVFX dashVfx;
+    private Transform dashVfxPoint;
+
+    protected virtual void Awake()
     {
         characterInventory = GetComponentInParent<CharacterInventory>();
         attackVFXHolder = GetComponentInChildren<AttackVFXHolder>();
+        dashVfx = GetComponentInChildren<DashVFX>();
+        dashVfxPoint = attackVFXHolder.GetDashTransform();
     }
 
     public void AttackVFX(int attackDirection)
@@ -26,7 +31,7 @@ public class CharacterCombat : MonoBehaviour
         switch (equippedWeapon.weaponPrefab.GetComponent<WeaponBase>())
         {
             case MeleeWeapon meleeWeapon:
-                MeleeAttackVFX((MeleeAttackDirection)attackDirection, meleeWeapon);
+                attackVFXHolder.MeleeAttackVFX((MeleeAttackDirection)attackDirection, meleeWeapon);
                 break;
 
             case RangedWeapon rangedWeapon:
@@ -41,40 +46,7 @@ public class CharacterCombat : MonoBehaviour
                 Debug.LogWarning($"{equippedWeapon.name} is of an unsupported weapon type!");
                 break;
         }
-    }
-
-    public void MeleeAttackVFX(MeleeAttackDirection attackDirection, MeleeWeapon meleeWeapon)
-    {
-        // Stop all VFX to reset their states
-        StopAllMeleeVFX(meleeWeapon);
-
-        switch (attackDirection)
-        {
-            case MeleeAttackDirection.HORIZONTAL_LEFT:
-                attackVFXHolder.horizontalLeftVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
-                break;
-            case MeleeAttackDirection.HORIZONTAL_RIGHT:
-                attackVFXHolder.horizontalRightVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
-                break;
-            case MeleeAttackDirection.VERTICAL_DOWN:
-                attackVFXHolder.verticalDownVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
-                break;
-            case MeleeAttackDirection.VERTICAL_UP:
-                attackVFXHolder.verticalUpVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
-                break;
-            default:
-                Debug.LogWarning("Invalid attack direction.");
-                break;
-        }
-    }
-
-    private void StopAllMeleeVFX(MeleeWeapon meleeWeapon)
-    {
-        attackVFXHolder.horizontalLeftVfx.Stop(meleeWeapon.weaponScriptableObj.weaponElement);
-        attackVFXHolder.horizontalRightVfx.Stop(meleeWeapon.weaponScriptableObj.weaponElement);
-        attackVFXHolder.verticalDownVfx.Stop(meleeWeapon.weaponScriptableObj.weaponElement);
-        attackVFXHolder.verticalUpVfx.Stop(meleeWeapon.weaponScriptableObj.weaponElement);
-    }
+    }    
 
     private void RangedAttackVFX(RangedWeapon rangedWeapon)
     {
@@ -90,5 +62,10 @@ public class CharacterCombat : MonoBehaviour
     {
         if (characterInventory.equippedWeaponBase != null)
             characterInventory.equippedWeaponBase.StopUse();
+    }
+
+    public void DashVFX()
+    {
+        dashVfx.Play(PlayerInventory.Instance.dashElement, dashVfxPoint);
     }
 }

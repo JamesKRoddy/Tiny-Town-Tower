@@ -1556,6 +1556,8 @@ GameObject:
   - component: {fileID: 4931471072091272626}
   - component: {fileID: 1203203454930544501}
   - component: {fileID: 2254817619120094739}
+  - component: {fileID: 8320294776751182447}
+  - component: {fileID: 593422880817215953}
   - component: {fileID: 1287946293633936085}
   - component: {fileID: 4868853620621953941}
   - component: {fileID: 3754499901241065424}
@@ -1580,7 +1582,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 2438557977848960721}
   - {fileID: 7034930588691365147}
   - {fileID: 5045964284803098155}
   - {fileID: 1898180869485109804}
@@ -1702,6 +1703,34 @@ MonoBehaviour:
   playerCombat: {fileID: 0}
   playerController: {fileID: 0}
   playerInventory: {fileID: 0}
+--- !u!114 &8320294776751182447
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2985604360754162274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d2fd7b150acdc64b980aae0097c4fd2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  equippedWeaponScriptObj: {fileID: 0}
+  equippedWeaponBase: {fileID: 0}
+  weaponHolder: {fileID: 0}
+  inventoryList: []
+--- !u!114 &593422880817215953
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2985604360754162274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37936d33caa405f4a87ac73e6d80133c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &1287946293633936085
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1716,7 +1745,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveMaxSpeed: 10
   rotationSpeed: 720
-  animator: {fileID: 282148053366822605}
   nPCDataObj: {fileID: 11400000, guid: ff84a74ffbac90849b0eb152033e7ac8, type: 2}
 --- !u!114 &4868853620621953941
 MonoBehaviour:
@@ -1956,37 +1984,6 @@ Transform:
   - {fileID: 7115411711332369931}
   m_Father: {fileID: 8505407217946499174}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &3686623185128142091
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2438557977848960721}
-  m_Layer: 0
-  m_Name: DashPoint
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2438557977848960721
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3686623185128142091}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 1, z: -0.5}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4023079707919572210}
-  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
 --- !u!1 &3727320311929008492
 GameObject:
   m_ObjectHideFlags: 0

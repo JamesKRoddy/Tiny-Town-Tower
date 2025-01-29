@@ -30,7 +30,6 @@ public class PlayerController : HumanCharacterController, IControllerInput
     [Header("NPC Possesion")]
     public GameObject _possessedNPC;
 
-
     [Header("Camera")]
     public PlayerCamera playerCamera;
 

@@ -53,7 +53,7 @@ public interface IInteractive<out T> : IInteractiveBase
  * 
  * 
  * Curent work refactoring player
- * melee weapon vfx references not updating
+ * remove player parent classes just take over the npcs versions, have it all in the charater combat, character controller
  * 
  * 
  * 
