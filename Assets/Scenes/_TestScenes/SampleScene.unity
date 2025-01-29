@@ -333,7 +333,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1108052112129980, guid: e2d415ab74b8cd44d997ab29bd081294, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4106895909508856, guid: e2d415ab74b8cd44d997ab29bd081294, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1550,6 +1550,10 @@ PrefabInstance:
     - target: {fileID: 6477775522615659138, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
       propertyPath: m_Name
       value: BasicZombie
+      objectReference: {fileID: 0}
+    - target: {fileID: 6477775522615659138, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

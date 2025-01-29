@@ -154,6 +154,7 @@ MonoBehaviour:
   offset: {x: 0, y: 20, z: -20}
   followSpeed: 5
   rotationSpeed: 5
+  panSpeed: 20
 --- !u!1 &9124372233556808277
 GameObject:
   m_ObjectHideFlags: 0
@@ -204,7 +205,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e2434c58294ac18428d4e3d49852a163, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentControlType: 0
+  currentControlType: 1
 --- !u!114 &7394057616191428834
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -220,6 +221,7 @@ MonoBehaviour:
   moveMaxSpeed: 10
   rotationSpeed: 720
   animator: {fileID: 0}
+  _possessedNPC: {fileID: 0}
   playerCamera: {fileID: 102207026006429088}
   dashSpeed: 30
   dashDuration: 0.4
@@ -247,10 +249,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec197ca81624d044eb0b1832ce1d54eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  horizontalLeftVfx: {fileID: 0}
-  horizontalRightVfx: {fileID: 0}
-  verticalDownVfx: {fileID: 0}
-  verticalUpVfx: {fileID: 0}
   dashVfx: {fileID: 1068890609441434409}
   dashVfxPoint: {fileID: 0}
 --- !u!114 &5445671924862257595
@@ -265,14 +263,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1b7d717e4a3748942ac73353fb97a4f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  equippedWeaponScriptObj: {fileID: 0}
+  equippedWeaponScriptObj: {fileID: 11400000, guid: e6fde83523c7216478e945d81aedf237, type: 2}
   equippedWeaponBase: {fileID: 0}
   weaponHolder: {fileID: 0}
-  inventoryList:
-  - resource: {fileID: 11400000, guid: e9e256aa3d595cc46bfcc1c42f699df0, type: 2}
-    count: 10
-  - resource: {fileID: 11400000, guid: e6fde83523c7216478e945d81aedf237, type: 2}
-    count: 10
+  inventoryList: []
   interactionRange: 3
   geneticMutation: 0
   dashElement: 0
