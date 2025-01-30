@@ -24,6 +24,16 @@ public interface IInteractive<out T> : IInteractiveBase
     new T Interact(); // Hides the base Interact method with a strongly-typed version
 }
 
+public interface IPossessable
+{
+    void OnPossess();
+    void OnUnpossess();
+    void Movement(Vector3 movement);
+    void Attack();
+    void Dash();
+    Transform GetTransform();
+}
+
 /*
  * 
  * 
@@ -54,7 +64,7 @@ public interface IInteractive<out T> : IInteractiveBase
  * 
  * Curent work refactoring player
  * remove player parent classes just take over the npcs versions, have it all in the charater combat, character controller
- * 
+ * rework inventory system CharacterInventory.cs needs to be looked at read info at the top
  * 
  * 
  * 

@@ -9,6 +9,9 @@ public class InventoryItem
     public int count;
 }
 
+/// <summary>
+/// This is the NPCs characters inventory, once a player posesses an NPC items picked up are added to this inventory, once they return to base the items are added to the players inventory
+/// </summary>
 public class CharacterInventory : MonoBehaviour
 {
     [Header("Equipment")]
@@ -78,7 +81,7 @@ public class CharacterInventory : MonoBehaviour
         switch (equippedWeaponBase)
         {
             case MeleeWeapon meleeWeapon:
-                PlayerController.Instance.EquipMeleeWeapon((int)animationType);
+                GetComponent<HumanCharacterController>().EquipMeleeWeapon((int)animationType);
                 break;
             case RangedWeapon rangedWeapon:
                 Debug.LogError("TODO: Implement ranged weapon setup.");
