@@ -59,7 +59,10 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     public override void Start()
     {
-        base.Start();
+        if (equippedWeaponScriptObj != null && PlayerController.Instance._possessedNPC != null)
+        {
+            EquipWeapon(equippedWeaponScriptObj);
+        }
     }
 
 
@@ -191,6 +194,9 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     protected override Transform GetCharacterTransform()
     {
+        if (PlayerController.Instance._possessedNPC == null)
+            return null;
+
         return PlayerController.Instance._possessedNPC.GetTransform();
     }
 }

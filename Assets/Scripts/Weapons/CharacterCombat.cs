@@ -8,14 +8,12 @@ public class CharacterCombat : MonoBehaviour
     private CharacterInventory characterInventory;
 
     private DashVFX dashVfx;
-    private Transform dashVfxPoint;
 
     protected virtual void Awake()
     {
         characterInventory = GetComponent<CharacterInventory>();
         attackVFXHolder = GetComponentInChildren<AttackVFXHolder>();
         dashVfx = GetComponentInChildren<DashVFX>();
-        dashVfxPoint = attackVFXHolder.GetDashTransform();
     }
 
     public void AttackVFX(int attackDirection)
@@ -66,6 +64,6 @@ public class CharacterCombat : MonoBehaviour
 
     public void DashVFX()
     {
-        dashVfx.Play(PlayerInventory.Instance.dashElement, dashVfxPoint);
+        dashVfx.Play(PlayerInventory.Instance.dashElement, attackVFXHolder.GetDashTransform());
     }
 }
