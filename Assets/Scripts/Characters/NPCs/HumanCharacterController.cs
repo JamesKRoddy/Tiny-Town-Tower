@@ -16,6 +16,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable
 
     protected Animator animator;
     protected CharacterCombat characterCombat;
+    protected NavMeshAgent agent; // Reference to NavMeshAgent
 
     [Header("Vault Parameters")]
     public float vaultSpeed = 5f; // Slower speed for vaulting
@@ -28,7 +29,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable
     private Collider humanCollider;
 
     [Header("Input and Movement State")]
-    private Vector3 movementInput; // Stores the current movement input
+    protected Vector3 movementInput; // Stores the current movement input
     private bool isDashing = false; // Whether the player is currently dashing
     private bool isVaulting = false; // Whether the player is currently vaulting
 
@@ -41,7 +42,15 @@ public class HumanCharacterController : MonoBehaviour, IPossessable
     [Header("Vault State")]
     private Vector3 vaultTargetPosition; // Target position for vaulting
 
-    private void Update()
+    protected virtual void Awake()
+    {
+        // Store the reference to NavMeshAgent once
+        agent = GetComponent<NavMeshAgent>();
+        animator = GetComponent<Animator>();
+        humanCollider = GetComponent<Collider>();
+    }
+
+    public void PossessedUpdate()
     {
         HandleDash();
         MoveCharacter();
@@ -76,7 +85,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable
         if (narrativeInteractive != null) narrativeInteractive.enabled = isAIControlled;
 
         var settlerNPC = GetComponent<SettlerNPC>();
-        if (settlerNPC != null) settlerNPC.enabled = isAIControlled;
 
         foreach (var task in GetComponents<_TaskState>())
         {
@@ -90,6 +98,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable
         }
         else
         {
+            settlerNPC?.ChangeState(null);
             GetComponent<CharacterAnimationEvents>().Setup(PlayerCombat.Instance, this, PlayerInventory.Instance);
         }
     }

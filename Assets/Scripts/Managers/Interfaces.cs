@@ -28,6 +28,7 @@ public interface IPossessable
 {
     void OnPossess();
     void OnUnpossess();
+    void PossessedUpdate();
     void Movement(Vector3 movement);
     void Attack();
     void Dash();
@@ -63,7 +64,7 @@ public interface IPossessable
  * 
  * 
  * Curent work refactoring player
- * Looks like most of the refactor is done just have to remove errors, first thing is to set an inital possess character and have the player control it, then look at the rework of the possesion menu
+ * Possessed movement is being called but not correctly so have to look at that!!!!!
  * remove player parent classes just take over the npcs versions, have it all in the charater combat, character controller
  * rework inventory system CharacterInventory.cs needs to be looked at read info at the top
  * 

@@ -40,10 +40,4 @@ public class PlayerCombat : CharacterCombat
 
         base.Awake();
     }
-
-    private void OnDisable()
-    {
-        Debug.Log("*****");
-        Debug.Log("*****");
-    }
 }

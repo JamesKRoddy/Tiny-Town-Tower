@@ -61,6 +61,14 @@ public class PlayerController : MonoBehaviour, IControllerInput
         PossessNPC(_possessedNPC);
     }
 
+    void Update()
+    {
+        if (_possessedNPC != null)
+        {
+            _possessedNPC.PossessedUpdate();
+        }
+    }
+
     private void OnDestroy()
     {
         PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
