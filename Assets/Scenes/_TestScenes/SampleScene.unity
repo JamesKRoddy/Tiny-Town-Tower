@@ -937,6 +937,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1561464752}
     m_Modifications:
+    - target: {fileID: 1287946293633936085, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+      propertyPath: dashSpeed
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 1287946293633936085, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+      propertyPath: vaultOffset
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1287946293633936085, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+      propertyPath: dashDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1287946293633936085, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+      propertyPath: capsuleCastRadius
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1287946293633936085, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+      propertyPath: vaultDetectionRange
+      value: 1.5
+      objectReference: {fileID: 0}
     - target: {fileID: 2985604360754162274, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
       propertyPath: m_Name
       value: Test_Character_Player_NPC

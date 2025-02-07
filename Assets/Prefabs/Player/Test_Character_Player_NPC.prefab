@@ -1742,20 +1742,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveMaxSpeed: 10
   rotationSpeed: 720
-  dashSpeed: 20
-  dashDuration: 0.2
+  dashSpeed: 30
+  dashDuration: 0.4
   dashCooldown: 1
   vaultSpeed: 5
-  vaultDetectionRange: 1
+  vaultDetectionRange: 1.5
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 64
   vaultLayer:
     serializedVersion: 2
     m_Bits: 128
-  capsuleCastRadius: 0.5
+  capsuleCastRadius: 0.2
   vaultHeight: 1
-  vaultOffset: 1
+  vaultOffset: 2
   nPCDataObj: {fileID: 11400000, guid: ff84a74ffbac90849b0eb152033e7ac8, type: 2}
 --- !u!114 &4868853620621953941
 MonoBehaviour:
