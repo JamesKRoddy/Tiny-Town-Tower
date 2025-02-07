@@ -57,15 +57,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
     }
 
-    public override void Start()
-    {
-        if (equippedWeaponScriptObj != null && PlayerController.Instance._possessedNPC != null)
-        {
-            EquipWeapon(equippedWeaponScriptObj);
-        }
-    }
-
-
     private void Update()
     {
         if (PlayerController.Instance._possessedNPC == null)
@@ -89,13 +80,16 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         {
             case WeaponScriptableObj weapon:
 
-                if (equippedWeaponScriptObj == null)
+                if(PlayerController.Instance._possessedNPC != null)
                 {
-                    EquipWeapon(weapon);                    
-                }
-                else
-                {
-                    Debug.LogError("//TODO have to drop current weapon and equip new one");
+                    if (PlayerController.Instance._possessedNPC.GetEquipped() == null)
+                    {
+                        PlayerController.Instance._possessedNPC.EquipWeapon(weapon);
+                    }
+                    else
+                    {
+                        Debug.LogError("//TODO have to drop current weapon and equip new one");
+                    }
                 }
                 break;
 
@@ -192,7 +186,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         }
     }
 
-    protected override Transform GetCharacterTransform()
+    protected Transform GetCharacterTransform()
     {
         if (PlayerController.Instance._possessedNPC == null)
             return null;

@@ -32,6 +32,8 @@ public interface IPossessable
     void Movement(Vector3 movement);
     void Attack();
     void Dash();
+    WeaponScriptableObj GetEquipped();
+    void EquipWeapon(WeaponScriptableObj weapon);
     Transform GetTransform();
 }
 

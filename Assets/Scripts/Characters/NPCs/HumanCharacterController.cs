@@ -17,6 +17,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable
     protected Animator animator;
     protected CharacterCombat characterCombat;
     protected NavMeshAgent agent; // Reference to NavMeshAgent
+    protected CharacterInventory characterInventory;
 
     [Header("Vault Parameters")]
     public float vaultSpeed = 5f; // Slower speed for vaulting
@@ -49,6 +50,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable
         animator = GetComponent<Animator>();
         humanCollider = GetComponent<Collider>();
         characterCombat = GetComponent<CharacterCombat>();
+        characterInventory = GetComponent<CharacterInventory>();
     }
 
     public void PossessedUpdate()
@@ -114,7 +116,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable
 
     public void Attack()
     {
-        if (!isDashing && !isVaulting && PlayerInventory.Instance.equippedWeaponScriptObj != null)
+        if (!isDashing && !isVaulting && characterInventory.equippedWeaponScriptObj != null)
         {
             isAttacking = true;
             animator.SetBool("LightAttack", true);
@@ -148,6 +150,15 @@ public class HumanCharacterController : MonoBehaviour, IPossessable
 
     #region Weapons
 
+    public WeaponScriptableObj GetEquipped()
+    {
+        return characterInventory.equippedWeaponScriptObj;
+    }
+
+    public void EquipWeapon(WeaponScriptableObj weapon)
+    {
+        throw new NotImplementedException();
+    }
     public void EquipMeleeWeapon(int equipped)
     {
         animator.SetInteger("Equipped", equipped);
@@ -373,5 +384,4 @@ public class HumanCharacterController : MonoBehaviour, IPossessable
             Gizmos.DrawLine(capsuleBottom, capsuleTop);
         }
     }
-
 }

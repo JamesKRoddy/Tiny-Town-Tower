@@ -31,75 +31,12 @@ public class CharacterInventory : MonoBehaviour
         }
     }
 
-    public virtual void EquipWeapon(WeaponScriptableObj weaponScriptableObj)
-    {
-        // Validate the new weapon
-        if (!IsValidWeaponPrefab(weaponScriptableObj))
-        {
-            Debug.LogWarning("Attempted to equip an invalid or null weapon scriptable object or prefab!");
-            return;
-        }
-        // Unequip the currently equipped weapon
-        UnequipCurrentWeapon();
-        // Instantiate and equip the new weapon
-        GameObject weapon = Instantiate(weaponScriptableObj.weaponPrefab, weaponHolder);
-        equippedWeaponBase = weapon.GetComponent<WeaponBase>();
-
-        Transform characterTransform = GetCharacterTransform();
-        if(characterTransform != null)
-        {
-            equippedWeaponBase.OnEquipped(characterTransform);
-        }
-        equippedWeaponScriptObj = weaponScriptableObj;
-
-        // Handle weapon-specific setup
-        HandleWeaponType(weapon, weaponScriptableObj.animationType);
-    }
-
     protected virtual Transform GetCharacterTransform()
     {
         return this.transform;
     }
 
-    private void UnequipCurrentWeapon()
-    {
-        if (equippedWeaponScriptObj != null && weaponHolder.childCount > 0)
-        {
-            Destroy(weaponHolder.GetChild(0).gameObject);
-            equippedWeaponScriptObj = null;
-            equippedWeaponBase = null;
-        }
-    }
-
-    private bool IsValidWeaponPrefab(WeaponScriptableObj weaponScriptableObj)
-    {
-        if (weaponScriptableObj == null || weaponScriptableObj.weaponPrefab == null)
-            return false;
-
-        GameObject prefab = weaponScriptableObj.weaponPrefab;
-        return prefab.GetComponent<WeaponBase>() != null &&
-               prefab.GetComponent<Collider>() != null;
-    }
-
-    private void HandleWeaponType(GameObject weapon, WeaponAnimationType animationType)
-    {
-        switch (equippedWeaponBase)
-        {
-            case MeleeWeapon meleeWeapon:
-                GetComponent<HumanCharacterController>().EquipMeleeWeapon((int)animationType);
-                break;
-            case RangedWeapon rangedWeapon:
-                Debug.LogError("TODO: Implement ranged weapon setup.");
-                break;
-            case ThrowableWeapon throwableWeapon:
-                Debug.LogError("TODO: Implement throwable weapon setup.");
-                break;
-            default:
-                Debug.LogWarning($"{weapon.name} is of an unsupported weapon type!");
-                break;
-        }
-    }
-
+    #region Inventory_Items
 
     public void AddItem(ResourceScriptableObj item, int count = 1)
     {
@@ -142,4 +79,74 @@ public class CharacterInventory : MonoBehaviour
     {
         return inventoryList;
     }
+
+    #endregion
+
+    #region NPC_Weapon
+
+    public virtual void EquipWeapon(WeaponScriptableObj weaponScriptableObj)
+    {
+        // Validate the new weapon
+        if (!IsValidWeaponPrefab(weaponScriptableObj))
+        {
+            Debug.LogWarning("Attempted to equip an invalid or null weapon scriptable object or prefab!");
+            return;
+        }
+        // Unequip the currently equipped weapon
+        UnequipCurrentWeapon();
+        // Instantiate and equip the new weapon
+        GameObject weapon = Instantiate(weaponScriptableObj.weaponPrefab, weaponHolder);
+        equippedWeaponBase = weapon.GetComponent<WeaponBase>();
+
+        Transform characterTransform = GetCharacterTransform();
+        if (characterTransform != null)
+        {
+            equippedWeaponBase.OnEquipped(characterTransform);
+        }
+        equippedWeaponScriptObj = weaponScriptableObj;
+
+        // Handle weapon-specific setup
+        HandleWeaponType(weapon, weaponScriptableObj.animationType);
+    }
+
+    private void UnequipCurrentWeapon()
+    {
+        if (equippedWeaponScriptObj != null && weaponHolder.childCount > 0)
+        {
+            Destroy(weaponHolder.GetChild(0).gameObject);
+            equippedWeaponScriptObj = null;
+            equippedWeaponBase = null;
+        }
+    }
+
+    private bool IsValidWeaponPrefab(WeaponScriptableObj weaponScriptableObj)
+    {
+        if (weaponScriptableObj == null || weaponScriptableObj.weaponPrefab == null)
+            return false;
+
+        GameObject prefab = weaponScriptableObj.weaponPrefab;
+        return prefab.GetComponent<WeaponBase>() != null &&
+               prefab.GetComponent<Collider>() != null;
+    }
+
+    private void HandleWeaponType(GameObject weapon, WeaponAnimationType animationType)
+    {
+        switch (equippedWeaponBase)
+        {
+            case MeleeWeapon meleeWeapon:
+                GetComponent<HumanCharacterController>().EquipMeleeWeapon((int)animationType);
+                break;
+            case RangedWeapon rangedWeapon:
+                Debug.LogError("TODO: Implement ranged weapon setup.");
+                break;
+            case ThrowableWeapon throwableWeapon:
+                Debug.LogError("TODO: Implement throwable weapon setup.");
+                break;
+            default:
+                Debug.LogWarning($"{weapon.name} is of an unsupported weapon type!");
+                break;
+        }
+    }
+
+    #endregion
 }
