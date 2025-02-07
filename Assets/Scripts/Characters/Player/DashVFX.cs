@@ -48,6 +48,7 @@ public class DashVFX : MonoBehaviour
             // Set the position and rotation to match the spawnTransform
             ps.transform.position = spawnTransform.position;
             ps.transform.rotation = spawnTransform.rotation;
+            ps.transform.parent = null;
 
             ps.Play();
 
@@ -70,6 +71,7 @@ public class DashVFX : MonoBehaviour
         {
             ps.Stop();
             ps.gameObject.SetActive(false); // Deactivate it when not in use
+            ps.gameObject.transform.parent = this.transform;
             dashVfxPool[element].Enqueue(ps); // Return it to the pool
         }
     }

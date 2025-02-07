@@ -1700,9 +1700,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8cdfbceb3c91a894d88c2ce9d8d2e34b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerCombat: {fileID: 0}
-  playerController: {fileID: 0}
-  playerInventory: {fileID: 0}
 --- !u!114 &8320294776751182447
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1745,6 +1742,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveMaxSpeed: 10
   rotationSpeed: 720
+  dashSpeed: 20
+  dashDuration: 0.2
+  dashCooldown: 1
+  vaultSpeed: 5
+  vaultDetectionRange: 1
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  vaultLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  capsuleCastRadius: 0.5
+  vaultHeight: 1
+  vaultOffset: 1
   nPCDataObj: {fileID: 11400000, guid: ff84a74ffbac90849b0eb152033e7ac8, type: 2}
 --- !u!114 &4868853620621953941
 MonoBehaviour:
@@ -4550,15 +4561,25 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4263922213240884375, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+      propertyPath: dashVFXPoint
+      value: 
+      objectReference: {fileID: 2150085026169600938}
     - target: {fileID: 8217325088818768309, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
       propertyPath: m_Name
       value: AttackVFX
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 7168723526862689677, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+--- !u!4 &2150085026169600938 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6430969020272167356, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+  m_PrefabInstance: {fileID: 4965718526647398934}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &7034930588691365147 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2686641998464454413, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}

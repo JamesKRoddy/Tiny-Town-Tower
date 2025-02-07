@@ -45,7 +45,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e79467fadb9e19147887ab74af3c5153, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dashVfx: []
+  dashElementVfxPrefabs:
+  - element: 0
+    particleSystemPrefab: {fileID: 5614025556983756223}
 --- !u!1001 &6357855821793202274
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -171,6 +173,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 51473b08ddbf8a646ae5db23abaa0682, type: 3}
+--- !u!198 &5614025556983756223 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 1572497687957808605, guid: 51473b08ddbf8a646ae5db23abaa0682, type: 3}
+  m_PrefabInstance: {fileID: 6357855821793202274}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &7725295127930567703 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3678990998584257653, guid: 51473b08ddbf8a646ae5db23abaa0682, type: 3}
