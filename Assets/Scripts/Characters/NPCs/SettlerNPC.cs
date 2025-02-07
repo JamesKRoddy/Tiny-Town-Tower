@@ -40,12 +40,11 @@ public class SettlerNPC : HumanCharacterController
 
     private void Update()
     {
-        //base.Update();
-
-        animator.SetFloat("Speed", agent.velocity.magnitude / 3.5f); //TODO have to work out this ratio a bit better
+        //base.Update();        
 
         if (currentState != null)
         {
+            animator.SetFloat("Speed", agent.velocity.magnitude / 3.5f); //TODO have to work out this ratio a bit better
             currentState.UpdateState(); // Call UpdateState on the current state
         }
     }

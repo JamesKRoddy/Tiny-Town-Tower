@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Windows;
 
@@ -54,10 +55,14 @@ public class PlayerController : MonoBehaviour, IControllerInput
         playerCombat = GetComponent<PlayerCombat>();
     }
 
-    void Start()
+    private IEnumerator Start()
     {
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
         GameManager.Instance.OnGameModeChanged += OnGameModeChanged;
+
+        yield return new WaitForEndOfFrame(); //This is just to take over the npc after their setup has happened
+
+        _possessedNPC = GetComponentInChildren<IPossessable>();
         PossessNPC(_possessedNPC);
     }
 

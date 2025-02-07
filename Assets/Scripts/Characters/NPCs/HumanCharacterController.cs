@@ -48,6 +48,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         humanCollider = GetComponent<Collider>();
+        characterCombat = GetComponent<CharacterCombat>();
     }
 
     public void PossessedUpdate()
@@ -107,7 +108,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable
     {
         if (!isVaulting && !isAttacking)
         {
-            movementInput = new Vector3(movement.x, 0, movement.y);
+            movementInput = new Vector3(movement.x, 0, movement.z);
         }
     }
 
