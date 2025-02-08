@@ -47,7 +47,7 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
 
     private void LateUpdate()
     {
-        if (PlayerInput.Instance.currentControlType == PlayerControlType.TURRET_PLACEMENT || target == null)
+        if (target == null)
         {
             HandleCameraPanning();
         }
@@ -64,6 +64,7 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
 
     private void FollowTarget()
     {
+        Debug.Log("****** Panning");
         // Smoothly interpolate the camera's position to the target position + offset
         Vector3 targetPosition = target.position + offset;
         transform.position = Vector3.Lerp(transform.position, targetPosition, followSpeed * Time.deltaTime);

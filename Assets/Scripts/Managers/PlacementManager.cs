@@ -9,8 +9,6 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
 
     [Header("Grid Settings")]
     public GameObject gridPrefab;
-    public Vector2 gridDimensions = new Vector2(20, 20);
-    public Vector3 gridOrigin = Vector3.zero;
     public Transform gridParent;
 
     protected GameObject currentPreview;
@@ -60,8 +58,13 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
         Vector3 move = new Vector3(input.x, 0, input.y) * gridSize * moveSpeed;
 
         currentGridPosition += move;
-        currentGridPosition.x = Mathf.Clamp(currentGridPosition.x, gridOrigin.x, gridOrigin.x + gridDimensions.x * gridSize - gridSize);
-        currentGridPosition.z = Mathf.Clamp(currentGridPosition.z, gridOrigin.z, gridOrigin.z + gridDimensions.y * gridSize - gridSize);
+
+        // Use TurretManager bounds instead of gridDimensions/gridOrigin
+        Vector2 xBounds = TurretManager.Instance.GetXBounds();
+        Vector2 zBounds = TurretManager.Instance.GetZBounds();
+
+        currentGridPosition.x = Mathf.Clamp(currentGridPosition.x, xBounds.x, xBounds.y - gridSize);
+        currentGridPosition.z = Mathf.Clamp(currentGridPosition.z, zBounds.x, zBounds.y - gridSize);
 
         currentPreview.transform.position = SnapToGrid(currentGridPosition);
 
@@ -74,6 +77,7 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
             SetPreviewMaterial(invalidPlacementMaterial);
         }
     }
+
 
     protected void CancelPlacement()
     {
@@ -119,7 +123,7 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
             {
                 for (float z = zBounds.x; z < zBounds.y; z += gridSize)
                 {
-                    Vector3 gridPosition = new Vector3(x, gridOrigin.y, z);
+                    Vector3 gridPosition = new Vector3(x, 0, z);
                     GameObject gridSection = Instantiate(gridPrefab, gridPosition, Quaternion.identity, gridParent);
                     gridSection.SetActive(false);
                     gridObjects.Add(gridPosition, gridSection);
