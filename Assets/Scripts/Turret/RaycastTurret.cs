@@ -5,7 +5,7 @@ public class RaycastTurret : BaseTurret
     protected override void Fire()
     {
         RaycastHit hit;
-        if (Physics.Raycast(firePoint.position, firePoint.forward, out hit, range))
+        if (Physics.Raycast(firePoint.position, firePoint.forward, out hit))
         {
             if (hit.collider.CompareTag("Enemy"))
             {

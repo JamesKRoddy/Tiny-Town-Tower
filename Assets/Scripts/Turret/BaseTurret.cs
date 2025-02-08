@@ -19,7 +19,7 @@ public class UpgradeData
 public abstract class BaseTurret : MonoBehaviour
 {
     [Header("Turret Settings")]
-    public float range = 10f;
+    public float range = 10f; //TODO use this for the size of the collider
     public float fireRate = 1f;
     public Transform turretTop;
     public Transform firePoint;
@@ -147,6 +147,6 @@ public abstract class BaseTurret : MonoBehaviour
 
     internal void SetupTurret()
     {
-        throw new NotImplementedException();
+        //TODO setup turret
     }
 }
