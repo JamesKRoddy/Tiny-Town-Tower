@@ -178,7 +178,7 @@ public class RogueLiteManager : MonoBehaviour
     {
         if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null)
         {
-            PlayerController.Instance._possessedNPC.transform.position = currentbuildingParent.GetComponent<RoomSectionRandomizer>().GetPlayerSpawnPoint();
+            PlayerController.Instance._possessedNPC.GetTransform().position = currentbuildingParent.GetComponent<RoomSectionRandomizer>().GetPlayerSpawnPoint();
         }
     }
 }

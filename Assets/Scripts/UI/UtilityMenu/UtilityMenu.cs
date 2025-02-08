@@ -82,7 +82,7 @@ public class UtilityMenu : MenuBase, IControllerInput
                 ReturnToGame();
         }
 
-        gameObject.SetActive(active);
+        PlayerUIManager.Instance.SetScreenActive(this, active);
     }
 
     public void ReturnToGame()
@@ -125,7 +125,6 @@ public class UtilityMenu : MenuBase, IControllerInput
     {
         if (PlayerUIManager.Instance.currentMenu != this)
             return;
-
         switch (controlType)
         {
             case PlayerControlType.IN_MENU:

@@ -66,6 +66,7 @@ public class NarrativeSystem : MenuBase
 
         if (currentDialogue != null && currentDialogue.lines.Count > 0)
         {
+            PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_CONVERSATION);
             dialoguePanel.SetActive(true);
             ShowDialogue(currentDialogue.lines[0]);
         }

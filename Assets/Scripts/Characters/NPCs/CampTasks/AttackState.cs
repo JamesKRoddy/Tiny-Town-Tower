@@ -3,15 +3,10 @@ using UnityEngine.AI;
 
 public class AttackState : _TaskState
 {
-    private void Awake()
-    {
-        // Ensure NPC reference is set when the state starts
-        if (npc == null)
-        {
-            SetNPCReference(GetComponent<SettlerNPC>());
-        }
 
-        agent = npc.GetAgent(); // Store reference to NavMeshAgent
+    protected override void Awake()
+    {
+        base.Awake();
     }
 
     public override void OnEnterState()

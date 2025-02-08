@@ -5,21 +5,18 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(UnityEngine.AI.NavMeshAgent))]
-
+//TODO basically go down through this and if its being controlled stop the AI stuff
 public class SettlerNPC : HumanCharacterController
 {
     public SettlerNPCScriptableObj nPCDataObj;
     private _TaskState currentState;
-    private NavMeshAgent agent; // Reference to NavMeshAgent
 
     // Dictionary that maps TaskType to TaskState
     Dictionary<TaskType, _TaskState> taskStates = new Dictionary<TaskType, _TaskState>();
 
-    private void Awake()
+    protected override void Awake()
     {
-        // Store the reference to NavMeshAgent once
-        agent = GetComponent<NavMeshAgent>();
-        animator = GetComponent<Animator>();
+        base.Awake();
 
         // Get all TaskState components attached to the SettlerNPC GameObject
         _TaskState[] states = GetComponents<_TaskState>();
@@ -39,18 +36,15 @@ public class SettlerNPC : HumanCharacterController
         {
             ChangeState(taskStates[TaskType.WANDER]);
         }
-
-        if (PlayerController.Instance._possessedNPC != gameObject)
-            ToggleNPCComponents(true, gameObject);
-
     }
 
     private void Update()
     {
-        animator.SetFloat("Speed", agent.velocity.magnitude / 3.5f); //TODO have to work out this ratio a bit better
+        //base.Update();        
 
         if (currentState != null)
         {
+            animator.SetFloat("Speed", agent.velocity.magnitude / 3.5f); //TODO have to work out this ratio a bit better
             currentState.UpdateState(); // Call UpdateState on the current state
         }
     }
@@ -64,10 +58,14 @@ public class SettlerNPC : HumanCharacterController
         }
 
         currentState = newState;
-        currentState.OnEnterState(); // Enter the new state
 
-        // Adjust the agent's speed according to the new state's requirements
-        agent.speed = currentState.MaxSpeed();
+        if (newState != null)
+        {
+            currentState.OnEnterState(); // Enter the new state
+
+            // Adjust the agent's speed according to the new state's requirements
+            agent.speed = currentState.MaxSpeed();
+        }
     }
 
     internal void AssignWork(WorkTask newTask)
@@ -91,5 +89,10 @@ public class SettlerNPC : HumanCharacterController
     public NavMeshAgent GetAgent()
     {
         return agent; // Return the stored NavMeshAgent reference
+    }
+
+    public Animator GetAnimator()
+    {
+        return animator;
     }
 }

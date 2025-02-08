@@ -40,8 +40,7 @@ public class SettlerPreviewBtn : MonoBehaviour
 
     private void OnButtonClicked()
     {
-        PlayerController.Instance.ToggleNPCComponents(true);
-        npc.ToggleNPCComponents(false, npc.gameObject);
+        PlayerController.Instance.PossessNPC(npc);
 
         SettlerNPCMenu.Instance.SetScreenActive(false, 0.05f);
         UtilityMenu.Instance.ReturnToGame(); //Doing this to reset the player controlls

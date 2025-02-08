@@ -69,6 +69,26 @@ public class PlayerUIManager : MonoBehaviour
         utilityMenu.Setup();
     }
 
+    /// <summary>
+    /// Use this to open any menus
+    /// </summary>
+    /// <param name="menu"></param>
+    /// <param name="active"></param>
+    /// <param name="delay"></param>
+    public void SetScreenActive(MenuBase menu, bool active, float delay = 0.0f)
+    {
+        if (delay > 0.0f)
+        {
+            if (openingMenuCoroutine == null)
+                openingMenuCoroutine = StartCoroutine(EnableMenuAfterDelay(menu, active, delay));
+        }
+        else
+        {
+            currentMenu = menu;
+            menu.gameObject.SetActive(active);
+        }
+    }
+
     public void DisplayUIErrorMessage(string message, float duration = 2.0f)
     {
         errorMessage.gameObject.SetActive(true);
@@ -104,20 +124,6 @@ public class PlayerUIManager : MonoBehaviour
         turretMenu.SetScreenActive(false);
         turretUpgradeMenu.SetScreenActive(false);
         utilityMenu.SetScreenActive(false);
-    }
-
-
-    public void SetScreenActive(MenuBase menu, bool active, float delay = 0.0f)
-    {
-        if(delay > 0.0f)
-        {
-            if (openingMenuCoroutine == null)
-                openingMenuCoroutine = StartCoroutine(EnableMenuAfterDelay(menu, active, delay));
-        }
-        else
-        {
-            menu.gameObject.SetActive(active);
-        }
     }
 
     private IEnumerator EnableMenuAfterDelay(MenuBase menu, bool active, float delay) //This delay is needed to stop the build menu from appearing and disappearing quickly from the ui building button being pressed

@@ -5,6 +5,19 @@ public abstract class _TaskState : MonoBehaviour
 {
     protected SettlerNPC npc;
     protected NavMeshAgent agent;
+    protected Animator animator;
+
+    protected virtual void Awake()
+    {
+        // Ensure NPC reference is set when the state starts
+        if (npc == null)
+        {
+            SetNPCReference(GetComponent<SettlerNPC>());
+        }
+
+        agent = npc.GetAgent();
+        animator = npc.GetAnimator();
+    }
 
     // This method will be called to set the NPC reference once the state is added to the NPC
     public void SetNPCReference(SettlerNPC npc)

@@ -11,7 +11,7 @@ public class MeleeWeapon : WeaponBase
 
     private bool isAttacking = false;
     private HashSet<Collider> hitTargets = new HashSet<Collider>();
-    private Transform characterTransform;
+    private Transform characterTransform; //Used for the box trigger for hitting
 
     public override void OnEquipped(Transform character)
     {

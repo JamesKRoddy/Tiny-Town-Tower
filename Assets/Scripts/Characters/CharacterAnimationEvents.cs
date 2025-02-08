@@ -2,9 +2,9 @@ using UnityEngine;
 
 public class CharacterAnimationEvents : MonoBehaviour
 {
-    public CharacterCombat playerCombat;
-    public HumanCharacterController playerController;
-    public CharacterInventory playerInventory;
+    private CharacterCombat playerCombat;
+    private HumanCharacterController playerController;
+    private CharacterInventory playerInventory;
 
     public void Setup(CharacterCombat characterCombat =  null, HumanCharacterController characterController = null, CharacterInventory characterInventory = null) //TOD add this to the npc swap event, this also might be stupid
     {

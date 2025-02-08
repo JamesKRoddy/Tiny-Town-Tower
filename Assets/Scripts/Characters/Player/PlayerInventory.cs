@@ -52,16 +52,15 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
 
+    public override void Start()
+    {
+
+    }
+
     private void OnDestroy()
     {
         PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
     }
-
-    public override void Start()
-    {
-        base.Start();
-    }
-
 
     private void Update()
     {
@@ -86,13 +85,16 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         {
             case WeaponScriptableObj weapon:
 
-                if (equippedWeaponScriptObj == null)
+                if(PlayerController.Instance._possessedNPC != null)
                 {
-                    EquipWeapon(weapon);                    
-                }
-                else
-                {
-                    Debug.LogError("//TODO have to drop current weapon and equip new one");
+                    if (PlayerController.Instance._possessedNPC.GetEquipped() == null)
+                    {
+                        PlayerController.Instance._possessedNPC.EquipWeapon(weapon);
+                    }
+                    else
+                    {
+                        Debug.LogError("//TODO have to drop current weapon and equip new one");
+                    }
                 }
                 break;
 
@@ -120,7 +122,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     private void DetectInteraction()
     {
         RaycastHit hit;
-        if (Physics.Raycast(PlayerController.Instance._possessedNPC.transform.position + Vector3.up, PlayerController.Instance._possessedNPC.transform.transform.forward, out hit, interactionRange))
+        if (Physics.Raycast(PlayerController.Instance._possessedNPC.GetTransform().position + Vector3.up, PlayerController.Instance._possessedNPC.GetTransform().transform.forward, out hit, interactionRange))
         {
             IInteractiveBase interactive = hit.collider.GetComponent<IInteractiveBase>();
 
@@ -191,6 +193,9 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     protected override Transform GetCharacterTransform()
     {
-        return PlayerController.Instance._possessedNPC.transform;
+        if (PlayerController.Instance._possessedNPC == null)
+            return null;
+
+        return PlayerController.Instance._possessedNPC.GetTransform();
     }
 }
