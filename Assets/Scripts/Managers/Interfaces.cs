@@ -66,7 +66,7 @@ public interface IPossessable
  * 
  * 
  * Curent work refactoring player
- * Possessed movement is being called but not correctly so have to look at that!!!!!
+ * Equipped weapon not showing on npc
  * remove player parent classes just take over the npcs versions, have it all in the charater combat, character controller
  * rework inventory system CharacterInventory.cs needs to be looked at read info at the top
  * 

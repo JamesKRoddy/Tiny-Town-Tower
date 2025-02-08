@@ -157,7 +157,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable
 
     public void EquipWeapon(WeaponScriptableObj weapon)
     {
-        throw new NotImplementedException();
+        characterInventory.EquipWeapon(weapon);
     }
     public void EquipMeleeWeapon(int equipped)
     {

@@ -52,6 +52,11 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
 
+    public override void Start()
+    {
+
+    }
+
     private void OnDestroy()
     {
         PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
@@ -186,7 +191,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         }
     }
 
-    protected Transform GetCharacterTransform()
+    protected override Transform GetCharacterTransform()
     {
         if (PlayerController.Instance._possessedNPC == null)
             return null;
