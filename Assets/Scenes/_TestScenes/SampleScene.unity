@@ -632,6 +632,10 @@ PrefabInstance:
       propertyPath: weaponHolder
       value: 
       objectReference: {fileID: 1343044753}
+    - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
+      propertyPath: equippedWeaponScriptObj
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 7394057616191428834, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: animator
       value: 
@@ -1001,6 +1005,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8320294776751182447, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+      propertyPath: weaponHolder
+      value: 
+      objectReference: {fileID: 1343044753}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1593,19 +1601,19 @@ PrefabInstance:
       objectReference: {fileID: 11400000, guid: e9e256aa3d595cc46bfcc1c42f699df0, type: 2}
     - target: {fileID: 8012979606489901428, guid: 99aa04a97cae35b4c9da654d4af50cc5, type: 3}
       propertyPath: resourceCount
-      value: 5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8012979606489901428, guid: 99aa04a97cae35b4c9da654d4af50cc5, type: 3}
       propertyPath: resourceScriptableObj
       value: 
-      objectReference: {fileID: 11400000, guid: e9e256aa3d595cc46bfcc1c42f699df0, type: 2}
+      objectReference: {fileID: 11400000, guid: e6fde83523c7216478e945d81aedf237, type: 2}
     - target: {fileID: 8995519799970307877, guid: 99aa04a97cae35b4c9da654d4af50cc5, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.67
       objectReference: {fileID: 0}
     - target: {fileID: 8995519799970307877, guid: 99aa04a97cae35b4c9da654d4af50cc5, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.51
+      value: 0.9
       objectReference: {fileID: 0}
     - target: {fileID: 8995519799970307877, guid: 99aa04a97cae35b4c9da654d4af50cc5, type: 3}
       propertyPath: m_LocalPosition.z
