@@ -9,7 +9,6 @@ public class NarrativeInteractive : MonoBehaviour, IInteractive<NarrativeAsset>
     public bool CanInteract() => true;
 
     public NarrativeAsset Interact() {
-        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_CONVERSATION);
         return narrativeAsset;
     }
 
