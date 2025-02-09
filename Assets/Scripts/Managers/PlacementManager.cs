@@ -55,7 +55,7 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
         if (currentPreview == null) return;
 
         float moveSpeed = 0.05f;
-        Vector3 move = new Vector3(input.x, 0, input.y) * gridSize * moveSpeed;
+        Vector3 move = new Vector3(input.x, 0, input.y) * gridSize/2 * moveSpeed;
 
         currentGridPosition += move;
 
