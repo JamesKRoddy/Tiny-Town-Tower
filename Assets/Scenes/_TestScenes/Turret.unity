@@ -455,6 +455,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2683458163222554810, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: gridPrefab
+      value: 
+      objectReference: {fileID: 241196777734048875, guid: fb1ace5487d684b4a86192309c6fb1ec, type: 3}
     - target: {fileID: 3066187907054321760, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_IsActive
       value: 1

@@ -81,7 +81,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98d2e6833a44b1d428a19f0d0fc29b9d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _currentGameMode: 1
+  _currentGameMode: 3
 --- !u!1 &3066187907054321760
 GameObject:
   m_ObjectHideFlags: 0
@@ -129,7 +129,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   validPlacementMaterial: {fileID: 0}
   invalidPlacementMaterial: {fileID: 0}
-  gridPrefab: {fileID: 1649997278618206, guid: 4ed3355cdb3d9424f8f80b2a79da3543, type: 3}
+  gridPrefab: {fileID: 241196777734048875, guid: fb1ace5487d684b4a86192309c6fb1ec, type: 3}
   gridParent: {fileID: 4644746889367459830}
 --- !u!1 &3935579015954441274
 GameObject:
@@ -175,9 +175,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70687aa39e56fd04e92edc082fd6d4ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  xBounds: {x: -25, y: 25}
-  zBounds: {x: -25, y: 25}
-  showGridBounds: 0
+  xBounds: {x: -10, y: 10}
+  zBounds: {x: -10, y: 10}
+  showGridBounds: 1
 --- !u!1 &5052584228449062672
 GameObject:
   m_ObjectHideFlags: 0
@@ -363,7 +363,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   validPlacementMaterial: {fileID: 0}
   invalidPlacementMaterial: {fileID: 0}
-  gridPrefab: {fileID: 1649997278618206, guid: 4ed3355cdb3d9424f8f80b2a79da3543, type: 3}
+  gridPrefab: {fileID: 241196777734048875, guid: fb1ace5487d684b4a86192309c6fb1ec, type: 3}
   gridParent: {fileID: 892765565880304067}
 --- !u!1 &7892603899224520776
 GameObject:
