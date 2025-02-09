@@ -52,7 +52,7 @@ public class TurretPreviewBtn : MonoBehaviour
     {
         turretObj = turretObjRef;
 
-        turretPrefab = turretObjRef.turretPrefab;
+        turretPrefab = turretObjRef.prefab;
 
         button.onClick.AddListener(InstantiateTurretPlacement);
 

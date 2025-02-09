@@ -69,7 +69,7 @@ public class ConstructionSite : WorkTask
 
     public void SetupConstruction(BuildingScriptableObj buildingScriptableObj)
     {
-        finalBuildingPrefab = buildingScriptableObj.buildingPrefab;
+        finalBuildingPrefab = buildingScriptableObj.prefab;
         baseConstructionTime = buildingScriptableObj.constructionTime;
     }
 

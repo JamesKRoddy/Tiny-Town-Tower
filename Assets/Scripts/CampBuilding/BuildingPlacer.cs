@@ -24,7 +24,7 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
     protected override void PlaceObject()
     {
         // Deduct the required resources from the player's inventory
-        foreach (var requiredItem in selectedObject.buildingResourceCost)
+        foreach (var requiredItem in selectedObject._resourceCost)
         {
             PlayerInventory.Instance.RemoveItem(requiredItem.resource, requiredItem.count);
         }
@@ -32,18 +32,18 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
         GameObject constructionSite = Instantiate(selectedObject.constructionSite, currentPreview.transform.position, Quaternion.identity);
         constructionSite.GetComponent<ConstructionSite>().SetupConstruction(selectedObject);
 
-        MarkGridSlotsOccupied(currentPreview.transform.position, selectedObject.buildingSize, constructionSite);
+        MarkGridSlotsOccupied(currentPreview.transform.position, selectedObject.size, constructionSite);
         CancelPlacement();
     }
 
     protected override bool IsValidPlacement(Vector3 position)
     {
-        return AreGridSlotsAvailable(position, selectedObject.buildingSize);
+        return AreGridSlotsAvailable(position, selectedObject.size);
     }
 
     protected override GameObject GetPrefabFromObject(BuildingScriptableObj obj)
     {
-        return obj.buildingPrefab;
+        return obj.prefab;
     }
 
     protected override void NotifyControlTypeChange()

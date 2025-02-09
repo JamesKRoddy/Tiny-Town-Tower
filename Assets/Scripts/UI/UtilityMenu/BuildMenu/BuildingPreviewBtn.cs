@@ -23,7 +23,7 @@ public class BuildingPreviewBtn : MonoBehaviour
         bool canBuild = true;
 
         // Loop through each required resource and check the player's inventory.
-        foreach (var requiredItem in buildingObj.buildingResourceCost)
+        foreach (var requiredItem in buildingObj._resourceCost)
         {
             // Check how many of this resource the player currently has.
             int playerCount = PlayerInventory.Instance.GetItemCount(requiredItem.resource);
@@ -52,14 +52,14 @@ public class BuildingPreviewBtn : MonoBehaviour
     {
         buildingObj = buildingObjRef;
 
-        buildingPrefab = buildingObjRef.buildingPrefab;
+        buildingPrefab = buildingObjRef.prefab;
 
         button.onClick.AddListener(InstanciateBuildingConstruction);
 
-        if(buildingObjRef.buildingSprite != null)
-            buildingImage.sprite = buildingObjRef.buildingSprite;
+        if(buildingObjRef._sprite != null)
+            buildingImage.sprite = buildingObjRef._sprite;
 
-        buildingNameText.text = buildingObjRef.buildingName;
+        buildingNameText.text = buildingObjRef._name;
 
     }
 }

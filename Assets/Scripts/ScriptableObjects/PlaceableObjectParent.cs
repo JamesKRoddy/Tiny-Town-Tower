@@ -1,7 +1,13 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "PlaceableObjectParent", menuName = "Scriptable Objects/PlaceableObjectParent")]
 public class PlaceableObjectParent : ScriptableObject
 {
-    
+    public string _name;
+    [TextArea(3, 5)] // Enables multi-line text input in the Inspector
+    public string _description;
+    public Sprite _sprite;
+    public List<InventoryItem> _resourceCost;
+    public GameObject prefab;
+    public Vector2Int size;
 }

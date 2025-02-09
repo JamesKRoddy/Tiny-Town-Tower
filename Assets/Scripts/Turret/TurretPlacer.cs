@@ -29,21 +29,21 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
             PlayerInventory.Instance.RemoveItem(requiredItem.resource, requiredItem.count);
         }
 
-        GameObject turret = Instantiate(selectedObject.turretPrefab, currentPreview.transform.position, Quaternion.identity);
+        GameObject turret = Instantiate(selectedObject.prefab, currentPreview.transform.position, Quaternion.identity);
         turret.GetComponent<BaseTurret>().SetupTurret();
 
-        MarkGridSlotsOccupied(currentPreview.transform.position, selectedObject.turretSize, turret);
+        MarkGridSlotsOccupied(currentPreview.transform.position, selectedObject.size, turret);
         CancelPlacement();
     }
 
     protected override bool IsValidPlacement(Vector3 position)
     {
-        return AreGridSlotsAvailable(position, selectedObject.turretSize);
+        return AreGridSlotsAvailable(position, selectedObject.size);
     }
 
     protected override GameObject GetPrefabFromObject(TurretScriptableObject obj)
     {
-        return obj.turretPrefab;
+        return obj.prefab;
     }
 
     protected override void NotifyControlTypeChange()
