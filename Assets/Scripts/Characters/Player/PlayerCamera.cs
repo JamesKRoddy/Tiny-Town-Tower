@@ -9,6 +9,7 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
     [SerializeField] private float rotationSpeed = 5f; // Speed at which the camera rotates to match the target
 
     [Header("Panning Camera")]
+    [SerializeField] private Transform defaultTarget; // The default target to follow fopr camera panning
     [SerializeField] private float panSpeed = 20f; // Speed at which the camera pans
 
     private Vector2 joystickInput; // Stores the current joystick input
@@ -37,7 +38,7 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
             case PlayerControlType.TURRET_PLACEMENT:
                 break;
             case PlayerControlType.TURRET_CAMERA_MOVEMENT:
-                target = null; // Detach from target to allow free camera movement
+                target = defaultTarget; // Detach from target to allow free camera movement
                 PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystickInput; // Subscribe to joystick input
                 break;
             default:
@@ -47,19 +48,16 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
 
     private void LateUpdate()
     {
-        if (target == null)
+        if (target == defaultTarget)
         {
             HandleCameraPanning();
         }
-        else if (target != null)
-        {
-            FollowTarget();
-        }
+
+        FollowTarget();
     }
 
     public void UpdateTarget(Transform newTarget)
     {
-        Debug.Log($"******{newTarget.name}");
         target = newTarget;
     }
 
@@ -79,11 +77,11 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
         Vector3 panMovement = new Vector3(joystickInput.x, 0, joystickInput.y) * panSpeed * Time.deltaTime;
 
         // Clamp the camera's new position within the X and Z bounds
-        Vector3 newPosition = transform.position + panMovement;
+        Vector3 newPosition = defaultTarget.position + panMovement;
         newPosition.x = Mathf.Clamp(newPosition.x, TurretManager.Instance.GetXBounds().x, TurretManager.Instance.GetXBounds().y);
         newPosition.z = Mathf.Clamp(newPosition.z, TurretManager.Instance.GetZBounds().x, TurretManager.Instance.GetZBounds().y);
 
-        transform.position = newPosition;
+        defaultTarget.position = newPosition;
     }
 
     private void HandleLeftJoystickInput(Vector2 input)

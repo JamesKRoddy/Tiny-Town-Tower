@@ -18,7 +18,6 @@ public class TurretPreviewBtn : MonoBehaviour
 
     void InstantiateTurretPlacement()
     {
-        Debug.Log("******InstantiateTurretPlacement");
         // Initialize canPlace to true and set it to false if a requirement isn't met.
         bool canPlace = true;
 

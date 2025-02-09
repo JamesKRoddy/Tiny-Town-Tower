@@ -24,7 +24,6 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
 
     protected override void PlaceObject()
     {
-        Debug.Log("****** PlaceObject");
         // Deduct the required resources from the player's inventory.
         foreach (var requiredItem in selectedObject.turretResourceCost)
         {
