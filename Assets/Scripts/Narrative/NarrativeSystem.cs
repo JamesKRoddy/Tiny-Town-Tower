@@ -181,7 +181,7 @@ public class NarrativeSystem : MenuBase
 
     public void EndConversation()
     {
-        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.COMBAT_MOVEMENT); //TODO figure out which controls to go back to combat or camp movement, TEST IF this works
+        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.COMBAT_NPC_MOVEMENT); //TODO figure out which controls to go back to combat or camp movement, TEST IF this works
         dialoguePanel.SetActive(false);
     }
 
@@ -197,7 +197,7 @@ public class NarrativeSystem : MenuBase
         {
             PlayerControlType controlType = PlayerInput.Instance.currentControlType;
 
-            if (controlType == PlayerControlType.CAMP_MOVEMENT || controlType == PlayerControlType.COMBAT_MOVEMENT)
+            if (controlType == PlayerControlType.CAMP_NPC_MOVEMENT || controlType == PlayerControlType.COMBAT_NPC_MOVEMENT)
                 returnToControls = controlType;
         }
         else

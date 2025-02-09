@@ -25,7 +25,7 @@ public class PlayerInput : MonoBehaviour
         }
     }
 
-    public PlayerControlType currentControlType = PlayerControlType.COMBAT_MOVEMENT;
+    public PlayerControlType currentControlType = PlayerControlType.COMBAT_NPC_MOVEMENT;
 
     public event Action<PlayerControlType> OnUpdatePlayerControls;
 
@@ -154,13 +154,13 @@ public class PlayerInput : MonoBehaviour
         switch (gameMode)
         {
             case CurrentGameMode.ROGUE_LITE:
-                UpdatePlayerControls(PlayerControlType.COMBAT_MOVEMENT);
+                UpdatePlayerControls(PlayerControlType.COMBAT_NPC_MOVEMENT);
                 break;
             case CurrentGameMode.CAMP:
-                UpdatePlayerControls(PlayerControlType.CAMP_MOVEMENT);
+                UpdatePlayerControls(PlayerControlType.CAMP_NPC_MOVEMENT);
                 break;
             case CurrentGameMode.TURRET:
-                UpdatePlayerControls(PlayerControlType.TURRET_MOVEMENT);
+                UpdatePlayerControls(PlayerControlType.TURRET_CAMERA_MOVEMENT);
                 break;
             default:
                 UpdatePlayerControls(PlayerControlType.NONE);

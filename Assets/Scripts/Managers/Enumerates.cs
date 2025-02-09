@@ -50,12 +50,33 @@ public enum TaskType
 public enum PlayerControlType
 {
     NONE, // Default
-    COMBAT_MOVEMENT, // In combat during roguelike sections
-    CAMP_MOVEMENT, // Player's movement in the camp
+
+    /// <summary>
+    /// RogueLike
+    /// </summary>
+
+    COMBAT_NPC_MOVEMENT, // In combat during roguelike sections
+
+    /// <summary>
+    /// Camp
+    /// </summary>
+
+    CAMP_NPC_MOVEMENT, // Player's movement in the camp
+    BUILDING_CAMERA_MOVEMENT, //Default
     BUILDING_PLACEMENT, // Placing a building from the build menu
+
+    /// <summary>
+    /// Menus
+    /// </summary>
+
     IN_CONVERSATION, // Talking to an NPC
     IN_MENU, // In any menu
-    TURRET_MOVEMENT, //Default
+
+    /// <summary>
+    /// Turret
+    /// </summary>
+
+    TURRET_CAMERA_MOVEMENT, //Default
     TURRET_PLACEMENT // Placing a turret from the turret menu
 }
 

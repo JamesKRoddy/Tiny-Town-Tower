@@ -58,7 +58,6 @@ public class PlayerController : MonoBehaviour, IControllerInput
     private IEnumerator Start()
     {
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
-        GameManager.Instance.OnGameModeChanged += OnGameModeChanged;
 
         yield return new WaitForEndOfFrame(); //This is just to take over the npc after their setup has happened
 
@@ -77,7 +76,6 @@ public class PlayerController : MonoBehaviour, IControllerInput
     private void OnDestroy()
     {
         PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
-        GameManager.Instance.OnGameModeChanged -= OnGameModeChanged;
     }
 
     public void PossessNPC(IPossessable npc)
@@ -102,7 +100,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
             case PlayerControlType.NONE:
                 // No controls are active
                 break;
-            case PlayerControlType.COMBAT_MOVEMENT:
+            case PlayerControlType.COMBAT_NPC_MOVEMENT:
                 if (PlayerInput.Instance != null)
                 {
                     PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
@@ -111,14 +109,14 @@ public class PlayerController : MonoBehaviour, IControllerInput
                     PlayerInput.Instance.OnSelectPressed += OpenCombatUtilityMenu;
                 }
                 break;
-            case PlayerControlType.CAMP_MOVEMENT:
+            case PlayerControlType.CAMP_NPC_MOVEMENT:
                 if (PlayerInput.Instance != null)
                 {
                     PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
                     PlayerInput.Instance.OnSelectPressed += OpenCampUtilityMenu;
                 }
                 break;
-            case PlayerControlType.TURRET_MOVEMENT:
+            case PlayerControlType.TURRET_CAMERA_MOVEMENT:
                 {
                     PlayerInput.Instance.OnSelectPressed += OpenTurretUtilityMenu;
                 }
@@ -128,47 +126,19 @@ public class PlayerController : MonoBehaviour, IControllerInput
         }
     }
 
-    /// <summary>
-    /// Called whenever the gamemode is changed, call before deloading current scene
-    /// </summary>
-    /// <param name="currentGameMode"></param>
-    private void OnGameModeChanged(CurrentGameMode currentGameMode)
-    {
-        throw new NotImplementedException();
-        //switch (currentGameMode)
-        //{
-        //    case CurrentGameMode.NONE:
-        //        break;
-        //    case CurrentGameMode.ROGUE_LITE:
-        //        if (_possessedNPC != null)
-        //            ToggleNPCComponents(false);
-        //        break;
-        //    case CurrentGameMode.CAMP:
-        //        if (_possessedNPC != null)
-        //            ToggleNPCComponents(false);
-        //        break;
-        //    case CurrentGameMode.TURRET:
-        //        if(_possessedNPC != null)
-        //            ToggleNPCComponents(true);
-        //        break;
-        //    default:
-        //        break;
-        //}
-    }
-
     private void OpenCampUtilityMenu()
     {
-        UtilityMenu.Instance.OpenMenu(PlayerControlType.CAMP_MOVEMENT);
+        UtilityMenu.Instance.OpenMenu(PlayerControlType.CAMP_NPC_MOVEMENT);
     }
 
     private void OpenCombatUtilityMenu()
     {
-        UtilityMenu.Instance.OpenMenu(PlayerControlType.COMBAT_MOVEMENT);
+        UtilityMenu.Instance.OpenMenu(PlayerControlType.COMBAT_NPC_MOVEMENT);
     }
 
     private void OpenTurretUtilityMenu()
     {
-        UtilityMenu.Instance.OpenMenu(PlayerControlType.TURRET_MOVEMENT);
+        UtilityMenu.Instance.OpenMenu(PlayerControlType.TURRET_CAMERA_MOVEMENT);
     }
 
     private void HandleLeftJoystick(Vector2 input)
@@ -181,7 +151,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
     private void HandleAInput()
     {
-        if (_possessedNPC != null && PlayerInput.Instance.currentControlType == PlayerControlType.COMBAT_MOVEMENT)
+        if (_possessedNPC != null && PlayerInput.Instance.currentControlType == PlayerControlType.COMBAT_NPC_MOVEMENT)
         {
             _possessedNPC.Attack();
         }
@@ -189,7 +159,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
     private void HandleYInput()
     {
-        if (_possessedNPC != null && PlayerInput.Instance.currentControlType == PlayerControlType.COMBAT_MOVEMENT)
+        if (_possessedNPC != null && PlayerInput.Instance.currentControlType == PlayerControlType.COMBAT_NPC_MOVEMENT)
         {
             _possessedNPC.Dash();
         }

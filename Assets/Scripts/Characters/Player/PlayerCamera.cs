@@ -36,7 +36,7 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
         {
             case PlayerControlType.TURRET_PLACEMENT:
                 break;
-            case PlayerControlType.TURRET_MOVEMENT:
+            case PlayerControlType.TURRET_CAMERA_MOVEMENT:
                 target = null; // Detach from target to allow free camera movement
                 PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystickInput; // Subscribe to joystick input
                 break;
