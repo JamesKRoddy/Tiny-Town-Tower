@@ -22,7 +22,7 @@ public class TurretPreviewBtn : MonoBehaviour
         bool canPlace = true;
 
         // Loop through each required resource and check the player's inventory.
-        foreach (var requiredItem in turretObj.turretResourceCost)
+        foreach (var requiredItem in turretObj._resourceCost)
         {
             // Check how many of this resource the player currently has.
             int playerCount = PlayerInventory.Instance.GetItemCount(requiredItem.resource);
@@ -56,9 +56,9 @@ public class TurretPreviewBtn : MonoBehaviour
 
         button.onClick.AddListener(InstantiateTurretPlacement);
 
-        if (turretObjRef.turretSprite != null)
-            turretImage.sprite = turretObjRef.turretSprite;
+        if (turretObjRef._sprite != null)
+            turretImage.sprite = turretObjRef._sprite;
 
-        turretNameText.text = turretObjRef.turretName;
+        turretNameText.text = turretObjRef._name;
     }
 }

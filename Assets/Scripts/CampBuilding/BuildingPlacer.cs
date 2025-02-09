@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Collections;
 
 public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
 {
@@ -24,7 +23,7 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
 
     protected override void PlaceObject()
     {
-        // Optionally, deduct the required resources from the player's inventory here.
+        // Deduct the required resources from the player's inventory
         foreach (var requiredItem in selectedObject.buildingResourceCost)
         {
             PlayerInventory.Instance.RemoveItem(requiredItem.resource, requiredItem.count);
@@ -32,12 +31,14 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
 
         GameObject constructionSite = Instantiate(selectedObject.constructionSite, currentPreview.transform.position, Quaternion.identity);
         constructionSite.GetComponent<ConstructionSite>().SetupConstruction(selectedObject);
+
+        MarkGridSlotsOccupied(currentPreview.transform.position, selectedObject.buildingSize, constructionSite);
         CancelPlacement();
     }
 
     protected override bool IsValidPlacement(Vector3 position)
     {
-        return true; //TODO Add specific validation logic
+        return AreGridSlotsAvailable(position, selectedObject.buildingSize);
     }
 
     protected override GameObject GetPrefabFromObject(BuildingScriptableObj obj)

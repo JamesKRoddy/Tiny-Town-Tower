@@ -63,6 +63,9 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
 
     private void FollowTarget()
     {
+        if (target == null)
+            return;
+
         // Smoothly interpolate the camera's position to the target position + offset
         Vector3 targetPosition = target.position + offset;
         transform.position = Vector3.Lerp(transform.position, targetPosition, followSpeed * Time.deltaTime);

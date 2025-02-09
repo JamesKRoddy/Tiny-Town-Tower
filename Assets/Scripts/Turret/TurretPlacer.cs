@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Collections;
 
 public class TurretPlacer : PlacementManager<TurretScriptableObject>
 {
@@ -25,19 +24,21 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
     protected override void PlaceObject()
     {
         // Deduct the required resources from the player's inventory.
-        foreach (var requiredItem in selectedObject.turretResourceCost)
+        foreach (var requiredItem in selectedObject._resourceCost)
         {
             PlayerInventory.Instance.RemoveItem(requiredItem.resource, requiredItem.count);
         }
 
         GameObject turret = Instantiate(selectedObject.turretPrefab, currentPreview.transform.position, Quaternion.identity);
         turret.GetComponent<BaseTurret>().SetupTurret();
+
+        MarkGridSlotsOccupied(currentPreview.transform.position, selectedObject.turretSize, turret);
         CancelPlacement();
     }
 
     protected override bool IsValidPlacement(Vector3 position)
     {
-        return true; //TODO Add turret-specific validation logic
+        return AreGridSlotsAvailable(position, selectedObject.turretSize);
     }
 
     protected override GameObject GetPrefabFromObject(TurretScriptableObject obj)
