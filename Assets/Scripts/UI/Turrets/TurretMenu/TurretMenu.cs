@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -78,9 +79,9 @@ public class TurretMenu : PreviewListMenuBase<TurretCategory, TurretScriptableOb
         }
     }
 
-    public override void SetScreenActive(bool active, float delay = 0.0f)
+    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
-        PlayerUIManager.Instance.SetScreenActive(this, active, delay);
+        PlayerUIManager.Instance.SetScreenActive(this, active, delay, onDone);
     }
 
     public override IEnumerable<TurretScriptableObject> GetItems()

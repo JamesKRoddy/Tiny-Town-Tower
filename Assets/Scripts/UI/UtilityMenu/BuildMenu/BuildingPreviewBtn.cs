@@ -38,15 +38,8 @@ public class BuildingPreviewBtn : MonoBehaviour
 
         // If canBuild is true, proceed with construction placement. Otherwise, show an error or refuse placement.
         if (canBuild)
-        {
-            // Optionally, deduct the required resources from the player's inventory here.
-            foreach (var requiredItem in buildingObj.buildingResourceCost)
-            {
-                PlayerInventory.Instance.RemoveItem(requiredItem.resource, requiredItem.count);
-            }
-
-            BuildingPlacer.Instance.StartPlacement(buildingObj);
-            BuildMenu.Instance.SetScreenActive(false, 0.05f);
+        {           
+            BuildMenu.Instance.SetScreenActive(false, 0.1f, () => BuildingPlacer.Instance.StartPlacement(buildingObj));
         }
         else
         {

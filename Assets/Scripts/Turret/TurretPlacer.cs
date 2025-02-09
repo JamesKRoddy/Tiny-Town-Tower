@@ -24,7 +24,13 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
 
     protected override void PlaceObject()
     {
-        //TODO take away player resources
+        Debug.Log("****** PlaceObject");
+        // Deduct the required resources from the player's inventory.
+        foreach (var requiredItem in selectedObject.turretResourceCost)
+        {
+            PlayerInventory.Instance.RemoveItem(requiredItem.resource, requiredItem.count);
+        }
+
         GameObject turret = Instantiate(selectedObject.turretPrefab, currentPreview.transform.position, Quaternion.identity);
         turret.GetComponent<BaseTurret>().SetupTurret();
         CancelPlacement();

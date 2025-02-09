@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using System.Collections;
+using System;
 
 public class PlayerUIManager : MonoBehaviour
 {
@@ -75,17 +76,18 @@ public class PlayerUIManager : MonoBehaviour
     /// <param name="menu"></param>
     /// <param name="active"></param>
     /// <param name="delay"></param>
-    public void SetScreenActive(MenuBase menu, bool active, float delay = 0.0f)
+    public void SetScreenActive(MenuBase menu, bool active, float delay = 0.0f, Action callback = null)
     {
         if (delay > 0.0f)
         {
             if (openingMenuCoroutine == null)
-                openingMenuCoroutine = StartCoroutine(EnableMenuAfterDelay(menu, active, delay));
+                openingMenuCoroutine = StartCoroutine(EnableMenuAfterDelay(menu, active, delay, callback));
         }
         else
         {
             currentMenu = menu;
             menu.gameObject.SetActive(active);
+            callback?.Invoke(); // Invoke the callback immediately if there's no delay
         }
     }
 
@@ -126,11 +128,15 @@ public class PlayerUIManager : MonoBehaviour
         utilityMenu.SetScreenActive(false);
     }
 
-    private IEnumerator EnableMenuAfterDelay(MenuBase menu, bool active, float delay) //This delay is needed to stop the build menu from appearing and disappearing quickly from the ui building button being pressed
+    private IEnumerator EnableMenuAfterDelay(MenuBase menu, bool active, float delay, Action OnDone)
     {
-        yield return new WaitForSeconds(delay); // Add a slight delay
+        yield return new WaitForSeconds(delay);
+
         currentMenu = menu;
         menu.gameObject.SetActive(active);
-        openingMenuCoroutine = null;
+
+        OnDone?.Invoke(); // Invoke the callback after enabling the menu
+
+        openingMenuCoroutine = null; // Reset the coroutine reference
     }
 }

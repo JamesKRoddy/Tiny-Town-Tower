@@ -80,7 +80,7 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
         }
     }
 
-    public override void SetScreenActive(bool active, float delay = 0.0f)
+    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
         PlayerUIManager.Instance.SetScreenActive(this, active, delay);     
     }

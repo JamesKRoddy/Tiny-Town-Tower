@@ -67,7 +67,7 @@ public class UtilityMenu : MenuBase, IControllerInput
     [SerializeField] Button settlerNPCBtn;
     [SerializeField] Button turretBuildBtn;
 
-    public override void SetScreenActive(bool active, float delay = 0.0f)
+    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
         if (active)
         {

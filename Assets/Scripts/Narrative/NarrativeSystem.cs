@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Collections;
+using System;
 
 public class NarrativeSystem : MenuBase
 {
@@ -190,7 +191,7 @@ public class NarrativeSystem : MenuBase
         EndConversation();
     }
 
-    public override void SetScreenActive(bool active, float delay = 0.0f)
+    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
         if (active)
         {

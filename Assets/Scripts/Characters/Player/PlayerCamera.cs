@@ -59,6 +59,7 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
 
     public void UpdateTarget(Transform newTarget)
     {
+        Debug.Log($"******{newTarget.name}");
         target = newTarget;
     }
 

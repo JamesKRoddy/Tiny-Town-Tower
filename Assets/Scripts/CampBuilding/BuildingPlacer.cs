@@ -24,6 +24,12 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
 
     protected override void PlaceObject()
     {
+        // Optionally, deduct the required resources from the player's inventory here.
+        foreach (var requiredItem in selectedObject.buildingResourceCost)
+        {
+            PlayerInventory.Instance.RemoveItem(requiredItem.resource, requiredItem.count);
+        }
+
         GameObject constructionSite = Instantiate(selectedObject.constructionSite, currentPreview.transform.position, Quaternion.identity);
         constructionSite.GetComponent<ConstructionSite>().SetupConstruction(selectedObject);
         CancelPlacement();

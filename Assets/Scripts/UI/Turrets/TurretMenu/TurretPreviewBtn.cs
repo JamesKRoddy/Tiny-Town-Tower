@@ -18,6 +18,7 @@ public class TurretPreviewBtn : MonoBehaviour
 
     void InstantiateTurretPlacement()
     {
+        Debug.Log("******InstantiateTurretPlacement");
         // Initialize canPlace to true and set it to false if a requirement isn't met.
         bool canPlace = true;
 
@@ -38,14 +39,7 @@ public class TurretPreviewBtn : MonoBehaviour
         // If canPlace is true, proceed with turret placement. Otherwise, show an error or refuse placement.
         if (canPlace)
         {
-            // Deduct the required resources from the player's inventory.
-            foreach (var requiredItem in turretObj.turretResourceCost)
-            {
-                PlayerInventory.Instance.RemoveItem(requiredItem.resource, requiredItem.count);
-            }
-
-            TurretPlacer.Instance.StartPlacement(turretObj);
-            TurretMenu.Instance.SetScreenActive(false, 0.05f);
+            TurretMenu.Instance.SetScreenActive(false, 0.1f, () => TurretPlacer.Instance.StartPlacement(turretObj));
         }
         else
         {

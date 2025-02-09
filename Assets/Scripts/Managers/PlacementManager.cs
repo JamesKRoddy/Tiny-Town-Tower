@@ -37,6 +37,7 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
 
     public void StartPlacement(T objectToPlace)
     {
+        Debug.Log("******StartPlacement");
         selectedObject = objectToPlace;
         currentPreview = Instantiate(GetPrefabFromObject(selectedObject));
         SetPreviewMaterial(validPlacementMaterial);
@@ -55,7 +56,7 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
         if (currentPreview == null) return;
 
         float moveSpeed = 0.05f;
-        Vector3 move = new Vector3(input.x, 0, input.y) * gridSize/2 * moveSpeed;
+        Vector3 move = new Vector3(input.x, 0, input.y) * gridSize * moveSpeed;
 
         currentGridPosition += move;
 
@@ -95,9 +96,9 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
     private Vector3 SnapToGrid(Vector3 position)
     {
         return new Vector3(
-            Mathf.Round(position.x / gridSize) * gridSize,
+            Mathf.Round(position.x / gridSize) * gridSize + gridSize / 2,
             position.y,
-            Mathf.Round(position.z / gridSize) * gridSize
+            Mathf.Round(position.z / gridSize) * gridSize + gridSize / 2
         );
     }
 
