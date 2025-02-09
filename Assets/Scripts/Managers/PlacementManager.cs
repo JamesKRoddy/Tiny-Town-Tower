@@ -123,7 +123,7 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
             {
                 for (float z = zBounds.x; z < zBounds.y; z += gridSize)
                 {
-                    Vector3 gridPosition = new Vector3(x, 0, z);
+                    Vector3 gridPosition = new Vector3(x + gridSize/2, 0, z + gridSize / 2);
                     GameObject gridSection = Instantiate(gridPrefab, gridPosition, Quaternion.identity, gridParent);
                     gridSection.SetActive(false);
                     gridObjects.Add(gridPosition, gridSection);

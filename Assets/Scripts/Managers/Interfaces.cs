@@ -65,9 +65,8 @@ public interface IPossessable
  * CURRENT  WORK TURRETS ******* PUT On HOLD *******
  * 
  * 
+ * 
  * Curent work refactoring player
- * Equipped weapon not showing on npc
- * remove player parent classes just take over the npcs versions, have it all in the charater combat, character controller
  * rework inventory system CharacterInventory.cs needs to be looked at read info at the top
  * 
  * 

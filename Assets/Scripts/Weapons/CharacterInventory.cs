@@ -10,7 +10,9 @@ public class InventoryItem
 }
 
 /// <summary>
-/// This is the NPCs characters inventory, once a player posesses an NPC items picked up are added to this inventory, once they return to base the items are added to the players inventory
+/// This is the NPCs characters inventory 
+/// 
+/// TODO once a player posesses an NPC items picked up are added to this inventory, once they return to base the items are added to the players inventory
 /// </summary>
 public class CharacterInventory : MonoBehaviour
 {

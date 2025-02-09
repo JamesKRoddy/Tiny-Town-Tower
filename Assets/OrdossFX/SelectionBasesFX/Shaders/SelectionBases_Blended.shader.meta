@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: dd54480077de21b45921d43d777dc7b6
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 115459
+  packageName: Selection Bases FX
+  packageVersion: 1.1
+  assetPath: Assets/OrdossFX/SelectionBasesFX/Shaders/SelectionBases_Blended.shader
+  uploadId: 525208

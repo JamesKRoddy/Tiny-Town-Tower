@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 6fab6dae387f9ae4690873f31f8eeb04
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 115459
+  packageName: Selection Bases FX
+  packageVersion: 1.1
+  assetPath: Assets/OrdossFX/SelectionBasesFX/Materials/SparksPoison.mat
+  uploadId: 525208

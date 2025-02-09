@@ -19,4 +19,4 @@ MonoBehaviour:
   - resource: {fileID: 11400000, guid: 12f818ac54e7fb1438a80c5e50b6a79a, type: 2}
     count: 1
   turretCategory: 0
-  turretPrefab: {fileID: 9088902041837886848, guid: 7f5725acab621cd41a9f3e86ced9d7db, type: 3}
+  turretPrefab: {fileID: 5704079499573655729, guid: 24e35ea0993320b42bc3b83f4a11a613, type: 3}

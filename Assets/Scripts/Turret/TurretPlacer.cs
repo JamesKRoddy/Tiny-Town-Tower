@@ -24,6 +24,7 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
 
     protected override void PlaceObject()
     {
+        //TODO take away player resources
         GameObject turret = Instantiate(selectedObject.turretPrefab, currentPreview.transform.position, Quaternion.identity);
         turret.GetComponent<BaseTurret>().SetupTurret();
         CancelPlacement();
