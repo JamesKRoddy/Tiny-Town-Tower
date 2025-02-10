@@ -92,13 +92,13 @@ public enum CurrentGameMode
     TURRET
 }
 
-public enum RoomSetupState
+public enum EnemySetupState
 {
     NONE,
-    ENTERING_ROOM, //Player choses to open a door
+    WAVE_START, //Player choses to open a door
     PRE_ENEMY_SPAWNING, //Period when the new room is spawned in, props, chests etc. are spawned in and nav mesh is baked
     ENEMIES_SPAWNED, //The room game play has started
-    ROOM_CLEARED // enemies are all dea, player is free the move around and choose the next path
+    ALL_WAVES_CLEARED // enemies are all dea, player is free the move around and choose the next path
 }
 
 // =========================

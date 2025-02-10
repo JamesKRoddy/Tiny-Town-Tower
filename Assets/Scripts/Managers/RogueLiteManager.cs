@@ -39,7 +39,7 @@ public class RogueLiteManager : MonoBehaviour
         }
     }
 
-    private RoomSetupState roomSetupState;
+    private EnemySetupState roomSetupState;
     public List<BuildingDataScriptableObj> buildingDataScriptableObjs;
     public List<EnemyWaveConfig> waveConfigs; // List of all possible wave configurations //TODO move this to a separate container with all the waves divided up into different buildings
     public BuildingType currentBuilding = BuildingType.NONE;
@@ -51,13 +51,13 @@ public class RogueLiteManager : MonoBehaviour
     /// <summary>
     /// All actions relating to roguelite gameplay loop
     /// </summary>
-    public Action<RoomSetupState> OnRoomSetupStateChanged;
+    public Action<EnemySetupState> OnRoomSetupStateChanged;
 
     /// <summary>
     /// Property to encapsulate roomSetupState and invoke OnSetupStateChanged
     /// whenever it changes.
     /// </summary>
-    private RoomSetupState RoomSetupState
+    private EnemySetupState RoomSetupState
     {
         get => roomSetupState;
         set
@@ -72,12 +72,12 @@ public class RogueLiteManager : MonoBehaviour
     }
 
     //Call this whenever the state needs to be changed
-    public void SetRoomState(RoomSetupState newState)
+    public void SetRoomState(EnemySetupState newState)
     {
         RoomSetupState = newState;
     }
 
-    public RoomSetupState GetRoomState()
+    public EnemySetupState GetRoomState()
     {
         return RoomSetupState;
     }
@@ -85,7 +85,7 @@ public class RogueLiteManager : MonoBehaviour
     private void Start()
     {
         OnRoomSetupStateChanged += RoomSetupStateChanged;
-        roomSetupState = RoomSetupState.ROOM_CLEARED; //TODO this is just for testing
+        roomSetupState = EnemySetupState.ALL_WAVES_CLEARED; //TODO this is just for testing
     }
 
     private void OnDestroy()
@@ -93,20 +93,20 @@ public class RogueLiteManager : MonoBehaviour
         OnRoomSetupStateChanged -= RoomSetupStateChanged;
     }
 
-    private void RoomSetupStateChanged(RoomSetupState newState)
+    private void RoomSetupStateChanged(EnemySetupState newState)
     {
         switch (newState)
         {
-            case RoomSetupState.NONE:
+            case EnemySetupState.NONE:
                 break;
-            case RoomSetupState.ENTERING_ROOM:
+            case EnemySetupState.WAVE_START:
                 break;
-            case RoomSetupState.PRE_ENEMY_SPAWNING:
+            case EnemySetupState.PRE_ENEMY_SPAWNING:
                 SetupPlayer();
                 break;
-            case RoomSetupState.ENEMIES_SPAWNED:
+            case EnemySetupState.ENEMIES_SPAWNED:
                 break;
-            case RoomSetupState.ROOM_CLEARED:
+            case EnemySetupState.ALL_WAVES_CLEARED:
                 break;
             default:
                 break;
@@ -115,7 +115,7 @@ public class RogueLiteManager : MonoBehaviour
 
     public void EnterRoom(RogueLiteDoor rogueLiteDoor)
     {
-        SetRoomState(RoomSetupState.ENTERING_ROOM);
+        SetRoomState(EnemySetupState.WAVE_START);
 
         currentRoomDifficulty = rogueLiteDoor.doorRoomDifficulty;
         currentRoom++;

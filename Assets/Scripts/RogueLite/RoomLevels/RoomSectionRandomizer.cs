@@ -136,7 +136,7 @@ public class RoomSectionRandomizer : MonoBehaviour
         {
             navMeshSurface.BuildNavMesh();            
             Debug.Log("NavMesh baked at runtime.");
-            RogueLiteManager.Instance.SetRoomState(RoomSetupState.PRE_ENEMY_SPAWNING);
+            RogueLiteManager.Instance.SetRoomState(EnemySetupState.PRE_ENEMY_SPAWNING);
         }
         else
         {

@@ -4,6 +4,27 @@ using UnityEngine;
 
 public class EnemySpawnManager : MonoBehaviour
 {
+    // Singleton instance
+    private static EnemySpawnManager _instance;
+
+    // Singleton property to get the instance
+    public static EnemySpawnManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                // Find the GameManager instance if it hasn't been assigned
+                _instance = FindFirstObjectByType<EnemySpawnManager>();
+                if (_instance == null)
+                {
+                    Debug.LogWarning("EnemySpawnManager instance not found in the scene!");
+                }
+            }
+            return _instance;
+        }
+    }
+
     private EnemyWaveConfig waveConfig; // Current wave configuration //TODO use GetCurrentRoomDifficulty
 
     private List<EnemySpawnPoint> spawnPoints;
@@ -12,9 +33,20 @@ public class EnemySpawnManager : MonoBehaviour
     private int enemiesSpawned; // Number of enemies spawned so far
     private List<GameObject> activeEnemies = new List<GameObject>(); // List of active enemies
 
+    private void Awake()
+    {
+        if (_instance != null && _instance != this)
+        {
+            Destroy(gameObject); // Destroy duplicate instances
+        }
+        else
+        {
+            _instance = this; // Set the instance
+        }
+    }
+
     private void Start()
     {
-        // Subscribe to RogueLiteManager event
         RogueLiteManager.Instance.OnRoomSetupStateChanged += RoomSetupStateChanged;
     }
 
@@ -24,26 +56,30 @@ public class EnemySpawnManager : MonoBehaviour
         RogueLiteManager.Instance.OnRoomSetupStateChanged -= RoomSetupStateChanged;
     }
 
-    private void RoomSetupStateChanged(RoomSetupState newState)
+    #region RogueLike
+
+    private void RoomSetupStateChanged(EnemySetupState newState)
     {
         switch (newState)
         {
-            case RoomSetupState.NONE:
+            case EnemySetupState.NONE:
                 break;
-            case RoomSetupState.ENTERING_ROOM:
+            case EnemySetupState.WAVE_START:
                 ResetWaveCount();
                 break;
-            case RoomSetupState.PRE_ENEMY_SPAWNING:
+            case EnemySetupState.PRE_ENEMY_SPAWNING:
                 StartSpawningEnemies();
                 break;
-            case RoomSetupState.ENEMIES_SPAWNED:
+            case EnemySetupState.ENEMIES_SPAWNED:
                 break;
-            case RoomSetupState.ROOM_CLEARED:
+            case EnemySetupState.ALL_WAVES_CLEARED:
                 break;
             default:
                 break;
         }
     }
+
+    #endregion
 
     private void ResetWaveCount()
     {
@@ -52,7 +88,7 @@ public class EnemySpawnManager : MonoBehaviour
 
     private void StartSpawningEnemies()
     {
-        RogueLiteManager.Instance.SetRoomState(RoomSetupState.ENEMIES_SPAWNED);
+        RogueLiteManager.Instance.SetRoomState(EnemySetupState.ENEMIES_SPAWNED);
         // Get the waveConfig from the RogueLiteManager
         waveConfig = RogueLiteManager.Instance.GetWaveConfig();
 
@@ -78,7 +114,7 @@ public class EnemySpawnManager : MonoBehaviour
         if (currentWave >= waveConfig.maxWaves)
         {
             Debug.Log("All waves completed!");
-            RogueLiteManager.Instance.SetRoomState(RoomSetupState.ROOM_CLEARED);
+            RogueLiteManager.Instance.SetRoomState(EnemySetupState.ALL_WAVES_CLEARED);
             return;
         }
 
