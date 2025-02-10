@@ -63,7 +63,7 @@ public interface IPossessable
  * 
  * 
  * CURRENT  WORK TURRETS ******* PUT On HOLD *******
- * 
+ * Have to check if turret and building grid size code works
  * 
  * 
  * Curent work refactoring player

@@ -103,9 +103,9 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
     private Vector3 SnapToGrid(Vector3 position)
     {
         return new Vector3(
-            Mathf.Round(position.x / gridSize) * gridSize + gridSize / 2,
-            position.y,
-            Mathf.Round(position.z / gridSize) * gridSize + gridSize / 2
+            Mathf.Floor(position.x / gridSize) * gridSize + (gridSize / 2),
+            0,
+            Mathf.Floor(position.z / gridSize) * gridSize + (gridSize / 2)
         );
     }
 
@@ -129,7 +129,9 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
             {
                 for (float z = zBounds.x; z < zBounds.y; z += gridSize)
                 {
+                    // Offset the grid position so it's centered in the cell
                     Vector3 gridPosition = new Vector3(x + gridSize / 2, 0, z + gridSize / 2);
+
                     GameObject gridSection = Instantiate(gridPrefab, gridPosition, Quaternion.identity, gridParent);
                     gridSection.SetActive(false);
 
@@ -175,8 +177,18 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
         {
             if (gridSlots.ContainsKey(slot))
             {
+                if (gridSlots[slot].IsOccupied)
+                {
+                    Debug.LogWarning($"Grid slot at {slot} is already occupied by {gridSlots[slot].OccupyingObject.name}!");
+                    continue; // Skip marking if already occupied
+                }
+
                 gridSlots[slot].IsOccupied = true;
                 gridSlots[slot].OccupyingObject = placedObject;
+            }
+            else
+            {
+                Debug.LogError($"Grid slot at {slot} does not exist in the dictionary!");
             }
         }
     }
@@ -185,11 +197,18 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
     {
         List<Vector3> requiredSlots = new List<Vector3>();
 
+        Vector3 basePosition = SnapToGrid(position); // Ensure snapping is applied
+
         for (int x = 0; x < size.x; x++)
         {
             for (int z = 0; z < size.y; z++)
             {
-                Vector3 slotPosition = new Vector3(position.x + x * gridSize, 0, position.z + z * gridSize);
+                Vector3 slotPosition = new Vector3(
+                    basePosition.x + x * gridSize,
+                    0,
+                    basePosition.z + z * gridSize
+                );
+
                 requiredSlots.Add(slotPosition);
             }
         }

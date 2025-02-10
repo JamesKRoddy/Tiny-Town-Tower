@@ -23,6 +23,12 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
 
     protected override void PlaceObject()
     {
+        if (!IsValidPlacement(currentGridPosition))
+        {
+            PlayerUIManager.Instance.DisplayUIErrorMessage("Cannot place turret");
+            return;
+        }
+
         // Deduct the required resources from the player's inventory.
         foreach (var requiredItem in selectedObject._resourceCost)
         {

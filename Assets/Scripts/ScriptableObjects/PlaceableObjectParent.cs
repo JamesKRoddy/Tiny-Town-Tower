@@ -9,5 +9,5 @@ public class PlaceableObjectParent : ScriptableObject
     public Sprite _sprite;
     public List<InventoryItem> _resourceCost;
     public GameObject prefab;
-    public Vector2Int size;
+    public Vector2Int size = new Vector2Int(1, 1);
 }

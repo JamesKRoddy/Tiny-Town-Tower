@@ -52,10 +52,10 @@ public class TurretManager : MonoBehaviour
             Gizmos.color = Color.green;
 
             // Draw a rectangular outline to visualize the panning bounds
-            Vector3 bottomLeft = new Vector3(TurretManager.Instance.GetXBounds().x, 0, TurretManager.Instance.GetZBounds().x);
-            Vector3 bottomRight = new Vector3(TurretManager.Instance.GetXBounds().y, 0, TurretManager.Instance.GetZBounds().x);
-            Vector3 topLeft = new Vector3(TurretManager.Instance.GetXBounds().x, 0, TurretManager.Instance.GetZBounds().y);
-            Vector3 topRight = new Vector3(TurretManager.Instance.GetXBounds().y, 0, TurretManager.Instance.GetZBounds().y);
+            Vector3 bottomLeft = new Vector3(GetXBounds().x, 0, GetZBounds().x);
+            Vector3 bottomRight = new Vector3(GetXBounds().y, 0, GetZBounds().x);
+            Vector3 topLeft = new Vector3(GetXBounds().x, 0, GetZBounds().y);
+            Vector3 topRight = new Vector3(GetXBounds().y, 0, GetZBounds().y);
 
             Gizmos.DrawLine(bottomLeft, bottomRight);
             Gizmos.DrawLine(bottomRight, topRight);
