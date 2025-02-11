@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class TurretManager : GameModeManager<TurretEnemyWaveConfig, ScriptableObject>
+public class TurretManager : GameModeManager<TurretEnemyWaveConfig>
 {
     [Header("Turret Grid")]
     [SerializeField] private Vector2 xBounds = new Vector2(-25f, 25f);
