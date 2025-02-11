@@ -9,14 +9,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ec7f3d924e594b409827ea074c6160b, type: 3}
-  m_Name: _TestEnemyWaveConfig
+  m_Script: {fileID: 11500000, guid: 1b9cb7dc00f0dd448af4a0ed21ab6ca9, type: 3}
+  m_Name: _TestRogueLikeEnemyWave
   m_EditorClassIdentifier: 
   enemyPrefabs:
   - {fileID: 6477775522615659138, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
   minWaves: 1
-  maxWaves: 1
-  minEnemiesPerWave: 3
-  maxEnemiesPerWave: 7
+  maxWaves: 5
+  minEnemiesPerWave: 1
+  maxEnemiesPerWave: 10
+  enemyWaveDifficulty: 0
   buildingType: 0
-  floor: 0
