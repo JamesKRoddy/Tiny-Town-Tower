@@ -2,10 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class GameModeManager<TWaveConfig, TBuildingData> : MonoBehaviour where TWaveConfig : ScriptableObject where TBuildingData : ScriptableObject
+public abstract class GameModeManager<TWaveConfig> : MonoBehaviour where TWaveConfig : ScriptableObject
 {
     [SerializeField] protected List<TWaveConfig> waveConfigs;
-    [SerializeField] protected List<TBuildingData> buildingDataScriptableObjs;
 
     protected EnemySetupState enemySetupState;
     public Action<EnemySetupState> OnRoomSetupStateChanged;
@@ -47,21 +46,6 @@ public abstract class GameModeManager<TWaveConfig, TBuildingData> : MonoBehaviou
             }
         }
         Debug.LogWarning($"No matching waveConfig found for difficulty {difficulty}. Returning null.");
-        return null;
-    }
-
-    public GameObject GetBuildingParent(BuildingType buildingType, int difficulty, out BuildingDataScriptableObj selectedBuilding)
-    {
-        foreach (var buildingData in buildingDataScriptableObjs)
-        {
-            if (buildingData is BuildingDataScriptableObj building && building.buildingType == buildingType)
-            {
-                selectedBuilding = building;
-                return building.GetBuildingParent(difficulty);
-            }
-        }
-        Debug.LogWarning($"No building parent found for type {buildingType} with difficulty {difficulty}.");
-        selectedBuilding = null;
         return null;
     }
 }

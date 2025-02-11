@@ -1,7 +1,9 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class RogueLiteManager : GameModeManager<RogueLikeEnemyWaveConfig, BuildingDataScriptableObj>
+public class RogueLiteManager : GameModeManager<RogueLikeEnemyWaveConfig>
 {
+    [SerializeField] protected List<BuildingDataScriptableObj> buildingDataScriptableObjs;
     public BuildingType currentBuilding = BuildingType.NONE;
     private GameObject currentBuildingParent;
     public int buildingDifficulty;
@@ -101,6 +103,21 @@ public class RogueLiteManager : GameModeManager<RogueLikeEnemyWaveConfig, Buildi
         }
 
         SetupLevel(currentBuilding);
+    }
+
+    public GameObject GetBuildingParent(BuildingType buildingType, int difficulty, out BuildingDataScriptableObj selectedBuilding)
+    {
+        foreach (var buildingData in buildingDataScriptableObjs)
+        {
+            if (buildingData is BuildingDataScriptableObj building && building.buildingType == buildingType)
+            {
+                selectedBuilding = building;
+                return building.GetBuildingParent(difficulty);
+            }
+        }
+        Debug.LogWarning($"No building parent found for type {buildingType} with difficulty {difficulty}.");
+        selectedBuilding = null;
+        return null;
     }
 
     public int GetCurrentWaveDifficulty()
