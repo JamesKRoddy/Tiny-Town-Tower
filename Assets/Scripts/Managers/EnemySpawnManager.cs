@@ -47,18 +47,16 @@ public class EnemySpawnManager : MonoBehaviour
 
     private void Start()
     {
-        RogueLiteManager.Instance.OnRoomSetupStateChanged += RoomSetupStateChanged;
+        RogueLiteManager.Instance.OnRoomSetupStateChanged += EnemySetupStateChanged;
     }
 
     private void OnDestroy()
     {
         // Unsubscribe from RogueLiteManager event
-        RogueLiteManager.Instance.OnRoomSetupStateChanged -= RoomSetupStateChanged;
+        RogueLiteManager.Instance.OnRoomSetupStateChanged -= EnemySetupStateChanged;
     }
 
-    #region RogueLike
-
-    private void RoomSetupStateChanged(EnemySetupState newState)
+    private void EnemySetupStateChanged(EnemySetupState newState)
     {
         switch (newState)
         {
@@ -79,8 +77,6 @@ public class EnemySpawnManager : MonoBehaviour
         }
     }
 
-    #endregion
-
     private void ResetWaveCount()
     {
         currentWave = 0;
@@ -88,9 +84,9 @@ public class EnemySpawnManager : MonoBehaviour
 
     private void StartSpawningEnemies()
     {
-        RogueLiteManager.Instance.SetRoomState(EnemySetupState.ENEMIES_SPAWNED);
+        RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ENEMIES_SPAWNED);
         // Get the waveConfig from the RogueLiteManager
-        waveConfig = RogueLiteManager.Instance.GetWaveConfig();
+        waveConfig = RogueLiteManager.Instance.GetWaveConfigForRoom();
 
         if (waveConfig == null)
         {
@@ -114,7 +110,7 @@ public class EnemySpawnManager : MonoBehaviour
         if (currentWave >= waveConfig.maxWaves)
         {
             Debug.Log("All waves completed!");
-            RogueLiteManager.Instance.SetRoomState(EnemySetupState.ALL_WAVES_CLEARED);
+            RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
             return;
         }
 

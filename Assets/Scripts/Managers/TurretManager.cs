@@ -1,8 +1,15 @@
-using System;
 using UnityEngine;
 
-public class TurretManager : MonoBehaviour
+public class TurretManager : GameModeManager<TurretEnemyWaveConfig, ScriptableObject>
 {
+    [Header("Turret Grid")]
+    [SerializeField] private Vector2 xBounds = new Vector2(-25f, 25f);
+    [SerializeField] private Vector2 zBounds = new Vector2(-25f, 25f);
+    [SerializeField] private bool showGridBounds;
+
+    public Vector2 GetXBounds() => xBounds;
+    public Vector2 GetZBounds() => zBounds;
+
     // Singleton instance
     private static TurretManager _instance;
 
@@ -36,26 +43,25 @@ public class TurretManager : MonoBehaviour
         }
     }
 
-    [Header("Turret Grid")]
-    [SerializeField] private Vector2 xBounds = new Vector2(-25f, 25f); // X-axis bounds for turret grid
-    [SerializeField] private Vector2 zBounds = new Vector2(-25f, 25f); // Z-axis bounds for turret grid
-    [SerializeField] bool showGridBounds;
+    protected override void EnemySetupStateChanged(EnemySetupState newState)
+    {
+        // Add turret-specific enemy setup state handling if needed.
+    }
 
-    public Vector2 GetXBounds() => xBounds;
-    public Vector2 GetZBounds() => zBounds;
-
+    public EnemyWaveConfig GetTurretWaveConfig(int difficulty)
+    {
+        return GetWaveConfig(difficulty);
+    }
 
     private void OnDrawGizmos()
     {
         if (showGridBounds)
         {
             Gizmos.color = Color.green;
-
-            // Draw a rectangular outline to visualize the panning bounds
-            Vector3 bottomLeft = new Vector3(GetXBounds().x, 0, GetZBounds().x);
-            Vector3 bottomRight = new Vector3(GetXBounds().y, 0, GetZBounds().x);
-            Vector3 topLeft = new Vector3(GetXBounds().x, 0, GetZBounds().y);
-            Vector3 topRight = new Vector3(GetXBounds().y, 0, GetZBounds().y);
+            Vector3 bottomLeft = new Vector3(xBounds.x, 0, zBounds.x);
+            Vector3 bottomRight = new Vector3(xBounds.y, 0, zBounds.x);
+            Vector3 topLeft = new Vector3(xBounds.x, 0, zBounds.y);
+            Vector3 topRight = new Vector3(xBounds.y, 0, zBounds.y);
 
             Gizmos.DrawLine(bottomLeft, bottomRight);
             Gizmos.DrawLine(bottomRight, topRight);

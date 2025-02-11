@@ -105,12 +105,9 @@ public class RoomSectionRandomizer : MonoBehaviour
         }
 
         // Instantiate the prefab at the position and rotation of the target transform
-        GameObject room = Instantiate(randomPrefab, targetTransform.position, targetTransform.rotation);
+        GameObject room = Instantiate(randomPrefab, targetTransform.position, targetTransform.rotation, targetTransform);
 
         room.GetComponent<RogueLiteRoom>().Setup(roomPosition);
-
-        // Set the instantiated room as a child of the target transform
-        room.transform.SetParent(targetTransform);
 
         RandomizePropsInSection(room.transform);
     }
@@ -136,7 +133,7 @@ public class RoomSectionRandomizer : MonoBehaviour
         {
             navMeshSurface.BuildNavMesh();            
             Debug.Log("NavMesh baked at runtime.");
-            RogueLiteManager.Instance.SetRoomState(EnemySetupState.PRE_ENEMY_SPAWNING);
+            RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.PRE_ENEMY_SPAWNING);
         }
         else
         {
@@ -214,7 +211,7 @@ public class RoomSectionRandomizer : MonoBehaviour
                 continue; // Skip assigning loot to disabled chests
             }
 
-            chest.SetupChest(RogueLiteManager.Instance.GetCurrentRoomDifficulty());
+            chest.SetupChest(RogueLiteManager.Instance.GetCurrentWaveDifficulty());
         }
 
         Debug.Log("Chests have been setup.");

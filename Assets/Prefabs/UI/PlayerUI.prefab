@@ -9744,7 +9744,7 @@ MonoBehaviour:
   playerInventoryBtn: {fileID: 2410235753797247901}
   buildMenuBtn: {fileID: 318545757525774023}
   settlerNPCBtn: {fileID: 3065089566355071980}
-  turretBuildBtn: {fileID: 0}
+  turretBuildBtn: {fileID: 4199740164213846634}
 --- !u!1 &6395254606574152548
 GameObject:
   m_ObjectHideFlags: 0
