@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chests:
-  - {fileID: 5743781068077125176}
+  - {fileID: 8957100806710602772}
   lootTableScriptableObj: {fileID: 11400000, guid: 681b939ea02b0fb408e38b6647a144b0, type: 2}
 --- !u!1001 &4390464703821688865
 PrefabInstance:
@@ -62,7 +62,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1343672823087468, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4014087072882898, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
       propertyPath: m_LocalPosition.x
@@ -119,21 +119,40 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1343672823087468, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8957100806710602772}
   m_SourcePrefab: {fileID: 100100000, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
 --- !u!4 &4386596921053876467 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4014087072882898, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
   m_PrefabInstance: {fileID: 4390464703821688865}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &5743781068077125176 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8311412980704575001, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
+--- !u!4 &4387050992579538741 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4503327804284692, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
   m_PrefabInstance: {fileID: 4390464703821688865}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+--- !u!1 &4389556575623065933 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1343672823087468, guid: 25b4c90ed403d7743b04c203d2476652, type: 3}
+  m_PrefabInstance: {fileID: 4390464703821688865}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8957100806710602772
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4389556575623065933}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3b406abc42092ed45af45e00a22d2022, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isOpened: 0
+  door: {fileID: 4387050992579538741}
+  rotationAxis: {x: 1, y: 0, z: 0}
+  openAngle: 90
+  openSpeed: 2
