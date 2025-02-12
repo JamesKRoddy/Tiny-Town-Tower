@@ -45,7 +45,30 @@ public class TurretManager : GameModeManager<TurretEnemyWaveConfig>
 
     protected override void EnemySetupStateChanged(EnemySetupState newState)
     {
-        // Add turret-specific enemy setup state handling if needed.
+        switch (newState)
+        {
+            case EnemySetupState.NONE:
+                break;
+            case EnemySetupState.WAVE_START:
+                EnemySpawnManager.Instance.ResetWaveCount();
+                break;
+            case EnemySetupState.PRE_ENEMY_SPAWNING:
+                SetEnemySetupState(EnemySetupState.ENEMIES_SPAWNED);
+                EnemySpawnManager.Instance.StartSpawningEnemies(GetTurretWaveConfig(GetCurrentWaveDifficulty()));
+                break;
+            case EnemySetupState.ENEMIES_SPAWNED:
+                break;
+            case EnemySetupState.ALL_WAVES_CLEARED:
+                break;
+            default:
+                break;
+        }
+    }
+
+    public override int GetCurrentWaveDifficulty()
+    {
+        Debug.LogError("TODO have to figure out how this is calculated");
+        return 1;
     }
 
     public EnemyWaveConfig GetTurretWaveConfig(int difficulty)

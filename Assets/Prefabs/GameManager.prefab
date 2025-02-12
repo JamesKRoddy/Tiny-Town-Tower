@@ -220,6 +220,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70687aa39e56fd04e92edc082fd6d4ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  waveConfigs:
+  - {fileID: 11400000, guid: 1bff15a3b967a6543a2d0aaba3e05a4b, type: 2}
   xBounds: {x: -10, y: 10}
   zBounds: {x: -10, y: 10}
   showGridBounds: 1
@@ -311,9 +313,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4362f965b1725845a99fd80b277094f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buildingDataScriptableObjs: []
   waveConfigs:
-  - {fileID: 11400000, guid: 955d0194db20557418167b4d210cc9cb, type: 2}
+  - {fileID: 11400000, guid: 3a8a25e27794d7845b4281207ea01f30, type: 2}
+  buildingDataScriptableObjs: []
   currentBuilding: 0
   buildingDifficulty: 0
   currentRoom: 0

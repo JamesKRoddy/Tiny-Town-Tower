@@ -47,12 +47,23 @@ public class RogueLiteManager : GameModeManager<RogueLikeEnemyWaveConfig>
     {
         switch (newState)
         {
+            case EnemySetupState.NONE:
+                break;
+            case EnemySetupState.WAVE_START:
+                EnemySpawnManager.Instance.ResetWaveCount();
+                break;
             case EnemySetupState.PRE_ENEMY_SPAWNING:
                 SetupPlayer();
+                SetEnemySetupState(EnemySetupState.ENEMIES_SPAWNED);
+                EnemySpawnManager.Instance.StartSpawningEnemies(GetWaveConfig(GetCurrentWaveDifficulty()));
+                break;
+            case EnemySetupState.ENEMIES_SPAWNED:
                 break;
             case EnemySetupState.ALL_WAVES_CLEARED:
                 break;
-        }
+            default:
+                break;
+        }               
     }
 
     private void SetupLevel(BuildingType buildingType)
@@ -120,13 +131,8 @@ public class RogueLiteManager : GameModeManager<RogueLikeEnemyWaveConfig>
         return null;
     }
 
-    public int GetCurrentWaveDifficulty()
+    public override int GetCurrentWaveDifficulty()
     {
         return (currentRoom * buildingDifficulty) + currentRoomDifficulty;
-    }
-
-    public EnemyWaveConfig GetWaveConfigForRoom()
-    {
-        return GetWaveConfig(GetCurrentWaveDifficulty());
     }
 }

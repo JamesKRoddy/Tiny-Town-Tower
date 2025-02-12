@@ -25,7 +25,7 @@ public class EnemySpawnManager : MonoBehaviour
         }
     }
 
-    private EnemyWaveConfig waveConfig; // Current wave configuration //TODO use GetCurrentRoomDifficulty
+    private EnemyWaveConfig currentWaveConfig; // Current wave configuration //TODO use GetCurrentRoomDifficulty
 
     private List<EnemySpawnPoint> spawnPoints;
     private int currentWave = 0;
@@ -45,50 +45,16 @@ public class EnemySpawnManager : MonoBehaviour
         }
     }
 
-    private void Start()
-    {
-        RogueLiteManager.Instance.OnRoomSetupStateChanged += EnemySetupStateChanged;
-    }
-
-    private void OnDestroy()
-    {
-        // Unsubscribe from RogueLiteManager event
-        RogueLiteManager.Instance.OnRoomSetupStateChanged -= EnemySetupStateChanged;
-    }
-
-    private void EnemySetupStateChanged(EnemySetupState newState)
-    {
-        switch (newState)
-        {
-            case EnemySetupState.NONE:
-                break;
-            case EnemySetupState.WAVE_START:
-                ResetWaveCount();
-                break;
-            case EnemySetupState.PRE_ENEMY_SPAWNING:
-                StartSpawningEnemies();
-                break;
-            case EnemySetupState.ENEMIES_SPAWNED:
-                break;
-            case EnemySetupState.ALL_WAVES_CLEARED:
-                break;
-            default:
-                break;
-        }
-    }
-
-    private void ResetWaveCount()
+    public void ResetWaveCount()
     {
         currentWave = 0;
     }
 
-    private void StartSpawningEnemies()
+    public void StartSpawningEnemies(EnemyWaveConfig waveConfig)
     {
-        RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ENEMIES_SPAWNED);
-        // Get the waveConfig from the RogueLiteManager
-        waveConfig = RogueLiteManager.Instance.GetWaveConfigForRoom();
 
-        if (waveConfig == null)
+
+        if (currentWaveConfig == null)
         {
             Debug.LogError("No waveConfig provided by RogueLiteManager!");
             return;
@@ -107,10 +73,23 @@ public class EnemySpawnManager : MonoBehaviour
 
     private void StartNextWave()
     {
-        if (currentWave >= waveConfig.maxWaves)
+        if (currentWave >= currentWaveConfig.maxWaves)
         {
             Debug.Log("All waves completed!");
-            RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+
+            switch (GameManager.Instance.CurrentGameMode)
+            {
+                case CurrentGameMode.ROGUE_LITE:
+                    RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                    break;
+                case CurrentGameMode.TURRET:
+                    TurretManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                    break;
+                default:
+                    Debug.LogError("Shouldnt be spawning enemies here!!!");
+                    break;
+            }
+
             return;
         }
 
@@ -118,7 +97,7 @@ public class EnemySpawnManager : MonoBehaviour
         Debug.Log($"Starting Wave {currentWave}");
 
         // Determine the number of enemies to spawn in this wave
-        totalEnemiesInWave = Random.Range(waveConfig.minEnemiesPerWave, waveConfig.maxEnemiesPerWave + 1);
+        totalEnemiesInWave = Random.Range(currentWaveConfig.minEnemiesPerWave, currentWaveConfig.maxEnemiesPerWave + 1);
         enemiesSpawned = 0; // Reset for the new wave
 
         SpawnWave(totalEnemiesInWave);
@@ -134,7 +113,7 @@ public class EnemySpawnManager : MonoBehaviour
 
     private void SpawnEnemy()
     {
-        if (spawnPoints.Count == 0 || waveConfig.enemyPrefabs.Length == 0)
+        if (spawnPoints.Count == 0 || currentWaveConfig.enemyPrefabs.Length == 0)
             return;
 
         StartCoroutine(SpawnEnemyWithRetry());
@@ -162,7 +141,7 @@ public class EnemySpawnManager : MonoBehaviour
             }
         }
 
-        GameObject enemyPrefab = waveConfig.enemyPrefabs[Random.Range(0, waveConfig.enemyPrefabs.Length)];
+        GameObject enemyPrefab = currentWaveConfig.enemyPrefabs[Random.Range(0, currentWaveConfig.enemyPrefabs.Length)];
 
         // Delegate spawning to the spawn point
         GameObject enemy = spawnPoint.SpawnEnemy(enemyPrefab);
