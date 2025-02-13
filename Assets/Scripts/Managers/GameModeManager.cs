@@ -7,17 +7,16 @@ public abstract class GameModeManager<TWaveConfig> : MonoBehaviour where TWaveCo
     [SerializeField] protected List<TWaveConfig> waveConfigs;
 
     protected EnemySetupState enemySetupState;
-    public Action<EnemySetupState> OnRoomSetupStateChanged;
+    public Action<EnemySetupState> OnEnemySetupStateChanged;
 
     protected virtual void Start()
     {
-        OnRoomSetupStateChanged += EnemySetupStateChanged;
-        enemySetupState = EnemySetupState.ALL_WAVES_CLEARED;
+        OnEnemySetupStateChanged += EnemySetupStateChanged;
     }
 
     protected virtual void OnDestroy()
     {
-        OnRoomSetupStateChanged -= EnemySetupStateChanged;
+        OnEnemySetupStateChanged -= EnemySetupStateChanged;
     }
 
     protected abstract void EnemySetupStateChanged(EnemySetupState newState);
@@ -28,7 +27,7 @@ public abstract class GameModeManager<TWaveConfig> : MonoBehaviour where TWaveCo
         if (enemySetupState != newState)
         {
             enemySetupState = newState;
-            OnRoomSetupStateChanged?.Invoke(enemySetupState);
+            OnEnemySetupStateChanged?.Invoke(enemySetupState);
         }
     }
 

@@ -52,8 +52,6 @@ public class EnemySpawnManager : MonoBehaviour
 
     public void StartSpawningEnemies(EnemyWaveConfig waveConfig)
     {
-
-
         if (currentWaveConfig == null)
         {
             Debug.LogError("No waveConfig provided by RogueLiteManager!");

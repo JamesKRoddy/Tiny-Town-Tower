@@ -63,7 +63,9 @@ public class RogueLiteManager : GameModeManager<RogueLikeEnemyWaveConfig>
                 break;
             default:
                 break;
-        }               
+        }   
+        
+        
     }
 
     private void SetupLevel(BuildingType buildingType)

@@ -10,6 +10,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     [SerializeField] public float Health { get; set; }
     [SerializeField] public float MaxHealth { get; set; }
+    [SerializeField] public float damage;
 
     public event Action OnEnemyKilled;
 
@@ -55,5 +56,10 @@ public class EnemyBase : MonoBehaviour, IDamageable
         OnEnemyKilled?.Invoke();
         animator.SetTrigger("Dead");
         Destroy(gameObject); //TODO testing purpose
+    }
+
+    internal float GetDamageValue()
+    {
+        return damage;
     }
 }

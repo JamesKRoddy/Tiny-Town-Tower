@@ -13,6 +13,9 @@ public class TurretManager : GameModeManager<TurretEnemyWaveConfig>
     // Singleton instance
     private static TurretManager _instance;
 
+    [Header("Turret Level Vars")]
+    public TurretBaseTarget baseTarget;
+
     // Singleton property to get the instance
     public static TurretManager Instance
     {
@@ -43,6 +46,12 @@ public class TurretManager : GameModeManager<TurretEnemyWaveConfig>
         }
     }
 
+    protected override void Start()
+    {
+        base.Start();
+        SetEnemySetupState(EnemySetupState.PRE_ENEMY_SPAWNING);
+    }
+
     protected override void EnemySetupStateChanged(EnemySetupState newState)
     {
         switch (newState)
@@ -53,8 +62,8 @@ public class TurretManager : GameModeManager<TurretEnemyWaveConfig>
                 EnemySpawnManager.Instance.ResetWaveCount();
                 break;
             case EnemySetupState.PRE_ENEMY_SPAWNING:
-                SetEnemySetupState(EnemySetupState.ENEMIES_SPAWNED);
                 EnemySpawnManager.Instance.StartSpawningEnemies(GetTurretWaveConfig(GetCurrentWaveDifficulty()));
+                SetEnemySetupState(EnemySetupState.ENEMIES_SPAWNED);
                 break;
             case EnemySetupState.ENEMIES_SPAWNED:
                 break;
