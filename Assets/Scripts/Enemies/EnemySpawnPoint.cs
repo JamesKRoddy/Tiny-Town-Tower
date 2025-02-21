@@ -48,10 +48,13 @@ public class EnemySpawnPoint : MonoBehaviour
                 return null;
             case EnemyTargetType.TURRET_END:
                 enemyTarget = TurretManager.Instance.baseTarget.transform;
-                return null;
+                break;
             default:
                 return null;
         }
+
+        if (enemyTarget != null)
+            enemyBase.SetEnemyDestination(enemyTarget.position);
 
         return enemy;
     }

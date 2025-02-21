@@ -36,6 +36,11 @@ public class EnemyBase : MonoBehaviour, IDamageable
         navMeshTarget = navAgentTarget;
     }
 
+    public void SetEnemyDestination(Vector3 navMeshTarget)
+    {
+        agent.SetDestination(navMeshTarget);
+    }
+
     public void Heal(float amount)
     {
         Health = Mathf.Min(Health + amount, MaxHealth);
