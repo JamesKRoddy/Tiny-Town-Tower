@@ -52,11 +52,13 @@ public class EnemySpawnManager : MonoBehaviour
 
     public void StartSpawningEnemies(EnemyWaveConfig waveConfig)
     {
-        if (currentWaveConfig == null)
+        if (waveConfig == null)
         {
             Debug.LogError("No waveConfig provided by RogueLiteManager!");
             return;
         }
+
+        currentWaveConfig = waveConfig;
 
         // Get all spawn points in the scene
         spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));

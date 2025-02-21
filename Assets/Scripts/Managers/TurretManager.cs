@@ -77,7 +77,7 @@ public class TurretManager : GameModeManager<TurretEnemyWaveConfig>
     public override int GetCurrentWaveDifficulty()
     {
         Debug.LogError("TODO have to figure out how this is calculated");
-        return 1;
+        return 0;
     }
 
     public EnemyWaveConfig GetTurretWaveConfig(int difficulty)
