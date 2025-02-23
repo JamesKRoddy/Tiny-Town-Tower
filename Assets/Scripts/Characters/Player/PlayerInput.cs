@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using UnityEngine.InputSystem.LowLevel;
 
 public class PlayerInput : MonoBehaviour
 {
@@ -136,7 +137,7 @@ public class PlayerInput : MonoBehaviour
 
     public void UpdatePlayerControls(PlayerControlType playerControlType)
     {
-        Debug.Log($"Update Controls playerControlType : {playerControlType}");
+        Debug.Log($"Update Controls playerControlType : <color=cyan> {playerControlType} </color>");
 
         currentControlType = playerControlType;
 
@@ -148,7 +149,7 @@ public class PlayerInput : MonoBehaviour
     // This method will be called when the game mode changes
     public void UpdatePlayerControls(CurrentGameMode gameMode)
     {
-        Debug.Log($"Update Controls gameMode : {gameMode}");
+        Debug.Log($"Update Controls gameMode : <color=green> {gameMode} </color>");
 
         // Logic to update the control type based on game mode
         switch (gameMode)

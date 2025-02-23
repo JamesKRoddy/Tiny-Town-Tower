@@ -49,25 +49,34 @@ public class TurretManager : GameModeManager<TurretEnemyWaveConfig>
     protected override void Start()
     {
         base.Start();
-        SetEnemySetupState(EnemySetupState.PRE_ENEMY_SPAWNING);
+        //SetEnemySetupState(EnemySetupState.PRE_ENEMY_SPAWNING);
+    }
+
+    public void StartWave() //************************************************** TODO!!!!!!! HAVE TO CALL THIS
+    {
+        SetEnemySetupState(EnemySetupState.WAVE_START);
     }
 
     protected override void EnemySetupStateChanged(EnemySetupState newState)
     {
+        Debug.Log($"Enemy Setup Changed: <color=red> {newState} </color>");
         switch (newState)
         {
             case EnemySetupState.NONE:
                 break;
             case EnemySetupState.WAVE_START:
                 EnemySpawnManager.Instance.ResetWaveCount();
+                SetEnemySetupState(EnemySetupState.PRE_ENEMY_SPAWNING);
                 break;
             case EnemySetupState.PRE_ENEMY_SPAWNING:
                 EnemySpawnManager.Instance.StartSpawningEnemies(GetTurretWaveConfig(GetCurrentWaveDifficulty()));
                 SetEnemySetupState(EnemySetupState.ENEMIES_SPAWNED);
                 break;
-            case EnemySetupState.ENEMIES_SPAWNED:
+            case EnemySetupState.ENEMIES_SPAWNED:    
+                //This is the point in which the enemies are moving toward the end point so I dont think we need to do anything here
                 break;
             case EnemySetupState.ALL_WAVES_CLEARED:
+                //TODO turret wave section complete, i think here we check to see how many waves the player is supposed to complete on this night so either move onto the next wave or finish the night
                 break;
             default:
                 break;
@@ -80,7 +89,7 @@ public class TurretManager : GameModeManager<TurretEnemyWaveConfig>
         return 0;
     }
 
-    public EnemyWaveConfig GetTurretWaveConfig(int difficulty)
+    private EnemyWaveConfig GetTurretWaveConfig(int difficulty)
     {
         return GetWaveConfig(difficulty);
     }
