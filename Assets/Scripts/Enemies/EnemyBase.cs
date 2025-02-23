@@ -8,8 +8,21 @@ public class EnemyBase : MonoBehaviour, IDamageable
     protected Animator animator;
     protected Transform navMeshTarget;
 
-    [SerializeField] public float Health { get; set; }
-    [SerializeField] public float MaxHealth { get; set; }
+    [SerializeField] private float health = 100f;
+    [SerializeField] private float maxHealth = 100f;
+
+    public float Health
+    {
+        get => health;
+        set => health = Mathf.Clamp(value, 0, maxHealth);
+    }
+
+    public float MaxHealth
+    {
+        get => maxHealth;
+        set => maxHealth = value;
+    }
+
     [SerializeField] public float damage;
 
     public event Action OnEnemyKilled;

@@ -5,8 +5,20 @@ using UnityEngine;
 public class TurretBaseTarget : MonoBehaviour, IDamageable
 {
     [Header("Base Settings")]
-    public float Health { get; set; }
-    public float MaxHealth { get; set; }
+    [SerializeField] private float health = 100f;
+    [SerializeField] private float maxHealth = 100f;
+
+    public float Health
+    {
+        get => health;
+        set => health = Mathf.Clamp(value, 0, maxHealth);
+    }
+
+    public float MaxHealth
+    {
+        get => maxHealth;
+        set => maxHealth = value;
+    }
 
     public delegate void BaseDestroyedHandler();
     public event BaseDestroyedHandler OnBaseDestroyed;
