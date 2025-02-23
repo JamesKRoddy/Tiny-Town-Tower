@@ -38,16 +38,6 @@ public class TurretBaseTarget : MonoBehaviour, IDamageable
         }
     }
 
-    private void TakeDamage(float damage)
-    {
-        Health -= damage;
-        if (Health <= 0)
-        {
-            Health = 0;
-            HandleBaseDestroyed();
-        }
-    }
-
     private void HandleBaseDestroyed()
     {
         Debug.Log("Turret Base has been destroyed!");
@@ -55,9 +45,14 @@ public class TurretBaseTarget : MonoBehaviour, IDamageable
         // Add logic for game over, animations, etc.
     }
 
-    void IDamageable.TakeDamage(float amount)
+    public void TakeDamage(float amount)
     {
-        throw new System.NotImplementedException();
+        Health -= amount;
+        if (Health <= 0)
+        {
+            Health = 0;
+            HandleBaseDestroyed();
+        }
     }
 
     public void Heal(float amount)

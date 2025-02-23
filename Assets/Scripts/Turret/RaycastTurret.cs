@@ -7,10 +7,11 @@ public class RaycastTurret : BaseTurret
         RaycastHit hit;
         if (Physics.Raycast(firePoint.position, firePoint.forward, out hit))
         {
-            if (hit.collider.CompareTag("Enemy"))
+            IDamageable damageable = hit.collider.GetComponent<IDamageable>();
+
+            if (damageable != null)
             {
-                Debug.Log("Enemy hit by raycast turret!");
-                // Add damage logic here
+                damageable.TakeDamage(damage);
             }
         }
     }

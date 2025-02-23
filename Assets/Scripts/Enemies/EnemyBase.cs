@@ -60,7 +60,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
     }
 
     public void TakeDamage(float amount)
-    {        
+    {
         Health -= amount;
         animator.SetTrigger("Damaged");
         if (Health <= 0)
@@ -73,6 +73,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
     {
         OnEnemyKilled?.Invoke();
         animator.SetTrigger("Dead");
+        agent.enabled = false;
         Destroy(gameObject); //TODO testing purpose
     }
 

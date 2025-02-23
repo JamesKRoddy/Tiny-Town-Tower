@@ -7,8 +7,10 @@ using UnityEngine.UI;
 [System.Serializable]
 public class UpgradeData
 {
+    public float damageIncrease = 5;
     public float rangeIncrease = 2f;
     public float fireRateIncrease = 0.5f;
+    public float turretTurnSpeedIncrease = 0.25f;
     public int upgradeCost = 50;
     public float upgradeTime = 5f;
     public int costIncrease = 50;
@@ -16,18 +18,21 @@ public class UpgradeData
 }
 
 [RequireComponent(typeof(Collider))]
+[RequireComponent(typeof(Rigidbody))]
 public abstract class BaseTurret : MonoBehaviour
 {
     [Header("Turret Settings")]
+    public float damage = 10f;
     public float range = 10f; //TODO use this for the size of the collider
     public float fireRate = 1f;
+    public float turretTurnSpeed = 5f;
     public Transform turretTop;
     public Transform firePoint;
     public UpgradeData upgradeData;
 
     private float fireCooldown = 0f;
-    private Transform target;
-    private List<Transform> enemiesInRange = new List<Transform>();
+    private EnemyBase target;
+    private List<EnemyBase> enemiesInRange = new List<EnemyBase>();
     private bool isUpgrading = false;
 
     private void Start()
@@ -39,7 +44,9 @@ public abstract class BaseTurret : MonoBehaviour
     {
         if (isUpgrading) return;
 
-        UpdateTarget();
+        if(enemiesInRange.Count > 0 )
+            UpdateTarget();
+
         if (target != null)
         {
             RotateToTarget();
@@ -49,18 +56,18 @@ public abstract class BaseTurret : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Enemy"))
+        if (other.TryGetComponent(out EnemyBase enemy))
         {
-            enemiesInRange.Add(other.transform);
+            enemiesInRange.Add(enemy);
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Enemy"))
+        if (other.TryGetComponent(out EnemyBase enemy))
         {
-            enemiesInRange.Remove(other.transform);
-            if (target == other.transform)
+            enemiesInRange.Remove(enemy);
+            if (target == other.GetComponent<EnemyBase>())
                 target = null;
         }
     }
@@ -69,11 +76,12 @@ public abstract class BaseTurret : MonoBehaviour
     {
         if (target == null || !enemiesInRange.Contains(target))
         {
-            target = null;
+            enemiesInRange.RemoveAll(enemy => enemy == null);
+
             float shortestDistance = Mathf.Infinity;
             foreach (var enemy in enemiesInRange)
             {
-                float distanceToEnemy = Vector3.Distance(transform.position, enemy.position);
+                float distanceToEnemy = Vector3.Distance(transform.position, enemy.transform.position);
                 if (distanceToEnemy < shortestDistance)
                 {
                     shortestDistance = distanceToEnemy;
@@ -85,9 +93,9 @@ public abstract class BaseTurret : MonoBehaviour
 
     private void RotateToTarget()
     {
-        Vector3 direction = target.position - turretTop.position;
+        Vector3 direction = target.transform.position - turretTop.position;
         Quaternion lookRotation = Quaternion.LookRotation(direction);
-        Vector3 rotation = Quaternion.Lerp(turretTop.rotation, lookRotation, Time.deltaTime * 5f).eulerAngles;
+        Vector3 rotation = Quaternion.Lerp(turretTop.rotation, lookRotation, Time.deltaTime * turretTurnSpeed).eulerAngles;
         turretTop.rotation = Quaternion.Euler(0f, rotation.y, 0f);
     }
 
