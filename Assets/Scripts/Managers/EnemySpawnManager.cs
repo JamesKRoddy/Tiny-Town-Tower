@@ -169,4 +169,17 @@ public class EnemySpawnManager : MonoBehaviour
             StartNextWave();
         }
     }
+
+    /// <summary>
+    /// USed by the PlacementManager to make sure a turrent is not blocking the enemy path
+    /// </summary>
+    /// <returns></returns>
+    public Vector3? SpawnPointPosition()
+    {
+        if (spawnPoints.Count != 0)
+        {
+            return spawnPoints[0].transform.position;
+        }
+        return null;
+    }
 }

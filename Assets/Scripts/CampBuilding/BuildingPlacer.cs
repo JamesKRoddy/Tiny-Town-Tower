@@ -23,7 +23,7 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
 
     protected override void PlaceObject()
     {
-        if (!IsValidPlacement(currentGridPosition))
+        if (!IsValidPlacement(currentGridPosition, out string errorMessage))
         {
             PlayerUIManager.Instance.DisplayUIErrorMessage("Cannot place turret");
             return;        
@@ -42,8 +42,9 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
         CancelPlacement();
     }
 
-    protected override bool IsValidPlacement(Vector3 position)
+    protected override bool IsValidPlacement(Vector3 position, out string errorMessage)
     {
+        errorMessage = null;
         return AreGridSlotsAvailable(position, selectedObject.size);
     }
 

@@ -73,8 +73,8 @@ public interface IDamageable
  * Have to implement a system to move around buildings/turrets
  * 
  * 
- * CURRENT  WORK TURRETS ******* PUT On HOLD *******
- * 
+ * CURRENT  WORK TURRETS 
+ * Put in a check to see if the turret maze is blocking enemies 
  * 
  * 
  * Curent work refactoring player

@@ -27,7 +27,7 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
     private Dictionary<Vector3, GridSlot> gridSlots = new Dictionary<Vector3, GridSlot>();
 
     protected abstract void PlaceObject();
-    protected abstract bool IsValidPlacement(Vector3 position);
+    protected abstract bool IsValidPlacement(Vector3 position, out string errorMessage);
 
     private void OnEnable()
     {
@@ -76,7 +76,7 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
 
         currentPreview.transform.position = SnapToGrid(currentGridPosition);
 
-        if (IsValidPlacement(currentPreview.transform.position))
+        if (IsValidPlacement(currentPreview.transform.position, out string errorMessage))
         {
             SetPreviewMaterial(validPlacementMaterial);
         }
