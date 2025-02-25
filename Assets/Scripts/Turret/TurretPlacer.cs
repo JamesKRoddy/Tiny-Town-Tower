@@ -56,7 +56,6 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
         MarkGridSlotsOccupiedTemporarily(position, selectedObject.size);
 
         // Get enemy spawn and base (destination) points.
-        // These should be defined in your game. For example, via a GameManager.
         Vector3? spawnPoint = EnemySpawnManager.Instance.SpawnPointPosition();
         if (!spawnPoint.HasValue)
         {

@@ -45,6 +45,11 @@ public class EnemySpawnManager : MonoBehaviour
         }
     }
 
+    private void Start()
+    {
+        spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
+    }
+
     public void ResetWaveCount()
     {
         currentWave = 0;

@@ -99,7 +99,7 @@ NavMeshObstacle:
   m_Carve: 1
   m_CarveOnlyStationary: 1
   m_Center: {x: 0, y: 0, z: 0}
-  m_TimeToStationary: 0.5
+  m_TimeToStationary: 0
 --- !u!114 &8214602545162772007
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -112,13 +112,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e9790573e9494e4d8167335f0ad195c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  damage: 10
   range: 10
   fireRate: 1
+  turretTurnSpeed: 5
   turretTop: {fileID: 286434362102794343}
   firePoint: {fileID: 1251338008053795908}
   upgradeData:
+    damageIncrease: 5
     rangeIncrease: 2
     fireRateIncrease: 0.5
+    turretTurnSpeedIncrease: 0.25
     upgradeCost: 50
     upgradeTime: 5
     costIncrease: 50
