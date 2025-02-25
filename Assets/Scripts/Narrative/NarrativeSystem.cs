@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Collections;
+using System;
 
 public class NarrativeSystem : MenuBase
 {
@@ -180,7 +181,7 @@ public class NarrativeSystem : MenuBase
 
     public void EndConversation()
     {
-        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.COMBAT_MOVEMENT); //TODO figure out which controls to go back to combat or camp movement, TEST IF this works
+        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.COMBAT_NPC_MOVEMENT); //TODO figure out which controls to go back to combat or camp movement, TEST IF this works
         dialoguePanel.SetActive(false);
     }
 
@@ -190,13 +191,13 @@ public class NarrativeSystem : MenuBase
         EndConversation();
     }
 
-    public override void SetScreenActive(bool active, float delay = 0.0f)
+    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
         if (active)
         {
             PlayerControlType controlType = PlayerInput.Instance.currentControlType;
 
-            if (controlType == PlayerControlType.CAMP_MOVEMENT || controlType == PlayerControlType.COMBAT_MOVEMENT)
+            if (controlType == PlayerControlType.CAMP_NPC_MOVEMENT || controlType == PlayerControlType.COMBAT_NPC_MOVEMENT)
                 returnToControls = controlType;
         }
         else

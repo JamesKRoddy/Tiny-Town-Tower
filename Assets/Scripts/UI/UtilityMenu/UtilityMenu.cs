@@ -67,14 +67,32 @@ public class UtilityMenu : MenuBase, IControllerInput
     [SerializeField] Button settlerNPCBtn;
     [SerializeField] Button turretBuildBtn;
 
-    public override void SetScreenActive(bool active, float delay = 0.0f)
+    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
         if (active)
         {
-            PlayerControlType controlType = PlayerInput.Instance.currentControlType;
+            CurrentGameMode currentGameMode = GameManager.Instance.CurrentGameMode;
 
-            if (controlType == PlayerControlType.CAMP_MOVEMENT || controlType == PlayerControlType.COMBAT_MOVEMENT || controlType == PlayerControlType.TURRET_PLACEMENT)
-                returnToControls = controlType;
+            switch (currentGameMode)
+            {
+                case CurrentGameMode.NONE:
+                    returnToControls = PlayerControlType.NONE;
+                    break;
+                case CurrentGameMode.ROGUE_LITE:
+                    returnToControls = PlayerControlType.COMBAT_NPC_MOVEMENT;
+                    break;
+                case CurrentGameMode.CAMP:
+                    if (PlayerController.Instance._possessedNPC != null)
+                        returnToControls = PlayerControlType.CAMP_NPC_MOVEMENT;
+                    else
+                        returnToControls = PlayerControlType.BUILDING_CAMERA_MOVEMENT;
+                    break;
+                case CurrentGameMode.TURRET:
+                    returnToControls = PlayerControlType.TURRET_CAMERA_MOVEMENT;
+                    break;
+                default:
+                    break;
+            }
         }
         else
         {
@@ -144,15 +162,15 @@ public class UtilityMenu : MenuBase, IControllerInput
 
         switch (playerControlType)
         {
-            case PlayerControlType.COMBAT_MOVEMENT:
+            case PlayerControlType.COMBAT_NPC_MOVEMENT:
                 playerInventoryBtn.gameObject.SetActive(true);
                 break;
-            case PlayerControlType.CAMP_MOVEMENT:
+            case PlayerControlType.CAMP_NPC_MOVEMENT:
                 playerInventoryBtn.gameObject.SetActive(true);
                 buildMenuBtn.gameObject.SetActive(true);
                 settlerNPCBtn.gameObject.SetActive(true);
                 break;
-            case PlayerControlType.TURRET_MOVEMENT:
+            case PlayerControlType.TURRET_CAMERA_MOVEMENT:
                 playerInventoryBtn.gameObject.SetActive(true);
                 turretBuildBtn.gameObject.SetActive(true);
                 break;

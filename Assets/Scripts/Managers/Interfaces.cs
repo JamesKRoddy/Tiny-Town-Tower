@@ -37,6 +37,17 @@ public interface IPossessable
     Transform GetTransform();
 }
 
+public interface IDamageable
+{
+    [SerializeField] public float Health { get; set; } // Property for current health
+    [SerializeField] public float MaxHealth { get; set; } // Property for max health
+
+    void TakeDamage(float amount); // Method to handle damage
+    void Heal(float amount);       // Optional: Method to handle healing
+    void Die();
+}
+
+
 /*
  * 
  * 
@@ -62,12 +73,11 @@ public interface IPossessable
  * Have to implement a system to move around buildings/turrets
  * 
  * 
- * CURRENT  WORK TURRETS ******* PUT On HOLD *******
+ * CURRENT  WORK TURRETS 
+ * Put in a check to see if the turret maze is blocking enemies 
  * 
  * 
  * Curent work refactoring player
- * Equipped weapon not showing on npc
- * remove player parent classes just take over the npcs versions, have it all in the charater combat, character controller
  * rework inventory system CharacterInventory.cs needs to be looked at read info at the top
  * 
  * 

@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Collections;
 
 public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
 {
@@ -24,19 +23,34 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
 
     protected override void PlaceObject()
     {
+        if (!IsValidPlacement(currentGridPosition, out string errorMessage))
+        {
+            PlayerUIManager.Instance.DisplayUIErrorMessage("Cannot place turret");
+            return;        
+        }
+
+        // Deduct the required resources from the player's inventory
+        foreach (var requiredItem in selectedObject._resourceCost)
+        {
+            PlayerInventory.Instance.RemoveItem(requiredItem.resource, requiredItem.count);
+        }
+
         GameObject constructionSite = Instantiate(selectedObject.constructionSite, currentPreview.transform.position, Quaternion.identity);
         constructionSite.GetComponent<ConstructionSite>().SetupConstruction(selectedObject);
+
+        MarkGridSlotsOccupied(currentPreview.transform.position, selectedObject.size, constructionSite);
         CancelPlacement();
     }
 
-    protected override bool IsValidPlacement(Vector3 position)
+    protected override bool IsValidPlacement(Vector3 position, out string errorMessage)
     {
-        return true; //TODO Add specific validation logic
+        errorMessage = null;
+        return AreGridSlotsAvailable(position, selectedObject.size);
     }
 
     protected override GameObject GetPrefabFromObject(BuildingScriptableObj obj)
     {
-        return obj.buildingPrefab;
+        return obj.prefab;
     }
 
     protected override void NotifyControlTypeChange()

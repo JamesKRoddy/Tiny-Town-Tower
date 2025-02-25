@@ -180,10 +180,10 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     {
         switch (controlType)
         {
-            case PlayerControlType.COMBAT_MOVEMENT:
+            case PlayerControlType.COMBAT_NPC_MOVEMENT:
                 PlayerInput.Instance.OnBPressed += HandleInteraction;
                 break;
-            case PlayerControlType.CAMP_MOVEMENT:
+            case PlayerControlType.CAMP_NPC_MOVEMENT:
                 PlayerInput.Instance.OnBPressed += HandleInteraction;
                 break;
             default:

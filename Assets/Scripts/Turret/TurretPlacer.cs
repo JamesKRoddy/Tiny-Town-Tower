@@ -1,6 +1,6 @@
 using UnityEngine;
+using UnityEngine.AI;
 using System.Collections.Generic;
-using System.Collections;
 
 public class TurretPlacer : PlacementManager<TurretScriptableObject>
 {
@@ -24,19 +24,81 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
 
     protected override void PlaceObject()
     {
-        GameObject turret = Instantiate(selectedObject.turretPrefab, currentPreview.transform.position, Quaternion.identity);
+        if (!IsValidPlacement(currentGridPosition, out string errorMessage))
+        {
+            PlayerUIManager.Instance.DisplayUIErrorMessage($"Cannot place turret - {errorMessage}");
+            return;
+        }
+
+        // Deduct the required resources from the player's inventory.
+        foreach (var requiredItem in selectedObject._resourceCost)
+        {
+            PlayerInventory.Instance.RemoveItem(requiredItem.resource, requiredItem.count);
+        }
+
+        GameObject turret = Instantiate(selectedObject.prefab, currentPreview.transform.position, Quaternion.identity);
         turret.GetComponent<BaseTurret>().SetupTurret();
+
+        MarkGridSlotsOccupied(currentPreview.transform.position, selectedObject.size, turret);
         CancelPlacement();
     }
 
-    protected override bool IsValidPlacement(Vector3 position)
+    protected override bool IsValidPlacement(Vector3 position, out string errorMessage)
     {
-        return true; //TODO Add turret-specific validation logic
+        // First, check if the grid slots are available.
+        if (!AreGridSlotsAvailable(position, selectedObject.size))
+        {
+            errorMessage = " no space!";
+            return false;
+        }
+
+        // Temporarily mark the grid cells as blocked by the turret.
+        MarkGridSlotsOccupiedTemporarily(position, selectedObject.size);
+
+        // Get enemy spawn and base (destination) points.
+        Vector3? spawnPoint = EnemySpawnManager.Instance.SpawnPointPosition();
+        if (!spawnPoint.HasValue)
+        {
+            errorMessage = " no spawn points (this is an error)!";
+            return false;
+        }
+        Vector3 basePoint = TurretManager.Instance.baseTarget.transform.position;
+
+        NavMeshPath path = new NavMeshPath();
+        NavMesh.CalculatePath(spawnPoint.Value, basePoint, NavMesh.AllAreas, path);
+
+        // Revert the temporary grid changes.
+        UnmarkGridSlotsTemporarily(position, selectedObject.size);
+
+        if(path.status == NavMeshPathStatus.PathInvalid || path.status == NavMeshPathStatus.PathPartial)
+        {
+            // Allow placement only if a complete path exists.
+            errorMessage = " path blocked!";
+            return false;
+        }
+        else
+        {
+            errorMessage = string.Empty;
+            return true;
+        }
+
+    }
+
+    // These temporary grid methods must be implemented according to your grid system.
+    private void MarkGridSlotsOccupiedTemporarily(Vector3 position, Vector2 size)
+    {
+        // Mark the grid cells as occupied without permanently changing them.
+        // This could be as simple as setting flags in a grid array.
+    }
+
+    private void UnmarkGridSlotsTemporarily(Vector3 position, Vector2 size)
+    {
+        // Revert the temporary blocking of grid cells.
     }
 
     protected override GameObject GetPrefabFromObject(TurretScriptableObject obj)
     {
-        return obj.turretPrefab;
+        return obj.prefab;
     }
 
     protected override void NotifyControlTypeChange()
@@ -64,6 +126,6 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
 
     protected override void OnPlacementCancelled()
     {
-        TurretMenu.Instance.SetScreenActive(true);
+        TurretMenu.Instance.SetScreenActive(true, 0.1f);
     }
 }

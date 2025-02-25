@@ -22,7 +22,7 @@ public class TurretPreviewBtn : MonoBehaviour
         bool canPlace = true;
 
         // Loop through each required resource and check the player's inventory.
-        foreach (var requiredItem in turretObj.turretResourceCost)
+        foreach (var requiredItem in turretObj._resourceCost)
         {
             // Check how many of this resource the player currently has.
             int playerCount = PlayerInventory.Instance.GetItemCount(requiredItem.resource);
@@ -38,14 +38,7 @@ public class TurretPreviewBtn : MonoBehaviour
         // If canPlace is true, proceed with turret placement. Otherwise, show an error or refuse placement.
         if (canPlace)
         {
-            // Deduct the required resources from the player's inventory.
-            foreach (var requiredItem in turretObj.turretResourceCost)
-            {
-                PlayerInventory.Instance.RemoveItem(requiredItem.resource, requiredItem.count);
-            }
-
-            TurretPlacer.Instance.StartPlacement(turretObj);
-            TurretMenu.Instance.SetScreenActive(false, 0.05f);
+            TurretMenu.Instance.SetScreenActive(false, 0.1f, () => TurretPlacer.Instance.StartPlacement(turretObj));
         }
         else
         {
@@ -59,13 +52,13 @@ public class TurretPreviewBtn : MonoBehaviour
     {
         turretObj = turretObjRef;
 
-        turretPrefab = turretObjRef.turretPrefab;
+        turretPrefab = turretObjRef.prefab;
 
         button.onClick.AddListener(InstantiateTurretPlacement);
 
-        if (turretObjRef.turretSprite != null)
-            turretImage.sprite = turretObjRef.turretSprite;
+        if (turretObjRef._sprite != null)
+            turretImage.sprite = turretObjRef._sprite;
 
-        turretNameText.text = turretObjRef.turretName;
+        turretNameText.text = turretObjRef._name;
     }
 }

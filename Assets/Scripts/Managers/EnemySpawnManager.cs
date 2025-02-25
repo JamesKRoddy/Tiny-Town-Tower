@@ -4,7 +4,28 @@ using UnityEngine;
 
 public class EnemySpawnManager : MonoBehaviour
 {
-    private EnemyWaveConfig waveConfig; // Current wave configuration //TODO use GetCurrentRoomDifficulty
+    // Singleton instance
+    private static EnemySpawnManager _instance;
+
+    // Singleton property to get the instance
+    public static EnemySpawnManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                // Find the GameManager instance if it hasn't been assigned
+                _instance = FindFirstObjectByType<EnemySpawnManager>();
+                if (_instance == null)
+                {
+                    Debug.LogWarning("EnemySpawnManager instance not found in the scene!");
+                }
+            }
+            return _instance;
+        }
+    }
+
+    private EnemyWaveConfig currentWaveConfig; // Current wave configuration //TODO use GetCurrentRoomDifficulty
 
     private List<EnemySpawnPoint> spawnPoints;
     private int currentWave = 0;
@@ -12,55 +33,37 @@ public class EnemySpawnManager : MonoBehaviour
     private int enemiesSpawned; // Number of enemies spawned so far
     private List<GameObject> activeEnemies = new List<GameObject>(); // List of active enemies
 
-    private void Start()
+    private void Awake()
     {
-        // Subscribe to RogueLiteManager event
-        RogueLiteManager.Instance.OnRoomSetupStateChanged += RoomSetupStateChanged;
-    }
-
-    private void OnDestroy()
-    {
-        // Unsubscribe from RogueLiteManager event
-        RogueLiteManager.Instance.OnRoomSetupStateChanged -= RoomSetupStateChanged;
-    }
-
-    private void RoomSetupStateChanged(RoomSetupState newState)
-    {
-        switch (newState)
+        if (_instance != null && _instance != this)
         {
-            case RoomSetupState.NONE:
-                break;
-            case RoomSetupState.ENTERING_ROOM:
-                ResetWaveCount();
-                break;
-            case RoomSetupState.PRE_ENEMY_SPAWNING:
-                StartSpawningEnemies();
-                break;
-            case RoomSetupState.ENEMIES_SPAWNED:
-                break;
-            case RoomSetupState.ROOM_CLEARED:
-                break;
-            default:
-                break;
+            Destroy(gameObject); // Destroy duplicate instances
+        }
+        else
+        {
+            _instance = this; // Set the instance
         }
     }
 
-    private void ResetWaveCount()
+    private void Start()
+    {
+        spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
+    }
+
+    public void ResetWaveCount()
     {
         currentWave = 0;
     }
 
-    private void StartSpawningEnemies()
+    public void StartSpawningEnemies(EnemyWaveConfig waveConfig)
     {
-        RogueLiteManager.Instance.SetRoomState(RoomSetupState.ENEMIES_SPAWNED);
-        // Get the waveConfig from the RogueLiteManager
-        waveConfig = RogueLiteManager.Instance.GetWaveConfig();
-
         if (waveConfig == null)
         {
             Debug.LogError("No waveConfig provided by RogueLiteManager!");
             return;
         }
+
+        currentWaveConfig = waveConfig;
 
         // Get all spawn points in the scene
         spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
@@ -75,10 +78,23 @@ public class EnemySpawnManager : MonoBehaviour
 
     private void StartNextWave()
     {
-        if (currentWave >= waveConfig.maxWaves)
+        if (currentWave >= currentWaveConfig.maxWaves)
         {
             Debug.Log("All waves completed!");
-            RogueLiteManager.Instance.SetRoomState(RoomSetupState.ROOM_CLEARED);
+
+            switch (GameManager.Instance.CurrentGameMode)
+            {
+                case CurrentGameMode.ROGUE_LITE:
+                    RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                    break;
+                case CurrentGameMode.TURRET:
+                    TurretManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                    break;
+                default:
+                    Debug.LogError("Shouldnt be spawning enemies here!!!");
+                    break;
+            }
+
             return;
         }
 
@@ -86,7 +102,7 @@ public class EnemySpawnManager : MonoBehaviour
         Debug.Log($"Starting Wave {currentWave}");
 
         // Determine the number of enemies to spawn in this wave
-        totalEnemiesInWave = Random.Range(waveConfig.minEnemiesPerWave, waveConfig.maxEnemiesPerWave + 1);
+        totalEnemiesInWave = Random.Range(currentWaveConfig.minEnemiesPerWave, currentWaveConfig.maxEnemiesPerWave + 1);
         enemiesSpawned = 0; // Reset for the new wave
 
         SpawnWave(totalEnemiesInWave);
@@ -102,7 +118,7 @@ public class EnemySpawnManager : MonoBehaviour
 
     private void SpawnEnemy()
     {
-        if (spawnPoints.Count == 0 || waveConfig.enemyPrefabs.Length == 0)
+        if (spawnPoints.Count == 0 || currentWaveConfig.enemyPrefabs.Length == 0)
             return;
 
         StartCoroutine(SpawnEnemyWithRetry());
@@ -130,7 +146,7 @@ public class EnemySpawnManager : MonoBehaviour
             }
         }
 
-        GameObject enemyPrefab = waveConfig.enemyPrefabs[Random.Range(0, waveConfig.enemyPrefabs.Length)];
+        GameObject enemyPrefab = currentWaveConfig.enemyPrefabs[Random.Range(0, currentWaveConfig.enemyPrefabs.Length)];
 
         // Delegate spawning to the spawn point
         GameObject enemy = spawnPoint.SpawnEnemy(enemyPrefab);
@@ -157,5 +173,18 @@ public class EnemySpawnManager : MonoBehaviour
             Debug.Log("Wave Complete!");
             StartNextWave();
         }
+    }
+
+    /// <summary>
+    /// USed by the PlacementManager to make sure a turrent is not blocking the enemy path
+    /// </summary>
+    /// <returns></returns>
+    public Vector3? SpawnPointPosition()
+    {
+        if (spawnPoints.Count != 0)
+        {
+            return spawnPoints[0].transform.position;
+        }
+        return null;
     }
 }

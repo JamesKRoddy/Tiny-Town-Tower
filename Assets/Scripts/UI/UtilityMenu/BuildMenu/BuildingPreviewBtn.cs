@@ -23,7 +23,7 @@ public class BuildingPreviewBtn : MonoBehaviour
         bool canBuild = true;
 
         // Loop through each required resource and check the player's inventory.
-        foreach (var requiredItem in buildingObj.buildingResourceCost)
+        foreach (var requiredItem in buildingObj._resourceCost)
         {
             // Check how many of this resource the player currently has.
             int playerCount = PlayerInventory.Instance.GetItemCount(requiredItem.resource);
@@ -38,15 +38,8 @@ public class BuildingPreviewBtn : MonoBehaviour
 
         // If canBuild is true, proceed with construction placement. Otherwise, show an error or refuse placement.
         if (canBuild)
-        {
-            // Optionally, deduct the required resources from the player's inventory here.
-            foreach (var requiredItem in buildingObj.buildingResourceCost)
-            {
-                PlayerInventory.Instance.RemoveItem(requiredItem.resource, requiredItem.count);
-            }
-
-            BuildingPlacer.Instance.StartPlacement(buildingObj);
-            BuildMenu.Instance.SetScreenActive(false, 0.05f);
+        {           
+            BuildMenu.Instance.SetScreenActive(false, 0.1f, () => BuildingPlacer.Instance.StartPlacement(buildingObj));
         }
         else
         {
@@ -59,14 +52,14 @@ public class BuildingPreviewBtn : MonoBehaviour
     {
         buildingObj = buildingObjRef;
 
-        buildingPrefab = buildingObjRef.buildingPrefab;
+        buildingPrefab = buildingObjRef.prefab;
 
         button.onClick.AddListener(InstanciateBuildingConstruction);
 
-        if(buildingObjRef.buildingSprite != null)
-            buildingImage.sprite = buildingObjRef.buildingSprite;
+        if(buildingObjRef._sprite != null)
+            buildingImage.sprite = buildingObjRef._sprite;
 
-        buildingNameText.text = buildingObjRef.buildingName;
+        buildingNameText.text = buildingObjRef._name;
 
     }
 }

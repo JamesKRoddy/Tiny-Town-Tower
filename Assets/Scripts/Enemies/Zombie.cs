@@ -54,7 +54,7 @@ public class Zombie : EnemyBase
         if (!isAttacking)
         {
             // The NavMeshAgent moves the zombie, but root motion from animation drives actual movement
-            agent.SetDestination(navMeshTarget.position);
+            SetEnemyDestination(navMeshTarget.position);
         }
     }
 

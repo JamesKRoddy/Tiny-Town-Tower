@@ -80,7 +80,7 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
         }
     }
 
-    public override void SetScreenActive(bool active, float delay = 0.0f)
+    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
         PlayerUIManager.Instance.SetScreenActive(this, active, delay);     
     }
@@ -103,22 +103,22 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
 
     public override string GetPreviewName(BuildingScriptableObj item)
     {
-        return item.buildingName;
+        return item._name;
     }
 
     public override Sprite GetPreviewSprite(BuildingScriptableObj item)
     {
-        return item.buildingSprite;
+        return item._sprite;
     }
 
     public override string GetPreviewDescription(BuildingScriptableObj item)
     {
-        return item.buildingDescription;
+        return item._description;
     }
 
     public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(BuildingScriptableObj item)
     {
-        foreach (var resourceCost in item.buildingResourceCost)
+        foreach (var resourceCost in item._resourceCost)
         {
             yield return (
                 resourceCost.resource.resourceName,

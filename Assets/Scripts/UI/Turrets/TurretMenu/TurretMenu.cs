@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -78,9 +79,9 @@ public class TurretMenu : PreviewListMenuBase<TurretCategory, TurretScriptableOb
         }
     }
 
-    public override void SetScreenActive(bool active, float delay = 0.0f)
+    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
-        PlayerUIManager.Instance.SetScreenActive(this, active, delay);
+        PlayerUIManager.Instance.SetScreenActive(this, active, delay, onDone);
     }
 
     public override IEnumerable<TurretScriptableObject> GetItems()
@@ -101,22 +102,22 @@ public class TurretMenu : PreviewListMenuBase<TurretCategory, TurretScriptableOb
 
     public override string GetPreviewName(TurretScriptableObject item)
     {
-        return item.turretName;
+        return item._name;
     }
 
     public override Sprite GetPreviewSprite(TurretScriptableObject item)
     {
-        return item.turretSprite;
+        return item._sprite;
     }
 
     public override string GetPreviewDescription(TurretScriptableObject item)
     {
-        return item.turretDescription;
+        return item._description;
     }
 
     public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(TurretScriptableObject item)
     {
-        foreach (var resourceCost in item.turretResourceCost)
+        foreach (var resourceCost in item._resourceCost)
         {
             yield return (
                 resourceCost.resource.resourceName,

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -64,7 +65,7 @@ public class TurretUpgradeMenu : MenuBase, IControllerInput
     }
 
 
-    public override void SetScreenActive(bool active, float delay = 0)
+    public override void SetScreenActive(bool active, float delay = 0, Action onDone = null)
     {
         PlayerUIManager.Instance.SetScreenActive(this, active, delay);
     }

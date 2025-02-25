@@ -1,10 +1,20 @@
-using System;
 using UnityEngine;
 
-public class TurretManager : MonoBehaviour
+public class TurretManager : GameModeManager<TurretEnemyWaveConfig>
 {
+    [Header("Turret Grid")]
+    [SerializeField] private Vector2 xBounds = new Vector2(-25f, 25f);
+    [SerializeField] private Vector2 zBounds = new Vector2(-25f, 25f);
+    [SerializeField] private bool showGridBounds;
+
+    public Vector2 GetXBounds() => xBounds;
+    public Vector2 GetZBounds() => zBounds;
+
     // Singleton instance
     private static TurretManager _instance;
+
+    [Header("Turret Level Vars")]
+    public TurretBaseTarget baseTarget;
 
     // Singleton property to get the instance
     public static TurretManager Instance
@@ -36,26 +46,63 @@ public class TurretManager : MonoBehaviour
         }
     }
 
-    [Header("Turret Grid")]
-    [SerializeField] private Vector2 xBounds = new Vector2(-25f, 25f); // X-axis bounds for turret grid
-    [SerializeField] private Vector2 zBounds = new Vector2(-25f, 25f); // Z-axis bounds for turret grid
-    [SerializeField] bool showGridBounds;
+    protected override void Start()
+    {
+        base.Start();
+        //SetEnemySetupState(EnemySetupState.PRE_ENEMY_SPAWNING);
+    }
 
-    public Vector2 GetXBounds() => xBounds;
-    public Vector2 GetZBounds() => zBounds;
+    public void StartWave() //************************************************** TODO!!!!!!! HAVE TO CALL THIS
+    {
+        SetEnemySetupState(EnemySetupState.WAVE_START);
+    }
 
+    protected override void EnemySetupStateChanged(EnemySetupState newState)
+    {
+        Debug.Log($"Enemy Setup Changed: <color=red> {newState} </color>");
+        switch (newState)
+        {
+            case EnemySetupState.NONE:
+                break;
+            case EnemySetupState.WAVE_START:
+                EnemySpawnManager.Instance.ResetWaveCount();
+                SetEnemySetupState(EnemySetupState.PRE_ENEMY_SPAWNING);
+                break;
+            case EnemySetupState.PRE_ENEMY_SPAWNING:
+                EnemySpawnManager.Instance.StartSpawningEnemies(GetTurretWaveConfig(GetCurrentWaveDifficulty()));
+                SetEnemySetupState(EnemySetupState.ENEMIES_SPAWNED);
+                break;
+            case EnemySetupState.ENEMIES_SPAWNED:    
+                //This is the point in which the enemies are moving toward the end point so I dont think we need to do anything here
+                break;
+            case EnemySetupState.ALL_WAVES_CLEARED:
+                //TODO turret wave section complete, i think here we check to see how many waves the player is supposed to complete on this night so either move onto the next wave or finish the night
+                break;
+            default:
+                break;
+        }
+    }
+
+    public override int GetCurrentWaveDifficulty()
+    {
+        Debug.LogError("TODO have to figure out how this is calculated");
+        return 0;
+    }
+
+    private EnemyWaveConfig GetTurretWaveConfig(int difficulty)
+    {
+        return GetWaveConfig(difficulty);
+    }
 
     private void OnDrawGizmos()
     {
         if (showGridBounds)
         {
             Gizmos.color = Color.green;
-
-            // Draw a rectangular outline to visualize the panning bounds
-            Vector3 bottomLeft = new Vector3(TurretManager.Instance.GetXBounds().x, 0, TurretManager.Instance.GetZBounds().x);
-            Vector3 bottomRight = new Vector3(TurretManager.Instance.GetXBounds().y, 0, TurretManager.Instance.GetZBounds().x);
-            Vector3 topLeft = new Vector3(TurretManager.Instance.GetXBounds().x, 0, TurretManager.Instance.GetZBounds().y);
-            Vector3 topRight = new Vector3(TurretManager.Instance.GetXBounds().y, 0, TurretManager.Instance.GetZBounds().y);
+            Vector3 bottomLeft = new Vector3(xBounds.x, 0, zBounds.x);
+            Vector3 bottomRight = new Vector3(xBounds.y, 0, zBounds.x);
+            Vector3 topLeft = new Vector3(xBounds.x, 0, zBounds.y);
+            Vector3 topRight = new Vector3(xBounds.y, 0, zBounds.y);
 
             Gizmos.DrawLine(bottomLeft, bottomRight);
             Gizmos.DrawLine(bottomRight, topRight);

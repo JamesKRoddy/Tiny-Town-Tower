@@ -46,11 +46,15 @@ public class EnemySpawnPoint : MonoBehaviour
                 break;
             case EnemyTargetType.CLOSEST_NPC: //TODO set this up for the enemy to attack whatevers closest
                 return null;
-            case EnemyTargetType.TURRET_END: //TODO set this up for the turret section
-                return null;
+            case EnemyTargetType.TURRET_END:
+                enemyTarget = TurretManager.Instance.baseTarget.transform;
+                break;
             default:
                 return null;
         }
+
+        if (enemyTarget != null)
+            enemyBase.SetEnemyDestination(enemyTarget.position);
 
         return enemy;
     }

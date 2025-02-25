@@ -12,11 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e5e83a346c0a944f9d9f31c8d9a74ae, type: 3}
   m_Name: _TestTurret
   m_EditorClassIdentifier: 
-  turretName: TestTurret
-  turretDescription: TestTurret Description
-  turretSprite: {fileID: 0}
-  turretResourceCost:
+  _name: _TestTurret
+  _description: _TestTurretDesc
+  _sprite: {fileID: 0}
+  _resourceCost:
   - resource: {fileID: 11400000, guid: 12f818ac54e7fb1438a80c5e50b6a79a, type: 2}
     count: 1
+  prefab: {fileID: 5704079499573655729, guid: 24e35ea0993320b42bc3b83f4a11a613, type: 3}
+  size: {x: 1, y: 1}
   turretCategory: 0
-  turretPrefab: {fileID: 9088902041837886848, guid: 7f5725acab621cd41a9f3e86ced9d7db, type: 3}

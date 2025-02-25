@@ -19,6 +19,7 @@ public class ChestParent : MonoBehaviour
 
         // Pick a random chest to enable
         enabledChest = chests[Random.Range(0, chests.Count)]; //TODO base this on difficulty
+        enabledChest.gameObject.SetActive(true);
         enabledChest.AssignChestLoot(roomDifficulty, lootTableScriptableObj);
     }
 }

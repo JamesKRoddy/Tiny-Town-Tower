@@ -8,15 +8,36 @@ public class BuildingDataScriptableObj : ScriptableObject
     public List<BuildingParents> buildingParents;
     public List<BuildingRooms> buildingRooms;
 
-
-    public GameObject GetBuildingParent(int difficulty) //TODO implement difficulty stuff here
+    public GameObject GetBuildingParent(int difficulty)
     {
-        return buildingParents[0].buildingParent;
+        // Selects the most appropriate parent based on difficulty
+        BuildingParents selectedParent = buildingParents[0];
+
+        foreach (var parent in buildingParents)
+        {
+            if (parent.difficulty <= difficulty)
+            {
+                selectedParent = parent;
+            }
+        }
+
+        return selectedParent.buildingParent;
     }
 
-    public GameObject GetBuildingRoom(int difficulty) //TODO implement difficulty stuff here
+    public GameObject GetBuildingRoom(int difficulty)
     {
-        return buildingRooms[0].buildingRoom;
+        // Selects the most appropriate room based on difficulty
+        BuildingRooms selectedRoom = buildingRooms[0];
+
+        foreach (var room in buildingRooms)
+        {
+            if (room.difficulty <= difficulty)
+            {
+                selectedRoom = room;
+            }
+        }
+
+        return selectedRoom.buildingRoom;
     }
 }
 

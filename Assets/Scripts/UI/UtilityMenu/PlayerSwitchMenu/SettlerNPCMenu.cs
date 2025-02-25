@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -66,7 +67,7 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, SettlerNPC>, IControll
         }
     }
 
-    public override void SetScreenActive(bool active, float delay = 0.0f)
+    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
         PlayerUIManager.Instance.SetScreenActive(this, active, delay);
     }
