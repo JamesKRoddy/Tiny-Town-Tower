@@ -5,7 +5,6 @@ using System;
 
 public class PlayerUIManager : MonoBehaviour
 {
-
     // Static instance of the PlayerUIManager class
     private static PlayerUIManager _instance;
 
