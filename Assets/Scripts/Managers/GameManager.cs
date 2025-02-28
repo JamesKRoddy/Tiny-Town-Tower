@@ -63,6 +63,6 @@ public class GameManager : MonoBehaviour
     // Start is called once before the first execution of Update
     void Start()
     {
-        OnGameModeChanged(_currentGameMode);
+        OnGameModeChanged?.Invoke(_currentGameMode);
     }
 }

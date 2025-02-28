@@ -9,45 +9,8 @@ using UnityEngine.UI;
 // It updates its UI as the scene loads asynchronously.
 public class LoadingMenu : MenuBase
 {
-    // Static instance of the LoadingMenu class
-    private static LoadingMenu _instance;
-
-    // Public property to access the instance
-    public static LoadingMenu Instance
-    {
-        get
-        {
-            // Check if the instance is null
-            if (_instance == null)
-            {
-                // Try to find the PlayerCombat in the scene
-                _instance = FindFirstObjectByType<LoadingMenu>();
-
-                // If not found, log a warning
-                if (_instance == null)
-                {
-                    Debug.LogWarning("LoadingMenu instance not found in the scene!");
-                }
-            }
-            return _instance;
-        }
-    }
-
     [SerializeField] private Slider progressBar;         // Progress bar UI.
     [SerializeField] private TMP_Text progressText;            // Progress text UI.
-
-    // Ensure that there is only one instance of LoadingMenu
-    private void Awake()
-    {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(gameObject); // Destroy duplicate instances
-        }
-        else
-        {
-            _instance = this; // Set the instance
-        }
-    }
 
     // No setup required for screen activation here.
     public override void Setup() { }

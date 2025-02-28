@@ -12,4 +12,9 @@ public abstract class MenuBase : MonoBehaviour
     {
         PlayerUIManager.Instance.DisplayUIErrorMessage(message);
     }
+
+    public virtual void LoadScene(string scene)
+    {
+        SceneTransitionManager.Instance.LoadScene(scene);
+    }
 }
