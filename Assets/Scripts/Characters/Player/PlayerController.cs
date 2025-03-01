@@ -126,6 +126,8 @@ public class PlayerController : MonoBehaviour, IControllerInput
         }
     }
 
+    #region private
+
     private void OpenCampUtilityMenu()
     {
         UtilityMenu.Instance.OpenMenu(PlayerControlType.CAMP_NPC_MOVEMENT);
@@ -164,4 +166,6 @@ public class PlayerController : MonoBehaviour, IControllerInput
             _possessedNPC.Dash();
         }
     }
+
+    #endregion
 }

@@ -35,6 +35,7 @@ public class SceneTransitionManager : MonoBehaviour
     public string CurrentScene { get; private set; }
     public string PreviousScene { get; private set; }
     public string NextScene { get; private set; }
+    public GameMode NextGameMode { get; private set; }
 
     // The name of your dedicated loading scene.
     [SerializeField]
@@ -54,15 +55,37 @@ public class SceneTransitionManager : MonoBehaviour
         }
     }
 
+    public void LoadScene(string sceneName, GameMode nextGameMode, bool keepPlayerControls, bool keepPossessedNPC)
+    {
+        if (!keepPlayerControls)
+        {
+            if(PlayerController.Instance != null)
+            {
+                PlayerController.Instance.PossessNPC(null);
+                Destroy(PlayerController.Instance);
+            }
+        }
+        else if (!keepPossessedNPC)
+        {
+            if (PlayerController.Instance != null)
+            {
+                PlayerController.Instance.PossessNPC(null);
+            }
+        }
+
+        LoadScene(sceneName, nextGameMode);             
+    }
+
     /// <summary>
     /// Begins the transition by setting the next scene and loading the dedicated loading scene.
     /// Call this (for example, from your main menu) when you want to load a new scene.
     /// </summary>
     /// <param name="sceneName">Name of the target scene to load.</param>
-    public void LoadScene(string sceneName)
+    private void LoadScene(string sceneName, GameMode nextGameMode = GameMode.NONE)
     {
         PreviousScene = SceneManager.GetActiveScene().name;
         NextScene = sceneName;
+        NextGameMode = nextGameMode;
         SceneManager.LoadScene(loadingSceneName);
     }
 
@@ -100,5 +123,6 @@ public class SceneTransitionManager : MonoBehaviour
         // Update scene tracking after the new scene is active.
         CurrentScene = NextScene;
         NextScene = string.Empty;
+        GameManager.Instance.CurrentGameMode = NextGameMode;
     }
 }

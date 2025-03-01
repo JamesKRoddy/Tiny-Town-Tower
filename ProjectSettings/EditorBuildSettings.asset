@@ -6,8 +6,23 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/_TestScenes/SampleScene.unity
+    path: Assets/Scenes/MenuScenes/MainMenuScene.unity
+    guid: b92aca9dd147e2b46a7d112408b7e7ac
+  - enabled: 1
+    path: Assets/Scenes/MenuScenes/LoadingScene.unity
+    guid: a5ad227f9f2fc1d43a0e592f3819cc21
+  - enabled: 1
+    path: Assets/Scenes/_TestScenes/CampScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Scenes/_TestScenes/OverworldScene.unity
+    guid: 3f6cf79f9e7340e4ca517fa20c9ed304
+  - enabled: 1
+    path: Assets/Scenes/_TestScenes/RogueLikeScene.unity
+    guid: 355c9a67e8e920247a727f354a920c4f
+  - enabled: 1
+    path: Assets/Scenes/_TestScenes/TurretScene.unity
+    guid: 827395ff30506994281a88c5f0869df9
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

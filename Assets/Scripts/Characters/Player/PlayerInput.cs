@@ -147,20 +147,20 @@ public class PlayerInput : MonoBehaviour
     }
 
     // This method will be called when the game mode changes
-    public void UpdatePlayerControls(CurrentGameMode gameMode)
+    public void UpdatePlayerControls(GameMode gameMode)
     {
         Debug.Log($"Update Controls gameMode : <color=green> {gameMode} </color>");
 
         // Logic to update the control type based on game mode
         switch (gameMode)
         {
-            case CurrentGameMode.ROGUE_LITE:
+            case GameMode.ROGUE_LITE:
                 UpdatePlayerControls(PlayerControlType.COMBAT_NPC_MOVEMENT);
                 break;
-            case CurrentGameMode.CAMP:
+            case GameMode.CAMP:
                 UpdatePlayerControls(PlayerControlType.CAMP_NPC_MOVEMENT);
                 break;
-            case CurrentGameMode.TURRET:
+            case GameMode.TURRET:
                 UpdatePlayerControls(PlayerControlType.TURRET_CAMERA_MOVEMENT);
                 break;
             default:

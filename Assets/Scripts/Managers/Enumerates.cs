@@ -84,7 +84,7 @@ public enum PlayerControlType
 // GAME MODE AND ROOM SETUP ENUMS
 // =========================
 
-public enum CurrentGameMode
+public enum GameMode
 {
     NONE,
     ROGUE_LITE,

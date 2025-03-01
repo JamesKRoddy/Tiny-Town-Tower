@@ -71,23 +71,23 @@ public class UtilityMenu : MenuBase, IControllerInput
     {
         if (active)
         {
-            CurrentGameMode currentGameMode = GameManager.Instance.CurrentGameMode;
+            GameMode currentGameMode = GameManager.Instance.CurrentGameMode;
 
             switch (currentGameMode)
             {
-                case CurrentGameMode.NONE:
+                case GameMode.NONE:
                     returnToControls = PlayerControlType.NONE;
                     break;
-                case CurrentGameMode.ROGUE_LITE:
+                case GameMode.ROGUE_LITE:
                     returnToControls = PlayerControlType.COMBAT_NPC_MOVEMENT;
                     break;
-                case CurrentGameMode.CAMP:
+                case GameMode.CAMP:
                     if (PlayerController.Instance._possessedNPC != null)
                         returnToControls = PlayerControlType.CAMP_NPC_MOVEMENT;
                     else
                         returnToControls = PlayerControlType.BUILDING_CAMERA_MOVEMENT;
                     break;
-                case CurrentGameMode.TURRET:
+                case GameMode.TURRET:
                     returnToControls = PlayerControlType.TURRET_CAMERA_MOVEMENT;
                     break;
                 default:

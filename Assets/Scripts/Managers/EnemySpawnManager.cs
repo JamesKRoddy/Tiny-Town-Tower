@@ -84,10 +84,10 @@ public class EnemySpawnManager : MonoBehaviour
 
             switch (GameManager.Instance.CurrentGameMode)
             {
-                case CurrentGameMode.ROGUE_LITE:
+                case GameMode.ROGUE_LITE:
                     RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                     break;
-                case CurrentGameMode.TURRET:
+                case GameMode.TURRET:
                     TurretManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                     break;
                 default:
