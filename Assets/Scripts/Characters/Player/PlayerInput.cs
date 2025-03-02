@@ -154,6 +154,9 @@ public class PlayerInput : MonoBehaviour
         // Logic to update the control type based on game mode
         switch (gameMode)
         {
+            case GameMode.MAIN_MENU:
+                UpdatePlayerControls(PlayerControlType.MAIN_MENU);
+                break;
             case GameMode.ROGUE_LITE:
                 UpdatePlayerControls(PlayerControlType.COMBAT_NPC_MOVEMENT);
                 break;

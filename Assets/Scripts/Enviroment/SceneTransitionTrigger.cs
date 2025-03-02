@@ -24,7 +24,7 @@ public class SceneTransitionTrigger : MonoBehaviour
                 Debug.LogWarning($"{gameObject.name} has no next scene");
             }
 
-            SceneTransitionManager.Instance.LoadScene(targetScene, nextSceneGameMode, keepPlayerControls, keepPossessedNPC);
+            SceneTransitionManager.Instance.LoadScene(targetScene, nextSceneGameMode, keepPossessedNPC);
         }
     }
 }

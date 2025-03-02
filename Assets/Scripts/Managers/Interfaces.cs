@@ -68,11 +68,9 @@ public interface IDamageable
  * 
  * CURRENT  WORK MENU FLOW
  * From game screen have a pause menu when you can get back to the main screen and clean up
- * camp scene to over world
  * roguelike to over world
  * roguelike to camp scene
  * over world to roguelike
- * camp scene to turret scene
  * turret scene to camp
  * 
  * 

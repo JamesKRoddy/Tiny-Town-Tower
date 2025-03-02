@@ -185,6 +185,11 @@ public class EnemySpawnManager : MonoBehaviour
         {
             return spawnPoints[0].transform.position;
         }
+        else
+        {
+            spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
+            return spawnPoints[0].transform.position;
+        }
         return null;
     }
 }

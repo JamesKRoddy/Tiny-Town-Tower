@@ -50,6 +50,7 @@ public enum TaskType
 public enum PlayerControlType
 {
     NONE, // Default
+    MAIN_MENU,
 
     /// <summary>
     /// RogueLike
@@ -87,6 +88,7 @@ public enum PlayerControlType
 public enum GameMode
 {
     NONE,
+    MAIN_MENU,
     ROGUE_LITE,
     CAMP,
     TURRET

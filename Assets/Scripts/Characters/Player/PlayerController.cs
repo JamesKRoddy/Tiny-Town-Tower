@@ -101,34 +101,33 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 // No controls are active
                 break;
             case PlayerControlType.COMBAT_NPC_MOVEMENT:
-                if (PlayerInput.Instance != null)
-                {
-                    PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
-                    PlayerInput.Instance.OnYPressed += HandleYInput;
-                    PlayerInput.Instance.OnAPressed += HandleAInput;
-                    PlayerInput.Instance.OnSelectPressed += OpenCombatUtilityMenu;
-                }
+                PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
+                PlayerInput.Instance.OnYPressed += HandleYInput;
+                PlayerInput.Instance.OnAPressed += HandleAInput;
+                PlayerInput.Instance.OnSelectPressed += OpenCombatUtilityMenu;                
                 break;
             case PlayerControlType.CAMP_NPC_MOVEMENT:
-                if (PlayerInput.Instance != null)
-                {
-                    PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
-                    PlayerInput.Instance.OnSelectPressed += OpenCampUtilityMenu;
-                }
+                PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
+                PlayerInput.Instance.OnSelectPressed += OpenCampUtilityMenu;                
                 break;
-            case PlayerControlType.TURRET_CAMERA_MOVEMENT:
-                {
-                    PlayerInput.Instance.OnSelectPressed += OpenTurretUtilityMenu;
-                }
+            case PlayerControlType.TURRET_CAMERA_MOVEMENT:                
+                PlayerInput.Instance.OnSelectPressed += OpenTurretUtilityMenu;
                 break;
             case PlayerControlType.CAMP_CAMERA_MOVEMENT:
-                if (PlayerInput.Instance != null)
-                {
-                    PlayerInput.Instance.OnSelectPressed += OpenCampUtilityMenu;
-                }
+                PlayerInput.Instance.OnSelectPressed += OpenCampUtilityMenu;
                 break;
             default:
                 break;
+        }
+
+        //Camera setup
+        if(controlType == PlayerControlType.MAIN_MENU)
+        {
+            playerCamera.gameObject.SetActive(false);
+        }
+        else
+        {
+            playerCamera.gameObject.SetActive(true);
         }
     }
 

@@ -55,9 +55,9 @@ public class SceneTransitionManager : MonoBehaviour
         }
     }
 
-    public void LoadScene(string sceneName, GameMode nextGameMode, bool keepPlayerControls, bool keepPossessedNPC)
+    public void LoadScene(string sceneName, GameMode nextGameMode, bool keepPossessedNPC)
     {
-        StartCoroutine(LoadSceneNextFrame(sceneName, nextGameMode, keepPlayerControls, keepPossessedNPC));
+        StartCoroutine(LoadSceneNextFrame(sceneName, nextGameMode, keepPossessedNPC));
     }
 
     /// <summary>
@@ -68,19 +68,14 @@ public class SceneTransitionManager : MonoBehaviour
     /// <param name="keepPlayerControls"></param>
     /// <param name="keepPossessedNPC"></param>
     /// <returns></returns>
-    private IEnumerator LoadSceneNextFrame(string sceneName, GameMode nextGameMode, bool keepPlayerControls, bool keepPossessedNPC)
+    private IEnumerator LoadSceneNextFrame(string sceneName, GameMode nextGameMode, bool keepPossessedNPC)
     {
         if (PlayerController.Instance != null)
         {
-            if (PlayerController.Instance._possessedNPC is MonoBehaviour npc && (!keepPlayerControls || !keepPossessedNPC))
+            if (PlayerController.Instance._possessedNPC is MonoBehaviour npc && (!keepPossessedNPC))
             {
                 PlayerController.Instance.PossessNPC(null);
                 Destroy(npc.gameObject);
-            }
-
-            if (!keepPlayerControls)
-            {
-                Destroy(PlayerController.Instance);
             }
         }
 

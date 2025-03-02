@@ -59,7 +59,8 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
         Vector3? spawnPoint = EnemySpawnManager.Instance.SpawnPointPosition();
         if (!spawnPoint.HasValue)
         {
-            errorMessage = " no spawn points (this is an error)!";
+            Debug.LogError("No spawn points (this is an error)!");
+            errorMessage = "No spawn points (this is an error)!";
             return false;
         }
         Vector3 basePoint = TurretManager.Instance.baseTarget.transform.position;
