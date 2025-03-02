@@ -3,9 +3,8 @@ using UnityEngine;
 public class SceneTransitionTrigger : MonoBehaviour
 {
     // Name of the scene to load when the possessed NPC enters this area.
-    [SerializeField] private string targetScene;
+    [SerializeField] private string targetScene; //TODO convert this to an enum?
     [SerializeField] GameMode nextSceneGameMode;
-    [SerializeField] bool keepPlayerControls;
     [SerializeField] bool keepPossessedNPC;
 
     private void OnTriggerEnter(Collider other)
