@@ -57,23 +57,36 @@ public class SceneTransitionManager : MonoBehaviour
 
     public void LoadScene(string sceneName, GameMode nextGameMode, bool keepPlayerControls, bool keepPossessedNPC)
     {
-        if (!keepPlayerControls)
+        StartCoroutine(LoadSceneNextFrame(sceneName, nextGameMode, keepPlayerControls, keepPossessedNPC));
+    }
+
+    /// <summary>
+    /// Need to wait for destroy and unhooking possessed npc
+    /// </summary>
+    /// <param name="sceneName"></param>
+    /// <param name="nextGameMode"></param>
+    /// <param name="keepPlayerControls"></param>
+    /// <param name="keepPossessedNPC"></param>
+    /// <returns></returns>
+    private IEnumerator LoadSceneNextFrame(string sceneName, GameMode nextGameMode, bool keepPlayerControls, bool keepPossessedNPC)
+    {
+        if (PlayerController.Instance != null)
         {
-            if(PlayerController.Instance != null)
+            if (PlayerController.Instance._possessedNPC is MonoBehaviour npc && (!keepPlayerControls || !keepPossessedNPC))
             {
                 PlayerController.Instance.PossessNPC(null);
+                Destroy(npc.gameObject);
+            }
+
+            if (!keepPlayerControls)
+            {
                 Destroy(PlayerController.Instance);
             }
         }
-        else if (!keepPossessedNPC)
-        {
-            if (PlayerController.Instance != null)
-            {
-                PlayerController.Instance.PossessNPC(null);
-            }
-        }
 
-        LoadScene(sceneName, nextGameMode);             
+        yield return null; // Wait one frame
+
+        LoadScene(sceneName, nextGameMode);
     }
 
     /// <summary>

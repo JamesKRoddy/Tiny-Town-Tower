@@ -14,6 +14,16 @@ public class SceneTransitionTrigger : MonoBehaviour
         IPossessable npc = other.GetComponent<IPossessable>();
         if (npc != null && npc == PlayerController.Instance._possessedNPC)
         {
+            if (nextSceneGameMode == GameMode.NONE)
+            {
+                Debug.LogWarning($"{gameObject.name} has no next game mode");
+            }
+
+            if(targetScene == string.Empty)
+            {
+                Debug.LogWarning($"{gameObject.name} has no next scene");
+            }
+
             SceneTransitionManager.Instance.LoadScene(targetScene, nextSceneGameMode, keepPlayerControls, keepPossessedNPC);
         }
     }

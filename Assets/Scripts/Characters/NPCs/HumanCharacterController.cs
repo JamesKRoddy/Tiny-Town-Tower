@@ -72,7 +72,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable
     public void OnUnpossess()
     {
         SetAIControl(true);
-        transform.SetParent(null);
+        transform.SetParent(null, true);
     }
 
     /// <summary>
