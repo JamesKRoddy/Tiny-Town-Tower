@@ -341,14 +341,14 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1613673850}
         m_TargetAssemblyTypeName: MenuBase, Assembly-CSharp
-        m_MethodName: LoadScene
-        m_Mode: 5
+        m_MethodName: StartBtn
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: CampScene
+          m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &887053364
@@ -592,7 +592,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1257474435}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1613673850}
+        m_TargetAssemblyTypeName: MenuBase, Assembly-CSharp
+        m_MethodName: OptionsBtn
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1257474435
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -716,14 +728,14 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1613673850}
         m_TargetAssemblyTypeName: MenuBase, Assembly-CSharp
-        m_MethodName: LoadScene
-        m_Mode: 5
+        m_MethodName: ContinueBtn
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: CampScene
+          m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &1461726385
@@ -1478,7 +1490,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2103096549}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1613673850}
+        m_TargetAssemblyTypeName: MenuBase, Assembly-CSharp
+        m_MethodName: QuitBtn
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &2103096549
 MonoBehaviour:
   m_ObjectHideFlags: 0

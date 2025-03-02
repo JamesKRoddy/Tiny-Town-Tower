@@ -62,7 +62,7 @@ public enum PlayerControlType
     /// </summary>
 
     CAMP_NPC_MOVEMENT, // Player's movement in the camp
-    BUILDING_CAMERA_MOVEMENT, //Default
+    CAMP_CAMERA_MOVEMENT, //Default
     BUILDING_PLACEMENT, // Placing a building from the build menu
 
     /// <summary>

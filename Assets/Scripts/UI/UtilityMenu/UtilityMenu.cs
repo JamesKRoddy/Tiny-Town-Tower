@@ -85,7 +85,7 @@ public class UtilityMenu : MenuBase, IControllerInput
                     if (PlayerController.Instance._possessedNPC != null)
                         returnToControls = PlayerControlType.CAMP_NPC_MOVEMENT;
                     else
-                        returnToControls = PlayerControlType.BUILDING_CAMERA_MOVEMENT;
+                        returnToControls = PlayerControlType.CAMP_CAMERA_MOVEMENT;
                     break;
                 case GameMode.TURRET:
                     returnToControls = PlayerControlType.TURRET_CAMERA_MOVEMENT;
@@ -103,8 +103,12 @@ public class UtilityMenu : MenuBase, IControllerInput
         PlayerUIManager.Instance.SetScreenActive(this, active);
     }
 
-    public void ReturnToGame()
+    public void ReturnToGame(PlayerControlType playerControlType = PlayerControlType.NONE)
     {
+        if(playerControlType != PlayerControlType.NONE)
+        {
+            returnToControls = playerControlType;
+        }
         PlayerInput.Instance.UpdatePlayerControls(returnToControls);
     }
 

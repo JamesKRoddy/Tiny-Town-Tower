@@ -121,6 +121,12 @@ public class PlayerController : MonoBehaviour, IControllerInput
                     PlayerInput.Instance.OnSelectPressed += OpenTurretUtilityMenu;
                 }
                 break;
+            case PlayerControlType.CAMP_CAMERA_MOVEMENT:
+                if (PlayerInput.Instance != null)
+                {
+                    PlayerInput.Instance.OnSelectPressed += OpenCampUtilityMenu;
+                }
+                break;
             default:
                 break;
         }

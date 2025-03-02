@@ -158,7 +158,7 @@ public class PlayerInput : MonoBehaviour
                 UpdatePlayerControls(PlayerControlType.COMBAT_NPC_MOVEMENT);
                 break;
             case GameMode.CAMP:
-                UpdatePlayerControls(PlayerControlType.CAMP_NPC_MOVEMENT);
+                UpdatePlayerControls(PlayerControlType.CAMP_CAMERA_MOVEMENT);
                 break;
             case GameMode.TURRET:
                 UpdatePlayerControls(PlayerControlType.TURRET_CAMERA_MOVEMENT);
