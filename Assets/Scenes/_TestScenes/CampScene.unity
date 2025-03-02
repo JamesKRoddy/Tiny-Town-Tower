@@ -1198,6 +1198,10 @@ PrefabInstance:
       value: TurretScene
       objectReference: {fileID: 0}
     - target: {fileID: 1647695797651180896, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
+      propertyPath: nextSceneGameMode
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1647695797651180896, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
       propertyPath: keepPlayerControls
       value: 1
       objectReference: {fileID: 0}
@@ -1877,6 +1881,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1647695797651180896, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
       propertyPath: keepPossessedNPC
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1647695797651180896, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
+      propertyPath: nextSceneGameMode
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1647695797651180896, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
