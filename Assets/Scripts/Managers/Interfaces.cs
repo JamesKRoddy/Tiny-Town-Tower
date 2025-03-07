@@ -74,6 +74,8 @@ public interface IDamageable
  * turret scene to camp
  * Generating levels in roguelike not working correctly!!!!!!!!
  * 
+ * Have to create pause menu
+ * 
  * 
  * Curent work refactoring player
  * rework inventory system CharacterInventory.cs needs to be looked at read info at the top

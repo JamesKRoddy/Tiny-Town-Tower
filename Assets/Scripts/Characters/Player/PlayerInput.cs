@@ -44,7 +44,7 @@ public class PlayerInput : MonoBehaviour
     //public event Action<float> OnRTPressed; // Right Trigger (returns a float value for trigger intensity)
     //public event Action<float> OnLTPressed; // Left Trigger (returns a float value for trigger intensity)
 
-    //public event Action OnStartPressed;
+    public event Action OnStartPressed;
     public event Action OnSelectPressed;
 
     //public event Action OnLeftStickPressed;
@@ -131,7 +131,7 @@ public class PlayerInput : MonoBehaviour
         //if (Input.GetButtonDown("RightStickPress")) OnRightStickPressed?.Invoke();
 
         //// Start and Select buttons
-        //if (Input.GetButtonDown("Start")) OnStartPressed?.Invoke();
+        if (Input.GetButtonDown("Start")) OnStartPressed?.Invoke();
         if (Input.GetButtonDown("Select")) OnSelectPressed?.Invoke();
     }
 
@@ -192,7 +192,7 @@ public class PlayerInput : MonoBehaviour
         //OnRTPressed = null;
         //OnLTPressed = null;
 
-        //OnStartPressed = null;
+        OnStartPressed = null;
         OnSelectPressed = null;
 
         //OnLeftStickPressed = null;

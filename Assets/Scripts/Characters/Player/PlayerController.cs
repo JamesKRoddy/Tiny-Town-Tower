@@ -97,55 +97,45 @@ public class PlayerController : MonoBehaviour, IControllerInput
         // Subscribe to events based on the new control type
         switch (controlType)
         {
-            case PlayerControlType.NONE:
-                // No controls are active
-                break;
             case PlayerControlType.COMBAT_NPC_MOVEMENT:
                 PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
                 PlayerInput.Instance.OnYPressed += HandleYInput;
                 PlayerInput.Instance.OnAPressed += HandleAInput;
-                PlayerInput.Instance.OnSelectPressed += OpenCombatUtilityMenu;                
+                PlayerInput.Instance.OnSelectPressed += () => OpenUtilityMenu(PlayerControlType.COMBAT_NPC_MOVEMENT);
+                PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu(PlayerControlType.COMBAT_NPC_MOVEMENT);
                 break;
+
             case PlayerControlType.CAMP_NPC_MOVEMENT:
-                PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
-                PlayerInput.Instance.OnSelectPressed += OpenCampUtilityMenu;                
-                break;
-            case PlayerControlType.TURRET_CAMERA_MOVEMENT:                
-                PlayerInput.Instance.OnSelectPressed += OpenTurretUtilityMenu;
-                break;
             case PlayerControlType.CAMP_CAMERA_MOVEMENT:
-                PlayerInput.Instance.OnSelectPressed += OpenCampUtilityMenu;
+                PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
+                PlayerInput.Instance.OnSelectPressed += () => OpenUtilityMenu(PlayerControlType.CAMP_NPC_MOVEMENT);
+                PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu(PlayerControlType.CAMP_NPC_MOVEMENT);
                 break;
+
+            case PlayerControlType.TURRET_CAMERA_MOVEMENT:
+                PlayerInput.Instance.OnSelectPressed += () => OpenUtilityMenu(PlayerControlType.TURRET_CAMERA_MOVEMENT);
+                PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu(PlayerControlType.TURRET_CAMERA_MOVEMENT);
+                break;
+
+            case PlayerControlType.NONE:
             default:
                 break;
         }
 
-        //Camera setup
-        if(controlType == PlayerControlType.MAIN_MENU)
-        {
-            playerCamera.gameObject.SetActive(false);
-        }
-        else
-        {
-            playerCamera.gameObject.SetActive(true);
-        }
+        // Camera setup
+        playerCamera.gameObject.SetActive(controlType != PlayerControlType.MAIN_MENU);
     }
 
     #region private
 
-    private void OpenCampUtilityMenu()
+    private void OpenUtilityMenu(PlayerControlType controlType)
     {
-        UtilityMenu.Instance.OpenMenu(PlayerControlType.CAMP_NPC_MOVEMENT);
+        UtilityMenu.Instance.OpenMenu(controlType);
     }
 
-    private void OpenCombatUtilityMenu()
+    private void OpenPauseMenu(PlayerControlType controlType)
     {
-        UtilityMenu.Instance.OpenMenu(PlayerControlType.COMBAT_NPC_MOVEMENT);
-    }
-
-    private void OpenTurretUtilityMenu()
-    {
-        UtilityMenu.Instance.OpenMenu(PlayerControlType.TURRET_CAMERA_MOVEMENT);
+        PauseMenu.Instance.OpenMenu(controlType);
     }
 
     private void HandleLeftJoystick(Vector2 input)

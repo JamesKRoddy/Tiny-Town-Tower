@@ -60,6 +60,8 @@ public class SceneTransitionManager : MonoBehaviour
         StartCoroutine(LoadSceneNextFrame(sceneName, nextGameMode, keepPossessedNPC));
     }
 
+    #region private
+
     /// <summary>
     /// Need to wait for destroy and unhooking possessed npc
     /// </summary>
@@ -133,4 +135,6 @@ public class SceneTransitionManager : MonoBehaviour
         NextScene = string.Empty;
         GameManager.Instance.CurrentGameMode = NextGameMode;
     }
+
+    #endregion
 }
