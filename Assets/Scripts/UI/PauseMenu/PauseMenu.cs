@@ -116,13 +116,13 @@ public class PauseMenu : MenuBase, IControllerInput
     private void ReturnToCamp()
     {
         PlayerUIManager.Instance.HidePauseMenus();
-        LoadScene("CampScene", GameMode.CAMP);
+        ReturnToCampMenu.Instance.SetScreenActive(true, 0.1f);
     }
 
     private void QuitGame()
     {
         PlayerUIManager.Instance.HidePauseMenus();
-        Application.Quit();
+        QuitMenu.Instance.SetScreenActive(true, 0.1f);
     }
 
     public void SetPlayerControlType(PlayerControlType controlType)
