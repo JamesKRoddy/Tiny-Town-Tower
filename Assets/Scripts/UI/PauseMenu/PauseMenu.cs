@@ -93,11 +93,6 @@ public class PauseMenu : MenuBase, IControllerInput
                     break;
             }
         }
-        else
-        {
-            if (gameObject.activeInHierarchy == true)
-                ReturnToGame();
-        }
 
         PlayerUIManager.Instance.SetScreenActive(this, active);
     }
