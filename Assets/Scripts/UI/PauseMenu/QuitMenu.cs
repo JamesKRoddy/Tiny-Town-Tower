@@ -1,16 +1,15 @@
+using System;
 using UnityEngine;
 
-public class QuitMenu : MonoBehaviour
+public class QuitMenu : MenuBase
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public override void SetScreenActive(bool active, float delay = 0, Action onDone = null)
     {
-        
+        throw new NotImplementedException();
     }
 
-    // Update is called once per frame
-    void Update()
+    public override void Setup()
     {
-        
+        throw new NotImplementedException();
     }
 }
