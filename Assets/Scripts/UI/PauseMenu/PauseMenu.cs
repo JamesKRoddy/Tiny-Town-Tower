@@ -3,20 +3,20 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class UtilityMenu : MenuBase, IControllerInput
+public class PauseMenu : MenuBase, IControllerInput
 {
-    private static UtilityMenu _instance;
+    private static PauseMenu _instance;
 
-    public static UtilityMenu Instance
+    public static PauseMenu Instance
     {
         get
         {
             if (_instance == null)
             {
-                _instance = FindFirstObjectByType<UtilityMenu>();
+                _instance = FindFirstObjectByType<PauseMenu>();
                 if (_instance == null)
                 {
-                    Debug.LogError("UtilityMenu instance not found in the scene!");
+                    Debug.LogError("PauseMenu instance not found in the scene!");
                 }
             }
             return _instance;
@@ -34,10 +34,10 @@ public class UtilityMenu : MenuBase, IControllerInput
             _instance = this;
         }
 
-        playerInventoryBtn.onClick.AddListener(EnablePlayerInventoryMenu);
-        buildMenuBtn.onClick.AddListener(EnableBuildMenu);
-        settlerNPCBtn.onClick.AddListener(EnableSettlerNPCMenu);
-        turretBuildBtn.onClick.AddListener(EnableTurretBuildMenu);
+        resumeGameBtn.onClick.AddListener(() => ReturnToGame());
+        settingsBtn.onClick.AddListener(OpenSettings);
+        returnToCampBtn.onClick.AddListener(ReturnToCamp);
+        quitGameBtn.onClick.AddListener(QuitGame);
 
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
@@ -47,29 +47,27 @@ public class UtilityMenu : MenuBase, IControllerInput
     public void OnEnable()
     {
         PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
-
-        EventSystem.current.SetSelectedGameObject(playerInventoryBtn.gameObject);
+        EventSystem.current.SetSelectedGameObject(resumeGameBtn.gameObject);
     }
 
     void OnDestroy()
     {
-        playerInventoryBtn.onClick.RemoveAllListeners();
-        buildMenuBtn.onClick.RemoveAllListeners();
-        settlerNPCBtn.onClick.RemoveAllListeners();
-        turretBuildBtn.onClick.RemoveAllListeners();
+        resumeGameBtn.onClick.RemoveAllListeners();
+        settingsBtn.onClick.RemoveAllListeners();
+        returnToCampBtn.onClick.RemoveAllListeners();
+        quitGameBtn.onClick.RemoveAllListeners();
 
         if (PlayerInput.Instance != null)
             PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
     }
 
-    [SerializeField] Button playerInventoryBtn;
-    [SerializeField] Button buildMenuBtn;
-    [SerializeField] Button settlerNPCBtn;
-    [SerializeField] Button turretBuildBtn;
+    [SerializeField] Button resumeGameBtn;
+    [SerializeField] Button settingsBtn;
+    [SerializeField] Button returnToCampBtn;
+    [SerializeField] Button quitGameBtn;
 
     public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
-        Debug.Log("******");
         if (active)
         {
             GameMode currentGameMode = GameManager.Instance.CurrentGameMode;
@@ -95,58 +93,37 @@ public class UtilityMenu : MenuBase, IControllerInput
                     break;
             }
         }
-        else
-        {
-            if (gameObject.activeInHierarchy == true)
-                ReturnToGame();
-        }
 
         PlayerUIManager.Instance.SetScreenActive(this, active);
     }
 
-    public void ReturnToGame(PlayerControlType playerControlType = PlayerControlType.NONE)
+    private void ReturnToGame(PlayerControlType playerControlType = PlayerControlType.NONE)
     {
-        if(playerControlType != PlayerControlType.NONE)
+        PlayerUIManager.Instance.HidePauseMenus();
+        if (playerControlType != PlayerControlType.NONE)
         {
             returnToControls = playerControlType;
         }
         PlayerInput.Instance.UpdatePlayerControls(returnToControls);
     }
 
-    #region Menus Active
-
-    public void EnableUtilityMenu()
+    private void OpenSettings()
     {
-        PlayerUIManager.Instance.HideUtilityMenus();
-        SetScreenActive(true, 0.1f);
+        PlayerUIManager.Instance.HidePauseMenus();
+        SettingsMenu.Instance.SetScreenActive(true, 0.1f);
     }
 
-    public void EnablePlayerInventoryMenu()
+    private void ReturnToCamp()
     {
-        PlayerUIManager.Instance.HideUtilityMenus();
-        PlayerInventoryMenu.Instance.SetScreenActive(true, 0.1f);
+        PlayerUIManager.Instance.HidePauseMenus();
+        ReturnToCampMenu.Instance.SetScreenActive(true, 0.1f);
     }
 
-    public void EnableBuildMenu()
+    private void QuitGame()
     {
-        PlayerUIManager.Instance.HideUtilityMenus();
-        BuildMenu.Instance.SetScreenActive(true, 0.1f);
+        PlayerUIManager.Instance.HidePauseMenus();
+        QuitMenu.Instance.SetScreenActive(true, 0.1f);
     }
-
-
-    private void EnableSettlerNPCMenu()
-    {
-        PlayerUIManager.Instance.HideUtilityMenus();
-        SettlerNPCMenu.Instance.SetScreenActive(true, 0.1f);
-    }
-
-    private void EnableTurretBuildMenu()
-    {
-        PlayerUIManager.Instance.HideUtilityMenus();
-        TurretMenu.Instance.SetScreenActive(true, 0.1f);
-    }
-
-    #endregion
 
     public void SetPlayerControlType(PlayerControlType controlType)
     {
@@ -155,33 +132,36 @@ public class UtilityMenu : MenuBase, IControllerInput
         switch (controlType)
         {
             case PlayerControlType.IN_MENU:
-                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.HideUtilityMenus();
+                PlayerInput.Instance.OnBPressed += () => ReturnToGame();
                 break;
             default:
                 break;
         }
     }
 
-    internal void OpenMenu(PlayerControlType playerControlType)//TODO change this to use GameMode instead of player controls
+    internal void OpenMenu(PlayerControlType playerControlType)
     {
-        playerInventoryBtn.gameObject.SetActive(false);
-        buildMenuBtn.gameObject.SetActive(false);
-        settlerNPCBtn.gameObject.SetActive(false);
-        turretBuildBtn.gameObject.SetActive(false);
+        resumeGameBtn.gameObject.SetActive(false);
+        settingsBtn.gameObject.SetActive(false);
+        returnToCampBtn.gameObject.SetActive(false);
+        quitGameBtn.gameObject.SetActive(false);
 
         switch (playerControlType)
         {
             case PlayerControlType.COMBAT_NPC_MOVEMENT:
-                playerInventoryBtn.gameObject.SetActive(true);
+                resumeGameBtn.gameObject.SetActive(true);
+                settingsBtn.gameObject.SetActive(true);
+                returnToCampBtn.gameObject.SetActive(true);
                 break;
             case PlayerControlType.CAMP_NPC_MOVEMENT:
-                playerInventoryBtn.gameObject.SetActive(true);
-                buildMenuBtn.gameObject.SetActive(true);
-                settlerNPCBtn.gameObject.SetActive(true);
+                resumeGameBtn.gameObject.SetActive(true);
+                settingsBtn.gameObject.SetActive(true);
+                quitGameBtn.gameObject.SetActive(true);
                 break;
             case PlayerControlType.TURRET_CAMERA_MOVEMENT:
-                playerInventoryBtn.gameObject.SetActive(true);
-                turretBuildBtn.gameObject.SetActive(true);
+                resumeGameBtn.gameObject.SetActive(true);
+                settingsBtn.gameObject.SetActive(true);
+                returnToCampBtn.gameObject.SetActive(true);
                 break;
             default:
                 break;

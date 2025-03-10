@@ -84,10 +84,10 @@ public class EnemySpawnManager : MonoBehaviour
 
             switch (GameManager.Instance.CurrentGameMode)
             {
-                case CurrentGameMode.ROGUE_LITE:
+                case GameMode.ROGUE_LITE:
                     RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                     break;
-                case CurrentGameMode.TURRET:
+                case GameMode.TURRET:
                     TurretManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                     break;
                 default:
@@ -183,6 +183,11 @@ public class EnemySpawnManager : MonoBehaviour
     {
         if (spawnPoints.Count != 0)
         {
+            return spawnPoints[0].transform.position;
+        }
+        else
+        {
+            spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
             return spawnPoints[0].transform.position;
         }
         return null;

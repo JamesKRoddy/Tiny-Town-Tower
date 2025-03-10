@@ -44,7 +44,7 @@ public class PlayerInput : MonoBehaviour
     //public event Action<float> OnRTPressed; // Right Trigger (returns a float value for trigger intensity)
     //public event Action<float> OnLTPressed; // Left Trigger (returns a float value for trigger intensity)
 
-    //public event Action OnStartPressed;
+    public event Action OnStartPressed;
     public event Action OnSelectPressed;
 
     //public event Action OnLeftStickPressed;
@@ -131,7 +131,7 @@ public class PlayerInput : MonoBehaviour
         //if (Input.GetButtonDown("RightStickPress")) OnRightStickPressed?.Invoke();
 
         //// Start and Select buttons
-        //if (Input.GetButtonDown("Start")) OnStartPressed?.Invoke();
+        if (Input.GetButtonDown("Start")) OnStartPressed?.Invoke();
         if (Input.GetButtonDown("Select")) OnSelectPressed?.Invoke();
     }
 
@@ -147,20 +147,23 @@ public class PlayerInput : MonoBehaviour
     }
 
     // This method will be called when the game mode changes
-    public void UpdatePlayerControls(CurrentGameMode gameMode)
+    public void UpdatePlayerControls(GameMode gameMode)
     {
         Debug.Log($"Update Controls gameMode : <color=green> {gameMode} </color>");
 
         // Logic to update the control type based on game mode
         switch (gameMode)
         {
-            case CurrentGameMode.ROGUE_LITE:
+            case GameMode.MAIN_MENU:
+                UpdatePlayerControls(PlayerControlType.MAIN_MENU);
+                break;
+            case GameMode.ROGUE_LITE:
                 UpdatePlayerControls(PlayerControlType.COMBAT_NPC_MOVEMENT);
                 break;
-            case CurrentGameMode.CAMP:
-                UpdatePlayerControls(PlayerControlType.CAMP_NPC_MOVEMENT);
+            case GameMode.CAMP:
+                UpdatePlayerControls(PlayerControlType.CAMP_CAMERA_MOVEMENT);
                 break;
-            case CurrentGameMode.TURRET:
+            case GameMode.TURRET:
                 UpdatePlayerControls(PlayerControlType.TURRET_CAMERA_MOVEMENT);
                 break;
             default:
@@ -189,7 +192,7 @@ public class PlayerInput : MonoBehaviour
         //OnRTPressed = null;
         //OnLTPressed = null;
 
-        //OnStartPressed = null;
+        OnStartPressed = null;
         OnSelectPressed = null;
 
         //OnLeftStickPressed = null;

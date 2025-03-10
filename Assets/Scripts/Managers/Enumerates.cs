@@ -50,6 +50,7 @@ public enum TaskType
 public enum PlayerControlType
 {
     NONE, // Default
+    MAIN_MENU,
 
     /// <summary>
     /// RogueLike
@@ -62,7 +63,7 @@ public enum PlayerControlType
     /// </summary>
 
     CAMP_NPC_MOVEMENT, // Player's movement in the camp
-    BUILDING_CAMERA_MOVEMENT, //Default
+    CAMP_CAMERA_MOVEMENT, //Default
     BUILDING_PLACEMENT, // Placing a building from the build menu
 
     /// <summary>
@@ -84,9 +85,10 @@ public enum PlayerControlType
 // GAME MODE AND ROOM SETUP ENUMS
 // =========================
 
-public enum CurrentGameMode
+public enum GameMode
 {
     NONE,
+    MAIN_MENU,
     ROGUE_LITE,
     CAMP,
     TURRET

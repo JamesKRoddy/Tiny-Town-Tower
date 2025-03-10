@@ -29,15 +29,16 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
 
     public void SetPlayerControlType(PlayerControlType controlType)
     {
-        // Unsubscribe from previous joystick input
-        PlayerInput.Instance.OnLeftJoystick -= HandleLeftJoystickInput;
-
         // Handle new control type
         switch (controlType)
         {
             case PlayerControlType.TURRET_PLACEMENT:
                 break;
             case PlayerControlType.TURRET_CAMERA_MOVEMENT:
+                target = defaultTarget; // Detach from target to allow free camera movement
+                PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystickInput; // Subscribe to joystick input
+                break;
+            case PlayerControlType.CAMP_CAMERA_MOVEMENT:
                 target = defaultTarget; // Detach from target to allow free camera movement
                 PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystickInput; // Subscribe to joystick input
                 break;

@@ -5,7 +5,6 @@ using System;
 
 public class PlayerUIManager : MonoBehaviour
 {
-
     // Static instance of the PlayerUIManager class
     private static PlayerUIManager _instance;
 
@@ -35,6 +34,14 @@ public class PlayerUIManager : MonoBehaviour
 
     [Header("UI References")]
     [HideInInspector] public MenuBase currentMenu;
+
+    [Header("Pause Menu References")]
+    [SerializeField] MenuBase pauseMenu;
+    [SerializeField] MenuBase settingsMenu;
+    [SerializeField] MenuBase returnToCampMenu;
+    [SerializeField] MenuBase quitMenu;
+
+    [Header("Utility Menu References")] 
     [SerializeField] MenuBase buildMenu; 
     [SerializeField] MenuBase narrativeSystem;
     [SerializeField] MenuBase playerInventoryMenu;
@@ -68,6 +75,10 @@ public class PlayerUIManager : MonoBehaviour
         turretMenu.Setup();
         turretUpgradeMenu.Setup();
         utilityMenu.Setup();
+        pauseMenu.Setup();
+        settingsMenu.Setup();
+        returnToCampMenu.Setup();
+        quitMenu.Setup();
     }
 
     /// <summary>
@@ -117,7 +128,7 @@ public class PlayerUIManager : MonoBehaviour
         interactionPromptUI.HidePanel();
     }
 
-    public void HideMenus()
+    public void HideUtilityMenus()
     {
         buildMenu.SetScreenActive(false);
         narrativeSystem.SetScreenActive(false);
@@ -126,6 +137,14 @@ public class PlayerUIManager : MonoBehaviour
         turretMenu.SetScreenActive(false);
         turretUpgradeMenu.SetScreenActive(false);
         utilityMenu.SetScreenActive(false);
+    }
+
+    public void HidePauseMenus()
+    {
+        pauseMenu.SetScreenActive(false);
+        settingsMenu.SetScreenActive(false);
+        returnToCampMenu.SetScreenActive(false);
+        quitMenu.SetScreenActive(false);
     }
 
     private IEnumerator EnableMenuAfterDelay(MenuBase menu, bool active, float delay, Action OnDone)
