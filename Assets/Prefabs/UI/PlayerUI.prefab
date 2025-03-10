@@ -7189,8 +7189,8 @@ MonoBehaviour:
   currentMenu: {fileID: 0}
   pauseMenu: {fileID: 6031392202740666420}
   settingsMenu: {fileID: 4654930161454814456}
-  returnToCampMenu: {fileID: 0}
-  quitMenu: {fileID: 0}
+  returnToCampMenu: {fileID: 1168541475958688944}
+  quitMenu: {fileID: 1125807288198912761}
   buildMenu: {fileID: 2645204055199219515}
   narrativeSystem: {fileID: 7899024836448388358}
   playerInventoryMenu: {fileID: 7708601317638227685}
@@ -11014,6 +11014,7 @@ GameObject:
   - component: {fileID: 6011754202683424728}
   - component: {fileID: 118874669250805023}
   - component: {fileID: 7090237440200105993}
+  - component: {fileID: 1125807288198912761}
   m_Layer: 5
   m_Name: QuitMenu
   m_TagString: Untagged
@@ -11104,6 +11105,20 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &1125807288198912761
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5954292469109052856}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4d2f2b7bf0ff6e4eb1c204e316157b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  yesBtn: {fileID: 3947261939096256619}
+  noBtn: {fileID: 2535874686394731897}
 --- !u!1 &5961535205073818087
 GameObject:
   m_ObjectHideFlags: 0
@@ -12183,6 +12198,7 @@ GameObject:
   - component: {fileID: 5578909329989624149}
   - component: {fileID: 2968371464617806400}
   - component: {fileID: 1878993972553769806}
+  - component: {fileID: 1168541475958688944}
   m_Layer: 5
   m_Name: ReturnToCampMenu
   m_TagString: Untagged
@@ -12273,6 +12289,20 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &1168541475958688944
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6351922899866702219}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1fac2fd9a6d8b449b70a44cfbf852e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  yesBtn: {fileID: 5042935901260124780}
+  noBtn: {fileID: 897328409245684514}
 --- !u!1 &6364616260809315757
 GameObject:
   m_ObjectHideFlags: 0

@@ -132,7 +132,7 @@ public class PauseMenu : MenuBase, IControllerInput
         switch (controlType)
         {
             case PlayerControlType.IN_MENU:
-                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.HidePauseMenus();
+                PlayerInput.Instance.OnBPressed += () => ReturnToGame();
                 break;
             default:
                 break;

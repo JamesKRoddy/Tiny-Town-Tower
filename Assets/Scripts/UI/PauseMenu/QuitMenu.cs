@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class QuitMenu : MenuBase
@@ -33,12 +34,17 @@ public class QuitMenu : MenuBase
             _instance = this;
         }
 
-        yesBtn.onClick.AddListener(CloseMenu);
-        noBtn.onClick.AddListener(QuitApplication);
+        yesBtn.onClick.AddListener(QuitApplication);
+        noBtn.onClick.AddListener(CloseMenu);
     }
 
     [SerializeField] Button yesBtn;
     [SerializeField] Button noBtn;
+
+    public void OnEnable()
+    {
+        EventSystem.current.SetSelectedGameObject(yesBtn.gameObject);
+    }
 
     public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
@@ -53,6 +59,7 @@ public class QuitMenu : MenuBase
 
     void QuitApplication()
     {
+        PlayerUIManager.Instance.HidePauseMenus();
         Application.Quit();
     }
 }
