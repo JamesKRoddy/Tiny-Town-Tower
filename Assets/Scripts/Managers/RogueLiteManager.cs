@@ -43,6 +43,12 @@ public class RogueLiteManager : GameModeManager<RogueLikeEnemyWaveConfig>
         }
     }
 
+    protected override void Start()
+    {
+        base.Start();
+        SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+    }
+
     protected override void EnemySetupStateChanged(EnemySetupState newState)
     {
         switch (newState)

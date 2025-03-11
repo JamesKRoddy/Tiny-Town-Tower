@@ -778,6 +778,14 @@ PrefabInstance:
       propertyPath: _currentGameMode
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6945657278055493532, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: buildingDataScriptableObjs.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6945657278055493532, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: 'buildingDataScriptableObjs.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: cabb675861ade9446b9fd0936ab40689, type: 2}
     - target: {fileID: 8009027879356615486, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_UseGravity
       value: 0

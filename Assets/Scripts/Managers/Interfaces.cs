@@ -66,15 +66,10 @@ public interface IDamageable
  * Change the possession screen so that it opens up a selection box to talkt to them (quests) assign them work or possess them
  * 
  * 
- * CURRENT  WORK MENU FLOW
- * From game screen have a pause menu when you can get back to the main screen and clean up
- * roguelike to over world
- * roguelike to camp scene
- * over world to roguelike
- * turret scene to camp
+ * CURRENT  WORK BUG  FIXING
  * Generating levels in roguelike not working correctly!!!!!!!!
- * 
- * Have to create pause menu
+ * Player stays moving after pause menu is opened
+ * player returning to camp npc disappears
  * 
  * 
  * Curent work refactoring player

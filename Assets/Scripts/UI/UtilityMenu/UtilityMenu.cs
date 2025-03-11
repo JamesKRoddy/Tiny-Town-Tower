@@ -69,7 +69,6 @@ public class UtilityMenu : MenuBase, IControllerInput
 
     public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
-        Debug.Log("******");
         if (active)
         {
             GameMode currentGameMode = GameManager.Instance.CurrentGameMode;
