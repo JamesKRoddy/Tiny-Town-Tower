@@ -5,35 +5,8 @@ using UnityEngine.UI;
 
 public class PauseMenu : MenuBase, IControllerInput
 {
-    private static PauseMenu _instance;
-
-    public static PauseMenu Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                _instance = FindFirstObjectByType<PauseMenu>();
-                if (_instance == null)
-                {
-                    Debug.LogError("PauseMenu instance not found in the scene!");
-                }
-            }
-            return _instance;
-        }
-    }
-
     public override void Setup()
     {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            _instance = this;
-        }
-
         resumeGameBtn.onClick.AddListener(() => ReturnToGame());
         settingsBtn.onClick.AddListener(OpenSettings);
         returnToCampBtn.onClick.AddListener(ReturnToCamp);
@@ -86,19 +59,19 @@ public class PauseMenu : MenuBase, IControllerInput
     private void OpenSettings()
     {
         PlayerUIManager.Instance.HidePauseMenus();
-        SettingsMenu.Instance.SetScreenActive(true, 0.1f);
+        PlayerUIManager.Instance.settingsMenu.SetScreenActive(true, 0.1f);
     }
 
     private void ReturnToCamp()
     {
         PlayerUIManager.Instance.HidePauseMenus();
-        ReturnToCampMenu.Instance.SetScreenActive(true, 0.1f);
+        PlayerUIManager.Instance.returnToCampMenu.SetScreenActive(true, 0.1f);
     }
 
     private void QuitGame()
     {
         PlayerUIManager.Instance.HidePauseMenus();
-        QuitMenu.Instance.SetScreenActive(true, 0.1f);
+        PlayerUIManager.Instance.quitMenu.SetScreenActive(true, 0.1f);
     }
 
     public void SetPlayerControlType(PlayerControlType controlType)

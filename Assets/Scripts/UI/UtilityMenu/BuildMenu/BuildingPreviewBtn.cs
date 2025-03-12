@@ -39,11 +39,11 @@ public class BuildingPreviewBtn : MonoBehaviour
         // If canBuild is true, proceed with construction placement. Otherwise, show an error or refuse placement.
         if (canBuild)
         {           
-            BuildMenu.Instance.SetScreenActive(false, 0.1f, () => BuildingPlacer.Instance.StartPlacement(buildingObj));
+            PlayerUIManager.Instance.buildMenu.SetScreenActive(false, 0.1f, () => BuildingPlacer.Instance.StartPlacement(buildingObj));
         }
         else
         {
-            BuildMenu.Instance.DisplayErrorMessage("Not enough resources to build this structure!");
+            PlayerUIManager.Instance.buildMenu.DisplayErrorMessage("Not enough resources to build this structure!");
             // Optionally, display a UI message to the player.
         }
     }

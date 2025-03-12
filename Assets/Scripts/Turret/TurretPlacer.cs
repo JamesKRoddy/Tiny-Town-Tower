@@ -127,6 +127,6 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
 
     protected override void OnPlacementCancelled()
     {
-        TurretMenu.Instance.SetScreenActive(true, 0.1f);
+        PlayerUIManager.Instance.turretMenu.SetScreenActive(true, 0.1f);
     }
 }

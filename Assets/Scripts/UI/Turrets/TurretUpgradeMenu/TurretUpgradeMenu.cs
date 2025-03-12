@@ -6,24 +6,6 @@ using UnityEngine.UI;
 
 public class TurretUpgradeMenu : MenuBase, IControllerInput
 {
-    private static TurretUpgradeMenu _instance;
-
-    public static TurretUpgradeMenu Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                _instance = FindFirstObjectByType<TurretUpgradeMenu>();
-                if (_instance == null)
-                {
-                    Debug.LogError("TurretUpgradeMenu instance not found in the scene!");
-                }
-            }
-            return _instance;
-        }
-    }
-
     [Header("Upgrade Menu UI")]
     [SerializeField] private Button upgradeButton;
     [SerializeField] private TMP_Text upgradeButtonText;
@@ -34,28 +16,7 @@ public class TurretUpgradeMenu : MenuBase, IControllerInput
 
     public override void Setup()
     {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            _instance = this;
-        }
-
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
-    }
-
-    private void Awake()
-    {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            _instance = this;
-        }
     }
 
     public void OnDestroy()

@@ -6,35 +6,8 @@ using UnityEngine;
 
 public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptableObj>, IControllerInput
 {
-    private static BuildMenu _instance;
-
-    public static BuildMenu Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                _instance = FindFirstObjectByType<BuildMenu>();
-                if (_instance == null)
-                {
-                    Debug.LogError("BuildMenu instance not found in the scene!");
-                }
-            }
-            return _instance;
-        }
-    }
-
     public override void Setup()
     {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            _instance = this;
-        }
-
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
 
@@ -73,7 +46,7 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
             case PlayerControlType.IN_MENU:
                 PlayerInput.Instance.OnRBPressed += rightScreenBtn.onClick.Invoke;
                 PlayerInput.Instance.OnLBPressed += leftScreenBtn.onClick.Invoke;
-                PlayerInput.Instance.OnBPressed += () => UtilityMenu.Instance.EnableUtilityMenu();
+                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.utilityMenu.EnableUtilityMenu();
                 break;
             default:
                 break;

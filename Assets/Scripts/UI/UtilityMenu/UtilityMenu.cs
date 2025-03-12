@@ -5,35 +5,8 @@ using UnityEngine.UI;
 
 public class UtilityMenu : MenuBase, IControllerInput
 {
-    private static UtilityMenu _instance;
-
-    public static UtilityMenu Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                _instance = FindFirstObjectByType<UtilityMenu>();
-                if (_instance == null)
-                {
-                    Debug.LogError("UtilityMenu instance not found in the scene!");
-                }
-            }
-            return _instance;
-        }
-    }
-
     public override void Setup()
     {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            _instance = this;
-        }
-
         playerInventoryBtn.onClick.AddListener(EnablePlayerInventoryMenu);
         buildMenuBtn.onClick.AddListener(EnableBuildMenu);
         settlerNPCBtn.onClick.AddListener(EnableSettlerNPCMenu);
@@ -95,13 +68,13 @@ public class UtilityMenu : MenuBase, IControllerInput
     public void EnablePlayerInventoryMenu()
     {
         PlayerUIManager.Instance.HideUtilityMenus();
-        PlayerInventoryMenu.Instance.SetScreenActive(true, 0.1f);
+        PlayerUIManager.Instance.playerInventoryMenu.SetScreenActive(true, 0.1f);
     }
 
     public void EnableBuildMenu()
     {
         PlayerUIManager.Instance.HideUtilityMenus();
-        BuildMenu.Instance.SetScreenActive(true, 0.1f);
+        PlayerUIManager.Instance.buildMenu.SetScreenActive(true, 0.1f);
     }
 
 
@@ -114,7 +87,7 @@ public class UtilityMenu : MenuBase, IControllerInput
     private void EnableTurretBuildMenu()
     {
         PlayerUIManager.Instance.HideUtilityMenus();
-        TurretMenu.Instance.SetScreenActive(true, 0.1f);
+        PlayerUIManager.Instance.turretMenu.SetScreenActive(true, 0.1f);
     }
 
     #endregion

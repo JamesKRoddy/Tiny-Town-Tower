@@ -64,11 +64,7 @@ public interface IDamageable
  * survivour infection level, once filled they turn harming other npcs, drugs found during the day can reduce infection, slow it down or cure them
  * Have to implement a system to move around buildings/turrets
  * Change the possession screen so that it opens up a selection box to talkt to them (quests) assign them work or possess them
- * 
- * 
- * CURRENT  WORK BUG  FIXING
- * Player stays moving after pause menu is opened
- * player returning to camp npc disappears
+ *  
  * 
  * 
  * Curent work refactoring player

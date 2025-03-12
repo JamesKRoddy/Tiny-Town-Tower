@@ -160,7 +160,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                     AddToCharacterInventory(resourcePickup);
                     break;
                 case NarrativeAsset narrative:
-                    NarrativeSystem.Instance.StartConversation(narrative);
+                    PlayerUIManager.Instance.narrativeSystem.StartConversation(narrative);
                     break;
                 case RogueLiteDoor rogueLiteDoor:
                     RogueLiteManager.Instance.EnterRoom(rogueLiteDoor);

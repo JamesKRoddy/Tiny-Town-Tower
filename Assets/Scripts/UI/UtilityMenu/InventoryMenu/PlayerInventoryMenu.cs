@@ -4,34 +4,9 @@ using UnityEngine;
 
 public class PlayerInventoryMenu : PreviewListMenuBase<ResourceCategory, ResourceScriptableObj>, IControllerInput
 {
-    private static PlayerInventoryMenu _instance;
-
-    public static PlayerInventoryMenu Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                _instance = FindFirstObjectByType<PlayerInventoryMenu>();
-                if (_instance == null)
-                {
-                    Debug.LogError("PlayerInventoryMenu instance not found in the scene!");
-                }
-            }
-            return _instance;
-        }
-    }
-
     public override void Setup()
     {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            _instance = this;
-        }
+        
     }
 
     public override void OnEnable()
@@ -60,7 +35,7 @@ public class PlayerInventoryMenu : PreviewListMenuBase<ResourceCategory, Resourc
             case PlayerControlType.IN_MENU:
                 PlayerInput.Instance.OnRBPressed += rightScreenBtn.onClick.Invoke;
                 PlayerInput.Instance.OnLBPressed += leftScreenBtn.onClick.Invoke;
-                PlayerInput.Instance.OnBPressed += () => UtilityMenu.Instance.EnableUtilityMenu();
+                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.utilityMenu.EnableUtilityMenu();
                 break;
             default:
                 break;

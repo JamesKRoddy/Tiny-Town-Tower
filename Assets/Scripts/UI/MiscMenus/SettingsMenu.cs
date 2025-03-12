@@ -5,35 +5,8 @@ using UnityEngine.UI;
 
 public class SettingsMenu : MenuBase, IControllerInput
 {
-    private static SettingsMenu _instance;
-
-    public static SettingsMenu Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                _instance = FindFirstObjectByType<SettingsMenu>();
-                if (_instance == null)
-                {
-                    Debug.LogError("SettingsMenu instance not found in the scene!");
-                }
-            }
-            return _instance;
-        }
-    }
-
     public override void Setup()
     {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            _instance = this;
-        }
-
         audioSettingsBtn.onClick.AddListener(OpenAudioSettings);
         videoSettingsBtn.onClick.AddListener(OpenVideoSettings);
         controlsSettingsBtn.onClick.AddListener(OpenControlsSettings);
@@ -72,25 +45,25 @@ public class SettingsMenu : MenuBase, IControllerInput
     public void OpenAudioSettings()
     {
         //PlayerUIManager.Instance.HideMenus();
-        //AudioSettingsMenu.Instance.SetScreenActive(true, 0.1f);
+        //AudioPlayerUIManager.Instance.settingsMenu.SetScreenActive(true, 0.1f);
     }
 
     public void OpenVideoSettings()
     {
         //PlayerUIManager.Instance.HideMenus();
-        //VideoSettingsMenu.Instance.SetScreenActive(true, 0.1f);
+        //VideoPlayerUIManager.Instance.settingsMenu.SetScreenActive(true, 0.1f);
     }
 
     public void OpenControlsSettings()
     {
         //PlayerUIManager.Instance.HideMenus();
-        //ControlsSettingsMenu.Instance.SetScreenActive(true, 0.1f);
+        //ControlsPlayerUIManager.Instance.settingsMenu.SetScreenActive(true, 0.1f);
     }
 
     public void CloseSettingsMenu()
     {
         SetScreenActive(false);
-        PauseMenu.Instance.SetScreenActive(true, 0.1f);
+        PlayerUIManager.Instance.pauseMenu.SetScreenActive(true, 0.1f);
     }
 
     public void SetPlayerControlType(PlayerControlType controlType)

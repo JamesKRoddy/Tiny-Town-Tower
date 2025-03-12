@@ -78,6 +78,6 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
 
     protected override void OnPlacementCancelled()
     {
-        UtilityMenu.Instance.EnableBuildMenu();
+        PlayerUIManager.Instance.utilityMenu.EnableBuildMenu();
     }
 }

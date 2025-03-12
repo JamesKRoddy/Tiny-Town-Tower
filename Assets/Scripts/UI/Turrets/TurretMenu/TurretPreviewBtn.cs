@@ -38,11 +38,11 @@ public class TurretPreviewBtn : MonoBehaviour
         // If canPlace is true, proceed with turret placement. Otherwise, show an error or refuse placement.
         if (canPlace)
         {
-            TurretMenu.Instance.SetScreenActive(false, 0.1f, () => TurretPlacer.Instance.StartPlacement(turretObj));
+            PlayerUIManager.Instance.turretMenu.SetScreenActive(false, 0.1f, () => TurretPlacer.Instance.StartPlacement(turretObj));
         }
         else
         {
-            TurretMenu.Instance.DisplayErrorMessage("Not enough resources to place this turret!");
+            PlayerUIManager.Instance.turretMenu.DisplayErrorMessage("Not enough resources to place this turret!");
             // Optionally, display a UI message to the player.
         }
     }
