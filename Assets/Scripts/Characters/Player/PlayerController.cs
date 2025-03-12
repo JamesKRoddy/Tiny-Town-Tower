@@ -117,7 +117,6 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu(PlayerControlType.TURRET_CAMERA_MOVEMENT);
                 break;
 
-            case PlayerControlType.NONE:
             default:
                 break;
         }

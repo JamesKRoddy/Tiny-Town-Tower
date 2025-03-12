@@ -46,6 +46,26 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public PlayerControlType PlayerGameControlType() //Used as the default gamemode for returning to from menus and conversations
+    {
+        switch (_currentGameMode)
+        {
+            case GameMode.NONE:
+                return PlayerControlType.NONE;
+            case GameMode.ROGUE_LITE:
+                return PlayerControlType.COMBAT_NPC_MOVEMENT;
+            case GameMode.CAMP:
+                if (PlayerController.Instance._possessedNPC != null)
+                    return PlayerControlType.CAMP_NPC_MOVEMENT;
+                else
+                    return PlayerControlType.CAMP_CAMERA_MOVEMENT;
+            case GameMode.TURRET:
+                return PlayerControlType.TURRET_CAMERA_MOVEMENT;
+            default:
+                return PlayerControlType.NONE;
+        }        
+    }
+
 
     private void Awake()
     {

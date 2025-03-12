@@ -181,8 +181,13 @@ public class NarrativeSystem : MenuBase
 
     public void EndConversation()
     {
-        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.COMBAT_NPC_MOVEMENT); //TODO figure out which controls to go back to combat or camp movement, TEST IF this works
+        ReturnToGame(); //TODO figure out which controls to go back to combat or camp movement, TEST IF this works
         dialoguePanel.SetActive(false);
+    }
+
+    public void ReturnToGame(PlayerControlType playerControlType = PlayerControlType.NONE)
+    {
+        PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
     }
 
     private IEnumerator EndAfterDelay(float delay)

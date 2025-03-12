@@ -42,8 +42,6 @@ public class UtilityMenu : MenuBase, IControllerInput
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
 
-    private PlayerControlType returnToControls; //Used for when the menu is closed which controlls are gonna be used
-
     public void OnEnable()
     {
         PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
@@ -69,47 +67,21 @@ public class UtilityMenu : MenuBase, IControllerInput
 
     public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
-        if (active)
-        {
-            GameMode currentGameMode = GameManager.Instance.CurrentGameMode;
-
-            switch (currentGameMode)
-            {
-                case GameMode.NONE:
-                    returnToControls = PlayerControlType.NONE;
-                    break;
-                case GameMode.ROGUE_LITE:
-                    returnToControls = PlayerControlType.COMBAT_NPC_MOVEMENT;
-                    break;
-                case GameMode.CAMP:
-                    if (PlayerController.Instance._possessedNPC != null)
-                        returnToControls = PlayerControlType.CAMP_NPC_MOVEMENT;
-                    else
-                        returnToControls = PlayerControlType.CAMP_CAMERA_MOVEMENT;
-                    break;
-                case GameMode.TURRET:
-                    returnToControls = PlayerControlType.TURRET_CAMERA_MOVEMENT;
-                    break;
-                default:
-                    break;
-            }
-        }
-        else
-        {
-            if (gameObject.activeInHierarchy == true)
-                ReturnToGame();
-        }
-
         PlayerUIManager.Instance.SetScreenActive(this, active);
     }
 
     public void ReturnToGame(PlayerControlType playerControlType = PlayerControlType.NONE)
     {
-        if(playerControlType != PlayerControlType.NONE)
+        PlayerUIManager.Instance.HideUtilityMenus();
+
+        if (playerControlType != PlayerControlType.NONE)
         {
-            returnToControls = playerControlType;
+            PlayerInput.Instance.UpdatePlayerControls(playerControlType);
         }
-        PlayerInput.Instance.UpdatePlayerControls(returnToControls);
+        else
+        {
+            PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
+        }        
     }
 
     #region Menus Active

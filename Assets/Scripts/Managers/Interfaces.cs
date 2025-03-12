@@ -67,7 +67,6 @@ public interface IDamageable
  * 
  * 
  * CURRENT  WORK BUG  FIXING
- * Generating levels in roguelike not working correctly!!!!!!!!
  * Player stays moving after pause menu is opened
  * player returning to camp npc disappears
  * 
