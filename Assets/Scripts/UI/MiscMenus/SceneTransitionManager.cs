@@ -60,6 +60,15 @@ public class SceneTransitionManager : MonoBehaviour
         StartCoroutine(LoadSceneNextFrame(sceneName, nextGameMode, keepPossessedNPC));
     }
 
+    /// <summary>
+    /// Used when npcs are unpossessed to move them back to be destroyed
+    /// </summary>
+    /// <param name="gameObject"></param>
+    public void MoveGameObjectBackToCurrent(GameObject gameObject)
+    {
+        SceneManager.MoveGameObjectToScene(gameObject, SceneManager.GetActiveScene());
+    }
+
     #region private
 
     /// <summary>
