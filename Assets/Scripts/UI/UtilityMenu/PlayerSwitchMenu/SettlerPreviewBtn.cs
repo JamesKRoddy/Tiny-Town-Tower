@@ -1,7 +1,5 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.AI;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class SettlerPreviewBtn : MonoBehaviour
@@ -42,7 +40,7 @@ public class SettlerPreviewBtn : MonoBehaviour
     {
         PlayerController.Instance.PossessNPC(npc);
 
-        SettlerNPCMenu.Instance.SetScreenActive(false, 0.05f);
+        PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false, 0.05f);
         PlayerUIManager.Instance.utilityMenu.ReturnToGame(PlayerControlType.CAMP_NPC_MOVEMENT); //Doing this to reset the player controlls
     }
 

@@ -49,6 +49,7 @@ public class PlayerUIManager : MonoBehaviour
     public SettlerNPCMenu settlerNPCMenu;
     public TurretMenu turretMenu;
     public TurretUpgradeMenu turretUpgradeMenu;
+    public GeneticMutationUI geneticMutationMenu;
 
     [Header("Interaction")]
     [SerializeField] UIPanelController interactionPromptUI; // UI text for interactionPromptUI //TODO because ill be using panels with text being displayed (talk to, pickup, open etc.) might be an idea to create a separate class for all this stuff
@@ -79,6 +80,7 @@ public class PlayerUIManager : MonoBehaviour
         settingsMenu.Setup();
         returnToCampMenu.Setup();
         quitMenu.Setup();
+        geneticMutationMenu.Setup();
     }
 
     /// <summary>
@@ -136,6 +138,7 @@ public class PlayerUIManager : MonoBehaviour
         settlerNPCMenu.SetScreenActive(false);
         turretMenu.SetScreenActive(false);
         turretUpgradeMenu.SetScreenActive(false);
+        geneticMutationMenu.SetScreenActive(false);
         utilityMenu.SetScreenActive(false);
     }
 
