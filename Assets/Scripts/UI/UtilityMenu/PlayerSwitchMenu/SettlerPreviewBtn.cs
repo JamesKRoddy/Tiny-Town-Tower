@@ -43,7 +43,7 @@ public class SettlerPreviewBtn : MonoBehaviour
         PlayerController.Instance.PossessNPC(npc);
 
         SettlerNPCMenu.Instance.SetScreenActive(false, 0.05f);
-        UtilityMenu.Instance.ReturnToGame(PlayerControlType.CAMP_NPC_MOVEMENT); //Doing this to reset the player controlls
+        PlayerUIManager.Instance.utilityMenu.ReturnToGame(PlayerControlType.CAMP_NPC_MOVEMENT); //Doing this to reset the player controlls
     }
 
     

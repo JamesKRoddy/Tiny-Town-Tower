@@ -60,7 +60,7 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, SettlerNPC>, IControll
             case PlayerControlType.IN_MENU:
                 PlayerInput.Instance.OnRBPressed += rightScreenBtn.onClick.Invoke;
                 PlayerInput.Instance.OnLBPressed += leftScreenBtn.onClick.Invoke;
-                PlayerInput.Instance.OnBPressed += () => UtilityMenu.Instance.EnableUtilityMenu();
+                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.utilityMenu.EnableUtilityMenu();
                 break;
             default:
                 break;

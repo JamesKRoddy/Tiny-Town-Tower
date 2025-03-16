@@ -6,24 +6,6 @@ using UnityEngine.UI;
 
 public class TurretMenu : PreviewListMenuBase<TurretCategory, TurretScriptableObject>, IControllerInput
 {
-    private static TurretMenu _instance;
-
-    public static TurretMenu Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                _instance = FindFirstObjectByType<TurretMenu>();
-                if (_instance == null)
-                {
-                    Debug.LogError("TurretMenu instance not found in the scene!");
-                }
-            }
-            return _instance;
-        }
-    }
-
     [Header("Turret Menu Preview UI")]
     [SerializeField] GameObject previewResourceCostPrefab;
     [SerializeField] RectTransform previewResourceCostParent;
@@ -33,15 +15,6 @@ public class TurretMenu : PreviewListMenuBase<TurretCategory, TurretScriptableOb
 
     public override void Setup()
     {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            _instance = this;
-        }
-
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
 
@@ -72,7 +45,7 @@ public class TurretMenu : PreviewListMenuBase<TurretCategory, TurretScriptableOb
             case PlayerControlType.IN_MENU:
                 PlayerInput.Instance.OnRBPressed += rightScreenBtn.onClick.Invoke;
                 PlayerInput.Instance.OnLBPressed += leftScreenBtn.onClick.Invoke;
-                PlayerInput.Instance.OnBPressed += () => UtilityMenu.Instance.EnableUtilityMenu();
+                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.utilityMenu.EnableUtilityMenu();
                 break;
             default:
                 break;

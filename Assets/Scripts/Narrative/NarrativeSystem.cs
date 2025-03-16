@@ -8,24 +8,6 @@ using System;
 
 public class NarrativeSystem : MenuBase
 {
-    private static NarrativeSystem _instance;
-
-    public static NarrativeSystem Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                _instance = FindFirstObjectByType<NarrativeSystem>();
-                if (_instance == null)
-                {
-                    Debug.LogWarning("NarrativeSystem instance not found in the scene!");
-                }
-            }
-            return _instance;
-        }
-    }
-
     [Header("UI Elements")]
     [SerializeField] private TextMeshProUGUI npcNameText;
     [SerializeField] private TextMeshProUGUI dialogueText;
@@ -38,22 +20,8 @@ public class NarrativeSystem : MenuBase
 
     private PlayerControlType returnToControls; //Used for when the menu is closed which controlls are gonna be used
 
-    private void Awake()
-    {
-        Setup();
-    }
-
     public override void Setup()
     {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            _instance = this;
-        }
-
         dialoguePanel = gameObject; //TODO can i get rid of dialoguePanel?
         dialoguePanel.SetActive(false);
     }
@@ -181,8 +149,13 @@ public class NarrativeSystem : MenuBase
 
     public void EndConversation()
     {
-        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.COMBAT_NPC_MOVEMENT); //TODO figure out which controls to go back to combat or camp movement, TEST IF this works
+        ReturnToGame(); //TODO figure out which controls to go back to combat or camp movement, TEST IF this works
         dialoguePanel.SetActive(false);
+    }
+
+    public void ReturnToGame(PlayerControlType playerControlType = PlayerControlType.NONE)
+    {
+        PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
     }
 
     private IEnumerator EndAfterDelay(float delay)

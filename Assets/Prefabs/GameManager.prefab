@@ -414,7 +414,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   waveConfigs:
   - {fileID: 11400000, guid: 3a8a25e27794d7845b4281207ea01f30, type: 2}
-  buildingDataScriptableObjs: []
+  buildingDataScriptableObjs:
+  - {fileID: 11400000, guid: cabb675861ade9446b9fd0936ab40689, type: 2}
   currentBuilding: 0
   buildingDifficulty: 0
   currentRoom: 0

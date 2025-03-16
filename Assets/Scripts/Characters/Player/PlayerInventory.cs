@@ -125,7 +125,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         if (Physics.Raycast(PlayerController.Instance._possessedNPC.GetTransform().position + Vector3.up, PlayerController.Instance._possessedNPC.GetTransform().transform.forward, out hit, interactionRange))
         {
             IInteractiveBase interactive = hit.collider.GetComponent<IInteractiveBase>();
-
             if (interactive != null && interactive.CanInteract())
             {
                 currentInteractive = (IInteractive<object>)interactive;
@@ -161,7 +160,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                     AddToCharacterInventory(resourcePickup);
                     break;
                 case NarrativeAsset narrative:
-                    NarrativeSystem.Instance.StartConversation(narrative);
+                    PlayerUIManager.Instance.narrativeSystem.StartConversation(narrative);
                     break;
                 case RogueLiteDoor rogueLiteDoor:
                     RogueLiteManager.Instance.EnterRoom(rogueLiteDoor);

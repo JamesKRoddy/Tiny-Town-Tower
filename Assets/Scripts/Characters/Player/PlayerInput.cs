@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using UnityEngine.InputSystem.LowLevel;
+using static UnityEditor.Searcher.SearcherWindow.Alignment;
 
 public class PlayerInput : MonoBehaviour
 {
@@ -141,9 +142,17 @@ public class PlayerInput : MonoBehaviour
 
         currentControlType = playerControlType;
 
+        ResetControlPositions();
+
         UnsubscribeAll();
 
         OnUpdatePlayerControls?.Invoke(currentControlType);
+    }
+
+    private void ResetControlPositions()
+    {
+        OnLeftJoystick?.Invoke(new Vector2(0.0f, 0.0f));
+        OnRightJoystick?.Invoke(new Vector2(0.0f, 0.0f));
     }
 
     // This method will be called when the game mode changes

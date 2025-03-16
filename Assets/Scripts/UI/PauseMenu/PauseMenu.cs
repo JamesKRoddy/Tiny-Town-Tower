@@ -5,35 +5,8 @@ using UnityEngine.UI;
 
 public class PauseMenu : MenuBase, IControllerInput
 {
-    private static PauseMenu _instance;
-
-    public static PauseMenu Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                _instance = FindFirstObjectByType<PauseMenu>();
-                if (_instance == null)
-                {
-                    Debug.LogError("PauseMenu instance not found in the scene!");
-                }
-            }
-            return _instance;
-        }
-    }
-
     public override void Setup()
     {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            _instance = this;
-        }
-
         resumeGameBtn.onClick.AddListener(() => ReturnToGame());
         settingsBtn.onClick.AddListener(OpenSettings);
         returnToCampBtn.onClick.AddListener(ReturnToCamp);
@@ -41,8 +14,6 @@ public class PauseMenu : MenuBase, IControllerInput
 
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
-
-    private PlayerControlType returnToControls; //Used for when the menu is closed which controlls are gonna be used
 
     public void OnEnable()
     {
@@ -68,61 +39,39 @@ public class PauseMenu : MenuBase, IControllerInput
 
     public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
-        if (active)
-        {
-            GameMode currentGameMode = GameManager.Instance.CurrentGameMode;
-
-            switch (currentGameMode)
-            {
-                case GameMode.NONE:
-                    returnToControls = PlayerControlType.NONE;
-                    break;
-                case GameMode.ROGUE_LITE:
-                    returnToControls = PlayerControlType.COMBAT_NPC_MOVEMENT;
-                    break;
-                case GameMode.CAMP:
-                    if (PlayerController.Instance._possessedNPC != null)
-                        returnToControls = PlayerControlType.CAMP_NPC_MOVEMENT;
-                    else
-                        returnToControls = PlayerControlType.CAMP_CAMERA_MOVEMENT;
-                    break;
-                case GameMode.TURRET:
-                    returnToControls = PlayerControlType.TURRET_CAMERA_MOVEMENT;
-                    break;
-                default:
-                    break;
-            }
-        }
-
         PlayerUIManager.Instance.SetScreenActive(this, active);
     }
 
-    private void ReturnToGame(PlayerControlType playerControlType = PlayerControlType.NONE)
+    public void ReturnToGame(PlayerControlType playerControlType = PlayerControlType.NONE)
     {
         PlayerUIManager.Instance.HidePauseMenus();
+
         if (playerControlType != PlayerControlType.NONE)
         {
-            returnToControls = playerControlType;
+            PlayerInput.Instance.UpdatePlayerControls(playerControlType);
         }
-        PlayerInput.Instance.UpdatePlayerControls(returnToControls);
+        else
+        {
+            PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
+        }
     }
 
     private void OpenSettings()
     {
         PlayerUIManager.Instance.HidePauseMenus();
-        SettingsMenu.Instance.SetScreenActive(true, 0.1f);
+        PlayerUIManager.Instance.settingsMenu.SetScreenActive(true, 0.1f);
     }
 
     private void ReturnToCamp()
     {
         PlayerUIManager.Instance.HidePauseMenus();
-        ReturnToCampMenu.Instance.SetScreenActive(true, 0.1f);
+        PlayerUIManager.Instance.returnToCampMenu.SetScreenActive(true, 0.1f);
     }
 
     private void QuitGame()
     {
         PlayerUIManager.Instance.HidePauseMenus();
-        QuitMenu.Instance.SetScreenActive(true, 0.1f);
+        PlayerUIManager.Instance.quitMenu.SetScreenActive(true, 0.1f);
     }
 
     public void SetPlayerControlType(PlayerControlType controlType)

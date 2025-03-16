@@ -73,6 +73,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable
     {
         SetAIControl(true);
         transform.SetParent(null, true);
+        SceneTransitionManager.Instance.MoveGameObjectBackToCurrent(gameObject);
     }
 
     /// <summary>

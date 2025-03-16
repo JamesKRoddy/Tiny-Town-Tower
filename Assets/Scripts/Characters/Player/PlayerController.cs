@@ -117,7 +117,6 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu(PlayerControlType.TURRET_CAMERA_MOVEMENT);
                 break;
 
-            case PlayerControlType.NONE:
             default:
                 break;
         }
@@ -130,12 +129,12 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
     private void OpenUtilityMenu(PlayerControlType controlType)
     {
-        UtilityMenu.Instance.OpenMenu(controlType);
+        PlayerUIManager.Instance.utilityMenu.OpenMenu(controlType);
     }
 
     private void OpenPauseMenu(PlayerControlType controlType)
     {
-        PauseMenu.Instance.OpenMenu(controlType);
+        PlayerUIManager.Instance.pauseMenu.OpenMenu(controlType);
     }
 
     private void HandleLeftJoystick(Vector2 input)

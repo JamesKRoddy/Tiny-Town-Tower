@@ -36,19 +36,19 @@ public class PlayerUIManager : MonoBehaviour
     [HideInInspector] public MenuBase currentMenu;
 
     [Header("Pause Menu References")]
-    [SerializeField] MenuBase pauseMenu;
-    [SerializeField] MenuBase settingsMenu;
-    [SerializeField] MenuBase returnToCampMenu;
-    [SerializeField] MenuBase quitMenu;
+    public PauseMenu pauseMenu;
+    public SettingsMenu settingsMenu;
+    public ReturnToCampMenu returnToCampMenu;
+    public QuitMenu quitMenu;
 
-    [Header("Utility Menu References")] 
-    [SerializeField] MenuBase buildMenu; 
-    [SerializeField] MenuBase narrativeSystem;
-    [SerializeField] MenuBase playerInventoryMenu;
-    [SerializeField] MenuBase settlerNPCMenu;
-    [SerializeField] MenuBase turretMenu;
-    [SerializeField] MenuBase turretUpgradeMenu;
-    [SerializeField] MenuBase utilityMenu;
+    [Header("Utility Menu References")]
+    public UtilityMenu utilityMenu;
+    public BuildMenu buildMenu; 
+    public NarrativeSystem narrativeSystem;
+    public PlayerInventoryMenu playerInventoryMenu;
+    public SettlerNPCMenu settlerNPCMenu;
+    public TurretMenu turretMenu;
+    public TurretUpgradeMenu turretUpgradeMenu;
 
     [Header("Interaction")]
     [SerializeField] UIPanelController interactionPromptUI; // UI text for interactionPromptUI //TODO because ill be using panels with text being displayed (talk to, pickup, open etc.) might be an idea to create a separate class for all this stuff

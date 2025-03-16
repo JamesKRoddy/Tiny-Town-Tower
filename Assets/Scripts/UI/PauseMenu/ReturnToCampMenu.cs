@@ -5,35 +5,8 @@ using UnityEngine.UI;
 
 public class ReturnToCampMenu : MenuBase
 {
-    private static ReturnToCampMenu _instance;
-
-    public static ReturnToCampMenu Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                _instance = FindFirstObjectByType<ReturnToCampMenu>();
-                if (_instance == null)
-                {
-                    Debug.LogError("ReturnToCampMenu instance not found in the scene!");
-                }
-            }
-            return _instance;
-        }
-    }
-
     public override void Setup()
     {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            _instance = this;
-        }
-
         yesBtn.onClick.AddListener(ReturnToCamp);
         noBtn.onClick.AddListener(CloseMenu);
     }
@@ -54,7 +27,7 @@ public class ReturnToCampMenu : MenuBase
     void CloseMenu()
     {
         PlayerUIManager.Instance.HidePauseMenus();
-        PauseMenu.Instance.SetScreenActive(true, 0.1f);
+        PlayerUIManager.Instance.pauseMenu.SetScreenActive(true, 0.1f);
     }
 
     void ReturnToCamp()
