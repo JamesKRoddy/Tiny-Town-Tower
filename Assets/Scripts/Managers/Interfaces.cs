@@ -57,6 +57,14 @@ public interface IDamageable
 // - Mutations should vary between combat enhancements, survival buffs, and risk-reward effects.
 // - Introduce contamination mechanics, requiring purification before re-entering the camp.
 
+/*
+ * Buttons
+ * Scriptable obj
+ * Mutation grid
+ * Mutations system GeneticMutationSystem.cs
+ * Do the ui first then start looking into the effects of mutations
+ */
+
 // 2. NPC Characteristics System
 // - Implement a pool of positive and negative traits for NPCs to make them unique.
 // - Examples of positive traits: Hard Worker, Sharpshooter, Medic.
