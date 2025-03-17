@@ -3132,10 +3132,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 8284035022889301987}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 480, y: -98.43}
+  m_SizeDelta: {x: 220, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1930468801183252963
 CanvasRenderer:
@@ -7810,7 +7810,7 @@ MonoBehaviour:
   settlerNPCMenu: {fileID: 2078819796754524781}
   turretMenu: {fileID: 1123490454175077717}
   turretUpgradeMenu: {fileID: 6310549610981201374}
-  geneticMutationMenu: {fileID: 0}
+  geneticMutationMenu: {fileID: 715760893344533062}
   interactionPromptUI: {fileID: 1019080610871490543}
 --- !u!1 &4196626637578071975
 GameObject:
@@ -15326,10 +15326,10 @@ RectTransform:
   - {fileID: 7836098718978162886}
   m_Father: {fileID: 8284035022889301987}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 850, y: -98.43}
+  m_SizeDelta: {x: 220, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4452091920684202300
 CanvasRenderer:
@@ -15719,10 +15719,10 @@ RectTransform:
   - {fileID: 4410499204107314160}
   m_Father: {fileID: 8284035022889301987}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 110, y: -98.43}
+  m_SizeDelta: {x: 220, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4357126574814899588
 CanvasRenderer:
@@ -17992,7 +17992,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &7357337574326214413
 RectTransform:
   m_ObjectHideFlags: 0
@@ -18031,14 +18031,12 @@ MonoBehaviour:
   rightScreenBtn: {fileID: 7796631374309649166}
   leftScreenBtn: {fileID: 3146511940037055116}
   screenParent: {fileID: 2958628648994205591}
-  screenPrefab: {fileID: 0}
-  itemButtonPrefab: {fileID: 0}
-  previewImage: {fileID: 0}
-  previewName: {fileID: 0}
-  previewDesc: {fileID: 0}
-  mutationGrid: {fileID: 0}
-  previewContaminationStatus: {fileID: 0}
-  contaminationText: {fileID: 0}
+  screenPrefab: {fileID: 5063337512277586178, guid: e53801123846c60428191f692e09ef07, type: 3}
+  itemButtonPrefab: {fileID: 6478322886510079522, guid: a677cacf3a7475248a853c3d073fba9f, type: 3}
+  previewImage: {fileID: 8053230902449463200}
+  previewName: {fileID: 6256520276427620045}
+  previewDesc: {fileID: 1729203607624778609}
+  mutationGrid: {fileID: 8219817581952613195}
   allMutations: []
 --- !u!1 &9143141171944472929
 GameObject:

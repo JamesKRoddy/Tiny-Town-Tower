@@ -81,11 +81,6 @@ public class PlayerInput : MonoBehaviour
             GameManager.Instance.OnGameModeChanged -= UpdatePlayerControls;
     }
 
-    public void Start()
-    {
-        UpdatePlayerControls(currentControlType);        
-    }
-
     private void Update()
     {
         if (playerInputDisabled)

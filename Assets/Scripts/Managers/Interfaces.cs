@@ -47,6 +47,14 @@ public interface IDamageable
     void Die();
 }
 
+/*
+ * Known bugs
+ * Turret scene and placing turrets
+ * 
+ * 
+ * 
+ */
+
 // ========================================
 // Next Large Things to Move Onto
 // ========================================

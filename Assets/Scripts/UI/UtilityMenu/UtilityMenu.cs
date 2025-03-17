@@ -114,7 +114,7 @@ public class UtilityMenu : MenuBase, IControllerInput
         switch (controlType)
         {
             case PlayerControlType.IN_MENU:
-                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.HideUtilityMenus();
+                PlayerInput.Instance.OnBPressed += () => ReturnToGame();
                 break;
             default:
                 break;

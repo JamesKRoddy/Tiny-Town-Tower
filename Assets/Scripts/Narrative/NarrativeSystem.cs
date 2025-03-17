@@ -18,8 +18,6 @@ public class NarrativeSystem : MenuBase
     private DialogueData currentDialogue;
     private Dictionary<string, DialogueLine> dialogueLinesMap;
 
-    private PlayerControlType returnToControls; //Used for when the menu is closed which controlls are gonna be used
-
     public override void Setup()
     {
         dialoguePanel = gameObject; //TODO can i get rid of dialoguePanel?
@@ -149,34 +147,24 @@ public class NarrativeSystem : MenuBase
 
     public void EndConversation()
     {
-        ReturnToGame(); //TODO figure out which controls to go back to combat or camp movement, TEST IF this works
+        ReturnToGame();
         dialoguePanel.SetActive(false);
     }
 
     public void ReturnToGame(PlayerControlType playerControlType = PlayerControlType.NONE)
     {
-        PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
-    }
-
-    private IEnumerator EndAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        EndConversation();
+        if (playerControlType != PlayerControlType.NONE)
+        {
+            PlayerInput.Instance.UpdatePlayerControls(playerControlType);
+        }
+        else
+        {
+            PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
+        }
     }
 
     public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
-        if (active)
-        {
-            PlayerControlType controlType = PlayerInput.Instance.currentControlType;
-
-            if (controlType == PlayerControlType.CAMP_NPC_MOVEMENT || controlType == PlayerControlType.COMBAT_NPC_MOVEMENT)
-                returnToControls = controlType;
-        }
-        else
-        {
-            if(dialoguePanel.activeInHierarchy == true)
-                PlayerInput.Instance.UpdatePlayerControls(returnToControls);
-        }
+        PlayerUIManager.Instance.SetScreenActive(this, active);
     }
 }
