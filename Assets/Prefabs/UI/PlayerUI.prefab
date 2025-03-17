@@ -18027,10 +18027,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d05b44e10b600941bc2d1f5c62dc778, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  screenTitle: {fileID: 0}
-  rightScreenBtn: {fileID: 0}
-  leftScreenBtn: {fileID: 0}
-  screenParent: {fileID: 0}
+  screenTitle: {fileID: 3268931851928860754}
+  rightScreenBtn: {fileID: 7796631374309649166}
+  leftScreenBtn: {fileID: 3146511940037055116}
+  screenParent: {fileID: 2958628648994205591}
   screenPrefab: {fileID: 0}
   itemButtonPrefab: {fileID: 0}
   previewImage: {fileID: 0}

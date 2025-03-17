@@ -4,15 +4,13 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMutationData>, IControllerInput
+public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMutationObj>, IControllerInput
 {
     [Header("Mutation Inventory UI")]
     [SerializeField] private GeneticMutationGrid mutationGrid;
-    [SerializeField] private GameObject previewContaminationStatus;
-    [SerializeField] private TextMeshProUGUI contaminationText;
 
     [Header("Mutation Data")]
-    public GeneticMutationData[] allMutations;
+    public GeneticMutationObj[] allMutations;
 
     public override void Setup()
     {
@@ -58,46 +56,35 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         PlayerUIManager.Instance.SetScreenActive(this, active, delay, onDone);
     }
 
-    public override IEnumerable<GeneticMutationData> GetItems()
+    public override IEnumerable<GeneticMutationObj> GetItems()
     {
         return allMutations; // Return all available mutations
     }
 
-    public override GeneticMutation GetItemCategory(GeneticMutationData mutation)
+    public override GeneticMutation GetItemCategory(GeneticMutationObj mutation)
     {
         return GeneticMutation.NONE; // Placeholder if categories are added later
     }
 
-    public override void SetupItemButton(GeneticMutationData mutation, GameObject button)
+    public override void SetupItemButton(GeneticMutationObj mutation, GameObject button)
     {
         var buttonComponent = button.GetComponent<GeneticMutationBtn>();
         buttonComponent.SetupButton(mutation);
     }
 
-    public override string GetPreviewName(GeneticMutationData mutation)
+    public override string GetPreviewName(GeneticMutationObj mutation)
     {
-        return mutation.mutationName;
+        return mutation.resourceName;
     }
 
-    public override Sprite GetPreviewSprite(GeneticMutationData mutation)
+    public override Sprite GetPreviewSprite(GeneticMutationObj mutation)
     {
-        return mutation.mutationSprite;
+        return mutation.resourceSprite;
     }
 
-    public override string GetPreviewDescription(GeneticMutationData mutation)
+    public override string GetPreviewDescription(GeneticMutationObj mutation)
     {
-        return mutation.isContaminated ? "Contaminated Mutation - Requires Purification!" : "Genetic Enhancement Ready for Use.";
-    }
-
-    public override void UpdatePreviewSpecifics(GeneticMutationData mutation)
-    {
-        previewContaminationStatus.SetActive(mutation.isContaminated);
-        contaminationText.text = mutation.isContaminated ? "Contaminated" : "Clean";
-    }
-
-    public override void DestroyPreviewSpecifics()
-    {
-        previewContaminationStatus.SetActive(false);
+        return mutation.resourceDescription;
     }
 
     public void UpdateInventory()
@@ -111,7 +98,17 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         }
     }
 
-    public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(GeneticMutationData item)
+    public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(GeneticMutationObj item)
+    {
+        throw new NotImplementedException();
+    }
+
+    public override void UpdatePreviewSpecifics(GeneticMutationObj item)
+    {
+        throw new NotImplementedException();
+    }
+
+    public override void DestroyPreviewSpecifics()
     {
         throw new NotImplementedException();
     }

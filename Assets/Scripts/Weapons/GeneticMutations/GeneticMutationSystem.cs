@@ -8,8 +8,7 @@ public class GeneticMutationSystem : MonoBehaviour
 
     public event Action OnMutationChanged;
 
-    public List<GeneticMutationData> activeMutations = new List<GeneticMutationData>();
-    public List<GeneticMutationData> contaminatedMutations = new List<GeneticMutationData>();
+    public List<GeneticMutationObj> activeMutations = new List<GeneticMutationObj>();
 
     private void Awake()
     {
@@ -19,41 +18,21 @@ public class GeneticMutationSystem : MonoBehaviour
             Destroy(gameObject);
     }
 
-    public void AddMutation(GeneticMutationData mutation)
+    public void AddMutation(GeneticMutationObj mutation)
     {
         if (!activeMutations.Contains(mutation))
         {
             activeMutations.Add(mutation);
-            if (mutation.isContaminated)
-            {
-                contaminatedMutations.Add(mutation);
-            }
             OnMutationChanged?.Invoke();
         }
     }
 
-    public void RemoveMutation(GeneticMutationData mutation)
+    public void RemoveMutation(GeneticMutationObj mutation)
     {
         if (activeMutations.Contains(mutation))
         {
             activeMutations.Remove(mutation);
-            contaminatedMutations.Remove(mutation);
             OnMutationChanged?.Invoke();
         }
-    }
-
-    public void PurifyMutation(GeneticMutationData mutation)
-    {
-        if (contaminatedMutations.Contains(mutation))
-        {
-            mutation.isContaminated = false;
-            contaminatedMutations.Remove(mutation);
-            OnMutationChanged?.Invoke();
-        }
-    }
-
-    public bool HasContaminatedMutations()
-    {
-        return contaminatedMutations.Count > 0;
     }
 }

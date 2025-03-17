@@ -3,22 +3,22 @@ using UnityEngine.UI;
 
 public class MutationUIElement : MonoBehaviour
 {
-    public GeneticMutationData mutation;
+    public GeneticMutationObj mutation;
     private RectTransform rectTransform;
     private Image iconImage; // UI icon
     private bool isRotated = false;
 
     public Vector2Int Size => isRotated ? new Vector2Int(mutation.size.y, mutation.size.x) : mutation.size;
 
-    public void Initialize(GeneticMutationData mutation, GeneticMutationGrid grid)
+    public void Initialize(GeneticMutationObj mutation, GeneticMutationGrid grid)
     {
         this.mutation = mutation;
         rectTransform = GetComponent<RectTransform>();
         iconImage = GetComponent<Image>();
 
-        if (mutation.mutationSprite != null)
+        if (mutation.resourceSprite != null)
         {
-            iconImage.sprite = mutation.mutationSprite; // Set the UI icon
+            iconImage.sprite = mutation.resourceSprite; // Set the UI icon
         }
     }
 

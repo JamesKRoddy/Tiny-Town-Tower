@@ -69,7 +69,7 @@ public class GeneticMutationGrid : MonoBehaviour
     /// <summary>
     /// Adds a mutation to the grid if space is available.
     /// </summary>
-    public bool AddMutation(GeneticMutationData mutation)
+    public bool AddMutation(GeneticMutationObj mutation)
     {
         Vector2Int mutationSize = mutation.size;
 
@@ -91,7 +91,7 @@ public class GeneticMutationGrid : MonoBehaviour
             }
         }
 
-        Debug.LogWarning($"No space available for mutation: {mutation.mutationName}");
+        Debug.LogWarning($"No space available for mutation: {mutation.resourceName}");
         return false;
     }
 }

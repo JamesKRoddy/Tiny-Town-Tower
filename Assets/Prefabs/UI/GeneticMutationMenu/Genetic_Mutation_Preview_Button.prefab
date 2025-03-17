@@ -148,9 +148,9 @@ GameObject:
   - component: {fileID: 195846373981839671}
   - component: {fileID: 6573310334195328695}
   - component: {fileID: 3521595180707107549}
-  - component: {fileID: 4567356399263333272}
+  - component: {fileID: 977232775099103422}
   m_Layer: 5
-  m_Name: Player_Switch_Preview_Button
+  m_Name: Genetic_Mutation_Preview_Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -258,7 +258,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &4567356399263333272
+--- !u!114 &977232775099103422
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -267,8 +267,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6478322886510079522}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 200829a6b453e2e4f99a62c979fd5ce1, type: 3}
+  m_Script: {fileID: 11500000, guid: 8f729d2ac9dd0474e9f4d808abbad351, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nameText: {fileID: 3136177978789284010}
   button: {fileID: 3521595180707107549}
+  previewImage: {fileID: 6573310334195328695}
+  nameText: {fileID: 3136177978789284010}
