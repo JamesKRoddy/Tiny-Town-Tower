@@ -74,9 +74,10 @@ public interface IDamageable
  */
 
 /*
- * Setup gene btn in ai to fill in clicked button
- * create button prefab
- * 
+ *Gene button not working
+ *Move grid size to player inventory?
+ *Keep all the genetic mutation storage in the player inventory
+ *Implement genetic control chage enum
  */
 
 

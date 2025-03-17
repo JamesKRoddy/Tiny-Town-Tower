@@ -4,12 +4,12 @@ using UnityEngine;
 public class ResourceScriptableObj : ScriptableObject
 {
     [Header("Resource Information")]
-    public string resourceName; // Name of the resource
+    public string objectName; // Name of the resource
     [TextArea(3, 5)] // Allows for multi-line text in the Inspector
-    public string resourceDescription; // Description of the resource
-    public ResourceCategory resourceCategory;
-    public ResourceRarity resourceRarity;
-    public Sprite resourceSprite; // Sprite for the UI representation
+    public string description; // Description of the resource
+    public ResourceCategory category;
+    public ResourceRarity rarity;
+    public Sprite sprite; // Sprite for the UI representation
 }
 
 public static class DifficultyRarityMapper

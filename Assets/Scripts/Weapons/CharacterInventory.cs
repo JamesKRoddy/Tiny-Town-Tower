@@ -68,7 +68,7 @@ public class CharacterInventory : MonoBehaviour
 
     public bool HasItemByName(string itemName)
     {
-        return inventoryList.Any(i => i.resource.resourceName == itemName);
+        return inventoryList.Any(i => i.resource.objectName == itemName);
     }
 
     public int GetItemCount(ResourceScriptableObj item)

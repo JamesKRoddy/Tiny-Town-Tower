@@ -12,6 +12,12 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     [Header("Mutation Data")]
     public GeneticMutationObj[] allMutations;
 
+    [Header("Selected Mutation")]
+    private GeneticMutationObj selectedMutation;
+    private MutationUIElement selectedMutationElement;
+    private Vector2Int selectedPosition;
+    private bool isPlacingMutation = false;
+
     public override void Setup()
     {
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
@@ -44,7 +50,12 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
             case PlayerControlType.IN_MENU:
                 PlayerInput.Instance.OnRBPressed += rightScreenBtn.onClick.Invoke;
                 PlayerInput.Instance.OnLBPressed += leftScreenBtn.onClick.Invoke;
-                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.utilityMenu.EnableUtilityMenu();
+                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.utilityMenu.EnableUtilityMenu();                
+                break;
+            case PlayerControlType.GENETIC_MUTATION_MOVEMENT:
+                PlayerInput.Instance.OnLeftJoystick += MoveMutation;
+                PlayerInput.Instance.OnAPressed += PlaceMutation;
+                PlayerInput.Instance.OnXPressed += RotateMutation;
                 break;
             default:
                 break;
@@ -74,28 +85,17 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
 
     public override string GetPreviewName(GeneticMutationObj mutation)
     {
-        return mutation.resourceName;
+        return mutation.objectName;
     }
 
     public override Sprite GetPreviewSprite(GeneticMutationObj mutation)
     {
-        return mutation.resourceSprite;
+        return mutation.sprite;
     }
 
     public override string GetPreviewDescription(GeneticMutationObj mutation)
     {
-        return mutation.resourceDescription;
-    }
-
-    public void UpdateInventory()
-    {
-        mutationGrid.ClearGrid();
-
-        foreach (var mutation in GeneticMutationSystem.Instance.activeMutations)
-        {
-            if (mutation == null) continue;
-            mutationGrid.AddMutation(mutation);
-        }
+        return mutation.description;
     }
 
     public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(GeneticMutationObj item)
@@ -111,5 +111,61 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     public override void DestroyPreviewSpecifics()
     {
         throw new NotImplementedException();
+    }
+
+    public void SelectMutation(GeneticMutationObj mutation)
+    {
+        selectedMutation = mutation;
+        isPlacingMutation = true;
+        selectedPosition = new Vector2Int(0, 0);
+
+        // Create mutation preview in grid
+        GameObject newSlot = Instantiate(mutationGrid.mutationSlotPrefab, mutationGrid.transform);
+        selectedMutationElement = newSlot.GetComponent<MutationUIElement>();
+        selectedMutationElement.Initialize(mutation, mutationGrid);
+        selectedMutationElement.SetGridPosition(selectedPosition);
+    }
+
+    private void MoveMutation(Vector2 direction)
+    {
+        if (!isPlacingMutation || selectedMutationElement == null) return;
+
+        Vector2Int newPosition = selectedPosition + new Vector2Int((int)direction.x, (int)direction.y);
+        newPosition = mutationGrid.ClampToGrid(newPosition);
+
+        if (mutationGrid.CanPlaceMutation(newPosition, selectedMutation.size))
+        {
+            selectedPosition = newPosition;
+            selectedMutationElement.SetGridPosition(selectedPosition);
+        }
+    }
+
+    private void RotateMutation()
+    {
+        if (!isPlacingMutation || selectedMutationElement == null) return;
+        selectedMutationElement.Rotate();
+    }
+
+    private void PlaceMutation()
+    {
+        if (!isPlacingMutation || selectedMutationElement == null) return;
+
+        if (mutationGrid.CanPlaceMutation(selectedPosition, selectedMutation.size))
+        {
+            mutationGrid.PlaceMutation(selectedMutationElement, selectedPosition, selectedMutation.size);
+            isPlacingMutation = false;
+            selectedMutationElement = null;
+        }
+    }
+
+    public void UpdateInventory()
+    {
+        mutationGrid.ClearGrid();
+
+        foreach (var mutation in GeneticMutationSystem.Instance.activeMutations)
+        {
+            if (mutation == null) continue;
+            mutationGrid.AddMutation(mutation);
+        }
     }
 }

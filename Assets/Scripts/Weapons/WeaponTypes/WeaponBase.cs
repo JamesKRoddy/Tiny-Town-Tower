@@ -12,9 +12,9 @@ public abstract class WeaponBase : MonoBehaviour, IPickupableItem
 
     public abstract void OnEquipped(Transform character);
 
-    public string GetItemName() => weaponScriptableObj.resourceName;
+    public string GetItemName() => weaponScriptableObj.objectName;
 
-    public string GetItemDescription() => weaponScriptableObj.resourceDescription;
+    public string GetItemDescription() => weaponScriptableObj.description;
 
-    public Sprite GetItemImage() => weaponScriptableObj.resourceSprite;
+    public Sprite GetItemImage() => weaponScriptableObj.sprite;
 }

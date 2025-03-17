@@ -139,6 +139,7 @@ public class UtilityMenu : MenuBase, IControllerInput
                 playerInventoryBtn.gameObject.SetActive(true);
                 buildMenuBtn.gameObject.SetActive(true);
                 settlerNPCBtn.gameObject.SetActive(true);
+                geneticMutationBtn.gameObject.SetActive(true);
                 break;
             case PlayerControlType.TURRET_CAMERA_MOVEMENT:
                 playerInventoryBtn.gameObject.SetActive(true);

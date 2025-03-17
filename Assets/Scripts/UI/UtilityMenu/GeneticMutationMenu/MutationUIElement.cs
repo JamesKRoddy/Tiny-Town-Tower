@@ -16,9 +16,9 @@ public class MutationUIElement : MonoBehaviour
         rectTransform = GetComponent<RectTransform>();
         iconImage = GetComponent<Image>();
 
-        if (mutation.resourceSprite != null)
+        if (mutation.sprite != null)
         {
-            iconImage.sprite = mutation.resourceSprite; // Set the UI icon
+            iconImage.sprite = mutation.sprite; // Set the UI icon
         }
     }
 

@@ -94,7 +94,7 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
         foreach (var resourceCost in item._resourceCost)
         {
             yield return (
-                resourceCost.resource.resourceName,
+                resourceCost.resource.objectName,
                 resourceCost.count,
                 PlayerInventory.Instance.GetItemCount(resourceCost.resource)
             );

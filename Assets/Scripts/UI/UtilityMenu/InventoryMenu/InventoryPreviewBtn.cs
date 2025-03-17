@@ -7,7 +7,7 @@ public class InventoryPreviewBtn : PreviewButtonBase<ResourceScriptableObj>
 {
     public void SetupButton(ResourceScriptableObj resourceObjRef)
     {
-        base.SetupButton(resourceObjRef, resourceObjRef.resourceSprite, resourceObjRef.resourceName);
+        base.SetupButton(resourceObjRef, resourceObjRef.sprite, resourceObjRef.objectName);
     }
 
     protected override void OnButtonClicked()

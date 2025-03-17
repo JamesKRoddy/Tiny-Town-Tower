@@ -6,10 +6,10 @@ public class Resource : MonoBehaviour, IPickupableItem, IInteractive<ResourcePic
     [SerializeField] private int resourceCount; // Amount of the resource
 
     // Accessors that pull data from the ScriptableObject
-    public string GetItemDescription() => resourceScriptableObj.resourceDescription;
-    public Sprite GetItemImage() => resourceScriptableObj.resourceSprite;
-    public string GetItemName() => resourceScriptableObj.resourceName;
-    public ResourceCategory GetResourceType() => resourceScriptableObj.resourceCategory;
+    public string GetItemDescription() => resourceScriptableObj.description;
+    public Sprite GetItemImage() => resourceScriptableObj.sprite;
+    public string GetItemName() => resourceScriptableObj.objectName;
+    public ResourceCategory GetResourceType() => resourceScriptableObj.category;
 
     public int GetResourceCount() => resourceCount; // Return the count if needed
 
@@ -26,7 +26,7 @@ public class Resource : MonoBehaviour, IPickupableItem, IInteractive<ResourcePic
 
     public bool CanInteract() => true;
 
-    public string GetInteractionText() => $"Pickup: {resourceScriptableObj.resourceName}";
+    public string GetInteractionText() => $"Pickup: {resourceScriptableObj.objectName}";
 
     object IInteractiveBase.Interact() => Interact();
 }

@@ -9,7 +9,7 @@ public class GeneticMutationGrid : MonoBehaviour
     [SerializeField] private int gridWidth = 10;
     [SerializeField] private int gridHeight = 6;
     [SerializeField] private Vector2Int cellSize = new Vector2Int(50, 50);
-    [SerializeField] private GameObject mutationSlotPrefab;
+    [SerializeField] public GameObject mutationSlotPrefab;
 
     private MutationUIElement[,] grid;
     private GridLayoutGroup gridLayout;
@@ -91,7 +91,14 @@ public class GeneticMutationGrid : MonoBehaviour
             }
         }
 
-        Debug.LogWarning($"No space available for mutation: {mutation.resourceName}");
+        Debug.LogWarning($"No space available for mutation: {mutation.objectName}");
         return false;
+    }
+
+    public Vector2Int ClampToGrid(Vector2Int position)
+    {
+        int clampedX = Mathf.Clamp(position.x, 0, gridWidth - 1);
+        int clampedY = Mathf.Clamp(position.y, 0, gridHeight - 1);
+        return new Vector2Int(clampedX, clampedY);
     }
 }

@@ -1,16 +1,32 @@
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class GeneticMutationBtn : PreviewButtonBase<GeneticMutationObj>
 {
     protected override void OnButtonClicked()
     {
-        Debug.LogWarning("Genetic Mutation Btn not setup");
+        if (data == null)
+        {
+            Debug.LogWarning("Genetic Mutation Btn clicked, but item is null.");
+            return;
+        }
+
+        Debug.Log($"Selected Mutation: {data.objectName}");
+
+        // Activate mutation grid and allow player to move mutation
+        if (PlayerUIManager.Instance.geneticMutationMenu != null)
+        {
+            // Update preview
+            PlayerUIManager.Instance.geneticMutationMenu.UpdatePreview(data);
+
+            // Select mutation for placement
+            PlayerUIManager.Instance.geneticMutationMenu.SelectMutation(data);
+
+            PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.GENETIC_MUTATION_MOVEMENT);
+        }
     }
 
     public void SetupButton(GeneticMutationObj mutation)
     {
-        base.SetupButton(mutation, mutation.resourceSprite, mutation.resourceName);
+        base.SetupButton(mutation, mutation.sprite, mutation.objectName);
     }
 }

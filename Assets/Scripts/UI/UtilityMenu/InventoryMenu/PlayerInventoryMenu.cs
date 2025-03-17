@@ -61,7 +61,7 @@ public class PlayerInventoryMenu : PreviewListMenuBase<ResourceCategory, Resourc
     // Group resources by their category
     public override ResourceCategory GetItemCategory(ResourceScriptableObj item)
     {
-        return item.resourceCategory;
+        return item.category;
     }
 
     // Setup the button to display the resource details
@@ -74,19 +74,19 @@ public class PlayerInventoryMenu : PreviewListMenuBase<ResourceCategory, Resourc
 
     public override string GetPreviewName(ResourceScriptableObj item)
     {
-        return item.resourceName;
+        return item.objectName;
     }
 
     // Fetch the sprite for the preview
     public override Sprite GetPreviewSprite(ResourceScriptableObj item)
     {
-        return item.resourceSprite;
+        return item.sprite;
     }
 
     // Fetch the description for the preview
     public override string GetPreviewDescription(ResourceScriptableObj item)
     {
-        return item.resourceDescription;
+        return item.description;
     }
 
     // Resource costs are not relevant for inventory items; return an empty list
