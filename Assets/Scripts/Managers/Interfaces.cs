@@ -65,6 +65,14 @@ public interface IDamageable
  * Do the ui first then start looking into the effects of mutations
  */
 
+/*
+ * Setup gene btn in ai to fill in clicked button
+ * create button prefab
+ * 
+ */
+
+
+
 // 2. NPC Characteristics System
 // - Implement a pool of positive and negative traits for NPCs to make them unique.
 // - Examples of positive traits: Hard Worker, Sharpshooter, Medic.
@@ -126,6 +134,7 @@ public interface IDamageable
 // - Implement a **system to move buildings and turrets** after they have been placed.
 // - This should allow the player to reposition defenses without needing to destroy and rebuild them.
 // - Consider adding a cost or penalty for moving structures to balance gameplay.
+// - Upgrade system for turrets and buildings
 
 // 12. PlayerSwitchMenu Enhancement
 // - Modify the **PlayerSwitchMenu** to use a render texture that follows the currently selected player.

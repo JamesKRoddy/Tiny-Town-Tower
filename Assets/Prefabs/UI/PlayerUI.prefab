@@ -2949,8 +2949,10 @@ GameObject:
   - component: {fileID: 1411099349901972867}
   - component: {fileID: 3675618103375869234}
   - component: {fileID: 8053230902449463200}
+  - component: {fileID: 6471402037937200380}
+  - component: {fileID: 8219817581952613195}
   m_Layer: 5
-  m_Name: SettlerNPC_Image
+  m_Name: GeneticMutation_Grid
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3013,6 +3015,46 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &6471402037937200380
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1898715304259869304}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_StartCorner: 0
+  m_StartAxis: 0
+  m_CellSize: {x: 100, y: 100}
+  m_Spacing: {x: 0, y: 0}
+  m_Constraint: 0
+  m_ConstraintCount: 2
+--- !u!114 &8219817581952613195
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1898715304259869304}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2efbbcacf9e56c0448d2abf6bad4417f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gridWidth: 10
+  gridHeight: 6
+  cellSize: {x: 50, y: 50}
+  mutationSlotPrefab: {fileID: 0}
 --- !u!1 &1954235326828561559
 GameObject:
   m_ObjectHideFlags: 0
@@ -4196,7 +4238,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7058076963430571774}
   m_Layer: 5
-  m_Name: Current_Selected_SettlerNPC
+  m_Name: Current_Selected_GeneticMutation
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10320,7 +10362,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9095006918608367715}
   m_Layer: 5
-  m_Name: SettlerNPCListSection
+  m_Name: GeneticMutationListSection
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -14010,7 +14052,7 @@ GameObject:
   - component: {fileID: 5761446919078219013}
   - component: {fileID: 2994833389186912407}
   m_Layer: 5
-  m_Name: SettlerNPC_Panel
+  m_Name: GeneticMutation_Panel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -15037,7 +15079,7 @@ GameObject:
   - component: {fileID: 178365005622678152}
   - component: {fileID: 5373919849142164726}
   m_Layer: 5
-  m_Name: SettlerNPC_Previews_Window
+  m_Name: GeneticMutation_Previews_Window
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -17985,13 +18027,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d05b44e10b600941bc2d1f5c62dc778, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inventoryPanel: {fileID: 0}
-  mutationSlotPrefab: {fileID: 0}
-  slotParent: {fileID: 0}
-  gridWidth: 10
-  gridHeight: 6
+  screenTitle: {fileID: 0}
+  rightScreenBtn: {fileID: 0}
+  leftScreenBtn: {fileID: 0}
+  screenParent: {fileID: 0}
+  screenPrefab: {fileID: 0}
+  itemButtonPrefab: {fileID: 0}
+  previewImage: {fileID: 0}
+  previewName: {fileID: 0}
+  previewDesc: {fileID: 0}
+  mutationGrid: {fileID: 0}
   previewContaminationStatus: {fileID: 0}
   contaminationText: {fileID: 0}
+  allMutations: []
 --- !u!1 &9143141171944472929
 GameObject:
   m_ObjectHideFlags: 0

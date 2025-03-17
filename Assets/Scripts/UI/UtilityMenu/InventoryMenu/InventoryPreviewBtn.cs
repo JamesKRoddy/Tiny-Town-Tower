@@ -9,7 +9,7 @@ public class InventoryPreviewBtn : MonoBehaviour
     [SerializeField] Image InventoryImage;
     [SerializeField] TMP_Text inventoryNameText;
 
-    ResourceScriptableObj buildingObj;
+    ResourceScriptableObj resourceObj;
 
     void OnDestroy()
     {
@@ -18,7 +18,7 @@ public class InventoryPreviewBtn : MonoBehaviour
 
     public void SetupButton(ResourceScriptableObj resourceObjRef)
     {
-        buildingObj = resourceObjRef;
+        resourceObj = resourceObjRef;
 
         //button.onClick.AddListener(InstanciateBuildingConstruction); TODO //Open up sub menu with drop and stuff in it
 

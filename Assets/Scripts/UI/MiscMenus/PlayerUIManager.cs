@@ -75,12 +75,12 @@ public class PlayerUIManager : MonoBehaviour
         settlerNPCMenu.Setup(); 
         turretMenu.Setup();
         turretUpgradeMenu.Setup();
+        geneticMutationMenu.Setup();
         utilityMenu.Setup();
         pauseMenu.Setup();
         settingsMenu.Setup();
         returnToCampMenu.Setup();
-        quitMenu.Setup();
-        geneticMutationMenu.Setup();
+        quitMenu.Setup();        
     }
 
     /// <summary>

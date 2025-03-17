@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
+[RequireComponent(typeof (GridLayoutGroup))]
 public class GeneticMutationGrid : MonoBehaviour
 {
     [Header("Grid Settings")]
