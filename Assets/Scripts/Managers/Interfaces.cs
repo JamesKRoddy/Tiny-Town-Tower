@@ -66,10 +66,7 @@ public interface IDamageable
 // - Introduce contamination mechanics, requiring purification before re-entering the camp.
 
 /*
- * Buttons
- * Scriptable obj
- * Mutation grid
- * Mutations system GeneticMutationSystem.cs
+ * movement is still slightly offset
  * Do the ui first then start looking into the effects of mutations
  */
 
@@ -78,6 +75,7 @@ public interface IDamageable
  *Move grid size to player inventory?
  *Keep all the genetic mutation storage in the player inventory
  *Implement genetic control chage enum
+ *maybe the reason you have to go into the menu each time is because certain parts of the grid give you boosts like 2x the effect?
  */
 
 

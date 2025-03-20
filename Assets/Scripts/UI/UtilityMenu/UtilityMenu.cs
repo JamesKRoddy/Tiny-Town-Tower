@@ -98,8 +98,8 @@ public class UtilityMenu : MenuBase, IControllerInput
         PlayerUIManager.Instance.HideUtilityMenus();
         PlayerUIManager.Instance.turretMenu.SetScreenActive(true, 0.1f);
     }
-    
-    private void EnableGeneticMutationMenu()
+
+    public void EnableGeneticMutationMenu()
     {
         PlayerUIManager.Instance.HideUtilityMenus();
         PlayerUIManager.Instance.geneticMutationMenu.SetScreenActive(true, 0.1f);

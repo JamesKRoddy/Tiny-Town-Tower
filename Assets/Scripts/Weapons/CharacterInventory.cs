@@ -97,7 +97,7 @@ public class CharacterInventory : MonoBehaviour
         // Unequip the currently equipped weapon
         UnequipCurrentWeapon();
         // Instantiate and equip the new weapon
-        GameObject weapon = Instantiate(weaponScriptableObj.weaponPrefab, weaponHolder);
+        GameObject weapon = Instantiate(weaponScriptableObj.prefab, weaponHolder);
         equippedWeaponBase = weapon.GetComponent<WeaponBase>();
 
 
@@ -120,10 +120,10 @@ public class CharacterInventory : MonoBehaviour
 
     private bool IsValidWeaponPrefab(WeaponScriptableObj weaponScriptableObj)
     {
-        if (weaponScriptableObj == null || weaponScriptableObj.weaponPrefab == null)
+        if (weaponScriptableObj == null || weaponScriptableObj.prefab == null)
             return false;
 
-        GameObject prefab = weaponScriptableObj.weaponPrefab;
+        GameObject prefab = weaponScriptableObj.prefab;
         return prefab.GetComponent<WeaponBase>() != null &&
                prefab.GetComponent<Collider>() != null;
     }

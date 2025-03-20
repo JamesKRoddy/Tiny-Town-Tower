@@ -3,16 +3,16 @@ using UnityEngine.UI;
 
 public class MutationUIElement : MonoBehaviour
 {
-    public GeneticMutationObj mutation;
     private RectTransform rectTransform;
     private Image iconImage; // UI icon
     private bool isRotated = false;
+    private Vector2Int mutationSize; // Store size instead of keeping a reference to mutation
 
-    public Vector2Int Size => isRotated ? new Vector2Int(mutation.size.y, mutation.size.x) : mutation.size;
+    public Vector2Int Size => isRotated ? new Vector2Int(mutationSize.y, mutationSize.x) : mutationSize;
 
     public void Initialize(GeneticMutationObj mutation, GeneticMutationGrid grid)
     {
-        this.mutation = mutation;
+        mutationSize = mutation.size; // Store the size instead of keeping the entire object reference
         rectTransform = GetComponent<RectTransform>();
         iconImage = GetComponent<Image>();
 
@@ -22,10 +22,15 @@ public class MutationUIElement : MonoBehaviour
         }
     }
 
-    public void SetGridPosition(Vector2Int position)
+    public void SetGridPosition(Vector2Int position, Vector2 cellSize)
     {
-        rectTransform.anchoredPosition = new Vector2(position.x * 50, position.y * 50);
+        if (rectTransform == null) return;
+
+        // Offset position so the mutation is centered in the grid cell
+        Vector2 anchoredPosition = new Vector2(position.x * cellSize.x, position.y * cellSize.y);
+        rectTransform.anchoredPosition = anchoredPosition;
     }
+
 
     public void Rotate()
     {

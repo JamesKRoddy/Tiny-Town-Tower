@@ -6,7 +6,7 @@ using System.Collections.Generic;
 public class GeneticMutationGrid : MonoBehaviour
 {
     [Header("Grid Settings")]
-    [SerializeField] private int gridWidth = 10;
+    [SerializeField] private int gridWidth = 10;// TODO pull these from the player inventory where it will store the max number of mutations from
     [SerializeField] private int gridHeight = 6;
     [SerializeField] private Vector2Int cellSize = new Vector2Int(50, 50);
     [SerializeField] public GameObject mutationSlotPrefab;
@@ -25,7 +25,27 @@ public class GeneticMutationGrid : MonoBehaviour
             gridLayout.constraintCount = gridWidth;
             gridLayout.cellSize = new Vector2(cellSize.x, cellSize.y);
         }
+
+        // Instantiate empty grid slots for visibility
+        GenerateEmptySlots();
     }
+
+    /// <summary>
+    /// Creates empty slot visuals so the player can see the grid.
+    /// </summary>
+    private void GenerateEmptySlots()
+    {
+        for (int y = 0; y < gridHeight; y++)
+        {
+            for (int x = 0; x < gridWidth; x++)
+            {
+                GameObject emptySlot = Instantiate(mutationSlotPrefab, transform);
+                emptySlot.name = $"Slot ({x},{y})";
+                emptySlot.GetComponent<Image>().color = new Color(1, 1, 1, 0.2f); // Light transparency
+            }
+        }
+    }
+
 
     public bool CanPlaceMutation(Vector2Int position, Vector2Int size)
     {
@@ -95,10 +115,26 @@ public class GeneticMutationGrid : MonoBehaviour
         return false;
     }
 
-    public Vector2Int ClampToGrid(Vector2Int position)
+    public Vector2Int ClampToGrid(Vector2Int position, Vector2Int size)
     {
-        int clampedX = Mathf.Clamp(position.x, 0, gridWidth - 1);
-        int clampedY = Mathf.Clamp(position.y, 0, gridHeight - 1);
+        int clampedX = Mathf.Clamp(position.x, 0, gridWidth - size.x);
+        int clampedY = Mathf.Clamp(position.y, 0, gridHeight - size.y);
         return new Vector2Int(clampedX, clampedY);
+    }
+
+    /// <summary>
+    /// Returns the cell size from the GridLayoutGroup.
+    /// </summary>
+    public Vector2 GetCellSize()
+    {
+        if (gridLayout != null)
+        {
+            return gridLayout.cellSize;
+        }
+        else
+        {
+            Debug.LogWarning("GridLayoutGroup is missing! Returning default cell size.");
+            return new Vector2(cellSize.x, cellSize.y);
+        }
     }
 }

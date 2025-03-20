@@ -26,7 +26,7 @@ public class CharacterCombat : MonoBehaviour
             return;
         }
 
-        switch (equippedWeapon.weaponPrefab.GetComponent<WeaponBase>())
+        switch (equippedWeapon.prefab.GetComponent<WeaponBase>())
         {
             case MeleeWeapon meleeWeapon:
                 attackVFXHolder.MeleeAttackVFX((MeleeAttackDirection)attackDirection, meleeWeapon);

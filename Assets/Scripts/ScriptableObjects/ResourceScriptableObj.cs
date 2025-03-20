@@ -10,6 +10,7 @@ public class ResourceScriptableObj : ScriptableObject
     public ResourceCategory category;
     public ResourceRarity rarity;
     public Sprite sprite; // Sprite for the UI representation
+    public GameObject prefab;
 }
 
 public static class DifficultyRarityMapper
