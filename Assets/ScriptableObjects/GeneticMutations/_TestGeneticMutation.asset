@@ -17,4 +17,5 @@ MonoBehaviour:
   category: 0
   rarity: 0
   sprite: {fileID: 0}
-  size: {x: 2, y: 2}
+  prefab: {fileID: 7003231519949422219, guid: 7356a91689017464eb39553d3d2479a9, type: 3}
+  size: {x: 1, y: 2}
