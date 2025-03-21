@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using UnityEngine.InputSystem.LowLevel;
 using static UnityEditor.Searcher.SearcherWindow.Alignment;
+using System.Collections;
 
 public class PlayerInput : MonoBehaviour
 {
@@ -142,6 +143,20 @@ public class PlayerInput : MonoBehaviour
         UnsubscribeAll();
 
         OnUpdatePlayerControls?.Invoke(currentControlType);
+    }
+
+    public void UpdatePlayerControls(PlayerControlType playerControlType, int frameDelay)
+    {
+        StartCoroutine(DelayedUpdatePlayerControls(playerControlType, frameDelay));
+    }
+
+    private IEnumerator DelayedUpdatePlayerControls(PlayerControlType playerControlType, int frameDelay)
+    {
+        for (int i = 0; i < frameDelay; i++)
+        {
+            yield return null;
+        }
+        UpdatePlayerControls(playerControlType);
     }
 
     private void ResetControlPositions()

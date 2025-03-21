@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMutationObj>, IControllerInput
 {
@@ -18,6 +19,13 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     private MutationUIElement selectedMutationElement;
     private Vector2Int selectedPosition;
     private bool isPlacingMutation = false;
+    private GameObject previouslySelectedButton; // Track which button was selected before placement mode
+
+    [Header("Movement Settings")]
+    [SerializeField] private float moveSpeed = 0.2f; // Time between movements in seconds
+    private float lastMoveTime;
+    private Vector2 lastInputDirection;
+    private float warningLockEndTime = 0f;
 
     public override void Setup()
     {
@@ -51,12 +59,29 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
             case PlayerControlType.IN_MENU:
                 PlayerInput.Instance.OnRBPressed += rightScreenBtn.onClick.Invoke;
                 PlayerInput.Instance.OnLBPressed += leftScreenBtn.onClick.Invoke;
-                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.utilityMenu.EnableUtilityMenu();                
+                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.utilityMenu.EnableUtilityMenu();
+                // Enable all buttons in the current screen
+                if (screens[currentCategory] != null)
+                {
+                    foreach (Button button in screens[currentCategory].GetComponentsInChildren<Button>())
+                    {
+                        button.interactable = true;
+                    }
+                    UpdateActiveScreen();
+                }
                 break;
             case PlayerControlType.GENETIC_MUTATION_MOVEMENT:
                 PlayerInput.Instance.OnLeftJoystick += MoveMutation;
                 PlayerInput.Instance.OnAPressed += PlaceMutation;
                 PlayerInput.Instance.OnXPressed += RotateMutation;
+                // Disable all buttons in the current screen
+                if (screens[currentCategory] != null)
+                {
+                    foreach (Button button in screens[currentCategory].GetComponentsInChildren<Button>())
+                    {
+                        button.interactable = false;
+                    }
+                }
                 break;
             default:
                 break;
@@ -143,14 +168,20 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         Vector2 cellSize = mutationGrid.GetCellSize();
         selectedMutationElement.SetGridPosition(selectedPosition, cellSize);
 
-        // Ensure the UI element matches the mutation's intended size
+        // Ensure the UI element matches the mutation's intended size and positioning
         RectTransform rectTransform = selectedMutationElement.GetComponent<RectTransform>();
         if (rectTransform != null)
         {
+            // Set the size based on the mutation size and cell size
             rectTransform.sizeDelta = new Vector2(cellSize.x * mutation.size.x, cellSize.y * mutation.size.y);
 
-            // Set pivot to (0,0) so it aligns with the top-left corner of the grid cell
+            // Set anchors to stretch across the required number of cells
+            rectTransform.anchorMin = new Vector2(0, 0);
+            rectTransform.anchorMax = new Vector2(0, 0);
             rectTransform.pivot = new Vector2(0, 0);
+
+            // Force layout update to ensure proper positioning
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
         }
     }
 
@@ -158,19 +189,50 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     {
         if (!isPlacingMutation || selectedMutationElement == null) return;
 
-        Vector2Int newPosition = selectedPosition + new Vector2Int((int)direction.x, (int)direction.y);
+        // Check if we're in warning lock period
+        if (Time.time < warningLockEndTime)
+            return;
+
+        // Store the last input direction
+        lastInputDirection = direction;
+
+        // Check if enough time has passed since last movement
+        if (Time.time - lastMoveTime < moveSpeed)
+            return;
+
+        // Only move if there's significant input (to prevent drift)
+        if (Mathf.Abs(direction.x) < 0.5f && Mathf.Abs(direction.y) < 0.5f)
+            return;
+
+        // Determine which axis has the stronger input
+        bool moveHorizontal = Mathf.Abs(direction.x) > Mathf.Abs(direction.y);
+        
+        // Calculate new position based on dominant axis
+        Vector2Int newPosition = selectedPosition;
+        if (moveHorizontal)
+        {
+            newPosition.x += direction.x > 0 ? 1 : -1;
+        }
+        else
+        {
+            newPosition.y += direction.y > 0 ? 1 : -1;
+        }
 
         // Ensure new position is within the grid bounds
         newPosition = mutationGrid.ClampToGrid(newPosition, selectedMutation.size);
 
         // Only move if the position is different
-        if (newPosition != selectedPosition && mutationGrid.CanPlaceMutation(newPosition, selectedMutation.size))
+        if (newPosition != selectedPosition)
         {
             selectedPosition = newPosition;
+            lastMoveTime = Time.time;
 
             // Pass cellSize when updating position
             Vector2 cellSize = mutationGrid.GetCellSize();
             selectedMutationElement.SetGridPosition(selectedPosition, cellSize);
+
+            // Force layout update after position change
+            LayoutRebuilder.ForceRebuildLayoutImmediate(selectedMutationElement.GetComponent<RectTransform>());
         }
     }
 
@@ -189,6 +251,30 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
             mutationGrid.PlaceMutation(selectedMutationElement, selectedPosition, selectedMutation.size);
             isPlacingMutation = false;
             selectedMutationElement = null;
+
+            // Switch control types with a frame delay
+            PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU, 5);
+        }
+        else
+        {
+            // Show warning and lock movement
+            selectedMutationElement.ShowWarning();
+            warningLockEndTime = Time.time + 0.5f;
+
+            // Show error message using PlayerUIManager
+            PlayerUIManager.Instance.buildMenu.DisplayErrorMessage("Cannot place mutation here!");
+
+            // Hide warning after lock period
+            StartCoroutine(HideWarningAfterDelay());
+        }
+    }
+
+    private IEnumerator HideWarningAfterDelay()
+    {
+        yield return new WaitForSeconds(0.5f);
+        if (selectedMutationElement != null)
+        {
+            selectedMutationElement.HideWarning();
         }
     }
 

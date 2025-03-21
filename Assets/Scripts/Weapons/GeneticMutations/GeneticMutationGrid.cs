@@ -24,6 +24,9 @@ public class GeneticMutationGrid : MonoBehaviour
             gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             gridLayout.constraintCount = gridWidth;
             gridLayout.cellSize = new Vector2(cellSize.x, cellSize.y);
+            gridLayout.spacing = Vector2.zero; // Ensure no spacing between cells
+            gridLayout.padding = new RectOffset(0, 0, 0, 0); // Ensure no padding
+            gridLayout.childAlignment = TextAnchor.LowerLeft; // Align children to lower left
         }
 
         // Instantiate empty grid slots for visibility
@@ -73,7 +76,7 @@ public class GeneticMutationGrid : MonoBehaviour
             }
         }
 
-        element.transform.SetParent(transform, false); // Assign to grid layout group
+        // Note: Parenting is now handled by GeneticMutationUI using mutationGridPrefabContainer
     }
 
     public void ClearGrid()

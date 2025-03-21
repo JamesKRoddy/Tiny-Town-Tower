@@ -122,7 +122,7 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         UpdateActiveScreen();
     }
 
-    private void UpdateActiveScreen()
+    protected void UpdateActiveScreen()
     {
         foreach (var kvp in screens)
         {
