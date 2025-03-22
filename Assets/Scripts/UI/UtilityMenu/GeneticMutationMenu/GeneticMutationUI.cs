@@ -12,14 +12,22 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     [SerializeField] private Transform mutationGridPrefabContainer;
 
     [Header("Mutation Data")]
-    public GeneticMutationObj[] allMutations;
+    [SerializeField] private List<MutationQuantityEntry> mutationQuantities = new List<MutationQuantityEntry>();
+
+    [System.Serializable]
+    private class MutationQuantityEntry
+    {
+        public GeneticMutationObj mutation;
+        public int quantity;
+    }
 
     [Header("Selected Mutation")]
     private GeneticMutationObj selectedMutation;
     private MutationUIElement selectedMutationElement;
     private Vector2Int selectedPosition;
     private bool isPlacingMutation = false;
-    private GameObject previouslySelectedButton; // Track which button was selected before placement mode
+    private GameObject previouslySelectedButton;
+    private bool isMovingExistingMutation = false;
 
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 0.2f; // Time between movements in seconds
@@ -36,6 +44,7 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     {
         base.OnEnable();
         PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
+        UpdateMutationQuantities();
     }
 
     public override void OnDisable()
@@ -93,9 +102,52 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         PlayerUIManager.Instance.SetScreenActive(this, active, delay, onDone);
     }
 
+    private Dictionary<GeneticMutationObj, int> GetMutationQuantities()
+    {
+        Dictionary<GeneticMutationObj, int> quantities = new Dictionary<GeneticMutationObj, int>();
+        foreach (var entry in mutationQuantities)
+        {
+            if (entry.mutation != null)
+            {
+                quantities[entry.mutation] = entry.quantity;
+            }
+        }
+        return quantities;
+    }
+
+    private void UpdateMutationQuantities()
+    {
+        var quantities = GetMutationQuantities();
+
+        // Subtract mutations that are equipped
+        foreach (var mutation in PlayerInventory.Instance.EquippedMutations)
+        {
+            if (quantities.ContainsKey(mutation))
+            {
+                quantities[mutation]--;
+            }
+        }
+
+        // Update the serialized list
+        foreach (var entry in mutationQuantities)
+        {
+            if (entry.mutation != null && quantities.ContainsKey(entry.mutation))
+            {
+                entry.quantity = quantities[entry.mutation];
+            }
+        }
+    }
+
     public override IEnumerable<GeneticMutationObj> GetItems()
     {
-        return allMutations; // Return all available mutations
+        // Only return mutations that have a quantity greater than 0
+        foreach (var entry in mutationQuantities)
+        {
+            if (entry.mutation != null && entry.quantity > 0)
+            {
+                yield return entry.mutation;
+            }
+        }
     }
 
     public override GeneticMutation GetItemCategory(GeneticMutationObj mutation)
@@ -106,7 +158,16 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     public override void SetupItemButton(GeneticMutationObj mutation, GameObject button)
     {
         var buttonComponent = button.GetComponent<GeneticMutationBtn>();
-        buttonComponent.SetupButton(mutation);
+        int quantity = 0;
+        foreach (var entry in mutationQuantities)
+        {
+            if (entry.mutation == mutation)
+            {
+                quantity = entry.quantity;
+                break;
+            }
+        }
+        buttonComponent.SetupButton(mutation, quantity);
     }
 
     public override string GetPreviewName(GeneticMutationObj mutation)
@@ -139,10 +200,11 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         //TODO  Implement with something I think, not sure
     }
 
-    public void SelectMutation(GeneticMutationObj mutation)
+    public void SelectMutation(GeneticMutationObj mutation, bool isExistingMutation = false)
     {
         selectedMutation = mutation;
         isPlacingMutation = true;
+        isMovingExistingMutation = isExistingMutation;
         selectedPosition = new Vector2Int(0, 0);
 
         Debug.Log($"***** Instantiating Mutation Preview for: {mutation.objectName}");
@@ -163,6 +225,10 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         }
 
         selectedMutationElement.Initialize(mutation, mutationGrid);
+        if (isExistingMutation)
+        {
+            selectedMutationElement.SetSelected(true); // Highlight selected mutation
+        }
 
         // Get the cell size once and pass it in
         Vector2 cellSize = mutationGrid.GetCellSize();
@@ -252,6 +318,36 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
             isPlacingMutation = false;
             selectedMutationElement = null;
 
+            if (!isMovingExistingMutation)
+            {
+                // Remove mutation from available mutations and add it to player inventory
+                for (int i = mutationQuantities.Count - 1; i >= 0; i--)
+                {
+                    if (mutationQuantities[i].mutation == selectedMutation)
+                    {
+                        mutationQuantities[i].quantity--;
+                        if (mutationQuantities[i].quantity <= 0)
+                        {
+                            mutationQuantities.RemoveAt(i);
+                        }
+                        break;
+                    }
+                }
+                PlayerInventory.Instance.AddMutation(selectedMutation);
+                GeneticMutationSystem.Instance.AddMutation(selectedMutation);
+
+                // Clear existing screens and rebuild UI
+                foreach (var screen in screens.Values)
+                {
+                    if (screen != null)
+                    {
+                        Destroy(screen);
+                    }
+                }
+                screens.Clear();
+                SetupScreens();
+            }
+
             // Switch control types with a frame delay
             PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU, 5);
         }
@@ -282,10 +378,14 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     {
         mutationGrid.ClearGrid();
 
+        // Get mutations from GeneticMutationSystem (equipped mutations)
         foreach (var mutation in GeneticMutationSystem.Instance.activeMutations)
         {
             if (mutation == null) continue;
             mutationGrid.AddMutation(mutation);
         }
+
+        // Update mutation quantities
+        UpdateMutationQuantities();
     }
 }

@@ -9,6 +9,10 @@ public class MutationUIElement : MonoBehaviour
     private Vector2Int mutationSize; // Store size instead of keeping a reference to mutation
     private GeneticMutationGrid grid;
     private Color originalColor;
+    private Color selectedColor = new Color(0.5f, 1f, 0.5f, 1f); // Light green color for selection
+    private bool isSelected = false;
+
+    public bool IsSelected => isSelected;
 
     public Vector2Int Size => isRotated ? new Vector2Int(mutationSize.y, mutationSize.x) : mutationSize;
 
@@ -38,7 +42,13 @@ public class MutationUIElement : MonoBehaviour
 
     public void HideWarning()
     {
-        iconImage.color = originalColor;
+        iconImage.color = isSelected ? selectedColor : originalColor;
+    }
+
+    public void SetSelected(bool selected)
+    {
+        isSelected = selected;
+        iconImage.color = selected ? selectedColor : originalColor;
     }
 
     public void SetGridPosition(Vector2Int position, Vector2 cellSize)

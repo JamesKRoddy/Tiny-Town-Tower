@@ -6,18 +6,31 @@ using System.Collections.Generic;
 public class GeneticMutationGrid : MonoBehaviour
 {
     [Header("Grid Settings")]
-    [SerializeField] private int gridWidth = 10;// TODO pull these from the player inventory where it will store the max number of mutations from
-    [SerializeField] private int gridHeight = 6;
     [SerializeField] private Vector2Int cellSize = new Vector2Int(50, 50);
     [SerializeField] public GameObject mutationSlotPrefab;
 
     private MutationUIElement[,] grid;
     private GridLayoutGroup gridLayout;
+    private int gridWidth;
+    private int gridHeight;
 
     private void Awake()
     {
-        grid = new MutationUIElement[gridWidth, gridHeight];
         gridLayout = GetComponent<GridLayoutGroup>();
+        UpdateGridSize();
+    }
+
+    private void UpdateGridSize()
+    {
+        // Get the max slots from player inventory
+        int maxSlots = PlayerInventory.Instance.MaxMutationSlots;
+        
+        // Calculate grid dimensions to be as square as possible
+        gridWidth = Mathf.CeilToInt(Mathf.Sqrt(maxSlots));
+        gridHeight = Mathf.CeilToInt((float)maxSlots / gridWidth);
+
+        // Initialize grid array
+        grid = new MutationUIElement[gridWidth, gridHeight];
 
         if (gridLayout)
         {
@@ -29,7 +42,8 @@ public class GeneticMutationGrid : MonoBehaviour
             gridLayout.childAlignment = TextAnchor.LowerLeft; // Align children to lower left
         }
 
-        // Instantiate empty grid slots for visibility
+        // Clear existing slots and generate new ones
+        ClearGrid();
         GenerateEmptySlots();
     }
 
@@ -49,7 +63,6 @@ public class GeneticMutationGrid : MonoBehaviour
         }
     }
 
-
     public bool CanPlaceMutation(Vector2Int position, Vector2Int size)
     {
         if (position.x + size.x > gridWidth || position.y + size.y > gridHeight)
@@ -68,6 +81,13 @@ public class GeneticMutationGrid : MonoBehaviour
 
     public void PlaceMutation(MutationUIElement element, Vector2Int position, Vector2Int size)
     {
+        // Clear the old position if this is an existing mutation
+        if (element.GetComponent<MutationUIElement>().IsSelected)
+        {
+            ClearPosition(position, size);
+        }
+
+        // Place the mutation in the new position
         for (int x = 0; x < size.x; x++)
         {
             for (int y = 0; y < size.y; y++)
@@ -77,6 +97,26 @@ public class GeneticMutationGrid : MonoBehaviour
         }
 
         // Note: Parenting is now handled by GeneticMutationUI using mutationGridPrefabContainer
+    }
+
+    private void ClearPosition(Vector2Int position, Vector2Int size)
+    {
+        for (int x = 0; x < size.x; x++)
+        {
+            for (int y = 0; y < size.y; y++)
+            {
+                grid[position.x + x, position.y + y] = null;
+            }
+        }
+    }
+
+    public MutationUIElement GetMutationAtPosition(Vector2Int position)
+    {
+        if (position.x >= 0 && position.x < gridWidth && position.y >= 0 && position.y < gridHeight)
+        {
+            return grid[position.x, position.y];
+        }
+        return null;
     }
 
     public void ClearGrid()

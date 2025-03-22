@@ -71,10 +71,8 @@ public interface IDamageable
  */
 
 /*
- *Gene button not working
- *Move grid size to player inventory?
- *Keep all the genetic mutation storage in the player inventory
- *Implement genetic control chage enum
+ *Move grid size to player inventory, I think it should be just an int in the inventory for the max number of mutation slots, the mutation grid should then handle turning this into as much of a square grid as possible
+ *Keep all the genetic mutation storage in the player inventory, if a mutation is assigned then remove it from GeneticMutationUI allMutations, if a mutation is removed then add it to the player inventory
  *maybe the reason you have to go into the menu each time is because certain parts of the grid give you boosts like 2x the effect?
  */
 

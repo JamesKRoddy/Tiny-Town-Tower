@@ -112,6 +112,14 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
     protected void SwitchScreen(bool forward)
     {
         var categories = new List<TCategory>(screens.Keys);
+        
+        // If there are no categories, return early
+        if (categories.Count == 0)
+        {
+            Debug.LogWarning("No categories available to switch between.");
+            return;
+        }
+
         int currentIndex = categories.IndexOf(currentCategory);
 
         currentIndex = forward

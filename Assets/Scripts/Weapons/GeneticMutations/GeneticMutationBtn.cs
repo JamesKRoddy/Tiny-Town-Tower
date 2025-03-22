@@ -1,7 +1,10 @@
 using UnityEngine;
+using TMPro;
 
 public class GeneticMutationBtn : PreviewButtonBase<GeneticMutationObj>
 {
+    [SerializeField] private TextMeshProUGUI quantityText;
+
     protected override void OnButtonClicked()
     {
         if (data == null)
@@ -25,8 +28,14 @@ public class GeneticMutationBtn : PreviewButtonBase<GeneticMutationObj>
         }
     }
 
-    public void SetupButton(GeneticMutationObj mutation)
+    public void SetupButton(GeneticMutationObj mutation, int quantity)
     {
         base.SetupButton(mutation, mutation.sprite, mutation.objectName);
+        
+        if (quantityText != null)
+        {
+            quantityText.text = quantity.ToString();
+            quantityText.gameObject.SetActive(quantity > 0);
+        }
     }
 }

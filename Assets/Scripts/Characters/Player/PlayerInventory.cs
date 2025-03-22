@@ -37,6 +37,13 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     public GeneticMutation geneticMutation = GeneticMutation.NONE;
     public WeaponElement dashElement = WeaponElement.NONE;
 
+    [Header("Mutation Grid")]
+    [SerializeField] private int maxMutationSlots = 9; // Default to a 3x3 grid
+    private List<GeneticMutationObj> equippedMutations = new List<GeneticMutationObj>();
+
+    public int MaxMutationSlots => maxMutationSlots;
+    public List<GeneticMutationObj> EquippedMutations => equippedMutations;
+
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -196,5 +203,23 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             return null;
 
         return PlayerController.Instance._possessedNPC.GetTransform();
+    }
+
+    public void AddMutation(GeneticMutationObj mutation)
+    {
+        if (!equippedMutations.Contains(mutation))
+        {
+            equippedMutations.Add(mutation);
+        }
+    }
+
+    public void RemoveMutation(GeneticMutationObj mutation)
+    {
+        equippedMutations.Remove(mutation);
+    }
+
+    public void SetMaxMutationSlots(int slots)
+    {
+        maxMutationSlots = slots;
     }
 }
