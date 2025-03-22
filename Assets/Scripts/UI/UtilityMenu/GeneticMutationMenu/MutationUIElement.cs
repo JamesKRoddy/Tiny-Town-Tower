@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class MutationUIElement : MonoBehaviour
 {
@@ -11,6 +12,8 @@ public class MutationUIElement : MonoBehaviour
     private Color originalColor;
     private Color selectedColor = new Color(0.5f, 1f, 0.5f, 1f); // Light green color for selection
     private bool isSelected = false;
+    private GeneticMutationObj mutation;
+    private Button button;
 
     public bool IsSelected => isSelected;
 
@@ -18,10 +21,12 @@ public class MutationUIElement : MonoBehaviour
 
     public void Initialize(GeneticMutationObj mutation, GeneticMutationGrid grid)
     {
+        this.mutation = mutation;
         this.grid = grid;
         mutationSize = mutation.size; // Store the size instead of keeping the entire object reference
         rectTransform = GetComponent<RectTransform>();
         iconImage = GetComponent<Image>();
+        button = GetComponent<Button>();
         originalColor = iconImage.color;
 
         if (mutation.sprite != null)
@@ -33,6 +38,27 @@ public class MutationUIElement : MonoBehaviour
         rectTransform.anchorMin = new Vector2(0, 0); // Bottom-left anchor
         rectTransform.anchorMax = new Vector2(0, 0); // Bottom-left anchor
         rectTransform.pivot = new Vector2(0, 0); // Bottom-left pivot
+    }
+
+    public void SetupButtonClick()
+    {
+        if (button != null)
+        {
+            button.onClick.AddListener(OnButtonClicked);
+        }
+    }
+    bool clickedOnce = false;
+    private void OnButtonClicked()
+    {
+        if (mutation != null && clickedOnce)
+        {
+            var mutationUI = GetComponentInParent<GeneticMutationUI>();
+            if (mutationUI != null)
+            {
+                mutationUI.OnMutationClicked(mutation);
+            }
+        }
+        clickedOnce = true;
     }
 
     public void ShowWarning()

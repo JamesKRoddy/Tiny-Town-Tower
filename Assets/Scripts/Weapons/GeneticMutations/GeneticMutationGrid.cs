@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections.Generic;
+using UnityEngine.EventSystems;
 
 [RequireComponent(typeof (GridLayoutGroup))]
 public class GeneticMutationGrid : MonoBehaviour
@@ -97,6 +97,12 @@ public class GeneticMutationGrid : MonoBehaviour
         }
 
         // Note: Parenting is now handled by GeneticMutationUI using mutationGridPrefabContainer
+
+        // Set the button click handler
+        element.SetupButtonClick();
+
+        // Set as selected object
+        EventSystem.current.SetSelectedGameObject(element.gameObject);
     }
 
     private void ClearPosition(Vector2Int position, Vector2Int size)

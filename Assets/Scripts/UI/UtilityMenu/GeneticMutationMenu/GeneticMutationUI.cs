@@ -4,12 +4,14 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using UnityEngine.EventSystems;
 
 public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMutationObj>, IControllerInput
 {
     [Header("Mutation Inventory UI")]
     [SerializeField] private GeneticMutationGrid mutationGrid;
     [SerializeField] private Transform mutationGridPrefabContainer;
+    [SerializeField] private GeneticMutationSelectPopup mutationSelectPopup;
 
     [Header("Mutation Data")]
     [SerializeField] private List<MutationQuantityEntry> mutationQuantities = new List<MutationQuantityEntry>();
@@ -76,7 +78,6 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
                     {
                         button.interactable = true;
                     }
-                    UpdateActiveScreen();
                 }
                 break;
             case PlayerControlType.GENETIC_MUTATION_MOVEMENT:
@@ -387,5 +388,33 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
 
         // Update mutation quantities
         UpdateMutationQuantities();
+    }
+
+    public void AddMutationBackToQuantities(GeneticMutationObj mutation)
+    {
+        // Check if mutation already exists in quantities
+        foreach (var entry in mutationQuantities)
+        {
+            if (entry.mutation == mutation)
+            {
+                entry.quantity++;
+                return;
+            }
+        }
+
+        // If not found, add new entry
+        mutationQuantities.Add(new MutationQuantityEntry
+        {
+            mutation = mutation,
+            quantity = 1
+        });
+    }
+
+    public void OnMutationClicked(GeneticMutationObj mutation)
+    {
+        if (mutationSelectPopup != null)
+        {
+            mutationSelectPopup.Setup(mutation, this);
+        }
     }
 }
