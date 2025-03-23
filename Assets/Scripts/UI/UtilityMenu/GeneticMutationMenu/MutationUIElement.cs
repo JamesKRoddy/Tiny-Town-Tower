@@ -12,7 +12,7 @@ public class MutationUIElement : MonoBehaviour
     private Color originalColor;
     private Color selectedColor = new Color(0.5f, 1f, 0.5f, 1f); // Light green color for selection
     private bool isSelected = false;
-    private GeneticMutationObj mutation;
+    public GeneticMutationObj mutation; // Made public to access from GeneticMutationGrid
     private Button button;
 
     public bool IsSelected => isSelected;

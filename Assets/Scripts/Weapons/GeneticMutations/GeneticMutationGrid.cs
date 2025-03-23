@@ -81,10 +81,27 @@ public class GeneticMutationGrid : MonoBehaviour
 
     public void PlaceMutation(MutationUIElement element, Vector2Int position, Vector2Int size)
     {
-        // Clear the old position if this is an existing mutation
-        if (element.GetComponent<MutationUIElement>().IsSelected)
+        // Find and clear the old position of this mutation
+        for (int x = 0; x < gridWidth; x++)
         {
-            ClearPosition(position, size);
+            for (int y = 0; y < gridHeight; y++)
+            {
+                if (grid[x, y] == element)
+                {
+                    // Clear the old position
+                    for (int oldX = 0; oldX < size.x; oldX++)
+                    {
+                        for (int oldY = 0; oldY < size.y; oldY++)
+                        {
+                            if (x + oldX < gridWidth && y + oldY < gridHeight)
+                            {
+                                grid[x + oldX, y + oldY] = null;
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
         }
 
         // Place the mutation in the new position
@@ -185,5 +202,21 @@ public class GeneticMutationGrid : MonoBehaviour
             Debug.LogWarning("GridLayoutGroup is missing! Returning default cell size.");
             return new Vector2(cellSize.x, cellSize.y);
         }
+    }
+
+    public MutationUIElement GetMutationElement(GeneticMutationObj mutation)
+    {
+        // Search through the grid for the mutation
+        for (int x = 0; x < gridWidth; x++)
+        {
+            for (int y = 0; y < gridHeight; y++)
+            {
+                if (grid[x, y] != null && grid[x, y].GetComponent<MutationUIElement>().mutation == mutation)
+                {
+                    return grid[x, y];
+                }
+            }
+        }
+        return null;
     }
 }

@@ -208,7 +208,7 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         isMovingExistingMutation = isExistingMutation;
         selectedPosition = new Vector2Int(0, 0);
 
-        Debug.Log($"***** Instantiating Mutation Preview for: {mutation.objectName}");
+        Debug.Log($"***** Selecting Mutation: {mutation.objectName}");
 
         if (mutation.prefab == null)
         {
@@ -216,19 +216,30 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
             return;
         }
 
-        GameObject newSlot = Instantiate(mutation.prefab, mutationGridPrefabContainer.transform);
-        selectedMutationElement = newSlot.GetComponent<MutationUIElement>();
-
-        if (selectedMutationElement == null)
-        {
-            Debug.LogError($"Mutation prefab {mutation.prefab.name} is missing a MutationUIElement component!");
-            return;
-        }
-
-        selectedMutationElement.Initialize(mutation, mutationGrid);
         if (isExistingMutation)
         {
+            // Find the existing UI element for this mutation
+            selectedMutationElement = mutationGrid.GetMutationElement(mutation);
+            if (selectedMutationElement == null)
+            {
+                Debug.LogError($"Could not find existing UI element for mutation: {mutation.objectName}");
+                return;
+            }
             selectedMutationElement.SetSelected(true); // Highlight selected mutation
+        }
+        else
+        {
+            // Create new UI element for new mutation
+            GameObject newSlot = Instantiate(mutation.prefab, mutationGridPrefabContainer.transform);
+            selectedMutationElement = newSlot.GetComponent<MutationUIElement>();
+
+            if (selectedMutationElement == null)
+            {
+                Debug.LogError($"Mutation prefab {mutation.prefab.name} is missing a MutationUIElement component!");
+                return;
+            }
+
+            selectedMutationElement.Initialize(mutation, mutationGrid);
         }
 
         // Get the cell size once and pass it in
