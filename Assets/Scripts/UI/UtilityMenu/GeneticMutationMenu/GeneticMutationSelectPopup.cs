@@ -11,8 +11,7 @@ public class GeneticMutationSelectPopup : MonoBehaviour
 
     private GeneticMutationObj currentMutation;
     private GeneticMutationUI mutationUI;
-    private GameObject lastSelectedObject;
-
+    private MutationUIElement uiElement;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -25,14 +24,11 @@ public class GeneticMutationSelectPopup : MonoBehaviour
             closeButton.onClick.AddListener(OnCloseClicked);
     }
 
-    public void Setup(GeneticMutationObj mutation, GeneticMutationUI ui)
+    public void Setup(GeneticMutationObj mutation, GeneticMutationUI ui, MutationUIElement element)
     {
         currentMutation = mutation;
         mutationUI = ui;
-
-        // Store the currently selected object
-        lastSelectedObject = EventSystem.current.currentSelectedGameObject;
-
+        uiElement = element;
         // Disable all buttons in the parent UI except popup buttons
         SetParentUIButtonsInteractable(false);
 
@@ -80,7 +76,6 @@ public class GeneticMutationSelectPopup : MonoBehaviour
 
         // Start moving the mutation
         mutationUI.SelectMutation(currentMutation, true);
-
         // Re-enable parent UI buttons and close popup
         SetParentUIButtonsInteractable(true);
         gameObject.SetActive(false);
@@ -95,10 +90,7 @@ public class GeneticMutationSelectPopup : MonoBehaviour
         SetParentUIButtonsInteractable(true);
         gameObject.SetActive(false);
 
-        // Restore the last selected object
-        if (lastSelectedObject != null)
-        {
-            EventSystem.current.SetSelectedGameObject(lastSelectedObject);
-        }
+        EventSystem.current.SetSelectedGameObject(uiElement.gameObject);
+        
     }
 }

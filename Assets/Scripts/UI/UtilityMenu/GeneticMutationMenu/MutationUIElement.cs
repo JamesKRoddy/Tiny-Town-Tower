@@ -55,7 +55,7 @@ public class MutationUIElement : MonoBehaviour
             var mutationUI = GetComponentInParent<GeneticMutationUI>();
             if (mutationUI != null)
             {
-                mutationUI.OnMutationClicked(mutation);
+                mutationUI.OnMutationClicked(mutation, this);
             }
         }
         clickedOnce = true;

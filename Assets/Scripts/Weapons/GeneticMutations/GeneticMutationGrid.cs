@@ -81,28 +81,7 @@ public class GeneticMutationGrid : MonoBehaviour
 
     public void PlaceMutation(MutationUIElement element, Vector2Int position, Vector2Int size)
     {
-        // Find and clear the old position of this mutation
-        for (int x = 0; x < gridWidth; x++)
-        {
-            for (int y = 0; y < gridHeight; y++)
-            {
-                if (grid[x, y] == element)
-                {
-                    // Clear the old position
-                    for (int oldX = 0; oldX < size.x; oldX++)
-                    {
-                        for (int oldY = 0; oldY < size.y; oldY++)
-                        {
-                            if (x + oldX < gridWidth && y + oldY < gridHeight)
-                            {
-                                grid[x + oldX, y + oldY] = null;
-                            }
-                        }
-                    }
-                    break;
-                }
-            }
-        }
+        ClearPosition(element);
 
         // Place the mutation in the new position
         for (int x = 0; x < size.x; x++)
@@ -122,13 +101,28 @@ public class GeneticMutationGrid : MonoBehaviour
         EventSystem.current.SetSelectedGameObject(element.gameObject);
     }
 
-    private void ClearPosition(Vector2Int position, Vector2Int size)
+    public void ClearPosition(MutationUIElement element)
     {
-        for (int x = 0; x < size.x; x++)
+        // Find and clear the old position of this mutation
+        for (int x = 0; x < gridWidth; x++)
         {
-            for (int y = 0; y < size.y; y++)
+            for (int y = 0; y < gridHeight; y++)
             {
-                grid[position.x + x, position.y + y] = null;
+                if (grid[x, y] == element)
+                {
+                    // Clear the old position
+                    for (int oldX = 0; oldX < element.Size.x; oldX++)
+                    {
+                        for (int oldY = 0; oldY < element.Size.y; oldY++)
+                        {
+                            if (x + oldX < gridWidth && y + oldY < gridHeight)
+                            {
+                                grid[x + oldX, y + oldY] = null;
+                            }
+                        }
+                    }
+                    break;
+                }
             }
         }
     }

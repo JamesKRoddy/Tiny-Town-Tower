@@ -9,7 +9,7 @@ using UnityEngine.EventSystems;
 public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMutationObj>, IControllerInput
 {
     [Header("Mutation Inventory UI")]
-    [SerializeField] private GeneticMutationGrid mutationGrid;
+    [SerializeField] public GeneticMutationGrid mutationGrid;
     [SerializeField] private Transform mutationGridPrefabContainer;
     [SerializeField] private GeneticMutationSelectPopup mutationSelectPopup;
 
@@ -72,7 +72,7 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
                 PlayerInput.Instance.OnLBPressed += leftScreenBtn.onClick.Invoke;
                 PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.utilityMenu.EnableUtilityMenu();
                 // Enable all buttons in the current screen
-                if (screens[currentCategory] != null)
+                if (screens.ContainsKey(currentCategory) && screens[currentCategory] != null)
                 {
                     foreach (Button button in screens[currentCategory].GetComponentsInChildren<Button>())
                     {
@@ -85,7 +85,7 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
                 PlayerInput.Instance.OnAPressed += PlaceMutation;
                 PlayerInput.Instance.OnXPressed += RotateMutation;
                 // Disable all buttons in the current screen
-                if (screens[currentCategory] != null)
+                if (screens.ContainsKey(currentCategory) && screens[currentCategory] != null)
                 {
                     foreach (Button button in screens[currentCategory].GetComponentsInChildren<Button>())
                     {
@@ -220,6 +220,7 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         {
             // Find the existing UI element for this mutation
             selectedMutationElement = mutationGrid.GetMutationElement(mutation);
+            mutationGrid.ClearPosition(selectedMutationElement);
             if (selectedMutationElement == null)
             {
                 Debug.LogError($"Could not find existing UI element for mutation: {mutation.objectName}");
@@ -421,11 +422,11 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         });
     }
 
-    public void OnMutationClicked(GeneticMutationObj mutation)
+    public void OnMutationClicked(GeneticMutationObj mutation, MutationUIElement uiElement)
     {
         if (mutationSelectPopup != null)
         {
-            mutationSelectPopup.Setup(mutation, this);
+            mutationSelectPopup.Setup(mutation, this, uiElement);
         }
     }
 }
