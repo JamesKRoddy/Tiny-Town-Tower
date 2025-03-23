@@ -64,7 +64,7 @@ public class GeneticMutationSelectPopup : MonoBehaviour
         PlayerInventory.Instance.RemoveMutation(currentMutation);
         GeneticMutationSystem.Instance.RemoveMutation(currentMutation);
         mutationUI.AddMutationBackToQuantities(currentMutation);
-
+        Destroy(uiElement.gameObject);
         // Re-enable parent UI buttons and close popup
         SetParentUIButtonsInteractable(true);
         gameObject.SetActive(false);
@@ -90,7 +90,6 @@ public class GeneticMutationSelectPopup : MonoBehaviour
         SetParentUIButtonsInteractable(true);
         gameObject.SetActive(false);
 
-        EventSystem.current.SetSelectedGameObject(uiElement.gameObject);
-        
+        EventSystem.current.SetSelectedGameObject(uiElement.gameObject);        
     }
 }

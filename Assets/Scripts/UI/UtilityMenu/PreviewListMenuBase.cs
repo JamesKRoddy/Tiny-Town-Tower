@@ -35,18 +35,26 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
 
     public virtual void OnEnable()
     {
+        RefreshUIAndSelectFirst();
+
+        rightScreenBtn.onClick.AddListener(() => SwitchScreen(true));
+        leftScreenBtn.onClick.AddListener(() => SwitchScreen(false));
+    }
+
+    protected void RefreshUIAndSelectFirst()
+    {
         SetupScreens();
         if (screens.Count > 0)
         {
             currentCategory = new List<TCategory>(screens.Keys)[0];
             UpdateActiveScreen();
-        } else{
+        }
+        else
+        {
             EventSystem.current.SetSelectedGameObject(leftScreenBtn.gameObject);
         }
-
-        rightScreenBtn.onClick.AddListener(() => SwitchScreen(true));
-        leftScreenBtn.onClick.AddListener(() => SwitchScreen(false));
     }
+
 
     public virtual void OnDisable()
     {

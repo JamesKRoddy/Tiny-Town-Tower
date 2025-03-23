@@ -429,6 +429,8 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
             mutation = mutation,
             quantity = 1
         });
+
+        RefreshUIAndSelectFirst();
     }
 
     public void OnMutationClicked(GeneticMutationObj mutation, MutationUIElement uiElement)
