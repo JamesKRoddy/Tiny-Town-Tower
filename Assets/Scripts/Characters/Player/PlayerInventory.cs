@@ -34,7 +34,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     public float interactionRange = 3f; // Distance to detect weapons    
 
     [Header("Players currently equipped items")] 
-    public GeneticMutation geneticMutation = GeneticMutation.NONE;
     public WeaponElement dashElement = WeaponElement.NONE;
 
     [Header("Mutation Grid")]

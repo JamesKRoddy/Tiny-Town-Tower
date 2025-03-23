@@ -103,14 +103,14 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         PlayerUIManager.Instance.SetScreenActive(this, active, delay, onDone);
     }
 
-    private Dictionary<GeneticMutationObj, int> GetMutationQuantities()
+    private List<MutationQuantityEntry> GetMutationQuantities()
     {
-        Dictionary<GeneticMutationObj, int> quantities = new Dictionary<GeneticMutationObj, int>();
+        List<MutationQuantityEntry> quantities = new List<MutationQuantityEntry>();
         foreach (var entry in mutationQuantities)
         {
             if (entry.mutation != null)
             {
-                quantities[entry.mutation] = entry.quantity;
+                quantities.Add(new MutationQuantityEntry { mutation = entry.mutation, quantity = entry.quantity });
             }
         }
         return quantities;
@@ -123,18 +123,23 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         // Subtract mutations that are equipped
         foreach (var mutation in PlayerInventory.Instance.EquippedMutations)
         {
-            if (quantities.ContainsKey(mutation))
+            var entry = quantities.Find(e => e.mutation == mutation);
+            if (entry != null)
             {
-                quantities[mutation]--;
+                entry.quantity--;
             }
         }
 
         // Update the serialized list
         foreach (var entry in mutationQuantities)
         {
-            if (entry.mutation != null && quantities.ContainsKey(entry.mutation))
+            if (entry.mutation != null)
             {
-                entry.quantity = quantities[entry.mutation];
+                var matchingEntry = quantities.Find(e => e.mutation == entry.mutation);
+                if (matchingEntry != null)
+                {
+                    entry.quantity = matchingEntry.quantity;
+                }
             }
         }
     }
