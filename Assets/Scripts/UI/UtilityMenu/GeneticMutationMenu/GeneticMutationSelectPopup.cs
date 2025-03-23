@@ -75,7 +75,7 @@ public class GeneticMutationSelectPopup : MonoBehaviour
         if (currentMutation == null || mutationUI == null) return;
 
         // Start moving the mutation
-        mutationUI.SelectMutation(currentMutation, true);
+        mutationUI.SelectMutation(uiElement);
         // Re-enable parent UI buttons and close popup
         SetParentUIButtonsInteractable(true);
         gameObject.SetActive(false);

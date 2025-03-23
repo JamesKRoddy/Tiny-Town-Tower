@@ -136,16 +136,21 @@ public class PlayerInput : MonoBehaviour
     {
         Debug.Log($"Update Controls playerControlType : <color=cyan> {playerControlType} </color>");
 
-        currentControlType = playerControlType;
+        if(playerControlType == PlayerControlType.IN_MENU){
+            UpdatePlayerControls(playerControlType, 1);
+        }
+        else{
+            currentControlType = playerControlType;
 
-        ResetControlPositions();
+            ResetControlPositions();
 
-        UnsubscribeAll();
+            UnsubscribeAll();
 
-        OnUpdatePlayerControls?.Invoke(currentControlType);
+            OnUpdatePlayerControls?.Invoke(currentControlType);
+        }
     }
 
-    public void UpdatePlayerControls(PlayerControlType playerControlType, int frameDelay)
+    private void UpdatePlayerControls(PlayerControlType playerControlType, int frameDelay)
     {
         StartCoroutine(DelayedUpdatePlayerControls(playerControlType, frameDelay));
     }
@@ -156,7 +161,10 @@ public class PlayerInput : MonoBehaviour
         {
             yield return null;
         }
-        UpdatePlayerControls(playerControlType);
+        currentControlType = playerControlType;
+        ResetControlPositions();
+        UnsubscribeAll();
+        OnUpdatePlayerControls?.Invoke(currentControlType);
     }
 
     private void ResetControlPositions()

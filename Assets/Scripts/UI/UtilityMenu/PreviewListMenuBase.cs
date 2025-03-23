@@ -40,6 +40,8 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         {
             currentCategory = new List<TCategory>(screens.Keys)[0];
             UpdateActiveScreen();
+        } else{
+            EventSystem.current.SetSelectedGameObject(leftScreenBtn.gameObject);
         }
 
         rightScreenBtn.onClick.AddListener(() => SwitchScreen(true));
@@ -136,12 +138,16 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         {
             kvp.Value.SetActive(kvp.Key.Equals(currentCategory));
         }
-
         screenTitle.text = currentCategory.ToString();
-        EventSystem.current.SetSelectedGameObject(screens[currentCategory].transform.GetChild(0).gameObject);
+        Debug.Log($"Updating Active Screen: {currentCategory}");
+        // Get the first child GameObject or fallback to leftScreenBtn
+        GameObject selectedObject = screens[currentCategory].transform.childCount > 0 
+            ? screens[currentCategory].transform.GetChild(0).gameObject 
+            : leftScreenBtn.gameObject;
+        EventSystem.current.SetSelectedGameObject(selectedObject);
     }
 
-    public  virtual void UpdatePreview(TItem item = default)
+    public virtual void UpdatePreview(TItem item = default)
     {
         currentSelectedItem = item;        
 

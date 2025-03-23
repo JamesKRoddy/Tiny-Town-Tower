@@ -198,14 +198,15 @@ public class GeneticMutationGrid : MonoBehaviour
         }
     }
 
-    public MutationUIElement GetMutationElement(GeneticMutationObj mutation)
+    public MutationUIElement GetMutationElement(GameObject targetObject)
     {
         // Search through the grid for the mutation
         for (int x = 0; x < gridWidth; x++)
         {
             for (int y = 0; y < gridHeight; y++)
             {
-                if (grid[x, y] != null && grid[x, y].GetComponent<MutationUIElement>().mutation == mutation)
+                if (grid[x, y] != null &&
+                    grid[x, y].gameObject == targetObject)
                 {
                     return grid[x, y];
                 }
