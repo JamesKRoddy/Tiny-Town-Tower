@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 public class GeneticMutationSelectPopup : MonoBehaviour
 {
@@ -28,8 +29,31 @@ public class GeneticMutationSelectPopup : MonoBehaviour
         currentMutation = mutation;
         mutationUI = ui;
 
+        // Disable all buttons in the parent UI except popup buttons
+        SetParentUIButtonsInteractable(false);
+
         // Show popup
         gameObject.SetActive(true);
+
+        // Set remove button as selected
+        if (removeButton != null)
+        {
+            EventSystem.current.SetSelectedGameObject(removeButton.gameObject);
+        }
+    }
+
+    private void SetParentUIButtonsInteractable(bool interactable)
+    {
+        if (mutationUI == null) return;
+
+        // Get all buttons in the parent UI
+        var parentButtons = mutationUI.GetComponentsInChildren<Button>();
+        foreach (var button in parentButtons)
+        {
+            // Skip buttons that are part of this popup
+            if (button.transform.IsChildOf(transform)) continue;
+            button.interactable = interactable;
+        }
     }
 
     private void OnRemoveClicked()
@@ -41,7 +65,8 @@ public class GeneticMutationSelectPopup : MonoBehaviour
         GeneticMutationSystem.Instance.RemoveMutation(currentMutation);
         mutationUI.AddMutationBackToQuantities(currentMutation);
 
-        // Close popup
+        // Re-enable parent UI buttons and close popup
+        SetParentUIButtonsInteractable(true);
         gameObject.SetActive(false);
     }
 
@@ -52,12 +77,15 @@ public class GeneticMutationSelectPopup : MonoBehaviour
         // Start moving the mutation
         mutationUI.SelectMutation(currentMutation, true);
 
-        // Close popup
+        // Re-enable parent UI buttons and close popup
+        SetParentUIButtonsInteractable(true);
         gameObject.SetActive(false);
     }
 
     private void OnCloseClicked()
     {
+        // Re-enable parent UI buttons and close popup
+        SetParentUIButtonsInteractable(true);
         gameObject.SetActive(false);
     }
 }
