@@ -28,7 +28,6 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     private MutationUIElement selectedMutationElement;
     private Vector2Int selectedPosition;
     private bool isPlacingMutation = false;
-    private GameObject previouslySelectedButton;
     private bool isMovingExistingMutation = false;
 
     [Header("Movement Settings")]
@@ -206,6 +205,10 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         //TODO  Implement with something I think, not sure
     }
 
+    /// <summary>
+    /// Selects a mutation from the grid to move
+    /// </summary>
+    /// <param name="uiElement"></param>
     public void SelectMutation(MutationUIElement uiElement)
     {
         selectedMutation = uiElement.mutation;
@@ -226,6 +229,10 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         SetupMutationElementPosition(uiElement.mutation);
     }
 
+    /// <summary>
+    /// Selects a mutation from the inventory and initializes it in the grid
+    /// </summary>
+    /// <param name="mutation"></param>
     public void SelectMutation(GeneticMutationObj mutation)
     {
         selectedMutation = mutation;
@@ -250,6 +257,7 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         }
 
         selectedMutationElement.Initialize(mutation, mutationGrid);
+        selectedMutationElement.SetSelected(true); // Highlight selected mutation
         SetupMutationElementPosition(mutation);
     }
 
