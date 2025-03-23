@@ -190,6 +190,5 @@ public class EnemySpawnManager : MonoBehaviour
             spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
             return spawnPoints[0].transform.position;
         }
-        return null;
     }
 }

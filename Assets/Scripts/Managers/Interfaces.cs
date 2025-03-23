@@ -60,7 +60,6 @@ public interface IDamageable
 
 // 1. Genetic Mutations & Inventory System
 // - Implement a genetic mutation system for player upgrades.
-// - UI should resemble the Resident Evil 4-style briefcase for organizing mutations.
 // - Mutations should vary between combat enhancements, survival buffs, and risk-reward effects.
 // - Introduce contamination mechanics, requiring purification before re-entering the camp.
 

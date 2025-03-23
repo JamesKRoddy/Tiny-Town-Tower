@@ -209,12 +209,31 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         if (!equippedMutations.Contains(mutation))
         {
             equippedMutations.Add(mutation);
+            if (mutation.mutationEffectPrefab != null)
+            {
+                GameObject effectObj = Instantiate(mutation.mutationEffectPrefab, PlayerController.Instance._possessedNPC.GetTransform());
+                BaseMutationEffect effect = effectObj.GetComponent<BaseMutationEffect>();
+                if (effect != null)
+                {
+                    effect.Initialize(mutation);
+                    effect.OnEquip();
+                }
+            }
         }
     }
 
     public void RemoveMutation(GeneticMutationObj mutation)
     {
-        equippedMutations.Remove(mutation);
+        if (equippedMutations.Remove(mutation))
+        {
+            BaseMutationEffect effect = PlayerController.Instance._possessedNPC.GetTransform()
+                .GetComponentInChildren<BaseMutationEffect>();
+            if (effect != null)
+            {
+                effect.OnUnequip();
+                Destroy(effect.gameObject);
+            }
+        }
     }
 
     public void SetMaxMutationSlots(int slots)

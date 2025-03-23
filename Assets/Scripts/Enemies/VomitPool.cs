@@ -6,10 +6,10 @@ public class VomitPool : MonoBehaviour
 
     void OnTriggerStay(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (other.gameObject.GetComponent<IDamageable>() != null)
         {
             // Damage the player if they are in the vomit pool
-            other.gameObject.GetComponent<PlayerHealth>().TakeDamage(damage);
+            other.gameObject.GetComponent<IDamageable>().TakeDamage(damage);
         }
     }
 
