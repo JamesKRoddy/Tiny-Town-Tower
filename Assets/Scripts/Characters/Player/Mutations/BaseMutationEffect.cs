@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public abstract class BaseMutationEffect : MonoBehaviour
+public abstract class BaseMutationEffect : MonoBehaviour, IPickupableItem
 {
     protected bool isActive = false;
     protected GeneticMutationObj mutationData;
@@ -8,10 +8,14 @@ public abstract class BaseMutationEffect : MonoBehaviour
     // Abstract property that derived classes must implement
     protected abstract int ActiveInstances { get; set; }
 
-    public virtual void Initialize(GeneticMutationObj mutationData)
+    public void Initialize(GeneticMutationObj data)
     {
-        this.mutationData = mutationData;
+        mutationData = data;
     }
+
+    public string GetItemName() => mutationData.itemName;
+    public string GetItemDescription() => mutationData.itemDescription;
+    public Sprite GetItemImage() => mutationData.mutationIcon;
 
     public virtual void OnEquip()
     {
@@ -27,4 +31,7 @@ public abstract class BaseMutationEffect : MonoBehaviour
 
     protected abstract void ApplyEffect();
     protected abstract void RemoveEffect();
+
+    // Public property to access mutation data
+    public GeneticMutationObj MutationData => mutationData;
 } 

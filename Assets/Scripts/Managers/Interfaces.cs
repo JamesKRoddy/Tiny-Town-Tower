@@ -7,9 +7,10 @@ public interface IControllerInput
 
 public interface IPickupableItem
 {
-    public string GetItemName();
-    public string GetItemDescription();
-    public Sprite GetItemImage();
+    void Initialize(ResourceScriptableObj data);
+    string GetItemName();
+    string GetItemDescription();
+    Sprite GetItemImage();
 }
 
 public interface IInteractiveBase
@@ -50,7 +51,7 @@ public interface IDamageable
 /*
  * Known bugs:
  * Turret scene and placing turrets
- * Building menu menu not updating correctly when opened and placing buildings
+ * Building menu menu not updating correctly when opened and placing buildings not working
  * Player inventory menu not updating correctly when opened
  */
 

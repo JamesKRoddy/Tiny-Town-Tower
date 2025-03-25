@@ -226,12 +226,18 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     {
         if (equippedMutations.Remove(mutation))
         {
-            BaseMutationEffect effect = PlayerController.Instance._possessedNPC.GetTransform()
-                .GetComponentInChildren<BaseMutationEffect>();
-            if (effect != null)
+            // Find all mutation effects and find the one that matches our mutation
+            BaseMutationEffect[] effects = PlayerController.Instance._possessedNPC.GetTransform()
+                .GetComponentsInChildren<BaseMutationEffect>();
+            
+            foreach (BaseMutationEffect effect in effects)
             {
-                effect.OnUnequip();
-                Destroy(effect.gameObject);
+                if (effect.MutationData == mutation)
+                {
+                    effect.OnUnequip();
+                    Destroy(effect.gameObject);
+                    break;
+                }
             }
         }
     }
