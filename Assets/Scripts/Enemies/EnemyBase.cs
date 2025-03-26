@@ -23,7 +23,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
         set => maxHealth = value;
     }
 
-    [SerializeField] public float damage;
+    protected float damage;
 
     public event Action OnEnemyKilled;
 
