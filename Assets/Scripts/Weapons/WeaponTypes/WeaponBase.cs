@@ -5,6 +5,8 @@ public abstract class WeaponBase : MonoBehaviour, IPickupableItem
     [Header("General Weapon Stats")]
     protected WeaponScriptableObj weaponData;
 
+    public WeaponScriptableObj WeaponData => weaponData;
+
     public virtual void Initialize(ResourceScriptableObj data)
     {
         if (data is WeaponScriptableObj weaponScriptableObj)

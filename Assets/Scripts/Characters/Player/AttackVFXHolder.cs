@@ -21,16 +21,16 @@ public class AttackVFXHolder : MonoBehaviour
         switch (attackDirection)
         {
             case MeleeAttackDirection.HORIZONTAL_LEFT:
-                horizontalLeftVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
+                horizontalLeftVfx.Play(meleeWeapon.WeaponData.weaponElement);
                 break;
             case MeleeAttackDirection.HORIZONTAL_RIGHT:
-                horizontalRightVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
+                horizontalRightVfx.Play(meleeWeapon.WeaponData.weaponElement);
                 break;
             case MeleeAttackDirection.VERTICAL_DOWN:
-                verticalDownVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
+                verticalDownVfx.Play(meleeWeapon.WeaponData.weaponElement);
                 break;
             case MeleeAttackDirection.VERTICAL_UP:
-                verticalUpVfx.Play(meleeWeapon.weaponScriptableObj.weaponElement);
+                verticalUpVfx.Play(meleeWeapon.WeaponData.weaponElement);
                 break;
             default:
                 Debug.LogWarning("Invalid attack direction.");
@@ -45,9 +45,9 @@ public class AttackVFXHolder : MonoBehaviour
 
     private void StopAllMeleeVFX(MeleeWeapon meleeWeapon)
     {
-        horizontalLeftVfx.Stop(meleeWeapon.weaponScriptableObj.weaponElement);
-        horizontalRightVfx.Stop(meleeWeapon.weaponScriptableObj.weaponElement);
-        verticalDownVfx.Stop(meleeWeapon.weaponScriptableObj.weaponElement);
-        verticalUpVfx.Stop(meleeWeapon.weaponScriptableObj.weaponElement);
+        horizontalLeftVfx.Stop(meleeWeapon.WeaponData.weaponElement);
+        horizontalRightVfx.Stop(meleeWeapon.WeaponData.weaponElement);
+        verticalDownVfx.Stop(meleeWeapon.WeaponData.weaponElement);
+        verticalUpVfx.Stop(meleeWeapon.WeaponData.weaponElement);
     }
 }

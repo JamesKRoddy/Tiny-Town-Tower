@@ -8,14 +8,21 @@ public abstract class BaseMutationEffect : MonoBehaviour, IPickupableItem
     // Abstract property that derived classes must implement
     protected abstract int ActiveInstances { get; set; }
 
-    public void Initialize(GeneticMutationObj data)
+    public void Initialize(ResourceScriptableObj data)
     {
-        mutationData = data;
+        if (data is GeneticMutationObj mutationScriptableObj)
+        {
+            mutationData = mutationScriptableObj;
+        }
+        else
+        {
+            Debug.LogError($"Attempted to initialize mutation with incorrect data type: {data.GetType()}");
+        }
     }
 
-    public string GetItemName() => mutationData.itemName;
-    public string GetItemDescription() => mutationData.itemDescription;
-    public Sprite GetItemImage() => mutationData.mutationIcon;
+    public string GetItemName() => mutationData.objectName;
+    public string GetItemDescription() => mutationData.description;
+    public Sprite GetItemImage() => mutationData.sprite;
 
     public virtual void OnEquip()
     {
@@ -33,5 +40,6 @@ public abstract class BaseMutationEffect : MonoBehaviour, IPickupableItem
     protected abstract void RemoveEffect();
 
     // Public property to access mutation data
+
     public GeneticMutationObj MutationData => mutationData;
 } 
