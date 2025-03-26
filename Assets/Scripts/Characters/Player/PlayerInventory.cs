@@ -227,8 +227,16 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         if (equippedMutations.Remove(mutation))
         {
             // Find all mutation effects and find the one that matches our mutation
-            BaseMutationEffect[] effects = PlayerController.Instance._possessedNPC.GetTransform()
-                .GetComponentsInChildren<BaseMutationEffect>();
+            BaseMutationEffect[] effects = new BaseMutationEffect[0];
+            if (PlayerController.Instance._possessedNPC != null)
+            {
+                effects = PlayerController.Instance._possessedNPC.GetTransform()
+                    .GetComponentsInChildren<BaseMutationEffect>();
+            }
+            else
+            {
+                Debug.LogWarning("Trying to remove mutation but no NPC is possessed");
+            }
             
             foreach (BaseMutationEffect effect in effects)
             {
