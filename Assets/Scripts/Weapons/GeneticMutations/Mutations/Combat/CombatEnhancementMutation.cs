@@ -3,7 +3,6 @@ using UnityEngine;
 public class CombatEnhancementMutation : BaseMutationEffect
 {
     [SerializeField] private float damageMultiplier = 1.5f;
-    private CharacterInventory characterInventory;
     private WeaponScriptableObj originalWeapon;
     private static int activeInstancesCount = 0;
 
@@ -18,10 +17,19 @@ public class CombatEnhancementMutation : BaseMutationEffect
         if (!isActive) return;
 
         ActiveInstances++;
-        characterInventory = PlayerController.Instance._possessedNPC.GetTransform().GetComponent<CharacterInventory>();
-        if (characterInventory == null) return;
+        if (characterInventory == null)
+        {
+            Debug.LogError("No CharacterInventory component found on possessed NPC!");
+            return;
+        }
 
-        originalWeapon = characterInventory.equippedWeaponScriptObj;
+        // Store original weapon if not already stored
+        if (originalWeapon == null)
+        {
+            originalWeapon = characterInventory.equippedWeaponScriptObj;
+        }
+
+        // Create a modified version of the weapon
         if (originalWeapon != null)
         {
             WeaponScriptableObj modifiedWeapon = ScriptableObject.CreateInstance<WeaponScriptableObj>();
@@ -30,6 +38,7 @@ public class CombatEnhancementMutation : BaseMutationEffect
             modifiedWeapon.prefab = originalWeapon.prefab;
             modifiedWeapon.animationType = originalWeapon.animationType;
 
+            // Equip the modified weapon
             characterInventory.EquipWeapon(modifiedWeapon);
         }
     }
@@ -51,11 +60,24 @@ public class CombatEnhancementMutation : BaseMutationEffect
             }
             else
             {
-                // If no more active instances, restore original weapon
+                // Restore original weapon
                 characterInventory.EquipWeapon(originalWeapon);
             }
         }
-        characterInventory = null;
         originalWeapon = null;
+    }
+
+    protected override void HandleWeaponChange(WeaponScriptableObj newWeapon)
+    {
+        if (isActive)
+        {
+            // Store the new weapon as the original if we don't have one yet
+            if (originalWeapon == null)
+            {
+                originalWeapon = newWeapon;
+            }
+            // Reapply the effect
+            base.HandleWeaponChange(newWeapon);
+        }
     }
 } 

@@ -4,7 +4,6 @@ public class AttackSpeedMutation : BaseMutationEffect
 {
     [SerializeField] private float attackSpeedMultiplier = 1.5f;
     [SerializeField] private float damageReductionMultiplier = 0.8f;
-    private CharacterInventory characterInventory;
     private WeaponScriptableObj originalWeapon;
     private static int activeInstancesCount = 0;
 
@@ -19,16 +18,17 @@ public class AttackSpeedMutation : BaseMutationEffect
         if (!isActive) return;
 
         ActiveInstances++;
-        // Get the inventory component from the possessed NPC
-        characterInventory = PlayerController.Instance._possessedNPC.GetTransform().GetComponent<CharacterInventory>();
         if (characterInventory == null)
         {
             Debug.LogError("No CharacterInventory component found on possessed NPC!");
             return;
         }
 
-        // Store original weapon
-        originalWeapon = characterInventory.equippedWeaponScriptObj;
+        // Store original weapon if not already stored
+        if (originalWeapon == null)
+        {
+            originalWeapon = characterInventory.equippedWeaponScriptObj;
+        }
 
         // Create a modified version of the weapon
         if (originalWeapon != null)
@@ -65,7 +65,20 @@ public class AttackSpeedMutation : BaseMutationEffect
                 characterInventory.EquipWeapon(originalWeapon);
             }
         }
-        characterInventory = null;
         originalWeapon = null;
+    }
+
+    protected override void HandleWeaponChange(WeaponScriptableObj newWeapon)
+    {
+        if (isActive)
+        {
+            // Store the new weapon as the original if we don't have one yet
+            if (originalWeapon == null)
+            {
+                originalWeapon = newWeapon;
+            }
+            // Reapply the effect
+            base.HandleWeaponChange(newWeapon);
+        }
     }
 } 

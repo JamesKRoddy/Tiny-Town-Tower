@@ -5,7 +5,6 @@ public class LowHealthDamageMutation : BaseMutationEffect
     [SerializeField] private float damageMultiplier = 2f;
     [SerializeField] private float healthThreshold = 0.3f; // 30% health threshold
     [SerializeField] private float vulnerabilityMultiplier = 1.5f;
-    private CharacterInventory characterInventory;
     private IDamageable damageable;
     private WeaponScriptableObj originalWeapon;
     private bool isLowHealth;
@@ -24,7 +23,6 @@ public class LowHealthDamageMutation : BaseMutationEffect
         ActiveInstances++;
         // Get the required components from the possessed NPC
         Transform npcTransform = PlayerController.Instance._possessedNPC.GetTransform();
-        characterInventory = npcTransform.GetComponent<CharacterInventory>();
         damageable = npcTransform.GetComponent<IDamageable>();
 
         if (characterInventory == null || damageable == null)
@@ -33,8 +31,11 @@ public class LowHealthDamageMutation : BaseMutationEffect
             return;
         }
 
-        // Store original weapon
-        originalWeapon = characterInventory.equippedWeaponScriptObj;
+        // Store original weapon if not already stored
+        if (originalWeapon == null)
+        {
+            originalWeapon = characterInventory.equippedWeaponScriptObj;
+        }
     }
 
     protected override void RemoveEffect()
@@ -58,7 +59,6 @@ public class LowHealthDamageMutation : BaseMutationEffect
                 characterInventory.EquipWeapon(originalWeapon);
             }
         }
-        characterInventory = null;
         damageable = null;
         originalWeapon = null;
         isLowHealth = false;
@@ -92,6 +92,20 @@ public class LowHealthDamageMutation : BaseMutationEffect
                 // Restore original weapon
                 characterInventory.EquipWeapon(originalWeapon);
             }
+        }
+    }
+
+    protected override void HandleWeaponChange(WeaponScriptableObj newWeapon)
+    {
+        if (isActive)
+        {
+            // Store the new weapon as the original if we don't have one yet
+            if (originalWeapon == null)
+            {
+                originalWeapon = newWeapon;
+            }
+            // Reapply the effect
+            base.HandleWeaponChange(newWeapon);
         }
     }
 } 

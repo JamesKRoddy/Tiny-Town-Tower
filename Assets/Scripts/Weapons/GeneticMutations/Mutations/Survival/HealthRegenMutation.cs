@@ -45,4 +45,11 @@ public class HealthRegenMutation : BaseMutationEffect
             damageable.Heal(healthRegenPerSecond * regenInterval * ActiveInstances);
         }
     }
+
+    protected override void HandleWeaponChange(WeaponScriptableObj newWeapon)
+    {
+        // HealthRegenMutation doesn't modify weapons, so we don't need to do anything
+        // Just let the base class handle it
+        base.HandleWeaponChange(newWeapon);
+    }
 } 

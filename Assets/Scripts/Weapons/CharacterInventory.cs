@@ -25,6 +25,9 @@ public class CharacterInventory : MonoBehaviour
     [SerializeField]
     private List<InventoryItem> inventoryList = new List<InventoryItem>();
 
+    // Event for when a weapon is equipped
+    public event System.Action<WeaponScriptableObj> OnWeaponEquipped;
+
     public virtual void Start()
     {
         if(equippedWeaponScriptObj != null)
@@ -100,12 +103,14 @@ public class CharacterInventory : MonoBehaviour
         GameObject weapon = Instantiate(weaponScriptableObj.prefab, weaponHolder);
         equippedWeaponBase = weapon.GetComponent<WeaponBase>();
 
-
         equippedWeaponBase.OnEquipped(transform);
         equippedWeaponScriptObj = weaponScriptableObj;
 
         // Handle weapon-specific setup
         HandleWeaponType(weapon, weaponScriptableObj.animationType);
+
+        // Notify listeners that a weapon was equipped
+        OnWeaponEquipped?.Invoke(weaponScriptableObj);
     }
 
     private void UnequipCurrentWeapon()
