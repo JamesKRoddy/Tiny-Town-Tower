@@ -121,4 +121,9 @@ public class TurretMenu : PreviewListMenuBase<TurretCategory, TurretScriptableOb
             Destroy(child.gameObject);
         }
     }
+
+    public void StartTurretWave()
+    {
+        TurretManager.Instance.StartWave();
+    }
 }

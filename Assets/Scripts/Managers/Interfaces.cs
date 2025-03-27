@@ -53,6 +53,7 @@ public interface IDamageable
  * Turret scene and placing turrets
  * Building menu menu not updating correctly when opened and placing buildings not working
  * Player inventory menu not updating correctly when opened
+ * Mutations not being added back to the player inventory when they are removed from the genetic mutation ui
  */
 
 // ========================================

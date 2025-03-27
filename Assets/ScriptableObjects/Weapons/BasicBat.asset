@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa17fc4077f715a4b886a2048b72218e, type: 3}
   m_Name: BasicBat
   m_EditorClassIdentifier: 
-  resourceName: Bat
-  resourceDescription: Basic bat for hitting
-  resourceCategory: 4
-  resourceRarity: 0
-  resourceSprite: {fileID: 0}
-  weaponPrefab: {fileID: 6242529188225862484, guid: 4be9664411af89841a88d59a92bc8d84, type: 3}
+  objectName: 
+  description: 
+  category: 0
+  rarity: 0
+  sprite: {fileID: 0}
+  prefab: {fileID: 6242529188225862484, guid: 4be9664411af89841a88d59a92bc8d84, type: 3}
   animationType: 1
   damage: 10
   weaponElement: 0

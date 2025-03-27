@@ -12,9 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aecf6f8af75fcf24586ff6e0bbdc7d95, type: 3}
   m_Name: _CommonChest
   m_EditorClassIdentifier: 
-  possibleLoot:
-  - {fileID: 11400000, guid: 74701f8e255f24a4980777d43c0b6edf, type: 2}
-  - {fileID: 11400000, guid: e9e256aa3d595cc46bfcc1c42f699df0, type: 2}
-  - {fileID: 11400000, guid: 12f818ac54e7fb1438a80c5e50b6a79a, type: 2}
-  minResourceCount: 1
-  maxResourceCount: 10
+  lootItems:
+  - resourceScriptableObj: {fileID: 11400000, guid: e6fde83523c7216478e945d81aedf237, type: 2}
+    count: 1

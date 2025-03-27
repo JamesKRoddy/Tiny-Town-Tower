@@ -14859,9 +14859,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: TurretManager, Assembly-CSharp
-        m_MethodName: StartWave
+      - m_Target: {fileID: 1123490454175077717}
+        m_TargetAssemblyTypeName: TurretMenu, Assembly-CSharp
+        m_MethodName: StartTurretWave
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
