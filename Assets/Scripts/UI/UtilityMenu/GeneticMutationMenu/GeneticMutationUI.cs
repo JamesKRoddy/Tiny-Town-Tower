@@ -6,22 +6,19 @@ using UnityEngine.UI;
 using System.Collections;
 using UnityEngine.EventSystems;
 
+[System.Serializable]
+public class MutationQuantityEntry
+{
+    public GeneticMutationObj mutation;
+    public int quantity;
+}
+
 public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMutationObj>, IControllerInput
 {
     [Header("Mutation Inventory UI")]
     [SerializeField] public GeneticMutationGrid mutationGrid;
     [SerializeField] private Transform mutationGridPrefabContainer;
     [SerializeField] private GeneticMutationSelectPopup mutationSelectPopup;
-
-    [Header("Mutation Data")]
-    [SerializeField] private List<MutationQuantityEntry> mutationQuantities = new List<MutationQuantityEntry>();
-
-    [System.Serializable]
-    private class MutationQuantityEntry
-    {
-        public GeneticMutationObj mutation;
-        public int quantity;
-    }
 
     [Header("Selected Mutation")]
     private GeneticMutationObj selectedMutation;
@@ -45,7 +42,6 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     {
         base.OnEnable();
         PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
-        UpdateMutationQuantities();
     }
 
     public override void OnDisable()
@@ -102,52 +98,13 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         PlayerUIManager.Instance.SetScreenActive(this, active, delay, onDone);
     }
 
-    private List<MutationQuantityEntry> GetMutationQuantities()
-    {
-        List<MutationQuantityEntry> quantities = new List<MutationQuantityEntry>();
-        foreach (var entry in mutationQuantities)
-        {
-            if (entry.mutation != null)
-            {
-                quantities.Add(new MutationQuantityEntry { mutation = entry.mutation, quantity = entry.quantity });
-            }
-        }
-        return quantities;
-    }
-
-    private void UpdateMutationQuantities()
-    {
-        var quantities = GetMutationQuantities();
-
-        // Subtract mutations that are equipped
-        foreach (var mutation in PlayerInventory.Instance.EquippedMutations)
-        {
-            var entry = quantities.Find(e => e.mutation == mutation);
-            if (entry != null)
-            {
-                entry.quantity--;
-            }
-        }
-
-        // Update the serialized list
-        foreach (var entry in mutationQuantities)
-        {
-            if (entry.mutation != null)
-            {
-                var matchingEntry = quantities.Find(e => e.mutation == entry.mutation);
-                if (matchingEntry != null)
-                {
-                    entry.quantity = matchingEntry.quantity;
-                }
-            }
-        }
-    }
-
     public override IEnumerable<GeneticMutationObj> GetItems()
     {
+        Debug.Log($"Getting items");
         // Only return mutations that have a quantity greater than 0
-        foreach (var entry in mutationQuantities)
+        foreach (var entry in PlayerInventory.Instance.availableMutations)
         {
+            Debug.Log($"Entry: {entry.mutation.objectName} - {entry.quantity}");
             if (entry.mutation != null && entry.quantity > 0)
             {
                 yield return entry.mutation;
@@ -164,7 +121,7 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     {
         var buttonComponent = button.GetComponent<GeneticMutationBtn>();
         int quantity = 0;
-        foreach (var entry in mutationQuantities)
+        foreach (var entry in PlayerInventory.Instance.availableMutations)
         {
             if (entry.mutation == mutation)
             {
@@ -356,20 +313,22 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
             if (!isMovingExistingMutation)
             {
                 // Remove mutation from available mutations and add it to player inventory
-                for (int i = mutationQuantities.Count - 1; i >= 0; i--)
+                PlayerInventory.Instance.EquipMutation(selectedMutation);
+                GeneticMutationSystem.Instance.AddMutation(selectedMutation);
+
+                // Remove from available mutations
+                foreach (var entry in PlayerInventory.Instance.availableMutations)
                 {
-                    if (mutationQuantities[i].mutation == selectedMutation)
+                    if (entry.mutation == selectedMutation)
                     {
-                        mutationQuantities[i].quantity--;
-                        if (mutationQuantities[i].quantity <= 0)
+                        entry.quantity--;
+                        if (entry.quantity <= 0)
                         {
-                            mutationQuantities.RemoveAt(i);
+                            PlayerInventory.Instance.availableMutations.Remove(entry);
                         }
                         break;
                     }
                 }
-                PlayerInventory.Instance.AddMutation(selectedMutation);
-                GeneticMutationSystem.Instance.AddMutation(selectedMutation);
 
                 // Clear existing screens and rebuild UI
                 foreach (var screen in screens.Values)
@@ -419,30 +378,11 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
             if (mutation == null) continue;
             mutationGrid.AddMutation(mutation);
         }
-
-        // Update mutation quantities
-        UpdateMutationQuantities();
     }
 
     public void AddMutationBackToQuantities(GeneticMutationObj mutation)
     {
-        // Check if mutation already exists in quantities
-        foreach (var entry in mutationQuantities)
-        {
-            if (entry.mutation == mutation)
-            {
-                entry.quantity++;
-                return;
-            }
-        }
-
-        // If not found, add new entry
-        mutationQuantities.Add(new MutationQuantityEntry
-        {
-            mutation = mutation,
-            quantity = 1
-        });
-
+        PlayerInventory.Instance.AddAvalibleMutation(mutation);
         RefreshUIAndSelectFirst();
     }
 

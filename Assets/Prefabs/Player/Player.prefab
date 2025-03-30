@@ -201,7 +201,6 @@ GameObject:
   - component: {fileID: 1753517641701161209}
   - component: {fileID: 2410259817644597622}
   - component: {fileID: 5445671924862257595}
-  - component: {fileID: 7000275051264364189}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -296,19 +295,6 @@ MonoBehaviour:
   - resource: {fileID: 11400000, guid: 12f818ac54e7fb1438a80c5e50b6a79a, type: 2}
     count: 10
   interactionRange: 3
-  geneticMutation: 0
   dashElement: 0
---- !u!114 &7000275051264364189
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9124372233556808277}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cbf6d617d6c174e41ba05b422f66cbaa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  health: 100
-  maxHealth: 100
+  maxMutationSlots: 9
+  availableMutations: []

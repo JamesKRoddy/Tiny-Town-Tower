@@ -83,6 +83,16 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
 
     protected void SetupScreens()
     {
+        // Clear existing screens first
+        foreach (var screen in screens.Values)
+        {
+            if (screen != null)
+            {
+                Destroy(screen);
+            }
+        }
+        screens.Clear();
+
         foreach (var item in GetItems())
         {
             TCategory category = GetItemCategory(item);
@@ -94,7 +104,7 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
             }
 
             GameObject screenForCategory = screens[category];
-            GameObject itemButton = Instantiate(itemButtonPrefab, screenForCategory.transform); //TODO implement object pooling for these
+            GameObject itemButton = Instantiate(itemButtonPrefab, screenForCategory.transform);
             SetupItemButton(item, itemButton);
 
             // Add event listener for selection

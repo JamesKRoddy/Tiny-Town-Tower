@@ -40,6 +40,8 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     [SerializeField] private int maxMutationSlots = 9; // Default to a 3x3 grid
     private List<GeneticMutationObj> equippedMutations = new List<GeneticMutationObj>();
 
+    public List<MutationQuantityEntry> availableMutations = new List<MutationQuantityEntry>();
+
     public int MaxMutationSlots => maxMutationSlots;
     public List<GeneticMutationObj> EquippedMutations => equippedMutations;
 
@@ -103,7 +105,9 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                     }
                 }
                 break;
-
+            case GeneticMutationObj geneticMutation:
+                AddAvalibleMutation(geneticMutation);
+                break;
             case ResourceScriptableObj resource:
                 AddItem(resource, resourcePickup.count);
                 break;
@@ -114,6 +118,30 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 break;
         }
     }
+
+    public void AddAvalibleMutation(GeneticMutationObj geneticMutation)
+    {
+        bool mutationFound = false;
+        for (int i = 0; i < availableMutations.Count; i++)
+        {
+            if (availableMutations[i].mutation == geneticMutation)
+            {
+                availableMutations[i].quantity++;
+                mutationFound = true;
+                break;
+            }
+        }
+
+        if (!mutationFound)
+        {
+            availableMutations.Add(new MutationQuantityEntry
+            {
+                mutation = geneticMutation,
+                quantity = 1
+            });
+        }
+    }
+
 
     public void EquipDash()
     {
@@ -204,7 +232,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         return PlayerController.Instance._possessedNPC.GetTransform();
     }
 
-    public void AddMutation(GeneticMutationObj mutation)
+    public void EquipMutation(GeneticMutationObj mutation)
     {
         if (!equippedMutations.Contains(mutation))
         {
