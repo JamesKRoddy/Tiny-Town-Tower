@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -7,21 +8,22 @@ using UnityEngine.UI;
 public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
 {
     [Header("Shared Menu Components")]
-    [SerializeField] TMP_Text screenTitle;
-    public Button rightScreenBtn;
-    public Button leftScreenBtn;
-    [SerializeField] RectTransform screenParent;
-    [SerializeField] GameObject screenPrefab;
-    [SerializeField] GameObject itemButtonPrefab;
+    [SerializeField] protected TMP_Text screenTitle;
+    [SerializeField] protected Button rightScreenBtn;
+    [SerializeField] protected Button leftScreenBtn;
+    [SerializeField] protected RectTransform screenParent;
+    [SerializeField] protected GameObject screenPrefab;
+    [SerializeField] protected GameObject itemButtonPrefab;
 
     [Header("Shared Preview UI")]
-    [SerializeField] Image previewImage;
-    [SerializeField] TMP_Text previewName;
-    [SerializeField] TMP_Text previewDesc;
+    [SerializeField] protected Image previewImage;
+    [SerializeField] protected TMP_Text previewName;
+    [SerializeField] protected TMP_Text previewDesc;
 
     protected Dictionary<TCategory, GameObject> screens = new Dictionary<TCategory, GameObject>();
     protected TCategory currentCategory;
     protected TItem currentSelectedItem;
+    protected bool isInitialized = false;
 
     public abstract IEnumerable<TItem> GetItems();
     public abstract TCategory GetItemCategory(TItem item);
@@ -33,12 +35,35 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
     public abstract void UpdatePreviewSpecifics(TItem item);
     public abstract void DestroyPreviewSpecifics();
 
+    protected virtual void Awake()
+    {
+        if (!isInitialized)
+        {
+            Setup();
+            isInitialized = true;
+        }
+    }
+
+    public override void Setup()
+    {
+        if (rightScreenBtn != null)
+        {
+            rightScreenBtn.onClick.AddListener(() => SwitchScreen(true));
+        }
+        if (leftScreenBtn != null)
+        {
+            leftScreenBtn.onClick.AddListener(() => SwitchScreen(false));
+        }
+    }
+
     public virtual void OnEnable()
     {
+        if (!isInitialized)
+        {
+            Setup();
+            isInitialized = true;
+        }
         RefreshUIAndSelectFirst();
-
-        rightScreenBtn.onClick.AddListener(() => SwitchScreen(true));
-        leftScreenBtn.onClick.AddListener(() => SwitchScreen(false));
     }
 
     protected void RefreshUIAndSelectFirst()
@@ -49,41 +74,20 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
             currentCategory = new List<TCategory>(screens.Keys)[0];
             UpdateActiveScreen();
         }
-        else
+        else if (leftScreenBtn != null)
         {
             EventSystem.current.SetSelectedGameObject(leftScreenBtn.gameObject);
         }
     }
 
-
     public virtual void OnDisable()
     {
-        // Destroy all dynamically created screens and their EventTriggers
-        foreach (var kvp in screens)
-        {
-            foreach (Transform child in kvp.Value.transform)
-            {
-                EventTrigger trigger = child.GetComponent<EventTrigger>();
-                if (trigger != null)
-                {
-                    trigger.triggers.Clear(); // Clear all listeners
-                    Destroy(trigger); // Optionally remove the EventTrigger component
-                }
-            }
-
-            Destroy(kvp.Value); // Destroy the screen itself
-        }
-
-        screens.Clear();
-
-        // Remove button navigation listeners (if any other listeners are added outside EventTriggers)
-        rightScreenBtn.onClick.RemoveAllListeners();
-        leftScreenBtn.onClick.RemoveAllListeners();
+        CleanupScreens();
+        CleanupEventListeners();
     }
 
-    protected void SetupScreens()
+    protected virtual void CleanupScreens()
     {
-        // Clear existing screens first
         foreach (var screen in screens.Values)
         {
             if (screen != null)
@@ -92,6 +96,23 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
             }
         }
         screens.Clear();
+    }
+
+    protected virtual void CleanupEventListeners()
+    {
+        if (rightScreenBtn != null)
+        {
+            rightScreenBtn.onClick.RemoveAllListeners();
+        }
+        if (leftScreenBtn != null)
+        {
+            leftScreenBtn.onClick.RemoveAllListeners();
+        }
+    }
+
+    protected void SetupScreens()
+    {
+        CleanupScreens();
 
         foreach (var item in GetItems())
         {
@@ -107,33 +128,57 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
             GameObject itemButton = Instantiate(itemButtonPrefab, screenForCategory.transform);
             SetupItemButton(item, itemButton);
 
-            // Add event listener for selection
-            EventTrigger trigger = itemButton.AddComponent<EventTrigger>();
-
-            // Handle OnSelect
-            EventTrigger.Entry selectEntry = new EventTrigger.Entry
-            {
-                eventID = EventTriggerType.Select
-            };
-            selectEntry.callback.AddListener((data) => UpdatePreview(item));
-            trigger.triggers.Add(selectEntry);
-
-            // Optionally: Handle OnDeselect (to clear the preview)
-            EventTrigger.Entry deselectEntry = new EventTrigger.Entry
-            {
-                eventID = EventTriggerType.Deselect
-            };
-            deselectEntry.callback.AddListener((data) => UpdatePreview(default));
-            trigger.triggers.Add(deselectEntry);
+            SetupItemButtonEvents(itemButton, item);
         }
     }
 
+    protected virtual void SetupItemButtonEvents(GameObject itemButton, TItem item)
+    {
+        EventTrigger trigger = itemButton.AddComponent<EventTrigger>();
+
+        // Handle OnSelect
+        EventTrigger.Entry selectEntry = new EventTrigger.Entry
+        {
+            eventID = EventTriggerType.Select
+        };
+        selectEntry.callback.AddListener((data) => OnItemSelected(item));
+        trigger.triggers.Add(selectEntry);
+
+        // Handle OnDeselect
+        EventTrigger.Entry deselectEntry = new EventTrigger.Entry
+        {
+            eventID = EventTriggerType.Deselect
+        };
+        deselectEntry.callback.AddListener((data) => OnItemDeselected());
+        trigger.triggers.Add(deselectEntry);
+
+        // Handle OnClick
+        Button button = itemButton.GetComponent<Button>();
+        if (button != null)
+        {
+            button.onClick.AddListener(() => OnItemClicked(item));
+        }
+    }
+
+    protected virtual void OnItemSelected(TItem item)
+    {
+        UpdatePreview(item);
+    }
+
+    protected virtual void OnItemDeselected()
+    {
+        UpdatePreview(default);
+    }
+
+    protected virtual void OnItemClicked(TItem item)
+    {
+        // Override in derived classes to handle click events
+    }
 
     protected void SwitchScreen(bool forward)
     {
         var categories = new List<TCategory>(screens.Keys);
         
-        // If there are no categories, return early
         if (categories.Count == 0)
         {
             Debug.LogWarning("No categories available to switch between.");
@@ -141,7 +186,6 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         }
 
         int currentIndex = categories.IndexOf(currentCategory);
-
         currentIndex = forward
             ? (currentIndex + 1) % categories.Count
             : (currentIndex - 1 + categories.Count) % categories.Count;
@@ -156,38 +200,66 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         {
             kvp.Value.SetActive(kvp.Key.Equals(currentCategory));
         }
-        screenTitle.text = currentCategory.ToString();
-        Debug.Log($"Updating Active Screen: {currentCategory}");
-        // Get the first child GameObject or fallback to leftScreenBtn
-        GameObject selectedObject = screens[currentCategory].transform.childCount > 0 
-            ? screens[currentCategory].transform.GetChild(0).gameObject 
-            : leftScreenBtn.gameObject;
-        EventSystem.current.SetSelectedGameObject(selectedObject);
+        
+        if (screenTitle != null)
+        {
+            screenTitle.text = currentCategory?.ToString() ?? "No Category";
+        }
+
+        GameObject selectedObject = null;
+        if (screens.ContainsKey(currentCategory) && screens[currentCategory].transform.childCount > 0)
+        {
+            selectedObject = screens[currentCategory].transform.GetChild(0).gameObject;
+        }
+        else if (leftScreenBtn != null)
+        {
+            selectedObject = leftScreenBtn.gameObject;
+        }
+
+        if (selectedObject != null)
+        {
+            EventSystem.current.SetSelectedGameObject(selectedObject);
+        }
     }
 
     public virtual void UpdatePreview(TItem item = default)
     {
         currentSelectedItem = item;        
 
-        // Update preview UI
         if (item != null)
         {
-            previewName.text = GetPreviewName(item);
-            previewImage.sprite = GetPreviewSprite(item);
-            previewDesc.text = GetPreviewDescription(item);
+            if (previewName != null)
+            {
+                previewName.text = GetPreviewName(item);
+            }
+            if (previewImage != null)
+            {
+                previewImage.sprite = GetPreviewSprite(item);
+            }
+            if (previewDesc != null)
+            {
+                previewDesc.text = GetPreviewDescription(item);
+            }
 
-            // Clear and populate resource cost
             UpdatePreviewSpecifics(item);
         }
         else
         {
-            // Clear UI for null (no selection)
-            previewName.text = string.Empty;
-            previewImage.sprite = null;
-            previewDesc.text = string.Empty;
+            if (previewName != null)
+            {
+                previewName.text = string.Empty;
+            }
+            if (previewImage != null)
+            {
+                previewImage.sprite = null;
+            }
+            if (previewDesc != null)
+            {
+                previewDesc.text = string.Empty;
+            }
 
             DestroyPreviewSpecifics();
         }
     }
-
 }
+

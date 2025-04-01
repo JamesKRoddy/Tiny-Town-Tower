@@ -45,6 +45,7 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
 
     public void StartPlacement(T objectToPlace)
     {
+        Debug.Log("StartPlacement: " + objectToPlace.ToString());
         selectedObject = objectToPlace;
         currentPreview = Instantiate(GetPrefabFromObject(selectedObject));
         SetPreviewMaterial(validPlacementMaterial);
