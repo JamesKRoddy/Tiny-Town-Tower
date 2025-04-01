@@ -37,16 +37,6 @@ public abstract class _TaskState : MonoBehaviour
         }
     }
 
-    // Get the agent, ensuring it's available
-    protected NavMeshAgent GetAgent()
-    {
-        if (agent == null && npc != null)
-        {
-            UpdateReferences();
-        }
-        return agent;
-    }
-
     public abstract TaskType GetTaskType();
 
     // Called when the state is entered
