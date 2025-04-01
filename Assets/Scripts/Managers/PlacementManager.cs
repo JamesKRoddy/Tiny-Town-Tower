@@ -28,6 +28,8 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
 
     protected abstract void PlaceObject();
     protected abstract bool IsValidPlacement(Vector3 position, out string errorMessage);
+    public abstract Vector2 GetXBounds();
+    public abstract Vector2 GetZBounds();
 
     private void OnEnable()
     {
@@ -68,9 +70,8 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
 
         currentGridPosition += move;
 
-        // Use TurretManager bounds instead of gridDimensions/gridOrigin
-        Vector2 xBounds = TurretManager.Instance.GetXBounds();
-        Vector2 zBounds = TurretManager.Instance.GetZBounds();
+        Vector2 xBounds = GetXBounds();
+        Vector2 zBounds = GetZBounds();
 
         currentGridPosition.x = Mathf.Clamp(currentGridPosition.x, xBounds.x, xBounds.y - gridSize);
         currentGridPosition.z = Mathf.Clamp(currentGridPosition.z, zBounds.x, zBounds.y - gridSize);

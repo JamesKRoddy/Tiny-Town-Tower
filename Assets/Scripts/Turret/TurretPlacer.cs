@@ -4,6 +4,11 @@ using System.Collections.Generic;
 
 public class TurretPlacer : PlacementManager<TurretScriptableObject>
 {
+    [Header("Turret Grid")]
+    [SerializeField] private Vector2 xBounds = new Vector2(-25f, 25f);
+    [SerializeField] private Vector2 zBounds = new Vector2(-25f, 25f);
+    [SerializeField] private bool showGridBounds;
+
     private static TurretPlacer _instance;
 
     public static TurretPlacer Instance
@@ -111,7 +116,7 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
     {
         if (controlType == PlayerControlType.TURRET_PLACEMENT)
         {
-            EnableGrid(TurretManager.Instance.GetXBounds(), TurretManager.Instance.GetZBounds());
+            EnableGrid(xBounds, zBounds);
             PlayerInput.Instance.OnLeftJoystick += HandleJoystickMovement;
             PlayerInput.Instance.OnAPressed += PlaceObject;
             PlayerInput.Instance.OnBPressed += CancelPlacement;
@@ -128,5 +133,25 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
     protected override void OnPlacementCancelled()
     {
         PlayerUIManager.Instance.turretMenu.SetScreenActive(true, 0.1f);
+    }
+
+    public override Vector2 GetXBounds() => xBounds;
+    public override Vector2 GetZBounds() => zBounds;
+
+    private void OnDrawGizmos()
+    {
+        if (showGridBounds)
+        {
+            Gizmos.color = Color.green;
+            Vector3 bottomLeft = new Vector3(xBounds.x, 0, zBounds.x);
+            Vector3 bottomRight = new Vector3(xBounds.y, 0, zBounds.x);
+            Vector3 topLeft = new Vector3(xBounds.x, 0, zBounds.y);
+            Vector3 topRight = new Vector3(xBounds.y, 0, zBounds.y);
+
+            Gizmos.DrawLine(bottomLeft, bottomRight);
+            Gizmos.DrawLine(bottomRight, topRight);
+            Gizmos.DrawLine(topRight, topLeft);
+            Gizmos.DrawLine(topLeft, bottomLeft);
+        }
     }
 }

@@ -3,6 +3,11 @@ using System.Collections.Generic;
 
 public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
 {
+    [Header("Building Grid")]
+    [SerializeField] private Vector2 xBounds = new Vector2(-25f, 25f);
+    [SerializeField] private Vector2 zBounds = new Vector2(-25f, 25f);
+    [SerializeField] private bool showGridBounds;
+
     private static BuildingPlacer _instance;
 
     public static BuildingPlacer Instance
@@ -20,6 +25,9 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
             return _instance;
         }
     }
+
+    public override Vector2 GetXBounds() => xBounds;
+    public override Vector2 GetZBounds() => zBounds;
 
     protected override void PlaceObject()
     {
@@ -62,7 +70,7 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
     {
         if (controlType == PlayerControlType.BUILDING_PLACEMENT)
         {
-            EnableGrid(BuildManager.Instance.GetXBounds(), BuildManager.Instance.GetZBounds());
+            EnableGrid(xBounds, zBounds);
             PlayerInput.Instance.OnLeftJoystick += HandleJoystickMovement;
             PlayerInput.Instance.OnAPressed += PlaceObject;
             PlayerInput.Instance.OnBPressed += CancelPlacement;
@@ -79,5 +87,22 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
     protected override void OnPlacementCancelled()
     {
         PlayerUIManager.Instance.utilityMenu.EnableBuildMenu();
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (showGridBounds)
+        {
+            Gizmos.color = Color.blue; // Using blue to distinguish from turret grid
+            Vector3 bottomLeft = new Vector3(xBounds.x, 0, zBounds.x);
+            Vector3 bottomRight = new Vector3(xBounds.y, 0, zBounds.x);
+            Vector3 topLeft = new Vector3(xBounds.x, 0, zBounds.y);
+            Vector3 topRight = new Vector3(xBounds.y, 0, zBounds.y);
+
+            Gizmos.DrawLine(bottomLeft, bottomRight);
+            Gizmos.DrawLine(bottomRight, topRight);
+            Gizmos.DrawLine(topRight, topLeft);
+            Gizmos.DrawLine(topLeft, bottomLeft);
+        }
     }
 }
