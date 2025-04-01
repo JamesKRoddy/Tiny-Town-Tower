@@ -25,6 +25,9 @@ public class CharacterInventory : MonoBehaviour
     [SerializeField]
     private List<InventoryItem> inventoryList = new List<InventoryItem>();
 
+    // Event for when a weapon is equipped
+    public event System.Action<WeaponScriptableObj> OnWeaponEquipped;
+
     public virtual void Start()
     {
         if(equippedWeaponScriptObj != null)
@@ -68,7 +71,7 @@ public class CharacterInventory : MonoBehaviour
 
     public bool HasItemByName(string itemName)
     {
-        return inventoryList.Any(i => i.resource.resourceName == itemName);
+        return inventoryList.Any(i => i.resource.objectName == itemName);
     }
 
     public int GetItemCount(ResourceScriptableObj item)
@@ -97,15 +100,17 @@ public class CharacterInventory : MonoBehaviour
         // Unequip the currently equipped weapon
         UnequipCurrentWeapon();
         // Instantiate and equip the new weapon
-        GameObject weapon = Instantiate(weaponScriptableObj.weaponPrefab, weaponHolder);
+        GameObject weapon = Instantiate(weaponScriptableObj.prefab, weaponHolder);
         equippedWeaponBase = weapon.GetComponent<WeaponBase>();
-
 
         equippedWeaponBase.OnEquipped(transform);
         equippedWeaponScriptObj = weaponScriptableObj;
 
         // Handle weapon-specific setup
         HandleWeaponType(weapon, weaponScriptableObj.animationType);
+
+        // Notify listeners that a weapon was equipped
+        OnWeaponEquipped?.Invoke(weaponScriptableObj);
     }
 
     private void UnequipCurrentWeapon()
@@ -120,10 +125,10 @@ public class CharacterInventory : MonoBehaviour
 
     private bool IsValidWeaponPrefab(WeaponScriptableObj weaponScriptableObj)
     {
-        if (weaponScriptableObj == null || weaponScriptableObj.weaponPrefab == null)
+        if (weaponScriptableObj == null || weaponScriptableObj.prefab == null)
             return false;
 
-        GameObject prefab = weaponScriptableObj.weaponPrefab;
+        GameObject prefab = weaponScriptableObj.prefab;
         return prefab.GetComponent<WeaponBase>() != null &&
                prefab.GetComponent<Collider>() != null;
     }

@@ -45,7 +45,7 @@ public class Chest : MonoBehaviour, IInteractive<ResourcePickup>
 
         if (chestContents != null)
         {
-            Debug.Log($"Chest {name} contains {chestContents.GetResourceObj().resourceName} (x{chestContents.count}), Rarity: {rarity}.");
+            Debug.Log($"Chest {name} contains {chestContents.GetResourceObj().objectName} (x{chestContents.count}), Rarity: {rarity}.");
         }
         else
         {
@@ -114,7 +114,7 @@ public class Chest : MonoBehaviour, IInteractive<ResourcePickup>
         }
 
         Debug.Log("Chest opened! It contains:");
-        Debug.Log($"{chestContents.GetResourceObj().resourceName}");
+        Debug.Log($"{chestContents.GetResourceObj().objectName}");
 
         return chestContents;
     }

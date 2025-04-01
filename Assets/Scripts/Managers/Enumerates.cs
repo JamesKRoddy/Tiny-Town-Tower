@@ -78,7 +78,13 @@ public enum PlayerControlType
     /// </summary>
 
     TURRET_CAMERA_MOVEMENT, //Default
-    TURRET_PLACEMENT // Placing a turret from the turret menu
+    TURRET_PLACEMENT, // Placing a turret from the turret menu
+
+    /// <summary>
+    /// Genetic Mutation UI
+    /// </summary>
+
+    GENETIC_MUTATION_MOVEMENT //Default
 }
 
 // =========================

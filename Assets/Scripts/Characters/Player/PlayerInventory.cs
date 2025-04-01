@@ -34,8 +34,16 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     public float interactionRange = 3f; // Distance to detect weapons    
 
     [Header("Players currently equipped items")] 
-    public GeneticMutation geneticMutation = GeneticMutation.NONE;
     public WeaponElement dashElement = WeaponElement.NONE;
+
+    [Header("Mutation Grid")]
+    [SerializeField] private int maxMutationSlots = 9; // Default to a 3x3 grid
+    private List<GeneticMutationObj> equippedMutations = new List<GeneticMutationObj>();
+
+    public List<MutationQuantityEntry> availableMutations = new List<MutationQuantityEntry>();
+
+    public int MaxMutationSlots => maxMutationSlots;
+    public List<GeneticMutationObj> EquippedMutations => equippedMutations;
 
     private void Awake()
     {
@@ -97,7 +105,9 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                     }
                 }
                 break;
-
+            case GeneticMutationObj geneticMutation:
+                AddAvalibleMutation(geneticMutation);
+                break;
             case ResourceScriptableObj resource:
                 AddItem(resource, resourcePickup.count);
                 break;
@@ -108,6 +118,30 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 break;
         }
     }
+
+    public void AddAvalibleMutation(GeneticMutationObj geneticMutation)
+    {
+        bool mutationFound = false;
+        for (int i = 0; i < availableMutations.Count; i++)
+        {
+            if (availableMutations[i].mutation == geneticMutation)
+            {
+                availableMutations[i].quantity++;
+                mutationFound = true;
+                break;
+            }
+        }
+
+        if (!mutationFound)
+        {
+            availableMutations.Add(new MutationQuantityEntry
+            {
+                mutation = geneticMutation,
+                quantity = 1
+            });
+        }
+    }
+
 
     public void EquipDash()
     {
@@ -196,5 +230,56 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             return null;
 
         return PlayerController.Instance._possessedNPC.GetTransform();
+    }
+
+    public void EquipMutation(GeneticMutationObj mutation)
+    {
+        if (!equippedMutations.Contains(mutation))
+        {
+            equippedMutations.Add(mutation);
+            if (mutation.mutationEffectPrefab != null)
+            {
+                GameObject effectObj = Instantiate(mutation.mutationEffectPrefab, PlayerController.Instance._possessedNPC.GetTransform());
+                BaseMutationEffect effect = effectObj.GetComponent<BaseMutationEffect>();
+                if (effect != null)
+                {
+                    effect.Initialize(mutation);
+                    effect.OnEquip();
+                }
+            }
+        }
+    }
+
+    public void RemoveMutation(GeneticMutationObj mutation)
+    {
+        if (equippedMutations.Remove(mutation))
+        {
+            // Find all mutation effects and find the one that matches our mutation
+            BaseMutationEffect[] effects = new BaseMutationEffect[0];
+            if (PlayerController.Instance._possessedNPC != null)
+            {
+                effects = PlayerController.Instance._possessedNPC.GetTransform()
+                    .GetComponentsInChildren<BaseMutationEffect>();
+            }
+            else
+            {
+                Debug.LogWarning("Trying to remove mutation but no NPC is possessed");
+            }
+            
+            foreach (BaseMutationEffect effect in effects)
+            {
+                if (effect.MutationData == mutation)
+                {
+                    effect.OnUnequip();
+                    Destroy(effect.gameObject);
+                    break;
+                }
+            }
+        }
+    }
+
+    public void SetMaxMutationSlots(int slots)
+    {
+        maxMutationSlots = slots;
     }
 }

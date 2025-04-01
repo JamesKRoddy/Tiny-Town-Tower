@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Windows;
 
-public class HumanCharacterController : MonoBehaviour, IPossessable
+public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 {
     [Header("Movement Parameters")]
     public float moveMaxSpeed = 10f; // Speed at which the player moves normally
@@ -42,6 +42,13 @@ public class HumanCharacterController : MonoBehaviour, IPossessable
 
     [Header("Vault State")]
     private Vector3 vaultTargetPosition; // Target position for vaulting
+
+    [Header("Health")]
+    [SerializeField] private float health = 100f;
+    [SerializeField] private float maxHealth = 100f;
+
+    public float Health { get => health; set => health = value; }
+    public float MaxHealth { get => maxHealth; set => maxHealth = value; }
 
     protected virtual void Awake()
     {
@@ -103,7 +110,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable
         else
         {
             settlerNPC?.ChangeState(null);
-            GetComponent<CharacterAnimationEvents>().Setup(PlayerCombat.Instance, this, PlayerInventory.Instance);
+            GetComponent<CharacterAnimationEvents>().Setup(characterCombat, this, PlayerInventory.Instance);
         }
     }
 
@@ -384,5 +391,22 @@ public class HumanCharacterController : MonoBehaviour, IPossessable
             Gizmos.DrawWireSphere(capsuleTop, capsuleCastRadius);
             Gizmos.DrawLine(capsuleBottom, capsuleTop);
         }
+    }
+
+    public void TakeDamage(float amount)
+    {
+        health = Mathf.Max(0, health - amount);
+        if (health <= 0) Die();
+    }
+
+    public void Heal(float amount)
+    {
+        health = Mathf.Min(maxHealth, health + amount);
+    }
+
+    public void Die()
+    {
+        // TODO: Implement death behavior
+        Debug.Log($"{gameObject.name} has died!");
     }
 }

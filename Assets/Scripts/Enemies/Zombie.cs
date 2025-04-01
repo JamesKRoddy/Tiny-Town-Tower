@@ -4,7 +4,6 @@ using UnityEngine.AI;
 public class Zombie : EnemyBase
 {
     public float attackRange = 2f;
-    public float damage = 10f;
     protected bool isAttacking = false;
 
     protected override void Awake()
@@ -39,7 +38,7 @@ public class Zombie : EnemyBase
         {
             // If you want to keep NavMeshAgent's pathfinding active but control movement through root motion:
             Vector3 rootMotion = animator.deltaPosition; // Get the root motion delta (movement from animation)
-            rootMotion.y = 0; // We don’t want to apply any vertical movement (gravity, etc.)
+            rootMotion.y = 0; // We don't want to apply any vertical movement (gravity, etc.)
 
             // Move the zombie using root motion
             transform.position += rootMotion;

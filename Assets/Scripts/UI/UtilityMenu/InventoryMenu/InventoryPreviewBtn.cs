@@ -3,29 +3,16 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class InventoryPreviewBtn : MonoBehaviour
+public class InventoryPreviewBtn : PreviewButtonBase<ResourceScriptableObj>
 {
-    [SerializeField] Button button;
-    [SerializeField] Image InventoryImage;
-    [SerializeField] TMP_Text inventoryNameText;
-
-    ResourceScriptableObj buildingObj;
-
-    void OnDestroy()
-    {
-        button.onClick.RemoveAllListeners();
-    }
-
     public void SetupButton(ResourceScriptableObj resourceObjRef)
     {
-        buildingObj = resourceObjRef;
+        base.SetupButton(resourceObjRef, resourceObjRef.sprite, resourceObjRef.objectName);
+    }
 
-        //button.onClick.AddListener(InstanciateBuildingConstruction); TODO //Open up sub menu with drop and stuff in it
-
-        if (resourceObjRef.resourceSprite != null)
-            InventoryImage.sprite = resourceObjRef.resourceSprite;
-
-        inventoryNameText.text = resourceObjRef.resourceName;
-
+    protected override void OnButtonClicked()
+    {
+        // Open inventory submenu (if needed)
     }
 }
+

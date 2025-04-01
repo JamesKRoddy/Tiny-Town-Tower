@@ -26,7 +26,7 @@ public class CharacterCombat : MonoBehaviour
             return;
         }
 
-        switch (equippedWeapon.weaponPrefab.GetComponent<WeaponBase>())
+        switch (equippedWeapon.prefab.GetComponent<WeaponBase>())
         {
             case MeleeWeapon meleeWeapon:
                 attackVFXHolder.MeleeAttackVFX((MeleeAttackDirection)attackDirection, meleeWeapon);
@@ -41,7 +41,7 @@ public class CharacterCombat : MonoBehaviour
                 break;
 
             default:
-                Debug.LogWarning($"{equippedWeapon.name} is of an unsupported weapon type!");
+                Debug.LogWarning($"{equippedWeapon.objectName} is of an unsupported weapon type!");
                 break;
         }
     }    

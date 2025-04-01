@@ -271,5 +271,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   button: {fileID: 3521595180707107549}
-  buildingImage: {fileID: 6573310334195328695}
-  buildingNameText: {fileID: 3136177978789284010}
+  previewImage: {fileID: 6573310334195328695}
+  nameText: {fileID: 3136177978789284010}

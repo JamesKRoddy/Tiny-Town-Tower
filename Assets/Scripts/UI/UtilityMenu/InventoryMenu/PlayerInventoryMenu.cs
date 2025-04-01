@@ -4,24 +4,25 @@ using UnityEngine;
 
 public class PlayerInventoryMenu : PreviewListMenuBase<ResourceCategory, ResourceScriptableObj>, IControllerInput
 {
+    [Header("Inventory Preview UI")]
+    [SerializeField] private GameObject previewResourceCostPrefab;
+    [SerializeField] private RectTransform previewResourceCostParent;
+
     public override void Setup()
     {
-        
+        base.Setup();
+        PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
 
     public override void OnEnable()
     {
         base.OnEnable();
-
-        PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
-
         PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
     }
 
     public override void OnDisable()
     {
         base.OnDisable();
-
         PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
     }
 
@@ -47,49 +48,48 @@ public class PlayerInventoryMenu : PreviewListMenuBase<ResourceCategory, Resourc
         PlayerUIManager.Instance.SetScreenActive(this, active, delay);
     }
 
-    // Retrieve the player's inventory, returning the `ResourceScriptableObj` directly
     public override IEnumerable<ResourceScriptableObj> GetItems()
     {
-        // Extract resources from the inventory list
         var inventory = PlayerInventory.Instance.GetFullInventory();
         foreach (var item in inventory)
         {
-            yield return item.resource;
+            if (item.resource != null && item.count > 0)
+            {
+                yield return item.resource;
+            }
         }
     }
 
-    // Group resources by their category
     public override ResourceCategory GetItemCategory(ResourceScriptableObj item)
     {
-        return item.resourceCategory;
+        return item.category;
     }
 
-    // Setup the button to display the resource details
     public override void SetupItemButton(ResourceScriptableObj item, GameObject button)
     {
         var buttonComponent = button.GetComponent<InventoryPreviewBtn>();
-        buttonComponent.SetupButton(item); 
+        if (buttonComponent != null)
+        {
+            int quantity = PlayerInventory.Instance.GetItemCount(item);
+            buttonComponent.SetupButton(item, item.sprite, quantity.ToString());
+        }
     }
-
 
     public override string GetPreviewName(ResourceScriptableObj item)
     {
-        return item.resourceName;
+        return item.objectName;
     }
 
-    // Fetch the sprite for the preview
     public override Sprite GetPreviewSprite(ResourceScriptableObj item)
     {
-        return item.resourceSprite;
+        return item.sprite;
     }
 
-    // Fetch the description for the preview
     public override string GetPreviewDescription(ResourceScriptableObj item)
     {
-        return item.resourceDescription;
+        return item.description;
     }
 
-    // Resource costs are not relevant for inventory items; return an empty list
     public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(ResourceScriptableObj item)
     {
         yield break;
@@ -97,11 +97,43 @@ public class PlayerInventoryMenu : PreviewListMenuBase<ResourceCategory, Resourc
 
     public override void UpdatePreviewSpecifics(ResourceScriptableObj item)
     {
-        Debug.Log("UNIMPLEMENTED FUNCTION");
+        if (previewResourceCostParent == null) return;
+
+        foreach (Transform child in previewResourceCostParent)
+        {
+            Destroy(child.gameObject);
+        }
+
+        if (item != null)
+        {
+            int quantity = PlayerInventory.Instance.GetItemCount(item);
+            GameObject resourceCostUI = Instantiate(previewResourceCostPrefab, previewResourceCostParent);
+            resourceCostUI.GetComponentInChildren<TMPro.TMP_Text>().text = $"Quantity: {quantity}";
+        }
     }
 
     public override void DestroyPreviewSpecifics()
     {
-        Debug.Log("UNIMPLEMENTED FUNCTION");
+        if (previewResourceCostParent == null) return;
+
+        foreach (Transform child in previewResourceCostParent)
+        {
+            Destroy(child.gameObject);
+        }
+    }
+
+    protected override void OnItemSelected(ResourceScriptableObj item)
+    {
+        base.OnItemSelected(item);
+        if (item != null)
+        {
+            UpdatePreviewSpecifics(item);
+        }
+    }
+
+    protected override void OnItemDeselected()
+    {
+        base.OnItemDeselected();
+        DestroyPreviewSpecifics();
     }
 }

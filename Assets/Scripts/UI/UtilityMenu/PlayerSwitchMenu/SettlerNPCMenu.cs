@@ -4,43 +4,9 @@ using UnityEngine;
 
 public class SettlerNPCMenu : PreviewListMenuBase<string, SettlerNPC>, IControllerInput
 {
-    private static SettlerNPCMenu _instance;
-
-    public static SettlerNPCMenu Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                _instance = FindFirstObjectByType<SettlerNPCMenu>();
-                if (_instance == null)
-                {
-                    Debug.LogError("SettlerNPCMenu instance not found in the scene!");
-                }
-            }
-            return _instance;
-        }
-    }
-
     public override void Setup()
     {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            _instance = this;
-        }
-    }
-
-    public override void OnEnable()
-    {
-        base.OnEnable();
-
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
-
-        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
     }
 
     public override void OnDisable()

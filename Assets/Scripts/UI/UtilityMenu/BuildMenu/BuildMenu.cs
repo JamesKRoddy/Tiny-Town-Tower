@@ -3,14 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptableObj>, IControllerInput
 {
-    public override void Setup()
-    {
-        PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
-    }
-
     [Header("Build Menu Preview UI")]
     [SerializeField] GameObject previewResourceCostPrefab;
     [SerializeField] RectTransform previewResourceCostParent;
@@ -18,10 +15,17 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
     [Header("Full list of Building Scriptable Objs")]
     public BuildingScriptableObj[] buildingScriptableObjs;
 
+    private BuildingPreviewBtn selectedButton;
+
+    public override void Setup()
+    {
+        base.Setup();
+        PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
+    }
+
     public override void OnEnable()
     {
-        base.OnEnable();        
-
+        base.OnEnable();
         PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
     }
 
@@ -48,6 +52,15 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
                 PlayerInput.Instance.OnLBPressed += leftScreenBtn.onClick.Invoke;
                 PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.utilityMenu.EnableUtilityMenu();
                 break;
+            case PlayerControlType.BUILDING_PLACEMENT:
+                if (selectedButton != null)
+                {
+                    PlayerInput.Instance.OnBPressed += () => {
+                        BuildingPlacer.Instance.StartPlacement(null);
+                        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
+                    };
+                }
+                break;
             default:
                 break;
         }
@@ -55,23 +68,26 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
 
     public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
-        PlayerUIManager.Instance.SetScreenActive(this, active, delay);     
+        PlayerUIManager.Instance.SetScreenActive(this, active, delay, onDone);     
     }
 
     public override IEnumerable<BuildingScriptableObj> GetItems()
     {
-        return buildingScriptableObjs; // Array of buildings from inspector
+        return buildingScriptableObjs;
     }
 
     public override BuildingCategory GetItemCategory(BuildingScriptableObj item)
     {
-        return item.buildingCategory; // Category of the building
+        return item.buildingCategory;
     }
 
     public override void SetupItemButton(BuildingScriptableObj item, GameObject button)
     {
         var buttonComponent = button.GetComponent<BuildingPreviewBtn>();
-        buttonComponent.SetupButton(item);
+        if (buttonComponent != null)
+        {
+            buttonComponent.SetupButton(item);
+        }
     }
 
     public override string GetPreviewName(BuildingScriptableObj item)
@@ -94,7 +110,7 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
         foreach (var resourceCost in item._resourceCost)
         {
             yield return (
-                resourceCost.resource.resourceName,
+                resourceCost.resource.objectName,
                 resourceCost.count,
                 PlayerInventory.Instance.GetItemCount(resourceCost.resource)
             );
@@ -120,6 +136,20 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
         foreach (Transform child in previewResourceCostParent)
         {
             Destroy(child.gameObject);
+        }
+    }
+
+    protected override void OnItemClicked(BuildingScriptableObj item)
+    {
+        if (item != null)
+        {
+            var buttonComponent = EventSystem.current.currentSelectedGameObject?.GetComponent<BuildingPreviewBtn>();
+            if (buttonComponent != null)
+            {
+                Debug.Log("OnItemClicked: " + item._name);
+                selectedButton = buttonComponent;
+                PlayerUIManager.Instance.buildMenu.SetScreenActive(false, 0.1f, () => BuildingPlacer.Instance.StartPlacement(item));
+            }
         }
     }
 }

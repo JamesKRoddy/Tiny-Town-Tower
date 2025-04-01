@@ -76,7 +76,7 @@ public class MeleeWeapon : WeaponBase
                 if (target != null)
                 {
                     Debug.Log($"Hit target: {hit.collider.name}");
-                    target.TakeDamage(weaponScriptableObj.damage);
+                    target.TakeDamage(WeaponData.damage);
                 }
             }
         }

@@ -1,50 +1,19 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.AI;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class SettlerPreviewBtn : MonoBehaviour
+public class SettlerPreviewBtn : PreviewButtonBase<SettlerNPC>
 {
-    [SerializeField] private TMP_Text nameText;
-    //[SerializeField] private TMP_Text ageText;
-    //[SerializeField] private TMP_Text descriptionText;
-    [SerializeField] private Button button;
-
-    private SettlerNPC npc;
-
-    void OnDestroy()
+    protected override void OnButtonClicked()
     {
-        button.onClick.RemoveAllListeners();
+        PlayerController.Instance.PossessNPC(data);
+        PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false, 0.05f);
+        PlayerUIManager.Instance.utilityMenu.ReturnToGame(PlayerControlType.CAMP_NPC_MOVEMENT);
     }
 
     public void SetupButton(SettlerNPC settlerNPC)
     {
-        npc = settlerNPC;
-
-        if (npc != null)
-        {
-            nameText.text = npc.nPCDataObj.nPCName;
-            //ageText.text = $"Age: {npcData.nPCAge}";
-            //descriptionText.text = npcData.nPCDescription;
-        }
-        else
-        {
-            nameText.text = "Unknown";
-            //ageText.text = "Age: N/A";
-            //descriptionText.text = "No details available.";
-        }
-
-        button.onClick.AddListener(OnButtonClicked);
+        base.SetupButton(settlerNPC, null, settlerNPC?.nPCDataObj.nPCName ?? "Unknown");
     }
-
-    private void OnButtonClicked()
-    {
-        PlayerController.Instance.PossessNPC(npc);
-
-        SettlerNPCMenu.Instance.SetScreenActive(false, 0.05f);
-        PlayerUIManager.Instance.utilityMenu.ReturnToGame(PlayerControlType.CAMP_NPC_MOVEMENT); //Doing this to reset the player controlls
-    }
-
-    
 }
+

@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using UnityEngine.InputSystem.LowLevel;
 using static UnityEditor.Searcher.SearcherWindow.Alignment;
+using System.Collections;
 
 public class PlayerInput : MonoBehaviour
 {
@@ -81,11 +82,6 @@ public class PlayerInput : MonoBehaviour
             GameManager.Instance.OnGameModeChanged -= UpdatePlayerControls;
     }
 
-    public void Start()
-    {
-        UpdatePlayerControls(currentControlType);        
-    }
-
     private void Update()
     {
         if (playerInputDisabled)
@@ -140,12 +136,34 @@ public class PlayerInput : MonoBehaviour
     {
         Debug.Log($"Update Controls playerControlType : <color=cyan> {playerControlType} </color>");
 
+        if(playerControlType == PlayerControlType.IN_MENU){
+            UpdatePlayerControls(playerControlType, 1);
+        }
+        else{
+            currentControlType = playerControlType;
+
+            ResetControlPositions();
+
+            UnsubscribeAll();
+
+            OnUpdatePlayerControls?.Invoke(currentControlType);
+        }
+    }
+
+    private void UpdatePlayerControls(PlayerControlType playerControlType, int frameDelay)
+    {
+        StartCoroutine(DelayedUpdatePlayerControls(playerControlType, frameDelay));
+    }
+
+    private IEnumerator DelayedUpdatePlayerControls(PlayerControlType playerControlType, int frameDelay)
+    {
+        for (int i = 0; i < frameDelay; i++)
+        {
+            yield return null;
+        }
         currentControlType = playerControlType;
-
         ResetControlPositions();
-
         UnsubscribeAll();
-
         OnUpdatePlayerControls?.Invoke(currentControlType);
     }
 

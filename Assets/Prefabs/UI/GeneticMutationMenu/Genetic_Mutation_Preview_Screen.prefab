@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 8499675349403038571}
   - component: {fileID: 1664155228235971516}
   m_Layer: 5
-  m_Name: Player_Switch_Preview_Screen
+  m_Name: Genetic_Mutation_Preview_Screen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
