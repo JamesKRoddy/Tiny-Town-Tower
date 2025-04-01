@@ -105,9 +105,9 @@ public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableOb
     private Vector3 SnapToGrid(Vector3 position)
     {
         return new Vector3(
-            Mathf.Floor(position.x / gridSize) * gridSize + (gridSize / 2),
+            Mathf.Round(position.x / gridSize) * gridSize,
             0,
-            Mathf.Floor(position.z / gridSize) * gridSize + (gridSize / 2)
+            Mathf.Round(position.z / gridSize) * gridSize
         );
     }
 
