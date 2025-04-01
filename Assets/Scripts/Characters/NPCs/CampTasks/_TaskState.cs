@@ -14,15 +14,37 @@ public abstract class _TaskState : MonoBehaviour
         {
             SetNPCReference(GetComponent<SettlerNPC>());
         }
-
-        agent = npc.GetAgent();
-        animator = npc.GetAnimator();
     }
 
     // This method will be called to set the NPC reference once the state is added to the NPC
     public void SetNPCReference(SettlerNPC npc)
     {
         this.npc = npc;
+        UpdateReferences();
+    }
+
+    // Update component references
+    protected void UpdateReferences()
+    {
+        if (npc != null)
+        {
+            agent = npc.GetAgent();
+            animator = npc.GetAnimator();
+        }
+        else
+        {
+            Debug.LogWarning($"NPC reference is null in {gameObject.name}'s {GetType().Name}");
+        }
+    }
+
+    // Get the agent, ensuring it's available
+    protected NavMeshAgent GetAgent()
+    {
+        if (agent == null && npc != null)
+        {
+            UpdateReferences();
+        }
+        return agent;
     }
 
     public abstract TaskType GetTaskType();

@@ -25,6 +25,7 @@ public class SettlerNPC : HumanCharacterController
         foreach (var state in states)
         {
             taskStates.Add(state.GetTaskType(), state);
+            state.SetNPCReference(this);
         }
     }
 
