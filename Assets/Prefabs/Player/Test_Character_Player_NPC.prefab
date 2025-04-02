@@ -1666,7 +1666,7 @@ NavMeshAgent:
   m_Acceleration: 8
   avoidancePriority: 50
   m_AngularSpeed: 120
-  m_StoppingDistance: 0
+  m_StoppingDistance: 1.5
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
@@ -1756,6 +1756,8 @@ MonoBehaviour:
   capsuleCastRadius: 0.2
   vaultHeight: 1
   vaultOffset: 2
+  health: 100
+  maxHealth: 100
   nPCDataObj: {fileID: 11400000, guid: ff84a74ffbac90849b0eb152033e7ac8, type: 2}
 --- !u!114 &4868853620621953941
 MonoBehaviour:
