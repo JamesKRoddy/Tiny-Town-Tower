@@ -581,9 +581,29 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
+      propertyPath: inventoryList.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: availableMutations.Array.size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
+      propertyPath: inventoryList.Array.data[1].count
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
+      propertyPath: inventoryList.Array.data[2].count
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
+      propertyPath: inventoryList.Array.data[1].resource
+      value: 
+      objectReference: {fileID: 11400000, guid: 74701f8e255f24a4980777d43c0b6edf, type: 2}
+    - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
+      propertyPath: inventoryList.Array.data[2].resource
+      value: 
+      objectReference: {fileID: 11400000, guid: e9e256aa3d595cc46bfcc1c42f699df0, type: 2}
     - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: availableMutations.Array.data[0].mutation
       value: 
