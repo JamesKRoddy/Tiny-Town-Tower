@@ -89,6 +89,20 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         CleanupEventListeners();
     }
 
+    public override void SetPlayerControls(PlayerControlType controlType){
+
+        base.SetPlayerControls(controlType);
+        
+        switch (controlType)
+        {
+            case PlayerControlType.IN_MENU:
+                PlayerInput.Instance.OnRBPressed += rightScreenBtn.onClick.Invoke;
+                PlayerInput.Instance.OnLBPressed += leftScreenBtn.onClick.Invoke;
+                break;
+            default:
+                break;
+        }
+    }
     protected virtual void CleanupScreens()
     {
         foreach (var screen in screens.Values)

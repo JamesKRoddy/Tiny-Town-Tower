@@ -17,18 +17,10 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
 
     private BuildingPreviewBtn selectedButton;
 
-    public void SetPlayerControlType(PlayerControlType controlType)
+    public override void SetPlayerControls(PlayerControlType controlType)
     {
-        if (PlayerUIManager.Instance.currentMenu != this)
-            return;
-
         switch (controlType)
         {
-            case PlayerControlType.IN_MENU:
-                PlayerInput.Instance.OnRBPressed += rightScreenBtn.onClick.Invoke;
-                PlayerInput.Instance.OnLBPressed += leftScreenBtn.onClick.Invoke;
-                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.utilityMenu.EnableUtilityMenu();
-                break;
             case PlayerControlType.BUILDING_PLACEMENT:
                 if (selectedButton != null)
                 {

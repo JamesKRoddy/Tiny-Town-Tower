@@ -48,6 +48,12 @@ public class PauseMenu : MenuBase, IControllerInput
         }
     }
 
+    public void EnablePauseMenu()
+    {
+        PlayerUIManager.Instance.HidePauseMenus();
+        SetScreenActive(true, 0.1f);
+    }
+    
     private void OpenSettings()
     {
         PlayerUIManager.Instance.HidePauseMenus();
@@ -64,20 +70,6 @@ public class PauseMenu : MenuBase, IControllerInput
     {
         PlayerUIManager.Instance.HidePauseMenus();
         PlayerUIManager.Instance.quitMenu.SetScreenActive(true, 0.1f);
-    }
-
-    public void SetPlayerControlType(PlayerControlType controlType)
-    {
-        if (PlayerUIManager.Instance.currentMenu != this)
-            return;
-        switch (controlType)
-        {
-            case PlayerControlType.IN_MENU:
-                PlayerInput.Instance.OnBPressed += () => ReturnToGame();
-                break;
-            default:
-                break;
-        }
     }
 
     internal void OpenMenu(PlayerControlType playerControlType)

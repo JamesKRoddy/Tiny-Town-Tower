@@ -33,17 +33,13 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     private Vector2 lastInputDirection;
     private float warningLockEndTime = 0f;
 
-    public void SetPlayerControlType(PlayerControlType controlType)
+    public override void SetPlayerControls(PlayerControlType controlType)
     {
-        if (PlayerUIManager.Instance.currentMenu != this)
-            return;
+        base.SetPlayerControls(controlType);
 
         switch (controlType)
         {
             case PlayerControlType.IN_MENU:
-                PlayerInput.Instance.OnRBPressed += rightScreenBtn.onClick.Invoke;
-                PlayerInput.Instance.OnLBPressed += leftScreenBtn.onClick.Invoke;
-                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.utilityMenu.EnableUtilityMenu();
                 // Enable all buttons in the current screen
                 if (screens.ContainsKey(currentCategory) && screens[currentCategory] != null)
                 {

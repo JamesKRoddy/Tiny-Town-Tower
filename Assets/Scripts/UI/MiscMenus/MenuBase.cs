@@ -39,7 +39,7 @@ public abstract class MenuBase : MonoBehaviour, IControllerInput
         switch (controlType)
         {
             case PlayerControlType.IN_MENU:
-                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.utilityMenu.EnableUtilityMenu();
+                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.BackPressed();
                 break;
             default:
                 break;

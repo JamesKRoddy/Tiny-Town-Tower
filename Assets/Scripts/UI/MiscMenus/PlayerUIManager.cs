@@ -33,7 +33,8 @@ public class PlayerUIManager : MonoBehaviour
     [SerializeField] TMP_Text errorMessage;
 
     [Header("UI References")]
-    [HideInInspector] public MenuBase currentMenu;
+    public MenuBase currentMenu;
+    public MenuBase previousMenu;
 
     [Header("Pause Menu References")]
     public PauseMenu pauseMenu;
@@ -98,10 +99,24 @@ public class PlayerUIManager : MonoBehaviour
         }
         else
         {
+            previousMenu = currentMenu;
             currentMenu = menu;
             menu.gameObject.SetActive(active);
             callback?.Invoke(); // Invoke the callback immediately if there's no delay
         }
+    }
+    
+    private IEnumerator EnableMenuAfterDelay(MenuBase menu, bool active, float delay, Action OnDone)
+    {
+        yield return new WaitForSeconds(delay);
+
+        previousMenu = currentMenu;
+        currentMenu = menu;
+        menu.gameObject.SetActive(active);
+
+        OnDone?.Invoke(); // Invoke the callback after enabling the menu
+
+        openingMenuCoroutine = null; // Reset the coroutine reference
     }
 
     public void DisplayUIErrorMessage(string message, float duration = 2.0f)
@@ -150,15 +165,32 @@ public class PlayerUIManager : MonoBehaviour
         quitMenu.SetScreenActive(false);
     }
 
-    private IEnumerator EnableMenuAfterDelay(MenuBase menu, bool active, float delay, Action OnDone)
+    internal void BackPressed()
     {
-        yield return new WaitForSeconds(delay);
-
-        currentMenu = menu;
-        menu.gameObject.SetActive(active);
-
-        OnDone?.Invoke(); // Invoke the callback after enabling the menu
-
-        openingMenuCoroutine = null; // Reset the coroutine reference
+        Debug.Log("BackPressed");
+        switch (currentMenu)
+        {
+            case PauseMenu:
+                pauseMenu.ReturnToGame();
+                break;
+            case UtilityMenu:
+                utilityMenu.ReturnToGame();
+                break;
+            case BuildMenu:
+            case GeneticMutationUI:
+            case PlayerInventoryMenu:
+            case SettlerNPCMenu:
+            case TurretMenu:
+            case TurretUpgradeMenu:
+                utilityMenu.EnableUtilityMenu();
+                break;
+            case SettingsMenu:
+            case ReturnToCampMenu:
+            case QuitMenu:
+                pauseMenu.EnablePauseMenu();
+                break;
+            default:
+                break;  
+        }
     }
 }
