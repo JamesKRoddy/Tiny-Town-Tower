@@ -33,28 +33,6 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     private Vector2 lastInputDirection;
     private float warningLockEndTime = 0f;
 
-    public override void Setup()
-    {
-        PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
-    }
-
-    public override void OnEnable()
-    {
-        base.OnEnable();
-        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
-    }
-
-    public override void OnDisable()
-    {
-        base.OnDisable();
-    }
-
-    public void OnDestroy()
-    {
-        if (PlayerInput.Instance != null)
-            PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
-    }
-
     public void SetPlayerControlType(PlayerControlType controlType)
     {
         if (PlayerUIManager.Instance.currentMenu != this)
@@ -91,11 +69,6 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
             default:
                 break;
         }
-    }
-
-    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
-    {
-        PlayerUIManager.Instance.SetScreenActive(this, active, delay, onDone);
     }
 
     public override IEnumerable<GeneticMutationObj> GetItems()

@@ -4,40 +4,6 @@ using UnityEngine;
 
 public class SettlerNPCMenu : PreviewListMenuBase<string, SettlerNPC>, IControllerInput
 {
-    public override void Setup()
-    {
-        PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
-    }
-
-    public override void OnDisable()
-    {
-        base.OnDisable();
-
-        PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
-    }
-
-    public void SetPlayerControlType(PlayerControlType controlType)
-    {
-        if (PlayerUIManager.Instance.currentMenu != this)
-            return;
-
-        switch (controlType)
-        {
-            case PlayerControlType.IN_MENU:
-                PlayerInput.Instance.OnRBPressed += rightScreenBtn.onClick.Invoke;
-                PlayerInput.Instance.OnLBPressed += leftScreenBtn.onClick.Invoke;
-                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.utilityMenu.EnableUtilityMenu();
-                break;
-            default:
-                break;
-        }
-    }
-
-    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
-    {
-        PlayerUIManager.Instance.SetScreenActive(this, active, delay);
-    }
-
     // Retrieve all NPCs in the scene that inherit from SettlerNPC
     public override IEnumerable<SettlerNPC> GetItems()
     {

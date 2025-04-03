@@ -7,32 +7,28 @@ public class UtilityMenu : MenuBase, IControllerInput
 {
     public override void Setup()
     {
+        base.Setup();
         playerInventoryBtn.onClick.AddListener(EnablePlayerInventoryMenu);
         buildMenuBtn.onClick.AddListener(EnableBuildMenu);
         settlerNPCBtn.onClick.AddListener(EnableSettlerNPCMenu);
         turretBuildBtn.onClick.AddListener(EnableTurretBuildMenu);
         geneticMutationBtn.onClick.AddListener(EnableGeneticMutationMenu);
-
-        PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
 
-    public void OnEnable()
+    public override void OnEnable()
     {
-        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
-
+        base.OnEnable();
         EventSystem.current.SetSelectedGameObject(playerInventoryBtn.gameObject);
     }
 
-    void OnDestroy()
+    public override void OnDestroy()
     {
+        base.OnDestroy();
         playerInventoryBtn.onClick.RemoveAllListeners();
         buildMenuBtn.onClick.RemoveAllListeners();
         settlerNPCBtn.onClick.RemoveAllListeners();
         turretBuildBtn.onClick.RemoveAllListeners();
         geneticMutationBtn.onClick.RemoveAllListeners();
-
-        if (PlayerInput.Instance != null)
-            PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
     }
 
     [SerializeField] Button playerInventoryBtn;
@@ -40,11 +36,6 @@ public class UtilityMenu : MenuBase, IControllerInput
     [SerializeField] Button settlerNPCBtn;
     [SerializeField] Button turretBuildBtn;
     [SerializeField] Button geneticMutationBtn;
-
-    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
-    {
-        PlayerUIManager.Instance.SetScreenActive(this, active);
-    }
 
     public void ReturnToGame(PlayerControlType playerControlType = PlayerControlType.NONE)
     {
@@ -106,20 +97,6 @@ public class UtilityMenu : MenuBase, IControllerInput
     }
 
     #endregion
-
-    public void SetPlayerControlType(PlayerControlType controlType)
-    {
-        if (PlayerUIManager.Instance.currentMenu != this)
-            return;
-        switch (controlType)
-        {
-            case PlayerControlType.IN_MENU:
-                PlayerInput.Instance.OnBPressed += () => ReturnToGame();
-                break;
-            default:
-                break;
-        }
-    }
 
     internal void OpenMenu(PlayerControlType playerControlType)//TODO change this to use GameMode instead of player controls
     {

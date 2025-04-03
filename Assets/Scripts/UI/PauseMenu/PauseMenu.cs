@@ -7,40 +7,32 @@ public class PauseMenu : MenuBase, IControllerInput
 {
     public override void Setup()
     {
+        base.Setup();
         resumeGameBtn.onClick.AddListener(() => ReturnToGame());
         settingsBtn.onClick.AddListener(OpenSettings);
         returnToCampBtn.onClick.AddListener(ReturnToCamp);
         quitGameBtn.onClick.AddListener(QuitGame);
-
-        PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
 
-    public void OnEnable()
+    public override void OnEnable()
     {
-        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
+        base.OnEnable();
         EventSystem.current.SetSelectedGameObject(resumeGameBtn.gameObject);
     }
 
-    void OnDestroy()
+    public override void OnDestroy()
     {
+        base.OnDestroy();
         resumeGameBtn.onClick.RemoveAllListeners();
         settingsBtn.onClick.RemoveAllListeners();
         returnToCampBtn.onClick.RemoveAllListeners();
         quitGameBtn.onClick.RemoveAllListeners();
-
-        if (PlayerInput.Instance != null)
-            PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
     }
 
     [SerializeField] Button resumeGameBtn;
     [SerializeField] Button settingsBtn;
     [SerializeField] Button returnToCampBtn;
     [SerializeField] Button quitGameBtn;
-
-    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
-    {
-        PlayerUIManager.Instance.SetScreenActive(this, active);
-    }
 
     public void ReturnToGame(PlayerControlType playerControlType = PlayerControlType.NONE)
     {

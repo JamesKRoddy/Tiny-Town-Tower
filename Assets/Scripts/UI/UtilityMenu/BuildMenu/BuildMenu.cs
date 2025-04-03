@@ -17,29 +17,6 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
 
     private BuildingPreviewBtn selectedButton;
 
-    public override void Setup()
-    {
-        base.Setup();
-        PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
-    }
-
-    public override void OnEnable()
-    {
-        base.OnEnable();
-        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
-    }
-
-    public override void OnDisable()
-    {
-        base.OnDisable();
-    }
-
-    public void OnDestroy()
-    {
-        if(PlayerInput.Instance != null)
-            PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
-    }
-
     public void SetPlayerControlType(PlayerControlType controlType)
     {
         if (PlayerUIManager.Instance.currentMenu != this)
@@ -64,11 +41,6 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
             default:
                 break;
         }
-    }
-
-    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
-    {
-        PlayerUIManager.Instance.SetScreenActive(this, active, delay, onDone);     
     }
 
     public override IEnumerable<BuildingScriptableObj> GetItems()

@@ -162,9 +162,4 @@ public class NarrativeSystem : MenuBase
             PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
         }
     }
-
-    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
-    {
-        PlayerUIManager.Instance.SetScreenActive(this, active);
-    }
 }

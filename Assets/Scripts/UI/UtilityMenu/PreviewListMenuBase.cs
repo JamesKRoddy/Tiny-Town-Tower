@@ -46,6 +46,7 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
 
     public override void Setup()
     {
+        base.Setup();
         if (rightScreenBtn != null)
         {
             rightScreenBtn.onClick.AddListener(() => SwitchScreen(true));
@@ -56,8 +57,9 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         }
     }
 
-    public virtual void OnEnable()
+    public override void OnEnable()
     {
+        base.OnEnable();
         if (!isInitialized)
         {
             Setup();
@@ -80,8 +82,9 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         }
     }
 
-    public virtual void OnDisable()
+    public override void OnDisable()
     {
+        base.OnDisable();
         CleanupScreens();
         CleanupEventListeners();
     }
