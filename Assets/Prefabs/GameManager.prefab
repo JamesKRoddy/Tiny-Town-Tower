@@ -229,6 +229,9 @@ MonoBehaviour:
   invalidPlacementMaterial: {fileID: 0}
   gridPrefab: {fileID: 241196777734048875, guid: fb1ace5487d684b4a86192309c6fb1ec, type: 3}
   gridParent: {fileID: 4644746889367459830}
+  xBounds: {x: -25, y: 25}
+  zBounds: {x: -25, y: 25}
+  showGridBounds: 0
 --- !u!1 &3286751178416191525
 GameObject:
   m_ObjectHideFlags: 0
@@ -320,9 +323,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   waveConfigs:
   - {fileID: 11400000, guid: 1bff15a3b967a6543a2d0aaba3e05a4b, type: 2}
-  xBounds: {x: -10, y: 10}
-  zBounds: {x: -10, y: 10}
-  showGridBounds: 1
   baseTarget: {fileID: 6346286704177275359}
 --- !u!1 &5052584228449062672
 GameObject:
@@ -544,6 +544,9 @@ MonoBehaviour:
   invalidPlacementMaterial: {fileID: 0}
   gridPrefab: {fileID: 241196777734048875, guid: fb1ace5487d684b4a86192309c6fb1ec, type: 3}
   gridParent: {fileID: 892765565880304067}
+  xBounds: {x: -25, y: 25}
+  zBounds: {x: -25, y: 25}
+  showGridBounds: 0
 --- !u!1 &7892603899224520776
 GameObject:
   m_ObjectHideFlags: 0
@@ -588,6 +591,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13be80af3e9d3e94b8ab9cae4ddd3f35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  xBounds: {x: -25, y: 25}
-  zBounds: {x: -25, y: 25}
-  showGridBounds: 0

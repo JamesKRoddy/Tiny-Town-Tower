@@ -82,8 +82,21 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
 
         // Clamp the camera's new position within the X and Z bounds
         Vector3 newPosition = defaultTarget.position + panMovement;
-        newPosition.x = Mathf.Clamp(newPosition.x, TurretManager.Instance.GetXBounds().x, TurretManager.Instance.GetXBounds().y);
-        newPosition.z = Mathf.Clamp(newPosition.z, TurretManager.Instance.GetZBounds().x, TurretManager.Instance.GetZBounds().y);
+        // Clamp the position to the grid bounds based on game mode
+        switch (GameManager.Instance.CurrentGameMode)
+        {
+            case GameMode.TURRET:
+                newPosition.x = Mathf.Clamp(newPosition.x, TurretPlacer.Instance.GetXBounds().x, TurretPlacer.Instance.GetXBounds().y);
+                newPosition.z = Mathf.Clamp(newPosition.z, TurretPlacer.Instance.GetZBounds().x, TurretPlacer.Instance.GetZBounds().y);
+                break;
+            case GameMode.CAMP:
+                newPosition.x = Mathf.Clamp(newPosition.x, BuildingPlacer.Instance.GetXBounds().x, BuildingPlacer.Instance.GetXBounds().y);
+                newPosition.z = Mathf.Clamp(newPosition.z, BuildingPlacer.Instance.GetZBounds().x, BuildingPlacer.Instance.GetZBounds().y);
+                break;
+            default:
+                Debug.LogWarning($"Camera bounds not set for game mode: {GameManager.Instance.CurrentGameMode}");
+                break;
+        }
 
         defaultTarget.position = newPosition;
     }

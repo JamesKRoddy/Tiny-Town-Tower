@@ -2,14 +2,6 @@ using UnityEngine;
 
 public class TurretManager : GameModeManager<TurretEnemyWaveConfig>
 {
-    [Header("Turret Grid")]
-    [SerializeField] private Vector2 xBounds = new Vector2(-25f, 25f);
-    [SerializeField] private Vector2 zBounds = new Vector2(-25f, 25f);
-    [SerializeField] private bool showGridBounds;
-
-    public Vector2 GetXBounds() => xBounds;
-    public Vector2 GetZBounds() => zBounds;
-
     // Singleton instance
     private static TurretManager _instance;
 
@@ -92,22 +84,5 @@ public class TurretManager : GameModeManager<TurretEnemyWaveConfig>
     private EnemyWaveConfig GetTurretWaveConfig(int difficulty)
     {
         return GetWaveConfig(difficulty);
-    }
-
-    private void OnDrawGizmos()
-    {
-        if (showGridBounds)
-        {
-            Gizmos.color = Color.green;
-            Vector3 bottomLeft = new Vector3(xBounds.x, 0, zBounds.x);
-            Vector3 bottomRight = new Vector3(xBounds.y, 0, zBounds.x);
-            Vector3 topLeft = new Vector3(xBounds.x, 0, zBounds.y);
-            Vector3 topRight = new Vector3(xBounds.y, 0, zBounds.y);
-
-            Gizmos.DrawLine(bottomLeft, bottomRight);
-            Gizmos.DrawLine(bottomRight, topRight);
-            Gizmos.DrawLine(topRight, topLeft);
-            Gizmos.DrawLine(topLeft, bottomLeft);
-        }
     }
 }

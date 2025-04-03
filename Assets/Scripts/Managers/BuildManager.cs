@@ -34,32 +34,4 @@ public class BuildManager : MonoBehaviour
             _instance = this; // Set the instance
         }
     }
-
-    [Header("Build Grid")]
-    [SerializeField] private Vector2 xBounds = new Vector2(-25f, 25f); // X-axis bounds for turret grid
-    [SerializeField] private Vector2 zBounds = new Vector2(-25f, 25f); // Z-axis bounds for turret grid
-    [SerializeField] bool showGridBounds;
-
-    public Vector2 GetXBounds() => xBounds;
-    public Vector2 GetZBounds() => zBounds;
-
-
-    private void OnDrawGizmos()
-    {
-        if (showGridBounds)
-        {
-            Gizmos.color = Color.green;
-
-            // Draw a rectangular outline to visualize the panning bounds
-            Vector3 bottomLeft = new Vector3(TurretManager.Instance.GetXBounds().x, 0, TurretManager.Instance.GetZBounds().x);
-            Vector3 bottomRight = new Vector3(TurretManager.Instance.GetXBounds().y, 0, TurretManager.Instance.GetZBounds().x);
-            Vector3 topLeft = new Vector3(TurretManager.Instance.GetXBounds().x, 0, TurretManager.Instance.GetZBounds().y);
-            Vector3 topRight = new Vector3(TurretManager.Instance.GetXBounds().y, 0, TurretManager.Instance.GetZBounds().y);
-
-            Gizmos.DrawLine(bottomLeft, bottomRight);
-            Gizmos.DrawLine(bottomRight, topRight);
-            Gizmos.DrawLine(topRight, topLeft);
-            Gizmos.DrawLine(topLeft, bottomLeft);
-        }
-    }
 }

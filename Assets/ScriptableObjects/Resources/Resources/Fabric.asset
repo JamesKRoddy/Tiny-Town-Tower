@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fffb52b3d2a52944aafbf14c5b6debab, type: 3}
   m_Name: Fabric
   m_EditorClassIdentifier: 
-  resourceName: 
-  resourceDescription: 
-  resourceCategory: 0
-  resourceSprite: {fileID: 0}
+  objectName: Fabric
+  description: Fabric desc
+  category: 0
+  rarity: 0
+  sprite: {fileID: 0}
+  prefab: {fileID: 0}

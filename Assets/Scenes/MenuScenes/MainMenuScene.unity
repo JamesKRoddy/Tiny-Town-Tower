@@ -581,9 +581,29 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
+      propertyPath: inventoryList.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: availableMutations.Array.size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
+      propertyPath: inventoryList.Array.data[1].count
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
+      propertyPath: inventoryList.Array.data[2].count
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
+      propertyPath: inventoryList.Array.data[1].resource
+      value: 
+      objectReference: {fileID: 11400000, guid: 74701f8e255f24a4980777d43c0b6edf, type: 2}
+    - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
+      propertyPath: inventoryList.Array.data[2].resource
+      value: 
+      objectReference: {fileID: 11400000, guid: e9e256aa3d595cc46bfcc1c42f699df0, type: 2}
     - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: availableMutations.Array.data[0].mutation
       value: 
@@ -746,6 +766,30 @@ PrefabInstance:
       propertyPath: m_Name
       value: GameManager
       objectReference: {fileID: 0}
+    - target: {fileID: 2683458163222554810, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: showGridBounds
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4439842862291004188, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: xBounds.x
+      value: -10
+      objectReference: {fileID: 0}
+    - target: {fileID: 4439842862291004188, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: xBounds.y
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 4439842862291004188, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: zBounds.x
+      value: -10
+      objectReference: {fileID: 0}
+    - target: {fileID: 4439842862291004188, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: zBounds.y
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 4439842862291004188, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: showGridBounds
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4686915863895893509, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -785,6 +829,22 @@ PrefabInstance:
     - target: {fileID: 4686915863895893509, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: xBounds.x
+      value: -15
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: xBounds.y
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: zBounds.x
+      value: -15
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: zBounds.y
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 6945657278055493532, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: buildingDataScriptableObjs.Array.size

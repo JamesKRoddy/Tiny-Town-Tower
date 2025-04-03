@@ -3,6 +3,11 @@ using System.Collections.Generic;
 
 public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
 {
+    [Header("Building Grid")]
+    [SerializeField] private Vector2 xBounds = new Vector2(-25f, 25f);
+    [SerializeField] private Vector2 zBounds = new Vector2(-25f, 25f);
+    [SerializeField] private bool showGridBounds;
+
     private static BuildingPlacer _instance;
 
     public static BuildingPlacer Instance
@@ -21,6 +26,9 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
         }
     }
 
+    public override Vector2 GetXBounds() => xBounds;
+    public override Vector2 GetZBounds() => zBounds;
+
     protected override void PlaceObject()
     {
         if (!IsValidPlacement(currentGridPosition, out string errorMessage))
@@ -36,8 +44,14 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
         }
 
         GameObject constructionSite = Instantiate(selectedObject.constructionSite, currentPreview.transform.position, Quaternion.identity);
-        constructionSite.GetComponent<ConstructionSite>().SetupConstruction(selectedObject);
 
+        if (constructionSite.TryGetComponent(out ConstructionSite constructionSiteScript)){
+            constructionSiteScript.SetupConstruction(selectedObject);
+        } else {
+            constructionSite.AddComponent<ConstructionSite>();
+            constructionSite.GetComponent<ConstructionSite>().SetupConstruction(selectedObject);
+        }
+        
         MarkGridSlotsOccupied(currentPreview.transform.position, selectedObject.size, constructionSite);
         CancelPlacement();
     }
@@ -62,7 +76,7 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
     {
         if (controlType == PlayerControlType.BUILDING_PLACEMENT)
         {
-            EnableGrid(BuildManager.Instance.GetXBounds(), BuildManager.Instance.GetZBounds());
+            EnableGrid(xBounds, zBounds);
             PlayerInput.Instance.OnLeftJoystick += HandleJoystickMovement;
             PlayerInput.Instance.OnAPressed += PlaceObject;
             PlayerInput.Instance.OnBPressed += CancelPlacement;
@@ -79,5 +93,22 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
     protected override void OnPlacementCancelled()
     {
         PlayerUIManager.Instance.utilityMenu.EnableBuildMenu();
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (showGridBounds)
+        {
+            Gizmos.color = Color.blue; // Using blue to distinguish from turret grid
+            Vector3 bottomLeft = new Vector3(xBounds.x, 0, zBounds.x);
+            Vector3 bottomRight = new Vector3(xBounds.y, 0, zBounds.x);
+            Vector3 topLeft = new Vector3(xBounds.x, 0, zBounds.y);
+            Vector3 topRight = new Vector3(xBounds.y, 0, zBounds.y);
+
+            Gizmos.DrawLine(bottomLeft, bottomRight);
+            Gizmos.DrawLine(bottomRight, topRight);
+            Gizmos.DrawLine(topRight, topLeft);
+            Gizmos.DrawLine(topLeft, bottomLeft);
+        }
     }
 }
