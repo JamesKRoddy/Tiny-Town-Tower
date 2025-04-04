@@ -1,20 +1,29 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public abstract class MenuBase : MonoBehaviour, IControllerInput
 {
+    [Header("First Selected Button")]
+    [SerializeField] private Button _firstSelected;
+
     public virtual void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null){
-        PlayerUIManager.Instance.SetScreenActive(this, active, delay, onDone);
-    }
-
-    public virtual void OnEnable(){
-        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
-    }
-
-    public virtual void Setup(){
-        PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
+        PlayerUIManager.Instance.SetScreenActive(this, active, delay, () => {
+            if (active)
+            {
+                PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
+                PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
+                EventSystem.current.SetSelectedGameObject(_firstSelected.gameObject);
+            }
+            else
+            {
+                PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
+            }
+            onDone?.Invoke();
+        });
     }
 
     public virtual void DisplayErrorMessage(string message)
@@ -44,9 +53,6 @@ public abstract class MenuBase : MonoBehaviour, IControllerInput
             default:
                 break;
         }
-    }
-    public virtual void OnDisable(){
-        PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
     }
 
     public virtual void OnDestroy()

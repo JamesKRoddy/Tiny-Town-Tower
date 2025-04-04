@@ -5,20 +5,13 @@ using UnityEngine.UI;
 
 public class UtilityMenu : MenuBase, IControllerInput
 {
-    public override void Setup()
+    public void Awake()
     {
-        base.Setup();
         playerInventoryBtn.onClick.AddListener(EnablePlayerInventoryMenu);
         buildMenuBtn.onClick.AddListener(EnableBuildMenu);
         settlerNPCBtn.onClick.AddListener(EnableSettlerNPCMenu);
         turretBuildBtn.onClick.AddListener(EnableTurretBuildMenu);
         geneticMutationBtn.onClick.AddListener(EnableGeneticMutationMenu);
-    }
-
-    public override void OnEnable()
-    {
-        base.OnEnable();
-        EventSystem.current.SetSelectedGameObject(playerInventoryBtn.gameObject);
     }
 
     public override void OnDestroy()

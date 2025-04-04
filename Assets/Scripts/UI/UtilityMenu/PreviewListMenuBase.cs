@@ -23,7 +23,6 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
     protected Dictionary<TCategory, GameObject> screens = new Dictionary<TCategory, GameObject>();
     protected TCategory currentCategory;
     protected TItem currentSelectedItem;
-    protected bool isInitialized = false;
 
     public abstract IEnumerable<TItem> GetItems();
     public abstract TCategory GetItemCategory(TItem item);
@@ -35,18 +34,25 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
     public abstract void UpdatePreviewSpecifics(TItem item);
     public abstract void DestroyPreviewSpecifics();
 
-    protected virtual void Awake()
-    {
-        if (!isInitialized)
-        {
-            Setup();
-            isInitialized = true;
-        }
-    }
 
-    public override void Setup()
+    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
-        base.Setup();
+        base.SetScreenActive(active, delay, () => {
+            if (active)
+            {
+                RefreshUIAndSelectFirst();
+                SetupScreenButtons();
+            }
+            else
+            {
+                CleanupScreens();
+                CleanupScreenButtons();
+            }
+            onDone?.Invoke();
+        });
+    }    
+    private void SetupScreenButtons()
+    {
         if (rightScreenBtn != null)
         {
             rightScreenBtn.onClick.AddListener(() => SwitchScreen(true));
@@ -57,17 +63,17 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         }
     }
 
-    public override void OnEnable()
+    private void CleanupScreenButtons()
     {
-        base.OnEnable();
-        if (!isInitialized)
+        if (rightScreenBtn != null)
         {
-            Setup();
-            isInitialized = true;
+            rightScreenBtn.onClick.RemoveAllListeners();
         }
-        RefreshUIAndSelectFirst();
+        if (leftScreenBtn != null)
+        {
+            leftScreenBtn.onClick.RemoveAllListeners();
+        }
     }
-
     protected void RefreshUIAndSelectFirst()
     {
         SetupScreens();
@@ -80,13 +86,6 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         {
             EventSystem.current.SetSelectedGameObject(leftScreenBtn.gameObject);
         }
-    }
-
-    public override void OnDisable()
-    {
-        base.OnDisable();
-        CleanupScreens();
-        CleanupEventListeners();
     }
 
     public override void SetPlayerControls(PlayerControlType controlType){
@@ -113,18 +112,6 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
             }
         }
         screens.Clear();
-    }
-
-    protected virtual void CleanupEventListeners()
-    {
-        if (rightScreenBtn != null)
-        {
-            rightScreenBtn.onClick.RemoveAllListeners();
-        }
-        if (leftScreenBtn != null)
-        {
-            leftScreenBtn.onClick.RemoveAllListeners();
-        }
     }
 
     protected void SetupScreens()

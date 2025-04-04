@@ -12,9 +12,6 @@ public class LoadingMenu : MenuBase
     [SerializeField] private Slider progressBar;         // Progress bar UI.
     [SerializeField] private TMP_Text progressText;            // Progress text UI.
 
-    // No setup required for screen activation here.
-    public override void Setup() { }
-
     // Since we're not toggling any screen, simply invoke the callback.
     public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {

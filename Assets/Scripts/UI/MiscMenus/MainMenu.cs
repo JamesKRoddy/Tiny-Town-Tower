@@ -22,9 +22,4 @@ public class MainMenu : MenuBase
     {
         Debug.LogWarning("Not Implemented!!!!");
     }
-
-    public override void Setup()
-    {
-        throw new NotImplementedException();
-    }
 }

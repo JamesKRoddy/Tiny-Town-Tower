@@ -5,19 +5,12 @@ using UnityEngine.UI;
 
 public class PauseMenu : MenuBase, IControllerInput
 {
-    public override void Setup()
+    public void Awake()
     {
-        base.Setup();
         resumeGameBtn.onClick.AddListener(() => ReturnToGame());
         settingsBtn.onClick.AddListener(OpenSettings);
         returnToCampBtn.onClick.AddListener(ReturnToCamp);
         quitGameBtn.onClick.AddListener(QuitGame);
-    }
-
-    public override void OnEnable()
-    {
-        base.OnEnable();
-        EventSystem.current.SetSelectedGameObject(resumeGameBtn.gameObject);
     }
 
     public override void OnDestroy()

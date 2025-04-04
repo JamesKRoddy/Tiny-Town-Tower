@@ -18,7 +18,7 @@ public class NarrativeSystem : MenuBase
     private DialogueData currentDialogue;
     private Dictionary<string, DialogueLine> dialogueLinesMap;
 
-    public override void Setup()
+    public void Awake()
     {
         dialoguePanel = gameObject; //TODO can i get rid of dialoguePanel?
         dialoguePanel.SetActive(false);

@@ -19,6 +19,7 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
 
     public override void SetPlayerControls(PlayerControlType controlType)
     {
+        base.SetPlayerControls(controlType);
         switch (controlType)
         {
             case PlayerControlType.BUILDING_PLACEMENT:

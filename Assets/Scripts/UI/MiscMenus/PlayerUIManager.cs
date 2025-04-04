@@ -68,20 +68,7 @@ public class PlayerUIManager : MonoBehaviour
         {
             _instance = this; // Set the instance
             DontDestroyOnLoad(gameObject); // Optionally persist across scenes
-        }
-
-        buildMenu.Setup();
-        narrativeSystem.Setup();
-        playerInventoryMenu.Setup();
-        settlerNPCMenu.Setup(); 
-        turretMenu.Setup();
-        turretUpgradeMenu.Setup();
-        geneticMutationMenu.Setup();
-        utilityMenu.Setup();
-        pauseMenu.Setup();
-        settingsMenu.Setup();
-        returnToCampMenu.Setup();
-        quitMenu.Setup();        
+        }   
     }
 
     /// <summary>
@@ -167,7 +154,7 @@ public class PlayerUIManager : MonoBehaviour
 
     internal void BackPressed()
     {
-        Debug.Log("BackPressed");
+        Debug.Log("BackPressed " + currentMenu.name);
         switch (currentMenu)
         {
             case PauseMenu:

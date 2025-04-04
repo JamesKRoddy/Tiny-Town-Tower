@@ -5,9 +5,8 @@ using UnityEngine.UI;
 
 public class SettingsMenu : MenuBase, IControllerInput
 {
-    public override void Setup()
+    public void Awake()
     {
-        base.Setup();
         audioSettingsBtn.onClick.AddListener(OpenAudioSettings);
         videoSettingsBtn.onClick.AddListener(OpenVideoSettings);
         controlsSettingsBtn.onClick.AddListener(OpenControlsSettings);
@@ -50,19 +49,5 @@ public class SettingsMenu : MenuBase, IControllerInput
     {
         SetScreenActive(false);
         PlayerUIManager.Instance.pauseMenu.SetScreenActive(true, 0.1f);
-    }
-
-    public void SetPlayerControlType(PlayerControlType controlType)
-    {
-        if (PlayerUIManager.Instance.currentMenu != this)
-            return;
-        switch (controlType)
-        {
-            case PlayerControlType.IN_MENU:
-                PlayerInput.Instance.OnBPressed += () => CloseSettingsMenu();
-                break;
-            default:
-                break;
-        }
     }
 }

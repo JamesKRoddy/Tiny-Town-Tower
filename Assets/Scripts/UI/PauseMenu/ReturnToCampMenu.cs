@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class ReturnToCampMenu : MenuBase
 {
-    public override void Setup()
+    public void Awake()
     {
         yesBtn.onClick.AddListener(ReturnToCamp);
         noBtn.onClick.AddListener(CloseMenu);
@@ -13,12 +13,6 @@ public class ReturnToCampMenu : MenuBase
 
     [SerializeField] Button yesBtn;
     [SerializeField] Button noBtn;
-
-    public override void OnEnable()
-    {
-        base.OnEnable();
-        EventSystem.current.SetSelectedGameObject(yesBtn.gameObject);
-    }
 
     void CloseMenu()
     {
