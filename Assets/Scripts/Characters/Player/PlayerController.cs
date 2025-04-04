@@ -139,7 +139,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
     private void HandleLeftJoystick(Vector2 input)
     {
-        if(_possessedNPC != null && PlayerInput.Instance.currentControlType != PlayerControlType.IN_CONVERSATION)
+        if(_possessedNPC != null && PlayerInput.Instance.CurrentControlType != PlayerControlType.IN_CONVERSATION)
         {
             _possessedNPC.Movement(new Vector3(input.x, 0, input.y));
         }
@@ -147,7 +147,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
     private void HandleAInput()
     {
-        if (_possessedNPC != null && PlayerInput.Instance.currentControlType == PlayerControlType.COMBAT_NPC_MOVEMENT)
+        if (_possessedNPC != null && PlayerInput.Instance.CurrentControlType == PlayerControlType.COMBAT_NPC_MOVEMENT)
         {
             _possessedNPC.Attack();
         }
@@ -155,7 +155,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
     private void HandleYInput()
     {
-        if (_possessedNPC != null && PlayerInput.Instance.currentControlType == PlayerControlType.COMBAT_NPC_MOVEMENT)
+        if (_possessedNPC != null && PlayerInput.Instance.CurrentControlType == PlayerControlType.COMBAT_NPC_MOVEMENT)
         {
             _possessedNPC.Dash();
         }
