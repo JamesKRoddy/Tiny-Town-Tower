@@ -1113,6 +1113,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14c498484c9f32d4fbddca7250754549, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _firstSelected: {fileID: 6217221206467441037}
   upgradeButton: {fileID: 6217221206467441037}
   upgradeButtonText: {fileID: 8445827305004864697}
   previewResourceCostParent: {fileID: 5477093826068405018}
@@ -1543,6 +1544,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ef4261c5e4f8a54c97bd65c8ab1189f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _firstSelected: {fileID: 5280692672267255047}
   resumeGameBtn: {fileID: 5280692672267255047}
   settingsBtn: {fileID: 732187655044517418}
   returnToCampBtn: {fileID: 8831430401427996135}
@@ -1929,6 +1931,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8acb315f41add4842b637a9c6d4ef88e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _firstSelected: {fileID: 5069835375438988167}
   screenTitle: {fileID: 5389086869743904141}
   rightScreenBtn: {fileID: 5635821625545707043}
   leftScreenBtn: {fileID: 5069835375438988167}
@@ -3003,7 +3006,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Resume
+  m_text: Audio
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -7186,6 +7189,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95ac27fec49c4234d816c494fc2459c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _firstSelected: {fileID: 3190982520573090279}
   screenTitle: {fileID: 1779203873800409635}
   rightScreenBtn: {fileID: 5242601610839587651}
   leftScreenBtn: {fileID: 3190982520573090279}
@@ -8266,6 +8270,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   errorMessage: {fileID: 1270345140197587669}
   currentMenu: {fileID: 0}
+  previousMenu: {fileID: 0}
   pauseMenu: {fileID: 6031392202740666420}
   settingsMenu: {fileID: 4654930161454814456}
   returnToCampMenu: {fileID: 1168541475958688944}
@@ -10381,6 +10386,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 283141800aa2da042a4f2927be9c4f31, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _firstSelected: {fileID: 1374456535096969682}
   screenTitle: {fileID: 8951380795531033220}
   rightScreenBtn: {fileID: 7541440954917980666}
   leftScreenBtn: {fileID: 1374456535096969682}
@@ -10390,6 +10396,8 @@ MonoBehaviour:
   previewImage: {fileID: 2091898797933880109}
   previewName: {fileID: 1105519688695005855}
   previewDesc: {fileID: 1789256784823590056}
+  previewResourceCostPrefab: {fileID: 0}
+  previewResourceCostParent: {fileID: 0}
 --- !u!1 &4967162439630816473
 GameObject:
   m_ObjectHideFlags: 0
@@ -12610,6 +12618,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b4d2f2b7bf0ff6e4eb1c204e316157b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _firstSelected: {fileID: 3947261939096256619}
   yesBtn: {fileID: 3947261939096256619}
   noBtn: {fileID: 2535874686394731897}
 --- !u!1 &5961535205073818087
@@ -13462,7 +13471,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Quit
+  m_text: Back
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -13930,6 +13939,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1fac2fd9a6d8b449b70a44cfbf852e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _firstSelected: {fileID: 5042935901260124780}
   yesBtn: {fileID: 5042935901260124780}
   noBtn: {fileID: 897328409245684514}
 --- !u!1 &6364616260809315757
@@ -14050,6 +14060,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0305d9b43c6deea4aa9d28bd5459ef3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _firstSelected: {fileID: 2410235753797247901}
   playerInventoryBtn: {fileID: 2410235753797247901}
   buildMenuBtn: {fileID: 318545757525774023}
   settlerNPCBtn: {fileID: 3065089566355071980}
@@ -14303,6 +14314,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a88108ce066b0346a00d65fb2286357, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _firstSelected: {fileID: 0}
   npcNameText: {fileID: 8698052986647059860}
   dialogueText: {fileID: 7353961305026093277}
   optionsContainer: {fileID: 8248662438164707747}
@@ -14531,7 +14543,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Return_To_Camp
+  m_text: Video
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -15218,6 +15230,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6428427fb1cecc846bd448cdc8b5c2f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _firstSelected: {fileID: 160213155229416663}
   screenTitle: {fileID: 7567582657894341019}
   rightScreenBtn: {fileID: 7916272224086352736}
   leftScreenBtn: {fileID: 160213155229416663}
@@ -16321,7 +16334,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Settings
+  m_text: Controls
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -18437,6 +18450,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d360f6cfcd977640a93ea084117ec25, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _firstSelected: {fileID: 6248913873250569047}
   audioSettingsBtn: {fileID: 6248913873250569047}
   videoSettingsBtn: {fileID: 4552946990321999451}
   controlsSettingsBtn: {fileID: 1198517578689666586}
@@ -18871,6 +18885,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d05b44e10b600941bc2d1f5c62dc778, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _firstSelected: {fileID: 3146511940037055116}
   screenTitle: {fileID: 3268931851928860754}
   rightScreenBtn: {fileID: 7796631374309649166}
   leftScreenBtn: {fileID: 3146511940037055116}
@@ -18883,7 +18898,6 @@ MonoBehaviour:
   mutationGrid: {fileID: 8219817581952613195}
   mutationGridPrefabContainer: {fileID: 1037857587712313581}
   mutationSelectPopup: {fileID: 7611820370166008948}
-  mutationQuantities: []
   moveSpeed: 0.2
 --- !u!1 &9143141171944472929
 GameObject:

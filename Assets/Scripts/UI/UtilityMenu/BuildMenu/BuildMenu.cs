@@ -17,41 +17,11 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
 
     private BuildingPreviewBtn selectedButton;
 
-    public override void Setup()
+    public override void SetPlayerControls(PlayerControlType controlType)
     {
-        base.Setup();
-        PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
-    }
-
-    public override void OnEnable()
-    {
-        base.OnEnable();
-        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
-    }
-
-    public override void OnDisable()
-    {
-        base.OnDisable();
-    }
-
-    public void OnDestroy()
-    {
-        if(PlayerInput.Instance != null)
-            PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
-    }
-
-    public void SetPlayerControlType(PlayerControlType controlType)
-    {
-        if (PlayerUIManager.Instance.currentMenu != this)
-            return;
-
+        base.SetPlayerControls(controlType);
         switch (controlType)
         {
-            case PlayerControlType.IN_MENU:
-                PlayerInput.Instance.OnRBPressed += rightScreenBtn.onClick.Invoke;
-                PlayerInput.Instance.OnLBPressed += leftScreenBtn.onClick.Invoke;
-                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.utilityMenu.EnableUtilityMenu();
-                break;
             case PlayerControlType.BUILDING_PLACEMENT:
                 if (selectedButton != null)
                 {
@@ -64,11 +34,6 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
             default:
                 break;
         }
-    }
-
-    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
-    {
-        PlayerUIManager.Instance.SetScreenActive(this, active, delay, onDone);     
     }
 
     public override IEnumerable<BuildingScriptableObj> GetItems()

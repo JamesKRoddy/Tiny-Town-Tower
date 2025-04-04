@@ -18,7 +18,7 @@ public class NarrativeSystem : MenuBase
     private DialogueData currentDialogue;
     private Dictionary<string, DialogueLine> dialogueLinesMap;
 
-    public override void Setup()
+    public void Awake()
     {
         dialoguePanel = gameObject; //TODO can i get rid of dialoguePanel?
         dialoguePanel.SetActive(false);
@@ -161,10 +161,5 @@ public class NarrativeSystem : MenuBase
         {
             PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
         }
-    }
-
-    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
-    {
-        PlayerUIManager.Instance.SetScreenActive(this, active);
     }
 }

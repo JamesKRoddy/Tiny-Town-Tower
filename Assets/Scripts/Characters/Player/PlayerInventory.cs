@@ -75,7 +75,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         if (PlayerController.Instance._possessedNPC == null)
             return;
 
-        if (PlayerInput.Instance.currentControlType != PlayerControlType.IN_CONVERSATION)
+        if (PlayerInput.Instance.CurrentControlType != PlayerControlType.IN_CONVERSATION)
             DetectInteraction(); // Detect if the player is looking at a chest
         else
             ClearInteractive();
@@ -237,7 +237,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         if (!equippedMutations.Contains(mutation))
         {
             equippedMutations.Add(mutation);
-            if (mutation.mutationEffectPrefab != null)
+            if (mutation.mutationEffectPrefab != null && PlayerController.Instance._possessedNPC != null)
             {
                 GameObject effectObj = Instantiate(mutation.mutationEffectPrefab, PlayerController.Instance._possessedNPC.GetTransform());
                 BaseMutationEffect effect = effectObj.GetComponent<BaseMutationEffect>();
@@ -246,6 +246,8 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                     effect.Initialize(mutation);
                     effect.OnEquip();
                 }
+            } else{
+                Debug.LogWarning("Trying to equip mutation but no NPC is possessed or mutation effect prefab is null");
             }
         }
     }

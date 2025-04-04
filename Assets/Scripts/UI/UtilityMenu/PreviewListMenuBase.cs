@@ -23,7 +23,6 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
     protected Dictionary<TCategory, GameObject> screens = new Dictionary<TCategory, GameObject>();
     protected TCategory currentCategory;
     protected TItem currentSelectedItem;
-    protected bool isInitialized = false;
 
     public abstract IEnumerable<TItem> GetItems();
     public abstract TCategory GetItemCategory(TItem item);
@@ -35,16 +34,24 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
     public abstract void UpdatePreviewSpecifics(TItem item);
     public abstract void DestroyPreviewSpecifics();
 
-    protected virtual void Awake()
-    {
-        if (!isInitialized)
-        {
-            Setup();
-            isInitialized = true;
-        }
-    }
 
-    public override void Setup()
+    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
+    {
+        base.SetScreenActive(active, delay, () => {
+            if (active)
+            {
+                RefreshUIAndSelectFirst();
+                SetupScreenButtons();
+            }
+            else
+            {
+                CleanupScreens();
+                CleanupScreenButtons();
+            }
+            onDone?.Invoke();
+        });
+    }    
+    private void SetupScreenButtons()
     {
         if (rightScreenBtn != null)
         {
@@ -56,16 +63,17 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         }
     }
 
-    public virtual void OnEnable()
+    private void CleanupScreenButtons()
     {
-        if (!isInitialized)
+        if (rightScreenBtn != null)
         {
-            Setup();
-            isInitialized = true;
+            rightScreenBtn.onClick.RemoveAllListeners();
         }
-        RefreshUIAndSelectFirst();
+        if (leftScreenBtn != null)
+        {
+            leftScreenBtn.onClick.RemoveAllListeners();
+        }
     }
-
     protected void RefreshUIAndSelectFirst()
     {
         SetupScreens();
@@ -80,12 +88,20 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         }
     }
 
-    public virtual void OnDisable()
-    {
-        CleanupScreens();
-        CleanupEventListeners();
-    }
+    public override void SetPlayerControls(PlayerControlType controlType){
 
+        base.SetPlayerControls(controlType);
+        
+        switch (controlType)
+        {
+            case PlayerControlType.IN_MENU:
+                PlayerInput.Instance.OnRBPressed += rightScreenBtn.onClick.Invoke;
+                PlayerInput.Instance.OnLBPressed += leftScreenBtn.onClick.Invoke;
+                break;
+            default:
+                break;
+        }
+    }
     protected virtual void CleanupScreens()
     {
         foreach (var screen in screens.Values)
@@ -96,18 +112,6 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
             }
         }
         screens.Clear();
-    }
-
-    protected virtual void CleanupEventListeners()
-    {
-        if (rightScreenBtn != null)
-        {
-            rightScreenBtn.onClick.RemoveAllListeners();
-        }
-        if (leftScreenBtn != null)
-        {
-            leftScreenBtn.onClick.RemoveAllListeners();
-        }
     }
 
     protected void SetupScreens()

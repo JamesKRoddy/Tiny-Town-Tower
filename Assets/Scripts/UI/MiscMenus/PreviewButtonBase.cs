@@ -10,7 +10,7 @@ public abstract class PreviewButtonBase<T> : MonoBehaviour
 
     protected T data;
 
-    protected virtual void OnDestroy()
+    void OnDestroy()
     {
         button.onClick.RemoveAllListeners();
     }

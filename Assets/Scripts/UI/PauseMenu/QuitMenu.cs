@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class QuitMenu : MenuBase
 {
-    public override void Setup()
+    public void Awake()
     {
         yesBtn.onClick.AddListener(QuitApplication);
         noBtn.onClick.AddListener(CloseMenu);
@@ -13,16 +13,6 @@ public class QuitMenu : MenuBase
 
     [SerializeField] Button yesBtn;
     [SerializeField] Button noBtn;
-
-    public void OnEnable()
-    {
-        EventSystem.current.SetSelectedGameObject(yesBtn.gameObject);
-    }
-
-    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
-    {
-        PlayerUIManager.Instance.SetScreenActive(this, active);
-    }
 
     void CloseMenu()
     {

@@ -5,42 +5,27 @@ using UnityEngine.UI;
 
 public class PauseMenu : MenuBase, IControllerInput
 {
-    public override void Setup()
+    public void Awake()
     {
         resumeGameBtn.onClick.AddListener(() => ReturnToGame());
         settingsBtn.onClick.AddListener(OpenSettings);
         returnToCampBtn.onClick.AddListener(ReturnToCamp);
         quitGameBtn.onClick.AddListener(QuitGame);
-
-        PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
 
-    public void OnEnable()
+    public override void OnDestroy()
     {
-        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
-        EventSystem.current.SetSelectedGameObject(resumeGameBtn.gameObject);
-    }
-
-    void OnDestroy()
-    {
+        base.OnDestroy();
         resumeGameBtn.onClick.RemoveAllListeners();
         settingsBtn.onClick.RemoveAllListeners();
         returnToCampBtn.onClick.RemoveAllListeners();
         quitGameBtn.onClick.RemoveAllListeners();
-
-        if (PlayerInput.Instance != null)
-            PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
     }
 
     [SerializeField] Button resumeGameBtn;
     [SerializeField] Button settingsBtn;
     [SerializeField] Button returnToCampBtn;
     [SerializeField] Button quitGameBtn;
-
-    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
-    {
-        PlayerUIManager.Instance.SetScreenActive(this, active);
-    }
 
     public void ReturnToGame(PlayerControlType playerControlType = PlayerControlType.NONE)
     {
@@ -56,6 +41,12 @@ public class PauseMenu : MenuBase, IControllerInput
         }
     }
 
+    public void EnablePauseMenu()
+    {
+        PlayerUIManager.Instance.HidePauseMenus();
+        SetScreenActive(true, 0.1f);
+    }
+    
     private void OpenSettings()
     {
         PlayerUIManager.Instance.HidePauseMenus();
@@ -72,20 +63,6 @@ public class PauseMenu : MenuBase, IControllerInput
     {
         PlayerUIManager.Instance.HidePauseMenus();
         PlayerUIManager.Instance.quitMenu.SetScreenActive(true, 0.1f);
-    }
-
-    public void SetPlayerControlType(PlayerControlType controlType)
-    {
-        if (PlayerUIManager.Instance.currentMenu != this)
-            return;
-        switch (controlType)
-        {
-            case PlayerControlType.IN_MENU:
-                PlayerInput.Instance.OnBPressed += () => ReturnToGame();
-                break;
-            default:
-                break;
-        }
     }
 
     internal void OpenMenu(PlayerControlType playerControlType)

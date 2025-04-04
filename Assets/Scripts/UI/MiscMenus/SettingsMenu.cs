@@ -5,42 +5,27 @@ using UnityEngine.UI;
 
 public class SettingsMenu : MenuBase, IControllerInput
 {
-    public override void Setup()
+    public void Awake()
     {
         audioSettingsBtn.onClick.AddListener(OpenAudioSettings);
         videoSettingsBtn.onClick.AddListener(OpenVideoSettings);
         controlsSettingsBtn.onClick.AddListener(OpenControlsSettings);
         backButton.onClick.AddListener(CloseSettingsMenu);
-
-        PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
 
-    public void OnEnable()
+    public override void OnDestroy()
     {
-        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
-        EventSystem.current.SetSelectedGameObject(audioSettingsBtn.gameObject);
-    }
-
-    void OnDestroy()
-    {
+        base.OnDestroy();
         audioSettingsBtn.onClick.RemoveAllListeners();
         videoSettingsBtn.onClick.RemoveAllListeners();
         controlsSettingsBtn.onClick.RemoveAllListeners();
         backButton.onClick.RemoveAllListeners();
-
-        if (PlayerInput.Instance != null)
-            PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
     }
 
     [SerializeField] Button audioSettingsBtn;
     [SerializeField] Button videoSettingsBtn;
     [SerializeField] Button controlsSettingsBtn;
     [SerializeField] Button backButton;
-
-    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
-    {
-        PlayerUIManager.Instance.SetScreenActive(this, active);
-    }
 
     public void OpenAudioSettings()
     {
@@ -64,19 +49,5 @@ public class SettingsMenu : MenuBase, IControllerInput
     {
         SetScreenActive(false);
         PlayerUIManager.Instance.pauseMenu.SetScreenActive(true, 0.1f);
-    }
-
-    public void SetPlayerControlType(PlayerControlType controlType)
-    {
-        if (PlayerUIManager.Instance.currentMenu != this)
-            return;
-        switch (controlType)
-        {
-            case PlayerControlType.IN_MENU:
-                PlayerInput.Instance.OnBPressed += () => CloseSettingsMenu();
-                break;
-            default:
-                break;
-        }
     }
 }

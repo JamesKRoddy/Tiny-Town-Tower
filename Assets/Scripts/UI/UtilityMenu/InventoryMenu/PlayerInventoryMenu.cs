@@ -8,46 +8,6 @@ public class PlayerInventoryMenu : PreviewListMenuBase<ResourceCategory, Resourc
     [SerializeField] private GameObject previewResourceCostPrefab;
     [SerializeField] private RectTransform previewResourceCostParent;
 
-    public override void Setup()
-    {
-        base.Setup();
-        PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
-    }
-
-    public override void OnEnable()
-    {
-        base.OnEnable();
-        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
-    }
-
-    public override void OnDisable()
-    {
-        base.OnDisable();
-        PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
-    }
-
-    public void SetPlayerControlType(PlayerControlType controlType)
-    {
-        if (PlayerUIManager.Instance.currentMenu != this)
-            return;
-
-        switch (controlType)
-        {
-            case PlayerControlType.IN_MENU:
-                PlayerInput.Instance.OnRBPressed += rightScreenBtn.onClick.Invoke;
-                PlayerInput.Instance.OnLBPressed += leftScreenBtn.onClick.Invoke;
-                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.utilityMenu.EnableUtilityMenu();
-                break;
-            default:
-                break;
-        }
-    }
-
-    public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
-    {
-        PlayerUIManager.Instance.SetScreenActive(this, active, delay);
-    }
-
     public override IEnumerable<ResourceScriptableObj> GetItems()
     {
         var inventory = PlayerInventory.Instance.GetFullInventory();

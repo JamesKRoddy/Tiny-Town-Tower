@@ -14,23 +14,6 @@ public class TurretUpgradeMenu : MenuBase, IControllerInput
 
     private TurretScriptableObject currentTurret;
 
-    public override void Setup()
-    {
-        PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
-    }
-
-    public void OnDestroy()
-    {
-        if (PlayerInput.Instance != null)
-            PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
-    }
-
-
-    public override void SetScreenActive(bool active, float delay = 0, Action onDone = null)
-    {
-        PlayerUIManager.Instance.SetScreenActive(this, active, delay);
-    }
-
     public void ShowUpgradeOptions(TurretScriptableObject turret)
     {
         currentTurret = turret;
@@ -66,20 +49,5 @@ public class TurretUpgradeMenu : MenuBase, IControllerInput
     {
         // Replace with actual logic to fetch resource costs
         yield break;
-    }
-
-    public void SetPlayerControlType(PlayerControlType controlType)
-    {
-        if (PlayerUIManager.Instance.currentMenu != this)
-            return;
-
-        switch (controlType)
-        {
-            case PlayerControlType.IN_MENU:
-                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.SetScreenActive(this, false);
-                break;
-            default:
-                break;
-        }
     }
 }
