@@ -43,14 +43,14 @@ public class PlayerInput : MonoBehaviour
     public event Action OnRBPressed;
     public event Action OnLBPressed;
 
-    //public event Action<float> OnRTPressed; // Right Trigger (returns a float value for trigger intensity)
-    //public event Action<float> OnLTPressed; // Left Trigger (returns a float value for trigger intensity)
+    public event Action<float> OnRTPressed; // Right Trigger (returns a float value for trigger intensity)
+    public event Action<float> OnLTPressed; // Left Trigger (returns a float value for trigger intensity)
 
     public event Action OnStartPressed;
     public event Action OnSelectPressed;
 
-    //public event Action OnLeftStickPressed;
-    //public event Action OnRightStickPressed;
+    public event Action OnLeftStickPressed;
+    public event Action OnRightStickPressed;
 
     bool playerInputDisabled = false;
 
@@ -114,20 +114,18 @@ public class PlayerInput : MonoBehaviour
             OnLBPressed?.Invoke();
         }
 
-        //TODO setup these
+        // Triggers
+        float rtValue = Input.GetAxis("RT");
+        if (rtValue > 0.1f) OnRTPressed?.Invoke(rtValue);
 
-        //// Triggers
-        //float rtValue = Input.GetAxis("RT");
-        //if (rtValue > 0.1f) OnRTPressed?.Invoke(rtValue);
+        float ltValue = Input.GetAxis("LT");
+        if (ltValue > 0.1f) OnLTPressed?.Invoke(ltValue);
 
-        //float ltValue = Input.GetAxis("LT");
-        //if (ltValue > 0.1f) OnLTPressed?.Invoke(ltValue);
+        // Joystick presses
+        if (Input.GetButtonDown("LeftStickPress")) OnLeftStickPressed?.Invoke();
+        if (Input.GetButtonDown("RightStickPress")) OnRightStickPressed?.Invoke();
 
-        //// Joystick presses
-        //if (Input.GetButtonDown("LeftStickPress")) OnLeftStickPressed?.Invoke();
-        //if (Input.GetButtonDown("RightStickPress")) OnRightStickPressed?.Invoke();
-
-        //// Start and Select buttons
+        // Start and Select buttons
         if (Input.GetButtonDown("Start")) OnStartPressed?.Invoke();
         if (Input.GetButtonDown("Select")) OnSelectPressed?.Invoke();
     }
@@ -216,13 +214,13 @@ public class PlayerInput : MonoBehaviour
         OnRBPressed = null;
         OnLBPressed = null;
 
-        //OnRTPressed = null;
-        //OnLTPressed = null;
+        OnRTPressed = null;
+        OnLTPressed = null;
 
         OnStartPressed = null;
         OnSelectPressed = null;
 
-        //OnLeftStickPressed = null;
-        //OnRightStickPressed = null;
+        OnLeftStickPressed = null;
+        OnRightStickPressed = null;
     }
 }
