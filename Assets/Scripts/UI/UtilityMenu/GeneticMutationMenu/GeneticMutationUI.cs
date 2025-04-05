@@ -48,6 +48,7 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
                         button.interactable = true;
                     }
                 }
+                PlayerInput.Instance.OnBPressed += mutationSelectPopup.OnCloseClicked;
                 break;
             case PlayerControlType.GENETIC_MUTATION_MOVEMENT:
                 PlayerInput.Instance.OnLeftJoystick += MoveMutation;
@@ -69,11 +70,9 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
 
     public override IEnumerable<GeneticMutationObj> GetItems()
     {
-        Debug.Log($"Getting items");
         // Only return mutations that have a quantity greater than 0
         foreach (var entry in PlayerInventory.Instance.availableMutations)
         {
-            Debug.Log($"Entry: {entry.mutation.objectName} - {entry.quantity}");
             if (entry.mutation != null && entry.quantity > 0)
             {
                 yield return entry.mutation;

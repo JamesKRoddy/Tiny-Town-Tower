@@ -84,12 +84,15 @@ public class GeneticMutationSelectPopup : MonoBehaviour
         PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.GENETIC_MUTATION_MOVEMENT);
     }
 
-    private void OnCloseClicked()
+    public void OnCloseClicked()
     {
         // Re-enable parent UI buttons and close popup
         SetParentUIButtonsInteractable(true);
         gameObject.SetActive(false);
 
-        EventSystem.current.SetSelectedGameObject(uiElement.gameObject);        
+        if (uiElement != null)
+        {
+            EventSystem.current.SetSelectedGameObject(uiElement.gameObject);
+        }
     }
 }

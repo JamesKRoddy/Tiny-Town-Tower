@@ -234,21 +234,18 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     public void EquipMutation(GeneticMutationObj mutation)
     {
-        if (!equippedMutations.Contains(mutation))
+        equippedMutations.Add(mutation);
+        if (mutation.mutationEffectPrefab != null && PlayerController.Instance._possessedNPC != null)
         {
-            equippedMutations.Add(mutation);
-            if (mutation.mutationEffectPrefab != null && PlayerController.Instance._possessedNPC != null)
+            GameObject effectObj = Instantiate(mutation.mutationEffectPrefab, PlayerController.Instance._possessedNPC.GetTransform());
+            BaseMutationEffect effect = effectObj.GetComponent<BaseMutationEffect>();
+            if (effect != null)
             {
-                GameObject effectObj = Instantiate(mutation.mutationEffectPrefab, PlayerController.Instance._possessedNPC.GetTransform());
-                BaseMutationEffect effect = effectObj.GetComponent<BaseMutationEffect>();
-                if (effect != null)
-                {
-                    effect.Initialize(mutation);
-                    effect.OnEquip();
-                }
-            } else{
-                Debug.LogWarning("Trying to equip mutation but no NPC is possessed or mutation effect prefab is null");
+                effect.Initialize(mutation);
+                effect.OnEquip();
             }
+        } else{
+            Debug.LogWarning("Trying to equip mutation but no NPC is possessed or mutation effect prefab is null");
         }
     }
 
