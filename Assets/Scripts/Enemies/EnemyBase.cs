@@ -26,6 +26,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
     protected float damage;
 
     public event Action OnEnemyKilled;
+    public event Action<float, float> OnDamageTaken;
 
     protected virtual void Awake()
     {
@@ -61,8 +62,10 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     public void TakeDamage(float amount)
     {
+        float previousHealth = Health;
         Health -= amount;
         animator.SetTrigger("Damaged");
+        OnDamageTaken?.Invoke(amount, Health);
         if (Health <= 0)
         {
             Die();

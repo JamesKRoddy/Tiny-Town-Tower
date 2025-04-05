@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
@@ -22,6 +23,7 @@ public class TurretBaseTarget : MonoBehaviour, IDamageable
 
     public delegate void BaseDestroyedHandler();
     public event BaseDestroyedHandler OnBaseDestroyed;
+    public event Action<float, float> OnDamageTaken;
 
     private void Start()
     {
@@ -47,7 +49,9 @@ public class TurretBaseTarget : MonoBehaviour, IDamageable
 
     public void TakeDamage(float amount)
     {
+        float previousHealth = Health;
         Health -= amount;
+        OnDamageTaken?.Invoke(amount, Health);
         if (Health <= 0)
         {
             Health = 0;

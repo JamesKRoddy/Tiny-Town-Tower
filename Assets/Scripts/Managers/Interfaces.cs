@@ -43,6 +43,9 @@ public interface IDamageable
     [SerializeField] public float Health { get; set; } // Property for current health
     [SerializeField] public float MaxHealth { get; set; } // Property for max health
 
+    // Event that fires when damage is taken, providing the damage amount and remaining health
+    event System.Action<float, float> OnDamageTaken;
+
     void TakeDamage(float amount); // Method to handle damage
     void Heal(float amount);       // Optional: Method to handle healing
     void Die();

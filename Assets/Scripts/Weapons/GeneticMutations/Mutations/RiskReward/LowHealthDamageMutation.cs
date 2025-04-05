@@ -4,9 +4,8 @@ public class LowHealthDamageMutation : BaseMutationEffect
 {
     [SerializeField] private float damageMultiplier = 2f;
     [SerializeField] private float healthThreshold = 0.3f; // 30% health threshold
-    [SerializeField] private float vulnerabilityMultiplier = 1.5f;
+
     private IDamageable damageable;
-    private WeaponScriptableObj originalWeapon;
     private bool isLowHealth;
     private static int activeInstancesCount = 0;
 
@@ -32,43 +31,45 @@ public class LowHealthDamageMutation : BaseMutationEffect
         }
 
         // Store original weapon if not already stored
-        if (originalWeapon == null)
+        if (OriginalWeapon == null)
         {
-            originalWeapon = characterInventory.equippedWeaponScriptObj;
+            OriginalWeapon = characterInventory.equippedWeaponScriptObj;
+        }
+
+        // Subscribe to damage taken event
+        if (damageable is HumanCharacterController humanController)
+        {
+            humanController.OnDamageTaken += OnDamageTaken;
         }
     }
 
     protected override void RemoveEffect()
     {
         ActiveInstances--;
-        if (characterInventory != null && originalWeapon != null)
+        if (isLowHealth)
         {
-            if (ActiveInstances > 0 && isLowHealth)
-            {
-                // If there are still active instances and we're in low health, recalculate damage
-                WeaponScriptableObj modifiedWeapon = ScriptableObject.CreateInstance<WeaponScriptableObj>();
-                modifiedWeapon.damage = Mathf.RoundToInt(originalWeapon.damage * Mathf.Pow(damageMultiplier, ActiveInstances));
-                modifiedWeapon.weaponElement = originalWeapon.weaponElement;
-                modifiedWeapon.prefab = originalWeapon.prefab;
-                modifiedWeapon.animationType = originalWeapon.animationType;
-                characterInventory.EquipWeapon(modifiedWeapon);
-            }
-            else
-            {
-                // Restore original weapon
-                characterInventory.EquipWeapon(originalWeapon);
-            }
+            UpdateEquippedWeapon(damageMultiplier);
         }
+        else
+        {
+            UpdateEquippedWeapon(1f); // Restore original damage
+        }
+
+        // Unsubscribe from damage taken event
+        if (damageable is HumanCharacterController humanController)
+        {
+            humanController.OnDamageTaken -= OnDamageTaken;
+        }
+
         damageable = null;
-        originalWeapon = null;
         isLowHealth = false;
     }
 
-    private void Update()
+    private void OnDamageTaken(float currentHealth, float maxHealth)
     {
         if (!isActive || damageable == null || characterInventory == null) return;
 
-        float currentHealthPercent = damageable.Health / damageable.MaxHealth;
+        float currentHealthPercent = currentHealth / maxHealth;
         bool wasLowHealth = isLowHealth;
         isLowHealth = currentHealthPercent <= healthThreshold;
 
@@ -77,20 +78,11 @@ public class LowHealthDamageMutation : BaseMutationEffect
         {
             if (isLowHealth)
             {
-                // Create a modified version of the weapon with increased damage
-                WeaponScriptableObj modifiedWeapon = ScriptableObject.CreateInstance<WeaponScriptableObj>();
-                modifiedWeapon.damage = Mathf.RoundToInt(originalWeapon.damage * Mathf.Pow(damageMultiplier, ActiveInstances));
-                modifiedWeapon.weaponElement = originalWeapon.weaponElement;
-                modifiedWeapon.prefab = originalWeapon.prefab;
-                modifiedWeapon.animationType = originalWeapon.animationType;
-
-                // Equip the modified weapon
-                characterInventory.EquipWeapon(modifiedWeapon);
+                UpdateEquippedWeapon(damageMultiplier);
             }
             else
             {
-                // Restore original weapon
-                characterInventory.EquipWeapon(originalWeapon);
+                UpdateEquippedWeapon(1f); // Restore original damage
             }
         }
     }
@@ -100,9 +92,9 @@ public class LowHealthDamageMutation : BaseMutationEffect
         if (isActive)
         {
             // Store the new weapon as the original if we don't have one yet
-            if (originalWeapon == null)
+            if (OriginalWeapon == null)
             {
-                originalWeapon = newWeapon;
+                OriginalWeapon = newWeapon;
             }
             // Reapply the effect
             base.HandleWeaponChange(newWeapon);

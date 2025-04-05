@@ -6,4 +6,5 @@ public class WeaponScriptableObj : ResourceScriptableObj //TODO create a bunch o
     public WeaponAnimationType animationType;
     public int damage = 10;
     public WeaponElement weaponElement = WeaponElement.NONE;
+    public float attackSpeed = 1f;
 }

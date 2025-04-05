@@ -47,6 +47,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     [SerializeField] private float health = 100f;
     [SerializeField] private float maxHealth = 100f;
 
+    public event Action<float, float> OnDamageTaken;
+
     public float Health { get => health; set => health = value; }
     public float MaxHealth { get => maxHealth; set => maxHealth = value; }
 
@@ -395,7 +397,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void TakeDamage(float amount)
     {
+        float previousHealth = health;
         health = Mathf.Max(0, health - amount);
+        OnDamageTaken?.Invoke(amount, health);
         if (health <= 0) Die();
     }
 
