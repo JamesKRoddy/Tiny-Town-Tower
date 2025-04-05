@@ -282,7 +282,6 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
             {
                 // Remove mutation from available mutations and add it to player inventory
                 PlayerInventory.Instance.EquipMutation(selectedMutation);
-                GeneticMutationSystem.Instance.AddMutation(selectedMutation);
 
                 // Remove from available mutations
                 foreach (var entry in PlayerInventory.Instance.availableMutations)
@@ -340,8 +339,8 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     {
         mutationGrid.ClearGrid();
 
-        // Get mutations from GeneticMutationSystem (equipped mutations)
-        foreach (var mutation in GeneticMutationSystem.Instance.activeMutations)
+        // Get mutations from PlayerInventory (equipped mutations)
+        foreach (var mutation in PlayerInventory.Instance.EquippedMutations)
         {
             if (mutation == null) continue;
             mutationGrid.AddMutation(mutation);

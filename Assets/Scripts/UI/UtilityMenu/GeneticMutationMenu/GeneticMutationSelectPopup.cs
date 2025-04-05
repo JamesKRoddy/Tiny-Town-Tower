@@ -62,7 +62,6 @@ public class GeneticMutationSelectPopup : MonoBehaviour
 
         // Remove mutation from inventory and add back to quantities
         PlayerInventory.Instance.RemoveMutation(currentMutation);
-        GeneticMutationSystem.Instance.RemoveMutation(currentMutation);
         mutationUI.AddMutationBackToQuantities(currentMutation);
         Destroy(uiElement.gameObject);
         // Re-enable parent UI buttons and close popup
