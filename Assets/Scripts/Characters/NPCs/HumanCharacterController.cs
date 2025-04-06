@@ -397,7 +397,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         }
     }
 
-    public void TakeDamage(float amount)
+    public void TakeDamage(float amount, Transform damageSource = null)
     {
         float previousHealth = health;
         health = Mathf.Max(0, health - amount);

@@ -45,8 +45,9 @@ public class TurretManager : GameModeManager<TurretEnemyWaveConfig>
     }
 
     public void StartWave() //************************************************** TODO!!!!!!! HAVE TO CALL THIS
-    {
+    {   
         SetEnemySetupState(EnemySetupState.WAVE_START);
+        baseTarget.gameObject.SetActive(true);
     }
 
     protected override void EnemySetupStateChanged(EnemySetupState newState)
@@ -69,6 +70,7 @@ public class TurretManager : GameModeManager<TurretEnemyWaveConfig>
                 break;
             case EnemySetupState.ALL_WAVES_CLEARED:
                 //TODO turret wave section complete, i think here we check to see how many waves the player is supposed to complete on this night so either move onto the next wave or finish the night
+                baseTarget.gameObject.SetActive(false);
                 break;
             default:
                 break;

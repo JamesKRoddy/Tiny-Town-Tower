@@ -60,12 +60,26 @@ public class EnemyBase : MonoBehaviour, IDamageable
         Health = Mathf.Min(Health + amount, MaxHealth);
     }
 
-    public void TakeDamage(float amount)
+    public void TakeDamage(float amount, Transform damageSource = null)
     {
+        Debug.Log("Enemy took damage: " + amount);
         float previousHealth = Health;
         Health -= amount;
         animator.SetTrigger("Damaged");
         OnDamageTaken?.Invoke(amount, Health);
+
+        // Rotate towards the damage source if one is provided
+        if (damageSource != null)
+        {
+            Vector3 direction = (damageSource.position - transform.position).normalized;
+            direction.y = 0; // Keep the rotation on the horizontal plane
+            if (direction != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(direction);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 0.5f);
+            }
+        }
+
         if (Health <= 0)
         {
             Die();

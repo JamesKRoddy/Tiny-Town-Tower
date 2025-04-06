@@ -13,22 +13,33 @@ public class CharacterAnimationEvents : MonoBehaviour
         inventory = characterInventory;
     }
 
+    #region Animation Events
+    /// <summary>
+    /// Called from animator, enables the weapon vfx
+    /// </summary>
+    /// <param name="attackDirection"></param>
     public void AttackVFX(int attackDirection)
     {
         if(combat != null)
             combat.AttackVFX(attackDirection);
     }
 
-    //Called from animator
+    /// <summary>
+    /// Called from animator, enables the weapon hitbox for melee weapons
+    /// </summary>
     public void UseWeapon()
     {
         if (inventory.equippedWeaponScriptObj != null)
             inventory.equippedWeaponBase.Use();
     }
 
+    /// <summary>
+    /// Called from animator, disables the weapon hitbox for melee weapons
+    /// </summary>
     public void StopWeapon()
     {
         if (inventory.equippedWeaponScriptObj != null)
             inventory.equippedWeaponBase.StopUse();
     }
+    #endregion
 }

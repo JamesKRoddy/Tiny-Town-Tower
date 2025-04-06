@@ -50,7 +50,7 @@ public interface IDamageable
     // Event that fires when the entity dies
     event System.Action OnDeath;
 
-    void TakeDamage(float amount); // Method to handle damage
+    void TakeDamage(float amount, Transform damageSource = null); // Method to handle damage
     void Heal(float amount);       // Optional: Method to handle healing
     void Die();
 }
@@ -60,13 +60,12 @@ public interface IDamageable
  * Next work:
     Refactoring some of the enemy code:
 
-    Weapon VFX not working missing references
-    Attacks not registering correctly
     Enemies rotating towards player while attacking
     Picking up new weapons, Ui attached to this
     Player getting damaged by enemies
     Enemy deaths
     VFX for getting hit and hitting enemies
+    Setup different hitboxes on the weapons for horizontal and vertical attacks
  */
 
 // ========================================

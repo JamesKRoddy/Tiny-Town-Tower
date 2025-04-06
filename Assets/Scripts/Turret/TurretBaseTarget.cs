@@ -49,7 +49,7 @@ public class TurretBaseTarget : MonoBehaviour, IDamageable
         // Add logic for game over, animations, etc.
     }
 
-    public void TakeDamage(float amount)
+    public void TakeDamage(float amount, Transform damageSource = null)
     {
         float previousHealth = Health;
         Health -= amount;
