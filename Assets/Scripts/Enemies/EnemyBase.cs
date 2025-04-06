@@ -24,9 +24,9 @@ public class EnemyBase : MonoBehaviour, IDamageable
     }
 
     protected float damage;
-
-    public event Action OnEnemyKilled;
     public event Action<float, float> OnDamageTaken;
+    public event Action<float, float> OnHeal;
+    public event Action OnDeath;
 
     protected virtual void Awake()
     {
@@ -74,7 +74,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     public void Die()
     {
-        OnEnemyKilled?.Invoke();
+        OnDeath?.Invoke();
         animator.SetTrigger("Dead");
         agent.enabled = false;
         Destroy(gameObject); //TODO testing purpose

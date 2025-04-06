@@ -45,6 +45,10 @@ public interface IDamageable
 
     // Event that fires when damage is taken, providing the damage amount and remaining health
     event System.Action<float, float> OnDamageTaken;
+    // Event that fires when healing occurs, providing the heal amount and new health
+    event System.Action<float, float> OnHeal;
+    // Event that fires when the entity dies
+    event System.Action OnDeath;
 
     void TakeDamage(float amount); // Method to handle damage
     void Heal(float amount);       // Optional: Method to handle healing
