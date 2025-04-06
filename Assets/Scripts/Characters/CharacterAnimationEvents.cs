@@ -16,6 +16,7 @@ public class CharacterAnimationEvents : MonoBehaviour
     #region Animation Events
     /// <summary>
     /// Called from animator, enables the weapon vfx
+    /// HORIZONTAL_LEFT = 0, HORIZONTAL_RIGHT = 1, VERTICAL_DOWN = 2, VERTICAL_UP = 3
     /// </summary>
     /// <param name="attackDirection"></param>
     public void AttackVFX(int attackDirection)

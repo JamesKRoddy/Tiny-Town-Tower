@@ -60,7 +60,7 @@ public interface IDamageable
  * Next work:
     Refactoring some of the enemy code:
 
-    Enemies rotating towards player while attacking
+    Have to setup weapon comparison menu with usual set actice functions from menu base
     Picking up new weapons, Ui attached to this
     Player getting damaged by enemies
     Enemy deaths

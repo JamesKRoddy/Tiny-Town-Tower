@@ -92,7 +92,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         switch (resourceItem)
         {
             case WeaponScriptableObj weapon:
-
                 if(PlayerController.Instance._possessedNPC != null)
                 {
                     if (PlayerController.Instance._possessedNPC.GetEquipped() == null)
@@ -101,7 +100,18 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                     }
                     else
                     {
-                        Debug.LogError("//TODO have to drop current weapon and equip new one");
+                        // Show weapon comparison menu
+                        WeaponScriptableObj currentWeapon = PlayerController.Instance._possessedNPC.GetEquipped();
+                        PlayerUIManager.Instance.weaponComparisonMenu.ShowWeaponComparison(
+                            currentWeapon,
+                            weapon,
+                            (equipNew) => {
+                                if (equipNew)
+                                {
+                                    PlayerController.Instance._possessedNPC.EquipWeapon(weapon);
+                                }
+                            }
+                        );
                     }
                 }
                 break;
