@@ -18,7 +18,7 @@ public class CharacterInventory : MonoBehaviour
 {
     [Header("Equipment")]
     public WeaponScriptableObj equippedWeaponScriptObj;
-    [HideInInspector] public WeaponBase equippedWeaponBase;
+    public WeaponBase equippedWeaponBase;
     public Transform weaponHolder; // Transform where the weapon will be instantiated
 
     [Header("Inventory")]
@@ -103,6 +103,8 @@ public class CharacterInventory : MonoBehaviour
         GameObject weapon = Instantiate(weaponScriptableObj.prefab, weaponHolder);
         equippedWeaponBase = weapon.GetComponent<WeaponBase>();
 
+        // Initialize the weapon with its data
+        equippedWeaponBase.Initialize(weaponScriptableObj);
         equippedWeaponBase.OnEquipped(transform);
         equippedWeaponScriptObj = weaponScriptableObj;
 

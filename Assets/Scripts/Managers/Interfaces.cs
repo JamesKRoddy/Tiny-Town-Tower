@@ -57,8 +57,16 @@ public interface IDamageable
 
 /*
  * Known bugs:
- * Turret scene and placing turrets
- * Occationally mutations not being added back to the player inventory when they are removed from the genetic mutation ui
+ * Next work:
+    Refactoring some of the enemy code:
+
+    Weapon VFX not working missing references
+    Attacks not registering correctly
+    Enemies rotating towards player while attacking
+    Picking up new weapons, Ui attached to this
+    Player getting damaged by enemies
+    Enemy deaths
+    VFX for getting hit and hitting enemies
  */
 
 // ========================================
@@ -66,21 +74,11 @@ public interface IDamageable
 // ========================================
 
 // 1. Genetic Mutations & Inventory System
-// - Implement a genetic mutation system for player upgrades.
-// - Mutations should vary between combat enhancements, survival buffs, and risk-reward effects.
 // - Introduce contamination mechanics, requiring purification before re-entering the camp.
-
-/*
- * movement is still slightly offset
- * Do the ui first then start looking into the effects of mutations
- */
-
 /*
  *Keep all the genetic mutation storage in the player inventory, if a mutation is assigned then remove it from GeneticMutationUI allMutations, if a mutation is removed then add it to the player inventory
  *maybe the reason you have to go into the menu each time is because certain parts of the grid give you boosts like 2x the effect?
  */
-
-
 
 // 2. NPC Characteristics System
 // - Implement a pool of positive and negative traits for NPCs to make them unique.

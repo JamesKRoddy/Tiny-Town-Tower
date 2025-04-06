@@ -99,7 +99,6 @@ public class EnemySpawnManager : MonoBehaviour
         }
 
         currentWave++;
-        Debug.Log($"Starting Wave {currentWave}");
 
         // Determine the number of enemies to spawn in this wave
         totalEnemiesInWave = Random.Range(currentWaveConfig.minEnemiesPerWave, currentWaveConfig.maxEnemiesPerWave + 1);

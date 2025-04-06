@@ -26,7 +26,15 @@ public class CharacterCombat : MonoBehaviour
             return;
         }
 
-        switch (equippedWeapon.prefab.GetComponent<WeaponBase>())
+        WeaponBase weaponBase = characterInventory.equippedWeaponBase;
+
+        if (weaponBase == null)
+        {
+            Debug.LogWarning("No weapon base found on equipped weapon!");
+            return;
+        }
+
+        switch (weaponBase)
         {
             case MeleeWeapon meleeWeapon:
                 attackVFXHolder.MeleeAttackVFX((MeleeAttackDirection)attackDirection, meleeWeapon);
@@ -48,12 +56,18 @@ public class CharacterCombat : MonoBehaviour
 
     private void RangedAttackVFX(RangedWeapon rangedWeapon)
     {
-        throw new NotImplementedException();
+        // TODO: Implement ranged weapon VFX
+        // This should be similar to MeleeAttackVFX but for ranged weapons
+        // You'll need to create a RangedAttackVFX prefab with appropriate particle systems
+        Debug.LogWarning("Ranged weapon VFX not implemented yet!");
     }
 
     private void ThrowableWeaponVFX(ThrowableWeapon throwableWeaponVFX)
     {
-        throw new NotImplementedException();
+        // TODO: Implement throwable weapon VFX
+        // This should be similar to MeleeAttackVFX but for throwable weapons
+        // You'll need to create a ThrowableAttackVFX prefab with appropriate particle systems
+        Debug.LogWarning("Throwable weapon VFX not implemented yet!");
     }
 
     public void StopAttacking()

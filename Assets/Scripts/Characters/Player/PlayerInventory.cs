@@ -183,7 +183,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     private void HandleInteraction()
     {
-        Debug.Log("HandleInteraction");
         if (currentInteractive != null && currentInteractive.CanInteract())
         {
             object interactReturnObj = currentInteractive.Interact();

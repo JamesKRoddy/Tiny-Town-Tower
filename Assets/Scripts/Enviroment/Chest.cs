@@ -42,27 +42,16 @@ public class Chest : MonoBehaviour, IInteractive<ResourcePickup>
 
         ResourceRarity rarity = DifficultyRarityMapper.GetResourceRarity(roomDifficulty);
         chestContents = lootTableScriptableObj.GetLootByRarity(rarity);
-
-        if (chestContents != null)
-        {
-            Debug.Log($"Chest {name} contains {chestContents.GetResourceObj().objectName} (x{chestContents.count}), Rarity: {rarity}.");
-        }
-        else
-        {
-            Debug.Log($"Chest {name} is empty.");
-        }
     }
 
     public void CloseChest()
     {
         if (!isOpened)
         {
-            Debug.Log("Chest is already closed!");
             return;
         }
 
         isOpened = false;
-        Debug.Log("Chest closed.");
 
         // Start the door closing animation
         StartDoorAnimation(closedRotation);
@@ -112,9 +101,6 @@ public class Chest : MonoBehaviour, IInteractive<ResourcePickup>
             Debug.Log("Chest is empty!");
             return null;
         }
-
-        Debug.Log("Chest opened! It contains:");
-        Debug.Log($"{chestContents.GetResourceObj().objectName}");
 
         return chestContents;
     }

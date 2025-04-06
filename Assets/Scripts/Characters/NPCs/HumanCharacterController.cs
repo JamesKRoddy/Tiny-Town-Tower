@@ -114,7 +114,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         else
         {
             settlerNPC?.ChangeState(null);
-            GetComponent<CharacterAnimationEvents>().Setup(characterCombat, this, PlayerInventory.Instance);
+            GetComponent<CharacterAnimationEvents>().Setup(characterCombat, this, characterInventory);
         }
     }
 

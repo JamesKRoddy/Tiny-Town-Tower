@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa17fc4077f715a4b886a2048b72218e, type: 3}
   m_Name: BasicBat
   m_EditorClassIdentifier: 
-  objectName: 
-  description: 
+  objectName: Baseball Bat
+  description: Baseball Bat Desc
   category: 0
   rarity: 0
   sprite: {fileID: 0}
@@ -21,3 +21,4 @@ MonoBehaviour:
   animationType: 1
   damage: 10
   weaponElement: 0
+  attackSpeed: 1

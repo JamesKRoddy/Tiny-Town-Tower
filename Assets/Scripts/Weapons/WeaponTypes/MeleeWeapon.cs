@@ -23,8 +23,6 @@ public class MeleeWeapon : WeaponBase
             Debug.LogError("Character Transform is null! Ensure the OnEquipped function receives a valid Transform.");
             return;
         }
-
-        Debug.Log("MeleeWeapon equipped for character: " + characterTransform.name);
     }
 
     public override void Use()
@@ -37,13 +35,11 @@ public class MeleeWeapon : WeaponBase
 
         isAttacking = true;
         hitTargets.Clear(); // Clear hit tracking for this attack
-        Debug.Log("Attack started.");
     }
 
     public override void StopUse()
     {
         isAttacking = false;
-        Debug.Log("Attack stopped.");
     }
 
     private void FixedUpdate()
