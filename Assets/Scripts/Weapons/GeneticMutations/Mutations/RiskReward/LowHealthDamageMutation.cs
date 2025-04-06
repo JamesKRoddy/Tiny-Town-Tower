@@ -40,6 +40,7 @@ public class LowHealthDamageMutation : BaseMutationEffect
         if (damageable is HumanCharacterController humanController)
         {
             humanController.OnDamageTaken += OnDamageTaken;
+            humanController.OnHeal += OnDamageTaken; // Reuse the same handler since the logic is identical
         }
     }
 
@@ -59,6 +60,7 @@ public class LowHealthDamageMutation : BaseMutationEffect
         if (damageable is HumanCharacterController humanController)
         {
             humanController.OnDamageTaken -= OnDamageTaken;
+            humanController.OnHeal -= OnDamageTaken;
         }
 
         damageable = null;
