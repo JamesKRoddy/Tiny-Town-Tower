@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
@@ -22,6 +23,9 @@ public class TurretBaseTarget : MonoBehaviour, IDamageable
 
     public delegate void BaseDestroyedHandler();
     public event BaseDestroyedHandler OnBaseDestroyed;
+    public event Action<float, float> OnDamageTaken;
+    public event Action<float, float> OnHeal;
+    public event Action OnDeath;
 
     private void Start()
     {
@@ -47,7 +51,9 @@ public class TurretBaseTarget : MonoBehaviour, IDamageable
 
     public void TakeDamage(float amount)
     {
+        float previousHealth = Health;
         Health -= amount;
+        OnDamageTaken?.Invoke(amount, Health);
         if (Health <= 0)
         {
             Health = 0;
@@ -57,12 +63,13 @@ public class TurretBaseTarget : MonoBehaviour, IDamageable
 
     public void Heal(float amount)
     {
-        throw new System.NotImplementedException();
+        Health += amount;
+        OnHeal?.Invoke(amount, Health);
     }
 
     public void Die()
     {
-        throw new System.NotImplementedException();
+        OnDeath?.Invoke();
     }
 
     // Draws a blue gizmo matching the BoxCollider in the Scene view.

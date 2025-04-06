@@ -157,7 +157,7 @@ public class EnemySpawnManager : MonoBehaviour
             enemiesSpawned++; // Track the number of enemies spawned
 
             // Add listener to remove the enemy when it's destroyed
-            enemy.GetComponent<EnemyBase>().OnEnemyKilled += () =>
+            enemy.GetComponent<EnemyBase>().OnDeath += () =>
             {
                 activeEnemies.Remove(enemy);
                 CheckForWaveCompletion();

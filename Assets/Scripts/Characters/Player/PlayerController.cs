@@ -35,11 +35,6 @@ public class PlayerController : MonoBehaviour, IControllerInput
     [Header("Camera")]
     public PlayerCamera playerCamera;
 
-    
-
-    private Collider playerCollider;
-    private PlayerCombat playerCombat;
-
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -51,8 +46,6 @@ public class PlayerController : MonoBehaviour, IControllerInput
             _instance = this; // Set the instance
             DontDestroyOnLoad(gameObject); // Optionally persist across scenes
         }
-
-        playerCombat = GetComponent<PlayerCombat>();
     }
 
     private IEnumerator Start()

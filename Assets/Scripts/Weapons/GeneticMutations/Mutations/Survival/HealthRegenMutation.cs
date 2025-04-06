@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class HealthRegenMutation : BaseMutationEffect
 {
@@ -7,6 +8,7 @@ public class HealthRegenMutation : BaseMutationEffect
     private float timeSinceLastRegen;
     private IDamageable damageable;
     private static int activeInstancesCount = 0;
+    private Coroutine regenCoroutine;
 
     protected override int ActiveInstances
     {
@@ -26,23 +28,28 @@ public class HealthRegenMutation : BaseMutationEffect
             Debug.LogError("No IDamageable component found on possessed NPC!");
             return;
         }
+
+        // Start the regeneration coroutine
+        regenCoroutine = StartCoroutine(RegenerateHealth());
     }
 
     protected override void RemoveEffect()
     {
         ActiveInstances--;
+        if (regenCoroutine != null)
+        {
+            StopCoroutine(regenCoroutine);
+            regenCoroutine = null;
+        }
         damageable = null;
     }
 
-    private void Update()
+    private System.Collections.IEnumerator RegenerateHealth()
     {
-        if (!isActive || damageable == null) return;
-
-        timeSinceLastRegen += Time.deltaTime;
-        if (timeSinceLastRegen >= regenInterval)
+        while (isActive && damageable != null)
         {
-            timeSinceLastRegen = 0f;
             damageable.Heal(healthRegenPerSecond * regenInterval * ActiveInstances);
+            yield return new WaitForSeconds(regenInterval);
         }
     }
 

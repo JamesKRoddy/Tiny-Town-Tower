@@ -3,8 +3,7 @@ using UnityEngine;
 public class AttackSpeedMutation : BaseMutationEffect
 {
     [SerializeField] private float attackSpeedMultiplier = 1.5f;
-    [SerializeField] private float damageReductionMultiplier = 0.8f;
-    private WeaponScriptableObj originalWeapon;
+    [SerializeField] private float damageReductionMultiplier = 1.0f;
     private static int activeInstancesCount = 0;
 
     protected override int ActiveInstances
@@ -25,60 +24,17 @@ public class AttackSpeedMutation : BaseMutationEffect
         }
 
         // Store original weapon if not already stored
-        if (originalWeapon == null)
+        if (OriginalWeapon == null)
         {
-            originalWeapon = characterInventory.equippedWeaponScriptObj;
+            OriginalWeapon = characterInventory.equippedWeaponScriptObj;
         }
 
-        // Create a modified version of the weapon
-        if (originalWeapon != null)
-        {
-            WeaponScriptableObj modifiedWeapon = ScriptableObject.CreateInstance<WeaponScriptableObj>();
-            modifiedWeapon.damage = Mathf.RoundToInt(originalWeapon.damage * Mathf.Pow(damageReductionMultiplier, ActiveInstances));
-            modifiedWeapon.weaponElement = originalWeapon.weaponElement;
-            modifiedWeapon.prefab = originalWeapon.prefab;
-            modifiedWeapon.animationType = originalWeapon.animationType;
-
-            // Equip the modified weapon
-            characterInventory.EquipWeapon(modifiedWeapon);
-        }
+        UpdateEquippedWeapon(damageReductionMultiplier, attackSpeedMultiplier);
     }
 
     protected override void RemoveEffect()
     {
         ActiveInstances--;
-        if (characterInventory != null && originalWeapon != null)
-        {
-            if (ActiveInstances > 0)
-            {
-                // If there are still active instances, recalculate damage with remaining stacks
-                WeaponScriptableObj modifiedWeapon = ScriptableObject.CreateInstance<WeaponScriptableObj>();
-                modifiedWeapon.damage = Mathf.RoundToInt(originalWeapon.damage * Mathf.Pow(damageReductionMultiplier, ActiveInstances));
-                modifiedWeapon.weaponElement = originalWeapon.weaponElement;
-                modifiedWeapon.prefab = originalWeapon.prefab;
-                modifiedWeapon.animationType = originalWeapon.animationType;
-                characterInventory.EquipWeapon(modifiedWeapon);
-            }
-            else
-            {
-                // Restore original weapon
-                characterInventory.EquipWeapon(originalWeapon);
-            }
-        }
-        originalWeapon = null;
-    }
-
-    protected override void HandleWeaponChange(WeaponScriptableObj newWeapon)
-    {
-        if (isActive)
-        {
-            // Store the new weapon as the original if we don't have one yet
-            if (originalWeapon == null)
-            {
-                originalWeapon = newWeapon;
-            }
-            // Reapply the effect
-            base.HandleWeaponChange(newWeapon);
-        }
+        UpdateEquippedWeapon(damageReductionMultiplier, attackSpeedMultiplier);
     }
 } 

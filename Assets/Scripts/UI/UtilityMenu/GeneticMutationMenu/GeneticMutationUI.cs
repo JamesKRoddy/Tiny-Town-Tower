@@ -48,6 +48,7 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
                         button.interactable = true;
                     }
                 }
+                PlayerInput.Instance.OnBPressed += mutationSelectPopup.OnCloseClicked;
                 break;
             case PlayerControlType.GENETIC_MUTATION_MOVEMENT:
                 PlayerInput.Instance.OnLeftJoystick += MoveMutation;
@@ -69,11 +70,9 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
 
     public override IEnumerable<GeneticMutationObj> GetItems()
     {
-        Debug.Log($"Getting items");
         // Only return mutations that have a quantity greater than 0
         foreach (var entry in PlayerInventory.Instance.availableMutations)
         {
-            Debug.Log($"Entry: {entry.mutation.objectName} - {entry.quantity}");
             if (entry.mutation != null && entry.quantity > 0)
             {
                 yield return entry.mutation;
@@ -283,7 +282,6 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
             {
                 // Remove mutation from available mutations and add it to player inventory
                 PlayerInventory.Instance.EquipMutation(selectedMutation);
-                GeneticMutationSystem.Instance.AddMutation(selectedMutation);
 
                 // Remove from available mutations
                 foreach (var entry in PlayerInventory.Instance.availableMutations)
@@ -341,8 +339,8 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     {
         mutationGrid.ClearGrid();
 
-        // Get mutations from GeneticMutationSystem (equipped mutations)
-        foreach (var mutation in GeneticMutationSystem.Instance.activeMutations)
+        // Get mutations from PlayerInventory (equipped mutations)
+        foreach (var mutation in PlayerInventory.Instance.EquippedMutations)
         {
             if (mutation == null) continue;
             mutationGrid.AddMutation(mutation);
