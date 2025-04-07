@@ -26,7 +26,7 @@ public class WeaponComparisonMenu : MenuBase
     private Action<bool> onChoiceMade;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private void Start()
     {
         keepCurrentButton.onClick.AddListener(() => OnChoiceMade(false));
         equipNewButton.onClick.AddListener(() => OnChoiceMade(true));
@@ -44,8 +44,8 @@ public class WeaponComparisonMenu : MenuBase
         // Update new weapon UI
         UpdateWeaponUI(newWeapon, newWeaponImage, newWeaponName, newWeaponDescription, newWeaponStats);
 
-        // Show the menu
-        SetScreenActive(true);
+        // Show the menu with a small delay
+        SetScreenActive(true, 0.1f);
     }
 
     private void UpdateWeaponUI(WeaponScriptableObj weapon, Image image, TextMeshProUGUI nameText, 
@@ -68,12 +68,12 @@ public class WeaponComparisonMenu : MenuBase
     private void OnChoiceMade(bool equipNew)
     {
         onChoiceMade?.Invoke(equipNew);
-        SetScreenActive(false);
+        ReturnToGame();
     }
 
-    // Update is called once per frame
-    void Update()
+    public void ReturnToGame()
     {
-        
+        SetScreenActive(false, 0.1f);
+        PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
     }
 }

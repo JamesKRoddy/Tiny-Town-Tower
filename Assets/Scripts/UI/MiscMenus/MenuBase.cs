@@ -16,6 +16,7 @@ public abstract class MenuBase : MonoBehaviour, IControllerInput
             {
                 PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
                 PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
+                Debug.Log("Setting first selected button");
                 EventSystem.current.SetSelectedGameObject(_firstSelected.gameObject);
             }
             else
