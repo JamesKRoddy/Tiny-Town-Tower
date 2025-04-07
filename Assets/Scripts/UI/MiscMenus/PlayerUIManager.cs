@@ -54,6 +54,10 @@ public class PlayerUIManager : MonoBehaviour
     public NarrativeSystem narrativeSystem;
     public WeaponComparisonMenu weaponComparisonMenu;
 
+    [Header("Game UI References")]
+    public RogueLikeGameUI rogueLikeGameUI;
+
+
     private Coroutine openingMenuCoroutine;
 
     // Ensure that there is only one instance of PlayerCombat
@@ -68,6 +72,11 @@ public class PlayerUIManager : MonoBehaviour
             _instance = this; // Set the instance
             DontDestroyOnLoad(gameObject); // Optionally persist across scenes
         }   
+    }
+
+    void Start()
+    {
+        rogueLikeGameUI.Setup();
     }
 
     /// <summary>

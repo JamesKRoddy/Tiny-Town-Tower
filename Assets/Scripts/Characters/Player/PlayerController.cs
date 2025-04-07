@@ -31,6 +31,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
     [Header("NPC Possesion")]
     public IPossessable _possessedNPC;
+    public event Action<IPossessable> OnNPCPossessed;
 
     [Header("Camera")]
     public PlayerCamera playerCamera;
@@ -79,6 +80,9 @@ public class PlayerController : MonoBehaviour, IControllerInput
         // Assign new NPC and possess it
         _possessedNPC = npc;
         _possessedNPC?.OnPossess();
+        
+        // Invoke the event when an NPC is possessed
+        OnNPCPossessed?.Invoke(_possessedNPC);
     }
 
     /// <summary>

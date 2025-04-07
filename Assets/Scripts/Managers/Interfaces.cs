@@ -60,8 +60,6 @@ public interface IDamageable
  * Next work:
     Refactoring some of the enemy code:
 
-    Have to setup weapon comparison menu with usual set actice functions from menu base
-    Picking up new weapons, Ui attached to this
     Player getting damaged by enemies
     Enemy deaths
     VFX for getting hit and hitting enemies
