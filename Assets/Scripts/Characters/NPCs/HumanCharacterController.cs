@@ -175,6 +175,16 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public void EquipMeleeWeapon(int equipped)
     {
         animator.SetInteger("Equipped", equipped);
+        UpdateAnimationSpeed();
+    }
+
+    private void UpdateAnimationSpeed()
+    {
+        if (characterInventory.equippedWeaponScriptObj != null)
+        {
+            // Update the speed of all attack animations in the Attacking Layer
+            animator.SetFloat("AttackSpeed", characterInventory.equippedWeaponScriptObj.attackSpeed);
+        }
     }
 
     //Called from animator state class CombatAnimationState

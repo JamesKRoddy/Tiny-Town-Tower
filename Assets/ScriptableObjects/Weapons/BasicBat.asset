@@ -21,4 +21,4 @@ MonoBehaviour:
   animationType: 1
   damage: 10
   weaponElement: 0
-  attackSpeed: 1
+  attackSpeed: 0.1

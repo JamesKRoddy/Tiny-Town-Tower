@@ -59,7 +59,7 @@ public interface IDamageable
  * Known bugs:
  * Next work:
     Refactoring some of the enemy code:
-    
+
     VFX for getting hit and hitting enemies
     Setup different hitboxes on the weapons for horizontal and vertical attacks
     For the player interaction raycast maybe make more raycasts to cover a larger area? Or a box cast?
@@ -73,6 +73,12 @@ public interface IDamageable
 // - Introduce contamination mechanics, requiring purification before re-entering the camp.
 /*
  *maybe the reason you have to go into the menu each time is because certain parts of the grid give you boosts like 2x the effect?
+ Mutation Ideas
+ Increase Dash Distance
+ Increase Dash Speed
+ Increase dash cooldown
+ Increase Movement Speed
+ 
  */
 
 // 2. NPC Characteristics System

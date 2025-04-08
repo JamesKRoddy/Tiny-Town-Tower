@@ -14,10 +14,13 @@ public class MeleeAttackVFX : MonoBehaviour
                         .ToArray();
     }
 
-    internal void Play(WeaponElement element)
+    internal void Play(WeaponElement element, float attackSpeed = 1f)
     {
         //Adding 1 to compensate for NONE in enum
-        meleeVfx[(int)element].Play();
+        var ps = meleeVfx[(int)element];
+        var main = ps.main;
+        main.simulationSpeed = attackSpeed;
+        ps.Play();
     }
 
     internal void Stop(WeaponElement element)
