@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class MeleeZombie : Zombie
 {
-    public float meleeDamage = 20f;
+    public float meleeDamage = 2f;
 
     protected override void StartAttack()
     {

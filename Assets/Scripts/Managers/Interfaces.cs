@@ -74,7 +74,6 @@ public interface IDamageable
 // 1. Genetic Mutations & Inventory System
 // - Introduce contamination mechanics, requiring purification before re-entering the camp.
 /*
- *Keep all the genetic mutation storage in the player inventory, if a mutation is assigned then remove it from GeneticMutationUI allMutations, if a mutation is removed then add it to the player inventory
  *maybe the reason you have to go into the menu each time is because certain parts of the grid give you boosts like 2x the effect?
  */
 
