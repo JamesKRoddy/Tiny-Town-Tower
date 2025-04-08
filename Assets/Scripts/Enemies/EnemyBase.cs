@@ -91,7 +91,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
         OnDeath?.Invoke();
         animator.SetTrigger("Dead");
         agent.enabled = false;
-        Destroy(gameObject); //TODO testing purpose
+        Destroy(gameObject, 10f);
     }
 
     internal float GetDamageValue()
