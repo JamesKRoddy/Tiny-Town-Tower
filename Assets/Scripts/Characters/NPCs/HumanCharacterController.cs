@@ -412,6 +412,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         }
     }
 
+    public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
+
     public void TakeDamage(float amount, Transform damageSource = null)
     {
         float previousHealth = health;

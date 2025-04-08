@@ -48,6 +48,8 @@ public class TurretBaseTarget : MonoBehaviour, IDamageable
         OnBaseDestroyed?.Invoke();
         // Add logic for game over, animations, etc.
     }
+    
+    public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
 
     public void TakeDamage(float amount, Transform damageSource = null)
     {

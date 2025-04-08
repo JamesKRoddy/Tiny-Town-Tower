@@ -216,6 +216,17 @@ public enum TurretCategory
 }
 
 // =========================
+// ALLEGIANCE ENUM
+// =========================
+
+public enum Allegiance
+{
+    FRIENDLY,
+    HOSTILE,
+    NEUTRAL
+}
+
+// =========================
 // MISCELLANEOUS ENUMS
 // =========================
 

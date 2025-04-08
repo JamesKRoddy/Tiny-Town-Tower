@@ -84,11 +84,12 @@ public class RogueLikeGameUI : MonoBehaviour
     public void OnDestroy()
     {
         // Unsubscribe from game mode changes
-        GameManager.Instance.OnGameModeChanged -= OnGameModeChanged;
+        if (GameManager.Instance != null) GameManager.Instance.OnGameModeChanged -= OnGameModeChanged;
         
         // Unsubscribe from NPC possessed event
-        PlayerController.Instance.OnNPCPossessed -= OnNPCPossessed;
-        
+        if (PlayerController.Instance != null) PlayerController.Instance.OnNPCPossessed -= OnNPCPossessed;
+        else return;
+
         // Unsubscribe from current NPC's health events if it's damageable
         if (PlayerController.Instance._possessedNPC is IDamageable damageable)
         {

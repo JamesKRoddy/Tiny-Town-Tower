@@ -53,6 +53,7 @@ public interface IDamageable
     void TakeDamage(float amount, Transform damageSource = null); // Method to handle damage
     void Heal(float amount);       // Optional: Method to handle healing
     void Die();
+    Allegiance GetAllegiance(); // Method to get the allegiance of the entity
 }
 
 /*

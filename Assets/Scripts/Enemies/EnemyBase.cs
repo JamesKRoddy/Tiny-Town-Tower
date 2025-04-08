@@ -61,6 +61,8 @@ public class EnemyBase : MonoBehaviour, IDamageable
         Health = Mathf.Min(Health + amount, MaxHealth);
     }
 
+    public Allegiance GetAllegiance() => Allegiance.HOSTILE;
+
     public void TakeDamage(float amount, Transform damageSource = null)
     {
         Debug.Log("Enemy took damage: " + amount);
