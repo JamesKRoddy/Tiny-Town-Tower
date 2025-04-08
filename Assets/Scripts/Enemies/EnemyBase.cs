@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.AI;
+using System.Collections;
 
 public class EnemyBase : MonoBehaviour, IDamageable
 {
@@ -77,12 +78,45 @@ public class EnemyBase : MonoBehaviour, IDamageable
             {
                 Quaternion targetRotation = Quaternion.LookRotation(direction);
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 0.5f);
+
+                // Add knockback effect
+                Vector3 knockbackDirection = -direction; // Push away from damage source
+                float knockbackDistance = 1.5f; // Adjust this value to control knockback distance
+                Vector3 newPosition = transform.position + knockbackDirection * knockbackDistance;
+
+                // Sample the NavMesh to ensure the new position is valid
+                if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, knockbackDistance, NavMesh.AllAreas))
+                {
+                    StartCoroutine(KnockbackRoutine(hit.position));
+                }
             }
         }
 
         if (Health <= 0)
         {
             Die();
+        }
+    }
+
+    private IEnumerator KnockbackRoutine(Vector3 targetPosition)
+    {
+        float duration = 0.2f; // Duration of the knockback
+        float elapsed = 0f;
+        Vector3 startPosition = transform.position;
+        
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            Vector3 newPosition = Vector3.Lerp(startPosition, targetPosition, t);
+            
+            // Sample NavMesh to ensure we stay on it
+            if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 0.1f, NavMesh.AllAreas))
+            {
+                agent.Warp(hit.position);
+            }
+            
+            yield return null;
         }
     }
 

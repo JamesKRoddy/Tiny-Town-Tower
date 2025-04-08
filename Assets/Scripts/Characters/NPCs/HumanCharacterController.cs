@@ -8,6 +8,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     [Header("Movement Parameters")]
     public float moveMaxSpeed = 10f; // Speed at which the player moves normally
     public float rotationSpeed = 720f; // Speed at which the player rotates
+    public float attackRotationSpeed = 360f; // Speed at which the player rotates while attacking
     public float dashSpeed = 20f; // Speed during a dash
     public float dashDuration = 0.2f; // How long a dash lasts
     public float dashCooldown = 1.0f; // Cooldown time between dashes
@@ -120,7 +121,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void Movement(Vector3 movement)
     {
-        if (!isVaulting && !isAttacking)
+        if (!isVaulting)
         {
             movementInput = new Vector3(movement.x, 0, movement.z);
         }
@@ -272,10 +273,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 FinishVault();
             }
         }
-        else if (!isAttacking)
+        else
         {
             float inputMagnitude = movementInput.magnitude;
             float speed = isDashing ? dashSpeed : moveMaxSpeed;
+            float currentRotationSpeed = isAttacking ? attackRotationSpeed : rotationSpeed;
 
             // If dashing, smoothly change direction
             if (isDashing)
@@ -311,7 +313,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
                     // Rotate player towards the current direction
                     Quaternion targetRotation = Quaternion.LookRotation(currentDirection);
-                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
                 }
             }
             else
@@ -321,13 +323,16 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
                 if (!IsObstacleInPath(targetMovement, out RaycastHit hitInfo))
                 {
-                    transform.position += targetMovement;
+                    if (!isAttacking) // Only move position if not attacking
+                    {
+                        transform.position += targetMovement;
+                    }
 
                     // Rotate player towards the input direction
                     if (movementInput != Vector3.zero && !isVaulting)
                     {
                         Quaternion targetRotation = Quaternion.LookRotation(movementInput);
-                        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+                        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
                     }
                 }
                 else

@@ -1742,6 +1742,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveMaxSpeed: 10
   rotationSpeed: 720
+  attackRotationSpeed: 120
   dashSpeed: 30
   dashDuration: 0.4
   dashCooldown: 1

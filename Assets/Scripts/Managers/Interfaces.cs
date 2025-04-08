@@ -59,9 +59,7 @@ public interface IDamageable
  * Known bugs:
  * Next work:
     Refactoring some of the enemy code:
-
-    Player getting damaged by enemies
-    Enemy deaths
+    
     VFX for getting hit and hitting enemies
     Setup different hitboxes on the weapons for horizontal and vertical attacks
     For the player interaction raycast maybe make more raycasts to cover a larger area? Or a box cast?
