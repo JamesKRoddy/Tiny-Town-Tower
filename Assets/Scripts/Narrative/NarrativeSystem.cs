@@ -5,6 +5,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Collections;
 using System;
+using Managers;
 
 public class NarrativeSystem : MenuBase
 {

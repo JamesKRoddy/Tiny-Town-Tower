@@ -1,6 +1,6 @@
 using System.Collections;
 using UnityEngine;
-
+using Managers;
 public class EnemySpawnPoint : MonoBehaviour
 {
     public EnemyTargetType enemyTargetType;

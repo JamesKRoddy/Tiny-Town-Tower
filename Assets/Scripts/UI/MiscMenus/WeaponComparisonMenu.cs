@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System;
+using Managers;
 
 public class WeaponComparisonMenu : MenuBase
 {

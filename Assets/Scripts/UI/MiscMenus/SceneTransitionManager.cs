@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Managers;
 
 // This singleton manages scene transitions, tracking previous, current, and next scenes.
 // It loads a dedicated loading scene, which in turn starts loading the target scene.
