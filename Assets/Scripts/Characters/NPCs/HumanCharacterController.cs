@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Windows;
+using Managers;
 
 public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 {
@@ -419,6 +420,15 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         float previousHealth = health;
         health = Mathf.Max(0, health - amount);
         OnDamageTaken?.Invoke(amount, health);
+
+        // Play hit VFX
+        if (damageSource != null)
+        {
+            Vector3 hitPoint = transform.position + Vector3.up * 1.5f; // Adjust height as needed
+            Vector3 hitNormal = (transform.position - damageSource.position).normalized;
+            HitVFXManager.Instance.PlayHitEffect(hitPoint, hitNormal, GetAllegiance());
+        }
+
         if (health <= 0) Die();
     }
 

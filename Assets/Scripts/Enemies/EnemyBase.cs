@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
+using Managers;
 
 public class EnemyBase : MonoBehaviour, IDamageable
 {
@@ -70,6 +71,14 @@ public class EnemyBase : MonoBehaviour, IDamageable
         Health -= amount;
         animator.SetTrigger("Damaged");
         OnDamageTaken?.Invoke(amount, Health);
+
+        // Play hit VFX
+        if (damageSource != null)
+        {
+            Vector3 hitPoint = transform.position + Vector3.up * 1.5f; // Adjust height as needed
+            Vector3 hitNormal = (transform.position - damageSource.position).normalized;
+            HitVFXManager.Instance.PlayHitEffect(hitPoint, hitNormal, GetAllegiance());
+        }
 
         // Rotate towards the damage source if one is provided
         if (damageSource != null)

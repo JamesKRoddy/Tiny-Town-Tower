@@ -1,37 +1,40 @@
 using UnityEngine;
 
-public class BuildManager : MonoBehaviour
+namespace Managers
 {
-    // Singleton instance
-    private static BuildManager _instance;
-
-    // Singleton property to get the instance
-    public static BuildManager Instance
+    public class BuildManager : MonoBehaviour
     {
-        get
+        // Singleton instance
+        private static BuildManager _instance;
+
+        // Singleton property to get the instance
+        public static BuildManager Instance
         {
-            if (_instance == null)
+            get
             {
-                // Find the GameManager instance if it hasn't been assigned
-                _instance = FindFirstObjectByType<BuildManager>();
                 if (_instance == null)
                 {
-                    Debug.LogWarning("BuildManager instance not found in the scene!");
+                    // Find the GameManager instance if it hasn't been assigned
+                    _instance = FindFirstObjectByType<BuildManager>();
+                    if (_instance == null)
+                    {
+                        Debug.LogWarning("BuildManager instance not found in the scene!");
+                    }
                 }
+                return _instance;
             }
-            return _instance;
         }
-    }
 
-    private void Awake()
-    {
-        if (_instance != null && _instance != this)
+        private void Awake()
         {
-            Destroy(gameObject); // Destroy duplicate instances
-        }
-        else
-        {
-            _instance = this; // Set the instance
+            if (_instance != null && _instance != this)
+            {
+                Destroy(gameObject); // Destroy duplicate instances
+            }
+            else
+            {
+                _instance = this; // Set the instance
+            }
         }
     }
 }
