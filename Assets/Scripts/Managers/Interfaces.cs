@@ -62,9 +62,8 @@ public interface IDamageable
 /*
  * Known bugs:
 
-    Enemies are getting separated from their nav agents
     Something wrong with the zombie animation layer because the attacks are getting through the damage animation
-
+    Room prefabs are not getting instaciated correctly, the nav meshes are not baking.
  * Next work:
     Refactoring some of the enemy code:
 
