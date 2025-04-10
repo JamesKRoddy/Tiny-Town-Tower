@@ -933,6 +933,14 @@ PrefabInstance:
       propertyPath: 'buildingDataScriptableObjs.Array.data[0]'
       value: 
       objectReference: {fileID: 11400000, guid: cabb675861ade9446b9fd0936ab40689, type: 2}
+    - target: {fileID: 7451046357896141963, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: characterEffects.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7451046357896141963, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: 'characterEffects.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 83115b41ecc29d44284ef52b7551852a, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

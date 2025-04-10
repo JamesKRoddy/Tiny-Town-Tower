@@ -61,6 +61,12 @@ public interface IDamageable
 
 /*
  * Known bugs:
+
+    Disable enemy hitbox after they die because they can still get hit by the attack raycast
+    Enemies are getting separated from their nav agents
+    Player needs to collide with enemies, currently passing trough them
+    Something wrong with the zombie animation layer because the attacks are getting through the damage animation
+
  * Next work:
     Refactoring some of the enemy code:
 
@@ -69,6 +75,7 @@ public interface IDamageable
     For the player interaction raycast maybe make more raycasts to cover a larger area? Or a box cast?
     For the enemy attack, instead of the attack just hitting the player maybe it should instead set a warning sign above the enemy's head that the attack is coming? This would give the player a chance to dodge.
     Try to setup a boss, large zombie w/ cyberpunk aspects to shoot lazers, projectiles, explosions etc.
+
  */
 
 // ========================================

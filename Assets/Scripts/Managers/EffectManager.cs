@@ -4,7 +4,7 @@ using System.Collections;
 
 namespace Managers
 {
-    [CreateAssetMenu(fileName = "NewEffect", menuName = "Game/Effects/Effect Definition")]
+    [CreateAssetMenu(fileName = "NewEffect", menuName = "Scriptable Objects/Roguelite/Enemies/Effects/Effect Definition")]
     public class EffectDefinition : ScriptableObject
     {
         [Tooltip("Array of possible particle system prefabs. One will be randomly selected")]
@@ -26,7 +26,7 @@ namespace Managers
         public float duration = 0f;
     }
 
-    [CreateAssetMenu(fileName = "NewCharacterEffects", menuName = "Game/Effects/Character Effects")]
+    [CreateAssetMenu(fileName = "NewCharacterEffects", menuName = "Scriptable Objects/Roguelite/Enemies/Effects/Character Effects")]
     public class CharacterEffects : ScriptableObject
     {
         [Tooltip("The type of character these effects are for")]
@@ -34,27 +34,37 @@ namespace Managers
 
         [Header("Combat Effects")]
         [Tooltip("Blood/gore effects for organic characters, or fluid/particle effects for machines")]
-        public EffectDefinition[] bloodEffects;
+        public EffectDefinition[] bloodEffects = new EffectDefinition[0];
 
         [Tooltip("Impact effects showing the force of the hit (dust, sparks, debris)")]
-        public EffectDefinition[] impactEffects;
+        public EffectDefinition[] impactEffects = new EffectDefinition[0];
 
         [Tooltip("Special effects played when the character dies (explosions, disintegration, etc.)")]
-        public EffectDefinition[] deathEffects;
+        public EffectDefinition[] deathEffects = new EffectDefinition[0];
 
         [Header("Movement Effects")]
         [Tooltip("Effects played when the character takes a step")]
-        public EffectDefinition[] footstepEffects;
+        public EffectDefinition[] footstepEffects = new EffectDefinition[0];
 
         [Header("Idle Effects")]
         [Tooltip("Random effects played while the character is idle")]
-        public EffectDefinition[] idleEffects;
+        public EffectDefinition[] idleEffects = new EffectDefinition[0];
 
         [Tooltip("Minimum time between idle effects")]
         public float minIdleInterval = 5f;
 
         [Tooltip("Maximum time between idle effects")]
         public float maxIdleInterval = 15f;
+
+        private void OnEnable()
+        {
+            // Initialize arrays if they're null
+            if (bloodEffects == null) bloodEffects = new EffectDefinition[0];
+            if (impactEffects == null) impactEffects = new EffectDefinition[0];
+            if (deathEffects == null) deathEffects = new EffectDefinition[0];
+            if (footstepEffects == null) footstepEffects = new EffectDefinition[0];
+            if (idleEffects == null) idleEffects = new EffectDefinition[0];
+        }
     }
 
     public class EffectManager : MonoBehaviour
@@ -187,10 +197,14 @@ namespace Managers
             vfx.transform.position = position;
             vfx.transform.rotation = Quaternion.LookRotation(normal);
 
+            float particleDuration = 0f;
+            float audioDuration = 0f;
+
             var particleSystem = vfx.GetComponent<ParticleSystem>();
             if (particleSystem != null)
             {
                 particleSystem.Play();
+                particleDuration = particleSystem.main.duration;
             }
 
             if (effect.sounds != null && effect.sounds.Length > 0)
@@ -202,11 +216,11 @@ namespace Managers
                     audioSource.pitch = Random.Range(effect.minPitch, effect.maxPitch);
                     audioSource.volume = effect.volume;
                     audioSource.Play();
+                    audioDuration = audioSource.clip.length;
                 }
             }
 
-            float duration = effect.duration > 0 ? effect.duration : 
-                           (particleSystem != null ? particleSystem.main.duration : 1f);
+            float duration = effect.duration > 0 ? effect.duration : Mathf.Max(particleDuration, audioDuration);
             StartCoroutine(ReturnToPoolAfterDuration(vfx, effect, duration));
         }
 
@@ -217,22 +231,37 @@ namespace Managers
             Queue<GameObject> pool = effectPools[effect];
             List<GameObject> active = activeEffects[effect];
 
+            GameObject obj;
             if (pool.Count > 0)
             {
-                GameObject obj = pool.Dequeue();
+                obj = pool.Dequeue();
                 obj.SetActive(true);
                 active.Add(obj);
-                return obj;
             }
             else if (active.Count > 0)
             {
-                GameObject obj = active[0];
+                obj = active[0];
                 active.RemoveAt(0);
                 active.Add(obj);
-                return obj;
+            }
+            else
+            {
+                return null;
             }
 
-            return null;
+            // Ensure AudioSource component exists if the effect has sounds
+            if (effect.sounds != null && effect.sounds.Length > 0)
+            {
+                AudioSource audioSource = obj.GetComponent<AudioSource>();
+                if (audioSource == null)
+                {
+                    audioSource = obj.AddComponent<AudioSource>();
+                    audioSource.playOnAwake = false;
+                    audioSource.loop = false;
+                }
+            }
+
+            return obj;
         }
 
         private IEnumerator ReturnToPoolAfterDuration(GameObject obj, EffectDefinition effect, float duration)

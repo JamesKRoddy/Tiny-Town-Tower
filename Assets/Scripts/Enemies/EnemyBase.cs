@@ -97,7 +97,9 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
                 // Add knockback effect
                 Vector3 knockbackDirection = -direction; // Push away from damage source
-                float knockbackDistance = 1.5f; // Adjust this value to control knockback distance
+                float maxKnockbackDistance = 1.0f; // Maximum knockback distance
+                float distanceFromSource = Vector3.Distance(transform.position, damageSource.position);
+                float knockbackDistance = Mathf.Lerp(maxKnockbackDistance, maxKnockbackDistance * 0.3f, distanceFromSource / 5f); // Scale down to 30% at 5 units away
                 Vector3 newPosition = transform.position + knockbackDirection * knockbackDistance;
 
                 // Sample the NavMesh to ensure the new position is valid
@@ -141,6 +143,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
         OnDeath?.Invoke();
         animator.SetTrigger("Dead");
         agent.enabled = false;
+        GetComponent<Collider>().enabled = false;
 
         // Play death VFX
         Vector3 deathPoint = transform.position + Vector3.up * 1.5f;
