@@ -62,9 +62,7 @@ public interface IDamageable
 /*
  * Known bugs:
 
-    Disable enemy hitbox after they die because they can still get hit by the attack raycast
     Enemies are getting separated from their nav agents
-    Player needs to collide with enemies, currently passing trough them
     Something wrong with the zombie animation layer because the attacks are getting through the damage animation
 
  * Next work:
