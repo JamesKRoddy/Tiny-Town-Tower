@@ -79,6 +79,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   health: 100
   maxHealth: 100
+  characterType: 9
 --- !u!54 &8009027879356615486
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -190,7 +191,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3458277318788093592}
-  - component: {fileID: 561507407484933511}
+  - component: {fileID: 7451046357896141963}
   m_Layer: 0
   m_Name: HitVFXManager
   m_TagString: Untagged
@@ -213,7 +214,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 4686915863895893509}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &561507407484933511
+--- !u!114 &7451046357896141963
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -225,12 +226,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52ca4279e4358c8449461c0005960299, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bloodEffects:
-  - prefab: {fileID: 0}
-    hitSounds: []
-    minPitch: 0
-    maxPitch: 0
-    volume: 0
+  characterEffects: []
   poolSize: 20
 --- !u!1 &3066187907054321760
 GameObject:

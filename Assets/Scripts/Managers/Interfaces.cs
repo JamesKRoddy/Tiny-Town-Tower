@@ -68,7 +68,7 @@ public interface IDamageable
     Setup different hitboxes on the weapons for horizontal and vertical attacks
     For the player interaction raycast maybe make more raycasts to cover a larger area? Or a box cast?
     For the enemy attack, instead of the attack just hitting the player maybe it should instead set a warning sign above the enemy's head that the attack is coming? This would give the player a chance to dodge.
-
+    Try to setup a boss, large zombie w/ cyberpunk aspects to shoot lazers, projectiles, explosions etc.
  */
 
 // ========================================

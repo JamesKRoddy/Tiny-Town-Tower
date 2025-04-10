@@ -66,7 +66,7 @@ public class TurretBaseTarget : MonoBehaviour, IDamageable
         {
             Vector3 hitPoint = transform.position + Vector3.up * 1.5f; // Adjust height as needed
             Vector3 hitNormal = (transform.position - damageSource.position).normalized;
-            HitVFXManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
+            EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
         }
 
         if (Health <= 0)
@@ -89,7 +89,7 @@ public class TurretBaseTarget : MonoBehaviour, IDamageable
         // Play death VFX
         Vector3 deathPoint = transform.position + Vector3.up * 1.5f;
         Vector3 deathNormal = Vector3.up; // Default upward direction for death effects
-        HitVFXManager.Instance.PlayDeathEffect(deathPoint, deathNormal, this);
+        EffectManager.Instance.PlayDeathEffect(deathPoint, deathNormal, this);
     }
 
     // Draws a blue gizmo matching the BoxCollider in the Scene view.

@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Collections;
 
 namespace Managers
 {
@@ -85,8 +86,12 @@ namespace Managers
 
         private void InitializePools()
         {
+            if (characterEffects == null) return;
+
             foreach (var charEffect in characterEffects)
             {
+                if (charEffect == null) continue;
+
                 InitializeEffectPool(charEffect.bloodEffects);
                 InitializeEffectPool(charEffect.impactEffects);
                 InitializeEffectPool(charEffect.deathEffects);
@@ -97,9 +102,11 @@ namespace Managers
 
         private void InitializeEffectPool(EffectDefinition[] effects)
         {
+            if (effects == null) return;
+
             foreach (var effect in effects)
             {
-                if (effect != null && !effectPools.ContainsKey(effect))
+                if (effect != null && !effectPools.ContainsKey(effect) && effect.prefabs != null && effect.prefabs.Length > 0)
                 {
                     Queue<GameObject> pool = new Queue<GameObject>();
                     List<GameObject> active = new List<GameObject>();
@@ -107,9 +114,12 @@ namespace Managers
                     for (int i = 0; i < poolSize; i++)
                     {
                         GameObject prefab = effect.prefabs[Random.Range(0, effect.prefabs.Length)];
-                        GameObject obj = Instantiate(prefab, transform);
-                        obj.SetActive(false);
-                        pool.Enqueue(obj);
+                        if (prefab != null)
+                        {
+                            GameObject obj = Instantiate(prefab, transform);
+                            obj.SetActive(false);
+                            pool.Enqueue(obj);
+                        }
                     }
 
                     effectPools[effect] = pool;
@@ -124,12 +134,12 @@ namespace Managers
             var effects = GetCharacterEffects(damageable.CharacterType);
             if (effects == null) return;
 
-            if (effects.bloodEffects.Length > 0)
+            if (effects.bloodEffects != null && effects.bloodEffects.Length > 0)
             {
                 PlayEffect(position, normal, effects.bloodEffects[Random.Range(0, effects.bloodEffects.Length)]);
             }
 
-            if (effects.impactEffects.Length > 0)
+            if (effects.impactEffects != null && effects.impactEffects.Length > 0)
             {
                 PlayEffect(position, normal, effects.impactEffects[Random.Range(0, effects.impactEffects.Length)]);
             }
@@ -139,7 +149,7 @@ namespace Managers
         {
             if (damageable == null) return;
             var effects = GetCharacterEffects(damageable.CharacterType);
-            if (effects == null || effects.deathEffects.Length == 0) return;
+            if (effects == null || effects.deathEffects == null || effects.deathEffects.Length == 0) return;
 
             PlayEffect(position, normal, effects.deathEffects[Random.Range(0, effects.deathEffects.Length)]);
         }
@@ -147,16 +157,18 @@ namespace Managers
         public void PlayFootstepEffect(Vector3 position, Vector3 normal, CharacterType characterType)
         {
             var effects = GetCharacterEffects(characterType);
-            if (effects == null || effects.footstepEffects.Length == 0) return;
+            if (effects == null || effects.footstepEffects == null || effects.footstepEffects.Length == 0) return;
 
             PlayEffect(position, normal, effects.footstepEffects[Random.Range(0, effects.footstepEffects.Length)]);
         }
 
         private CharacterEffects GetCharacterEffects(CharacterType characterType)
         {
+            if (characterEffects == null) return null;
+
             foreach (var effect in characterEffects)
             {
-                if (effect.characterType == characterType)
+                if (effect != null && effect.characterType == characterType)
                 {
                     return effect;
                 }
@@ -167,6 +179,8 @@ namespace Managers
 
         private void PlayEffect(Vector3 position, Vector3 normal, EffectDefinition effect)
         {
+            if (effect == null) return;
+
             GameObject vfx = GetPooledObject(effect);
             if (vfx == null) return;
 
@@ -179,7 +193,7 @@ namespace Managers
                 particleSystem.Play();
             }
 
-            if (effect.sounds.Length > 0)
+            if (effect.sounds != null && effect.sounds.Length > 0)
             {
                 AudioSource audioSource = vfx.GetComponent<AudioSource>();
                 if (audioSource != null)
@@ -191,12 +205,15 @@ namespace Managers
                 }
             }
 
-            float duration = effect.duration > 0 ? effect.duration : particleSystem.main.duration;
+            float duration = effect.duration > 0 ? effect.duration : 
+                           (particleSystem != null ? particleSystem.main.duration : 1f);
             StartCoroutine(ReturnToPoolAfterDuration(vfx, effect, duration));
         }
 
         private GameObject GetPooledObject(EffectDefinition effect)
         {
+            if (effect == null || !effectPools.ContainsKey(effect)) return null;
+
             Queue<GameObject> pool = effectPools[effect];
             List<GameObject> active = activeEffects[effect];
 
@@ -218,13 +235,19 @@ namespace Managers
             return null;
         }
 
-        private System.Collections.IEnumerator ReturnToPoolAfterDuration(GameObject obj, EffectDefinition effect, float duration)
+        private IEnumerator ReturnToPoolAfterDuration(GameObject obj, EffectDefinition effect, float duration)
         {
             yield return new WaitForSeconds(duration);
             
-            obj.SetActive(false);
-            activeEffects[effect].Remove(obj);
-            effectPools[effect].Enqueue(obj);
+            if (obj != null && effect != null && activeEffects.ContainsKey(effect))
+            {
+                obj.SetActive(false);
+                activeEffects[effect].Remove(obj);
+                if (effectPools.ContainsKey(effect))
+                {
+                    effectPools[effect].Enqueue(obj);
+                }
+            }
         }
     }
 } 
