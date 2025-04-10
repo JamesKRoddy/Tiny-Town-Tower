@@ -63,7 +63,6 @@ public interface IDamageable
  * Known bugs:
 
     Something wrong with the zombie animation layer because the attacks are getting through the damage animation
-    Room prefabs are not getting instaciated correctly, the nav meshes are not baking.
  * Next work:
     Refactoring some of the enemy code:
 
@@ -72,6 +71,8 @@ public interface IDamageable
     For the player interaction raycast maybe make more raycasts to cover a larger area? Or a box cast?
     For the enemy attack, instead of the attack just hitting the player maybe it should instead set a warning sign above the enemy's head that the attack is coming? This would give the player a chance to dodge.
     Try to setup a boss, large zombie w/ cyberpunk aspects to shoot lazers, projectiles, explosions etc.
+    Sound sources need to be 3d sources not 2d sources
+    Procedurally generate bosses? have them select from a pool of items and equipment that allow for different attacks. Player can see them and get an idea of what each does.
 
  */
 
@@ -88,6 +89,7 @@ public interface IDamageable
  Increase Dash Speed
  Increase dash cooldown
  Increase Movement Speed
+ Spawn a little turret or something that shoots at the zombies
  
  */
 
