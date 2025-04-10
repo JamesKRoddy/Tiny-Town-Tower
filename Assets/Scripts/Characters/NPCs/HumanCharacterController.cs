@@ -6,6 +6,9 @@ using Managers;
 
 public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 {
+    [Header("Character Type")]
+    [SerializeField] protected CharacterType characterType = CharacterType.HUMAN_MALE_1;
+
     [Header("Movement Parameters")]
     public float moveMaxSpeed = 10f; // Speed at which the player moves normally
     public float rotationSpeed = 720f; // Speed at which the player rotates
@@ -55,6 +58,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public float Health { get => health; set => health = value; }
     public float MaxHealth { get => maxHealth; set => maxHealth = value; }
+    public CharacterType CharacterType => characterType;
 
     protected virtual void Awake()
     {
@@ -426,7 +430,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             Vector3 hitPoint = transform.position + Vector3.up * 1.5f; // Adjust height as needed
             Vector3 hitNormal = (transform.position - damageSource.position).normalized;
-            HitVFXManager.Instance.PlayHitEffect(hitPoint, hitNormal, GetAllegiance());
+            HitVFXManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
         }
 
         if (health <= 0) Die();
@@ -443,5 +447,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // TODO: Implement death behavior
         Debug.Log($"{gameObject.name} has died!");
         OnDeath?.Invoke();
+
+        // Play death VFX
+        Vector3 deathPoint = transform.position + Vector3.up * 1.5f;
+        Vector3 deathNormal = Vector3.up; // Default upward direction for death effects
+        HitVFXManager.Instance.PlayDeathEffect(deathPoint, deathNormal, this);
     }
 }

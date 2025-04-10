@@ -817,6 +817,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 561507407484933511, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: characterEffects.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 561507407484933511, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: characterEffects.Array.data[0].characterType
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 561507407484933511, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: characterEffects.Array.data[0].bloodEffects.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 561507407484933511, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: characterEffects.Array.data[0].bloodEffects.Array.data[0].prefab
+      value: 
+      objectReference: {fileID: 166404, guid: 78e1c8c5b281b8b439229473779ac9aa, type: 3}
+    - target: {fileID: 561507407484933511, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: characterEffects.Array.data[0].bloodEffects.Array.data[1].prefab
+      value: 
+      objectReference: {fileID: 1362418652685942, guid: b369efb4abe69e044890b664115fab9e, type: 3}
     - target: {fileID: 809835814259599459, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_IsActive
       value: 0

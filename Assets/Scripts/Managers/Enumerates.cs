@@ -227,6 +227,32 @@ public enum Allegiance
 }
 
 // =========================
+// CHARACTER TYPE ENUMS
+// =========================
+
+public enum CharacterType
+{
+    NONE,
+    // Human Types
+    HUMAN_MALE_1,
+    HUMAN_MALE_2,
+    HUMAN_FEMALE_1,
+    HUMAN_FEMALE_2,
+    // Zombie Types
+    ZOMBIE_MELEE,
+    ZOMBIE_SPITTER,
+    ZOMBIE_TANK,
+    // Machine Types
+    MACHINE_DRONE,
+    MACHINE_TURRET_BASE_TARGET,
+    MACHINE_ROBOT,
+    // Special Types
+    BOSS_1,
+    BOSS_2,
+    BOSS_3
+}
+
+// =========================
 // MISCELLANEOUS ENUMS
 // =========================
 

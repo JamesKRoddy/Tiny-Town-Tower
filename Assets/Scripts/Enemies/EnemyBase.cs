@@ -6,6 +6,9 @@ using Managers;
 
 public class EnemyBase : MonoBehaviour, IDamageable
 {
+    [Header("Character Type")]
+    [SerializeField] protected CharacterType characterType = CharacterType.ZOMBIE_MELEE;
+
     protected NavMeshAgent agent;
     protected Animator animator;
     protected Transform navMeshTarget;
@@ -29,6 +32,8 @@ public class EnemyBase : MonoBehaviour, IDamageable
     public event Action<float, float> OnDamageTaken;
     public event Action<float, float> OnHeal;
     public event Action OnDeath;
+
+    public CharacterType CharacterType => characterType;
 
     protected virtual void Awake()
     {
@@ -77,7 +82,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
         {
             Vector3 hitPoint = transform.position + Vector3.up * 1.5f; // Adjust height as needed
             Vector3 hitNormal = (transform.position - damageSource.position).normalized;
-            HitVFXManager.Instance.PlayHitEffect(hitPoint, hitNormal, GetAllegiance());
+            HitVFXManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
         }
 
         // Rotate towards the damage source if one is provided
@@ -136,6 +141,12 @@ public class EnemyBase : MonoBehaviour, IDamageable
         OnDeath?.Invoke();
         animator.SetTrigger("Dead");
         agent.enabled = false;
+
+        // Play death VFX
+        Vector3 deathPoint = transform.position + Vector3.up * 1.5f;
+        Vector3 deathNormal = Vector3.up; // Default upward direction for death effects
+        HitVFXManager.Instance.PlayDeathEffect(deathPoint, deathNormal, this);
+
         Destroy(gameObject, 10f);
     }
 

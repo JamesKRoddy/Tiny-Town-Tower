@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Managers;
 
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(Rigidbody))]
@@ -8,6 +9,7 @@ public class TurretBaseTarget : MonoBehaviour, IDamageable
     [Header("Base Settings")]
     [SerializeField] private float health = 100f;
     [SerializeField] private float maxHealth = 100f;
+    [SerializeField] private CharacterType characterType = CharacterType.MACHINE_TURRET_BASE_TARGET;
 
     public float Health
     {
@@ -20,6 +22,8 @@ public class TurretBaseTarget : MonoBehaviour, IDamageable
         get => maxHealth;
         set => maxHealth = value;
     }
+
+    public CharacterType CharacterType => characterType;
 
     public delegate void BaseDestroyedHandler();
     public event BaseDestroyedHandler OnBaseDestroyed;
@@ -56,6 +60,15 @@ public class TurretBaseTarget : MonoBehaviour, IDamageable
         float previousHealth = Health;
         Health -= amount;
         OnDamageTaken?.Invoke(amount, Health);
+
+        // Play hit VFX
+        if (damageSource != null)
+        {
+            Vector3 hitPoint = transform.position + Vector3.up * 1.5f; // Adjust height as needed
+            Vector3 hitNormal = (transform.position - damageSource.position).normalized;
+            HitVFXManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
+        }
+
         if (Health <= 0)
         {
             Health = 0;
@@ -72,6 +85,11 @@ public class TurretBaseTarget : MonoBehaviour, IDamageable
     public void Die()
     {
         OnDeath?.Invoke();
+
+        // Play death VFX
+        Vector3 deathPoint = transform.position + Vector3.up * 1.5f;
+        Vector3 deathNormal = Vector3.up; // Default upward direction for death effects
+        HitVFXManager.Instance.PlayDeathEffect(deathPoint, deathNormal, this);
     }
 
     // Draws a blue gizmo matching the BoxCollider in the Scene view.

@@ -43,6 +43,9 @@ public interface IDamageable
     [SerializeField] public float Health { get; set; } // Property for current health
     [SerializeField] public float MaxHealth { get; set; } // Property for max health
 
+    // Character type for VFX and sound effects
+    CharacterType CharacterType { get; }
+
     // Event that fires when damage is taken, providing the damage amount and remaining health
     event System.Action<float, float> OnDamageTaken;
     // Event that fires when healing occurs, providing the heal amount and new health
@@ -64,6 +67,8 @@ public interface IDamageable
     VFX for getting hit and hitting enemies
     Setup different hitboxes on the weapons for horizontal and vertical attacks
     For the player interaction raycast maybe make more raycasts to cover a larger area? Or a box cast?
+    For the enemy attack, instead of the attack just hitting the player maybe it should instead set a warning sign above the enemy's head that the attack is coming? This would give the player a chance to dodge.
+
  */
 
 // ========================================
