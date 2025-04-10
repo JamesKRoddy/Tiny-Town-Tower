@@ -5,7 +5,6 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(UnityEngine.AI.NavMeshAgent))]
-//TODO basically go down through this and if its being controlled stop the AI stuff
 public class SettlerNPC : HumanCharacterController
 {
     public SettlerNPCScriptableObj nPCDataObj;

@@ -1740,6 +1740,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54c2a897229fb6d4a8117c1e3843c816, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  characterType: 1
   moveMaxSpeed: 10
   rotationSpeed: 720
   attackRotationSpeed: 120
@@ -1748,9 +1749,11 @@ MonoBehaviour:
   dashCooldown: 1
   vaultSpeed: 5
   vaultDetectionRange: 1.5
-  obstacleLayer:
-    serializedVersion: 2
+  obstacleLayers:
+  - serializedVersion: 2
     m_Bits: 64
+  - serializedVersion: 2
+    m_Bits: 256
   vaultLayer:
     serializedVersion: 2
     m_Bits: 128

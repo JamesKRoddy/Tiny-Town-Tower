@@ -2899,7 +2899,7 @@ GameObject:
   - component: {fileID: 4816306560198809998}
   - component: {fileID: 5237491215696526443}
   - component: {fileID: 1501960958168938100}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Melee_Zombie
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3022,6 +3022,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1aa8b8fb928dbf4892118fc7500f7a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  characterType: 5
   health: 100
   maxHealth: 100
   attackRange: 2

@@ -27,7 +27,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     [Header("Vault Parameters")]
     public float vaultSpeed = 5f; // Slower speed for vaulting
     public float vaultDetectionRange = 1.0f; // Range to detect vaultable obstacles
-    public LayerMask obstacleLayer; // Layer for non-vaultable obstacles
+    public LayerMask[] obstacleLayers; // Array of layers for non-vaultable obstacles
     public LayerMask vaultLayer; // Layer specifically for vaultable obstacles
     public float capsuleCastRadius = 0.5f; // Radius of the capsule for collision detection
     public float vaultHeight = 1.0f; // Height of the raycast to detect vaultable obstacles
@@ -364,10 +364,14 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         Vector3 capsuleBottom = transform.position + Vector3.up * 0.1f; // Slightly above ground to avoid terrain issues
         Vector3 capsuleTop = transform.position + Vector3.up * humanCollider.bounds.size.y;
 
-        // Perform a capsule cast to detect obstacles in the path using obstacleLayer
-        if (Physics.CapsuleCast(capsuleBottom, capsuleTop, capsuleCastRadius, direction.normalized, out hitInfo, capsuleCastRadius, obstacleLayer | vaultLayer))
+        // Check against each obstacle layer
+        foreach (LayerMask layer in obstacleLayers)
         {
-            return true;
+            // Perform a capsule cast to detect obstacles in the path using the current obstacle layer
+            if (Physics.CapsuleCast(capsuleBottom, capsuleTop, capsuleCastRadius, direction.normalized, out hitInfo, capsuleCastRadius, layer | vaultLayer))
+            {
+                return true;
+            }
         }
 
         hitInfo = default;
