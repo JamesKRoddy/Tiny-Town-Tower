@@ -26,7 +26,8 @@ public class Zombie : EnemyBase
 
     protected virtual void Update()
     {
-        if (Health > 0 && navMeshTarget == null)
+        // Don't do anything if dead or no target
+        if (Health <= 0 || navMeshTarget == null)
             return;
 
         if (!isAttacking)

@@ -37,11 +37,8 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     protected virtual void Awake()
     {
-        // Initialize the NavMeshAgent and Animator
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
-
-        // Find the player in the scene
     }
 
     private void Start()
@@ -74,13 +71,23 @@ public class EnemyBase : MonoBehaviour, IDamageable
         Debug.Log("Enemy took damage: " + amount);
         float previousHealth = Health;
         Health -= amount;
-        animator.SetTrigger("Damaged");
+
+        // Interrupt attack animation and play damage animation
+        if (animator != null)
+        {
+            // Reset attack trigger and return to default state
+            animator.ResetTrigger("Attack");
+            animator.Play("Default", 1, 0); // Play the default animation on attack layer
+            // Play damage animation
+            animator.SetTrigger("Damaged");
+        }
+
         OnDamageTaken?.Invoke(amount, Health);
 
         // Play hit VFX
         if (damageSource != null)
         {
-            Vector3 hitPoint = transform.position + Vector3.up * 1.5f; // Adjust height as needed
+            Vector3 hitPoint = transform.position + Vector3.up * 1.5f;
             Vector3 hitNormal = (transform.position - damageSource.position).normalized;
             EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
         }
@@ -89,20 +96,19 @@ public class EnemyBase : MonoBehaviour, IDamageable
         if (damageSource != null)
         {
             Vector3 direction = (damageSource.position - transform.position).normalized;
-            direction.y = 0; // Keep the rotation on the horizontal plane
+            direction.y = 0;
             if (direction != Vector3.zero)
             {
                 Quaternion targetRotation = Quaternion.LookRotation(direction);
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 0.5f);
 
                 // Add knockback effect
-                Vector3 knockbackDirection = -direction; // Push away from damage source
-                float maxKnockbackDistance = 1.0f; // Maximum knockback distance
+                Vector3 knockbackDirection = -direction;
+                float maxKnockbackDistance = 1.0f;
                 float distanceFromSource = Vector3.Distance(transform.position, damageSource.position);
-                float knockbackDistance = Mathf.Lerp(maxKnockbackDistance, maxKnockbackDistance * 0.3f, distanceFromSource / 5f); // Scale down to 30% at 5 units away
+                float knockbackDistance = Mathf.Lerp(maxKnockbackDistance, maxKnockbackDistance * 0.3f, distanceFromSource / 5f);
                 Vector3 newPosition = transform.position + knockbackDirection * knockbackDistance;
 
-                // Sample the NavMesh to ensure the new position is valid
                 if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, knockbackDistance, NavMesh.AllAreas))
                 {
                     StartCoroutine(KnockbackRoutine(hit.position));
@@ -118,7 +124,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     private IEnumerator KnockbackRoutine(Vector3 targetPosition)
     {
-        float duration = 0.2f; // Duration of the knockback
+        float duration = 0.2f;
         float elapsed = 0f;
         Vector3 startPosition = transform.position;
         
@@ -128,7 +134,6 @@ public class EnemyBase : MonoBehaviour, IDamageable
             float t = elapsed / duration;
             Vector3 newPosition = Vector3.Lerp(startPosition, targetPosition, t);
             
-            // Sample NavMesh to ensure we stay on it
             if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 0.1f, NavMesh.AllAreas))
             {
                 agent.Warp(hit.position);
@@ -141,13 +146,16 @@ public class EnemyBase : MonoBehaviour, IDamageable
     public void Die()
     {
         OnDeath?.Invoke();
-        animator.SetTrigger("Dead");
+        if (animator != null)
+        {
+            animator.SetTrigger("Dead");
+        }
         agent.enabled = false;
         GetComponent<Collider>().enabled = false;
 
         // Play death VFX
         Vector3 deathPoint = transform.position + Vector3.up * 1.5f;
-        Vector3 deathNormal = Vector3.up; // Default upward direction for death effects
+        Vector3 deathNormal = Vector3.up;
         EffectManager.Instance.PlayDeathEffect(deathPoint, deathNormal, this);
 
         Destroy(gameObject, 10f);

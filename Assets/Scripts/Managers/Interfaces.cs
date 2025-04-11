@@ -69,10 +69,20 @@ public interface IDamageable
     VFX for getting hit and hitting enemies
     Setup different hitboxes on the weapons for horizontal and vertical attacks
     For the player interaction raycast maybe make more raycasts to cover a larger area? Or a box cast?
-    For the enemy attack, instead of the attack just hitting the player maybe it should instead set a warning sign above the enemy's head that the attack is coming? This would give the player a chance to dodge.
+
+
     Try to setup a boss, large zombie w/ cyberpunk aspects to shoot lazers, projectiles, explosions etc.
     Sound sources need to be 3d sources not 2d sources
     Procedurally generate bosses? have them select from a pool of items and equipment that allow for different attacks. Player can see them and get an idea of what each does.
+
+
+    Enemy attack refactor:
+    For the enemy attack, instead of the attack just hitting the player maybe it should instead,
+     set a warning sign above the enemy's head that the attack is coming? For the moment just flash the material red
+     This would give the player a chance to dodge. 
+    Put this in the transition for the attack so this wind up animation happens first then moves onto the attack animation.
+
+    Can do a runningtowards the player attack, nav agent and animation should work for this.
 
  */
 
