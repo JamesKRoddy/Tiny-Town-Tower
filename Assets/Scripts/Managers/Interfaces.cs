@@ -62,6 +62,8 @@ public interface IDamageable
 /*
  * Known bugs:
 
+    Zombies rotating while attacking
+
  * Next work:
     Refactoring some of the enemy code:
 

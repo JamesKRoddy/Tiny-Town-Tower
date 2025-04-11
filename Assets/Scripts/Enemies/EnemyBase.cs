@@ -16,6 +16,13 @@ public class EnemyBase : MonoBehaviour, IDamageable
     [SerializeField] private float health = 100f;
     [SerializeField] private float maxHealth = 100f;
 
+    // Material flash effect
+    protected SkinnedMeshRenderer skinnedMeshRenderer;
+    protected Material originalMaterial;
+    protected Material flashMaterial;
+    public float flashDuration = 0.5f;
+    public Color flashColor = new Color(1f, 0.2f, 0.2f, 1f); // Bright red color for flash
+
     public float Health
     {
         get => health;
@@ -39,6 +46,16 @@ public class EnemyBase : MonoBehaviour, IDamageable
     {
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
+        
+        // Get the SkinnedMeshRenderer and store original material
+        skinnedMeshRenderer = GetComponentInChildren<SkinnedMeshRenderer>();
+        if (skinnedMeshRenderer != null)
+        {
+            originalMaterial = skinnedMeshRenderer.material;
+            // Create a new instance of the material for flashing
+            flashMaterial = new Material(originalMaterial);
+            flashMaterial.color = flashColor;
+        }
     }
 
     private void Start()
@@ -164,5 +181,26 @@ public class EnemyBase : MonoBehaviour, IDamageable
     internal float GetDamageValue()
     {
         return damage;
+    }
+
+    // Animation event function that can be called from the animator
+    public void AttackWarning()
+    {
+        if (skinnedMeshRenderer != null)
+        {
+            StartCoroutine(FlashMaterialCoroutine());
+        }
+    }
+
+    private IEnumerator FlashMaterialCoroutine()
+    {
+        // Apply flash material
+        skinnedMeshRenderer.material = flashMaterial;
+        
+        // Wait for flash duration
+        yield return new WaitForSeconds(flashDuration);
+        
+        // Restore original material
+        skinnedMeshRenderer.material = originalMaterial;
     }
 }
