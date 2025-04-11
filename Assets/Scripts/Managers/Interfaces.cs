@@ -62,7 +62,6 @@ public interface IDamageable
 /*
  * Known bugs:
 
-    Something wrong with the zombie animation layer because the attacks are getting through the damage animation
  * Next work:
     Refactoring some of the enemy code:
 
@@ -78,8 +77,8 @@ public interface IDamageable
 
     Enemy attack refactor:
     For the enemy attack, instead of the attack just hitting the player maybe it should instead,
-     set a warning sign above the enemy's head that the attack is coming? For the moment just flash the material red
-     This would give the player a chance to dodge. 
+    set a warning sign above the enemy's head that the attack is coming? For the moment just flash the material red
+    This would give the player a chance to dodge. 
     Put this in the transition for the attack so this wind up animation happens first then moves onto the attack animation.
 
     Can do a runningtowards the player attack, nav agent and animation should work for this.
