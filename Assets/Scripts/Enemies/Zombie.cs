@@ -5,7 +5,6 @@ using System.Collections;
 public class Zombie : EnemyBase
 {
     public float attackRange = 2f;
-    protected bool isAttacking = false;
 
     protected override void Awake()
     {
@@ -84,19 +83,5 @@ public class Zombie : EnemyBase
             // The NavMeshAgent moves the zombie, but root motion from animation drives actual movement
             SetEnemyDestination(navMeshTarget.position);
         }
-    }
-
-    protected virtual void StartAttack()
-    {
-        // Trigger attack animation, this should transition to attack animations via root motion
-        animator.SetTrigger("Attack");
-        isAttacking = true;
-    }
-
-    public void EndAttack()
-    {
-        // Reset isAttacking flag after the attack animation finishes
-        animator.SetBool("Attack", false);
-        isAttacking = false;
     }
 }

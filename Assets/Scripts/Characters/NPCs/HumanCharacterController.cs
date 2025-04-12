@@ -195,6 +195,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     //Called from animator state class CombatAnimationState
     public void StopAttacking()
     {
+        Debug.Log("StopAttacking");
         isAttacking = false;
         if(characterCombat != null)
             characterCombat.StopAttacking();

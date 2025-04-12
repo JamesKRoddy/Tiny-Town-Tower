@@ -12,6 +12,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
     protected NavMeshAgent agent;
     protected Animator animator;
     protected Transform navMeshTarget;
+    protected bool isAttacking = false;
 
     [SerializeField] private float health = 100f;
     [SerializeField] private float maxHealth = 100f;
@@ -79,6 +80,19 @@ public class EnemyBase : MonoBehaviour, IDamageable
     public void Heal(float amount)
     {
         Health = Mathf.Min(Health + amount, MaxHealth);
+    }    
+    protected virtual void StartAttack()
+    {
+        // Trigger attack animation, this should transition to attack animations via root motion
+        animator.SetTrigger("Attack");
+        isAttacking = true;
+    }
+
+    protected virtual void EndAttack()
+    {
+        // Reset isAttacking flag after the attack animation finishes
+        animator.SetBool("Attack", false);
+        isAttacking = false;
     }
 
     public Allegiance GetAllegiance() => Allegiance.HOSTILE;
@@ -109,8 +123,8 @@ public class EnemyBase : MonoBehaviour, IDamageable
             EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
         }
 
-        // Rotate towards the damage source if one is provided
-        if (damageSource != null)
+        // Only rotate towards damage source if not attacking
+        if (damageSource != null && !isAttacking)
         {
             Vector3 direction = (damageSource.position - transform.position).normalized;
             direction.y = 0;
