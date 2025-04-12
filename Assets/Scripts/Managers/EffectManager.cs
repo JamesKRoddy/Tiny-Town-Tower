@@ -77,24 +77,17 @@ namespace Managers
 
         public void PlayHitEffect(Vector3 position, Vector3 normal, IDamageable damageable)
         {
+            Debug.Log("PlayHitEffect");
             if (damageable == null) return;
             var effects = GetCharacterEffects(damageable.CharacterType);
             if (effects == null) return;
 
-            if (effects.bloodEffects == null || effects.bloodEffects.Length == 0)
-            {
-                Debug.LogWarning($"No blood effects found for character type: {damageable.CharacterType}");
-            }
-            else
+            if (effects.bloodEffects != null && effects.bloodEffects.Length > 0)
             {
                 PlayEffect(position, normal, effects.bloodEffects[Random.Range(0, effects.bloodEffects.Length)]);
             }
 
-            if (effects.impactEffects == null || effects.impactEffects.Length == 0)
-            {
-                Debug.LogWarning($"No impact effects found for character type: {damageable.CharacterType}");
-            }
-            else
+            if (effects.impactEffects != null && effects.impactEffects.Length > 0)
             {
                 PlayEffect(position, normal, effects.impactEffects[Random.Range(0, effects.impactEffects.Length)]);
             }

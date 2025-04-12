@@ -195,7 +195,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     //Called from animator state class CombatAnimationState
     public void StopAttacking()
     {
-        Debug.Log("StopAttacking");
         isAttacking = false;
         if(characterCombat != null)
             characterCombat.StopAttacking();
@@ -431,12 +430,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         OnDamageTaken?.Invoke(amount, health);
 
         // Play hit VFX
-        if (damageSource != null)
-        {
-            Vector3 hitPoint = transform.position + Vector3.up * 1.5f; // Adjust height as needed
-            Vector3 hitNormal = (transform.position - damageSource.position).normalized;
-            EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
-        }
+        Vector3 hitPoint = transform.position + Vector3.up * 1.5f; // Adjust height as needed
+        Vector3 hitNormal = damageSource != null 
+            ? (transform.position - damageSource.position).normalized 
+            : Vector3.up; // Use upward direction as fallback
+        EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
 
         if (health <= 0) Die();
     }

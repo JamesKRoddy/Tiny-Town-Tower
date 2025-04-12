@@ -16,7 +16,7 @@ public class MeleeZombie : Zombie
         if (Vector3.Distance(transform.position, navMeshTarget.position) <= attackRange)
         {
             // Damage the player if in range during melee attack
-            navMeshTarget.GetComponent<IDamageable>().TakeDamage(meleeDamage);
+            navMeshTarget.GetComponent<IDamageable>().TakeDamage(meleeDamage, transform);
             Debug.Log("Player hit by melee attack");
         }
     }

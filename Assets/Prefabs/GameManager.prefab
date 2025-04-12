@@ -226,7 +226,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52ca4279e4358c8449461c0005960299, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  characterEffects: []
+  characterEffects:
+  - {fileID: 11400000, guid: 83115b41ecc29d44284ef52b7551852a, type: 2}
+  - {fileID: 11400000, guid: e917dc6f66606014dbfa9cec973cd6f3, type: 2}
   poolSize: 20
 --- !u!1 &3066187907054321760
 GameObject:
@@ -277,9 +279,9 @@ MonoBehaviour:
   invalidPlacementMaterial: {fileID: 0}
   gridPrefab: {fileID: 241196777734048875, guid: fb1ace5487d684b4a86192309c6fb1ec, type: 3}
   gridParent: {fileID: 4644746889367459830}
-  xBounds: {x: -25, y: 25}
-  zBounds: {x: -25, y: 25}
-  showGridBounds: 0
+  xBounds: {x: -10, y: 10}
+  zBounds: {x: -10, y: 10}
+  showGridBounds: 1
 --- !u!1 &3286751178416191525
 GameObject:
   m_ObjectHideFlags: 0
@@ -594,7 +596,7 @@ MonoBehaviour:
   gridParent: {fileID: 892765565880304067}
   xBounds: {x: -25, y: 25}
   zBounds: {x: -25, y: 25}
-  showGridBounds: 0
+  showGridBounds: 1
 --- !u!1 &7892603899224520776
 GameObject:
   m_ObjectHideFlags: 0
