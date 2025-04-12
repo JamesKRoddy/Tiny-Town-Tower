@@ -75,8 +75,11 @@ public interface IDamageable
     Refactoring some of the enemy code:
 
     Setup different hitboxes on the weapons for horizontal and vertical attacks
-    For the player interaction raycast maybe make more raycasts to cover a larger area? Or a box cast?
+    
+    Weapon impacts, for basic weapons its just dirt
+    For fire/electric should check if its hit a viable mesh and should spread to the mesh using it as an emission point?
 
+    Setup a boss with an area attack and a longer range attack
 
     Try to setup a boss, large zombie w/ cyberpunk aspects to shoot lazers, projectiles, explosions etc.
     Sound sources need to be 3d sources not 2d sources
