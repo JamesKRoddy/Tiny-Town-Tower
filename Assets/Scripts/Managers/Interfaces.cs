@@ -82,7 +82,8 @@ public interface IDamageable
     Try to setup a boss, large zombie w/ cyberpunk aspects to shoot lazers, projectiles, explosions etc.
     Sound sources need to be 3d sources not 2d sources
     Procedurally generate bosses? have them select from a pool of items and equipment that allow for different attacks. Player can see them and get an idea of what each does.
-
+    
+    Can just use a mech for a boss
 
     Enemy attack refactor:
     For the enemy attack, instead of the attack just hitting the player maybe it should instead,

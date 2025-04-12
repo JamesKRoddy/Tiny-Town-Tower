@@ -9,14 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
-  m_Name: ZombieMelee
+  m_Script: {fileID: 11500000, guid: 30b97a306db20054c9836880f1ae9f49, type: 3}
+  m_Name: Zombie_Melee
   m_EditorClassIdentifier: Assembly-CSharp:Managers:CharacterEffects
   characterType: 5
   bloodEffects:
   - {fileID: 11400000, guid: eae0766bee71efd4393734407dda6009, type: 2}
-  impactEffects:
-  - {fileID: 11400000, guid: 510261dbe2bdb3447bd198161ede83a2, type: 2}
+  impactEffects: []
   deathEffects:
   - {fileID: 11400000, guid: 43cd6af74bf79d346a6d5c96866bf83b, type: 2}
   footstepEffects: []

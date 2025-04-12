@@ -3,70 +3,7 @@ using System.Collections.Generic;
 using System.Collections;
 
 namespace Managers
-{
-    [CreateAssetMenu(fileName = "NewEffect", menuName = "Scriptable Objects/Roguelite/Enemies/Effects/Effect Definition")]
-    public class EffectDefinition : ScriptableObject
-    {
-        [Tooltip("Array of possible particle system prefabs. One will be randomly selected")]
-        public GameObject[] prefabs;
-        
-        [Tooltip("Array of possible sound effects to play. One will be randomly selected")]
-        public AudioClip[] sounds;
-        
-        [Tooltip("Minimum pitch variation for the sound effect (0.9 = 10% lower)")]
-        public float minPitch = 0.9f;
-        
-        [Tooltip("Maximum pitch variation for the sound effect (1.1 = 10% higher)")]
-        public float maxPitch = 1.1f;
-        
-        [Tooltip("Volume level for the sound effect (0-1)")]
-        public float volume = 1f;
-
-        [Tooltip("Duration of the effect in seconds. If 0, uses the particle system duration")]
-        public float duration = 0f;
-    }
-
-    [CreateAssetMenu(fileName = "NewCharacterEffects", menuName = "Scriptable Objects/Roguelite/Enemies/Effects/Character Effects")]
-    public class CharacterEffects : ScriptableObject
-    {
-        [Tooltip("The type of character these effects are for")]
-        public CharacterType characterType;
-
-        [Header("Combat Effects")]
-        [Tooltip("Blood/gore effects for organic characters, or fluid/particle effects for machines")]
-        public EffectDefinition[] bloodEffects = new EffectDefinition[0];
-
-        [Tooltip("Impact effects showing the force of the hit (dust, sparks, debris)")]
-        public EffectDefinition[] impactEffects = new EffectDefinition[0];
-
-        [Tooltip("Special effects played when the character dies (explosions, disintegration, etc.)")]
-        public EffectDefinition[] deathEffects = new EffectDefinition[0];
-
-        [Header("Movement Effects")]
-        [Tooltip("Effects played when the character takes a step")]
-        public EffectDefinition[] footstepEffects = new EffectDefinition[0];
-
-        [Header("Idle Effects")]
-        [Tooltip("Random effects played while the character is idle")]
-        public EffectDefinition[] idleEffects = new EffectDefinition[0];
-
-        [Tooltip("Minimum time between idle effects")]
-        public float minIdleInterval = 5f;
-
-        [Tooltip("Maximum time between idle effects")]
-        public float maxIdleInterval = 15f;
-
-        private void OnEnable()
-        {
-            // Initialize arrays if they're null
-            if (bloodEffects == null) bloodEffects = new EffectDefinition[0];
-            if (impactEffects == null) impactEffects = new EffectDefinition[0];
-            if (deathEffects == null) deathEffects = new EffectDefinition[0];
-            if (footstepEffects == null) footstepEffects = new EffectDefinition[0];
-            if (idleEffects == null) idleEffects = new EffectDefinition[0];
-        }
-    }
-
+{  
     public class EffectManager : MonoBehaviour
     {
         public static EffectManager Instance { get; private set; }
@@ -144,12 +81,20 @@ namespace Managers
             var effects = GetCharacterEffects(damageable.CharacterType);
             if (effects == null) return;
 
-            if (effects.bloodEffects != null && effects.bloodEffects.Length > 0)
+            if (effects.bloodEffects == null || effects.bloodEffects.Length == 0)
+            {
+                Debug.LogWarning($"No blood effects found for character type: {damageable.CharacterType}");
+            }
+            else
             {
                 PlayEffect(position, normal, effects.bloodEffects[Random.Range(0, effects.bloodEffects.Length)]);
             }
 
-            if (effects.impactEffects != null && effects.impactEffects.Length > 0)
+            if (effects.impactEffects == null || effects.impactEffects.Length == 0)
+            {
+                Debug.LogWarning($"No impact effects found for character type: {damageable.CharacterType}");
+            }
+            else
             {
                 PlayEffect(position, normal, effects.impactEffects[Random.Range(0, effects.impactEffects.Length)]);
             }
@@ -159,7 +104,11 @@ namespace Managers
         {
             if (damageable == null) return;
             var effects = GetCharacterEffects(damageable.CharacterType);
-            if (effects == null || effects.deathEffects == null || effects.deathEffects.Length == 0) return;
+            if (effects == null || effects.deathEffects == null || effects.deathEffects.Length == 0)
+            {
+                Debug.LogWarning($"No death effects found for character type: {damageable.CharacterType}");
+                return;
+            }
 
             PlayEffect(position, normal, effects.deathEffects[Random.Range(0, effects.deathEffects.Length)]);
         }
