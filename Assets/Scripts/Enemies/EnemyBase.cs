@@ -21,8 +21,8 @@ public class EnemyBase : MonoBehaviour, IDamageable
     protected SkinnedMeshRenderer skinnedMeshRenderer;
     protected Material originalMaterial;
     protected Material flashMaterial;
-    public float flashDuration = 0.5f;
-    public Color flashColor = new Color(1f, 0.2f, 0.2f, 1f); // Bright red color for flash
+    protected float flashDuration = 0.5f;
+    protected Color flashColor = new Color(1f, 0.1f, 0.1f); // Bright red color for flash
 
     public float Health
     {
