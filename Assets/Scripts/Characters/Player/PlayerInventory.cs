@@ -33,6 +33,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     [Header ("Chest handling")]
     private IInteractive<object> currentInteractive; // The interaction the player is currently looking at
     public float interactionRange = 3f; // Distance to detect weapons    
+    [SerializeField] private Vector3 boxCastSize = new Vector3(0.5f, 0.5f, 0.5f); // Size of the box cast for interaction detection
 
     [Header("Players currently equipped items")] 
     public WeaponElement dashElement = WeaponElement.NONE;
@@ -167,7 +168,10 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     private void DetectInteraction()
     {
         RaycastHit hit;
-        if (Physics.Raycast(PlayerController.Instance._possessedNPC.GetTransform().position + Vector3.up, PlayerController.Instance._possessedNPC.GetTransform().transform.forward, out hit, interactionRange))
+        Vector3 startPos = PlayerController.Instance._possessedNPC.GetTransform().position + Vector3.up;
+        Vector3 direction = PlayerController.Instance._possessedNPC.GetTransform().forward;
+        
+        if (Physics.BoxCast(startPos, boxCastSize * 0.5f, direction, out hit, PlayerController.Instance._possessedNPC.GetTransform().rotation, interactionRange))
         {
             IInteractiveBase interactive = hit.collider.GetComponent<IInteractiveBase>();
             if (interactive != null && interactive.CanInteract())
