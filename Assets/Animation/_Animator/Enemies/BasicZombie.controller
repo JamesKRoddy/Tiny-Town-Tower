@@ -646,7 +646,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   functionCalls:
-  - componentTypeName: EnemyBase
+  - componentTypeName: Zombie
     functionName: EndAttack
     callOnEnter: 1
     callOnExit: 0
@@ -1348,7 +1348,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   functionCalls:
-  - componentTypeName: EnemyBase
+  - componentTypeName: Zombie
     functionName: EndAttack
     callOnEnter: 1
     callOnExit: 0
