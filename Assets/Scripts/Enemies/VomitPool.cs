@@ -1,20 +1,22 @@
 using UnityEngine;
 
-public class VomitPool : MonoBehaviour
-{
-    private float damage;
-
-    void OnTriggerStay(Collider other)
+namespace Enemies{
+    public class VomitPool : MonoBehaviour
     {
-        if (other.gameObject.GetComponent<IDamageable>() != null)
+        private float damage;
+
+        void OnTriggerStay(Collider other)
         {
-            // Damage the player if they are in the vomit pool
-            other.gameObject.GetComponent<IDamageable>().TakeDamage(damage);
+            if (other.gameObject.GetComponent<IDamageable>() != null)
+            {
+                // Damage the player if they are in the vomit pool
+                other.gameObject.GetComponent<IDamageable>().TakeDamage(damage);
+            }
         }
-    }
 
-    public void SetDamage(float dmg)
-    {
-        damage = dmg;
+        public void SetDamage(float dmg)
+        {
+            damage = dmg;
+        }
     }
 }

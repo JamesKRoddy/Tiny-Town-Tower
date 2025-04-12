@@ -1,6 +1,8 @@
 using UnityEngine;
 
-public class MeleeZombie : Zombie
+namespace Enemies
+{
+    public class MeleeZombie : Zombie
 {
     public float meleeDamage = 2f;
 
@@ -19,5 +21,6 @@ public class MeleeZombie : Zombie
             navMeshTarget.GetComponent<IDamageable>().TakeDamage(meleeDamage, transform);
             Debug.Log("Player hit by melee attack");
         }
+    }
     }
 }
