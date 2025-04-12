@@ -11,6 +11,7 @@ public class Zombie : EnemyBase
         base.Awake();
 
         agent.updatePosition = false;
+        agent.updateRotation = true; // Enable rotation by default
         
         // Ensure the enemy is on the NavMesh when spawned
         if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 2.0f, NavMesh.AllAreas))
@@ -39,10 +40,6 @@ public class Zombie : EnemyBase
         if (Vector3.Distance(transform.position, navMeshTarget.position) <= attackRange && !isAttacking)
         {
             StartAttack();
-        }
-        else
-        {
-            EndAttack();
         }
     }
 
@@ -83,5 +80,17 @@ public class Zombie : EnemyBase
             // The NavMeshAgent moves the zombie, but root motion from animation drives actual movement
             SetEnemyDestination(navMeshTarget.position);
         }
+    }
+
+    protected override void StartAttack()
+    {
+        base.StartAttack();
+        agent.updateRotation = false; // Disable NavMeshAgent rotation during attack
+    }
+
+    protected override void EndAttack()
+    {
+        base.EndAttack();
+        agent.updateRotation = true; // Re-enable NavMeshAgent rotation after attack
     }
 }

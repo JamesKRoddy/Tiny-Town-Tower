@@ -121,10 +121,20 @@ public class EnemyBase : MonoBehaviour, IDamageable
             Vector3 hitPoint = transform.position + Vector3.up * 1.5f;
             Vector3 hitNormal = (transform.position - damageSource.position).normalized;
             EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
+            
+            // Handle knockback and rotation
+            HandleDamageReaction(damageSource);
         }
 
-        // Only rotate towards damage source if not attacking
-        if (damageSource != null && !isAttacking)
+        if (Health <= 0)
+        {
+            Die();
+        }
+    }
+
+    protected virtual void HandleDamageReaction(Transform damageSource)
+    {
+        if (!isAttacking)
         {
             Vector3 direction = (damageSource.position - transform.position).normalized;
             direction.y = 0;
@@ -145,11 +155,6 @@ public class EnemyBase : MonoBehaviour, IDamageable
                     StartCoroutine(KnockbackRoutine(hit.position));
                 }
             }
-        }
-
-        if (Health <= 0)
-        {
-            Die();
         }
     }
 
