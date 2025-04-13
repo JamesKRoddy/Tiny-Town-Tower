@@ -74,16 +74,21 @@ public interface IDamageable
  * Next work:
     Refactoring some of the enemy code:
 
+    Sound sources need to be 3d sources not 2d sources
+
     Setup different hitboxes on the weapons for horizontal and vertical attacks
     
     Weapon impacts, for basic weapons its just dirt
     For fire/electric should check if its hit a viable mesh and should spread to the mesh using it as an emission point?
 
-    Setup a boss with an area attack and a longer range attack
 
     Try to setup a boss, large zombie w/ cyberpunk aspects to shoot lazers, projectiles, explosions etc.
-    Sound sources need to be 3d sources not 2d sources
-    Procedurally generate bosses? have them select from a pool of items and equipment that allow for different attacks. Player can see them and get an idea of what each does.
+    Work on boss attack effects
+    Check boss AI with player
+    Boss UI, health bar etc.
+    Add gizmos for boss attacks
+    Effects for player hitting boss
+    Boss death
     
     Can just use a mech for a boss
 
