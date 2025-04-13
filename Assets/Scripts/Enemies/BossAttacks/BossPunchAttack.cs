@@ -15,20 +15,7 @@ namespace Enemies.BossAttacks
 
         public override void OnAttackStart()
         {
-            // Find all colliders in the punch radius
-            Collider[] hitColliders = Physics.OverlapSphere(transform.position, punchRadius);
-            
-            foreach (var hitCollider in hitColliders)
-            {
-                IDamageable damageable = hitCollider.GetComponent<IDamageable>();
-                if (damageable != null && damageable.GetAllegiance() == Allegiance.FRIENDLY)
-                {
-                    damageable.TakeDamage(damage, transform);
-                }
-            }
-
-            // Play hit effect
-            PlayHitEffect(transform.position + Vector3.up, Vector3.up);
+            DealDamageInRadius(punchRadius, damage, transform.position);
         }
     }
 } 

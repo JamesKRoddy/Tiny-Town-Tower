@@ -16,20 +16,7 @@ namespace Enemies.BossAttacks
 
         public override void OnAttackStart()
         {
-            // Find all colliders in the AoE radius
-            Collider[] hitColliders = Physics.OverlapSphere(transform.position, aoeRadius);
-            
-            foreach (var hitCollider in hitColliders)
-            {
-                IDamageable damageable = hitCollider.GetComponent<IDamageable>();
-                if (damageable != null && damageable.GetAllegiance() == Allegiance.FRIENDLY)
-                {
-                    damageable.TakeDamage(aoeDamage, transform);
-                }
-            }
-
-            // Play AoE VFX
-            PlayHitEffect(transform.position + Vector3.up, Vector3.up);
+            DealDamageInRadius(aoeRadius, aoeDamage, transform.position);
         }
     }
 } 

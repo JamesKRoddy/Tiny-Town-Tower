@@ -35,6 +35,7 @@ namespace Enemies
                 {
                     if (attack != null && attack.CanAttack())
                     {
+                        SetCurrentAttack(attack);
                         attack.Execute();
                         break;
                     }

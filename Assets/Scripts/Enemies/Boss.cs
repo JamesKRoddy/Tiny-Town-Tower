@@ -1,5 +1,6 @@
 using UnityEngine;
 using Enemies.BossAttacks;
+using Managers;
 
 namespace Enemies{
     public class Boss : EnemyBase
@@ -10,11 +11,16 @@ namespace Enemies{
 
         [Header("Boss Attacks")]
         public BossAttackBase[] attacks; // Assign attack components in inspector
+        protected BossAttackBase currentAttack;
 
         protected override void Awake()
         {
             base.Awake();
             InitializeBossUI();
+        }
+
+        void Start(){
+            navMeshTarget = PlayerController.Instance._possessedNPC.GetTransform();
         }
 
         private void InitializeBossUI()
@@ -59,6 +65,31 @@ namespace Enemies{
                 Destroy(healthBarUI.gameObject);
             }
             base.Die();
+        }
+
+        // Called by animator events
+        public void AttackStart()
+        {
+            if (currentAttack != null)
+            {
+                currentAttack.OnAttackStart();
+            }
+        }
+
+        // Called by animator events
+        public void AttackEnd()
+        {
+            if (currentAttack != null)
+            {
+                currentAttack.OnAttackEnd();
+                currentAttack = null;
+                animator.SetInteger("AttackType", 0);
+            }
+        }
+
+        public void SetCurrentAttack(BossAttackBase attack)
+        {
+            currentAttack = attack;
         }
     }
 }

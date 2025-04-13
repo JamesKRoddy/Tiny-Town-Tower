@@ -6,6 +6,8 @@ using Managers;
 
 namespace Enemies
 {
+    [RequireComponent(typeof(NavMeshAgent))]
+    [RequireComponent(typeof(Animator))]
     public class EnemyBase : MonoBehaviour, IDamageable
     {
         [Header("Character Type")]
