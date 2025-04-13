@@ -1631,7 +1631,7 @@ BlendTree:
     m_CycleOffset: 0
     m_DirectBlendParameter: AttackType
     m_Mirror: 0
-  m_BlendParameter: AttackType
+  m_BlendParameter: DamageType
   m_BlendParameterY: AttackType
   m_MinThreshold: 0
   m_MaxThreshold: 4
