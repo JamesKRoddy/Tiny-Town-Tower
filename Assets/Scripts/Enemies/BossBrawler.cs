@@ -14,10 +14,67 @@ namespace Enemies
         public float shockwaveRange = 15f;
         public GameObject shockwavePrefab; // Assign in inspector
 
+        [Header("Attack Ranges")]
+        public float punchRange = 3f; // Short range attack
+        public float roarRange = 8f; // Medium range attack
+        public float jumpRange = 15f; // Long range attack
+
+        [Header("Attack Timing")]
+        public float attackCooldown = 2f; // Time between attacks
+        private float lastAttackTime;
+
         protected override void Awake()
         {
             useRootMotion = true; // Enable root motion for the boss
             base.Awake();
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+
+            if (navMeshTarget != null && !isAttacking && Time.time >= lastAttackTime + attackCooldown)
+            {
+                float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
+                if (distanceToTarget <= jumpRange) // Only attack if target is within maximum attack range
+                {
+                    DetermineAttack();
+                    lastAttackTime = Time.time;
+                }
+            }
+        }
+
+        void PunchAttack(){
+            animator.SetInteger("AttackType", 0);
+        }
+
+        void RoarAttack(){
+            animator.SetInteger("AttackType", 1);
+        }
+
+        void JumpAttack(){
+            animator.SetInteger("AttackType", 2);
+        }
+
+        // Determine which attack to use based on distance to target
+        public void DetermineAttack()
+        {
+            if (navMeshTarget == null) return;
+
+            float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
+
+            if (distanceToTarget <= punchRange)
+            {
+                PunchAttack();
+            }
+            else if (distanceToTarget <= roarRange)
+            {
+                RoarAttack();
+            }
+            else if (distanceToTarget <= jumpRange)
+            {
+                JumpAttack();
+            }
         }
 
         // Called by animation event for AoE attack
