@@ -1,4 +1,5 @@
 using UnityEngine;
+using Enemies.BossAttacks;
 
 namespace Enemies{
     public class Boss : EnemyBase
@@ -7,17 +8,8 @@ namespace Enemies{
         [SerializeField] private GameObject bossHealthBarPrefab;
         private BossHealthBarUI healthBarUI;
 
-        // Start is called once before the first execution of Update after the MonoBehaviour is created
-        void Start()
-        {
-            
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-            
-        }
+        [Header("Boss Attacks")]
+        public BossAttackBase[] attacks; // Assign attack components in inspector
 
         protected override void Awake()
         {

@@ -16,7 +16,8 @@ namespace Enemies
 
         protected NavMeshAgent agent;
         protected Animator animator;
-        protected Transform navMeshTarget;
+        protected Transform navMeshTarget;        
+        public Transform NavMeshTarget => navMeshTarget;
         protected bool isAttacking = false;
 
         [SerializeField] private float health = 100f;
