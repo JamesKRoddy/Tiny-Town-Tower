@@ -441,7 +441,7 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
---- !u!1001 &1544270541
+--- !u!1001 &5274672988417113480
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -449,97 +449,60 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: -8679921383154817045, guid: d49b38201864c18499b8825be849970e, type: 3}
+    - target: {fileID: 3498937984024521076, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: m_Name
+      value: ZombieBoss_Brawler
+      objectReference: {fileID: 0}
+    - target: {fileID: 4521413630554356895, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: d49b38201864c18499b8825be849970e, type: 3}
+    - target: {fileID: 4521413630554356895, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: d49b38201864c18499b8825be849970e, type: 3}
+    - target: {fileID: 4521413630554356895, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_LocalPosition.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: d49b38201864c18499b8825be849970e, type: 3}
+    - target: {fileID: 4521413630554356895, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_LocalRotation.w
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: d49b38201864c18499b8825be849970e, type: 3}
+    - target: {fileID: 4521413630554356895, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: d49b38201864c18499b8825be849970e, type: 3}
+    - target: {fileID: 4521413630554356895, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_LocalRotation.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: d49b38201864c18499b8825be849970e, type: 3}
+    - target: {fileID: 4521413630554356895, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: d49b38201864c18499b8825be849970e, type: 3}
+    - target: {fileID: 4521413630554356895, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: d49b38201864c18499b8825be849970e, type: 3}
+    - target: {fileID: 4521413630554356895, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: d49b38201864c18499b8825be849970e, type: 3}
+    - target: {fileID: 4521413630554356895, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -8205353259467907166, guid: d49b38201864c18499b8825be849970e, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -4698626682544423819, guid: d49b38201864c18499b8825be849970e, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 919132149155446097, guid: d49b38201864c18499b8825be849970e, type: 3}
-      propertyPath: m_Name
-      value: ZombieBoss_Brawler
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: d49b38201864c18499b8825be849970e, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1544270543}
-  m_SourcePrefab: {fileID: 100100000, guid: d49b38201864c18499b8825be849970e, type: 3}
---- !u!1 &1544270542 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: d49b38201864c18499b8825be849970e, type: 3}
-  m_PrefabInstance: {fileID: 1544270541}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1544270543
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1544270542}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cd0aeaed6c68bbe4b9a4fd883e382915, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  characterType: 11
-  health: 100
-  maxHealth: 100
-  aoeDamage: 10
-  aoeRadius: 5
-  shockwaveDamage: 15
-  shockwaveSpeed: 10
-  shockwaveRange: 15
-  shockwavePrefab: {fileID: 0}
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1297464335}
   - {fileID: 1530691261}
-  - {fileID: 1544270541}
+  - {fileID: 5274672988417113480}
   - {fileID: 1125983079}

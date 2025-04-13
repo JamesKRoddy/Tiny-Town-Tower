@@ -11,6 +11,9 @@ namespace Enemies
         [Header("Character Type")]
         [SerializeField] protected CharacterType characterType = CharacterType.ZOMBIE_MELEE;
 
+        [Header("Movement Settings")]
+        [SerializeField] protected bool useRootMotion = false;
+
         protected NavMeshAgent agent;
         protected Animator animator;
         protected Transform navMeshTarget;
@@ -59,6 +62,83 @@ namespace Enemies
                 flashMaterial = new Material(originalMaterial);
                 flashMaterial.color = flashColor;
             }
+
+            if (useRootMotion)
+            {
+                SetupRootMotion();
+            }
+        }
+
+        protected virtual void SetupRootMotion()
+        {
+            agent.updatePosition = false;
+            agent.updateRotation = true; // Enable rotation by default
+            
+            // Ensure the enemy is on the NavMesh when spawned
+            if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 2.0f, NavMesh.AllAreas))
+            {
+                transform.position = hit.position;
+                agent.Warp(hit.position);
+            }
+            else
+            {
+                Debug.LogWarning($"Enemy {gameObject.name} could not be placed on NavMesh at spawn position {transform.position}");
+            }
+        }
+
+        protected virtual void Update()
+        {
+            // Don't do anything if dead or no target
+            if (Health <= 0 || navMeshTarget == null)
+                return;
+
+            if (!isAttacking)
+            {
+                // Update the destination continuously
+                agent.SetDestination(navMeshTarget.position);
+            }
+        }
+
+        protected virtual void UpdateRootMotion()
+        {
+            // Don't do anything if dead or no target
+            if (Health <= 0 || navMeshTarget == null)
+                return;
+
+            if (!isAttacking)
+            {
+                // Update the destination continuously
+                agent.SetDestination(navMeshTarget.position);
+            }
+        }
+
+        // This method is called by the Animator when root motion is being applied
+        protected virtual void OnAnimatorMove()
+        {
+            if (useRootMotion && Health > 0 && agent.isOnNavMesh)
+            {
+                // Get the root motion delta (movement from animation)
+                Vector3 rootMotion = animator.deltaPosition;
+                rootMotion.y = 0; // We don't want to apply any vertical movement (gravity, etc.)
+
+                // Calculate the new position
+                Vector3 newPosition = transform.position + rootMotion;
+
+                // Sample the NavMesh to ensure the new position is valid
+                if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 0.1f, NavMesh.AllAreas))
+                {
+                    // Move the enemy using root motion
+                    transform.position = hit.position;
+                    
+                    // Update agent's position to match with root motion
+                    agent.nextPosition = hit.position;
+                }
+                else
+                {
+                    // If we can't find a valid position on the NavMesh, warp the agent to the current position
+                    agent.Warp(transform.position);
+                }
+            }
         }
 
         private void Start()
@@ -88,6 +168,11 @@ namespace Enemies
             // Trigger attack animation, this should transition to attack animations via root motion
             animator.SetTrigger("Attack");
             isAttacking = true;
+
+            if (useRootMotion)
+            {
+                agent.updateRotation = false; // Disable NavMeshAgent rotation during attack
+            }
         }
 
         protected virtual void EndAttack()
@@ -95,6 +180,11 @@ namespace Enemies
             // Reset isAttacking flag after the attack animation finishes
             animator.SetBool("Attack", false);
             isAttacking = false;
+
+            if (useRootMotion)
+            {
+                agent.updateRotation = true; // Re-enable NavMeshAgent rotation after attack
+            }
         }
 
         public Allegiance GetAllegiance() => Allegiance.HOSTILE;

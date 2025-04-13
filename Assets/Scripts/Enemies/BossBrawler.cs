@@ -1,5 +1,6 @@
 using UnityEngine;
 using Managers;
+using UnityEngine.AI;
 
 namespace Enemies
 {
@@ -12,6 +13,12 @@ namespace Enemies
         public float shockwaveSpeed = 10f;
         public float shockwaveRange = 15f;
         public GameObject shockwavePrefab; // Assign in inspector
+
+        protected override void Awake()
+        {
+            useRootMotion = true; // Enable root motion for the boss
+            base.Awake();
+        }
 
         // Called by animation event for AoE attack
         public void AoEAttack()
@@ -50,12 +57,6 @@ namespace Enemies
                     shockwaveComponent.Initialize(direction, shockwaveSpeed, shockwaveRange, shockwaveDamage);
                 }
             }
-        }
-
-        protected override void StartAttack()
-        {
-            base.StartAttack();
-            // Additional logic for boss attack can be added here
         }
 
         private void OnDrawGizmos()

@@ -6,12 +6,6 @@ namespace Enemies
 {
     public float meleeDamage = 2f;
 
-    protected override void StartAttack()
-    {
-        base.StartAttack();
-        // Additional logic for melee attack can be added here
-    }
-
     // Called by animation event or timing logic
     public void MeleeAttack()
     {
