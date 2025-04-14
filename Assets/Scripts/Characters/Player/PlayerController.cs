@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Managers;
 using UnityEngine;
 using UnityEngine.Windows;
 
@@ -56,7 +57,11 @@ public class PlayerController : MonoBehaviour, IControllerInput
         yield return new WaitForEndOfFrame(); //This is just to take over the npc after their setup has happened
 
         _possessedNPC = GetComponentInChildren<IPossessable>();
-        PossessNPC(_possessedNPC);
+        if(_possessedNPC != null)
+        {
+            PossessNPC(_possessedNPC);
+            PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
+        }
     }
 
     void Update()

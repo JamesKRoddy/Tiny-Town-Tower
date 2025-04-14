@@ -1,6 +1,7 @@
 using UnityEngine;
 using Enemies.BossAttacks;
 using Managers;
+using System.Collections;
 
 namespace Enemies{
     public class Boss : EnemyBase
@@ -20,7 +21,29 @@ namespace Enemies{
         }
 
         void Start(){
-            navMeshTarget = PlayerController.Instance._possessedNPC.GetTransform();
+            StartCoroutine(WaitForPlayer());
+            animator.SetFloat("WalkType", 1);
+        }
+
+        private IEnumerator WaitForPlayer()
+        {
+            float timeout = 3f;
+            float elapsedTime = 0f;
+
+            while (PlayerController.Instance._possessedNPC == null && elapsedTime < timeout)
+            {
+                elapsedTime += Time.deltaTime;
+                yield return null;
+            }
+
+            if (PlayerController.Instance._possessedNPC == null)
+            {
+                Debug.LogWarning("Boss failed to find player target after 3 seconds");
+            }
+            else
+            {
+                navMeshTarget = PlayerController.Instance._possessedNPC.GetTransform();
+            }
         }
 
         private void InitializeBossUI()

@@ -83,6 +83,7 @@ public interface IDamageable
 
 
     Try to setup a boss, large zombie w/ cyberpunk aspects to shoot lazers, projectiles, explosions etc.
+    
     Work on boss attack effects
     Check boss AI with player
     Boss UI, health bar etc.

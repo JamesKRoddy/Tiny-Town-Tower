@@ -378,7 +378,7 @@ AnimatorController:
   m_Name: ZombieBoss_Brawler
   serializedVersion: 5
   m_AnimatorParameters:
-  - m_Name: WalkSpeed
+  - m_Name: WalkType
     m_Type: 1
     m_DefaultFloat: 0
     m_DefaultInt: 0
@@ -852,7 +852,7 @@ BlendTree:
     m_CycleOffset: 0
     m_DirectBlendParameter: AttackType
     m_Mirror: 0
-  m_BlendParameter: WalkSpeed
+  m_BlendParameter: WalkType
   m_BlendParameterY: AttackType
   m_MinThreshold: 0
   m_MaxThreshold: 1
