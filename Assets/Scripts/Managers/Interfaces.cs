@@ -70,6 +70,7 @@ public interface IDamageable
     UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
     Boss attacking ranges are out, has to stop if its too close to the player, edit stopping distance in the nav mesh agent
+    I think there needs to be a random element to the boss attacks, currently its not doing the jump because its getting too close to the player, maybe add this to the jump attack script and have it as one that isnt controlled by the distance but rather how often it should fire off
 
  * Next work:
     Refactoring some of the enemy code:
