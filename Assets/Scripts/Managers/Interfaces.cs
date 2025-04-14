@@ -69,7 +69,7 @@ public interface IDamageable
     RoomSectionRandomizer/<DelayedBakeNavMesh>d__13:MoveNext () (at Assets/Scripts/RogueLite/RoomLevels/RoomSectionRandomizer.cs:135)
     UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-
+    Boss not attacking
 
  * Next work:
     Refactoring some of the enemy code:
@@ -83,7 +83,7 @@ public interface IDamageable
 
 
     Try to setup a boss, large zombie w/ cyberpunk aspects to shoot lazers, projectiles, explosions etc.
-    
+
     Work on boss attack effects
     Check boss AI with player
     Boss UI, health bar etc.

@@ -14,17 +14,32 @@ namespace Enemies{
         public BossAttackBase[] attacks; // Assign attack components in inspector
         protected BossAttackBase currentAttack;
 
+        protected virtual void SetCurrentAttack(BossAttackBase attack)
+        {
+            currentAttack = attack;
+        }
+
         protected override void Awake()
         {
             base.Awake();
             InitializeBossUI();
+            attacks = GetComponents<BossAttackBase>();
         }
 
         void Start(){
             StartCoroutine(WaitForPlayer());
-            animator.SetFloat("WalkType", 1);
+            animator.SetFloat("WalkType", 1); //TODO testing purposes
         }
-
+        private void InitializeAttacks()
+        {
+            foreach (var attack in attacks)
+            {
+                if (attack != null)
+                {
+                    attack.Initialize(this);
+                }
+            }
+        }
         private IEnumerator WaitForPlayer()
         {
             float timeout = 3f;
@@ -43,6 +58,7 @@ namespace Enemies{
             else
             {
                 navMeshTarget = PlayerController.Instance._possessedNPC.GetTransform();
+                InitializeAttacks();
             }
         }
 
@@ -108,11 +124,6 @@ namespace Enemies{
                 currentAttack = null;
                 animator.SetInteger("AttackType", 0);
             }
-        }
-
-        public void SetCurrentAttack(BossAttackBase attack)
-        {
-            currentAttack = attack;
         }
     }
 }

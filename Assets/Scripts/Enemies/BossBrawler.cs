@@ -1,6 +1,7 @@
 using UnityEngine;
 using Managers;
 using UnityEngine.AI;
+using Enemies.BossAttacks;
 
 namespace Enemies
 {
@@ -10,18 +11,6 @@ namespace Enemies
         {
             useRootMotion = true; // Enable root motion for the boss
             base.Awake();
-            InitializeAttacks();
-        }
-
-        private void InitializeAttacks()
-        {
-            foreach (var attack in attacks)
-            {
-                if (attack != null)
-                {
-                    attack.Initialize(this);
-                }
-            }
         }
 
         protected override void Update()
@@ -40,6 +29,18 @@ namespace Enemies
                         break;
                     }
                 }
+            }
+        }
+
+        protected override void SetCurrentAttack(BossAttackBase attack)
+        {
+            base.SetCurrentAttack(attack);
+            if (animator != null)
+            {
+                // Set the attack type parameter in the animator
+                animator.SetInteger("AttackType", attack.attackType);
+                // Trigger the attack animation
+                //animator.SetTrigger("Attack");
             }
         }
 

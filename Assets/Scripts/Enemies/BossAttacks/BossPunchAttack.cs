@@ -7,7 +7,7 @@ namespace Enemies.BossAttacks
         [Header("Punch Settings")]
         public float punchRadius = 2f;
 
-        public override void Initialize(BossBrawler boss)
+        public override void Initialize(Boss boss)
         {
             base.Initialize(boss);
             attackType = 0; // Set to match the animator parameter for punch

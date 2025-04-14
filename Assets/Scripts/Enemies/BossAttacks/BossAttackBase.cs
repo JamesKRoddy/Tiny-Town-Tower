@@ -13,12 +13,12 @@ namespace Enemies.BossAttacks
         [Tooltip("Optional transform to use as the attack origin. If not set, will use the boss's transform.")]
         public Transform attackOrigin;
 
-        protected BossBrawler boss;
+        protected Boss boss;
         protected Animator animator;
         protected Transform target;
         protected float lastAttackTime;
 
-        public virtual void Initialize(BossBrawler boss)
+        public virtual void Initialize(Boss boss)
         {
             this.boss = boss;
             this.animator = boss.GetComponent<Animator>();

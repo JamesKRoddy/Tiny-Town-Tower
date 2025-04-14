@@ -8,7 +8,7 @@ namespace Enemies.BossAttacks
         public float aoeRadius = 5f;
         public float aoeDamage = 10f;
 
-        public override void Initialize(BossBrawler boss)
+        public override void Initialize(Boss boss)
         {
             base.Initialize(boss);
             attackType = 1; // Set to match the animator parameter for roar

@@ -8,7 +8,7 @@ namespace Enemies.BossAttacks
         public float jumpRadius = 3f;
         public float jumpDamage = 15f;
 
-        public override void Initialize(BossBrawler boss)
+        public override void Initialize(Boss boss)
         {
             base.Initialize(boss);
             attackType = 2; // Set to match the animator parameter for jump
