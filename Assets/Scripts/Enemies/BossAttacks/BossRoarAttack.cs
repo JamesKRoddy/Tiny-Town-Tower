@@ -11,7 +11,6 @@ namespace Enemies.BossAttacks
         public override void Initialize(Boss boss)
         {
             base.Initialize(boss);
-            attackType = 1; // Set to match the animator parameter for roar
         }
 
         public override void OnAttackStart()

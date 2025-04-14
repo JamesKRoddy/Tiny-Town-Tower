@@ -118,6 +118,7 @@ namespace Enemies{
         // Called by animator events
         public void AttackEnd()
         {
+            Debug.Log("AttackEnd");
             if (currentAttack != null)
             {
                 EndAttack();

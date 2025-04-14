@@ -24,6 +24,7 @@ namespace Enemies
                 {
                     if (attack != null && attack.CanAttack())
                     {
+                        Debug.Log("Executing attack: " + attack.attackType);
                         SetCurrentAttack(attack);
                         agent.stoppingDistance = attack.range;
                         StartAttack();
@@ -32,18 +33,6 @@ namespace Enemies
                         break;
                     }
                 }
-            }
-        }
-
-        protected override void SetCurrentAttack(BossAttackBase attack)
-        {
-            base.SetCurrentAttack(attack);
-            if (animator != null)
-            {
-                // Set the attack type parameter in the animator
-                animator.SetInteger("AttackType", attack.attackType);
-                // Trigger the attack animation
-                //animator.SetTrigger("Attack");
             }
         }
 

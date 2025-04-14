@@ -11,7 +11,6 @@ namespace Enemies.BossAttacks
         public override void Initialize(Boss boss)
         {
             base.Initialize(boss);
-            attackType = 2; // Set to match the animator parameter for jump
         }
 
         public override void OnAttackStart()
