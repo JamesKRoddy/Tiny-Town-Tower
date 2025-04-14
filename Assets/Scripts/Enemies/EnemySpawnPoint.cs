@@ -47,7 +47,7 @@ namespace Enemies
                     enemyTarget = PlayerController.Instance._possessedNPC.GetTransform();
                     enemyBase.Setup(enemyTarget);
                     break;
-                case EnemyTargetType.CLOSEST_NPC: //TODO set this up for the enemy to attack whatevers closest
+                case EnemyTargetType.CLOSEST_NPC:
                     return null;
                 case EnemyTargetType.TURRET_END:
                     enemyTarget = TurretManager.Instance.baseTarget.transform;

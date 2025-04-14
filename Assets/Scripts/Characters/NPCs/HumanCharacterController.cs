@@ -447,7 +447,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void Die()
     {
-        // TODO: Implement death behavior
         Debug.Log($"{gameObject.name} has died!");
         OnDeath?.Invoke();
 

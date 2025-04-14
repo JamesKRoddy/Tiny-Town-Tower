@@ -85,9 +85,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     public void AddToCharacterInventory(ResourcePickup resourcePickup)
     {
-        //TODO might move this to base class
         //TODO Display this on the UI so that the player can seee the inventory items being added
-        //TODO go through inventory and add correctly, if its a usable weapon then equip it, mutation same etc.
 
         var resourceItem = resourcePickup.GetResourceObj();
 
@@ -152,17 +150,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 quantity = 1
             });
         }
-    }
-
-
-    public void EquipDash()
-    {
-        //TODO flesh this out set dashElement
-    }
-
-    public void EquipGeneticMutation()
-    {
-        //TODO flesh this out set geneticMutation
     }
 
     private void DetectInteraction()

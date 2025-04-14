@@ -19,13 +19,6 @@ namespace Enemies{
             }
         }
 
-        protected override void StartAttack()
-        {
-            base.StartAttack();
-            // Shoot projectile after attack animation starts
-            ShootProjectile();
-        }
-
         private void ShootProjectile()
         {
             GameObject projectile = Instantiate(projectilePrefab, transform.position, Quaternion.identity);

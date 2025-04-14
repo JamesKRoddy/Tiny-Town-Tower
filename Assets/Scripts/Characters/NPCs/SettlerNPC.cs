@@ -44,7 +44,7 @@ public class SettlerNPC : HumanCharacterController
 
         if (currentState != null)
         {
-            animator.SetFloat("Speed", agent.velocity.magnitude / 3.5f); //TODO have to work out this ratio a bit better
+            animator.SetFloat("Speed", agent.velocity.magnitude / 3.5f);
             currentState.UpdateState(); // Call UpdateState on the current state
         }
     }

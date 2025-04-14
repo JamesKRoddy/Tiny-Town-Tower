@@ -25,7 +25,7 @@ public enum BuildingCategory
 public enum WorkType
 {
     NONE,
-    FARMING, // TODO: might have to break this down into several parts
+    FARMING,
     GATHER_WOOD,
     GATHER_ROCK,
     WEAVE_FABRIC,

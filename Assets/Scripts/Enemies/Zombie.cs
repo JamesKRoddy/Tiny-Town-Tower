@@ -34,16 +34,5 @@ namespace Enemies
             }
         }
 
-        protected override void StartAttack()
-        {
-            base.StartAttack();
-            agent.updateRotation = false; // Disable NavMeshAgent rotation during attack
-        }
-
-        protected override void EndAttack()
-        {
-            base.EndAttack();
-            agent.updateRotation = true; // Re-enable NavMeshAgent rotation after attack
-        }
     }
 }

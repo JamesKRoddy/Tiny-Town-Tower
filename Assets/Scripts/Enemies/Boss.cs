@@ -120,9 +120,11 @@ namespace Enemies{
         {
             if (currentAttack != null)
             {
+                EndAttack();
                 currentAttack.OnAttackEnd();
                 currentAttack = null;
                 animator.SetInteger("AttackType", 0);
+                animator.SetFloat("WalkType", 1);
             }
         }
     }

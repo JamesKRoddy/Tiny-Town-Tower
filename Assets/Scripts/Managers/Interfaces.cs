@@ -69,7 +69,7 @@ public interface IDamageable
     RoomSectionRandomizer/<DelayedBakeNavMesh>d__13:MoveNext () (at Assets/Scripts/RogueLite/RoomLevels/RoomSectionRandomizer.cs:135)
     UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
-    Boss not attacking
+    Boss attacking ranges are out, has to stop if its too close to the player, edit stopping distance in the nav mesh agent
 
  * Next work:
     Refactoring some of the enemy code:
@@ -92,12 +92,7 @@ public interface IDamageable
     Boss death
     
     Can just use a mech for a boss
-
-    Enemy attack refactor:
-    For the enemy attack, instead of the attack just hitting the player maybe it should instead,
-    set a warning sign above the enemy's head that the attack is coming? For the moment just flash the material red
-    This would give the player a chance to dodge. 
-    Put this in the transition for the attack so this wind up animation happens first then moves onto the attack animation.
+    Easy way to make the boss harder is to just speed up its animator
 
     Can do a runningtowards the player attack, nav agent and animation should work for this.
 

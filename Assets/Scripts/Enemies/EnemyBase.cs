@@ -166,10 +166,14 @@ namespace Enemies
         {
             Health = Mathf.Min(Health + amount, MaxHealth);
         }    
-        protected virtual void StartAttack()
+
+        /// <summary>
+        /// Called by the child classes to start the attack animation and disable the nav mesh agent rotation
+        /// </summary>
+        protected void StartAttack()
         {
             // Trigger attack animation, this should transition to attack animations via root motion
-            animator.SetTrigger("Attack");
+            animator.SetBool("Attack", true);
             isAttacking = true;
 
             if (useRootMotion)
@@ -178,7 +182,10 @@ namespace Enemies
             }
         }
 
-        protected virtual void EndAttack()
+        /// <summary>
+        /// Called by the child classes to end the attack animation and re-enable the nav mesh agent rotation
+        /// </summary>
+        protected void EndAttack()
         {
             // Reset isAttacking flag after the attack animation finishes
             animator.SetBool("Attack", false);
