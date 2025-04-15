@@ -23,7 +23,8 @@ namespace Enemies{
         {
             base.Awake();
             InitializeBossUI();
-            attacks = GetComponents<BossAttackBase>();
+            var allAttacks = GetComponents<BossAttackBase>();
+            attacks = System.Array.FindAll(allAttacks, attack => attack.enabled);
         }
 
         void Start(){

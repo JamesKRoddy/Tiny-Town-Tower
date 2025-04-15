@@ -77,7 +77,6 @@ namespace Managers
 
         public void PlayHitEffect(Vector3 position, Vector3 normal, IDamageable damageable)
         {
-            Debug.Log("PlayHitEffect");
             if (damageable == null) return;
             var effects = GetCharacterEffects(damageable.CharacterType);
             if (effects == null) return;
