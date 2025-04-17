@@ -732,7 +732,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 606090892089044385}
@@ -798,7 +798,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   characterType: 11
-  useRootMotion: 0
+  useRootMotion: 1
   health: 100
   maxHealth: 100
   bossHealthBarPrefab: {fileID: 0}
@@ -818,7 +818,14 @@ MonoBehaviour:
   range: 5
   cooldown: 2
   damage: 10
-  attackType: 0
+  attackType: 1
+  attackOrigin: {fileID: 0}
+  startEffect: {fileID: 0}
+  startEffectDelay: 0
+  hitEffect: {fileID: 0}
+  hitEffectDelay: 0
+  endEffect: {fileID: 0}
+  endEffectDelay: 0
   punchRadius: 2
 --- !u!114 &7910383977426684308
 MonoBehaviour:
@@ -832,11 +839,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83e4b11bcf4d9a24d86f9952e8ccae1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  range: 5
-  cooldown: 2
+  range: 10
+  cooldown: 7
   damage: 10
-  attackType: 0
-  aoeRadius: 5
+  attackType: 2
+  attackOrigin: {fileID: 0}
+  startEffect: {fileID: 0}
+  startEffectDelay: 0
+  hitEffect: {fileID: 0}
+  hitEffectDelay: 0
+  endEffect: {fileID: 0}
+  endEffectDelay: 0
+  aoeRadius: 7
   aoeDamage: 10
 --- !u!114 &7411960016900357099
 MonoBehaviour:
@@ -852,10 +866,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   range: 5
   cooldown: 2
-  damage: 10
-  attackType: 0
+  damage: 5
+  attackType: 3
+  attackOrigin: {fileID: 0}
+  startEffect: {fileID: 11400000, guid: 34dd8713150ee7c4b93e486ac20fed3a, type: 2}
+  startEffectDelay: 0
+  hitEffect: {fileID: 0}
+  hitEffectDelay: 0
+  endEffect: {fileID: 11400000, guid: 7f3b9784e46c47e4faedf0ac585c4f17, type: 2}
+  endEffectDelay: 0
   jumpRadius: 3
-  jumpDamage: 15
+  jumpHeight: 20
+  jumpDuration: 1
+  predictionFactor: 0.5
+  finalJumpLockPercentage: 0.2
+  rotationSpeed: 360
 --- !u!1 &3544621238500329224
 GameObject:
   m_ObjectHideFlags: 0
