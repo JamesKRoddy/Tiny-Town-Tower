@@ -771,10 +771,6 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6879063096656345588, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: range
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 6879063096656345588, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
@@ -791,6 +787,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 11400000, guid: 7f3b9784e46c47e4faedf0ac585c4f17, type: 2}
     - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: attackType
       value: 3
       objectReference: {fileID: 0}
@@ -802,18 +802,6 @@ PrefabInstance:
       propertyPath: startEffect
       value: 
       objectReference: {fileID: 11400000, guid: 34dd8713150ee7c4b93e486ac20fed3a, type: 2}
-    - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: jumpDuration
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: predictionFactor
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: startEffectDelay
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: finalJumpLockPercentage
       value: 0.2
