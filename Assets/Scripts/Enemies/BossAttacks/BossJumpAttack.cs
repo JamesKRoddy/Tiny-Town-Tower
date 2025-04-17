@@ -6,14 +6,20 @@ namespace Enemies.BossAttacks
     public class BossJumpAttack : BossAttackBase
     {
         [Header("Jump Settings")]
+        [Range(1f, 10f)]
         public float jumpRadius = 3f;
+        [Range(1f, 30f)]
         public float jumpHeight = 5f;
+        [Range(0.1f, 3f)]
         public float jumpDuration = 1f;
         [Tooltip("How much to predict player movement (0 = no prediction, 1 = full prediction)")]
+        [Range(0f, 1f)]
         public float predictionFactor = 0.5f;
         [Tooltip("Stop tracking player during the final portion of the jump (0-1)")]
+        [Range(0f, 1f)]
         public float finalJumpLockPercentage = 0.1f;
         [Tooltip("How fast the boss rotates to face the player (degrees per second)")]
+        [Range(90f, 720f)]
         public float rotationSpeed = 360f;
 
         private Vector3 jumpStartPosition;
@@ -224,7 +230,7 @@ namespace Enemies.BossAttacks
             // Deal damage on landing
             DealDamageInRadius(jumpRadius, damage, transform.position);
 
-            PlayEndEffectWithDelay();
+            PlayEndEffect();
         }
 
         public override void OnAttackStart()

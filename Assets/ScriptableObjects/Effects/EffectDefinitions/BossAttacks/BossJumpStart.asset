@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ccf30521a69cb741ad56958e7173ea0, type: 3}
   m_Name: BossJumpStart
   m_EditorClassIdentifier: 
-  prefabs: []
+  prefabs:
+  - {fileID: 1352952055292810, guid: d8628f56ce986894a9be0c0fc92627bd, type: 3}
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

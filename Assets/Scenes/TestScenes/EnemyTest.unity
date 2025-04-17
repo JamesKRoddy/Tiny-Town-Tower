@@ -195,6 +195,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: GameManager
       objectReference: {fileID: 0}
+    - target: {fileID: 2451805035808484079, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: m_Name
+      value: EffectManagerManager
+      objectReference: {fileID: 0}
     - target: {fileID: 4686915863895893509, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -779,6 +783,14 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: damage
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: endEffect
+      value: 
+      objectReference: {fileID: 11400000, guid: 7f3b9784e46c47e4faedf0ac585c4f17, type: 2}
+    - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: attackType
       value: 3
       objectReference: {fileID: 0}
@@ -787,8 +799,20 @@ PrefabInstance:
       value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: startEffect
+      value: 
+      objectReference: {fileID: 11400000, guid: 34dd8713150ee7c4b93e486ac20fed3a, type: 2}
+    - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: jumpDuration
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: predictionFactor
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: startEffectDelay
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: finalJumpLockPercentage

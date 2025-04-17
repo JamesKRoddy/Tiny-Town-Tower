@@ -1,9 +1,10 @@
 using UnityEngine;
 using Managers;
 using System.Collections;
+using System;
 
 namespace Enemies.BossAttacks
-{
+{  
     public abstract class BossAttackBase : MonoBehaviour
     {
         [Header("Attack Settings")]
@@ -34,9 +35,10 @@ namespace Enemies.BossAttacks
         protected Animator animator;
         protected Transform target;
         protected float lastAttackTime;
-        protected Coroutine startEffectCoroutine; // Track the start effect coroutine
-        protected Coroutine endEffectCoroutine;   // Track the end effect coroutine
-        protected Coroutine hitEffectCoroutine;   // Track the hit effect coroutine
+
+        private EffectPlayer startEffectPlayer;
+        private EffectPlayer hitEffectPlayer;
+        private EffectPlayer endEffectPlayer;
 
         public virtual void Initialize(Boss boss)
         {
@@ -49,6 +51,11 @@ namespace Enemies.BossAttacks
             {
                 attackOrigin = boss.transform;
             }
+
+            // Initialize effect players
+            startEffectPlayer = new EffectPlayer(this, startEffect, startEffectDelay);
+            hitEffectPlayer = new EffectPlayer(this, hitEffect, hitEffectDelay);
+            endEffectPlayer = new EffectPlayer(this, endEffect, endEffectDelay);
         }
 
         public virtual bool CanAttack()
@@ -74,59 +81,22 @@ namespace Enemies.BossAttacks
 
         public virtual void OnAttackEnd()
         {
-            StartCoroutine(PlayEndEffectWithDelay());
+            // Override in child classes for specific attack end behavior
         }
 
-        private IEnumerator PlayEffectWithDelay(EffectDefinition effect, Vector3 position, Vector3 direction, float delay)
+        protected void PlayStartEffect(Vector3? position = null, Vector3? normal = null)
         {
-            if (delay > 0)
-            {
-                yield return new WaitForSeconds(delay);
-            }
-            if (effect != null)
-            {
-                EffectManager.Instance.PlayEffect(position, direction, effect);
-            }
+            startEffectPlayer.Play(position, normal);
         }
 
-        protected IEnumerator PlayStartEffectWithDelay()
+        protected void PlayHitEffect(Vector3? position = null, Vector3? normal = null)
         {
-            yield return PlayEffectWithDelay(startEffect, attackOrigin.position, attackOrigin.forward, startEffectDelay);
+            hitEffectPlayer.Play(position, normal);
         }
 
-        protected IEnumerator PlayHitEffectWithDelay(Vector3 position, Vector3 normal)
+        protected void PlayEndEffect(Vector3? position = null, Vector3? normal = null)
         {
-            yield return PlayEffectWithDelay(hitEffect, position, normal, hitEffectDelay);
-        }
-
-        protected IEnumerator PlayEndEffectWithDelay()
-        {
-            yield return PlayEffectWithDelay(endEffect, attackOrigin.position, attackOrigin.forward, endEffectDelay);
-        }
-
-        protected void PlayStartEffect()
-        {
-            if (startEffect != null)
-            {
-                startEffectCoroutine = StartCoroutine(PlayStartEffectWithDelay());
-            }
-        }
-
-        protected void PlayHitEffect(Vector3 position, Vector3 normal)
-        {
-            if (hitEffect != null)
-            {
-                hitEffectCoroutine = StartCoroutine(PlayHitEffectWithDelay(position, normal));
-            }
-        }
-
-        protected void PlayEndEffect()
-        {
-            Debug.Log("[BossAttackBase] Playing end effect");
-            if (endEffect != null)
-            {
-                endEffectCoroutine = StartCoroutine(PlayEndEffectWithDelay());
-            }
+            endEffectPlayer.Play(position, normal);
         }
 
         protected void DealDamageInRadius(float radius, float damageAmount, Vector3 position)
@@ -146,9 +116,52 @@ namespace Enemies.BossAttacks
                     // Play hit effect at the point of impact
                     Vector3 hitPoint = hitCollider.ClosestPoint(attackPosition);
                     Vector3 hitNormal = (hitPoint - attackPosition).normalized;
-                    StartCoroutine(PlayHitEffectWithDelay(hitPoint, hitNormal));
+                    PlayHitEffect(hitPoint, hitNormal);
                 }
             }
+        }
+    }
+
+    public class EffectPlayer
+    {
+        private readonly MonoBehaviour owner;
+        private readonly EffectDefinition effect;
+        private readonly float delay;
+        private Coroutine activeCoroutine;
+
+        public EffectPlayer(MonoBehaviour owner, EffectDefinition effect, float delay)
+        {
+            this.owner = owner;
+            this.effect = effect;
+            this.delay = delay;
+        }
+
+        public void Play(Vector3? position = null, Vector3? normal = null)
+        {
+            if (effect == null) return;
+            
+            Vector3 effectPosition = position ?? owner.transform.position;
+            Vector3 effectNormal = normal ?? owner.transform.forward;
+            
+            activeCoroutine = owner.StartCoroutine(PlayWithDelay(effectPosition, effectNormal));
+        }
+
+        public void Stop()
+        {
+            if (activeCoroutine != null)
+            {
+                owner.StopCoroutine(activeCoroutine);
+                activeCoroutine = null;
+            }
+        }
+
+        private IEnumerator PlayWithDelay(Vector3 position, Vector3 normal)
+        {
+            if (delay > 0)
+            {
+                yield return new WaitForSeconds(delay);
+            }
+            EffectManager.Instance.PlayEffect(position, normal, effect);
         }
     }
 } 
