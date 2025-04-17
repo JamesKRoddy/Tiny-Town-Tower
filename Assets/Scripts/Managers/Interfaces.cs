@@ -70,6 +70,7 @@ public interface IDamageable
     UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
     Boss attack effects
+    Issue with starting the effects at the wrong time, have to look at were they are being triggered and try bring the functionallity back animator events
     boss jump attack refactor
     
  * Next work:

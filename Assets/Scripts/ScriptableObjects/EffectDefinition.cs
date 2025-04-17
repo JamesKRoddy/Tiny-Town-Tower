@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-[CreateAssetMenu(fileName = "NewEffect", menuName = "Scriptable Objects/Roguelite/Enemies/Effects/Effect Definition")]
+[CreateAssetMenu(fileName = "NewEffect", menuName = "Scriptable Objects/Effects/Effect Definition")]
 public class EffectDefinition : ScriptableObject
 {
     [Tooltip("Array of possible particle system prefabs. One will be randomly selected")]

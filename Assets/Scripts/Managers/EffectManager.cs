@@ -128,12 +128,42 @@ namespace Managers
             return null;
         }
 
-        private void PlayEffect(Vector3 position, Vector3 normal, EffectDefinition effect)
+        public void PlayEffect(Vector3 position, Vector3 normal, EffectDefinition effect)
         {
-            if (effect == null) return;
+            if (effect == null)
+            {
+                Debug.LogWarning("[EffectManager] Attempted to play null effect");
+                return;
+            }
+
+            // If the effect isn't in our pools yet, initialize it
+            if (!effectPools.ContainsKey(effect))
+            {
+                Debug.Log($"[EffectManager] Initializing new effect pool for: {effect.name}");
+                InitializeEffectPool(new[] { effect });
+            }
 
             GameObject vfx = GetPooledObject(effect);
-            if (vfx == null) return;
+            if (vfx == null)
+            {
+                // If we couldn't get a pooled object, create a new one
+                Debug.Log($"[EffectManager] Creating new instance for effect: {effect.name}");
+                if (effect.prefabs != null && effect.prefabs.Length > 0)
+                {
+                    GameObject prefab = effect.prefabs[Random.Range(0, effect.prefabs.Length)];
+                    if (prefab != null)
+                    {
+                        vfx = Instantiate(prefab, transform);
+                        activeEffects[effect].Add(vfx);
+                    }
+                }
+            }
+
+            if (vfx == null)
+            {
+                Debug.LogError($"[EffectManager] Failed to create effect instance for: {effect.name}");
+                return;
+            }
 
             vfx.transform.position = position;
             vfx.transform.rotation = Quaternion.LookRotation(normal);
@@ -151,14 +181,18 @@ namespace Managers
             if (effect.sounds != null && effect.sounds.Length > 0)
             {
                 AudioSource audioSource = vfx.GetComponent<AudioSource>();
-                if (audioSource != null)
+                if (audioSource == null)
                 {
-                    audioSource.clip = effect.sounds[Random.Range(0, effect.sounds.Length)];
-                    audioSource.pitch = Random.Range(effect.minPitch, effect.maxPitch);
-                    audioSource.volume = effect.volume;
-                    audioSource.Play();
-                    audioDuration = audioSource.clip.length;
+                    audioSource = vfx.AddComponent<AudioSource>();
+                    audioSource.playOnAwake = false;
+                    audioSource.loop = false;
                 }
+
+                audioSource.clip = effect.sounds[Random.Range(0, effect.sounds.Length)];
+                audioSource.pitch = Random.Range(effect.minPitch, effect.maxPitch);
+                audioSource.volume = effect.volume;
+                audioSource.Play();
+                audioDuration = audioSource.clip.length;
             }
 
             float duration = effect.duration > 0 ? effect.duration : Mathf.Max(particleDuration, audioDuration);

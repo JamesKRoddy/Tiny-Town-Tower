@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-[CreateAssetMenu(fileName = "NewCharacterEffects", menuName = "Scriptable Objects/Roguelite/Enemies/Effects/Character Effects")]
+[CreateAssetMenu(fileName = "NewCharacterEffects", menuName = "Scriptable Objects/Effects/Character Effects")]
 public class CharacterEffects : ScriptableObject
 {
     [Tooltip("The type of character these effects are for")]

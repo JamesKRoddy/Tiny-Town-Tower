@@ -7,7 +7,6 @@ namespace Enemies.BossAttacks
     {
         [Header("Jump Settings")]
         public float jumpRadius = 3f;
-        public float jumpDamage = 15f;
         public float jumpHeight = 5f;
         public float jumpDuration = 1f;
         [Tooltip("How much to predict player movement (0 = no prediction, 1 = full prediction)")]
@@ -37,7 +36,6 @@ namespace Enemies.BossAttacks
                 if (agent != null)
                 {
                     originalStoppingDistance = agent.stoppingDistance;
-                    Debug.Log($"[BossJumpAttack] Initialized with stopping distance: {originalStoppingDistance}");
                 }
             }
         }
@@ -47,12 +45,13 @@ namespace Enemies.BossAttacks
         /// </summary>
         public void StartJump()
         {
-            Debug.Log("[BossJumpAttack] StartJump called");
             if (target == null)
             {
                 Debug.LogWarning("[BossJumpAttack] StartJump failed: target is null");
                 return;
             }
+
+            PlayStartEffect();
 
             jumpStartPosition = transform.position;
             
@@ -90,7 +89,6 @@ namespace Enemies.BossAttacks
             {
                 if (agent != null)
                 {
-                    Debug.Log($"[BossJumpAttack] Disabling NavMeshAgent. Current state: enabled={agent.enabled}, isStopped={agent.isStopped}, stoppingDistance={agent.stoppingDistance}");
                     agent.enabled = false;
                 }
                 else
@@ -103,7 +101,6 @@ namespace Enemies.BossAttacks
                 {
                     wasRootMotionEnabled = animator.applyRootMotion;
                     animator.applyRootMotion = false;
-                    Debug.Log($"[BossJumpAttack] Root motion was {wasRootMotionEnabled}, now disabled");
                 }
             }
             else
@@ -171,17 +168,13 @@ namespace Enemies.BossAttacks
 
         private void EndJump()
         {
-            Debug.Log("[BossJumpAttack] EndJump called");
             isJumping = false;
 
             if (boss != null && agent != null)
             {
                 // First, ensure we're on the NavMesh
                 if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 5f, NavMesh.AllAreas))
-                {
-                    // Re-enable NavMeshAgent and root motion
-                    Debug.Log($"[BossJumpAttack] Re-enabling NavMeshAgent at position {hit.position}");
-                    
+                {                    
                     // Warp to the nearest valid NavMesh position
                     transform.position = hit.position;
                     agent.enabled = true;
@@ -189,8 +182,6 @@ namespace Enemies.BossAttacks
                     // Reset the agent's destination to the current target
                     if (target != null)
                     {
-                        Debug.Log($"[BossJumpAttack] Setting new destination to {target.position}. Original stopping distance: {originalStoppingDistance}");
-                        
                         // Reset stopping distance to original value
                         agent.stoppingDistance = originalStoppingDistance;
                         agent.isStopped = false;
@@ -200,7 +191,6 @@ namespace Enemies.BossAttacks
                         if (NavMesh.SamplePosition(target.position, out NavMeshHit targetHit, 5f, NavMesh.AllAreas))
                         {
                             agent.SetDestination(targetHit.position);
-                            Debug.Log($"[BossJumpAttack] NavMeshAgent state after setup: enabled={agent.enabled}, isStopped={agent.isStopped}, stoppingDistance={agent.stoppingDistance}, hasPath={agent.hasPath}, pathStatus={agent.pathStatus}");
                         }
                         else
                         {
@@ -221,11 +211,9 @@ namespace Enemies.BossAttacks
                 if (animator != null)
                 {
                     animator.applyRootMotion = wasRootMotionEnabled;
-                    Debug.Log($"[BossJumpAttack] Restored root motion to {wasRootMotionEnabled}");
                 }
 
                 // Reset the attack state
-                Debug.Log("[BossJumpAttack] Calling AttackEnd");
                 boss.AttackEnd();
             }
             else
@@ -234,7 +222,9 @@ namespace Enemies.BossAttacks
             }
 
             // Deal damage on landing
-            DealDamageInRadius(jumpRadius, jumpDamage, transform.position);
+            DealDamageInRadius(jumpRadius, damage, transform.position);
+
+            PlayEndEffectWithDelay();
         }
 
         public override void OnAttackStart()
