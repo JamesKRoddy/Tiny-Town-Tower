@@ -74,7 +74,7 @@ namespace Enemies.BossAttacks
             lastAttackTime = Time.time;            
         }
 
-        public virtual void OnAttackStart()
+        public virtual void OnAttackHit()
         {
             // Override in child classes for specific attack start behavior
         }

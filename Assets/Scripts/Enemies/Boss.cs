@@ -108,11 +108,11 @@ namespace Enemies{
         }
 
         // Called by animator events
-        public void AttackStart()
+        public void AttackHit()
         {
             if (currentAttack != null)
             {
-                currentAttack.OnAttackStart();
+                currentAttack.OnAttackHit();
             }
         }
 

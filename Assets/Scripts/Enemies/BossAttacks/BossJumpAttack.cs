@@ -233,7 +233,7 @@ namespace Enemies.BossAttacks
             PlayEndEffect();
         }
 
-        public override void OnAttackStart()
+        public override void OnAttackHit()
         {
             // The actual damage is dealt when landing
         }

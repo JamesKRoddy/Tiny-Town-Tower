@@ -12,7 +12,7 @@ namespace Enemies.BossAttacks
             base.Initialize(boss);
         }
 
-        public override void OnAttackStart()
+        public override void OnAttackHit()
         {
             DealDamageInRadius(punchRadius, damage, transform.position);
         }
