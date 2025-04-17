@@ -788,7 +788,7 @@ PrefabInstance:
       objectReference: {fileID: 11400000, guid: 7f3b9784e46c47e4faedf0ac585c4f17, type: 2}
     - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: attackType
@@ -819,12 +819,20 @@ PrefabInstance:
       value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: hitEffect
+      value: 
+      objectReference: {fileID: 11400000, guid: f67d8cac14b3bd64eb6ca922af912f97, type: 2}
+    - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: attackType
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: startEffect
+      value: 
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

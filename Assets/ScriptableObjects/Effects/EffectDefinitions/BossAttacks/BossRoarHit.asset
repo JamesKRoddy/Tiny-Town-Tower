@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8ccf30521a69cb741ad56958e7173ea0, type: 3}
-  m_Name: BossRoar
+  m_Name: BossRoarHit
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 1159970587636746, guid: e7473d9620ab29341b98bf21b400e598, type: 3}
+  - {fileID: 1159970587636746, guid: 07148c8ec1315044cacab39dff250f3f, type: 3}
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1
