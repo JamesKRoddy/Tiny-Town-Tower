@@ -9,6 +9,7 @@ namespace Enemies.BossAttacks
     {
         [Header("Attack Settings")]
         public float range = 5f;
+        [Tooltip("Cooldown in seconds between attacks of this type, doesnt include the length of attack animation")]
         public float cooldown = 2f;
         public float damage = 10f;
         public int attackType = 0; // Used to set the animator parameter

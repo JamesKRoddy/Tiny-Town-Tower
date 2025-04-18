@@ -821,7 +821,7 @@ PrefabInstance:
     - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: hitEffect
       value: 
-      objectReference: {fileID: 11400000, guid: f67d8cac14b3bd64eb6ca922af912f97, type: 2}
+      objectReference: {fileID: 0}
     - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_Enabled
       value: 1
@@ -834,6 +834,10 @@ PrefabInstance:
       propertyPath: startEffect
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: attackEffect
+      value: 
+      objectReference: {fileID: 11400000, guid: f67d8cac14b3bd64eb6ca922af912f97, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
