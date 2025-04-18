@@ -7,6 +7,12 @@ namespace Enemies.BossAttacks
         [Header("Punch Settings")]
         public float punchRadius = 2f;
 
+        public override void StartAttack()
+        {
+            base.StartAttack();
+            PlayStartEffect(attackOrigin.position, attackOrigin.forward, attackOrigin.rotation);
+        }
+
         public override void Initialize(Boss boss)
         {
             base.Initialize(boss);

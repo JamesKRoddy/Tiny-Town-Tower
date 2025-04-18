@@ -83,12 +83,12 @@ namespace Managers
 
             if (effects.bloodEffects != null && effects.bloodEffects.Length > 0)
             {
-                PlayEffect(position, normal, effects.bloodEffects[Random.Range(0, effects.bloodEffects.Length)]);
+                PlayEffect(position, normal, Quaternion.LookRotation(normal), effects.bloodEffects[Random.Range(0, effects.bloodEffects.Length)]);
             }
 
             if (effects.impactEffects != null && effects.impactEffects.Length > 0)
             {
-                PlayEffect(position, normal, effects.impactEffects[Random.Range(0, effects.impactEffects.Length)]);
+                PlayEffect(position, normal, Quaternion.LookRotation(normal), effects.impactEffects[Random.Range(0, effects.impactEffects.Length)]);
             }
         }
 
@@ -102,7 +102,7 @@ namespace Managers
                 return;
             }
 
-            PlayEffect(position, normal, effects.deathEffects[Random.Range(0, effects.deathEffects.Length)]);
+            PlayEffect(position, normal, Quaternion.LookRotation(normal), effects.deathEffects[Random.Range(0, effects.deathEffects.Length)]);
         }
 
         public void PlayFootstepEffect(Vector3 position, Vector3 normal, CharacterType characterType)
@@ -110,7 +110,7 @@ namespace Managers
             var effects = GetCharacterEffects(characterType);
             if (effects == null || effects.footstepEffects == null || effects.footstepEffects.Length == 0) return;
 
-            PlayEffect(position, normal, effects.footstepEffects[Random.Range(0, effects.footstepEffects.Length)]);
+            PlayEffect(position, normal, Quaternion.LookRotation(normal), effects.footstepEffects[Random.Range(0, effects.footstepEffects.Length)]);
         }
 
         private CharacterEffects GetCharacterEffects(CharacterType characterType)
@@ -128,13 +128,15 @@ namespace Managers
             return null;
         }
 
-        public void PlayEffect(Vector3 position, Vector3 normal, EffectDefinition effect)
+        public void PlayEffect(Vector3 position, Vector3 normal, Quaternion rotation, EffectDefinition effect)
         {
             if (effect == null)
             {
                 Debug.LogWarning("[EffectManager] Attempted to play null effect");
                 return;
             }
+            
+            Debug.Log($"[EffectManager] PlayEffect - Position: {position}, Normal: {normal}, Rotation: {rotation.eulerAngles}, Effect: {effect.name}");
 
             // If the effect isn't in our pools yet, initialize it
             if (!effectPools.ContainsKey(effect))
@@ -164,7 +166,7 @@ namespace Managers
             }
 
             vfx.transform.position = position;
-            vfx.transform.rotation = Quaternion.LookRotation(normal);
+            vfx.transform.rotation = rotation;
 
             float particleDuration = 0f;
             float audioDuration = 0f;

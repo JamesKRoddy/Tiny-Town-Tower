@@ -73,7 +73,7 @@ namespace Enemies.BossAttacks
             return distance <= range && Time.time >= lastAttackTime + cooldown;
         }
 
-        public virtual void Execute()
+        public virtual void StartAttack()
         {
             if (animator != null)
             {
@@ -92,24 +92,25 @@ namespace Enemies.BossAttacks
             // Override in child classes for specific attack end behavior
         }
 
-        protected void PlayStartEffect(Vector3? position = null, Vector3? normal = null)
+        protected void PlayStartEffect(Vector3? position = null, Vector3? normal = null, Quaternion? rotation = null)
         {
-            startEffectPlayer.Play(position, normal);
+            startEffectPlayer.Play(position, normal, rotation);
         }
 
-        protected void PlayAttackEffect(Vector3? position = null, Vector3? normal = null)
+        protected void PlayAttackEffect(Vector3? position = null, Vector3? normal = null, Quaternion? rotation = null)
         {
-            attackEffectPlayer.Play(position, normal);
+            Debug.Log($"[BossAttackBase] PlayAttackEffect - Position: {position}, Normal: {normal}, Rotation: {rotation?.eulerAngles}, Attack Origin: {attackOrigin?.position}");
+            attackEffectPlayer.Play(position, normal, rotation);
         }
 
-        protected void PlayHitEffect(Vector3? position = null, Vector3? normal = null)
+        protected void PlayHitEffect(Vector3? position = null, Vector3? normal = null, Quaternion? rotation = null)
         {
-            hitEffectPlayer.Play(position, normal);
+            hitEffectPlayer.Play(position, normal, rotation);
         }
 
-        protected void PlayEndEffect(Vector3? position = null, Vector3? normal = null)
+        protected void PlayEndEffect(Vector3? position = null, Vector3? normal = null, Quaternion? rotation = null)
         {
-            endEffectPlayer.Play(position, normal);
+            endEffectPlayer.Play(position, normal, rotation);
         }
 
         protected void DealDamageInRadius(float radius, float damageAmount, Vector3 position)
@@ -149,14 +150,17 @@ namespace Enemies.BossAttacks
             this.delay = delay;
         }
 
-        public void Play(Vector3? position = null, Vector3? normal = null)
+        public void Play(Vector3? position = null, Vector3? normal = null, Quaternion? rotation = null)
         {
             if (effect == null) return;
             
             Vector3 effectPosition = position ?? owner.transform.position;
             Vector3 effectNormal = normal ?? owner.transform.forward;
+            Quaternion effectRotation = rotation ?? Quaternion.LookRotation(effectNormal);
             
-            activeCoroutine = owner.StartCoroutine(PlayWithDelay(effectPosition, effectNormal));
+            Debug.Log($"[EffectPlayer] Play - Effect Position: {effectPosition}, Normal: {effectNormal}, Rotation: {effectRotation.eulerAngles}, Owner Position: {owner.transform.position}");
+            
+            activeCoroutine = owner.StartCoroutine(PlayWithDelay(effectPosition, effectNormal, effectRotation));
         }
 
         public void Stop()
@@ -168,13 +172,14 @@ namespace Enemies.BossAttacks
             }
         }
 
-        private IEnumerator PlayWithDelay(Vector3 position, Vector3 normal)
+        private IEnumerator PlayWithDelay(Vector3 position, Vector3 normal, Quaternion rotation)
         {
             if (delay > 0)
             {
                 yield return new WaitForSeconds(delay);
             }
-            EffectManager.Instance.PlayEffect(position, normal, effect);
+            Debug.Log($"[EffectPlayer] PlayWithDelay - Final Position: {position}, Normal: {normal}, Rotation: {rotation.eulerAngles}");
+            EffectManager.Instance.PlayEffect(position, normal, rotation, effect);
         }
     }
 } 

@@ -21,7 +21,7 @@ namespace Enemies
             // Check for attack range
             if (navMeshTarget != null && Vector3.Distance(transform.position, navMeshTarget.position) <= attackRange && !isAttacking)
             {
-                StartAttack();
+                BeginAttackSequence();
             }
         }
 

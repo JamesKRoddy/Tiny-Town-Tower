@@ -26,9 +26,9 @@ namespace Enemies
                     {
                         SetCurrentAttack(attack);
                         agent.stoppingDistance = attack.range;
-                        StartAttack();
+                        BeginAttackSequence();
                         animator.SetFloat("WalkType", 0);
-                        attack.Execute();
+                        attack.StartAttack();
                         break;
                     }
                 }

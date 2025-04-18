@@ -15,7 +15,7 @@ namespace Enemies{
             // Ensure zombie doesn't shoot too frequently
             if (Time.time - lastShootTime >= shootCooldown && Vector3.Distance(transform.position, navMeshTarget.position) <= attackRange)
             {
-                StartAttack();
+                BeginAttackSequence();
             }
         }
 

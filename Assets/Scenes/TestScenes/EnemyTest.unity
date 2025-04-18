@@ -183,6 +183,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!4 &183837086 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8384904350946220507, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+  m_PrefabInstance: {fileID: 5274672988417113480}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &369156266
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -772,12 +777,20 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6879063096656345588, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6879063096656345588, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: attackType
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6879063096656345588, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: startEffect
+      value: 
+      objectReference: {fileID: 11400000, guid: fcf79a6a167279b4eae818ba6f5238fa, type: 2}
+    - target: {fileID: 6879063096656345588, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: attackOrigin
+      value: 
+      objectReference: {fileID: 183837086}
     - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: damage
       value: 5
@@ -824,7 +837,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: attackType

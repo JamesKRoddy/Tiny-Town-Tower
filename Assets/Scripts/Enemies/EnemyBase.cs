@@ -170,7 +170,7 @@ namespace Enemies
         /// <summary>
         /// Called by the child classes to start the attack animation and disable the nav mesh agent rotation
         /// </summary>
-        protected void StartAttack()
+        protected void BeginAttackSequence()
         {
             // Trigger attack animation, this should transition to attack animations via root motion
             animator.SetBool("Attack", true);
