@@ -112,14 +112,13 @@ namespace Enemies{
         {
             if (currentAttack != null)
             {
-                currentAttack.OnAttackHit();
+                currentAttack.OnAttack();
             }
         }
 
         // Called by animator events
         public void AttackEnd()
         {
-            Debug.Log("AttackEnd");
             if (currentAttack != null)
             {
                 EndAttack();

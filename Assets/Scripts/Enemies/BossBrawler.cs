@@ -24,7 +24,6 @@ namespace Enemies
                 {
                     if (attack != null && attack.CanAttack())
                     {
-                        Debug.Log("Executing attack: " + attack.attackType);
                         SetCurrentAttack(attack);
                         agent.stoppingDistance = attack.range;
                         StartAttack();

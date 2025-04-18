@@ -20,6 +20,11 @@ namespace Enemies.BossAttacks
         public EffectDefinition startEffect;
         [Tooltip("Delay in seconds before playing the start effect")]
         public float startEffectDelay = 0f;
+
+        [Tooltip("Effect played when the boss attacks")]
+        public EffectDefinition attackEffect;
+        [Tooltip("Delay in seconds before playing the attack effect")]
+        public float attackEffectDelay = 0f;
         
         [Tooltip("Effect played when the attack hits")]
         public EffectDefinition hitEffect;
@@ -37,6 +42,7 @@ namespace Enemies.BossAttacks
         protected float lastAttackTime;
 
         private EffectPlayer startEffectPlayer;
+        private EffectPlayer attackEffectPlayer;
         private EffectPlayer hitEffectPlayer;
         private EffectPlayer endEffectPlayer;
 
@@ -54,6 +60,7 @@ namespace Enemies.BossAttacks
 
             // Initialize effect players
             startEffectPlayer = new EffectPlayer(this, startEffect, startEffectDelay);
+            attackEffectPlayer = new EffectPlayer(this, attackEffect, attackEffectDelay);
             hitEffectPlayer = new EffectPlayer(this, hitEffect, hitEffectDelay);
             endEffectPlayer = new EffectPlayer(this, endEffect, endEffectDelay);
         }
@@ -74,7 +81,7 @@ namespace Enemies.BossAttacks
             lastAttackTime = Time.time;            
         }
 
-        public virtual void OnAttackHit()
+        public virtual void OnAttack()
         {
             // Override in child classes for specific attack start behavior
         }
@@ -87,6 +94,11 @@ namespace Enemies.BossAttacks
         protected void PlayStartEffect(Vector3? position = null, Vector3? normal = null)
         {
             startEffectPlayer.Play(position, normal);
+        }
+
+        protected void PlayAttackEffect(Vector3? position = null, Vector3? normal = null)
+        {
+            attackEffectPlayer.Play(position, normal);
         }
 
         protected void PlayHitEffect(Vector3? position = null, Vector3? normal = null)

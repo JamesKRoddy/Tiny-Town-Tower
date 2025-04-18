@@ -13,9 +13,9 @@ namespace Enemies.BossAttacks
             base.Initialize(boss);
         }
 
-        public override void OnAttackHit()
+        public override void OnAttack()
         {
-            PlayHitEffect(attackOrigin.position, attackOrigin.forward);
+            PlayAttackEffect(attackOrigin.position, attackOrigin.forward);
             DealDamageInRadius(aoeRadius, aoeDamage, transform.position);
         }
     }

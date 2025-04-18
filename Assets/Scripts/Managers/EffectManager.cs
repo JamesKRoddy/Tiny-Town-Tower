@@ -139,7 +139,6 @@ namespace Managers
             // If the effect isn't in our pools yet, initialize it
             if (!effectPools.ContainsKey(effect))
             {
-                Debug.Log($"[EffectManager] Initializing new effect pool for: {effect.name}");
                 InitializeEffectPool(new[] { effect });
             }
 
@@ -147,7 +146,6 @@ namespace Managers
             if (vfx == null)
             {
                 // If we couldn't get a pooled object, create a new one
-                Debug.Log($"[EffectManager] Creating new instance for effect: {effect.name}");
                 if (effect.prefabs != null && effect.prefabs.Length > 0)
                 {
                     GameObject prefab = effect.prefabs[Random.Range(0, effect.prefabs.Length)];
