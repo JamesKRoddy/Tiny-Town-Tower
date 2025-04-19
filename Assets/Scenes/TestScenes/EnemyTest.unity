@@ -792,6 +792,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 183837086}
     - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: range
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: damage
       value: 5
       objectReference: {fileID: 0}
@@ -801,7 +805,7 @@ PrefabInstance:
       objectReference: {fileID: 11400000, guid: 7f3b9784e46c47e4faedf0ac585c4f17, type: 2}
     - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: attackType
@@ -821,7 +825,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: range
-      value: 10
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: cooldown
@@ -837,7 +841,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: attackType

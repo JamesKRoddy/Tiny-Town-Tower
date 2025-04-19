@@ -6,7 +6,6 @@ namespace Enemies.BossAttacks
     {
         [Header("Roar Settings")]
         public float aoeRadius = 5f;
-        public float aoeDamage = 10f;
 
         public override void Initialize(Boss boss)
         {
@@ -16,7 +15,7 @@ namespace Enemies.BossAttacks
         public override void OnAttack()
         {
             PlayAttackEffect(attackOrigin.position, attackOrigin.forward);
-            DealDamageInRadius(aoeRadius, aoeDamage, transform.position);
+            DealDamageInRadius(aoeRadius, damage, transform.position);
         }
     }
 } 
