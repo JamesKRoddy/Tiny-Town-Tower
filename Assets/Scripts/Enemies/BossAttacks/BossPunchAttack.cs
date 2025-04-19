@@ -10,7 +10,7 @@ namespace Enemies.BossAttacks
         public override void StartAttack()
         {
             base.StartAttack();
-            PlayStartEffect(attackOrigin.position, attackOrigin.forward, attackOrigin.rotation);
+            PlayStartEffect(attackOrigin.position, attackOrigin.forward, attackOrigin.rotation, attackOrigin);
         }
 
         public override void Initialize(Boss boss)

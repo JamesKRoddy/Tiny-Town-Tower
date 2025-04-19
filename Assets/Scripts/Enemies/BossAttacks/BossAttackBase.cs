@@ -92,25 +92,25 @@ namespace Enemies.BossAttacks
             // Override in child classes for specific attack end behavior
         }
 
-        protected void PlayStartEffect(Vector3? position = null, Vector3? normal = null, Quaternion? rotation = null)
+        protected void PlayStartEffect(Vector3? position = null, Vector3? normal = null, Quaternion? rotation = null, Transform parent = null)
         {
-            startEffectPlayer.Play(position, normal, rotation);
+            startEffectPlayer.Play(position, normal, rotation, parent);
         }
 
-        protected void PlayAttackEffect(Vector3? position = null, Vector3? normal = null, Quaternion? rotation = null)
+        protected void PlayAttackEffect(Vector3? position = null, Vector3? normal = null, Quaternion? rotation = null, Transform parent = null)
         {
-            Debug.Log($"[BossAttackBase] PlayAttackEffect - Position: {position}, Normal: {normal}, Rotation: {rotation?.eulerAngles}, Attack Origin: {attackOrigin?.position}");
-            attackEffectPlayer.Play(position, normal, rotation);
+            Debug.Log($"[BossAttackBase] PlayAttackEffect - Position: {position}, Normal: {normal}, Rotation: {rotation?.eulerAngles}, Parent: {parent?.name}, Attack Origin: {attackOrigin?.position}");
+            attackEffectPlayer.Play(position, normal, rotation, parent);
         }
 
-        protected void PlayHitEffect(Vector3? position = null, Vector3? normal = null, Quaternion? rotation = null)
+        protected void PlayHitEffect(Vector3? position = null, Vector3? normal = null, Quaternion? rotation = null, Transform parent = null)
         {
-            hitEffectPlayer.Play(position, normal, rotation);
+            hitEffectPlayer.Play(position, normal, rotation, parent);
         }
 
-        protected void PlayEndEffect(Vector3? position = null, Vector3? normal = null, Quaternion? rotation = null)
+        protected void PlayEndEffect(Vector3? position = null, Vector3? normal = null, Quaternion? rotation = null, Transform parent = null)
         {
-            endEffectPlayer.Play(position, normal, rotation);
+            endEffectPlayer.Play(position, normal, rotation, parent);
         }
 
         protected void DealDamageInRadius(float radius, float damageAmount, Vector3 position)
@@ -150,7 +150,7 @@ namespace Enemies.BossAttacks
             this.delay = delay;
         }
 
-        public void Play(Vector3? position = null, Vector3? normal = null, Quaternion? rotation = null)
+        public void Play(Vector3? position = null, Vector3? normal = null, Quaternion? rotation = null, Transform parent = null)
         {
             if (effect == null) return;
             
@@ -158,9 +158,9 @@ namespace Enemies.BossAttacks
             Vector3 effectNormal = normal ?? owner.transform.forward;
             Quaternion effectRotation = rotation ?? Quaternion.LookRotation(effectNormal);
             
-            Debug.Log($"[EffectPlayer] Play - Effect Position: {effectPosition}, Normal: {effectNormal}, Rotation: {effectRotation.eulerAngles}, Owner Position: {owner.transform.position}");
+            Debug.Log($"[EffectPlayer] Play - Effect Position: {effectPosition}, Normal: {effectNormal}, Rotation: {effectRotation.eulerAngles}, Parent: {parent?.name}, Owner Position: {owner.transform.position}");
             
-            activeCoroutine = owner.StartCoroutine(PlayWithDelay(effectPosition, effectNormal, effectRotation));
+            activeCoroutine = owner.StartCoroutine(PlayWithDelay(effectPosition, effectNormal, effectRotation, parent));
         }
 
         public void Stop()
@@ -172,14 +172,14 @@ namespace Enemies.BossAttacks
             }
         }
 
-        private IEnumerator PlayWithDelay(Vector3 position, Vector3 normal, Quaternion rotation)
+        private IEnumerator PlayWithDelay(Vector3 position, Vector3 normal, Quaternion rotation, Transform parent)
         {
             if (delay > 0)
             {
                 yield return new WaitForSeconds(delay);
             }
-            Debug.Log($"[EffectPlayer] PlayWithDelay - Final Position: {position}, Normal: {normal}, Rotation: {rotation.eulerAngles}");
-            EffectManager.Instance.PlayEffect(position, normal, rotation, effect);
+            Debug.Log($"[EffectPlayer] PlayWithDelay - Final Position: {position}, Normal: {normal}, Rotation: {rotation.eulerAngles}, Parent: {parent?.name}");
+            EffectManager.Instance.PlayEffect(position, normal, rotation, parent, effect);
         }
     }
 } 
