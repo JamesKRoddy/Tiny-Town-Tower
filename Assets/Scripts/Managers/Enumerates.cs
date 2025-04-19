@@ -43,8 +43,7 @@ public enum TaskType
     NONE,
     WORK,
     WANDER,
-    ATTACK,
-    TEND_CROPS
+    ATTACK
 }
 
 // =========================
