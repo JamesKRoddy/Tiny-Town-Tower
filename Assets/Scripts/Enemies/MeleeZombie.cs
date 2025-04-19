@@ -1,14 +1,10 @@
 using UnityEngine;
 
-public class MeleeZombie : Zombie
+namespace Enemies
 {
-    public float meleeDamage = 20f;
-
-    protected override void StartAttack()
-    {
-        base.StartAttack();
-        // Additional logic for melee attack can be added here
-    }
+    public class MeleeZombie : Zombie
+{
+    public float meleeDamage = 2f;
 
     // Called by animation event or timing logic
     public void MeleeAttack()
@@ -16,8 +12,9 @@ public class MeleeZombie : Zombie
         if (Vector3.Distance(transform.position, navMeshTarget.position) <= attackRange)
         {
             // Damage the player if in range during melee attack
-            navMeshTarget.GetComponent<IDamageable>().TakeDamage(meleeDamage);
+            navMeshTarget.GetComponent<IDamageable>().TakeDamage(meleeDamage, transform);
             Debug.Log("Player hit by melee attack");
         }
+    }
     }
 }

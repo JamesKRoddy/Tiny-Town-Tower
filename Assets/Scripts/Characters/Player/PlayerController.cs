@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Managers;
 using UnityEngine;
 using UnityEngine.Windows;
 
@@ -31,6 +32,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
     [Header("NPC Possesion")]
     public IPossessable _possessedNPC;
+    public event Action<IPossessable> OnNPCPossessed;
 
     [Header("Camera")]
     public PlayerCamera playerCamera;
@@ -55,7 +57,11 @@ public class PlayerController : MonoBehaviour, IControllerInput
         yield return new WaitForEndOfFrame(); //This is just to take over the npc after their setup has happened
 
         _possessedNPC = GetComponentInChildren<IPossessable>();
-        PossessNPC(_possessedNPC);
+        if(_possessedNPC != null)
+        {
+            PossessNPC(_possessedNPC);
+            PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
+        }
     }
 
     void Update()
@@ -79,6 +85,9 @@ public class PlayerController : MonoBehaviour, IControllerInput
         // Assign new NPC and possess it
         _possessedNPC = npc;
         _possessedNPC?.OnPossess();
+        
+        // Invoke the event when an NPC is possessed
+        OnNPCPossessed?.Invoke(_possessedNPC);
     }
 
     /// <summary>

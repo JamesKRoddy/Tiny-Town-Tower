@@ -5,7 +5,6 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(UnityEngine.AI.NavMeshAgent))]
-//TODO basically go down through this and if its being controlled stop the AI stuff
 public class SettlerNPC : HumanCharacterController
 {
     public SettlerNPCScriptableObj nPCDataObj;
@@ -45,7 +44,7 @@ public class SettlerNPC : HumanCharacterController
 
         if (currentState != null)
         {
-            animator.SetFloat("Speed", agent.velocity.magnitude / 3.5f); //TODO have to work out this ratio a bit better
+            animator.SetFloat("Speed", agent.velocity.magnitude / 3.5f);
             currentState.UpdateState(); // Call UpdateState on the current state
         }
     }

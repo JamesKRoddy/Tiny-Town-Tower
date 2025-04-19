@@ -18,7 +18,7 @@ public class CharacterInventory : MonoBehaviour
 {
     [Header("Equipment")]
     public WeaponScriptableObj equippedWeaponScriptObj;
-    [HideInInspector] public WeaponBase equippedWeaponBase;
+    public WeaponBase equippedWeaponBase;
     public Transform weaponHolder; // Transform where the weapon will be instantiated
 
     [Header("Inventory")]
@@ -103,6 +103,8 @@ public class CharacterInventory : MonoBehaviour
         GameObject weapon = Instantiate(weaponScriptableObj.prefab, weaponHolder);
         equippedWeaponBase = weapon.GetComponent<WeaponBase>();
 
+        // Initialize the weapon with its data
+        equippedWeaponBase.Initialize(weaponScriptableObj);
         equippedWeaponBase.OnEquipped(transform);
         equippedWeaponScriptObj = weaponScriptableObj;
 
@@ -125,12 +127,37 @@ public class CharacterInventory : MonoBehaviour
 
     private bool IsValidWeaponPrefab(WeaponScriptableObj weaponScriptableObj)
     {
-        if (weaponScriptableObj == null || weaponScriptableObj.prefab == null)
+        // Check if scriptable object exists
+        if (weaponScriptableObj == null)
+        {
+            Debug.LogWarning("WeaponScriptableObj is null");
             return false;
+        }
+
+        // Check if prefab exists
+        if (weaponScriptableObj.prefab == null)
+        {
+            Debug.LogWarning($"Prefab is missing on WeaponScriptableObj: {weaponScriptableObj.name}");
+            return false;
+        }
 
         GameObject prefab = weaponScriptableObj.prefab;
-        return prefab.GetComponent<WeaponBase>() != null &&
-               prefab.GetComponent<Collider>() != null;
+
+        // Check for WeaponBase component
+        if (prefab.GetComponent<WeaponBase>() == null)
+        {
+            Debug.LogWarning($"WeaponBase component missing on prefab: {prefab.name}");
+            return false;
+        }
+
+        // Check for Collider component
+        if (prefab.GetComponent<Collider>() == null)
+        {
+            Debug.LogWarning($"Collider component missing on prefab: {prefab.name}");
+            return false;
+        }
+
+        return true;
     }
 
     private void HandleWeaponType(GameObject weapon, WeaponAnimationType animationType)

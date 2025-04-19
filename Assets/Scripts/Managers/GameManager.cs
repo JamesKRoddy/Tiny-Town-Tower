@@ -1,88 +1,91 @@
 using UnityEngine;
 using System;
 
-public class GameManager : MonoBehaviour
+namespace Managers
 {
-    // Singleton instance
-    private static GameManager _instance;
-
-    // Singleton property to get the instance
-    public static GameManager Instance
+    public class GameManager : MonoBehaviour
     {
-        get
+        // Singleton instance
+        private static GameManager _instance;
+
+        // Singleton property to get the instance
+        public static GameManager Instance
         {
-            if (_instance == null)
+            get
             {
-                // Find the GameManager instance if it hasn't been assigned
-                _instance = FindFirstObjectByType<GameManager>();
                 if (_instance == null)
                 {
-                    Debug.LogWarning("GameManager instance not found in the scene!");
+                    // Find the GameManager instance if it hasn't been assigned
+                    _instance = FindFirstObjectByType<GameManager>();
+                    if (_instance == null)
+                    {
+                        Debug.LogWarning("GameManager instance not found in the scene!");
+                    }
+                }
+                return _instance;
+            }
+        }
+
+        // Public event to notify when the game mode changes
+        public event Action<GameMode> OnGameModeChanged;
+
+        // Private backing field for the current game mode
+        [SerializeField] private GameMode _currentGameMode = GameMode.NONE;
+
+        // Property to get and set the current game mode
+        public GameMode CurrentGameMode
+        {
+            get { return _currentGameMode; }
+            set
+            {
+                // Only trigger event if the mode changes
+                if (_currentGameMode != value)
+                {
+                    _currentGameMode = value;
+                    // Invoke the event when game mode changes
+                    OnGameModeChanged?.Invoke(_currentGameMode);
                 }
             }
-            return _instance;
         }
-    }
 
-    // Public event to notify when the game mode changes
-    public event Action<GameMode> OnGameModeChanged;
-
-    // Private backing field for the current game mode
-    [SerializeField] private GameMode _currentGameMode = GameMode.NONE;
-
-    // Property to get and set the current game mode
-    public GameMode CurrentGameMode
-    {
-        get { return _currentGameMode; }
-        set
+        public PlayerControlType PlayerGameControlType() //Used as the default gamemode for returning to from menus and conversations
         {
-            // Only trigger event if the mode changes
-            if (_currentGameMode != value)
+            switch (_currentGameMode)
             {
-                _currentGameMode = value;
-                // Invoke the event when game mode changes
-                OnGameModeChanged?.Invoke(_currentGameMode);
+                case GameMode.NONE:
+                    return PlayerControlType.NONE;
+                case GameMode.ROGUE_LITE:
+                    return PlayerControlType.COMBAT_NPC_MOVEMENT;
+                case GameMode.CAMP:
+                    if (PlayerController.Instance._possessedNPC != null)
+                        return PlayerControlType.CAMP_NPC_MOVEMENT;
+                    else
+                        return PlayerControlType.CAMP_CAMERA_MOVEMENT;
+                case GameMode.TURRET:
+                    return PlayerControlType.TURRET_CAMERA_MOVEMENT;
+                default:
+                    return PlayerControlType.NONE;
+            }        
+        }
+
+
+        private void Awake()
+        {
+            if (_instance != null && _instance != this)
+            {
+                Destroy(gameObject); // Destroy duplicate instances
+            }
+            else
+            {
+                _instance = this; // Set the instance
+                DontDestroyOnLoad(gameObject); // Optionally persist across scenes
             }
         }
-    }
 
-    public PlayerControlType PlayerGameControlType() //Used as the default gamemode for returning to from menus and conversations
-    {
-        switch (_currentGameMode)
+        // Start is called once before the first execution of Update
+        void Start()
         {
-            case GameMode.NONE:
-                return PlayerControlType.NONE;
-            case GameMode.ROGUE_LITE:
-                return PlayerControlType.COMBAT_NPC_MOVEMENT;
-            case GameMode.CAMP:
-                if (PlayerController.Instance._possessedNPC != null)
-                    return PlayerControlType.CAMP_NPC_MOVEMENT;
-                else
-                    return PlayerControlType.CAMP_CAMERA_MOVEMENT;
-            case GameMode.TURRET:
-                return PlayerControlType.TURRET_CAMERA_MOVEMENT;
-            default:
-                return PlayerControlType.NONE;
-        }        
-    }
-
-
-    private void Awake()
-    {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(gameObject); // Destroy duplicate instances
+            OnGameModeChanged?.Invoke(_currentGameMode);
         }
-        else
-        {
-            _instance = this; // Set the instance
-            DontDestroyOnLoad(gameObject); // Optionally persist across scenes
-        }
-    }
-
-    // Start is called once before the first execution of Update
-    void Start()
-    {
-        OnGameModeChanged?.Invoke(_currentGameMode);
     }
 }

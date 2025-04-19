@@ -1,146 +1,149 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RogueLiteManager : GameModeManager<RogueLikeEnemyWaveConfig>
+namespace Managers
 {
-    [SerializeField] protected List<BuildingDataScriptableObj> buildingDataScriptableObjs;
-    public BuildingType currentBuilding = BuildingType.NONE;
-    private GameObject currentBuildingParent;
-    public int buildingDifficulty;
-    public int currentRoom;
-    private int currentRoomDifficulty;
-
-    // Singleton instance
-    private static RogueLiteManager _instance;
-
-    // Singleton property to get the instance
-    public static RogueLiteManager Instance
+    public class RogueLiteManager : GameModeManager<RogueLikeEnemyWaveConfig>
     {
-        get
+        [SerializeField] protected List<BuildingDataScriptableObj> buildingDataScriptableObjs;
+        public BuildingType currentBuilding = BuildingType.NONE;
+        private GameObject currentBuildingParent;
+        public int buildingDifficulty;
+        public int currentRoom;
+        private int currentRoomDifficulty;
+
+        // Singleton instance
+        private static RogueLiteManager _instance;
+
+        // Singleton property to get the instance
+        public static RogueLiteManager Instance
         {
-            if (_instance == null)
+            get
             {
-                // Find the GameManager instance if it hasn't been assigned
-                _instance = FindFirstObjectByType<RogueLiteManager>();
                 if (_instance == null)
                 {
-                    Debug.LogWarning("RogueLiteManager instance not found in the scene!");
+                    // Find the GameManager instance if it hasn't been assigned
+                    _instance = FindFirstObjectByType<RogueLiteManager>();
+                    if (_instance == null)
+                    {
+                        Debug.LogWarning("RogueLiteManager instance not found in the scene!");
+                    }
+                }
+                return _instance;
+            }
+        }
+
+        private void Awake()
+        {
+            if (_instance != null && _instance != this)
+            {
+                Destroy(gameObject); // Destroy duplicate instances
+            }
+            else
+            {
+                _instance = this; // Set the instance
+            }
+        }
+
+        protected override void Start()
+        {
+            base.Start();
+            SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+        }
+
+        protected override void EnemySetupStateChanged(EnemySetupState newState)
+        {
+            switch (newState)
+            {
+                case EnemySetupState.NONE:
+                    break;
+                case EnemySetupState.WAVE_START:
+                    EnemySpawnManager.Instance.ResetWaveCount();
+                    break;
+                case EnemySetupState.PRE_ENEMY_SPAWNING:
+                    SetupPlayer();
+                    SetEnemySetupState(EnemySetupState.ENEMIES_SPAWNED);
+                    EnemySpawnManager.Instance.StartSpawningEnemies(GetWaveConfig(GetCurrentWaveDifficulty()));
+                    break;
+                case EnemySetupState.ENEMIES_SPAWNED:
+                    break;
+                case EnemySetupState.ALL_WAVES_CLEARED:
+                    break;
+                default:
+                    break;
+            }   
+            
+            
+        }
+
+        private void SetupLevel(BuildingType buildingType)
+        {
+            if (currentBuildingParent != null)
+            {
+                Destroy(currentBuildingParent);
+            }
+
+            int difficulty = GetCurrentWaveDifficulty();
+            currentBuildingParent = Instantiate(GetBuildingParent(buildingType, difficulty, out BuildingDataScriptableObj selectedBuilding));
+
+            if (currentBuildingParent != null && selectedBuilding != null)
+            {
+                RoomSectionRandomizer randomizer = currentBuildingParent.GetComponent<RoomSectionRandomizer>();
+                if (randomizer != null)
+                {
+                    randomizer.GenerateRandomRooms(selectedBuilding);
                 }
             }
-            return _instance;
-        }
-    }
-
-    private void Awake()
-    {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(gameObject); // Destroy duplicate instances
-        }
-        else
-        {
-            _instance = this; // Set the instance
-        }
-    }
-
-    protected override void Start()
-    {
-        base.Start();
-        SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
-    }
-
-    protected override void EnemySetupStateChanged(EnemySetupState newState)
-    {
-        switch (newState)
-        {
-            case EnemySetupState.NONE:
-                break;
-            case EnemySetupState.WAVE_START:
-                EnemySpawnManager.Instance.ResetWaveCount();
-                break;
-            case EnemySetupState.PRE_ENEMY_SPAWNING:
-                SetupPlayer();
-                SetEnemySetupState(EnemySetupState.ENEMIES_SPAWNED);
-                EnemySpawnManager.Instance.StartSpawningEnemies(GetWaveConfig(GetCurrentWaveDifficulty()));
-                break;
-            case EnemySetupState.ENEMIES_SPAWNED:
-                break;
-            case EnemySetupState.ALL_WAVES_CLEARED:
-                break;
-            default:
-                break;
-        }   
-        
-        
-    }
-
-    private void SetupLevel(BuildingType buildingType)
-    {
-        if (currentBuildingParent != null)
-        {
-            Destroy(currentBuildingParent);
-        }
-
-        int difficulty = GetCurrentWaveDifficulty();
-        currentBuildingParent = Instantiate(GetBuildingParent(buildingType, difficulty, out BuildingDataScriptableObj selectedBuilding));
-
-        if (currentBuildingParent != null && selectedBuilding != null)
-        {
-            RoomSectionRandomizer randomizer = currentBuildingParent.GetComponent<RoomSectionRandomizer>();
-            if (randomizer != null)
+            else
             {
-                randomizer.GenerateRandomRooms(selectedBuilding);
+                Debug.LogError($"No building parent found for {buildingType} at difficulty {difficulty}.");
             }
         }
-        else
-        {
-            Debug.LogError($"No building parent found for {buildingType} at difficulty {difficulty}.");
-        }
-    }
 
-    private void SetupPlayer()
-    {
-        if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null && currentBuildingParent != null)
+        private void SetupPlayer()
         {
-            RoomSectionRandomizer randomizer = currentBuildingParent.GetComponent<RoomSectionRandomizer>();
-            if (randomizer != null)
+            if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null && currentBuildingParent != null)
             {
-                PlayerController.Instance._possessedNPC.GetTransform().position = randomizer.GetPlayerSpawnPoint();
+                RoomSectionRandomizer randomizer = currentBuildingParent.GetComponent<RoomSectionRandomizer>();
+                if (randomizer != null)
+                {
+                    PlayerController.Instance._possessedNPC.GetTransform().position = randomizer.GetPlayerSpawnPoint();
+                }
             }
         }
-    }
 
-    public void EnterRoom(RogueLiteDoor rogueLiteDoor)
-    {
-        SetEnemySetupState(EnemySetupState.WAVE_START);
-        currentRoomDifficulty = rogueLiteDoor.doorRoomDifficulty;
-        currentRoom++;
-
-        if (currentBuilding == BuildingType.NONE)
+        public void EnterRoom(RogueLiteDoor rogueLiteDoor)
         {
-            currentBuilding = rogueLiteDoor.buildingType;
-        }
+            SetEnemySetupState(EnemySetupState.WAVE_START);
+            currentRoomDifficulty = rogueLiteDoor.doorRoomDifficulty;
+            currentRoom++;
 
-        SetupLevel(currentBuilding);
-    }
-
-    public GameObject GetBuildingParent(BuildingType buildingType, int difficulty, out BuildingDataScriptableObj selectedBuilding)
-    {
-        foreach (var buildingData in buildingDataScriptableObjs)
-        {
-            if (buildingData is BuildingDataScriptableObj building && building.buildingType == buildingType)
+            if (currentBuilding == BuildingType.NONE)
             {
-                selectedBuilding = building;
-                return building.GetBuildingParent(difficulty);
+                currentBuilding = rogueLiteDoor.buildingType;
             }
-        }
-        Debug.LogWarning($"No building parent found for type {buildingType} with difficulty {difficulty}.");
-        selectedBuilding = null;
-        return null;
-    }
 
-    public override int GetCurrentWaveDifficulty()
-    {
-        return (currentRoom * buildingDifficulty) + currentRoomDifficulty;
+            SetupLevel(currentBuilding);
+        }
+
+        public GameObject GetBuildingParent(BuildingType buildingType, int difficulty, out BuildingDataScriptableObj selectedBuilding)
+        {
+            foreach (var buildingData in buildingDataScriptableObjs)
+            {
+                if (buildingData is BuildingDataScriptableObj building && building.buildingType == buildingType)
+                {
+                    selectedBuilding = building;
+                    return building.GetBuildingParent(difficulty);
+                }
+            }
+            Debug.LogWarning($"No building parent found for type {buildingType} with difficulty {difficulty}.");
+            selectedBuilding = null;
+            return null;
+        }
+
+        public override int GetCurrentWaveDifficulty()
+        {
+            return (currentRoom * buildingDifficulty) + currentRoomDifficulty;
+        }
     }
 }

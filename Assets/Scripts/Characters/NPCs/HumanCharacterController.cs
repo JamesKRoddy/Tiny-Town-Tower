@@ -2,12 +2,17 @@ using System;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Windows;
+using Managers;
 
 public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 {
+    [Header("Character Type")]
+    [SerializeField] protected CharacterType characterType = CharacterType.HUMAN_MALE_1;
+
     [Header("Movement Parameters")]
     public float moveMaxSpeed = 10f; // Speed at which the player moves normally
     public float rotationSpeed = 720f; // Speed at which the player rotates
+    public float attackRotationSpeed = 360f; // Speed at which the player rotates while attacking
     public float dashSpeed = 20f; // Speed during a dash
     public float dashDuration = 0.2f; // How long a dash lasts
     public float dashCooldown = 1.0f; // Cooldown time between dashes
@@ -22,7 +27,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     [Header("Vault Parameters")]
     public float vaultSpeed = 5f; // Slower speed for vaulting
     public float vaultDetectionRange = 1.0f; // Range to detect vaultable obstacles
-    public LayerMask obstacleLayer; // Layer for non-vaultable obstacles
+    public LayerMask[] obstacleLayers; // Array of layers for non-vaultable obstacles
     public LayerMask vaultLayer; // Layer specifically for vaultable obstacles
     public float capsuleCastRadius = 0.5f; // Radius of the capsule for collision detection
     public float vaultHeight = 1.0f; // Height of the raycast to detect vaultable obstacles
@@ -53,6 +58,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public float Health { get => health; set => health = value; }
     public float MaxHealth { get => maxHealth; set => maxHealth = value; }
+    public CharacterType CharacterType => characterType;
 
     protected virtual void Awake()
     {
@@ -114,13 +120,13 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         else
         {
             settlerNPC?.ChangeState(null);
-            GetComponent<CharacterAnimationEvents>().Setup(characterCombat, this, PlayerInventory.Instance);
+            GetComponent<CharacterAnimationEvents>().Setup(characterCombat, this, characterInventory);
         }
     }
 
     public void Movement(Vector3 movement)
     {
-        if (!isVaulting && !isAttacking)
+        if (!isVaulting)
         {
             movementInput = new Vector3(movement.x, 0, movement.z);
         }
@@ -174,6 +180,16 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public void EquipMeleeWeapon(int equipped)
     {
         animator.SetInteger("Equipped", equipped);
+        UpdateAnimationSpeed();
+    }
+
+    private void UpdateAnimationSpeed()
+    {
+        if (characterInventory.equippedWeaponScriptObj != null)
+        {
+            // Update the speed of all attack animations in the Attacking Layer
+            animator.SetFloat("AttackSpeed", characterInventory.equippedWeaponScriptObj.attackSpeed);
+        }
     }
 
     //Called from animator state class CombatAnimationState
@@ -272,10 +288,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 FinishVault();
             }
         }
-        else if (!isAttacking)
+        else
         {
             float inputMagnitude = movementInput.magnitude;
             float speed = isDashing ? dashSpeed : moveMaxSpeed;
+            float currentRotationSpeed = isAttacking ? attackRotationSpeed : rotationSpeed;
 
             // If dashing, smoothly change direction
             if (isDashing)
@@ -311,7 +328,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
                     // Rotate player towards the current direction
                     Quaternion targetRotation = Quaternion.LookRotation(currentDirection);
-                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
                 }
             }
             else
@@ -321,13 +338,16 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
                 if (!IsObstacleInPath(targetMovement, out RaycastHit hitInfo))
                 {
-                    transform.position += targetMovement;
+                    if (!isAttacking) // Only move position if not attacking
+                    {
+                        transform.position += targetMovement;
+                    }
 
                     // Rotate player towards the input direction
                     if (movementInput != Vector3.zero && !isVaulting)
                     {
                         Quaternion targetRotation = Quaternion.LookRotation(movementInput);
-                        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+                        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
                     }
                 }
                 else
@@ -344,10 +364,14 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         Vector3 capsuleBottom = transform.position + Vector3.up * 0.1f; // Slightly above ground to avoid terrain issues
         Vector3 capsuleTop = transform.position + Vector3.up * humanCollider.bounds.size.y;
 
-        // Perform a capsule cast to detect obstacles in the path using obstacleLayer
-        if (Physics.CapsuleCast(capsuleBottom, capsuleTop, capsuleCastRadius, direction.normalized, out hitInfo, capsuleCastRadius, obstacleLayer | vaultLayer))
+        // Check against each obstacle layer
+        foreach (LayerMask layer in obstacleLayers)
         {
-            return true;
+            // Perform a capsule cast to detect obstacles in the path using the current obstacle layer
+            if (Physics.CapsuleCast(capsuleBottom, capsuleTop, capsuleCastRadius, direction.normalized, out hitInfo, capsuleCastRadius, layer | vaultLayer))
+            {
+                return true;
+            }
         }
 
         hitInfo = default;
@@ -397,11 +421,21 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         }
     }
 
-    public void TakeDamage(float amount)
+    public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
+
+    public void TakeDamage(float amount, Transform damageSource = null)
     {
         float previousHealth = health;
         health = Mathf.Max(0, health - amount);
         OnDamageTaken?.Invoke(amount, health);
+
+        // Play hit VFX
+        Vector3 hitPoint = transform.position + Vector3.up * 1.5f; // Adjust height as needed
+        Vector3 hitNormal = damageSource != null 
+            ? (transform.position - damageSource.position).normalized 
+            : Vector3.up; // Use upward direction as fallback
+        EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
+
         if (health <= 0) Die();
     }
 
@@ -413,8 +447,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void Die()
     {
-        // TODO: Implement death behavior
         Debug.Log($"{gameObject.name} has died!");
         OnDeath?.Invoke();
+
+        // Play death VFX
+        Vector3 deathPoint = transform.position + Vector3.up * 1.5f;
+        Vector3 deathNormal = Vector3.up; // Default upward direction for death effects
+        EffectManager.Instance.PlayDeathEffect(deathPoint, deathNormal, this);
     }
 }

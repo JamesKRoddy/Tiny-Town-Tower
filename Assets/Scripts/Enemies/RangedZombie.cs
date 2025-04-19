@@ -1,35 +1,30 @@
 using UnityEngine;
 
-public class RangedZombie : Zombie
-{
-    public GameObject projectilePrefab;
-    public float rangedDamage = 15f;
-    public float shootCooldown = 2f;
-    private float lastShootTime;
-
-    protected override void Update()
+namespace Enemies{
+    public class RangedZombie : Zombie
     {
-        base.Update();
+        public GameObject projectilePrefab;
+        public float rangedDamage = 15f;
+        public float shootCooldown = 2f;
+        private float lastShootTime;
 
-        // Ensure zombie doesn't shoot too frequently
-        if (Time.time - lastShootTime >= shootCooldown && Vector3.Distance(transform.position, navMeshTarget.position) <= attackRange)
+        protected override void Update()
         {
-            StartAttack();
+            base.Update();
+
+            // Ensure zombie doesn't shoot too frequently
+            if (Time.time - lastShootTime >= shootCooldown && Vector3.Distance(transform.position, navMeshTarget.position) <= attackRange)
+            {
+                BeginAttackSequence();
+            }
         }
-    }
 
-    protected override void StartAttack()
-    {
-        base.StartAttack();
-        // Shoot projectile after attack animation starts
-        ShootProjectile();
-    }
-
-    private void ShootProjectile()
-    {
-        GameObject projectile = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
-        Vector3 direction = (navMeshTarget.position - transform.position).normalized;
-        projectile.GetComponent<ZombieVomitProjectile>().Initialize(direction, rangedDamage);
-        lastShootTime = Time.time;
+        private void ShootProjectile()
+        {
+            GameObject projectile = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
+            Vector3 direction = (navMeshTarget.position - transform.position).normalized;
+            projectile.GetComponent<ZombieVomitProjectile>().Initialize(direction, rangedDamage);
+            lastShootTime = Time.time;
+        }
     }
 }

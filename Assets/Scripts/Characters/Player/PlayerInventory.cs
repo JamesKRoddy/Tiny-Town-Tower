@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Managers;
 
 public class PlayerInventory : CharacterInventory, IControllerInput
 {
@@ -32,6 +33,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     [Header ("Chest handling")]
     private IInteractive<object> currentInteractive; // The interaction the player is currently looking at
     public float interactionRange = 3f; // Distance to detect weapons    
+    [SerializeField] private Vector3 boxCastSize = new Vector3(0.5f, 0.5f, 0.5f); // Size of the box cast for interaction detection
 
     [Header("Players currently equipped items")] 
     public WeaponElement dashElement = WeaponElement.NONE;
@@ -83,16 +85,13 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     public void AddToCharacterInventory(ResourcePickup resourcePickup)
     {
-        //TODO might move this to base class
         //TODO Display this on the UI so that the player can seee the inventory items being added
-        //TODO go through inventory and add correctly, if its a usable weapon then equip it, mutation same etc.
 
         var resourceItem = resourcePickup.GetResourceObj();
 
         switch (resourceItem)
         {
             case WeaponScriptableObj weapon:
-
                 if(PlayerController.Instance._possessedNPC != null)
                 {
                     if (PlayerController.Instance._possessedNPC.GetEquipped() == null)
@@ -101,7 +100,18 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                     }
                     else
                     {
-                        Debug.LogError("//TODO have to drop current weapon and equip new one");
+                        // Show weapon comparison menu
+                        WeaponScriptableObj currentWeapon = PlayerController.Instance._possessedNPC.GetEquipped();
+                        PlayerUIManager.Instance.weaponComparisonMenu.ShowWeaponComparison(
+                            currentWeapon,
+                            weapon,
+                            (equipNew) => {
+                                if (equipNew)
+                                {
+                                    PlayerController.Instance._possessedNPC.EquipWeapon(weapon);
+                                }
+                            }
+                        );
                     }
                 }
                 break;
@@ -142,21 +152,13 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         }
     }
 
-
-    public void EquipDash()
-    {
-        //TODO flesh this out set dashElement
-    }
-
-    public void EquipGeneticMutation()
-    {
-        //TODO flesh this out set geneticMutation
-    }
-
     private void DetectInteraction()
     {
         RaycastHit hit;
-        if (Physics.Raycast(PlayerController.Instance._possessedNPC.GetTransform().position + Vector3.up, PlayerController.Instance._possessedNPC.GetTransform().transform.forward, out hit, interactionRange))
+        Vector3 startPos = PlayerController.Instance._possessedNPC.GetTransform().position + Vector3.up;
+        Vector3 direction = PlayerController.Instance._possessedNPC.GetTransform().forward;
+        
+        if (Physics.BoxCast(startPos, boxCastSize * 0.5f, direction, out hit, PlayerController.Instance._possessedNPC.GetTransform().rotation, interactionRange))
         {
             IInteractiveBase interactive = hit.collider.GetComponent<IInteractiveBase>();
             if (interactive != null && interactive.CanInteract())
@@ -183,7 +185,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     private void HandleInteraction()
     {
-        Debug.Log("HandleInteraction");
         if (currentInteractive != null && currentInteractive.CanInteract())
         {
             object interactReturnObj = currentInteractive.Interact();

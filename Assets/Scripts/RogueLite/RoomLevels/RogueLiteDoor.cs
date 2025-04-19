@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using Managers;
 public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>
 {
     public GameObject doorModel; // TODO: Door models will change based on room difficulty and loot. GetCurrentRoomDifficulty

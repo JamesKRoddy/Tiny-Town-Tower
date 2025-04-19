@@ -1,4 +1,5 @@
 using UnityEngine;
+using Managers;
 
 public class PlayerCamera : MonoBehaviour, IControllerInput
 {

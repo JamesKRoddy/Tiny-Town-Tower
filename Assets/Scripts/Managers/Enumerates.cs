@@ -25,7 +25,7 @@ public enum BuildingCategory
 public enum WorkType
 {
     NONE,
-    FARMING, // TODO: might have to break this down into several parts
+    FARMING,
     GATHER_WOOD,
     GATHER_ROCK,
     WEAVE_FABRIC,
@@ -213,6 +213,43 @@ public enum GeneticMutation
 public enum TurretCategory
 {
     NONE
+}
+
+// =========================
+// ALLEGIANCE ENUM
+// =========================
+
+public enum Allegiance
+{
+    FRIENDLY,
+    HOSTILE,
+    NEUTRAL
+}
+
+// =========================
+// CHARACTER TYPE ENUMS
+// =========================
+
+public enum CharacterType
+{
+    NONE,
+    // Human Types
+    HUMAN_MALE_1,
+    HUMAN_MALE_2,
+    HUMAN_FEMALE_1,
+    HUMAN_FEMALE_2,
+    // Zombie Types
+    ZOMBIE_MELEE,
+    ZOMBIE_SPITTER,
+    ZOMBIE_TANK,
+    // Machine Types
+    MACHINE_DRONE,
+    MACHINE_TURRET_BASE_TARGET,
+    MACHINE_ROBOT,
+    // Special Types
+    BOSS_1,
+    BOSS_2,
+    BOSS_3
 }
 
 // =========================

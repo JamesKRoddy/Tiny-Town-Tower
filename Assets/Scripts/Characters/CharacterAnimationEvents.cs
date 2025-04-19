@@ -2,33 +2,45 @@ using UnityEngine;
 
 public class CharacterAnimationEvents : MonoBehaviour
 {
-    private CharacterCombat playerCombat;
-    private HumanCharacterController playerController;
-    private CharacterInventory playerInventory;
+    private CharacterCombat combat;
+    private HumanCharacterController controller;
+    private CharacterInventory inventory;
 
     public void Setup(CharacterCombat characterCombat =  null, HumanCharacterController characterController = null, CharacterInventory characterInventory = null) //TOD add this to the npc swap event, this also might be stupid
     {
-        playerCombat = characterCombat;
-        playerController = characterController;
-        playerInventory = characterInventory;
+        combat = characterCombat;
+        controller = characterController;
+        inventory = characterInventory;
     }
 
+    #region Animation Events
+    /// <summary>
+    /// Called from animator, enables the weapon vfx
+    /// HORIZONTAL_LEFT = 0, HORIZONTAL_RIGHT = 1, VERTICAL_DOWN = 2, VERTICAL_UP = 3
+    /// </summary>
+    /// <param name="attackDirection"></param>
     public void AttackVFX(int attackDirection)
     {
-        if(playerCombat != null)
-            playerCombat.AttackVFX(attackDirection);
+        if(combat != null)
+            combat.AttackVFX(attackDirection);
     }
 
-    //Called from animator
+    /// <summary>
+    /// Called from animator, enables the weapon hitbox for melee weapons
+    /// </summary>
     public void UseWeapon()
     {
-        if (playerInventory.equippedWeaponScriptObj != null)
-            playerInventory.equippedWeaponBase.Use();
+        if (inventory.equippedWeaponScriptObj != null)
+            inventory.equippedWeaponBase.Use();
     }
 
+    /// <summary>
+    /// Called from animator, disables the weapon hitbox for melee weapons
+    /// </summary>
     public void StopWeapon()
     {
-        if (playerInventory.equippedWeaponScriptObj != null)
-            playerInventory.equippedWeaponBase.StopUse();
+        if (inventory.equippedWeaponScriptObj != null)
+            inventory.equippedWeaponBase.StopUse();
     }
+    #endregion
 }

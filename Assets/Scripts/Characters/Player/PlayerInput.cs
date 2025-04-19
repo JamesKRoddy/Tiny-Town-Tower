@@ -3,6 +3,7 @@ using System;
 using UnityEngine.InputSystem.LowLevel;
 using static UnityEditor.Searcher.SearcherWindow.Alignment;
 using System.Collections;
+using Managers;
 
 /// <summary>
 /// Handles all player input events and control type management.

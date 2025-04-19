@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.AI.Navigation;
 using UnityEngine;
 using System.Linq;
+using Managers;
 
 public class RoomSectionRandomizer : MonoBehaviour
 {
@@ -132,7 +133,6 @@ public class RoomSectionRandomizer : MonoBehaviour
         if (navMeshSurface != null)
         {
             navMeshSurface.BuildNavMesh();            
-            Debug.Log("NavMesh baked at runtime.");
             RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.PRE_ENEMY_SPAWNING);
         }
         else
@@ -181,8 +181,6 @@ public class RoomSectionRandomizer : MonoBehaviour
                 door.gameObject.SetActive(false);
             }
         }
-
-        Debug.Log("Doors have been spawned and assigned.");
     }
 
     internal Vector3 GetPlayerSpawnPoint()
@@ -207,13 +205,10 @@ public class RoomSectionRandomizer : MonoBehaviour
             if (Random.value < 0.75f)
             {
                 chest.gameObject.SetActive(false);
-                Debug.Log($"Chest {chest.name} is disabled.");
                 continue; // Skip assigning loot to disabled chests
             }
 
             chest.SetupChest(RogueLiteManager.Instance.GetCurrentWaveDifficulty());
         }
-
-        Debug.Log("Chests have been setup.");
     }
 }

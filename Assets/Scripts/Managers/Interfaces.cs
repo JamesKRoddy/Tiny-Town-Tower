@@ -43,6 +43,9 @@ public interface IDamageable
     [SerializeField] public float Health { get; set; } // Property for current health
     [SerializeField] public float MaxHealth { get; set; } // Property for max health
 
+    // Character type for VFX and sound effects
+    CharacterType CharacterType { get; }
+
     // Event that fires when damage is taken, providing the damage amount and remaining health
     event System.Action<float, float> OnDamageTaken;
     // Event that fires when healing occurs, providing the heal amount and new health
@@ -50,15 +53,51 @@ public interface IDamageable
     // Event that fires when the entity dies
     event System.Action OnDeath;
 
-    void TakeDamage(float amount); // Method to handle damage
+    void TakeDamage(float amount, Transform damageSource = null); // Method to handle damage
     void Heal(float amount);       // Optional: Method to handle healing
     void Die();
+    Allegiance GetAllegiance(); // Method to get the allegiance of the entity
 }
 
 /*
  * Known bugs:
- * Turret scene and placing turrets
- * Occationally mutations not being added back to the player inventory when they are removed from the genetic mutation ui
+
+    Navmesh issues:
+    RuntimeNavMeshBuilder: Source mesh SM_Wep_Bat_01 does not allow read access. This will work in playmode in the editor but not in player
+    UnityEngine.AI.NavMeshBuilder:BuildNavMeshData (UnityEngine.AI.NavMeshBuildSettings,System.Collections.Generic.List`1<UnityEngine.AI.NavMeshBuildSource>,UnityEngine.Bounds,UnityEngine.Vector3,UnityEngine.Quaternion)
+    Unity.AI.Navigation.NavMeshSurface:BuildNavMesh () (at ./Library/PackageCache/com.unity.ai.navigation@9f76b145f0a8/Runtime/NavMeshSurface.cs:272)
+    RoomSectionRandomizer/<DelayedBakeNavMesh>d__13:MoveNext () (at Assets/Scripts/RogueLite/RoomLevels/RoomSectionRandomizer.cs:135)
+    UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+    Boss attack effects
+    Issue with starting the effects at the wrong time, have to look at were they are being triggered and try bring the functionallity back animator events
+    boss jump attack refactor
+    
+ * Next work:
+    Refactoring some of the enemy code:
+
+    Sound sources need to be 3d sources not 2d sources
+
+    Setup different hitboxes on the weapons for horizontal and vertical attacks
+    
+    Weapon impacts, for basic weapons its just dirt
+    For fire/electric should check if its hit a viable mesh and should spread to the mesh using it as an emission point?
+
+
+    Try to setup a boss, large zombie w/ cyberpunk aspects to shoot lazers, projectiles, explosions etc.
+
+    Work on boss attack effects
+    Check boss AI with player
+    Boss UI, health bar etc.
+    Add gizmos for boss attacks
+    Effects for player hitting boss
+    Boss death
+    
+    Can just use a mech for a boss
+    Easy way to make the boss harder is to just speed up its animator
+
+    Can do a runningtowards the player attack, nav agent and animation should work for this.
+
  */
 
 // ========================================
@@ -66,21 +105,17 @@ public interface IDamageable
 // ========================================
 
 // 1. Genetic Mutations & Inventory System
-// - Implement a genetic mutation system for player upgrades.
-// - Mutations should vary between combat enhancements, survival buffs, and risk-reward effects.
 // - Introduce contamination mechanics, requiring purification before re-entering the camp.
-
 /*
- * movement is still slightly offset
- * Do the ui first then start looking into the effects of mutations
- */
-
-/*
- *Keep all the genetic mutation storage in the player inventory, if a mutation is assigned then remove it from GeneticMutationUI allMutations, if a mutation is removed then add it to the player inventory
  *maybe the reason you have to go into the menu each time is because certain parts of the grid give you boosts like 2x the effect?
+ Mutation Ideas
+ Increase Dash Distance
+ Increase Dash Speed
+ Increase dash cooldown
+ Increase Movement Speed
+ Spawn a little turret or something that shoots at the zombies
+ 
  */
-
-
 
 // 2. NPC Characteristics System
 // - Implement a pool of positive and negative traits for NPCs to make them unique.

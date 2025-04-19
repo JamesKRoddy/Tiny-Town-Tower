@@ -29,9 +29,6 @@ public class PlayerUIManager : MonoBehaviour
         }
     }
 
-    [Header("Misc UI")]
-    [SerializeField] TMP_Text errorMessage;
-
     [Header("UI References")]
     public MenuBase currentMenu;
     public MenuBase previousMenu;
@@ -44,16 +41,22 @@ public class PlayerUIManager : MonoBehaviour
 
     [Header("Utility Menu References")]
     public UtilityMenu utilityMenu;
-    public BuildMenu buildMenu; 
-    public NarrativeSystem narrativeSystem;
+    public BuildMenu buildMenu;
     public PlayerInventoryMenu playerInventoryMenu;
     public SettlerNPCMenu settlerNPCMenu;
     public TurretMenu turretMenu;
     public TurretUpgradeMenu turretUpgradeMenu;
     public GeneticMutationUI geneticMutationMenu;
 
-    [Header("Interaction")]
-    [SerializeField] UIPanelController interactionPromptUI; // UI text for interactionPromptUI //TODO because ill be using panels with text being displayed (talk to, pickup, open etc.) might be an idea to create a separate class for all this stuff
+    [Header("Overlay Menu References")]
+    [SerializeField] TMP_Text errorMessage;
+    [SerializeField] UIPanelController interactionPromptUI; // UI text for interactionPromptUI
+    public NarrativeSystem narrativeSystem;
+    public WeaponComparisonMenu weaponComparisonMenu;
+
+    [Header("Game UI References")]
+    public RogueLikeGameUI rogueLikeGameUI;
+
 
     private Coroutine openingMenuCoroutine;
 
@@ -69,6 +72,11 @@ public class PlayerUIManager : MonoBehaviour
             _instance = this; // Set the instance
             DontDestroyOnLoad(gameObject); // Optionally persist across scenes
         }   
+    }
+
+    void Start()
+    {
+        rogueLikeGameUI.Setup();
     }
 
     /// <summary>
