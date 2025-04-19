@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using Managers;
 
 public class ResourceUpgradeTask : ResourceWorkTask
 {
@@ -40,12 +41,12 @@ public class ResourceUpgradeTask : ResourceWorkTask
 
     private bool HasRequiredResources()
     {
-        return CampInventory.Instance.GetResourceCount(inputResource) >= inputAmount;
+        return CampManager.Instance.PlayerInventory.GetItemCount(inputResource) >= inputAmount;
     }
 
     private void ConsumeResources()
     {
-        CampInventory.Instance.RemoveResource(inputResource, inputAmount);
+        CampManager.Instance.PlayerInventory.RemoveItem(inputResource, inputAmount);
     }
 
     protected override void CompleteWork()

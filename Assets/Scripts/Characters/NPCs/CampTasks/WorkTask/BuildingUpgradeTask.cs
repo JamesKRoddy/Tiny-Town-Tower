@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using Managers;
 
 public class BuildingUpgradeTask : WorkTask
 {
@@ -41,21 +42,37 @@ public class BuildingUpgradeTask : WorkTask
 
     private bool HasRequiredResources()
     {
-        return CampInventory.Instance.HasResources(requiredResources, resourceCosts);
+        for (int i = 0; i < requiredResources.Length; i++)
+        {
+            if (CampManager.Instance.PlayerInventory.GetItemCount(requiredResources[i]) < resourceCosts[i])
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void ConsumeResources()
     {
-        CampInventory.Instance.ConsumeResources(requiredResources, resourceCosts);
+        for (int i = 0; i < requiredResources.Length; i++)
+        {
+            CampManager.Instance.PlayerInventory.RemoveItem(requiredResources[i], resourceCosts[i]);
+        }
     }
 
     private void CompleteUpgrade()
     {
-        // Replace the current building with the upgraded version
-        GameObject upgradedBuilding = Instantiate(upgradeTarget.prefab, transform.position, transform.rotation);
-        upgradedBuilding.transform.parent = transform.parent;
+        // Get the current building's position and rotation
+        Vector3 position = transform.position;
+        Quaternion rotation = transform.rotation;
+
+        // Destroy the current building
+        Destroy(gameObject);
+
+        // Create the upgraded building
+        GameObject upgradedBuilding = Instantiate(upgradeTarget.prefab, position, rotation);
         
-        Debug.Log("Building upgrade completed!");
+        Debug.Log($"Building upgrade completed!");
         
         // Reset state
         upgradeProgress = 0f;
@@ -64,9 +81,6 @@ public class BuildingUpgradeTask : WorkTask
         
         // Notify completion
         InvokeStopWork();
-        
-        // Destroy the old building
-        Destroy(gameObject);
     }
 
     public override Transform WorkTaskTransform()

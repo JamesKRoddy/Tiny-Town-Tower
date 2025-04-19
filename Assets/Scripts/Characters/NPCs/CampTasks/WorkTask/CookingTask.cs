@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using Managers;
 
 public class CookingTask : ResourceWorkTask
 {
@@ -40,12 +41,22 @@ public class CookingTask : ResourceWorkTask
 
     private bool HasRequiredIngredients()
     {
-        return CampInventory.Instance.HasResources(ingredients, ingredientAmounts);
+        for (int i = 0; i < ingredients.Length; i++)
+        {
+            if (CampManager.Instance.PlayerInventory.GetItemCount(ingredients[i]) < ingredientAmounts[i])
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void ConsumeIngredients()
     {
-        CampInventory.Instance.ConsumeResources(ingredients, ingredientAmounts);
+        for (int i = 0; i < ingredients.Length; i++)
+        {
+            CampManager.Instance.PlayerInventory.RemoveItem(ingredients[i], ingredientAmounts[i]);
+        }
     }
 
     protected override void CompleteWork()

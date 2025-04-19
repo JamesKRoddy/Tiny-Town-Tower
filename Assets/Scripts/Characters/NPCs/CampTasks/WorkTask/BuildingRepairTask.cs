@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using Managers;
 
 public class BuildingRepairTask : WorkTask
 {
@@ -41,12 +42,22 @@ public class BuildingRepairTask : WorkTask
 
     private bool HasRequiredResources()
     {
-        return CampInventory.Instance.HasResources(requiredResources, resourceCosts);
+        for (int i = 0; i < requiredResources.Length; i++)
+        {
+            if (CampManager.Instance.PlayerInventory.GetItemCount(requiredResources[i]) < resourceCosts[i])
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void ConsumeResources()
     {
-        CampInventory.Instance.ConsumeResources(requiredResources, resourceCosts);
+        for (int i = 0; i < requiredResources.Length; i++)
+        {
+            CampManager.Instance.PlayerInventory.RemoveItem(requiredResources[i], resourceCosts[i]);
+        }
     }
 
     private void CompleteRepair()
