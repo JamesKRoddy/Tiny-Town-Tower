@@ -715,25 +715,9 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 506023768571128916, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: useRootMotion
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 3498937984024521076, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_Name
       value: ZombieBoss_Brawler
-      objectReference: {fileID: 0}
-    - target: {fileID: 4521413630554356895, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 4521413630554356895, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 4521413630554356895, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 4521413630554356895, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_LocalPosition.x
@@ -776,14 +760,6 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6879063096656345588, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6879063096656345588, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: attackType
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6879063096656345588, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: startEffect
       value: 
       objectReference: {fileID: 11400000, guid: fcf79a6a167279b4eae818ba6f5238fa, type: 2}
@@ -795,61 +771,9 @@ PrefabInstance:
       propertyPath: range
       value: 15
       objectReference: {fileID: 0}
-    - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: damage
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: endEffect
-      value: 
-      objectReference: {fileID: 11400000, guid: 7f3b9784e46c47e4faedf0ac585c4f17, type: 2}
-    - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: attackType
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: jumpHeight
-      value: 20
-      objectReference: {fileID: 0}
-    - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: startEffect
-      value: 
-      objectReference: {fileID: 11400000, guid: 34dd8713150ee7c4b93e486ac20fed3a, type: 2}
-    - target: {fileID: 7411960016900357099, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: finalJumpLockPercentage
-      value: 0.2
-      objectReference: {fileID: 0}
     - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: range
       value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: cooldown
-      value: 7
-      objectReference: {fileID: 0}
-    - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: aoeRadius
-      value: 7
-      objectReference: {fileID: 0}
-    - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: hitEffect
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: attackType
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: startEffect
-      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7910383977426684308, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: attackEffect
