@@ -16,6 +16,10 @@ namespace Enemies.BossAttacks
         [Tooltip("Optional transform to use as the attack origin. If not set, will use the boss's transform.")]
         public Transform attackOrigin;
 
+        [Header("Attack Game Objects")]
+        [Tooltip("Game objects that will be enabled when this attack is active")]
+        public GameObject[] attackGameObjects;
+
         [Header("Attack Effects")]
         [Tooltip("Effect played when the attack starts")]
         public EffectDefinition startEffect;
@@ -131,6 +135,34 @@ namespace Enemies.BossAttacks
                     Vector3 hitPoint = hitCollider.ClosestPoint(attackPosition);
                     Vector3 hitNormal = (hitPoint - attackPosition).normalized;
                     PlayHitEffect(hitPoint, hitNormal);
+                }
+            }
+        }
+
+        protected virtual void OnEnable()
+        {
+            if (attackGameObjects != null)
+            {
+                foreach (var go in attackGameObjects)
+                {
+                    if (go != null)
+                    {
+                        go.SetActive(true);
+                    }
+                }
+            }
+        }
+
+        protected virtual void OnDisable()
+        {
+            if (attackGameObjects != null)
+            {
+                foreach (var go in attackGameObjects)
+                {
+                    if (go != null)
+                    {
+                        go.SetActive(false);
+                    }
                 }
             }
         }

@@ -819,9 +819,11 @@ MonoBehaviour:
   cooldown: 2
   damage: 10
   attackType: 1
-  attackOrigin: {fileID: 0}
-  startEffect: {fileID: 0}
+  attackOrigin: {fileID: 8384904350946220507}
+  startEffect: {fileID: 11400000, guid: fcf79a6a167279b4eae818ba6f5238fa, type: 2}
   startEffectDelay: 0
+  attackEffect: {fileID: 0}
+  attackEffectDelay: 0
   hitEffect: {fileID: 0}
   hitEffectDelay: 0
   endEffect: {fileID: 0}
@@ -839,19 +841,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83e4b11bcf4d9a24d86f9952e8ccae1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  range: 10
+  range: 8
   cooldown: 7
   damage: 10
   attackType: 2
   attackOrigin: {fileID: 0}
   startEffect: {fileID: 0}
   startEffectDelay: 0
+  attackEffect: {fileID: 11400000, guid: f67d8cac14b3bd64eb6ca922af912f97, type: 2}
+  attackEffectDelay: 0
   hitEffect: {fileID: 0}
   hitEffectDelay: 0
   endEffect: {fileID: 0}
   endEffectDelay: 0
   aoeRadius: 7
-  aoeDamage: 10
 --- !u!114 &7411960016900357099
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -864,13 +867,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08403c2fae191bb46ae14a7f5add1802, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  range: 5
+  range: 15
   cooldown: 2
   damage: 5
   attackType: 3
   attackOrigin: {fileID: 0}
   startEffect: {fileID: 11400000, guid: 34dd8713150ee7c4b93e486ac20fed3a, type: 2}
   startEffectDelay: 0
+  attackEffect: {fileID: 0}
+  attackEffectDelay: 0
   hitEffect: {fileID: 0}
   hitEffectDelay: 0
   endEffect: {fileID: 11400000, guid: 7f3b9784e46c47e4faedf0ac585c4f17, type: 2}

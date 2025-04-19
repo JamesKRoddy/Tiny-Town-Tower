@@ -5,6 +5,12 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "NewEffect", menuName = "Scriptable Objects/Effects/Effect Definition")]
 public class EffectDefinition : ScriptableObject
 {
+    public enum PlayMode
+    {
+        Random,
+        All
+    }
+
     [Tooltip("Array of possible particle system prefabs. One will be randomly selected")]
     public GameObject[] prefabs;
     
@@ -22,4 +28,11 @@ public class EffectDefinition : ScriptableObject
 
     [Tooltip("Duration of the effect in seconds. If 0, uses the particle system duration")]
     public float duration = 0f;
+
+    [Tooltip("Controls how much the sound is affected by 3D positioning (0 = 2D, 1 = 3D)")]
+    [Range(0f, 1f)]
+    public float spatialBlend = 1f;
+
+    [Tooltip("Whether to play a random effect or all effects")]
+    public PlayMode playMode = PlayMode.Random;
 }
