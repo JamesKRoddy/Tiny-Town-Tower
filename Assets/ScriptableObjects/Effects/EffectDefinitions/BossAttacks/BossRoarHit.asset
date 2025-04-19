@@ -14,8 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   prefabs:
   - {fileID: 1159970587636746, guid: 07148c8ec1315044cacab39dff250f3f, type: 3}
-  sounds: []
+  sounds:
+  - {fileID: 0}
   minPitch: 0.9
   maxPitch: 1.1
   volume: 1
   duration: 0
+  spatialBlend: 1
+  playMode: 0
