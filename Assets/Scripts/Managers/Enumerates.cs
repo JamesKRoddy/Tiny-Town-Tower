@@ -26,12 +26,16 @@ public enum WorkType
 {
     NONE,
     FARMING,
-    GATHER_WOOD,
-    GATHER_ROCK,
-    WEAVE_FABRIC,
+    GATHER,
     MAKE_AMMO,
     GENERATE_ELECTRICITY,
     BUILD_STRUCTURE,
+    RESEARCH,
+    CLEANING,
+    COOKING,
+    UPGRADE_BUILDING,
+    REPAIR_BUILDING,
+    UPGRADE_RESOURCE
 }
 
 public enum TaskType

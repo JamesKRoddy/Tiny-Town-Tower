@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Managers;
 
 public abstract class WorkTask : MonoBehaviour
 {
@@ -16,7 +17,7 @@ public abstract class WorkTask : MonoBehaviour
     protected virtual void Start()
     {
         // Ensure AddWorkTask is called for all inheriting classes
-        WorkManager.Instance.AddWorkTask(this);
+        CampManager.Instance.WorkManager.AddWorkTask(this);
     }
 
     // Helper method to trigger the event safely (other classes can call this to invoke StopWork)

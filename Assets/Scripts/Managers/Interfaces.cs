@@ -89,6 +89,16 @@ public interface IDamageable
 
  */
 
+/*
+    Next Large Things to Move Onto
+    
+    A camp inventory system to track resources
+    A building health system
+    A research system
+    A cleanliness system for the camp
+
+*/
+
 // ========================================
 // Next Large Things to Move Onto
 // ========================================

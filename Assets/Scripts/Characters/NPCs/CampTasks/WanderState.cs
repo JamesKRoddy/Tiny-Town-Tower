@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
-
+using Managers;
 public class WanderState : _TaskState
 {
     private bool isWandering = false;
@@ -35,7 +35,7 @@ public class WanderState : _TaskState
             agent.speed = MaxSpeed(); // Reduce speed for wandering
             agent.angularSpeed = npc.rotationSpeed / 2f; // Reduce rotation speed for wandering
             wanderCoroutine = npc.StartCoroutine(WanderCoroutine()); // Start the wandering coroutine
-            WorkManager.Instance.OnTaskAssigned += WorkAvalible;
+            CampManager.Instance.WorkManager.OnTaskAssigned += WorkAvalible;
         }
     }
 
@@ -47,9 +47,7 @@ public class WanderState : _TaskState
             npc.StopCoroutine(wanderCoroutine); // Stop the wandering coroutine
             agent.speed = npc.moveMaxSpeed; // Reset speed
             agent.angularSpeed = npc.rotationSpeed; // Reset rotation speed
-
-            if(WorkManager.Instance)
-                WorkManager.Instance.OnTaskAssigned -= WorkAvalible;
+            CampManager.Instance.WorkManager.OnTaskAssigned -= WorkAvalible;
         }
     }
 
