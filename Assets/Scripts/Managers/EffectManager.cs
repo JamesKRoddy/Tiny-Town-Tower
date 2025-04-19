@@ -148,54 +148,89 @@ namespace Managers
             if (vfx == null)
             {
                 // If we couldn't get a pooled object, create a new one
-                float maxParticleDuration = 0f;
-                float maxAudioDuration = 0f;
-
                 if (effect.prefabs != null && effect.prefabs.Length > 0)
                 {
-                    GameObject[] prefabsToPlay = effect.playMode == EffectDefinition.PlayMode.Random
-                        ? new[] { effect.prefabs[Random.Range(0, effect.prefabs.Length)] }
-                        : effect.prefabs;
+                    GameObject prefab = effect.playMode == EffectDefinition.PlayMode.Random
+                        ? effect.prefabs[Random.Range(0, effect.prefabs.Length)]
+                        : effect.prefabs[0]; // For All mode, we'll create additional instances below
 
-                    foreach (var prefab in prefabsToPlay)
+                    if (prefab != null)
                     {
-                        if (prefab != null)
-                        {
-                            GameObject effectInstance = Instantiate(prefab, parent ?? transform);
-                            effectInstance.transform.position = position;
-                            effectInstance.transform.rotation = rotation;
-
-                            var ps = effectInstance.GetComponent<ParticleSystem>();
-                            if (ps != null)
-                            {
-                                ps.Play();
-                                maxParticleDuration = Mathf.Max(maxParticleDuration, ps.main.duration);
-                            }
-
-                            if (effect.sounds != null && effect.sounds.Length > 0)
-                            {
-                                AudioClip[] soundsToPlay = effect.playMode == EffectDefinition.PlayMode.Random
-                                    ? new[] { effect.sounds[Random.Range(0, effect.sounds.Length)] }
-                                    : effect.sounds;
-
-                                foreach (var sound in soundsToPlay)
-                                {
-                                    AudioSource audioSource = effectInstance.AddComponent<AudioSource>();
-                                    audioSource.clip = sound;
-                                    audioSource.pitch = Random.Range(effect.minPitch, effect.maxPitch);
-                                    audioSource.volume = effect.volume;
-                                    audioSource.spatialBlend = effect.spatialBlend;
-                                    audioSource.Play();
-                                    maxAudioDuration = Mathf.Max(maxAudioDuration, sound.length);
-                                }
-                            }
-                        }
+                        vfx = Instantiate(prefab, parent ?? transform);
+                        activeEffects[effect].Add(vfx);
                     }
                 }
-
-                float duration = effect.duration > 0 ? effect.duration : Mathf.Max(maxParticleDuration, maxAudioDuration);
-                StartCoroutine(ReturnToPoolAfterDuration(vfx, effect, duration));
             }
+
+            if (vfx == null)
+            {
+                Debug.LogError($"[EffectManager] Failed to create effect instance for: {effect.name}");
+                return;
+            }
+
+            // Set parent first to ensure proper local space calculations
+            vfx.transform.SetParent(parent ?? transform, false);
+            
+            // Set position and rotation in world space
+            vfx.transform.position = position;
+            vfx.transform.rotation = rotation;
+
+            float particleDuration = 0f;
+            float audioDuration = 0f;
+
+            var particleSystem = vfx.GetComponent<ParticleSystem>();
+            if (particleSystem != null)
+            {
+                particleSystem.Play();
+                particleDuration = particleSystem.main.duration;
+            }
+
+            if (effect.sounds != null && effect.sounds.Length > 0)
+            {
+                AudioSource audioSource = vfx.GetComponent<AudioSource>();
+                if (audioSource == null)
+                {
+                    audioSource = vfx.AddComponent<AudioSource>();
+                    audioSource.playOnAwake = false;
+                    audioSource.loop = false;
+                }
+
+                AudioClip[] soundsToPlay = effect.playMode == EffectDefinition.PlayMode.Random
+                    ? new[] { effect.sounds[Random.Range(0, effect.sounds.Length)] }
+                    : effect.sounds;
+
+                foreach (var sound in soundsToPlay)
+                {
+                    audioSource.clip = sound;
+                    audioSource.pitch = Random.Range(effect.minPitch, effect.maxPitch);
+                    audioSource.volume = effect.volume;
+                    audioSource.spatialBlend = effect.spatialBlend;
+                    audioSource.Play();
+                    audioDuration = Mathf.Max(audioDuration, sound.length);
+                }
+            }
+
+            // If in All mode, create additional instances for remaining prefabs
+            if (effect.playMode == EffectDefinition.PlayMode.All && effect.prefabs != null && effect.prefabs.Length > 1)
+            {
+                for (int i = 1; i < effect.prefabs.Length; i++)
+                {
+                    GameObject additionalVfx = Instantiate(effect.prefabs[i], parent ?? transform);
+                    additionalVfx.transform.position = position;
+                    additionalVfx.transform.rotation = rotation;
+                    activeEffects[effect].Add(additionalVfx);
+
+                    var additionalPs = additionalVfx.GetComponent<ParticleSystem>();
+                    if (additionalPs != null)
+                    {
+                        additionalPs.Play();
+                        particleDuration = Mathf.Max(particleDuration, additionalPs.main.duration);
+                    }
+                }
+            }
+
+            float duration = effect.duration > 0 ? effect.duration : Mathf.Max(particleDuration, audioDuration);
+            StartCoroutine(ReturnToPoolAfterDuration(vfx, effect, duration));
         }
 
         private GameObject GetPooledObject(EffectDefinition effect)
