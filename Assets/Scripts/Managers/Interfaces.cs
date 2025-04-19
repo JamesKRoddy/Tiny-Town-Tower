@@ -68,28 +68,17 @@ public interface IDamageable
     Unity.AI.Navigation.NavMeshSurface:BuildNavMesh () (at ./Library/PackageCache/com.unity.ai.navigation@9f76b145f0a8/Runtime/NavMeshSurface.cs:272)
     RoomSectionRandomizer/<DelayedBakeNavMesh>d__13:MoveNext () (at Assets/Scripts/RogueLite/RoomLevels/RoomSectionRandomizer.cs:135)
     UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-    Boss attack effects
-    Issue with starting the effects at the wrong time, have to look at were they are being triggered and try bring the functionallity back animator events
-    boss jump attack refactor
     
  * Next work:
-    Refactoring some of the enemy code:
-
-    Sound sources need to be 3d sources not 2d sources
 
     Setup different hitboxes on the weapons for horizontal and vertical attacks
     
     Weapon impacts, for basic weapons its just dirt
     For fire/electric should check if its hit a viable mesh and should spread to the mesh using it as an emission point?
 
-
     Try to setup a boss, large zombie w/ cyberpunk aspects to shoot lazers, projectiles, explosions etc.
 
-    Work on boss attack effects
-    Check boss AI with player
     Boss UI, health bar etc.
-    Add gizmos for boss attacks
     Effects for player hitting boss
     Boss death
     
