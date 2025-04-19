@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 
-public class ConstructionSite : WorkTask
+public class ConstructionTask : WorkTask
 {
     private GameObject finalBuildingPrefab;
     private float baseConstructionTime = 10f;

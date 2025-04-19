@@ -45,11 +45,11 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
 
         GameObject constructionSite = Instantiate(selectedObject.constructionSite, currentPreview.transform.position, Quaternion.identity);
 
-        if (constructionSite.TryGetComponent(out ConstructionSite constructionSiteScript)){
+        if (constructionSite.TryGetComponent(out ConstructionTask constructionSiteScript)){
             constructionSiteScript.SetupConstruction(selectedObject);
         } else {
-            constructionSite.AddComponent<ConstructionSite>();
-            constructionSite.GetComponent<ConstructionSite>().SetupConstruction(selectedObject);
+            constructionSite.AddComponent<ConstructionTask>();
+            constructionSite.GetComponent<ConstructionTask>().SetupConstruction(selectedObject);
         }
         
         MarkGridSlotsOccupied(currentPreview.transform.position, selectedObject.size, constructionSite);
