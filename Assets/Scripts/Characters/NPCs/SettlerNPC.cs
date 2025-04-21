@@ -68,7 +68,6 @@ public class SettlerNPC : HumanCharacterController
 
     internal void AssignWork(WorkTask newTask)
     {
-        Debug.Log($"[SettlerNPC] {gameObject.name} assigning work task: {newTask.GetType().Name}");
         (taskStates[TaskType.WORK] as WorkState).AssignTask(newTask);
         ChangeTask(TaskType.WORK);
     }
@@ -78,7 +77,6 @@ public class SettlerNPC : HumanCharacterController
     {
         if (taskStates.ContainsKey(newTask))
         {
-            Debug.Log($"[SettlerNPC] {gameObject.name} changing to task: {newTask}");
             ChangeState(taskStates[newTask]);
         }
         else
