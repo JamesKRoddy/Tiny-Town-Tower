@@ -48,12 +48,12 @@ public class PlayerController : MonoBehaviour, IControllerInput
             _instance = this; // Set the instance
             DontDestroyOnLoad(gameObject); // Optionally persist across scenes
         }
+
+        PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
 
     private IEnumerator Start()
-    {
-        PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
-
+    {      
         yield return new WaitForEndOfFrame(); //This is just to take over the npc after their setup has happened
 
         _possessedNPC = GetComponentInChildren<IPossessable>();
