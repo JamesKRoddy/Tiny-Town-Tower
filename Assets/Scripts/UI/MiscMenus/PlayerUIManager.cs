@@ -3,6 +3,7 @@ using TMPro;
 using System.Collections;
 using System;
 
+
 public class PlayerUIManager : MonoBehaviour
 {
     // Static instance of the PlayerUIManager class
@@ -30,8 +31,8 @@ public class PlayerUIManager : MonoBehaviour
     }
 
     [Header("UI References")]
-    public MenuBase currentMenu;
-    public MenuBase previousMenu;
+    [SerializeField, ReadOnly] public MenuBase currentMenu;
+    [SerializeField, ReadOnly] public MenuBase previousMenu;
 
     [Header("Pause Menu References")]
     public PauseMenu pauseMenu;

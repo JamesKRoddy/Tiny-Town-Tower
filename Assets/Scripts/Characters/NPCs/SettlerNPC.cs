@@ -70,7 +70,7 @@ public class SettlerNPC : HumanCharacterController
 
     internal void AssignWork(WorkTask newTask)
     {
-        (taskStates[TaskType.WORK] as WorkState).AssignWork(newTask);
+        (taskStates[TaskType.WORK] as WorkState).AssignTask(newTask);
     }
 
     // Method to change task and update state

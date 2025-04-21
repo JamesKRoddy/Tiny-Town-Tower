@@ -2,10 +2,12 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using UnityEngine.AI;
 
 public class ConstructionTask : WorkTask
 {
     private GameObject finalBuildingPrefab;
+    private BuildingScriptableObj buildingScriptableObj;
     private float baseConstructionTime = 10f;
     private float currentProgress = 0f;
     private List<SettlerNPC> workers = new List<SettlerNPC>();
@@ -69,16 +71,27 @@ public class ConstructionTask : WorkTask
 
     public void SetupConstruction(BuildingScriptableObj buildingScriptableObj)
     {
+        this.buildingScriptableObj = buildingScriptableObj;
         finalBuildingPrefab = buildingScriptableObj.prefab;
         baseConstructionTime = buildingScriptableObj.constructionTime;
+        NavMeshObstacle obstacle = gameObject.GetComponent<NavMeshObstacle>() ?? gameObject.AddComponent<NavMeshObstacle>();
+        obstacle.carving = true;
     }
 
     private void CompleteConstruction()
     {
         // Safely invoke the event
-        InvokeStopWork();  // Use the helper method to trigger the event
+        InvokeStopWork();
 
-        Instantiate(finalBuildingPrefab, transform.position, Quaternion.identity);
+        // Instantiate the building
+        GameObject buildingObj = Instantiate(finalBuildingPrefab, transform.position, Quaternion.identity);
+        Building buildingComponent = buildingObj.GetComponent<Building>();
+        if (buildingComponent != null)
+        {
+            buildingComponent.SetupBuilding(buildingScriptableObj);
+            buildingComponent.CompleteConstruction();
+        }
+
         Destroy(gameObject);
         isConstructionComplete = true;
     }

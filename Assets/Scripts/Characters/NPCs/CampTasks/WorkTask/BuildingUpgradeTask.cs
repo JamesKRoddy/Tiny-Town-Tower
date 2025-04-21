@@ -4,19 +4,34 @@ using Managers;
 
 public class BuildingUpgradeTask : WorkTask
 {
-    [SerializeField] private BuildingScriptableObj upgradeTarget;
-    [SerializeField] private float upgradeTime = 30f;
-    [SerializeField] private ResourceScriptableObj[] requiredResources;
-    [SerializeField] private int[] resourceCosts;
+    private BuildingScriptableObj upgradeTarget;
+    private float upgradeTime = 30f;
+    private ResourceScriptableObj[] requiredResources;
+    private int[] resourceCosts;
 
     private float upgradeProgress = 0f;
     private SettlerNPC currentWorker;
     private Coroutine upgradeCoroutine;
+    private Building targetBuilding;
 
     protected override void Start()
     {
         base.Start();
         workType = WorkType.UPGRADE_BUILDING;
+        targetBuilding = GetComponent<Building>();
+        if (targetBuilding == null)
+        {
+            Debug.LogError("BuildingUpgradeTask requires a Building component on the same GameObject!");
+            enabled = false;
+        }
+    }
+
+    public void SetupUpgradeTask(BuildingScriptableObj upgradeTarget, float upgradeTime, ResourceScriptableObj[] requiredResources, int[] resourceCosts)
+    {
+        this.upgradeTarget = upgradeTarget;
+        this.upgradeTime = upgradeTime;
+        this.requiredResources = requiredResources;
+        this.resourceCosts = resourceCosts;
     }
 
     public override void PerformTask(SettlerNPC npc)
@@ -62,17 +77,11 @@ public class BuildingUpgradeTask : WorkTask
 
     private void CompleteUpgrade()
     {
-        // Get the current building's position and rotation
-        Vector3 position = transform.position;
-        Quaternion rotation = transform.rotation;
-
-        // Destroy the current building
-        Destroy(gameObject);
-
-        // Create the upgraded building
-        GameObject upgradedBuilding = Instantiate(upgradeTarget.prefab, position, rotation);
-        
-        Debug.Log($"Building upgrade completed!");
+        if (targetBuilding != null)
+        {
+            targetBuilding.Upgrade(upgradeTarget);
+            Debug.Log($"Building upgrade completed!");
+        }
         
         // Reset state
         upgradeProgress = 0f;

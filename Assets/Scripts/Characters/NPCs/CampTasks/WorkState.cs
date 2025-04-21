@@ -1,10 +1,13 @@
 using UnityEngine;
 using UnityEngine.AI;
+using System.Collections;
+using Managers;
 
 public class WorkState : _TaskState
 {
     private WorkTask assignedTask;
-    private bool isTaskBeingPerformed;
+    private bool isTaskBeingPerformed = false;
+    private float minDistanceToTask = 0.1f; // Minimum distance to consider "close enough"
 
     protected override void Awake()
     {
@@ -13,40 +16,23 @@ public class WorkState : _TaskState
 
     public override void OnEnterState()
     {
-        // Work state logic can be added here
-        Debug.Log("Starting Work task");
-
-        // If a task is assigned, move to the closest reachable position near the task
         if (assignedTask != null)
         {
-            Transform taskTransform = assignedTask.WorkTaskTransform();
-            if (taskTransform != null)
-            {
-                // Try to find the closest reachable point on the NavMesh to the task location
-                NavMeshHit hit;
-                if (NavMesh.SamplePosition(taskTransform.position, out hit, 1f, NavMesh.AllAreas))
-                {
-                    // Move NPC to the closest reachable position
-                    agent.SetDestination(hit.position);
-                }
-                else
-                {
-                    // If no reachable position is found, stop the agent (or handle this case appropriately)
-                    Debug.LogWarning("No reachable position found near the work task.");
-                }
-            }
+            agent.SetDestination(assignedTask.WorkTaskTransform().position);
+            agent.speed = MaxSpeed();
+            agent.angularSpeed = npc.rotationSpeed;
         }
-
-        assignedTask.StopWork += StopWork;
     }
 
     public override void OnExitState()
     {
-        // Exit work state logic
-        Debug.Log("Exiting Work task");
-        animator.SetInteger("WorkType", 0);
-        assignedTask.StopWork -= StopWork;
-        assignedTask = null; // Reset task        
+        if (isTaskBeingPerformed)
+        {
+            animator.SetInteger("WorkType", 0);
+            isTaskBeingPerformed = false;
+        }
+        agent.speed = npc.moveMaxSpeed;
+        agent.angularSpeed = npc.rotationSpeed;
     }
 
     public override void UpdateState()
@@ -55,15 +41,15 @@ public class WorkState : _TaskState
         {
             float distanceToTask = Vector3.Distance(agent.transform.position, assignedTask.WorkTaskTransform().position);
 
-            // Only check if the NPC has reached the task location
-            if (distanceToTask <= agent.stoppingDistance)
+            // Check if we've reached the end of our path or are close enough to the task
+            if (!agent.pathPending && (agent.remainingDistance <= minDistanceToTask || distanceToTask <= minDistanceToTask))
             {
                 // Perform the task only once if the NPC has arrived at the location
                 if (!isTaskBeingPerformed)
                 {
                     assignedTask.PerformTask(npc);
-                    animator.SetInteger("WorkType", (int)assignedTask.workType);  // Set animator for the task
-                    isTaskBeingPerformed = true;  // Prevent multiple task starts
+                    animator.SetInteger("WorkType", (int)assignedTask.workType);
+                    isTaskBeingPerformed = true;
                 }
             }
             else
@@ -71,8 +57,8 @@ public class WorkState : _TaskState
                 // Reset animator when the NPC leaves the task location
                 if (isTaskBeingPerformed)
                 {
-                    animator.SetInteger("WorkType", 0);  // Reset the WorkType
-                    isTaskBeingPerformed = false;  // Reset task flag
+                    animator.SetInteger("WorkType", 0);
+                    isTaskBeingPerformed = false;
                 }
             }
         }
@@ -80,19 +66,21 @@ public class WorkState : _TaskState
 
     public override float MaxSpeed()
     {
-        return npc.moveMaxSpeed; // Work might have normal speed
+        return npc.moveMaxSpeed;
     }
 
     public override TaskType GetTaskType()
     {
-        return TaskType.WORK; // TaskType for this state
+        return TaskType.WORK;
     }
 
-    // Assign work manually
-    public void AssignWork(WorkTask task)
+    public void AssignTask(WorkTask task)
     {
-        assignedTask = task; // Assign a task to the NPC
-        npc.ChangeTask(TaskType.WORK);
+        assignedTask = task;
+        if (isActiveAndEnabled)
+        {
+            OnEnterState();
+        }
     }
 
     public void StopWork()

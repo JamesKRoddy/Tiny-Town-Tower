@@ -4,19 +4,34 @@ using Managers;
 
 public class BuildingRepairTask : WorkTask
 {
-    [SerializeField] private float repairTime = 20f;
-    [SerializeField] private float healthRestored = 50f;
-    [SerializeField] private ResourceScriptableObj[] requiredResources;
-    [SerializeField] private int[] resourceCosts;
+    private float repairTime = 20f;
+    private float healthRestored = 50f;
+    private ResourceScriptableObj[] requiredResources;
+    private int[] resourceCosts;
 
     private float repairProgress = 0f;
     private SettlerNPC currentWorker;
     private Coroutine repairCoroutine;
+    private Building targetBuilding;
 
     protected override void Start()
     {
         base.Start();
         workType = WorkType.REPAIR_BUILDING;
+        targetBuilding = GetComponent<Building>();
+        if (targetBuilding == null)
+        {
+            Debug.LogError("BuildingRepairTask requires a Building component on the same GameObject!");
+            enabled = false;
+        }
+    }
+
+    public void SetupRepairTask(float repairTime, float healthRestored, ResourceScriptableObj[] requiredResources, int[] resourceCosts)
+    {
+        this.repairTime = repairTime;
+        this.healthRestored = healthRestored;
+        this.requiredResources = requiredResources;
+        this.resourceCosts = resourceCosts;
     }
 
     public override void PerformTask(SettlerNPC npc)
@@ -62,14 +77,11 @@ public class BuildingRepairTask : WorkTask
 
     private void CompleteRepair()
     {
-        // Restore health to the building
-        BuildingHealth buildingHealth = GetComponent<BuildingHealth>();
-        if (buildingHealth != null)
+        if (targetBuilding != null)
         {
-            buildingHealth.RestoreHealth(healthRestored);
+            targetBuilding.Repair(healthRestored);
+            Debug.Log($"Building repair completed! Restored {healthRestored} health");
         }
-        
-        Debug.Log($"Building repair completed! Restored {healthRestored} health");
         
         // Reset state
         repairProgress = 0f;
