@@ -48,7 +48,6 @@ namespace Managers
 
         public void StartPlacement(T objectToPlace)
         {
-            Debug.Log("StartPlacement: " + objectToPlace.ToString());
             selectedObject = objectToPlace;
             currentPreview = Instantiate(GetPrefabFromObject(selectedObject));
             SetPreviewMaterial(validPlacementMaterial);

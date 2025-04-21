@@ -5,9 +5,8 @@ using UnityEngine.AI;
 
 /// <summary>
 /// A building is a structure that can be built in the camp.
-/// This is an abstract base class that all building types should inherit from.
 /// </summary>
-public abstract class Building : MonoBehaviour
+public class Building : MonoBehaviour
 {
     [Header("Building Configuration")]
     [SerializeField, ReadOnly] BuildingScriptableObj buildingScriptableObj;
@@ -20,6 +19,9 @@ public abstract class Building : MonoBehaviour
     [Header("Repair and Upgrade")]
     [SerializeField, ReadOnly] protected BuildingRepairTask repairTask;
     [SerializeField, ReadOnly] protected BuildingUpgradeTask upgradeTask;
+
+    [Header("Work Task")]
+    [SerializeField] protected WorkTask permanentWorkTask;
 
     // Events
     public event System.Action OnBuildingDestroyed;
@@ -141,6 +143,7 @@ public abstract class Building : MonoBehaviour
     public float GetCurrentHealth() => currentHealth;
     public float GetMaxHealth() => buildingScriptableObj.maxHealth;
     public float GetTaskRadius() => buildingScriptableObj.taskRadius;
+    public WorkTask GetPermanentWorkTask() => permanentWorkTask;
 
     /// <summary>
     /// Checks if a position is within the work area of this building

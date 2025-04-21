@@ -111,7 +111,6 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
             var buttonComponent = EventSystem.current.currentSelectedGameObject?.GetComponent<BuildingPreviewBtn>();
             if (buttonComponent != null)
             {
-                Debug.Log("OnItemClicked: " + item._name);
                 selectedButton = buttonComponent;
                 PlayerUIManager.Instance.buildMenu.SetScreenActive(false, 0.1f, () => BuildingPlacer.Instance.StartPlacement(item));
             }
