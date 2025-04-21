@@ -5,6 +5,7 @@ public abstract class _TaskState : MonoBehaviour
 {
     protected SettlerNPC npc;
     protected NavMeshAgent agent;
+    protected float stoppingDistance = 1.5f;
     protected Animator animator;
 
     protected virtual void Awake()
