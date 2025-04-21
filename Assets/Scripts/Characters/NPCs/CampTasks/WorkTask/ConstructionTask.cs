@@ -12,27 +12,37 @@ public class ConstructionTask : WorkTask
     private float currentProgress = 0f;
     private List<SettlerNPC> workers = new List<SettlerNPC>();
     private bool isConstructionComplete = false;
-
-    private Coroutine constructionCoroutine;  // Store a reference to the running coroutine
+    private Coroutine constructionCoroutine;
 
     protected override void Start()
     {
         base.Start();
         workType = WorkType.BUILD_STRUCTURE;
+        Debug.Log($"[ConstructionTask] {gameObject.name} initialized");
+
+        NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
+        if (obstacle == null)
+        {
+            obstacle = gameObject.AddComponent<NavMeshObstacle>();
+        }
+        obstacle.carving = true;
     }
 
     public override void PerformTask(SettlerNPC npc)
     {
+        Debug.Log($"[ConstructionTask] {gameObject.name} performing task with worker {npc.gameObject.name}");
+        
         // Add worker to the task
         if (!workers.Contains(npc))
         {
             workers.Add(npc);
+            Debug.Log($"[ConstructionTask] {gameObject.name} added worker {npc.gameObject.name}. Total workers: {workers.Count}");
         }
 
         // Start the construction process if not already started
         if (!isConstructionComplete && constructionCoroutine == null)
         {
-            // Start the coroutine and store its reference
+            Debug.Log($"[ConstructionTask] {gameObject.name} starting construction with {workers.Count} workers");
             constructionCoroutine = StartCoroutine(ConstructionCoroutine());
         }
     }
@@ -44,16 +54,13 @@ public class ConstructionTask : WorkTask
 
     private IEnumerator ConstructionCoroutine()
     {
+        Debug.Log($"[ConstructionTask] {gameObject.name} construction coroutine started");
+        
         while (currentProgress < baseConstructionTime && workers.Count > 0)
         {
-            // Calculate the effective construction time based on the number of workers
-            // This gives us diminishing returns for adding more workers
             float effectiveTime = baseConstructionTime / Mathf.Sqrt(workers.Count);
-
-            // Calculate how much time has passed per frame based on effective time
             currentProgress += Time.deltaTime / effectiveTime;
 
-            // Ensure we don't exceed baseConstructionTime
             if (currentProgress >= baseConstructionTime)
             {
                 currentProgress = baseConstructionTime;
@@ -63,33 +70,36 @@ public class ConstructionTask : WorkTask
             yield return null;
         }
 
-        // When progress reaches or exceeds base construction time, complete the construction
+        Debug.Log($"[ConstructionTask] {gameObject.name} construction complete");
         CompleteConstruction();
-
-        constructionCoroutine = null; // Reset the coroutine reference once it's complete
+        constructionCoroutine = null;
     }
 
     public void SetupConstruction(BuildingScriptableObj buildingScriptableObj)
     {
+        Debug.Log($"[ConstructionTask] {gameObject.name} setting up construction for {buildingScriptableObj.name}");
         this.buildingScriptableObj = buildingScriptableObj;
         finalBuildingPrefab = buildingScriptableObj.prefab;
         baseConstructionTime = buildingScriptableObj.constructionTime;
-        NavMeshObstacle obstacle = gameObject.GetComponent<NavMeshObstacle>() ?? gameObject.AddComponent<NavMeshObstacle>();
-        obstacle.carving = true;
     }
 
     private void CompleteConstruction()
     {
-        // Safely invoke the event
+        Debug.Log($"[ConstructionTask] {gameObject.name} completing construction");
+        
         InvokeStopWork();
 
-        // Instantiate the building
         GameObject buildingObj = Instantiate(finalBuildingPrefab, transform.position, Quaternion.identity);
         Building buildingComponent = buildingObj.GetComponent<Building>();
         if (buildingComponent != null)
         {
             buildingComponent.SetupBuilding(buildingScriptableObj);
             buildingComponent.CompleteConstruction();
+            Debug.Log($"[ConstructionTask] {gameObject.name} building instantiated and set up");
+        }
+        else
+        {
+            Debug.LogError($"[ConstructionTask] {gameObject.name} failed to get Building component from prefab");
         }
 
         Destroy(gameObject);
@@ -101,6 +111,17 @@ public class ConstructionTask : WorkTask
         if (workers.Contains(npc))
         {
             workers.Remove(npc);
+            Debug.Log($"[ConstructionTask] {gameObject.name} removed worker {npc.gameObject.name}. Remaining workers: {workers.Count}");
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (constructionCoroutine != null)
+        {
+            Debug.Log($"[ConstructionTask] {gameObject.name} construction coroutine stopped due to disable");
+            StopCoroutine(constructionCoroutine);
+            constructionCoroutine = null;
         }
     }
 }

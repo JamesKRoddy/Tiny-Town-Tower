@@ -29,8 +29,12 @@ public abstract class Building : MonoBehaviour
 
     protected virtual void Awake()
     {
-        // Add NavMeshObstacle for pathfinding
-        NavMeshObstacle obstacle = gameObject.GetComponent<NavMeshObstacle>() ?? gameObject.AddComponent<NavMeshObstacle>();
+        // Ensure NavMeshObstacle exists and is configured
+        NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
+        if (obstacle == null)
+        {
+            obstacle = gameObject.AddComponent<NavMeshObstacle>();
+        }
         obstacle.carving = true;
     }
 

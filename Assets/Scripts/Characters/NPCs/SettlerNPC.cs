@@ -40,8 +40,6 @@ public class SettlerNPC : HumanCharacterController
 
     private void Update()
     {
-        //base.Update();        
-
         if (currentState != null)
         {
             animator.SetFloat("Speed", agent.velocity.magnitude / 3.5f);
@@ -70,7 +68,9 @@ public class SettlerNPC : HumanCharacterController
 
     internal void AssignWork(WorkTask newTask)
     {
+        Debug.Log($"[SettlerNPC] {gameObject.name} assigning work task: {newTask.GetType().Name}");
         (taskStates[TaskType.WORK] as WorkState).AssignTask(newTask);
+        ChangeTask(TaskType.WORK);
     }
 
     // Method to change task and update state
@@ -78,6 +78,7 @@ public class SettlerNPC : HumanCharacterController
     {
         if (taskStates.ContainsKey(newTask))
         {
+            Debug.Log($"[SettlerNPC] {gameObject.name} changing to task: {newTask}");
             ChangeState(taskStates[newTask]);
         }
         else
