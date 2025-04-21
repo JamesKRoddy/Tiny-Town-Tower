@@ -35,6 +35,9 @@ public class WorkState : _TaskState
                 hasReachedTask = false;
                 timeAtTaskLocation = 0f;
                 agent.isStopped = false;
+                
+                // Subscribe to the StopWork event
+                assignedTask.StopWork += StopWork;
             }
             else
             {
@@ -59,6 +62,12 @@ public class WorkState : _TaskState
         agent.angularSpeed = npc.rotationSpeed;
         agent.isStopped = false;
         agent.stoppingDistance = 0f;
+        
+        // Unsubscribe from the StopWork event
+        if (assignedTask != null)
+        {
+            assignedTask.StopWork -= StopWork;
+        }
     }
 
     public override void UpdateState()

@@ -29,17 +29,6 @@ public class Building : MonoBehaviour
     public event System.Action OnBuildingUpgraded;
     public event System.Action<float> OnHealthChanged;
 
-    protected virtual void Awake()
-    {
-        // Ensure NavMeshObstacle exists and is configured
-        NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
-        if (obstacle == null)
-        {
-            obstacle = gameObject.AddComponent<NavMeshObstacle>();
-        }
-        obstacle.carving = true;
-    }
-
     public virtual void SetupBuilding(BuildingScriptableObj buildingScriptableObj)
     {
         this.buildingScriptableObj = buildingScriptableObj;
@@ -48,6 +37,18 @@ public class Building : MonoBehaviour
         // Setup repair and upgrade tasks
         SetupRepairTask();
         SetupUpgradeTask();
+        SetupNavmeshObstacle();
+    }
+
+    private void SetupNavmeshObstacle()
+    {
+        // Ensure NavMeshObstacle exists and is configured
+        NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
+        if (obstacle == null)
+        {
+            obstacle = gameObject.AddComponent<NavMeshObstacle>();
+        }
+        obstacle.carving = true;
     }
 
     private void SetupRepairTask()
