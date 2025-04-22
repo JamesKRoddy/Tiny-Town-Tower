@@ -323,6 +323,7 @@ MonoBehaviour:
   validPlacementMaterial: {fileID: 0}
   invalidPlacementMaterial: {fileID: 0}
   gridPrefab: {fileID: 241196777734048875, guid: fb1ace5487d684b4a86192309c6fb1ec, type: 3}
+  takenGridPrefab: {fileID: 5465302576335970331, guid: 6a7a6dc26f340444a98ee22f3a09587f, type: 3}
   gridParent: {fileID: 4644746889367459830}
   xBounds: {x: -10, y: 10}
   zBounds: {x: -10, y: 10}
@@ -738,6 +739,7 @@ MonoBehaviour:
   validPlacementMaterial: {fileID: 0}
   invalidPlacementMaterial: {fileID: 0}
   gridPrefab: {fileID: 241196777734048875, guid: fb1ace5487d684b4a86192309c6fb1ec, type: 3}
+  takenGridPrefab: {fileID: 5465302576335970331, guid: 6a7a6dc26f340444a98ee22f3a09587f, type: 3}
   gridParent: {fileID: 892765565880304067}
   xBounds: {x: -25, y: 25}
   zBounds: {x: -25, y: 25}

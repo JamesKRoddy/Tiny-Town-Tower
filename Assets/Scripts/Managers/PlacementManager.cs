@@ -18,6 +18,7 @@ namespace Managers
 
         [Header("Grid Settings")]
         public GameObject gridPrefab;
+        public GameObject takenGridPrefab;
         public Transform gridParent;
 
         protected GameObject currentPreview;
@@ -130,10 +131,11 @@ namespace Managers
                 {
                     for (float z = zBounds.x; z < zBounds.y; z += gridSize)
                     {
-                        // Offset the grid position so it's centered in the cell
-                        Vector3 gridPosition = new Vector3(x + gridSize / 2, 0, z + gridSize / 2);
+                        // Create grid position without offset
+                        Vector3 gridPosition = new Vector3(x, 0, z);
+                        Vector3 displayPosition = new Vector3(x + gridSize / 2, 0, z + gridSize / 2);
 
-                        GameObject gridSection = Instantiate(gridPrefab, gridPosition, Quaternion.identity, gridParent);
+                        GameObject gridSection = Instantiate(gridPrefab, displayPosition, Quaternion.identity, gridParent);
                         gridSection.SetActive(false);
 
                         gridSlots[gridPosition] = new GridSlot { IsOccupied = false, GridObject = gridSection };
@@ -143,6 +145,14 @@ namespace Managers
 
             foreach (var slot in gridSlots.Values)
             {
+                if (slot.IsOccupied && takenGridPrefab != null)
+                {
+                    if (slot.GridObject != null)
+                    {
+                        Destroy(slot.GridObject);
+                    }
+                    slot.GridObject = Instantiate(takenGridPrefab, slot.GridObject.transform.position, Quaternion.identity, gridParent);
+                }
                 slot.GridObject.SetActive(true);
             }
         }
@@ -197,16 +207,20 @@ namespace Managers
         {
             List<Vector3> requiredSlots = new List<Vector3>();
 
-            Vector3 basePosition = SnapToGrid(position); // Ensure snapping is applied
+            Vector3 basePosition = SnapToGrid(position);
+
+            // Calculate the starting position (bottom-left corner)
+            float startX = basePosition.x - ((size.x * gridSize) / 2f);
+            float startZ = basePosition.z - ((size.y * gridSize) / 2f);
 
             for (int x = 0; x < size.x; x++)
             {
                 for (int z = 0; z < size.y; z++)
                 {
                     Vector3 slotPosition = new Vector3(
-                        basePosition.x + x * gridSize,
+                        startX + (x * gridSize),
                         0,
-                        basePosition.z + z * gridSize
+                        startZ + (z * gridSize)
                     );
 
                     requiredSlots.Add(slotPosition);
