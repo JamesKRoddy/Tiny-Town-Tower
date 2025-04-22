@@ -16,8 +16,18 @@ MonoBehaviour:
   _description: Matress desc
   _sprite: {fileID: 0}
   _resourceCost: []
-  prefab: {fileID: 1305933842384340, guid: ccb79d2f691e98548a17e09e7c6f22c3, type: 3}
-  size: {x: 1, y: 1}
+  prefab: {fileID: 5397833359920250064, guid: 1ceb6a20cc53f3c4d8b871f14af8f2ff, type: 3}
+  size: {x: 3, y: 3}
   buildingCategory: 0
   constructionTime: 2
   constructionSite: {fileID: 1667268319894246, guid: 6cd6d1322f283a249b96a6e64e6b4ded, type: 3}
+  maxHealth: 100
+  repairTime: 20
+  healthRestoredPerRepair: 50
+  repairResources: []
+  repairResourceCosts: 
+  upgradeTarget: {fileID: 0}
+  upgradeTime: 30
+  upgradeResources: []
+  upgradeResourceCosts: 
+  taskRadius: 2

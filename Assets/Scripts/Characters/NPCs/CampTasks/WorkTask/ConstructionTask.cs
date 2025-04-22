@@ -25,6 +25,7 @@ public class ConstructionTask : WorkTask
             obstacle = gameObject.AddComponent<NavMeshObstacle>();
         }
         obstacle.carving = true;
+        obstacle.size = new Vector3(buildingScriptableObj.size.x, 1.0f, buildingScriptableObj.size.y);
     }
 
     public override void PerformTask(SettlerNPC npc)

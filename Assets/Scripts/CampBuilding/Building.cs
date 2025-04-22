@@ -49,6 +49,7 @@ public class Building : MonoBehaviour
             obstacle = gameObject.AddComponent<NavMeshObstacle>();
         }
         obstacle.carving = true;
+        obstacle.size = new Vector3(buildingScriptableObj.size.x, 1.0f, buildingScriptableObj.size.y);
     }
 
     private void SetupRepairTask()

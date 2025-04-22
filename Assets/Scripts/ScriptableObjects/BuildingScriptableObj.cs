@@ -9,7 +9,6 @@ public class BuildingScriptableObj : PlaceableObjectParent
 
     [Header("Construction Parameters")]
     public float constructionTime = 10.0f;
-    public GameObject constructionSite;
 
     [Header("Health Parameters")]
     public float maxHealth = 100f;

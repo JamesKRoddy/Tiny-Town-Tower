@@ -115,10 +115,13 @@ namespace Managers
         {
             if (currentPreview != null)
             {
-                MeshRenderer renderer = currentPreview.GetComponentInChildren<MeshRenderer>();
-                if (renderer != null)
+                MeshRenderer[] renderer = currentPreview.GetComponentsInChildren<MeshRenderer>();
+                if (renderer != null && renderer.Length > 0)
                 {
-                    renderer.material = material;
+                    foreach (var meshRenderer in renderer)
+                    {
+                        meshRenderer.material = material;
+                    }
                 }
             }
         }
