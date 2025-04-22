@@ -11,16 +11,23 @@ public class WorkState : _TaskState
     private float taskStartDelay = 0.5f;
     private float timeAtTaskLocation = 0f;
     private bool hasReachedTask = false;
+    private int workLayerIndex = -1;
 
     protected override void Awake()
     {
-        base.Awake();
+        base.Awake();        
     }
 
     public override void OnEnterState()
     {        
         if (assignedTask != null)
         {
+            workLayerIndex = animator.GetLayerIndex("Work Layer");
+            if (workLayerIndex == -1)
+            {
+                Debug.LogError($"[WorkState] Could not find 'Work Layer' in animator for {gameObject.name}");
+            }
+
             Vector3 taskPosition = assignedTask.WorkTaskTransform().position;
 
             // Check if the task position is on the NavMesh
@@ -55,7 +62,7 @@ public class WorkState : _TaskState
     {
         if (isTaskBeingPerformed)
         {
-            animator.SetInteger("WorkType", 0);
+            animator.Play("Empty", workLayerIndex);
             isTaskBeingPerformed = false;
         }
         agent.speed = npc.moveMaxSpeed;
@@ -76,6 +83,15 @@ public class WorkState : _TaskState
 
         float distanceToTask = Vector3.Distance(transform.position, assignedTask.WorkTaskTransform().position);
 
+        // Make NPC face the task position
+        Vector3 directionToTask = (assignedTask.WorkTaskTransform().position - transform.position).normalized;
+        directionToTask.y = 0; // Keep rotation only on the Y axis
+        if (directionToTask != Vector3.zero)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(directionToTask);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, npc.rotationSpeed * Time.deltaTime);
+        }
+
         // Check if we've reached the end of our path or are close enough to the task
         if (!agent.pathPending && (agent.remainingDistance <= stoppingDistance || distanceToTask <= minDistanceToTask))
         {
@@ -94,7 +110,10 @@ public class WorkState : _TaskState
             {
                 // Perform the task
                 assignedTask.PerformTask(npc);
-                animator.SetInteger("WorkType", (int)assignedTask.workType);
+                if (workLayerIndex != -1)
+                {
+                    animator.Play(assignedTask.workType.ToString(), workLayerIndex);
+                }
                 isTaskBeingPerformed = true;
             }
         }
@@ -103,7 +122,10 @@ public class WorkState : _TaskState
             // Reset task state if we're moving away
             if (isTaskBeingPerformed)
             {
-                animator.SetInteger("WorkType", 0);
+                if (workLayerIndex != -1)
+                {
+                    animator.Play("Empty", workLayerIndex);
+                }
                 isTaskBeingPerformed = false;
             }
             hasReachedTask = false;
