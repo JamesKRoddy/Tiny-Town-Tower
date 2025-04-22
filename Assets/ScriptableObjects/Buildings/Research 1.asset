@@ -24,9 +24,7 @@ MonoBehaviour:
   repairTime: 20
   healthRestoredPerRepair: 50
   repairResources: []
-  repairResourceCosts: 
   upgradeTarget: {fileID: 0}
   upgradeTime: 30
   upgradeResources: []
-  upgradeResourceCosts: 
   taskRadius: 2
