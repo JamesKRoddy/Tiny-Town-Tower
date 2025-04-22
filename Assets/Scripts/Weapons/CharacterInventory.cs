@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEngine;
 
 [System.Serializable]
-public class InventoryItem
+public class ResourceItemCount
 {
     public ResourceScriptableObj resource;
     public int count;
@@ -23,7 +23,7 @@ public class CharacterInventory : MonoBehaviour
 
     [Header("Inventory")]
     [SerializeField]
-    private List<InventoryItem> inventoryList = new List<InventoryItem>();
+    private List<ResourceItemCount> inventoryList = new List<ResourceItemCount>();
 
     // Event for when a weapon is equipped
     public event System.Action<WeaponScriptableObj> OnWeaponEquipped;
@@ -52,7 +52,7 @@ public class CharacterInventory : MonoBehaviour
         }
         else
         {
-            inventoryList.Add(new InventoryItem { resource = item, count = count });
+            inventoryList.Add(new ResourceItemCount { resource = item, count = count });
         }
     }
 
@@ -80,7 +80,7 @@ public class CharacterInventory : MonoBehaviour
         return existingItem != null ? existingItem.count : 0;
     }
 
-    public List<InventoryItem> GetFullInventory()
+    public List<ResourceItemCount> GetFullInventory()
     {
         return inventoryList;
     }

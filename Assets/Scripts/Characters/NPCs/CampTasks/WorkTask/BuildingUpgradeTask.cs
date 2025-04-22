@@ -6,8 +6,7 @@ public class BuildingUpgradeTask : WorkTask
 {
     private BuildingScriptableObj upgradeTarget;
     private float upgradeTime = 30f;
-    private ResourceScriptableObj[] requiredResources;
-    private int[] resourceCosts;
+    private ResourceItemCount[] requiredResources;
 
     private float upgradeProgress = 0f;
     private SettlerNPC currentWorker;
@@ -26,12 +25,11 @@ public class BuildingUpgradeTask : WorkTask
         }
     }
 
-    public void SetupUpgradeTask(BuildingScriptableObj upgradeTarget, float upgradeTime, ResourceScriptableObj[] requiredResources, int[] resourceCosts)
+    public void SetupUpgradeTask(BuildingScriptableObj upgradeTarget, float upgradeTime, ResourceItemCount[] requiredResources)
     {
         this.upgradeTarget = upgradeTarget;
         this.upgradeTime = upgradeTime;
         this.requiredResources = requiredResources;
-        this.resourceCosts = resourceCosts;
     }
 
     public override void PerformTask(SettlerNPC npc)
@@ -57,9 +55,9 @@ public class BuildingUpgradeTask : WorkTask
 
     private bool HasRequiredResources()
     {
-        for (int i = 0; i < requiredResources.Length; i++)
+        foreach (var resourceItem in requiredResources)
         {
-            if (CampManager.Instance.PlayerInventory.GetItemCount(requiredResources[i]) < resourceCosts[i])
+            if (CampManager.Instance.PlayerInventory.GetItemCount(resourceItem.resource) < resourceItem.count)
             {
                 return false;
             }
@@ -69,9 +67,9 @@ public class BuildingUpgradeTask : WorkTask
 
     private void ConsumeResources()
     {
-        for (int i = 0; i < requiredResources.Length; i++)
+        foreach (var resourceItem in requiredResources)
         {
-            CampManager.Instance.PlayerInventory.RemoveItem(requiredResources[i], resourceCosts[i]);
+            CampManager.Instance.PlayerInventory.RemoveItem(resourceItem.resource, resourceItem.count);
         }
     }
 

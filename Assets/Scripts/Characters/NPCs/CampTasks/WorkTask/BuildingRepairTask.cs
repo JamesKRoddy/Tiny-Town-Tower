@@ -6,8 +6,7 @@ public class BuildingRepairTask : WorkTask
 {
     private float repairTime = 20f;
     private float healthRestored = 50f;
-    private ResourceScriptableObj[] requiredResources;
-    private int[] resourceCosts;
+    private ResourceItemCount[] requiredResources;
 
     private float repairProgress = 0f;
     private SettlerNPC currentWorker;
@@ -26,12 +25,11 @@ public class BuildingRepairTask : WorkTask
         }
     }
 
-    public void SetupRepairTask(float repairTime, float healthRestored, ResourceScriptableObj[] requiredResources, int[] resourceCosts)
+    public void SetupRepairTask(float repairTime, float healthRestored, ResourceItemCount[] requiredResources)
     {
         this.repairTime = repairTime;
         this.healthRestored = healthRestored;
         this.requiredResources = requiredResources;
-        this.resourceCosts = resourceCosts;
     }
 
     public override void PerformTask(SettlerNPC npc)
@@ -57,9 +55,9 @@ public class BuildingRepairTask : WorkTask
 
     private bool HasRequiredResources()
     {
-        for (int i = 0; i < requiredResources.Length; i++)
+        foreach (var resourceItem in requiredResources)
         {
-            if (CampManager.Instance.PlayerInventory.GetItemCount(requiredResources[i]) < resourceCosts[i])
+            if (CampManager.Instance.PlayerInventory.GetItemCount(resourceItem.resource) < resourceItem.count)
             {
                 return false;
             }
@@ -69,9 +67,9 @@ public class BuildingRepairTask : WorkTask
 
     private void ConsumeResources()
     {
-        for (int i = 0; i < requiredResources.Length; i++)
+        foreach (var resourceItem in requiredResources)
         {
-            CampManager.Instance.PlayerInventory.RemoveItem(requiredResources[i], resourceCosts[i]);
+            CampManager.Instance.PlayerInventory.RemoveItem(resourceItem.resource, resourceItem.count);
         }
     }
 

@@ -14,14 +14,12 @@ public class BuildingScriptableObj : PlaceableObjectParent
     public float maxHealth = 100f;
     public float repairTime = 20f;
     public float healthRestoredPerRepair = 50f;
-    public ResourceScriptableObj[] repairResources;
-    public int[] repairResourceCosts;
+    public ResourceItemCount[] repairResources;
 
     [Header("Upgrade Parameters")]
     public BuildingScriptableObj upgradeTarget;
     public float upgradeTime = 30f;
-    public ResourceScriptableObj[] upgradeResources;
-    public int[] upgradeResourceCosts;
+    public ResourceItemCount[] upgradeResources;
 
     [Header("Work Area")]
     public float taskRadius = 2f; // Radius around the building where NPCs can work
