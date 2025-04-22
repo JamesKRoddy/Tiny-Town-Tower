@@ -5,11 +5,16 @@ using Managers;
 public abstract class WorkTask : MonoBehaviour
 {
     [HideInInspector] public WorkType workType;
+    [SerializeField] protected Transform workLocationTransform; // Optional specific work location
 
     // Abstract method for NPC to perform the work task
     public abstract void PerformTask(SettlerNPC npc);
-    // Point the npc has to go to to perform the work
-    public abstract Transform WorkTaskTransform();
+    
+    // Virtual method that can be overridden by specific tasks
+    public virtual Transform WorkTaskTransform()
+    {
+        return workLocationTransform != null ? workLocationTransform : transform;
+    }
 
     // Declare StopWork as an event
     public event Action StopWork; // Called when a construction is complete, building is broken, etc..

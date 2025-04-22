@@ -44,11 +44,6 @@ public class ConstructionTask : WorkTask
         }
     }
 
-    public override Transform WorkTaskTransform()
-    {
-        return this.transform;
-    }
-
     private IEnumerator ConstructionCoroutine()
     {
         

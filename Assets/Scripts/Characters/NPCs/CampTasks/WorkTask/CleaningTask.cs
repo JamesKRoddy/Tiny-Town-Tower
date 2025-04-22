@@ -52,11 +52,6 @@ public class CleaningTask : WorkTask
         InvokeStopWork();
     }
 
-    public override Transform WorkTaskTransform()
-    {
-        return transform;
-    }
-
     private void OnDisable()
     {
         if (cleaningCoroutine != null)

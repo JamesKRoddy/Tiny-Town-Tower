@@ -47,11 +47,6 @@ public abstract class ResourceWorkTask : WorkTask
         InvokeStopWork();
     }
 
-    public override Transform WorkTaskTransform()
-    {
-        return transform;
-    }
-
     protected virtual void OnDisable()
     {
         if (workCoroutine != null)

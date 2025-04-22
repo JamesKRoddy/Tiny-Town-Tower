@@ -90,11 +90,6 @@ public class BuildingRepairTask : WorkTask
         InvokeStopWork();
     }
 
-    public override Transform WorkTaskTransform()
-    {
-        return transform;
-    }
-
     private void OnDisable()
     {
         if (repairCoroutine != null)
