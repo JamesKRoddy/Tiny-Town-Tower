@@ -574,14 +574,6 @@ PrefabInstance:
       propertyPath: selectionPopup
       value: 
       objectReference: {fileID: 1792622299}
-    - target: {fileID: 2645204055199219515, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
-      propertyPath: buildingScriptableObjs.Array.size
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 2645204055199219515, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
-      propertyPath: 'buildingScriptableObjs.Array.data[3]'
-      value: 
-      objectReference: {fileID: 11400000, guid: 9e5170ccb411c2e42bdfd9db2f15716f, type: 2}
     - target: {fileID: 4190609362008320532, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
       propertyPath: m_Name
       value: PlayerUI
