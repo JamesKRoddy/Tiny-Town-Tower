@@ -6,15 +6,18 @@ using UnityEngine.AI;
 /// <summary>
 /// A building is a structure that can be built in the camp.
 /// </summary>
+/// 
+[RequireComponent(typeof(BuildingRepairTask))]
+[RequireComponent(typeof(BuildingUpgradeTask))]
 public class Building : MonoBehaviour
 {
     [Header("Building Configuration")]
     [SerializeField, ReadOnly] BuildingScriptableObj buildingScriptableObj;
     
     [Header("Building State")]
-    [SerializeField] protected bool isOperational = false;
-    [SerializeField] protected bool isUnderConstruction = true;
-    [SerializeField] protected float currentHealth;
+    [SerializeField, ReadOnly] protected bool isOperational = false;
+    [SerializeField, ReadOnly] protected bool isUnderConstruction = true;
+    [SerializeField, ReadOnly] protected float currentHealth;
 
     [Header("Repair and Upgrade")]
     [SerializeField, ReadOnly] protected BuildingRepairTask repairTask;
@@ -28,6 +31,12 @@ public class Building : MonoBehaviour
     public event System.Action OnBuildingRepaired;
     public event System.Action OnBuildingUpgraded;
     public event System.Action<float> OnHealthChanged;
+
+    void Start()
+    {
+        repairTask = GetComponent<BuildingRepairTask>();
+        upgradeTask = GetComponent<BuildingUpgradeTask>();
+    }
 
     public virtual void SetupBuilding(BuildingScriptableObj buildingScriptableObj)
     {

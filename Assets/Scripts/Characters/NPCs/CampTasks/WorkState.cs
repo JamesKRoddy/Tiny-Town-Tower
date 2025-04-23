@@ -101,6 +101,11 @@ public class WorkState : _TaskState
                 agent.isStopped = true;
                 agent.velocity = Vector3.zero;
                 timeAtTaskLocation = 0f;
+                if(assignedTask.WorkTaskTransform() != assignedTask.transform)
+                {
+                    transform.position = assignedTask.WorkTaskTransform().position;
+                    transform.rotation = assignedTask.WorkTaskTransform().rotation;
+                }
             }
 
             // Wait a small delay before starting the task to ensure NPC has stopped

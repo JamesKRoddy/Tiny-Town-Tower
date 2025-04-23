@@ -2,6 +2,9 @@
 // BUILDING ENUMS
 // =========================
 
+/// <summary>
+/// Building type used in roguelike section to determine the type of building and floor to spawn
+/// </summary>
 public enum BuildingType
 {
     NONE
