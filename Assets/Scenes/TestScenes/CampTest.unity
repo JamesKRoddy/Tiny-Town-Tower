@@ -183,6 +183,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &306736798 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7611820370166008948, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
+  m_PrefabInstance: {fileID: 1352994976}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 305f8280776a1fe4cacc4d6b3bd866cd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &369156266
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -555,6 +566,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 715760893344533062, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
+      propertyPath: selectionPopup
+      value: 
+      objectReference: {fileID: 306736798}
+    - target: {fileID: 2078819796754524781, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
+      propertyPath: selectionPopup
+      value: 
+      objectReference: {fileID: 1792622299}
     - target: {fileID: 2645204055199219515, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
       propertyPath: buildingScriptableObjs.Array.size
       value: 4
@@ -833,6 +852,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+--- !u!114 &1792622299 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 466128748190279414, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
+  m_PrefabInstance: {fileID: 1352994976}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89051b4c889ff2841aebed4b6a354717, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1885136431
 PrefabInstance:
   m_ObjectHideFlags: 0

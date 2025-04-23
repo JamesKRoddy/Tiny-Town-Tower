@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
 
-public class SettlerNPCPopup : PreviewPopupBase<SettlerNPC, string, SettlerNPCMenu>
+public class SettlerNPCPopup : PreviewPopupBase<SettlerNPC, string>
 {
     [Header("Work Assignment UI")]
     [SerializeField] private Button possessButton;
@@ -20,6 +20,11 @@ public class SettlerNPCPopup : PreviewPopupBase<SettlerNPC, string, SettlerNPCMe
             assignWorkButton.onClick.AddListener(OnAssignWorkClicked);
         if (removeWorkButton != null)
             removeWorkButton.onClick.AddListener(OnRemoveWorkClicked);
+    }
+
+    public override void Setup(SettlerNPC npc, PreviewListMenuBase<string, SettlerNPC> menu, GameObject element)
+    {
+        base.Setup(npc, menu, element);
     }
 
     protected override void SetupInitialSelection()
@@ -42,7 +47,7 @@ public class SettlerNPCPopup : PreviewPopupBase<SettlerNPC, string, SettlerNPCMe
 
     private void OnAssignWorkClicked()
     {
-
+        // TODO: Implement work assignment
     }
 
     private void OnRemoveWorkClicked()

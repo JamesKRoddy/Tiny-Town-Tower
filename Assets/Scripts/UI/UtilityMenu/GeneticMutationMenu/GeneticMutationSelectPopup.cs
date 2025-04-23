@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
-public class GeneticMutationSelectPopup : PreviewPopupBase<GeneticMutationObj, GeneticMutation, GeneticMutationUI>
+public class GeneticMutationSelectPopup : PreviewPopupBase<GeneticMutationObj, GeneticMutation>
 {
     [Header("UI Elements")]
     [SerializeField] private Button removeButton;
@@ -21,7 +21,7 @@ public class GeneticMutationSelectPopup : PreviewPopupBase<GeneticMutationObj, G
             moveButton.onClick.AddListener(OnMoveClicked);
     }
 
-    public override void Setup(GeneticMutationObj mutation, GeneticMutationUI menu, GameObject element)
+    public override void Setup(GeneticMutationObj mutation, PreviewListMenuBase<GeneticMutation, GeneticMutationObj> menu, GameObject element)
     {
         base.Setup(mutation, menu, element);
         uiElement = element.GetComponent<MutationUIElement>();
@@ -37,9 +37,12 @@ public class GeneticMutationSelectPopup : PreviewPopupBase<GeneticMutationObj, G
     {
         if (currentItem == null || parentMenu == null) return;
 
+        var geneticMenu = parentMenu as GeneticMutationUI;
+        if (geneticMenu == null) return;
+
         // Remove mutation from inventory and add back to quantities
         PlayerInventory.Instance.RemoveMutation(currentItem);
-        parentMenu.AddMutationBackToQuantities(currentItem);
+        geneticMenu.AddMutationBackToQuantities(currentItem);
         Destroy(uiElement.gameObject);
         // Re-enable parent UI buttons and close popup
         SetParentUIButtonsInteractable(true);
@@ -50,8 +53,11 @@ public class GeneticMutationSelectPopup : PreviewPopupBase<GeneticMutationObj, G
     {
         if (currentItem == null || parentMenu == null) return;
 
+        var geneticMenu = parentMenu as GeneticMutationUI;
+        if (geneticMenu == null) return;
+
         // Start moving the mutation
-        parentMenu.SelectMutation(uiElement);
+        geneticMenu.SelectMutation(uiElement);
         // Re-enable parent UI buttons and close popup
         SetParentUIButtonsInteractable(true);
         gameObject.SetActive(false);

@@ -3,13 +3,13 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 
-public abstract class PreviewPopupBase<TItem, TCategory, TMenu> : MonoBehaviour where TMenu : PreviewListMenuBase<TCategory, TItem>
+public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour
 {
     [Header("UI Elements")]
     [SerializeField] protected Button closeButton;
 
     protected TItem currentItem;
-    protected TMenu parentMenu;
+    protected PreviewListMenuBase<TCategory, TItem> parentMenu;
     protected GameObject selectedElement;
 
     protected virtual void Start()
@@ -18,7 +18,7 @@ public abstract class PreviewPopupBase<TItem, TCategory, TMenu> : MonoBehaviour 
             closeButton.onClick.AddListener(OnCloseClicked);
     }
 
-    public virtual void Setup(TItem item, TMenu menu, GameObject element)
+    public virtual void Setup(TItem item, PreviewListMenuBase<TCategory, TItem> menu, GameObject element)
     {
         currentItem = item;
         parentMenu = menu;

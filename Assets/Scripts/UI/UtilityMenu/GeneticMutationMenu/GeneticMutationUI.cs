@@ -18,7 +18,6 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     [Header("Mutation Inventory UI")]
     [SerializeField] public GeneticMutationGrid mutationGrid;
     [SerializeField] private Transform mutationGridPrefabContainer;
-    [SerializeField] private GeneticMutationSelectPopup mutationSelectPopup;
 
     [Header("Selected Mutation")]
     private GeneticMutationObj selectedMutation;
@@ -48,7 +47,7 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
                         button.interactable = true;
                     }
                 }
-                PlayerInput.Instance.OnBPressed += mutationSelectPopup.OnCloseClicked;
+                PlayerInput.Instance.OnBPressed += selectionPopup.OnCloseClicked;
                 break;
             case PlayerControlType.GENETIC_MUTATION_MOVEMENT:
                 PlayerInput.Instance.OnLeftJoystick += MoveMutation;
@@ -355,9 +354,9 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
 
     public void OnMutationClicked(GeneticMutationObj mutation, MutationUIElement uiElement)
     {
-        if (mutationSelectPopup != null)
+        if (selectionPopup != null)
         {
-            mutationSelectPopup.Setup(mutation, this, uiElement.gameObject);
+            selectionPopup.Setup(mutation, this, uiElement.gameObject);
         }
     }
 }
