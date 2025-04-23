@@ -70,6 +70,7 @@ public interface IDamageable
     UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
     Can open and place mutations in the genetic mutation menu, while no npcs are possessed
+    Overall popups feel a bit off, need to fix when they open and close
     
  * Next work:
 
