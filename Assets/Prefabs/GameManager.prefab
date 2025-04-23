@@ -226,7 +226,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98d2e6833a44b1d428a19f0d0fc29b9d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _currentGameMode: 2
+  _currentGameMode: 3
 --- !u!1 &2451805035808484079
 GameObject:
   m_ObjectHideFlags: 0
@@ -320,8 +320,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: feb32a6f968378645adc61bfa11753de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  validPlacementMaterial: {fileID: 0}
-  invalidPlacementMaterial: {fileID: 0}
+  validPlacementMaterial: {fileID: 2100000, guid: cccb5a487583e9a40b9136094d3a6233, type: 2}
+  invalidPlacementMaterial: {fileID: 2100000, guid: 1cccbe6acc16ba940ba1d34343573d32, type: 2}
   gridPrefab: {fileID: 241196777734048875, guid: fb1ace5487d684b4a86192309c6fb1ec, type: 3}
   takenGridPrefab: {fileID: 5465302576335970331, guid: 6a7a6dc26f340444a98ee22f3a09587f, type: 3}
   gridParent: {fileID: 4644746889367459830}
@@ -736,14 +736,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 541dab5c9aa07cc4aab1709ec8900a1a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  validPlacementMaterial: {fileID: 0}
-  invalidPlacementMaterial: {fileID: 0}
+  validPlacementMaterial: {fileID: 2100000, guid: cccb5a487583e9a40b9136094d3a6233, type: 2}
+  invalidPlacementMaterial: {fileID: 2100000, guid: 1cccbe6acc16ba940ba1d34343573d32, type: 2}
   gridPrefab: {fileID: 241196777734048875, guid: fb1ace5487d684b4a86192309c6fb1ec, type: 3}
   takenGridPrefab: {fileID: 5465302576335970331, guid: 6a7a6dc26f340444a98ee22f3a09587f, type: 3}
   gridParent: {fileID: 892765565880304067}
   xBounds: {x: -25, y: 25}
   zBounds: {x: -25, y: 25}
   showGridBounds: 1
+  constructionSiteMappings:
+  - gridSize: {x: 1, y: 1}
+    constructionSitePrefab: {fileID: 6308355632358144236, guid: 1f8c0a42a7bfa844784127d7e55f4c88, type: 3}
+  - gridSize: {x: 2, y: 2}
+    constructionSitePrefab: {fileID: 7583506354027141791, guid: fb5600eea4d0aa94dbaedd073a3bcf7e, type: 3}
+  - gridSize: {x: 3, y: 3}
+    constructionSitePrefab: {fileID: 4148604766521998765, guid: 4f1e7a0b6c61c1f4d81f9aada9e78969, type: 3}
 --- !u!1 &7892603899224520776
 GameObject:
   m_ObjectHideFlags: 0

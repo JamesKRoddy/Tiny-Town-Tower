@@ -195,50 +195,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: GameManager
       objectReference: {fileID: 0}
-    - target: {fileID: 2451805035808484079, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: m_Name
-      value: EffectManagerManager
-      objectReference: {fileID: 0}
     - target: {fileID: 2683458163222554810, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.size
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 2683458163222554810, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.data[0].gridSize.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2683458163222554810, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.data[0].gridSize.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2683458163222554810, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.data[1].gridSize.x
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 2683458163222554810, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.data[1].gridSize.y
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 2683458163222554810, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.data[2].gridSize.x
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 2683458163222554810, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.data[2].gridSize.y
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 2683458163222554810, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.data[0].constructionSitePrefab
+      propertyPath: validPlacementMaterial
       value: 
-      objectReference: {fileID: 6308355632358144236, guid: 1f8c0a42a7bfa844784127d7e55f4c88, type: 3}
+      objectReference: {fileID: 2100000, guid: cccb5a487583e9a40b9136094d3a6233, type: 2}
     - target: {fileID: 2683458163222554810, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.data[1].constructionSitePrefab
+      propertyPath: invalidPlacementMaterial
       value: 
-      objectReference: {fileID: 7583506354027141791, guid: fb5600eea4d0aa94dbaedd073a3bcf7e, type: 3}
-    - target: {fileID: 2683458163222554810, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.data[2].constructionSitePrefab
+      objectReference: {fileID: 2100000, guid: 1cccbe6acc16ba940ba1d34343573d32, type: 2}
+    - target: {fileID: 4439842862291004188, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: validPlacementMaterial
       value: 
-      objectReference: {fileID: 4148604766521998765, guid: 4f1e7a0b6c61c1f4d81f9aada9e78969, type: 3}
+      objectReference: {fileID: 2100000, guid: cccb5a487583e9a40b9136094d3a6233, type: 2}
+    - target: {fileID: 4439842862291004188, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: invalidPlacementMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 1cccbe6acc16ba940ba1d34343573d32, type: 2}
     - target: {fileID: 4686915863895893509, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
