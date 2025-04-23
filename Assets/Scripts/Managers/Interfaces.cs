@@ -68,6 +68,8 @@ public interface IDamageable
     Unity.AI.Navigation.NavMeshSurface:BuildNavMesh () (at ./Library/PackageCache/com.unity.ai.navigation@9f76b145f0a8/Runtime/NavMeshSurface.cs:272)
     RoomSectionRandomizer/<DelayedBakeNavMesh>d__13:MoveNext () (at Assets/Scripts/RogueLite/RoomLevels/RoomSectionRandomizer.cs:135)
     UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+    Can open and place mutations in the genetic mutation menu, while no npcs are possessed
     
  * Next work:
 
