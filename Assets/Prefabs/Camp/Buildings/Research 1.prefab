@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4007848271927928692}
+  - component: {fileID: 2428248218711433998}
   - component: {fileID: -3128080933102453849}
   - component: {fileID: -801814805303146503}
   - component: {fileID: -4966385171169535209}
@@ -49,6 +50,27 @@ Transform:
   - {fileID: 7619299354393056}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &2428248218711433998
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5397833359920250064}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &-3128080933102453849
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -82,6 +104,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   workType: 0
   workLocationTransform: {fileID: 0}
+  requiredResources: []
 --- !u!114 &-4966385171169535209
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -96,6 +119,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   workType: 0
   workLocationTransform: {fileID: 0}
+  requiredResources: []
 --- !u!114 &3931027013512436579
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -110,6 +134,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   workType: 0
   workLocationTransform: {fileID: 0}
+  requiredResources: []
   researchTime: 60
   researchPoints: 1
   requiredResource: {fileID: 0}
