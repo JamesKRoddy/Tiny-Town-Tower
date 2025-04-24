@@ -17,6 +17,7 @@ public class ConstructionTask : WorkTask
     protected override void Start()
     {
         base.Start();
+        AddWorkTask();
         workType = WorkType.BUILD_STRUCTURE;
 
         NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
@@ -83,7 +84,7 @@ public class ConstructionTask : WorkTask
             buildingComponent = buildingObj.AddComponent<Building>();
         }
         
-        buildingComponent.SetupBuilding(buildingScriptableObj);
+        buildingComponent.SetupBuilding(buildingScriptableObj); //Enable all the tasks here
         buildingComponent.CompleteConstruction();
 
         Destroy(gameObject);

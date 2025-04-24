@@ -163,7 +163,6 @@ public class PlayerUIManager : MonoBehaviour
 
     internal void BackPressed()
     {
-        Debug.Log("BackPressed " + currentMenu.name);
         switch (currentMenu)
         {
             case PauseMenu:

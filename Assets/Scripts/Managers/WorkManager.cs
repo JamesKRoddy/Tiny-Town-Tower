@@ -33,6 +33,7 @@ namespace Managers
         // Method to add a new work task to the queue
         public void AddWorkTask(WorkTask newTask)
         {
+            Debug.Log($"<color=green>[WorkManager]</color> Adding work task: {newTask.name}");
             workQueue.Enqueue(newTask);
             // Notify that a new task is available
             OnTaskAvailable?.Invoke(newTask);

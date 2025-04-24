@@ -20,6 +20,7 @@ public class WorkState : _TaskState
 
     public override void OnEnterState()
     {        
+        Debug.Log($"[WorkState] OnEnterState for {gameObject.name}");
         if (assignedTask != null)
         {
             workLayerIndex = animator.GetLayerIndex("Work Layer");

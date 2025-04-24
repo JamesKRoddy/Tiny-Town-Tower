@@ -48,7 +48,11 @@ public abstract class WorkTask : MonoBehaviour
 
     protected virtual void Start()
     {
-        // Ensure AddWorkTask is called for all inheriting classes
+        
+    }
+
+    protected void AddWorkTask()
+    {
         CampManager.Instance.WorkManager.AddWorkTask(this);
     }
 
