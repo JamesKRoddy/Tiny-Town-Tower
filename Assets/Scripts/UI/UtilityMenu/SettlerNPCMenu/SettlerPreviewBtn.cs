@@ -6,9 +6,7 @@ public class SettlerPreviewBtn : PreviewButtonBase<SettlerNPC>
 {
     protected override void OnButtonClicked()
     {
-        PlayerController.Instance.PossessNPC(data);
-        PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false, 0.05f);
-        PlayerUIManager.Instance.utilityMenu.ReturnToGame(PlayerControlType.CAMP_NPC_MOVEMENT);
+        PlayerUIManager.Instance.settlerNPCMenu.DisplayPopup(data, gameObject);
     }
 
     public void SetupButton(SettlerNPC settlerNPC)

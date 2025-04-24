@@ -43,11 +43,13 @@ public class SettlerNPCPopup : PreviewPopupBase<SettlerNPC, string>
             PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false, 0.05f);
             PlayerUIManager.Instance.utilityMenu.ReturnToGame(PlayerControlType.CAMP_NPC_MOVEMENT);
         }
+        OnCloseClicked();
     }
 
     private void OnAssignWorkClicked()
     {
         // TODO: Implement work assignment
+        OnCloseClicked();
     }
 
     private void OnRemoveWorkClicked()
@@ -57,5 +59,6 @@ public class SettlerNPCPopup : PreviewPopupBase<SettlerNPC, string>
             // TODO: Remove current work assignment
             Debug.Log($"Removing work from {currentItem.nPCDataObj.nPCName}");
         }
+        OnCloseClicked();
     }
 } 

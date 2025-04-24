@@ -18,11 +18,17 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour
             closeButton.onClick.AddListener(OnCloseClicked);
     }
 
-    public virtual void Setup(TItem item, PreviewListMenuBase<TCategory, TItem> menu, GameObject element)
+/// <summary>
+/// Displaying the popup
+/// </summary>
+/// <param name="item"></param> Item context in the popup
+/// <param name="menu"></param> Menu that opened the popup
+/// <param name="element"></param> Gameobject that will be selected when the popup is closed, usually the button that opened it
+    public virtual void Setup(TItem item, PreviewListMenuBase<TCategory, TItem> menu, GameObject element = null)
     {
         currentItem = item;
         parentMenu = menu;
-        selectedElement = element;
+        selectedElement = element ?? closeButton?.gameObject;
         
         // Disable all buttons in the parent UI except popup buttons
         SetParentUIButtonsInteractable(false);

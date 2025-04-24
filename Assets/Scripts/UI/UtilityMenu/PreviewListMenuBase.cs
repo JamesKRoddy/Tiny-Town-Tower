@@ -227,6 +227,13 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         }
     }
 
+    public void DisplayPopup(TItem item, GameObject selectedObject = null){
+        if (selectionPopup != null)
+        {
+            selectionPopup.Setup(item, this, selectedObject);
+        }
+    }
+
     public virtual void UpdatePreview(TItem item = default)
     {
         currentSelectedItem = item;        
