@@ -4,14 +4,18 @@ using Managers;
 public class PlayerCamera : MonoBehaviour, IControllerInput
 {
     [Header("Follow Camera")]
-    [SerializeField] private Transform target; // The player or target to follow
+    [SerializeField, ReadOnly] private Transform target; // The player or target to follow
     [SerializeField] private Vector3 offset = new Vector3(0, 10, -10); // Default offset position
     [SerializeField] private float followSpeed = 5f; // Speed at which the camera follows the target
     [SerializeField] private float rotationSpeed = 5f; // Speed at which the camera rotates to match the target
 
     [Header("Panning Camera")]
-    [SerializeField] private Transform defaultTarget; // The default target to follow fopr camera panning
+    [SerializeField] private Transform defaultTarget; // The default target to follow for camera panning
     [SerializeField] private float panSpeed = 20f; // Speed at which the camera pans
+
+    [Header("Work Assignment")]
+    [SerializeField] private GameObject workDetectionPoint; // Point used to detect work buildings
+    [SerializeField] private float workDetectionDistance = 5f; // Distance to check for work buildings
 
     private Vector2 joystickInput; // Stores the current joystick input
 
@@ -30,6 +34,7 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
 
     public void SetPlayerControlType(PlayerControlType controlType)
     {
+        workDetectionPoint.SetActive(false); // Disable work detection point for other modes
         // Handle new control type
         switch (controlType)
         {
@@ -43,7 +48,13 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
                 target = defaultTarget; // Detach from target to allow free camera movement
                 PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystickInput; // Subscribe to joystick input
                 break;
+            case PlayerControlType.CAMP_WORK_ASSIGNMENT:
+                target = defaultTarget; // Detach from target to allow free camera movement
+                PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystickInput; // Subscribe to joystick input
+                workDetectionPoint.SetActive(true); // Enable work detection point
+                break;
             default:
+                workDetectionPoint.SetActive(false); // Disable work detection point for other modes
                 break;
         }
     }
@@ -105,5 +116,29 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
     private void HandleLeftJoystickInput(Vector2 input)
     {
         joystickInput = input; // Update joystick input for panning
+    }
+
+    // Method to get the work detection point's position
+    public Vector3 GetWorkDetectionPoint()
+    {
+        return workDetectionPoint.transform.position;
+    }
+
+    // Method to check for work tasks at the detection point
+    public WorkTask GetWorkTaskAtDetectionPoint()
+    {
+        if (!workDetectionPoint.activeSelf) return null;
+
+        // Cast a sphere to detect work tasks
+        Collider[] hitColliders = Physics.OverlapSphere(workDetectionPoint.transform.position, workDetectionDistance);
+        foreach (var hitCollider in hitColliders)
+        {
+            WorkTask workTask = hitCollider.GetComponent<WorkTask>();
+            if (workTask != null)
+            {
+                return workTask;
+            }
+        }
+        return null;
     }
 }

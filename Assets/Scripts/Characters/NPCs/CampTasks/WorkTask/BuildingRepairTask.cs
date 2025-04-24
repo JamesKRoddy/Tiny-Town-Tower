@@ -6,8 +6,6 @@ public class BuildingRepairTask : WorkTask
 {
     private float repairTime = 20f;
     private float healthRestored = 50f;
-    private ResourceItemCount[] requiredResources;
-
     private float repairProgress = 0f;
     private SettlerNPC currentWorker;
     private Coroutine repairCoroutine;
@@ -25,11 +23,10 @@ public class BuildingRepairTask : WorkTask
         }
     }
 
-    public void SetupRepairTask(float repairTime, float healthRestored, ResourceItemCount[] requiredResources)
+    public void SetupRepairTask(float repairTime, float healthRestored)
     {
         this.repairTime = repairTime;
         this.healthRestored = healthRestored;
-        this.requiredResources = requiredResources;
     }
 
     public override void PerformTask(SettlerNPC npc)
@@ -97,5 +94,13 @@ public class BuildingRepairTask : WorkTask
             StopCoroutine(repairCoroutine);
             repairCoroutine = null;
         }
+    }
+
+    public override bool CanPerformTask()
+    {
+        if (targetBuilding == null) return false;
+        
+        // Check if the building needs repair (is not at full health)
+        return targetBuilding.GetCurrentHealth() < targetBuilding.GetMaxHealth();
     }
 } 

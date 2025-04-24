@@ -71,6 +71,7 @@ public enum PlayerControlType
 
     CAMP_NPC_MOVEMENT, // Player's movement in the camp
     CAMP_CAMERA_MOVEMENT, //Default
+    CAMP_WORK_ASSIGNMENT, // Assigning work to a settler
     BUILDING_PLACEMENT, // Placing a building from the build menu
 
     /// <summary>

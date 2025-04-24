@@ -60,4 +60,10 @@ public class CleaningTask : WorkTask
             cleaningCoroutine = null;
         }
     }
+
+    public override bool CanPerformTask()
+    {
+        // Check if the camp's cleanliness is below maximum
+        return CampManager.Instance.CleanlinessManager.GetCleanliness() < CampManager.Instance.CleanlinessManager.GetCleanlinessPercentage();
+    }
 } 

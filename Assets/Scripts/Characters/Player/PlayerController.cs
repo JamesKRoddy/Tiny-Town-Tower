@@ -114,6 +114,12 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu(PlayerControlType.CAMP_NPC_MOVEMENT);
                 break;
 
+            case PlayerControlType.CAMP_WORK_ASSIGNMENT:
+                PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
+                PlayerInput.Instance.OnAPressed += HandleWorkAssignment;
+                PlayerInput.Instance.OnBPressed += () => ReturnToSettlerMenu();
+                break;
+
             case PlayerControlType.TURRET_CAMERA_MOVEMENT:
                 PlayerInput.Instance.OnSelectPressed += () => OpenUtilityMenu(PlayerControlType.TURRET_CAMERA_MOVEMENT);
                 PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu(PlayerControlType.TURRET_CAMERA_MOVEMENT);
@@ -161,6 +167,23 @@ public class PlayerController : MonoBehaviour, IControllerInput
         {
             _possessedNPC.Dash();
         }
+    }
+
+    private void HandleWorkAssignment()
+    {
+        // Check for work tasks at the camera's detection point
+        WorkTask workTask = playerCamera.GetWorkTaskAtDetectionPoint();
+        if (workTask != null)
+        {
+            WorkManager.Instance.AssignWorkToBuilding(workTask);
+            ReturnToSettlerMenu();
+        }
+    }
+
+    private void ReturnToSettlerMenu()
+    {
+        PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(true, 0.05f);
+        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_NPC_MOVEMENT);
     }
 
     #endregion

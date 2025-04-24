@@ -72,8 +72,7 @@ public class Building : MonoBehaviour
         // Configure repair task with scriptable object parameters
         repairTask.SetupRepairTask(
             buildingScriptableObj.repairTime,
-            buildingScriptableObj.healthRestoredPerRepair,
-            buildingScriptableObj.repairResources
+            buildingScriptableObj.healthRestoredPerRepair
         );
     }
 
@@ -88,8 +87,7 @@ public class Building : MonoBehaviour
         // Configure upgrade task with scriptable object parameters
         upgradeTask.SetupUpgradeTask(
             buildingScriptableObj.upgradeTarget,
-            buildingScriptableObj.upgradeTime,
-            buildingScriptableObj.upgradeResources
+            buildingScriptableObj.upgradeTime
         );
     }
 

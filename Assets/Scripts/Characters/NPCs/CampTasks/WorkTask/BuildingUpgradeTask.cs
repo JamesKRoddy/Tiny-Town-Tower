@@ -6,8 +6,6 @@ public class BuildingUpgradeTask : WorkTask
 {
     private BuildingScriptableObj upgradeTarget;
     private float upgradeTime = 30f;
-    private ResourceItemCount[] requiredResources;
-
     private float upgradeProgress = 0f;
     private SettlerNPC currentWorker;
     private Coroutine upgradeCoroutine;
@@ -25,11 +23,10 @@ public class BuildingUpgradeTask : WorkTask
         }
     }
 
-    public void SetupUpgradeTask(BuildingScriptableObj upgradeTarget, float upgradeTime, ResourceItemCount[] requiredResources)
+    public void SetupUpgradeTask(BuildingScriptableObj upgradeTarget, float upgradeTime)
     {
         this.upgradeTarget = upgradeTarget;
         this.upgradeTime = upgradeTime;
-        this.requiredResources = requiredResources;
     }
 
     public override void PerformTask(SettlerNPC npc)
@@ -97,5 +94,13 @@ public class BuildingUpgradeTask : WorkTask
             StopCoroutine(upgradeCoroutine);
             upgradeCoroutine = null;
         }
+    }
+
+    public override bool CanPerformTask()
+    {
+        if (targetBuilding == null || upgradeTarget == null) return false;
+        
+        // Check if the building has an upgrade target (can be upgraded)
+        return upgradeTarget != null;
     }
 } 

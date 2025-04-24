@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
+using Managers;
 
 public class SettlerNPCPopup : PreviewPopupBase<SettlerNPC, string>
 {
@@ -48,7 +49,13 @@ public class SettlerNPCPopup : PreviewPopupBase<SettlerNPC, string>
 
     private void OnAssignWorkClicked()
     {
-        // TODO: Implement work assignment
+        if (currentItem != null)
+        {
+            PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false, 0.05f);
+            PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_WORK_ASSIGNMENT);
+            // Store the NPC we're assigning work to
+            WorkManager.Instance.SetNPCForAssignment(currentItem);
+        }
         OnCloseClicked();
     }
 
