@@ -60,6 +60,6 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, SettlerNPC>, IControll
 
     public override void DestroyPreviewSpecifics()
     {
-        Debug.Log("Clearing NPC preview details");
+        
     }
 }

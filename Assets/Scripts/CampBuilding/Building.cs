@@ -12,7 +12,7 @@ using UnityEngine.AI;
 public class Building : MonoBehaviour
 {
     [Header("Building Configuration")]
-    [SerializeField, ReadOnly] BuildingScriptableObj buildingScriptableObj;
+    [SerializeField] BuildingScriptableObj buildingScriptableObj;
     
     [Header("Building State")]
     [SerializeField, ReadOnly] protected bool isOperational = false;
