@@ -3,6 +3,7 @@ using System.Collections;
 using Managers;
 using UnityEngine;
 using UnityEngine.Windows;
+using System.Collections.Generic;
 
 public class PlayerController : MonoBehaviour, IControllerInput
 {
@@ -175,8 +176,26 @@ public class PlayerController : MonoBehaviour, IControllerInput
         WorkTask workTask = playerCamera.GetWorkTaskAtDetectionPoint();
         if (workTask != null)
         {
-            WorkManager.Instance.AssignWorkToBuilding(workTask);
-            ReturnToSettlerMenu();
+            Building building = workTask.GetComponent<Building>();
+            if (building != null)
+            {
+                // Create selection options for each work task
+                var workTasks = building.GetComponents<WorkTask>();
+                var options = new List<SelectionPopup.SelectionOption>();
+
+                foreach (var task in workTasks)
+                {
+                    options.Add(new SelectionPopup.SelectionOption
+                    {
+                        optionName = task.workType.ToString(),
+                        onSelected = () => WorkManager.Instance.AssignWorkToBuilding(task),
+                        canSelect = () => task.CanPerformTask()
+                    });
+                }
+
+                // Show the selection popup
+                PlayerUIManager.Instance.selectionPopup.Setup(options, null);
+            }
         }
     }
 
