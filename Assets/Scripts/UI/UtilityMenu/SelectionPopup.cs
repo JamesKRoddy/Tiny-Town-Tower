@@ -3,6 +3,8 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
 using System;
+using TMPro;
+using System.Collections;
 
 public class SelectionPopup : PreviewPopupBase<object, string>
 {
@@ -16,7 +18,6 @@ public class SelectionPopup : PreviewPopupBase<object, string>
 
     [Header("Selection Options")]
     [SerializeField] private Button[] optionButtons;
-    [SerializeField] private Text[] optionButtonTexts;
 
     private List<SelectionOption> currentOptions = new List<SelectionOption>();
 
@@ -43,22 +44,35 @@ public class SelectionPopup : PreviewPopupBase<object, string>
 
     private void UpdateOptionButtons()
     {
+        if (currentOptions.Count > optionButtons.Length)
+        {
+            Debug.LogError($"SelectionPopup: Not enough buttons for all options! Need {currentOptions.Count} but only have {optionButtons.Length}");
+            return;
+        }
+
         // Update each button based on available options
         for (int i = 0; i < optionButtons.Length; i++)
         {
             if (i < currentOptions.Count)
             {
                 SelectionOption option = currentOptions[i];
-                optionButtons[i].gameObject.SetActive(true);
-                optionButtonTexts[i].text = option.optionName;
+                Button button = optionButtons[i];
+                button.gameObject.SetActive(true);
+                
+                // Get the text component from the button's child
+                TMP_Text buttonText = button.GetComponentInChildren<TMP_Text>();
+                if (buttonText != null)
+                {
+                    buttonText.text = option.optionName;
+                }
                 
                 // Set button interactable based on canSelect function
-                optionButtons[i].interactable = option.canSelect?.Invoke() ?? true;
+                button.interactable = option.canSelect?.Invoke() ?? true;
                 
                 // Add listener for this specific option
                 int optionIndex = i; // Capture the index for the closure
-                optionButtons[i].onClick.RemoveAllListeners();
-                optionButtons[i].onClick.AddListener(() => OnOptionSelected(optionIndex));
+                button.onClick.RemoveAllListeners();
+                button.onClick.AddListener(() => OnOptionSelected(optionIndex));
             }
             else
             {
@@ -69,6 +83,7 @@ public class SelectionPopup : PreviewPopupBase<object, string>
 
     private void OnOptionSelected(int optionIndex)
     {
+        Debug.Log($"OnOptionSelected: {optionIndex}");
         if (optionIndex >= 0 && optionIndex < currentOptions.Count)
         {
             currentOptions[optionIndex].onSelected?.Invoke();
@@ -83,9 +98,15 @@ public class SelectionPopup : PreviewPopupBase<object, string>
         {
             if (button.gameObject.activeSelf && button.interactable)
             {
-                EventSystem.current.SetSelectedGameObject(button.gameObject);
+                StartCoroutine(SetSelectedAfterDelay(button.gameObject));
                 break;
             }
         }
+    }
+
+    private IEnumerator SetSelectedAfterDelay(GameObject button)
+    {
+        yield return new WaitForSeconds(0.5f); // Wait for 0.5 seconds before selecting the button
+        EventSystem.current.SetSelectedGameObject(button);
     }
 } 

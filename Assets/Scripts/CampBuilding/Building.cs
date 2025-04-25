@@ -32,12 +32,6 @@ public class Building : MonoBehaviour
     public event System.Action OnBuildingUpgraded;
     public event System.Action<float> OnHealthChanged;
 
-    void Start()
-    {
-        repairTask = GetComponent<BuildingRepairTask>();
-        upgradeTask = GetComponent<BuildingUpgradeTask>();
-    }
-
     public virtual void SetupBuilding(BuildingScriptableObj buildingScriptableObj)
     {
         this.buildingScriptableObj = buildingScriptableObj;
@@ -63,6 +57,7 @@ public class Building : MonoBehaviour
 
     private void SetupRepairTask()
     {
+        repairTask = GetComponent<BuildingRepairTask>();
         if (repairTask == null)
         {
             repairTask = gameObject.AddComponent<BuildingRepairTask>();
@@ -78,6 +73,7 @@ public class Building : MonoBehaviour
 
     private void SetupUpgradeTask()
     {
+        upgradeTask = GetComponent<BuildingUpgradeTask>();
         if (upgradeTask == null)
         {
             upgradeTask = gameObject.AddComponent<BuildingUpgradeTask>();

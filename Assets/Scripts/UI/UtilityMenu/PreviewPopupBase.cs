@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Collections;
 
 
 public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour
@@ -43,6 +44,17 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour
     protected virtual void SetupInitialSelection()
     {
         // Override in derived classes to set initial button selection
+        if (closeButton != null)
+        {
+            // Use a small delay to prevent immediate button press
+            StartCoroutine(SetSelectedAfterDelay(closeButton.gameObject));
+        }
+    }
+
+    private IEnumerator SetSelectedAfterDelay(GameObject obj)
+    {
+        yield return new WaitForEndOfFrame();
+        EventSystem.current.SetSelectedGameObject(obj);
     }
 
     protected void SetParentUIButtonsInteractable(bool interactable)
