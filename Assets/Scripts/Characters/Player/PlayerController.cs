@@ -119,6 +119,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
                 PlayerInput.Instance.OnAPressed += HandleWorkAssignment;
                 PlayerInput.Instance.OnBPressed += () => ReturnToSettlerMenu();
+                PlayerInput.Instance.OnBPressed += () => CloseSelectionPopup();
                 break;
 
             case PlayerControlType.TURRET_CAMERA_MOVEMENT:
@@ -194,7 +195,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 }
 
                 // Show the selection popup
-                PlayerUIManager.Instance.selectionPopup.Setup(options, null);
+                PlayerUIManager.Instance.selectionPopup.Setup(options, null, () => ReturnToSettlerMenu());
             }
         }
     }
@@ -202,6 +203,10 @@ public class PlayerController : MonoBehaviour, IControllerInput
     private void ReturnToSettlerMenu()
     {
         PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(true, 0.05f);
+    }
+
+    private void CloseSelectionPopup()
+    {
         PlayerUIManager.Instance.selectionPopup.OnCloseClicked();
     }
 

@@ -91,6 +91,8 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour, IContr
     {
         throw new System.NotImplementedException();
     }
+
+    
 }
 
 

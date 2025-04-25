@@ -20,16 +20,18 @@ public class SelectionPopup : PreviewPopupBase<object, string>
     [SerializeField] private Button[] optionButtons;
 
     private List<SelectionOption> currentOptions = new List<SelectionOption>();
+    private Action onClose;
 
     protected override void Start()
     {
         base.Start();
     }
 
-    public void Setup(List<SelectionOption> options, GameObject element)
+    public void Setup(List<SelectionOption> options, GameObject element, Action onClose = null)
     {
         currentOptions = options;
         selectedElement = element;
+        this.onClose = onClose;
         
         // Disable all buttons in the parent UI except popup buttons
         SetParentUIButtonsInteractable(false);
@@ -108,5 +110,11 @@ public class SelectionPopup : PreviewPopupBase<object, string>
     {
         yield return new WaitForSeconds(0.5f); // Wait for 0.5 seconds before selecting the button
         EventSystem.current.SetSelectedGameObject(button);
+    }
+
+    public override void OnCloseClicked()
+    {
+        base.OnCloseClicked();
+        onClose?.Invoke();
     }
 } 
