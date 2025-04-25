@@ -5,10 +5,6 @@ using Managers;
 public class BuildingUpgradeTask : WorkTask
 {
     private BuildingScriptableObj upgradeTarget;
-    private float upgradeTime = 30f;
-    private float upgradeProgress = 0f;
-    private SettlerNPC currentWorker;
-    private Coroutine upgradeCoroutine;
     private Building targetBuilding;
 
     protected override void Start()
@@ -26,28 +22,28 @@ public class BuildingUpgradeTask : WorkTask
     public void SetupUpgradeTask(BuildingScriptableObj upgradeTarget, float upgradeTime)
     {
         this.upgradeTarget = upgradeTarget;
-        this.upgradeTime = upgradeTime;
+        baseWorkTime = upgradeTime;
     }
 
-    public override void PerformTask(SettlerNPC npc)
+    protected override IEnumerator WorkCoroutine()
     {
-        if (currentWorker == null && HasRequiredResources())
+        if (!HasRequiredResources())
         {
-            currentWorker = npc;
-            ConsumeResources();
-            upgradeCoroutine = StartCoroutine(UpgradeCoroutine());
+            Debug.LogWarning("Not enough resources for upgrade");
+            yield break;
         }
-    }
 
-    private IEnumerator UpgradeCoroutine()
-    {
-        while (upgradeProgress < upgradeTime)
+        // Consume resources
+        ConsumeResources();
+
+        // Process the upgrade
+        while (workProgress < baseWorkTime)
         {
-            upgradeProgress += Time.deltaTime;
+            workProgress += Time.deltaTime;
             yield return null;
         }
 
-        CompleteUpgrade();
+        CompleteWork();
     }
 
     private bool HasRequiredResources()
@@ -70,7 +66,7 @@ public class BuildingUpgradeTask : WorkTask
         }
     }
 
-    private void CompleteUpgrade()
+    protected override void CompleteWork()
     {
         if (targetBuilding != null)
         {
@@ -78,22 +74,7 @@ public class BuildingUpgradeTask : WorkTask
             Debug.Log($"Building upgrade completed!");
         }
         
-        // Reset state
-        upgradeProgress = 0f;
-        currentWorker = null;
-        upgradeCoroutine = null;
-        
-        // Notify completion
-        InvokeStopWork();
-    }
-
-    private void OnDisable()
-    {
-        if (upgradeCoroutine != null)
-        {
-            StopCoroutine(upgradeCoroutine);
-            upgradeCoroutine = null;
-        }
+        base.CompleteWork();
     }
 
     public override bool CanPerformTask()

@@ -2,6 +2,9 @@ using UnityEngine;
 using System.Collections;
 using Managers;
 
+/// <summary>
+/// Used by dirt piles to clean them.
+/// </summary>
 public class CleaningTask : WorkTask
 {
     [SerializeField] private float cleaningTime = 5f;
@@ -15,6 +18,7 @@ public class CleaningTask : WorkTask
     {
         base.Start();
         workType = WorkType.CLEANING;
+        baseWorkTime = cleaningTime;
     }
 
     public override void PerformTask(SettlerNPC npc)
@@ -59,6 +63,15 @@ public class CleaningTask : WorkTask
             StopCoroutine(cleaningCoroutine);
             cleaningCoroutine = null;
         }
+    }
+
+    protected override void CompleteWork()
+    {
+        // Increase the camp's cleanliness
+        CampManager.Instance.CleanlinessManager.IncreaseCleanliness(cleanlinessIncrease);
+        Debug.Log($"Cleaning completed! Increased cleanliness by {cleanlinessIncrease}");
+        
+        base.CompleteWork();
     }
 
     public override bool CanPerformTask()

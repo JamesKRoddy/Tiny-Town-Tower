@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-public class FarmingTask : ResourceWorkTask
+public class FarmingTask : WorkTask
 {
     [SerializeField] private ResourceScriptableObj cropType;
     [SerializeField] private int harvestAmount = 3;

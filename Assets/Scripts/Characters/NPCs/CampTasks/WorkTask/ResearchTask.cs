@@ -1,7 +1,8 @@
 using UnityEngine;
 using System.Collections;
 using Managers;
-public class ResearchTask : ResourceWorkTask
+
+public class ResearchTask : WorkTask
 {
     [SerializeField] private float researchTime = 60f;
     [SerializeField] private int researchPoints = 1;

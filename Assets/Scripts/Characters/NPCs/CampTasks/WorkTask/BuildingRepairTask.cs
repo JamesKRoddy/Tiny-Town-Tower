@@ -4,11 +4,7 @@ using Managers;
 
 public class BuildingRepairTask : WorkTask
 {
-    private float repairTime = 20f;
     private float healthRestored = 50f;
-    private float repairProgress = 0f;
-    private SettlerNPC currentWorker;
-    private Coroutine repairCoroutine;
     private Building targetBuilding;
 
     protected override void Start()
@@ -25,41 +21,29 @@ public class BuildingRepairTask : WorkTask
 
     public void SetupRepairTask(float repairTime, float healthRestored)
     {
-        this.repairTime = repairTime;
+        baseWorkTime = repairTime;
         this.healthRestored = healthRestored;
     }
 
-    public override void PerformTask(SettlerNPC npc)
+    protected override IEnumerator WorkCoroutine()
     {
-        if (currentWorker == null && HasRequiredResources())
+        if (!HasRequiredResources())
         {
-            currentWorker = npc;
-            ConsumeResources();
-            repairCoroutine = StartCoroutine(RepairCoroutine());
+            Debug.LogWarning("Not enough resources for repair");
+            yield break;
         }
-    }
 
-    private IEnumerator RepairCoroutine()
-    {
-        while (repairProgress < repairTime)
+        // Consume resources
+        ConsumeResources();
+
+        // Process the repair
+        while (workProgress < baseWorkTime)
         {
-            repairProgress += Time.deltaTime;
+            workProgress += Time.deltaTime;
             yield return null;
         }
 
-        CompleteRepair();
-    }
-
-    private bool HasRequiredResources()
-    {
-        foreach (var resourceItem in requiredResources)
-        {
-            if (CampManager.Instance.PlayerInventory.GetItemCount(resourceItem.resource) < resourceItem.count)
-            {
-                return false;
-            }
-        }
-        return true;
+        CompleteWork();
     }
 
     private void ConsumeResources()
@@ -70,7 +54,7 @@ public class BuildingRepairTask : WorkTask
         }
     }
 
-    private void CompleteRepair()
+    protected override void CompleteWork()
     {
         if (targetBuilding != null)
         {
@@ -78,22 +62,7 @@ public class BuildingRepairTask : WorkTask
             Debug.Log($"Building repair completed! Restored {healthRestored} health");
         }
         
-        // Reset state
-        repairProgress = 0f;
-        currentWorker = null;
-        repairCoroutine = null;
-        
-        // Notify completion
-        InvokeStopWork();
-    }
-
-    private void OnDisable()
-    {
-        if (repairCoroutine != null)
-        {
-            StopCoroutine(repairCoroutine);
-            repairCoroutine = null;
-        }
+        base.CompleteWork();
     }
 
     public override bool CanPerformTask()

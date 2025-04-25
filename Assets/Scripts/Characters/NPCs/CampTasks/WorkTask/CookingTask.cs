@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using Managers;
 
-public class CookingTask : ResourceWorkTask
+public class CookingTask : WorkTask
 {
     [SerializeField] private ResourceScriptableObj[] ingredients;
     [SerializeField] private int[] ingredientAmounts;

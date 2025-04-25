@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using System.Collections;
 using Managers;
 
 public abstract class WorkTask : MonoBehaviour
@@ -9,11 +10,26 @@ public abstract class WorkTask : MonoBehaviour
     private SettlerNPC assignedNPC; // Reference to the NPC performing this task
     [SerializeField] public ResourceItemCount[] requiredResources; // Resources needed to perform this task
 
+    // Work progress tracking
+    protected float workProgress = 0f;
+    protected float baseWorkTime = 5f;
+    protected int resourceAmount = 1;
+    protected SettlerNPC currentWorker;
+    protected Coroutine workCoroutine;
+
     // Property to access the assigned NPC
     public SettlerNPC AssignedNPC => assignedNPC;
+    public bool IsOccupied => currentWorker != null;
 
     // Abstract method for NPC to perform the work task
-    public abstract void PerformTask(SettlerNPC npc);
+    public virtual void PerformTask(SettlerNPC npc)
+    {
+        if (currentWorker == null)
+        {
+            currentWorker = npc;
+            workCoroutine = StartCoroutine(WorkCoroutine());
+        }
+    }
     
     // Virtual method that can be overridden by specific tasks
     public virtual Transform WorkTaskTransform()
@@ -78,5 +94,38 @@ public abstract class WorkTask : MonoBehaviour
     public bool IsAssigned()
     {
         return assignedNPC != null;
+    }
+
+    // Virtual work coroutine that can be overridden by specific tasks
+    protected virtual IEnumerator WorkCoroutine()
+    {
+        while (workProgress < baseWorkTime)
+        {
+            workProgress += Time.deltaTime;
+            yield return null;
+        }
+
+        CompleteWork();
+    }
+
+    // Virtual method for completing work that can be overridden
+    protected virtual void CompleteWork()
+    {
+        // Reset state
+        workProgress = 0f;
+        currentWorker = null;
+        workCoroutine = null;
+        
+        // Notify completion
+        InvokeStopWork();
+    }
+
+    protected virtual void OnDisable()
+    {
+        if (workCoroutine != null)
+        {
+            StopCoroutine(workCoroutine);
+            workCoroutine = null;
+        }
     }
 }

@@ -4,15 +4,15 @@ using System.Collections.Generic;
 using System;
 using UnityEngine.AI;
 
+/// <summary>
+/// Used by construction sites to build buildings.
+/// </summary>
 public class ConstructionTask : WorkTask
 {
     private GameObject finalBuildingPrefab;
     private BuildingScriptableObj buildingScriptableObj;
-    private float baseConstructionTime = 10f;
-    private float currentProgress = 0f;
     private List<SettlerNPC> workers = new List<SettlerNPC>();
     private bool isConstructionComplete = false;
-    private Coroutine constructionCoroutine;
 
     protected override void Start()
     {
@@ -31,7 +31,6 @@ public class ConstructionTask : WorkTask
 
     public override void PerformTask(SettlerNPC npc)
     {
-        
         // Add worker to the task
         if (!workers.Contains(npc))
         {
@@ -39,44 +38,40 @@ public class ConstructionTask : WorkTask
         }
 
         // Start the construction process if not already started
-        if (!isConstructionComplete && constructionCoroutine == null)
+        if (!isConstructionComplete && workCoroutine == null)
         {
-            constructionCoroutine = StartCoroutine(ConstructionCoroutine());
+            workCoroutine = StartCoroutine(WorkCoroutine());
         }
     }
 
-    private IEnumerator ConstructionCoroutine()
+    protected override IEnumerator WorkCoroutine()
     {
-        
-        while (currentProgress < baseConstructionTime && workers.Count > 0)
+        while (workProgress < baseWorkTime && workers.Count > 0)
         {
-            float effectiveTime = baseConstructionTime / Mathf.Sqrt(workers.Count);
-            currentProgress += Time.deltaTime / effectiveTime;
+            float effectiveTime = baseWorkTime / Mathf.Sqrt(workers.Count);
+            workProgress += Time.deltaTime / effectiveTime;
 
-            if (currentProgress >= baseConstructionTime)
+            if (workProgress >= baseWorkTime)
             {
-                currentProgress = baseConstructionTime;
+                workProgress = baseWorkTime;
                 break;
             }
 
             yield return null;
         }
 
-        CompleteConstruction();
-        constructionCoroutine = null;
+        CompleteWork();
     }
 
     public void SetupConstruction(BuildingScriptableObj buildingScriptableObj)
     {
         this.buildingScriptableObj = buildingScriptableObj;
         finalBuildingPrefab = buildingScriptableObj.prefab;
-        baseConstructionTime = buildingScriptableObj.constructionTime;
+        baseWorkTime = buildingScriptableObj.constructionTime;
     }
 
-    private void CompleteConstruction()
+    protected override void CompleteWork()
     {
-        InvokeStopWork();
-
         GameObject buildingObj = Instantiate(finalBuildingPrefab, transform.position, Quaternion.identity);
         Building buildingComponent = buildingObj.GetComponent<Building>();
         if (buildingComponent == null)
@@ -89,6 +84,8 @@ public class ConstructionTask : WorkTask
 
         Destroy(gameObject);
         isConstructionComplete = true;
+        
+        base.CompleteWork();
     }
 
     public void RemoveWorker(SettlerNPC npc)
@@ -96,15 +93,6 @@ public class ConstructionTask : WorkTask
         if (workers.Contains(npc))
         {
             workers.Remove(npc);
-        }
-    }
-
-    private void OnDisable()
-    {
-        if (constructionCoroutine != null)
-        {
-            StopCoroutine(constructionCoroutine);
-            constructionCoroutine = null;
         }
     }
 }

@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using Managers;
 
-public class ResourceUpgradeTask : ResourceWorkTask
+public class ResourceUpgradeTask : WorkTask
 {
     [SerializeField] private ResourceScriptableObj inputResource;
     [SerializeField] private int inputAmount = 1;
