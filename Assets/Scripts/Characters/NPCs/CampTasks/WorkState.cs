@@ -125,20 +125,19 @@ public class WorkState : _TaskState
                 if(assignedTask.WorkTaskTransform() != assignedTask.transform)
                 {
                     Debug.Log($"[WorkState] {gameObject.name} has reached the task position");
-                    // Disable NavMeshAgent updates temporarily
+                    // Disable NavMeshAgent control to allow manual positioning
                     agent.updatePosition = false;
                     agent.updateRotation = false;
-                    
-                    // Set the exact position and rotation
-                    transform.position = assignedTask.WorkTaskTransform().position;
-                    transform.rotation = assignedTask.WorkTaskTransform().rotation;
                 }
             }
 
-            // If we're at a specific work location, maintain the exact rotation
+            // If we're at a specific work location, smoothly interpolate to the target position and rotation
             if(assignedTask.WorkTaskTransform() != assignedTask.transform)
             {
-                transform.rotation = assignedTask.WorkTaskTransform().rotation;
+                // Smoothly interpolate position
+                transform.position = Vector3.Lerp(transform.position, assignedTask.WorkTaskTransform().position, Time.deltaTime * 5f);
+                // Smoothly interpolate rotation
+                transform.rotation = Quaternion.Slerp(transform.rotation, assignedTask.WorkTaskTransform().rotation, Time.deltaTime * 5f);
             }
             else
             {
@@ -181,7 +180,7 @@ public class WorkState : _TaskState
             agent.isStopped = false;
             timeAtTaskLocation = 0f;
             
-            // Re-enable NavMeshAgent updates when moving
+            // Re-enable NavMeshAgent control when moving
             agent.updatePosition = true;
             agent.updateRotation = true;
 
