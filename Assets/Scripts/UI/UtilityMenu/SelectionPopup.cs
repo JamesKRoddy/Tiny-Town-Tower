@@ -29,6 +29,8 @@ public class SelectionPopup : PreviewPopupBase<object, string>
 
     public void Setup(List<SelectionOption> options, GameObject element, Action onClose = null)
     {
+        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
+
         currentOptions = options;
         selectedElement = element;
         this.onClose = onClose;
