@@ -87,7 +87,6 @@ public class SelectionPopup : PreviewPopupBase<object, string>
 
     private void OnOptionSelected(int optionIndex)
     {
-        Debug.Log($"OnOptionSelected: {optionIndex}");
         if (optionIndex >= 0 && optionIndex < currentOptions.Count)
         {
             currentOptions[optionIndex].onSelected?.Invoke();

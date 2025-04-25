@@ -37,11 +37,6 @@ public class ResearchTask : ResourceWorkTask
         CompleteWork();
     }
 
-    private bool HasRequiredResources()
-    {
-        return CampManager.Instance.PlayerInventory.GetItemCount(requiredResource) >= resourceCost;
-    }
-
     private void ConsumeResources()
     {
         CampManager.Instance.PlayerInventory.RemoveItem(requiredResource, resourceCost);

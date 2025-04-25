@@ -20,7 +20,6 @@ public class WorkState : _TaskState
 
     public override void OnEnterState()
     {        
-        Debug.Log($"[WorkState] OnEnterState for {gameObject.name}");
         if (assignedTask != null)
         {
             workLayerIndex = animator.GetLayerIndex("Work Layer");
@@ -31,12 +30,40 @@ public class WorkState : _TaskState
 
             Vector3 taskPosition = assignedTask.WorkTaskTransform().position;
 
-            // Check if the task position is on the NavMesh
+            // Try to find a valid position on the NavMesh
             NavMeshHit hit;
-            if (NavMesh.SamplePosition(taskPosition, out hit, 1.0f, NavMesh.AllAreas))
+            float searchRadius = 5.0f; // Start with a reasonable search radius
+            bool foundValidPosition = false;
+            
+            // Try multiple search radii if needed
+            while (searchRadius <= 20.0f && !foundValidPosition)
             {
+                if (NavMesh.SamplePosition(taskPosition, out hit, searchRadius, NavMesh.AllAreas))
+                {
+                    agent.stoppingDistance = stoppingDistance;
+                    agent.SetDestination(hit.position);
+                    agent.speed = MaxSpeed();
+                    agent.angularSpeed = npc.rotationSpeed;
+                    isTaskBeingPerformed = false;
+                    hasReachedTask = false;
+                    timeAtTaskLocation = 0f;
+                    agent.isStopped = false;
+                    
+                    // Subscribe to the StopWork event
+                    assignedTask.StopWork += StopWork;
+                    foundValidPosition = true;
+                }
+                else
+                {
+                    searchRadius += 5.0f; // Increase search radius
+                }
+            }
+
+            if (!foundValidPosition)
+            {
+                // If we still can't find a valid position, try to get as close as possible
                 agent.stoppingDistance = stoppingDistance;
-                agent.SetDestination(hit.position);
+                agent.SetDestination(taskPosition);
                 agent.speed = MaxSpeed();
                 agent.angularSpeed = npc.rotationSpeed;
                 isTaskBeingPerformed = false;
@@ -46,11 +73,8 @@ public class WorkState : _TaskState
                 
                 // Subscribe to the StopWork event
                 assignedTask.StopWork += StopWork;
-            }
-            else
-            {
-                Debug.LogError($"[WorkState] {gameObject.name} task position is not valid on NavMesh! Position: {taskPosition}");
-                StopWork();
+                
+                Debug.LogWarning($"[WorkState] {gameObject.name} could not find valid NavMesh position, attempting to get as close as possible");
             }
         }
         else
@@ -71,6 +95,10 @@ public class WorkState : _TaskState
         agent.isStopped = false;
         agent.stoppingDistance = 0f;
         
+        // Make sure NavMeshAgent updates are re-enabled when leaving the state
+        agent.updatePosition = true;
+        agent.updateRotation = true;
+        
         // Unsubscribe from the StopWork event
         if (assignedTask != null)
         {
@@ -84,15 +112,6 @@ public class WorkState : _TaskState
 
         float distanceToTask = Vector3.Distance(transform.position, assignedTask.WorkTaskTransform().position);
 
-        // Make NPC face the task position
-        Vector3 directionToTask = (assignedTask.WorkTaskTransform().position - transform.position).normalized;
-        directionToTask.y = 0; // Keep rotation only on the Y axis
-        if (directionToTask != Vector3.zero)
-        {
-            Quaternion targetRotation = Quaternion.LookRotation(directionToTask);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, npc.rotationSpeed * Time.deltaTime);
-        }
-
         // Check if we've reached the end of our path or are close enough to the task
         if (!agent.pathPending && (agent.remainingDistance <= stoppingDistance || distanceToTask <= minDistanceToTask))
         {
@@ -102,10 +121,34 @@ public class WorkState : _TaskState
                 agent.isStopped = true;
                 agent.velocity = Vector3.zero;
                 timeAtTaskLocation = 0f;
+                
                 if(assignedTask.WorkTaskTransform() != assignedTask.transform)
                 {
+                    Debug.Log($"[WorkState] {gameObject.name} has reached the task position");
+                    // Disable NavMeshAgent updates temporarily
+                    agent.updatePosition = false;
+                    agent.updateRotation = false;
+                    
+                    // Set the exact position and rotation
                     transform.position = assignedTask.WorkTaskTransform().position;
                     transform.rotation = assignedTask.WorkTaskTransform().rotation;
+                }
+            }
+
+            // If we're at a specific work location, maintain the exact rotation
+            if(assignedTask.WorkTaskTransform() != assignedTask.transform)
+            {
+                transform.rotation = assignedTask.WorkTaskTransform().rotation;
+            }
+            else
+            {
+                // Only rotate towards the task if we're not at a specific work location
+                Vector3 directionToTask = (assignedTask.WorkTaskTransform().position - transform.position).normalized;
+                directionToTask.y = 0; // Keep rotation only on the Y axis
+                if (directionToTask != Vector3.zero)
+                {
+                    Quaternion targetRotation = Quaternion.LookRotation(directionToTask);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, npc.rotationSpeed * Time.deltaTime);
                 }
             }
 
@@ -137,6 +180,19 @@ public class WorkState : _TaskState
             hasReachedTask = false;
             agent.isStopped = false;
             timeAtTaskLocation = 0f;
+            
+            // Re-enable NavMeshAgent updates when moving
+            agent.updatePosition = true;
+            agent.updateRotation = true;
+
+            // Rotate towards the task while moving
+            Vector3 directionToTask = (assignedTask.WorkTaskTransform().position - transform.position).normalized;
+            directionToTask.y = 0; // Keep rotation only on the Y axis
+            if (directionToTask != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(directionToTask);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, npc.rotationSpeed * Time.deltaTime);
+            }
         }
     }
 
