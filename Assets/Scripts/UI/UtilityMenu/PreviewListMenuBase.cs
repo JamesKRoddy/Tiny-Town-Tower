@@ -46,6 +46,10 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
             }
             else
             {
+                if (selectionPopup != null)
+                {
+                    selectionPopup.OnCloseClicked();
+                }
                 CleanupScreens();
                 CleanupScreenButtons();
             }
