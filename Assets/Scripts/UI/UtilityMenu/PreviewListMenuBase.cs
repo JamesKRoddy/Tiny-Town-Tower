@@ -56,6 +56,16 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
             onDone?.Invoke();
         });
     }    
+
+    protected override void BackPressed(){
+        if(selectionPopup != null && selectionPopup.isActive){
+            selectionPopup.OnCloseClicked();
+        }
+        else{
+            PlayerUIManager.Instance.BackPressed();
+        }
+    }
+
     private void SetupScreenButtons()
     {
         if (rightScreenBtn != null)

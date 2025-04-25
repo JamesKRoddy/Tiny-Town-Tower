@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using System.Collections;
 
 
-public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour
+public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour, IControllerInput
 {
     [Header("UI Elements")]
     [SerializeField] protected Button closeButton;
@@ -12,6 +12,7 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour
     protected TItem currentItem;
     protected PreviewListMenuBase<TCategory, TItem> parentMenu;
     protected GameObject selectedElement;
+    public bool isActive { get; private set; } = false;
 
     protected virtual void Start()
     {
@@ -36,6 +37,8 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour
 
         // Show popup
         gameObject.SetActive(true);
+
+        isActive = true;
 
         // Set first button as selected
         SetupInitialSelection();
@@ -76,11 +79,17 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour
         // Re-enable parent UI buttons and close popup
         SetParentUIButtonsInteractable(true);
         gameObject.SetActive(false);
+        isActive = false;
 
         if (selectedElement != null)
         {
             EventSystem.current.SetSelectedGameObject(selectedElement);
         }
+    }
+
+    public void SetPlayerControlType(PlayerControlType controlType)
+    {
+        throw new System.NotImplementedException();
     }
 }
 
