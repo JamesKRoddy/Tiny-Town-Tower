@@ -70,7 +70,7 @@ public interface IDamageable
     UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
     Can open and place mutations in the genetic mutation menu, while no npcs are possessed
-    Overall popups feel a bit off, need to fix when they open and close
+    NPCs still sliding around when they are assigned a task
     
  * Next work:
 
@@ -99,6 +99,13 @@ public interface IDamageable
     A building health system
     A research system
     A cleanliness system for the camp
+
+    Have to setup a menu for task details, they should all use the same preview menu just with different entries. tasks that need this are:
+    ResearchTask
+    ResourceUpgradeTask
+    FarmingTask
+    CookingTask
+
 
 */
 
