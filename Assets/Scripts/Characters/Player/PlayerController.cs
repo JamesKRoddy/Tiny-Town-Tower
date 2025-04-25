@@ -202,7 +202,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
     private void ReturnToSettlerMenu()
     {
         PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(true, 0.05f);
-        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_NPC_MOVEMENT);
+        PlayerUIManager.Instance.selectionPopup.OnCloseClicked();
     }
 
     #endregion
