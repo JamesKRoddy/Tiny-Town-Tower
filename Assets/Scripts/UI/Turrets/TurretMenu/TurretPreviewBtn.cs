@@ -30,7 +30,7 @@ public class TurretPreviewBtn : PreviewButtonBase<TurretScriptableObject>
 
     public void SetupButton(TurretScriptableObject turretObjRef)
     {
-        base.SetupButton(turretObjRef, turretObjRef._sprite, turretObjRef._name);
+        base.SetupButton(turretObjRef, turretObjRef.sprite, turretObjRef.objectName);
     }
 }
 

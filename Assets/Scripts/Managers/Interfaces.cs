@@ -74,6 +74,8 @@ public interface IDamageable
     
  * Next work:
 
+    ******Combat and Boss******
+
     Setup different hitboxes on the weapons for horizontal and vertical attacks
     
     Weapon impacts, for basic weapons its just dirt
@@ -90,10 +92,7 @@ public interface IDamageable
 
     Can do a runningtowards the player attack, nav agent and animation should work for this.
 
- */
-
-/*
-    Next Large Things to Move Onto
+    ******Camp Management******
     
     A camp inventory system to track resources
     A building health system
@@ -101,12 +100,15 @@ public interface IDamageable
     A cleanliness system for the camp
 
     Have to setup a menu for task details, they should all use the same preview menu just with different entries. tasks that need this are:
-    ResearchTask
+    ResearchTask, use the research manager to track whats been researched and what can be researched, scriptable obj for research items
     ResourceUpgradeTask
     Later:
     FarmingTask
     CookingTask
 
+    ******UI******
+
+    See if preview base prefabs (buttons and screens) can be more generic and share the same prefab
 
 */
 

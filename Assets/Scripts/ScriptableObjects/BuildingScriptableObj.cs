@@ -1,6 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Used for buildings in the camp section of the game
+/// </summary>
+
 [CreateAssetMenu(fileName = "BuildingScriptableObj", menuName = "Scriptable Objects/Camp/BuildingScriptableObj")]
 public class BuildingScriptableObj : PlaceableObjectParent
 {

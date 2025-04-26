@@ -57,17 +57,17 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
 
     public override string GetPreviewName(BuildingScriptableObj item)
     {
-        return item._name;
+        return item.objectName;
     }
 
     public override Sprite GetPreviewSprite(BuildingScriptableObj item)
     {
-        return item._sprite;
+        return item.sprite;
     }
 
     public override string GetPreviewDescription(BuildingScriptableObj item)
     {
-        return item._description;
+        return item.description;
     }
 
     public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(BuildingScriptableObj item)

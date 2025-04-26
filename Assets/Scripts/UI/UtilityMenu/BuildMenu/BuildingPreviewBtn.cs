@@ -31,7 +31,7 @@ public class BuildingPreviewBtn : PreviewButtonBase<BuildingScriptableObj>
 
     public void SetupButton(BuildingScriptableObj buildingObjRef)
     {
-        base.SetupButton(buildingObjRef, buildingObjRef._sprite, buildingObjRef._name);
+        base.SetupButton(buildingObjRef, buildingObjRef.sprite, buildingObjRef.objectName);
     }
 }
 
