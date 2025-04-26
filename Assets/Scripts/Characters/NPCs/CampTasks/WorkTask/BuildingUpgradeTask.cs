@@ -46,26 +46,6 @@ public class BuildingUpgradeTask : WorkTask
         CompleteWork();
     }
 
-    private bool HasRequiredResources()
-    {
-        foreach (var resourceItem in requiredResources)
-        {
-            if (CampManager.Instance.PlayerInventory.GetItemCount(resourceItem.resource) < resourceItem.count)
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private void ConsumeResources()
-    {
-        foreach (var resourceItem in requiredResources)
-        {
-            CampManager.Instance.PlayerInventory.RemoveItem(resourceItem.resource, resourceItem.count);
-        }
-    }
-
     protected override void CompleteWork()
     {
         if (targetBuilding != null)

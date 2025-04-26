@@ -4,8 +4,6 @@ using Managers;
 
 public class ResourceUpgradeTask : WorkTask
 {
-    [SerializeField] private ResourceScriptableObj inputResource;
-    [SerializeField] private int inputAmount = 1;
     [SerializeField] private ResourceScriptableObj outputResource;
     [SerializeField] private int outputAmount = 1;
     [SerializeField] private float upgradeTime = 15f;
@@ -37,16 +35,6 @@ public class ResourceUpgradeTask : WorkTask
         }
 
         CompleteWork();
-    }
-
-    private bool HasRequiredResources()
-    {
-        return CampManager.Instance.PlayerInventory.GetItemCount(inputResource) >= inputAmount;
-    }
-
-    private void ConsumeResources()
-    {
-        CampManager.Instance.PlayerInventory.RemoveItem(inputResource, inputAmount);
     }
 
     protected override void CompleteWork()

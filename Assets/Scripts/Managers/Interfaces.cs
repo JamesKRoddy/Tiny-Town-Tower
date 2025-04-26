@@ -103,6 +103,7 @@ public interface IDamageable
     Have to setup a menu for task details, they should all use the same preview menu just with different entries. tasks that need this are:
     ResearchTask
     ResourceUpgradeTask
+    Later:
     FarmingTask
     CookingTask
 

@@ -6,8 +6,6 @@ public class ResearchTask : WorkTask
 {
     [SerializeField] private float researchTime = 60f;
     [SerializeField] private int researchPoints = 1;
-    [SerializeField] private ResourceScriptableObj requiredResource;
-    [SerializeField] private int resourceCost = 1;
 
     protected override void Start()
     {
@@ -36,11 +34,6 @@ public class ResearchTask : WorkTask
         }
 
         CompleteWork();
-    }
-
-    private void ConsumeResources()
-    {
-        CampManager.Instance.PlayerInventory.RemoveItem(requiredResource, resourceCost);
     }
 
     protected override void CompleteWork()

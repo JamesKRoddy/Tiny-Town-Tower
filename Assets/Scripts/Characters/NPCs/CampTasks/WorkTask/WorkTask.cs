@@ -59,6 +59,15 @@ public abstract class WorkTask : MonoBehaviour
         return true;
     }
 
+    // Method to consume required resources
+    protected void ConsumeResources()
+    {
+        foreach (var resourceItem in requiredResources)
+        {
+            PlayerInventory.Instance.RemoveItem(resourceItem.resource, resourceItem.count);
+        }
+    }
+
     // Declare StopWork as an event
     public event Action StopWork; // Called when a construction is complete, building is broken, etc..
 
