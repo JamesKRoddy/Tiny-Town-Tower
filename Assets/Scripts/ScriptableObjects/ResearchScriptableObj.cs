@@ -1,12 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Managers;
 
 [CreateAssetMenu(fileName = "ResearchScriptableObj", menuName = "Scriptable Objects/Camp/ResearchScriptableObj")]
 public class ResearchScriptableObj : WorldItemBase
 {
     [Header("Research Requirements")]
     public ResourceScriptableObj[] requiredResources;
-    public int researchPointsCost;
     public float researchTime;
     public bool isUnlocked = false;
 
@@ -17,7 +17,6 @@ public class ResearchScriptableObj : WorldItemBase
     [Header("Research Benefits")]
     public ResourceScriptableObj[] outputResources; // Resources produced when research is completed
     public float[] outputAmounts; // Amount of each output resource produced
-    public bool unlocksNewBuilding; // Whether this research unlocks a new building type
-    public bool unlocksNewResource; // Whether this research unlocks a new resource type
-    public bool unlocksNewTechnology; // Whether this research unlocks a new technology
+    public ResearchUnlockType unlockType; // What type of item this research unlocks
+    public WorldItemBase[] unlockedItems; // The specific items that are unlocked by this research
 }

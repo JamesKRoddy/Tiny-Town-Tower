@@ -1,50 +1,98 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Managers;
 
-public class SelectionPreviewList : PreviewListMenuBase<string, WorldItemBase>
+public class SelectionPreviewList : PreviewListMenuBase<string, ResearchScriptableObj>
 {
+    private WorkTask currentTask;
+    private GameObject parentBuilding;
+
+    public void Setup(WorkTask task, GameObject building)
+    {
+        currentTask = task;
+        parentBuilding = building;
+        RefreshUIAndSelectFirst();
+    }
+
     public override void DestroyPreviewSpecifics()
     {
-        throw new System.NotImplementedException();
+        // No specific cleanup needed
     }
 
-    public override string GetItemCategory(WorldItemBase item)
+    public override string GetItemCategory(ResearchScriptableObj item)
     {
-        throw new System.NotImplementedException();
+        // Group research by unlock type
+        return item.unlockType.ToString();
     }
 
-    public override IEnumerable<WorldItemBase> GetItems()
+    public override IEnumerable<ResearchScriptableObj> GetItems()
     {
-        throw new System.NotImplementedException();
+        return CampManager.Instance.ResearchManager.GetAvailableResearch();
     }
 
-    public override string GetPreviewDescription(WorldItemBase item)
+    public override string GetPreviewDescription(ResearchScriptableObj item)
     {
-        throw new System.NotImplementedException();
+        string description = item.description + "\n\n";
+        
+        // Add resource requirements
+        if (item.requiredResources != null && item.requiredResources.Length > 0)
+        {
+            description += "Required Resources:\n";
+            foreach (var resource in item.requiredResources)
+            {
+                description += $"- {resource.objectName}\n";
+            }
+        }
+
+        // Add research time
+        description += $"\nResearch Time: {item.researchTime} seconds";
+
+        // Add unlock information
+        if (item.unlockedItems != null && item.unlockedItems.Length > 0)
+        {
+            description += $"\n\nUnlocks:";
+            foreach (var unlockedItem in item.unlockedItems)
+            {
+                description += $"\n- {unlockedItem.objectName}";
+            }
+        }
+
+        return description;
     }
 
-    public override string GetPreviewName(WorldItemBase item)
+    public override string GetPreviewName(ResearchScriptableObj item)
     {
-        throw new System.NotImplementedException();
+        return item.objectName;
     }
 
-    public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(WorldItemBase item)
+    public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(ResearchScriptableObj item)
     {
-        throw new System.NotImplementedException();
+        if (item.requiredResources != null)
+        {
+            foreach (var resource in item.requiredResources)
+            {
+                yield return (
+                    resource.objectName,
+                    1,
+                    PlayerInventory.Instance.GetItemCount(resource)
+                );
+            }
+        }
     }
 
-    public override Sprite GetPreviewSprite(WorldItemBase item)
+    public override Sprite GetPreviewSprite(ResearchScriptableObj item)
     {
-        throw new System.NotImplementedException();
+        return item.sprite;
     }
 
-    public override void SetupItemButton(WorldItemBase item, GameObject button)
+    public override void SetupItemButton(ResearchScriptableObj item, GameObject button)
     {
-        throw new System.NotImplementedException();
+        var buttonComponent = button.GetComponent<SelectionPreviewButton>();
+        buttonComponent.SetupButton(item);
     }
 
-    public override void UpdatePreviewSpecifics(WorldItemBase item)
+    public override void UpdatePreviewSpecifics(ResearchScriptableObj item)
     {
-        throw new System.NotImplementedException();
+        // No additional specifics needed
     }
 }

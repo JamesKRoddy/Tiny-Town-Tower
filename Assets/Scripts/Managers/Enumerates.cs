@@ -51,6 +51,22 @@ public enum TaskType
 }
 
 // =========================
+// RESEARCH ENUMS
+// =========================
+
+[System.Serializable]
+public enum ResearchUnlockType
+{
+    NONE,
+    BUILDING,    // Unlocks new building types
+    RESOURCE,    // Unlocks new resources
+    TECHNOLOGY,  // Unlocks new technologies
+    WEAPON,      // Unlocks new weapons
+    TURRET,      // Unlocks new turrets
+    UPGRADE      // Unlocks upgrades for existing items
+}
+
+// =========================
 // PLAYER AND CONTROL ENUMS
 // =========================
 

@@ -49,6 +49,7 @@ public class PlayerUIManager : MonoBehaviour
     public TurretUpgradeMenu turretUpgradeMenu;
     public GeneticMutationUI geneticMutationMenu;
     public SelectionPopup selectionPopup;
+    public SelectionPreviewList selectionPreviewList;
 
     [Header("Overlay Menu References")]
     [SerializeField] TMP_Text errorMessage;

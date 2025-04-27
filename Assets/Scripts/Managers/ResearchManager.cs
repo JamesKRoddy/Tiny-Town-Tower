@@ -45,21 +45,13 @@ namespace Managers
             availableResearch.Remove(research);
             completedResearch.Add(research);
 
-            // Unlock the associated items
-            if (research.unlocksNewBuilding)
+            // Add any unlocked items to the unlocked items list
+            if (research.unlockedItems != null && research.unlockType != ResearchUnlockType.NONE)
             {
-                // Add building to unlocked items
-                // This would need to be implemented based on your building system
-            }
-            if (research.unlocksNewResource)
-            {
-                // Add resource to unlocked items
-                // This would need to be implemented based on your resource system
-            }
-            if (research.unlocksNewTechnology)
-            {
-                // Add technology to unlocked items
-                // This would need to be implemented based on your technology system
+                foreach (var item in research.unlockedItems)
+                {
+                    unlockedItems.Add(item);
+                }
             }
 
             return true;

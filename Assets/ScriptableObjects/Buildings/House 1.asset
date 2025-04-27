@@ -12,22 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d7f097ca34a0eb45a8b2d5ba0c3d616, type: 3}
   m_Name: House 1
   m_EditorClassIdentifier: 
-  _name: House
-  _description: House desc
-  _sprite: {fileID: 0}
+  objectName: House
+  description: House desc
+  sprite: {fileID: 0}
   _resourceCost: []
   prefab: {fileID: 147044, guid: 60eaacb9ed4eea74c9348107646b92a4, type: 3}
   size: {x: 3, y: 3}
   buildingCategory: 0
   constructionTime: 1
-  constructionSite: {fileID: 1667268319894246, guid: 6cd6d1322f283a249b96a6e64e6b4ded, type: 3}
   maxHealth: 100
   repairTime: 20
   healthRestoredPerRepair: 50
   repairResources: []
-  repairResourceCosts: 
   upgradeTarget: {fileID: 0}
   upgradeTime: 30
   upgradeResources: []
-  upgradeResourceCosts: 
   taskRadius: 2

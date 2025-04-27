@@ -186,12 +186,29 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
                 foreach (var task in workTasks)
                 {
-                    options.Add(new SelectionPopup.SelectionOption
+                    if (task.workType == WorkType.RESEARCH)
                     {
-                        optionName = task.workType.ToString(),
-                        onSelected = () => WorkManager.Instance.AssignWorkToBuilding(task),
-                        canSelect = () => task.CanPerformTask()
-                    });
+                        // For research tasks, show the research selection screen
+                        options.Add(new SelectionPopup.SelectionOption
+                        {
+                            optionName = "Research",
+                            onSelected = () => {
+                                PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+                                PlayerUIManager.Instance.selectionPreviewList.Setup(task, building.gameObject);
+                            },
+                            canSelect = () => true
+                        });
+                    }
+                    else
+                    {
+                        // For other tasks, show the normal work assignment
+                        options.Add(new SelectionPopup.SelectionOption
+                        {
+                            optionName = task.workType.ToString(),
+                            onSelected = () => WorkManager.Instance.AssignWorkToBuilding(task),
+                            canSelect = () => task.CanPerformTask()
+                        });
+                    }
                 }
 
                 // Show the selection popup
