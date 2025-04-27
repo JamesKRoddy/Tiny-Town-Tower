@@ -27,6 +27,8 @@ namespace Managers
         [SerializeField] private CleanlinessManager cleanlinessManager;
         [SerializeField] private WorkManager workManager;
         [SerializeField] private BuildManager buildManager;
+        [SerializeField] private CookingManager cookingManager;
+        [SerializeField] private ResourceUpgradeManager resourceUpgradeManager;
 
         // Public access to other managers
         public ResearchManager ResearchManager => researchManager;
@@ -34,6 +36,9 @@ namespace Managers
         public PlayerInventory PlayerInventory => PlayerInventory.Instance;
         public WorkManager WorkManager => workManager;
         public BuildManager BuildManager => buildManager;
+        public CookingManager CookingManager => cookingManager;
+        public ResourceUpgradeManager ResourceUpgradeManager => resourceUpgradeManager;
+
 
         // Inventory Management
         private Dictionary<ResourceScriptableObj, int> resources = new Dictionary<ResourceScriptableObj, int>();

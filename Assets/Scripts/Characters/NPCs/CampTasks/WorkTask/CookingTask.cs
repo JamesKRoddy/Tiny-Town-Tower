@@ -4,45 +4,36 @@ using Managers;
 
 public class CookingTask : WorkTask
 {
-    [SerializeField] private ResourceScriptableObj cookedFood;
-    [SerializeField] private int foodAmount = 1;
-    [SerializeField] private float cookingTime = 10f;
+    private CookingRecipeScriptableObj currentRecipe;
 
     protected override void Start()
     {
         base.Start();
         workType = WorkType.COOKING;
-        baseWorkTime = cookingTime;
     }
 
-    protected override IEnumerator WorkCoroutine()
+    public void SetRecipe(CookingRecipeScriptableObj recipe)
     {
-        // Check if we have all required ingredients
-        if (!HasRequiredResources())
+        currentRecipe = recipe;
+        if (recipe != null)
         {
-            Debug.LogWarning("Not enough ingredients for cooking");
-            yield break;
+            baseWorkTime = recipe.cookingTime;
+            requiredResources = recipe.requiredIngredients;
         }
-
-        // Cook the food
-        while (workProgress < baseWorkTime)
-        {
-            workProgress += Time.deltaTime;
-            yield return null;
-        }
-
-        CompleteWork();
     }
 
     protected override void CompleteWork()
     {
-        // Create the cooked food
-        for (int i = 0; i < foodAmount; i++)
+        if (currentRecipe != null)
         {
-            Resource food = Instantiate(cookedFood.prefab, transform.position + Random.insideUnitSphere, Quaternion.identity).GetComponent<Resource>();
-            food.Initialize(cookedFood);
+            // Create the cooked food
+            for (int i = 0; i < currentRecipe.outputAmount; i++)
+            {
+                Resource food = Instantiate(currentRecipe.outputFood.prefab, transform.position + Random.insideUnitSphere, Quaternion.identity).GetComponent<Resource>();
+                food.Initialize(currentRecipe.outputFood);
+            }
         }
-
+        
         base.CompleteWork();
     }
 } 

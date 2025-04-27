@@ -20,8 +20,7 @@ MonoBehaviour:
     count: 0
   researchTime: 0
   isUnlocked: 0
-  requiredResearch:
-  - {fileID: 0}
+  requiredResearch: []
   requiredCampLevel: 0
   outputResources: []
   outputAmounts: []

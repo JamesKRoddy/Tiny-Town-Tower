@@ -4,15 +4,22 @@ using Managers;
 
 public class ResourceUpgradeTask : WorkTask
 {
-    [SerializeField] private ResourceScriptableObj outputResource;
-    [SerializeField] private int outputAmount = 1;
-    [SerializeField] private float upgradeTime = 15f;
+    private ResourceUpgradeScriptableObj currentUpgrade;
 
     protected override void Start()
     {
         base.Start();
         workType = WorkType.UPGRADE_RESOURCE;
-        baseWorkTime = upgradeTime;
+    }
+
+    public void SetUpgrade(ResourceUpgradeScriptableObj upgrade)
+    {
+        currentUpgrade = upgrade;
+        if (upgrade != null)
+        {
+            baseWorkTime = upgrade.upgradeTime;
+            requiredResources = upgrade.requiredResources;
+        }
     }
 
     protected override IEnumerator WorkCoroutine()
@@ -39,13 +46,16 @@ public class ResourceUpgradeTask : WorkTask
 
     protected override void CompleteWork()
     {
-        // Create the upgraded resources
-        for (int i = 0; i < outputAmount; i++)
+        if (currentUpgrade != null)
         {
-            Resource upgradedResource = Instantiate(outputResource.prefab, transform.position + Random.insideUnitSphere, Quaternion.identity).GetComponent<Resource>();
-            upgradedResource.Initialize(outputResource);
+            // Create the upgraded resources
+            for (int i = 0; i < currentUpgrade.outputAmount; i++)
+            {
+                Resource upgradedResource = Instantiate(currentUpgrade.outputResource.prefab, transform.position + Random.insideUnitSphere, Quaternion.identity).GetComponent<Resource>();
+                upgradedResource.Initialize(currentUpgrade.outputResource);
+            }
         }
-
+        
         base.CompleteWork();
     }
 } 
