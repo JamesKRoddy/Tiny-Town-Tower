@@ -7,18 +7,17 @@ public abstract class WorkTask : MonoBehaviour
 {
     [HideInInspector] public WorkType workType;
     [SerializeField] protected Transform workLocationTransform; // Optional specific work location
-    private SettlerNPC assignedNPC; // Reference to the NPC performing this task
+    protected SettlerNPC currentWorker; // Reference to the NPC performing this task
     [SerializeField] public ResourceItemCount[] requiredResources; // Resources needed to perform this task
 
     // Work progress tracking
     protected float workProgress = 0f;
     protected float baseWorkTime = 5f;
     protected int resourceAmount = 1;
-    protected SettlerNPC currentWorker;
     protected Coroutine workCoroutine;
 
     // Property to access the assigned NPC
-    public SettlerNPC AssignedNPC => assignedNPC;
+    public SettlerNPC AssignedNPC => currentWorker;
     public bool IsOccupied => currentWorker != null;
 
     // Abstract method for NPC to perform the work task
@@ -90,19 +89,20 @@ public abstract class WorkTask : MonoBehaviour
     // Method to assign an NPC to this task
     public void AssignNPC(SettlerNPC npc)
     {
-        assignedNPC = npc;
+        Debug.Log("Assigning NPC to task: " + npc.name);
+        currentWorker = npc;
     }
 
     // Method to unassign the current NPC
     public void UnassignNPC()
     {
-        assignedNPC = null;
+        currentWorker = null;
     }
 
     // Method to check if the task is currently assigned
     public bool IsAssigned()
     {
-        return assignedNPC != null;
+        return currentWorker != null;
     }
 
     // Virtual work coroutine that can be overridden by specific tasks

@@ -5,9 +5,9 @@ using Managers;
 public class SelectionPreviewList : PreviewListMenuBase<string, ResearchScriptableObj>
 {
     private WorkTask currentTask;
-    private GameObject parentBuilding;
+    private Building parentBuilding;
 
-    public void Setup(WorkTask task, GameObject building)
+    public void Setup(WorkTask task, Building building)
     {
         currentTask = task;
         parentBuilding = building;
@@ -88,7 +88,7 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ResearchScriptab
     public override void SetupItemButton(ResearchScriptableObj item, GameObject button)
     {
         var buttonComponent = button.GetComponent<SelectionPreviewButton>();
-        buttonComponent.SetupButton(item);
+        buttonComponent.SetupButton(item, parentBuilding);
     }
 
     public override void UpdatePreviewSpecifics(ResearchScriptableObj item)

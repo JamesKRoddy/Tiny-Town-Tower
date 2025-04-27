@@ -194,7 +194,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
                             optionName = "Research",
                             onSelected = () => {
                                 PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
-                                PlayerUIManager.Instance.selectionPreviewList.Setup(task, building.gameObject);
+                                PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
                             },
                             canSelect = () => true
                         });

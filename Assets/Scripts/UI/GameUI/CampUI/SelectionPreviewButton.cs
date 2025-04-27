@@ -5,6 +5,8 @@ using Managers;
 
 public class SelectionPreviewButton : PreviewButtonBase<ResearchScriptableObj>
 {
+    private Building building;
+
     protected override void OnButtonClicked()
     {
         // Check if research can be started
@@ -21,20 +23,23 @@ public class SelectionPreviewButton : PreviewButtonBase<ResearchScriptableObj>
     private void StartResearch()
     {
         // Find the research task in the building and set the research
-        var building = GetComponentInParent<Building>();
         if (building != null)
         {
             var researchTask = building.GetComponent<ResearchTask>();
             if (researchTask != null)
             {
                 researchTask.SetResearch(data);
-                PlayerUIManager.Instance.BackPressed(); // Return to previous menu
+                // Assign the task to an NPC through the WorkManager
+                CampManager.Instance.WorkManager.AssignWorkToBuilding(researchTask);
+                PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(false);
+                PlayerController.Instance.SetPlayerControlType(PlayerControlType.CAMP_CAMERA_MOVEMENT);
             }
         }
     }
 
-    public void SetupButton(ResearchScriptableObj research)
+    public void SetupButton(ResearchScriptableObj research, Building building)
     {
+        this.building = building;
         base.SetupButton(research, research.sprite, research.objectName);
     }
 }
