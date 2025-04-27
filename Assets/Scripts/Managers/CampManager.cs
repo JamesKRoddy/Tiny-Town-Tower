@@ -68,6 +68,11 @@ namespace Managers
             // Log warnings for any missing managers
             if (researchManager == null) Debug.LogWarning("ResearchManager not found in scene!");
             if (cleanlinessManager == null) Debug.LogWarning("CleanlinessManager not found in scene!");
+
+            researchManager.Initialize();
+            //cleanlinessManager.Initialize();
+            //workManager.Initialize();
+            //buildManager.Initialize();
         }
 
         private void Update()

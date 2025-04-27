@@ -7,18 +7,15 @@ public class SelectionPreviewButton : PreviewButtonBase<ResearchScriptableObj>
 {
     protected override void OnButtonClicked()
     {
-        // When clicked, show the research details in the selection popup
-        var options = new System.Collections.Generic.List<SelectionPopup.SelectionOption>
+        // Check if research can be started
+        if (!CampManager.Instance.ResearchManager.CanStartResearch(data, out string errorMessage))
         {
-            new SelectionPopup.SelectionOption
-            {
-                optionName = "Start Research",
-                onSelected = () => StartResearch(),
-                canSelect = () => CampManager.Instance.ResearchManager.CanStartResearch(data)
-            }
-        };
+            PlayerUIManager.Instance.DisplayUIErrorMessage(errorMessage);
+            return;
+        }
 
-        PlayerUIManager.Instance.selectionPopup.Setup(options, gameObject);
+        // Start the research directly
+        StartResearch();
     }
 
     private void StartResearch()

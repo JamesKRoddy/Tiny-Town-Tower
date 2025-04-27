@@ -10,9 +10,8 @@ namespace Managers
         private List<ResearchScriptableObj> completedResearch = new List<ResearchScriptableObj>();
         private List<WorldItemBase> unlockedItems = new List<WorldItemBase>();
 
-        public void Initialize(List<ResearchScriptableObj> allResearch)
+        public void Initialize()
         {
-            this.allResearch = new List<ResearchScriptableObj>(allResearch);
             availableResearch = new List<ResearchScriptableObj>(allResearch);
             completedResearch = new List<ResearchScriptableObj>();
             unlockedItems = new List<WorldItemBase>();
@@ -74,10 +73,21 @@ namespace Managers
             return true;
         }
 
-        public bool CanStartResearch(ResearchScriptableObj research)
+        public bool CanStartResearch(ResearchScriptableObj research, out string errorMessage)
         {
-            if (!availableResearch.Contains(research) || research.isUnlocked)
+            errorMessage = string.Empty;
+
+            if (!availableResearch.Contains(research))
+            {
+                errorMessage = "This research is not available!";
                 return false;
+            }
+
+            if (research.isUnlocked)
+            {
+                errorMessage = "This research has already been completed!";
+                return false;
+            }
 
             // Check prerequisites
             if (research.requiredResearch != null)
@@ -85,7 +95,10 @@ namespace Managers
                 foreach (var prereq in research.requiredResearch)
                 {
                     if (!prereq.isUnlocked)
+                    {
+                        errorMessage = "Research prerequisites not met!";
                         return false;
+                    }
                 }
             }
 

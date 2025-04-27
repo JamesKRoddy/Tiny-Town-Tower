@@ -6,9 +6,9 @@ using Managers;
 public class ResearchScriptableObj : WorldItemBase
 {
     [Header("Research Requirements")]
-    public ResourceItemCount[] requiredResources;
-    public float researchTime;
-    public bool isUnlocked = false;
+    public ResourceItemCount[] requiredResources; // Resources required to start the research
+    public float researchTime; // Time it takes to complete the research
+    public bool isUnlocked = false; //Has the research been completed?
 
     [Header("Research Prerequisites")]
     public ResearchScriptableObj[] requiredResearch; // Research that must be completed before this can be unlocked
