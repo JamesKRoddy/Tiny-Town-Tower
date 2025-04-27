@@ -5,15 +5,22 @@ namespace Managers
 {
     public class ResearchManager : MonoBehaviour
     {
+        [SerializeField] private List<ResearchScriptableObj> allResearch = new List<ResearchScriptableObj>();
         private List<ResearchScriptableObj> availableResearch = new List<ResearchScriptableObj>();
         private List<ResearchScriptableObj> completedResearch = new List<ResearchScriptableObj>();
         private List<WorldItemBase> unlockedItems = new List<WorldItemBase>();
 
         public void Initialize(List<ResearchScriptableObj> allResearch)
         {
+            this.allResearch = new List<ResearchScriptableObj>(allResearch);
             availableResearch = new List<ResearchScriptableObj>(allResearch);
             completedResearch = new List<ResearchScriptableObj>();
             unlockedItems = new List<WorldItemBase>();
+        }
+
+        public List<ResearchScriptableObj> GetAllResearch()
+        {
+            return allResearch;
         }
 
         public List<ResearchScriptableObj> GetAvailableResearch()
@@ -34,6 +41,16 @@ namespace Managers
         public bool IsItemUnlocked(WorldItemBase item)
         {
             return unlockedItems.Contains(item);
+        }
+
+        public bool IsResearchCompleted(ResearchScriptableObj research)
+        {
+            return completedResearch.Contains(research);
+        }
+
+        public bool IsResearchAvailable(ResearchScriptableObj research)
+        {
+            return availableResearch.Contains(research);
         }
 
         public bool CompleteResearch(ResearchScriptableObj research)

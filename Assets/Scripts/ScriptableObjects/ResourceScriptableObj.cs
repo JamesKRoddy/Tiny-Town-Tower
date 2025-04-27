@@ -23,3 +23,10 @@ public static class DifficultyRarityMapper
         return ResourceRarity.LEGENDARY;
     }
 }
+
+[System.Serializable]
+public class ResourceItemCount
+{
+    public ResourceScriptableObj resource;
+    public int count;
+}

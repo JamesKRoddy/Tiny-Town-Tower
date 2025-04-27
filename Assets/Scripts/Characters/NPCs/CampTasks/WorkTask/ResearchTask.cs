@@ -21,15 +21,7 @@ public class ResearchTask : WorkTask
             // Convert required resources from ResearchScriptableObj to ResourceItemCount[]
             if (research.requiredResources != null)
             {
-                requiredResources = new ResourceItemCount[research.requiredResources.Length];
-                for (int i = 0; i < research.requiredResources.Length; i++)
-                {
-                    requiredResources[i] = new ResourceItemCount
-                    {
-                        resource = research.requiredResources[i],
-                        count = 1
-                    };
-                }
+                requiredResources = research.requiredResources;
             }
         }
     }

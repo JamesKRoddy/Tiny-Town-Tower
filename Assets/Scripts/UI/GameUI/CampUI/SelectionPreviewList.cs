@@ -27,7 +27,7 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ResearchScriptab
 
     public override IEnumerable<ResearchScriptableObj> GetItems()
     {
-        return CampManager.Instance.ResearchManager.GetAvailableResearch();
+        return CampManager.Instance.ResearchManager.GetAllResearch();
     }
 
     public override string GetPreviewDescription(ResearchScriptableObj item)
@@ -40,7 +40,7 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ResearchScriptab
             description += "Required Resources:\n";
             foreach (var resource in item.requiredResources)
             {
-                description += $"- {resource.objectName}\n";
+                description += $"- {resource.resource.objectName}\n";
             }
         }
 
@@ -72,9 +72,9 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ResearchScriptab
             foreach (var resource in item.requiredResources)
             {
                 yield return (
-                    resource.objectName,
-                    1,
-                    PlayerInventory.Instance.GetItemCount(resource)
+                    resource.resource.objectName,
+                    resource.count,
+                    PlayerInventory.Instance.GetItemCount(resource.resource)
                 );
             }
         }

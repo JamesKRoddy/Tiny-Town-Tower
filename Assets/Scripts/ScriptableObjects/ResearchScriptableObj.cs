@@ -6,7 +6,7 @@ using Managers;
 public class ResearchScriptableObj : WorldItemBase
 {
     [Header("Research Requirements")]
-    public ResourceScriptableObj[] requiredResources;
+    public ResourceItemCount[] requiredResources;
     public float researchTime;
     public bool isUnlocked = false;
 

@@ -2,12 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-[System.Serializable]
-public class ResourceItemCount
-{
-    public ResourceScriptableObj resource;
-    public int count;
-}
+
 
 /// <summary>
 /// This is the NPCs characters inventory 
