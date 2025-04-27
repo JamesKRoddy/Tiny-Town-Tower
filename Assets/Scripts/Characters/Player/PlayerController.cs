@@ -212,7 +212,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 }
 
                 // Show the selection popup
-                PlayerUIManager.Instance.selectionPopup.Setup(options, null, () => ReturnToSettlerMenu());
+                PlayerUIManager.Instance.selectionPopup.Setup(options, null, null); //TODO might need to add a return to settler menu option here
             }
         }
     }
