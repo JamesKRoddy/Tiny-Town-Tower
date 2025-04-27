@@ -10,7 +10,6 @@ public class ResourceUpgradeScriptableObj : ScriptableObject
     public bool isUnlocked = false;
     public ResourceItemCount[] requiredResources;
     public float upgradeTime;
-    public ResourceScriptableObj inputResource;
     public ResourceScriptableObj outputResource;
     public int outputAmount = 1;
 }
