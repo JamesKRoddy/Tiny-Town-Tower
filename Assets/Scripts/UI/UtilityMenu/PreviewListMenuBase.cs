@@ -38,7 +38,6 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
 
     public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
-        Debug.Log($"Setting {GetType().Name} screen active: " + active);
         base.SetScreenActive(active, delay, () => {
             if (active)
             {

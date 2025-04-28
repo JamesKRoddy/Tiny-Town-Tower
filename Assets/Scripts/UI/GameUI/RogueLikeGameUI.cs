@@ -31,7 +31,6 @@ public class RogueLikeGameUI : MonoBehaviour
 
     private void OnGameModeChanged(GameMode newGameMode)
     {
-        Debug.Log("OnGameModeChanged: " + newGameMode);
         // Only show the UI in ROGUE_LITE mode
         gameObject.SetActive(newGameMode == GameMode.ROGUE_LITE);
     }
