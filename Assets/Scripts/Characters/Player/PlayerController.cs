@@ -173,19 +173,27 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
     private void HandleWorkAssignment()
     {
+        Debug.Log("[HandleWorkAssignment] Starting work assignment check");
         // Check for work tasks at the camera's detection point
         WorkTask workTask = playerCamera.GetWorkTaskAtDetectionPoint();
+        Debug.Log($"[HandleWorkAssignment] Found work task: {(workTask != null ? workTask.workType.ToString() : "null")}");
+
         if (workTask != null)
         {
             Building building = workTask.GetComponent<Building>();
+            Debug.Log($"[HandleWorkAssignment] Found building: {(building != null ? "Yes" : "No")}");
+
             if (building != null)
             {
                 // Create selection options for each work task
                 var workTasks = building.GetComponents<WorkTask>();
+                Debug.Log($"[HandleWorkAssignment] Found {workTasks.Length} work tasks on building");
+
                 var options = new List<SelectionPopup.SelectionOption>();
 
                 foreach (var task in workTasks)
                 {
+                    Debug.Log($"[HandleWorkAssignment] Processing task type: {task.workType}");
                     if (task.workType == WorkType.RESEARCH)
                     {
                         // For research tasks, show the research selection screen
@@ -193,8 +201,23 @@ public class PlayerController : MonoBehaviour, IControllerInput
                         {
                             optionName = "Research",
                             onSelected = () => {
-                                PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+                                Debug.Log("[HandleWorkAssignment] Research option selected");
                                 PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
+                                PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+                            },
+                            canSelect = () => true
+                        });
+                    }
+                    else if (task.workType == WorkType.COOKING)
+                    {
+                        // For cooking tasks, show the cooking selection screen
+                        options.Add(new SelectionPopup.SelectionOption
+                        {
+                            optionName = "Cook",
+                            onSelected = () => {
+                                Debug.Log("[HandleWorkAssignment] Cooking option selected");
+                                PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
+                                PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
                             },
                             canSelect = () => true
                         });
@@ -205,15 +228,23 @@ public class PlayerController : MonoBehaviour, IControllerInput
                         options.Add(new SelectionPopup.SelectionOption
                         {
                             optionName = task.workType.ToString(),
-                            onSelected = () => WorkManager.Instance.AssignWorkToBuilding(task),
+                            onSelected = () => {
+                                Debug.Log($"[HandleWorkAssignment] {task.workType} option selected");
+                                WorkManager.Instance.AssignWorkToBuilding(task);
+                            },
                             canSelect = () => task.CanPerformTask()
                         });
                     }
                 }
 
+                Debug.Log($"[HandleWorkAssignment] Created {options.Count} options, showing selection popup");
                 // Show the selection popup
                 PlayerUIManager.Instance.selectionPopup.Setup(options, null, null); //TODO might need to add a return to settler menu option here
             }
+        }
+        else
+        {
+            Debug.Log("[HandleWorkAssignment] No work task found at detection point");
         }
     }
 

@@ -9,6 +9,7 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
 
     public void Setup(WorkTask task, Building building)
     {
+        Debug.Log("Setting up SelectionPreviewList");
         currentTask = task;
         parentBuilding = building;
         RefreshUIAndSelectFirst();
