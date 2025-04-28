@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d7f79d9dc1653fe4fb334ed60f43fae0, type: 3}
   m_Name: _TestCookingRecipeScriptableObj
   m_EditorClassIdentifier: 
-  objectName: 
-  description: 
+  objectName: _TestCookingRecipeScriptableObj
+  description: _TestCookingRecipeScriptableObj Desc
   sprite: {fileID: 0}
   isUnlocked: 0
   requiredIngredients: []

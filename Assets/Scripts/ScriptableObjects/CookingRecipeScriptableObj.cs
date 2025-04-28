@@ -2,11 +2,8 @@ using UnityEngine;
 
 
 [CreateAssetMenu(fileName = "CookingRecipeScriptableObj", menuName = "Scriptable Objects/Camp/CookingRecipeScriptableObj")]
-public class CookingRecipeScriptableObj : ScriptableObject
+public class CookingRecipeScriptableObj : WorldItemBase
 {
-    public string objectName;
-    public string description;
-    public Sprite sprite;
     public bool isUnlocked = false;
     public ResourceItemCount[] requiredIngredients;
     public float cookingTime;

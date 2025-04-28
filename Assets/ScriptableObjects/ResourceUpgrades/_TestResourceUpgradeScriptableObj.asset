@@ -12,12 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb5854e5720c9244996c3f601736710a, type: 3}
   m_Name: _TestResourceUpgradeScriptableObj
   m_EditorClassIdentifier: 
-  objectName: 
-  description: 
+  objectName: _TestResourceUpgradeScriptableObj
+  description: _TestResourceUpgradeScriptableObj desc
   sprite: {fileID: 0}
   isUnlocked: 0
   requiredResources: []
   upgradeTime: 0
-  inputResource: {fileID: 0}
   outputResource: {fileID: 0}
   outputAmount: 1
