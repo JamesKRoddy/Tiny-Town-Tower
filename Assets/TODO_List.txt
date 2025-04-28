@@ -1,0 +1,20 @@
+More complex task animations and animation effects handle by animation state machine behaviours
+
+Need to make the SelectionPreviewList menu in unity and hook up references to new managers
+Have to setup resource upgrade buildings, tasks and scriptable objs
+
+
+
+TODO Large things:
+
+Queuing up tasks!!!!! i.e. the menu doesnt close after slecting just one, you can keep seleting more. Executing them in order.
+Upgrading buildings
+Damaging buildings
+Repairing buildings
+Removing work from NPCs
+
+
+
+Things to look at:
+
+Required resources on work tasks, are not needed, should be assigned automatically, have to look at this
