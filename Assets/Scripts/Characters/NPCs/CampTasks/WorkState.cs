@@ -124,7 +124,6 @@ public class WorkState : _TaskState
                 
                 if(assignedTask.WorkTaskTransform() != assignedTask.transform)
                 {
-                    Debug.Log($"[WorkState] {gameObject.name} has reached the task position");
                     // Disable NavMeshAgent control to allow manual positioning
                     agent.updatePosition = false;
                     agent.updateRotation = false;
@@ -156,6 +155,7 @@ public class WorkState : _TaskState
             
             if (timeAtTaskLocation >= taskStartDelay && !isTaskBeingPerformed)
             {
+                Debug.Log("Starting task: " + assignedTask.workType);
                 // Perform the task
                 assignedTask.PerformTask(npc);
                 if (workLayerIndex != -1)

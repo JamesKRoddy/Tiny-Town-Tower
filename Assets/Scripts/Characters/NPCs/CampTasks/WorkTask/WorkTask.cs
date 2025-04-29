@@ -23,9 +23,10 @@ public abstract class WorkTask : MonoBehaviour
     // Abstract method for NPC to perform the work task
     public virtual void PerformTask(SettlerNPC npc)
     {
-        if (currentWorker == null)
+        Debug.Log("Performing task: " + workType);
+        if (currentWorker == npc)
         {
-            currentWorker = npc;
+            Debug.Log("Assigning NPC to task: " + npc.name);
             workCoroutine = StartCoroutine(WorkCoroutine());
         }
     }
@@ -89,7 +90,6 @@ public abstract class WorkTask : MonoBehaviour
     // Method to assign an NPC to this task
     public void AssignNPC(SettlerNPC npc)
     {
-        Debug.Log("Assigning NPC to task: " + npc.name);
         currentWorker = npc;
     }
 
