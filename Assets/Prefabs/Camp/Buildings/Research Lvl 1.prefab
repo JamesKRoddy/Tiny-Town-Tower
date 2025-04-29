@@ -132,7 +132,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   workType: 0
-  workLocationTransform: {fileID: 0}
+  workLocationTransform: {fileID: 8294776679550274538}
   requiredResources: []
   currentResearch: {fileID: 0}
 --- !u!1001 &409922906333630591
