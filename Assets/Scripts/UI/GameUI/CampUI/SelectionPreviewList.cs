@@ -181,4 +181,18 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
     {
         // No additional specifics needed
     }
+
+    public void ReturnToGame(PlayerControlType playerControlType = PlayerControlType.NONE)
+    {
+        SetScreenActive(false);
+
+        if (playerControlType != PlayerControlType.NONE)
+        {
+            PlayerInput.Instance.UpdatePlayerControls(playerControlType);
+        }
+        else
+        {
+            PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
+        }        
+    }
 }
