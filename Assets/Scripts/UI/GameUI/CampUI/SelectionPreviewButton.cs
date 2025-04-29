@@ -3,12 +3,14 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 using Managers;
+using System;
 
 public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
 {
     private Building building;
     private WorkType workType;
     [SerializeField] private TMP_Text queueCountText;
+    private CookingTask cookingTask;
 
     protected override void OnButtonClicked()
     {
@@ -126,11 +128,35 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
             return;
         }
 
-        // Count includes both queued tasks and current recipe
-        int queueCount = cookingTask.taskQueue.Count + (cookingTask.currentRecipe != null ? 1 : 0);
+        // Count how many of this specific recipe are in the queue
+        int count = 0;
+        var currentRecipe = data as CookingRecipeScriptableObj;
         
-        queueCountText.text = queueCount > 0 ? queueCount.ToString() : "";
-        queueCountText.gameObject.SetActive(queueCount > 0);
+        if (currentRecipe != null)
+        {
+            // Count current recipe if it matches
+            if (cookingTask.currentRecipe == currentRecipe)
+            {
+                count++;
+            }
+            
+            // Count matching recipes in queue
+            foreach (var queuedRecipe in cookingTask.taskQueue)
+            {
+                if (queuedRecipe is CookingRecipeScriptableObj recipe && recipe == currentRecipe)
+                {
+                    count++;
+                }
+            }
+        }
+        
+        queueCountText.text = count > 0 ? count.ToString() : "";
+        queueCountText.gameObject.SetActive(count > 0);
+    }
+
+    private void OnTaskCompleted()
+    {
+        UpdateQueueCount();
     }
 
     public void SetupButton(ScriptableObject item, Building building, WorkType workType)
@@ -139,6 +165,12 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
         this.workType = workType;
         string name = string.Empty;
         Sprite sprite = null;
+
+        // Unsubscribe from previous cooking task if it exists
+        if (cookingTask != null)
+        {
+            cookingTask.OnTaskCompleted -= OnTaskCompleted;
+        }
 
         switch (workType)
         {
@@ -156,6 +188,11 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
                 {
                     name = recipe.objectName;
                     sprite = recipe.sprite;
+                    cookingTask = building.GetComponent<CookingTask>();
+                    if (cookingTask != null)
+                    {
+                        cookingTask.OnTaskCompleted += OnTaskCompleted;
+                    }
                     UpdateQueueCount();
                 }
                 break;
@@ -170,5 +207,13 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
         }
 
         base.SetupButton(item, sprite, name);
+    }
+
+    private void OnDestroy()
+    {
+        if (cookingTask != null)
+        {
+            cookingTask.OnTaskCompleted -= OnTaskCompleted;
+        }
     }
 }

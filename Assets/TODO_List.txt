@@ -1,13 +1,29 @@
 More complex task animations and animation effects handle by animation state machine behaviours
 
-Need to make the SelectionPreviewList menu in unity and hook up references to new managers
 Have to setup resource upgrade buildings, tasks and scriptable objs
 
+Queuing up tasks!!!!! i.e. the menu doesnt close after slecting just one, you can keep seleting more. Executing them in order.
+Cooking should be on a building basis, store lists of tasks there
 
+Tomorrw 30/04/24
+On completing tasks is getting down to 1 and not reaching 0
+Assigning more tasks is not reassigning the npc to do more
+
+
+Research is on a camp basis
+
+
+******
+
+So basically when you assign cooking work to an npc if there are tasks lined up just have them complete the queued up tasks
+If there are no tasks then open up the menu and start adding cooking tasks
+Have the button UI reflect this ie (it says "Queue cooking tasks" or "Cook food")
+
+*****
 
 TODO Large things:
 
-Queuing up tasks!!!!! i.e. the menu doesnt close after slecting just one, you can keep seleting more. Executing them in order.
+
 Upgrading buildings
 Damaging buildings
 Repairing buildings

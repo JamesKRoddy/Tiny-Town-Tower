@@ -211,6 +211,16 @@ public class WorkState : _TaskState
 
     public void StopWork()
     {
+        // Check if there are more tasks in the queue or if the current task is still active
+        if (assignedTask != null && (assignedTask.HasQueuedTasks || assignedTask.IsOccupied))
+        {
+            // Stay in work state and continue with next task
+            Debug.Log($"[WorkState] {npc.name} has more tasks in queue or is still occupied, continuing work");
+            return;
+        }
+
+        // Only change to wander if no more tasks and not occupied
+        Debug.Log($"[WorkState] {npc.name} has no more tasks and is not occupied, returning to wander");
         npc.ChangeTask(TaskType.WANDER);
     }
 }

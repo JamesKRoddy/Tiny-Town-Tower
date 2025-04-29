@@ -124,16 +124,35 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual method for completing work that can be overridden
     protected virtual void CompleteWork()
     {
+        
         // Reset state
         workProgress = 0f;
-        currentWorker = null;
-        workCoroutine = null;
+        if (workCoroutine != null)
+        {
+            StopCoroutine(workCoroutine);
+            workCoroutine = null;
+        }
         
         // Process next task in queue if available
         if (taskQueue.Count > 0)
         {
             currentTaskData = taskQueue.Dequeue();
             SetupNextTask();
+            
+            // Start the next task immediately if we have a worker
+            if (currentWorker != null)
+            {
+                workCoroutine = StartCoroutine(WorkCoroutine());
+            }
+            else
+            {
+                Debug.LogWarning("[WorkTask] No worker assigned for next task");
+            }
+        }
+        else
+        {
+            // Only clear the worker if there are no more tasks
+            currentWorker = null;
         }
         
         // Notify completion

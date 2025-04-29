@@ -1,10 +1,12 @@
 using UnityEngine;
 using System.Collections;
 using Managers;
+using System;
 
 public class CookingTask : WorkTask
 {
     public CookingRecipeScriptableObj currentRecipe;
+    public event Action OnTaskCompleted;
 
     protected override void Start()
     {
@@ -15,8 +17,8 @@ public class CookingTask : WorkTask
     public void SetRecipe(CookingRecipeScriptableObj recipe)
     {
         if (recipe == null) return;
-
-        // Always queue the recipe
+        
+        // Queue the recipe
         QueueTask(recipe);
 
         // If no current recipe, set it up immediately
@@ -49,5 +51,6 @@ public class CookingTask : WorkTask
         }
         
         base.CompleteWork();
+        OnTaskCompleted?.Invoke();
     }
 } 
