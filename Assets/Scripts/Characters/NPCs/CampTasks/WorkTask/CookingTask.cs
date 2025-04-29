@@ -14,11 +14,30 @@ public class CookingTask : WorkTask
 
     public void SetRecipe(CookingRecipeScriptableObj recipe)
     {
-        currentRecipe = recipe;
-        if (recipe != null)
+        if (currentRecipe == null)
         {
-            baseWorkTime = recipe.cookingTime;
-            requiredResources = recipe.requiredIngredients;
+            // If no current recipe, set it directly
+            currentRecipe = recipe;
+            if (recipe != null)
+            {
+                baseWorkTime = recipe.cookingTime;
+                requiredResources = recipe.requiredIngredients;
+            }
+        }
+        else
+        {
+            // Otherwise queue it
+            QueueTask(recipe);
+        }
+    }
+
+    protected override void SetupNextTask()
+    {
+        if (currentTaskData is CookingRecipeScriptableObj nextRecipe)
+        {
+            currentRecipe = nextRecipe;
+            baseWorkTime = nextRecipe.cookingTime;
+            requiredResources = nextRecipe.requiredIngredients;
         }
     }
 

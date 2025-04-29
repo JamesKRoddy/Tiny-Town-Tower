@@ -1,12 +1,14 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using TMPro;
 using Managers;
 
 public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
 {
     private Building building;
     private WorkType workType;
+    [SerializeField] private TMP_Text queueCountText;
 
     protected override void OnButtonClicked()
     {
@@ -44,8 +46,8 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
             {
                 researchTask.SetResearch(research);
                 CampManager.Instance.WorkManager.AssignWorkToBuilding(researchTask);
-                PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(false);
-                PlayerController.Instance.SetPlayerControlType(PlayerControlType.CAMP_CAMERA_MOVEMENT);
+                // Don't close the menu, just update the preview
+                PlayerUIManager.Instance.selectionPreviewList.UpdatePreview(data);
             }
         }
     }
@@ -62,8 +64,9 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
             {
                 cookingTask.SetRecipe(recipe);
                 CampManager.Instance.WorkManager.AssignWorkToBuilding(cookingTask);
-                PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(false);
-                PlayerController.Instance.SetPlayerControlType(PlayerControlType.CAMP_CAMERA_MOVEMENT);
+                // Don't close the menu, just update the preview
+                PlayerUIManager.Instance.selectionPreviewList.UpdatePreview(data);
+                UpdateQueueCount();
             }
         }
     }
@@ -80,8 +83,22 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
             {
                 upgradeTask.SetUpgrade(upgrade);
                 CampManager.Instance.WorkManager.AssignWorkToBuilding(upgradeTask);
-                PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(false);
-                PlayerController.Instance.SetPlayerControlType(PlayerControlType.CAMP_CAMERA_MOVEMENT);
+                // Don't close the menu, just update the preview
+                PlayerUIManager.Instance.selectionPreviewList.UpdatePreview(data);
+            }
+        }
+    }
+
+    private void UpdateQueueCount()
+    {
+        if (queueCountText != null && building != null)
+        {
+            var cookingTask = building.GetComponent<CookingTask>();
+            if (cookingTask != null)
+            {
+                int queueCount = cookingTask.HasQueuedTasks ? cookingTask.taskQueue.Count : 0;
+                queueCountText.text = queueCount > 0 ? queueCount.ToString() : "";
+                queueCountText.gameObject.SetActive(queueCount > 0);
             }
         }
     }
@@ -109,6 +126,7 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
                 {
                     name = recipe.objectName;
                     sprite = recipe.sprite;
+                    UpdateQueueCount();
                 }
                 break;
             case WorkType.UPGRADE_RESOURCE:

@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using Managers;
 
 public abstract class WorkTask : MonoBehaviour
@@ -16,9 +17,14 @@ public abstract class WorkTask : MonoBehaviour
     protected int resourceAmount = 1;
     protected Coroutine workCoroutine;
 
+    // Task queue
+    public Queue<object> taskQueue = new Queue<object>();
+    protected object currentTaskData;
+
     // Property to access the assigned NPC
     public SettlerNPC AssignedNPC => currentWorker;
     public bool IsOccupied => currentWorker != null;
+    public bool HasQueuedTasks => taskQueue.Count > 0;
 
     // Abstract method for NPC to perform the work task
     public virtual void PerformTask(SettlerNPC npc)
@@ -123,8 +129,33 @@ public abstract class WorkTask : MonoBehaviour
         currentWorker = null;
         workCoroutine = null;
         
+        // Process next task in queue if available
+        if (taskQueue.Count > 0)
+        {
+            currentTaskData = taskQueue.Dequeue();
+            SetupNextTask();
+        }
+        
         // Notify completion
         InvokeStopWork();
+    }
+
+    // Virtual method to setup the next task in queue
+    protected virtual void SetupNextTask()
+    {
+        // To be implemented by derived classes
+    }
+
+    // Method to add a task to the queue
+    public virtual void QueueTask(object taskData)
+    {
+        taskQueue.Enqueue(taskData);
+    }
+
+    // Method to clear the task queue
+    public virtual void ClearTaskQueue()
+    {
+        taskQueue.Clear();
     }
 
     protected void AddResourceToInventory(ResourceItemCount resourceItemCount)
