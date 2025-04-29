@@ -73,10 +73,15 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
             Debug.LogWarning($"[SelectionPreviewButton] No CookingTask found on building {building.name}");
             return;
         }
+        
+        // Only assign work if this is the first recipe
+        if (cookingTask.currentRecipe == null)
+        {
+            CampManager.Instance.WorkManager.AssignWorkToBuilding(cookingTask);
+        }
 
-        Debug.Log($"[SelectionPreviewButton] Adding recipe {recipe.objectName} to cooking task on {building.name}");
         cookingTask.SetRecipe(recipe);
-        CampManager.Instance.WorkManager.AssignWorkToBuilding(cookingTask);
+        
         // Don't close the menu, just update the preview
         PlayerUIManager.Instance.selectionPreviewList.UpdatePreview(data);
         UpdateQueueCount();
@@ -123,16 +128,13 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
 
         // Count includes both queued tasks and current recipe
         int queueCount = cookingTask.taskQueue.Count + (cookingTask.currentRecipe != null ? 1 : 0);
-        Debug.Log($"[SelectionPreviewButton] Updating queue count for {building.name}: {queueCount} tasks in queue (current + queued)");
         
         queueCountText.text = queueCount > 0 ? queueCount.ToString() : "";
         queueCountText.gameObject.SetActive(queueCount > 0);
     }
 
     public void SetupButton(ScriptableObject item, Building building, WorkType workType)
-    {
-        Debug.Log($"[SelectionPreviewButton] Setting up button for {building?.name} with work type {workType}");
-        
+    {        
         this.building = building;
         this.workType = workType;
         string name = string.Empty;
@@ -154,7 +156,6 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
                 {
                     name = recipe.objectName;
                     sprite = recipe.sprite;
-                    Debug.Log($"[SelectionPreviewButton] Setting up cooking button for recipe: {name}");
                     UpdateQueueCount();
                 }
                 break;
