@@ -155,7 +155,6 @@ public class WorkState : _TaskState
             
             if (timeAtTaskLocation >= taskStartDelay && !isTaskBeingPerformed)
             {
-                Debug.Log("Starting task: " + assignedTask.workType);
                 // Perform the task
                 assignedTask.PerformTask(npc);
                 if (workLayerIndex != -1)

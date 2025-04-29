@@ -29,8 +29,7 @@ public class CookingTask : WorkTask
             // Create the cooked food
             for (int i = 0; i < currentRecipe.outputAmount; i++)
             {
-                Resource food = Instantiate(currentRecipe.outputFood.prefab, transform.position + Random.insideUnitSphere, Quaternion.identity).GetComponent<Resource>();
-                food.Initialize(currentRecipe.outputFood);
+                AddResourceToInventory(currentRecipe.outputFood);
             }
         }
         

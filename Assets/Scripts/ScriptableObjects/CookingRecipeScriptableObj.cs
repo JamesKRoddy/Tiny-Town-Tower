@@ -6,7 +6,8 @@ public class CookingRecipeScriptableObj : WorldItemBase
 {
     public bool isUnlocked = false;
     public ResourceItemCount[] requiredIngredients;
+    [Min(5f)]
     public float cookingTime;
-    public ResourceScriptableObj outputFood;
+    public ResourceItemCount outputFood;
     public int outputAmount = 1;
 }

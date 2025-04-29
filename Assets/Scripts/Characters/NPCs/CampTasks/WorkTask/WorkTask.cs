@@ -23,10 +23,8 @@ public abstract class WorkTask : MonoBehaviour
     // Abstract method for NPC to perform the work task
     public virtual void PerformTask(SettlerNPC npc)
     {
-        Debug.Log("Performing task: " + workType);
         if (currentWorker == npc)
         {
-            Debug.Log("Assigning NPC to task: " + npc.name);
             workCoroutine = StartCoroutine(WorkCoroutine());
         }
     }
@@ -127,6 +125,11 @@ public abstract class WorkTask : MonoBehaviour
         
         // Notify completion
         InvokeStopWork();
+    }
+
+    protected void AddResourceToInventory(ResourceItemCount resourceItemCount)
+    {
+        PlayerInventory.Instance.AddItem(resourceItemCount.resource, resourceItemCount.count);
     }
 
     protected virtual void OnDisable()
