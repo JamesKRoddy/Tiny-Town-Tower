@@ -55,20 +55,31 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
     private void HandleCooking()
     {
         var recipe = data as CookingRecipeScriptableObj;
-        if (recipe == null) return;
-
-        if (building != null)
+        if (recipe == null)
         {
-            var cookingTask = building.GetComponent<CookingTask>();
-            if (cookingTask != null)
-            {
-                cookingTask.SetRecipe(recipe);
-                CampManager.Instance.WorkManager.AssignWorkToBuilding(cookingTask);
-                // Don't close the menu, just update the preview
-                PlayerUIManager.Instance.selectionPreviewList.UpdatePreview(data);
-                UpdateQueueCount();
-            }
+            Debug.LogWarning("[SelectionPreviewButton] Attempted to handle cooking with null recipe");
+            return;
         }
+
+        if (building == null)
+        {
+            Debug.LogWarning("[SelectionPreviewButton] Attempted to handle cooking with null building");
+            return;
+        }
+
+        var cookingTask = building.GetComponent<CookingTask>();
+        if (cookingTask == null)
+        {
+            Debug.LogWarning($"[SelectionPreviewButton] No CookingTask found on building {building.name}");
+            return;
+        }
+
+        Debug.Log($"[SelectionPreviewButton] Adding recipe {recipe.objectName} to cooking task on {building.name}");
+        cookingTask.SetRecipe(recipe);
+        CampManager.Instance.WorkManager.AssignWorkToBuilding(cookingTask);
+        // Don't close the menu, just update the preview
+        PlayerUIManager.Instance.selectionPreviewList.UpdatePreview(data);
+        UpdateQueueCount();
     }
 
     private void HandleResourceUpgrade()
@@ -91,20 +102,37 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
 
     private void UpdateQueueCount()
     {
-        if (queueCountText != null && building != null)
+        if (queueCountText == null)
         {
-            var cookingTask = building.GetComponent<CookingTask>();
-            if (cookingTask != null)
-            {
-                int queueCount = cookingTask.HasQueuedTasks ? cookingTask.taskQueue.Count : 0;
-                queueCountText.text = queueCount > 0 ? queueCount.ToString() : "";
-                queueCountText.gameObject.SetActive(queueCount > 0);
-            }
+            Debug.LogWarning("[SelectionPreviewButton] queueCountText is null");
+            return;
         }
+
+        if (building == null)
+        {
+            Debug.LogWarning("[SelectionPreviewButton] building is null");
+            return;
+        }
+
+        var cookingTask = building.GetComponent<CookingTask>();
+        if (cookingTask == null)
+        {
+            Debug.LogWarning($"[SelectionPreviewButton] No CookingTask found on building {building.name}");
+            return;
+        }
+
+        // Count includes both queued tasks and current recipe
+        int queueCount = cookingTask.taskQueue.Count + (cookingTask.currentRecipe != null ? 1 : 0);
+        Debug.Log($"[SelectionPreviewButton] Updating queue count for {building.name}: {queueCount} tasks in queue (current + queued)");
+        
+        queueCountText.text = queueCount > 0 ? queueCount.ToString() : "";
+        queueCountText.gameObject.SetActive(queueCount > 0);
     }
 
     public void SetupButton(ScriptableObject item, Building building, WorkType workType)
     {
+        Debug.Log($"[SelectionPreviewButton] Setting up button for {building?.name} with work type {workType}");
+        
         this.building = building;
         this.workType = workType;
         string name = string.Empty;
@@ -126,6 +154,7 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
                 {
                     name = recipe.objectName;
                     sprite = recipe.sprite;
+                    Debug.Log($"[SelectionPreviewButton] Setting up cooking button for recipe: {name}");
                     UpdateQueueCount();
                 }
                 break;

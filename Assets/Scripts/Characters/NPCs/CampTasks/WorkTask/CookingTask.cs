@@ -4,7 +4,7 @@ using Managers;
 
 public class CookingTask : WorkTask
 {
-    private CookingRecipeScriptableObj currentRecipe;
+    public CookingRecipeScriptableObj currentRecipe;
 
     protected override void Start()
     {
@@ -14,20 +14,16 @@ public class CookingTask : WorkTask
 
     public void SetRecipe(CookingRecipeScriptableObj recipe)
     {
+        if (recipe == null) return;
+
+        // Always queue the recipe
+        QueueTask(recipe);
+
+        // If no current recipe, set it up immediately
         if (currentRecipe == null)
         {
-            // If no current recipe, set it directly
-            currentRecipe = recipe;
-            if (recipe != null)
-            {
-                baseWorkTime = recipe.cookingTime;
-                requiredResources = recipe.requiredIngredients;
-            }
-        }
-        else
-        {
-            // Otherwise queue it
-            QueueTask(recipe);
+            currentTaskData = taskQueue.Dequeue();
+            SetupNextTask();
         }
     }
 
