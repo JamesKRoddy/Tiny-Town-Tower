@@ -4,7 +4,7 @@ using Managers;
 
 public class ResourceUpgradeTask : WorkTask
 {
-    private ResourceUpgradeScriptableObj currentUpgrade;
+    public ResourceUpgradeScriptableObj currentUpgrade;
 
     protected override void Start()
     {

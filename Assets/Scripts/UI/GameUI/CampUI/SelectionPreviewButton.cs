@@ -11,6 +11,7 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
     private WorkType workType;
     [SerializeField] private TMP_Text queueCountText;
     private CookingTask cookingTask;
+    private ResourceUpgradeTask resourceUpgradeTask;
 
     protected override void OnButtonClicked()
     {
@@ -92,19 +93,36 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
     private void HandleResourceUpgrade()
     {
         var upgrade = data as ResourceUpgradeScriptableObj;
-        if (upgrade == null) return;
-
-        if (building != null)
+        if (upgrade == null)
         {
-            var upgradeTask = building.GetComponent<ResourceUpgradeTask>();
-            if (upgradeTask != null)
-            {
-                upgradeTask.SetUpgrade(upgrade);
-                CampManager.Instance.WorkManager.AssignWorkToBuilding(upgradeTask);
-                // Don't close the menu, just update the preview
-                PlayerUIManager.Instance.selectionPreviewList.UpdatePreview(data);
-            }
+            Debug.LogWarning("[SelectionPreviewButton] Attempted to handle resource upgrade with null upgrade");
+            return;
         }
+
+        if (building == null)
+        {
+            Debug.LogWarning("[SelectionPreviewButton] Attempted to handle resource upgrade with null building");
+            return;
+        }
+
+        var upgradeTask = building.GetComponent<ResourceUpgradeTask>();
+        if (upgradeTask == null)
+        {
+            Debug.LogWarning($"[SelectionPreviewButton] No ResourceUpgradeTask found on building {building.name}");
+            return;
+        }
+        
+        // Only assign work if this is the first upgrade
+        if (upgradeTask.currentUpgrade == null)
+        {
+            CampManager.Instance.WorkManager.AssignWorkToBuilding(upgradeTask);
+        }
+
+        upgradeTask.SetUpgrade(upgrade);
+        
+        // Don't close the menu, just update the preview
+        PlayerUIManager.Instance.selectionPreviewList.UpdatePreview(data);
+        UpdateQueueCount();
     }
 
     private void UpdateQueueCount()
@@ -121,39 +139,84 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
             return;
         }
 
-        var cookingTask = building.GetComponent<CookingTask>();
-        if (cookingTask == null)
+        switch (workType)
         {
-            Debug.LogWarning($"[SelectionPreviewButton] No CookingTask found on building {building.name}");
-            return;
-        }
-
-        // Count how many of this specific recipe are in the queue
-        int count = 0;
-        var currentRecipe = data as CookingRecipeScriptableObj;
-        
-        if (currentRecipe != null)
-        {
-            // Count current recipe if it matches
-            if (cookingTask.currentRecipe == currentRecipe)
-            {
-                count++;
-            }
-            
-            // Count matching recipes in queue
-            foreach (var queuedRecipe in cookingTask.taskQueue)
-            {
-                if (queuedRecipe is CookingRecipeScriptableObj recipe && recipe == currentRecipe)
+            case WorkType.COOKING:
+                var cookingTask = building.GetComponent<CookingTask>();
+                if (cookingTask == null)
                 {
-                    count++;
+                    Debug.LogWarning($"[SelectionPreviewButton] No CookingTask found on building {building.name}");
+                    return;
                 }
-            }
-        }else{
-            Debug.LogWarning("[SelectionPreviewButton] No current recipe found");
+
+                // Count how many of this specific recipe are in the queue
+                int cookingCount = 0;
+                var currentRecipe = data as CookingRecipeScriptableObj;
+                
+                if (currentRecipe != null)
+                {
+                    // Count current recipe if it matches
+                    if (cookingTask.currentRecipe == currentRecipe)
+                    {
+                        cookingCount++;
+                    }
+                    
+                    // Count matching recipes in queue
+                    foreach (var queuedRecipe in cookingTask.taskQueue)
+                    {
+                        if (queuedRecipe is CookingRecipeScriptableObj recipe && recipe == currentRecipe)
+                        {
+                            cookingCount++;
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("[SelectionPreviewButton] No current recipe found");
+                }
+                
+                queueCountText.text = cookingCount > 0 ? cookingCount.ToString() : "";
+                queueCountText.gameObject.SetActive(cookingCount > 0);
+                break;
+
+            case WorkType.UPGRADE_RESOURCE:
+                var upgradeTask = building.GetComponent<ResourceUpgradeTask>();
+                if (upgradeTask == null)
+                {
+                    Debug.LogWarning($"[SelectionPreviewButton] No ResourceUpgradeTask found on building {building.name}");
+                    return;
+                }
+
+                // Count how many of this specific upgrade are in the queue
+                int upgradeCount = 0;
+                var currentUpgrade = data as ResourceUpgradeScriptableObj;
+                
+                if (currentUpgrade != null)
+                {
+                    // Count current upgrade if it matches
+                    if (upgradeTask.currentUpgrade == currentUpgrade)
+                    {
+                        upgradeCount++;
+                    }
+                    
+                    // Count matching upgrades in queue
+                    foreach (var queuedUpgrade in upgradeTask.taskQueue)
+                    {
+                        if (queuedUpgrade is ResourceUpgradeScriptableObj upgrade && upgrade == currentUpgrade)
+                        {
+                            upgradeCount++;
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("[SelectionPreviewButton] No current upgrade found");
+                }
+                
+                queueCountText.text = upgradeCount > 0 ? upgradeCount.ToString() : "";
+                queueCountText.gameObject.SetActive(upgradeCount > 0);
+                break;
         }
-        
-        queueCountText.text = count > 0 ? count.ToString() : "";
-        queueCountText.gameObject.SetActive(count > 0);
     }
 
     private void OnTaskCompleted()
@@ -168,10 +231,14 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
         string name = string.Empty;
         Sprite sprite = null;
 
-        // Unsubscribe from previous cooking task if it exists
+        // Unsubscribe from previous tasks if they exist
         if (cookingTask != null)
         {
             cookingTask.OnTaskCompleted -= OnTaskCompleted;
+        }
+        if (resourceUpgradeTask != null)
+        {
+            resourceUpgradeTask.OnTaskCompleted -= OnTaskCompleted;
         }
 
         switch (workType)
@@ -203,6 +270,11 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
                 {
                     name = upgrade.objectName;
                     sprite = upgrade.sprite;
+                    resourceUpgradeTask = building.GetComponent<ResourceUpgradeTask>();
+                    if (resourceUpgradeTask != null)
+                    {
+                        resourceUpgradeTask.OnTaskCompleted += OnTaskCompleted;
+                    }
                 }
                 break;
         }
@@ -216,6 +288,10 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
         if (cookingTask != null)
         {
             cookingTask.OnTaskCompleted -= OnTaskCompleted;
+        }
+        if (resourceUpgradeTask != null)
+        {
+            resourceUpgradeTask.OnTaskCompleted -= OnTaskCompleted;
         }
     }
 }

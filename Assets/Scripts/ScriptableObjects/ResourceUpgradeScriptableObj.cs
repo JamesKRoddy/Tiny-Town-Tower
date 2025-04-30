@@ -6,6 +6,7 @@ public class ResourceUpgradeScriptableObj : WorldItemBase
 {
     public bool isUnlocked = false;
     public ResourceItemCount[] requiredResources;
+    [Min(5f)]
     public float upgradeTime;
     public ResourceScriptableObj outputResource;
     public int outputAmount = 1;
