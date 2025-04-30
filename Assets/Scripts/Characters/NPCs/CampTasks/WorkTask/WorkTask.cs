@@ -9,7 +9,7 @@ public abstract class WorkTask : MonoBehaviour
     [HideInInspector] public WorkType workType;
     [SerializeField] protected Transform workLocationTransform; // Optional specific work location
     protected SettlerNPC currentWorker; // Reference to the NPC performing this task
-    [SerializeField] public ResourceItemCount[] requiredResources; // Resources needed to perform this task
+    public ResourceItemCount[] requiredResources; // Resources needed to perform this task
 
     // Work progress tracking
     protected float workProgress = 0f;

@@ -264,7 +264,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: buildingScriptableObjs.Array.size
-      value: 5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: 'buildingScriptableObjs.Array.data[0]'
@@ -286,6 +286,10 @@ PrefabInstance:
       propertyPath: 'buildingScriptableObjs.Array.data[4]'
       value: 
       objectReference: {fileID: 11400000, guid: 9e5170ccb411c2e42bdfd9db2f15716f, type: 2}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: 'buildingScriptableObjs.Array.data[5]'
+      value: 
+      objectReference: {fileID: 11400000, guid: afef9195e37c3ff41b2d1b6a40cbca7b, type: 2}
     - target: {fileID: 6193134543259632268, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: allResearch.Array.size
       value: 1
