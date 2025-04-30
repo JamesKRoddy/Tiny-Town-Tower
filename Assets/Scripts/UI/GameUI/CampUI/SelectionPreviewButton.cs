@@ -148,6 +148,8 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
                     count++;
                 }
             }
+        }else{
+            Debug.LogWarning("[SelectionPreviewButton] No current recipe found");
         }
         
         queueCountText.text = count > 0 ? count.ToString() : "";
@@ -193,7 +195,6 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
                     {
                         cookingTask.OnTaskCompleted += OnTaskCompleted;
                     }
-                    UpdateQueueCount();
                 }
                 break;
             case WorkType.UPGRADE_RESOURCE:
@@ -207,6 +208,7 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
         }
 
         base.SetupButton(item, sprite, name);
+        UpdateQueueCount();
     }
 
     private void OnDestroy()
