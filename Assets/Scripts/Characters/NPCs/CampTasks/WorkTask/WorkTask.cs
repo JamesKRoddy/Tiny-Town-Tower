@@ -75,6 +75,8 @@ public abstract class WorkTask : MonoBehaviour
     // Declare StopWork as an event
     public event Action StopWork; // Called when a construction is complete, building is broken, etc..
 
+    public event Action OnTaskCompleted;
+
     protected virtual void Start()
     {
         
@@ -156,6 +158,7 @@ public abstract class WorkTask : MonoBehaviour
         }
         
         // Notify completion
+        OnTaskCompleted?.Invoke();
         InvokeStopWork();
     }
 

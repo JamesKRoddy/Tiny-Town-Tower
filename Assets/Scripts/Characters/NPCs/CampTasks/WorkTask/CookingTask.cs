@@ -6,7 +6,6 @@ using System;
 public class CookingTask : WorkTask
 {
     public CookingRecipeScriptableObj currentRecipe;
-    public event Action OnTaskCompleted;
 
     protected override void Start()
     {
@@ -50,7 +49,9 @@ public class CookingTask : WorkTask
             }
         }
         
+        // Clear the current recipe before completing the work
+        currentRecipe = null;
+        
         base.CompleteWork();
-        OnTaskCompleted?.Invoke();
     }
 } 
