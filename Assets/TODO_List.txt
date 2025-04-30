@@ -6,7 +6,6 @@ Queuing up tasks!!!!! i.e. the menu doesnt close after slecting just one, you ca
 Cooking should be on a building basis, store lists of tasks there
 
 Tomorrw 30/04/24
-On completing tasks is getting down to 1 and not reaching 0
 Assigning more tasks is not reassigning the npc to do more
 
 
