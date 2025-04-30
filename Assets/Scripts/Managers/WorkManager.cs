@@ -34,7 +34,6 @@ namespace Managers
         // Method to add a new work task to the queue
         public void AddWorkTask(WorkTask newTask)
         {
-            Debug.Log($"<color=green>[WorkManager]</color> Adding work task: {newTask.name}");
             workQueue.Enqueue(newTask);
             // Notify that a new task is available
             OnTaskAvailable?.Invoke(newTask);
@@ -76,13 +75,11 @@ namespace Managers
 
         public void SetNPCForAssignment(SettlerNPC npc)
         {
-            Debug.Log($"[WorkManager] Setting NPC for assignment: {(npc != null ? npc.name : "null")}");
             npcForAssignment = npc;
         }
 
         public void AssignWorkToBuilding(WorkTask workTask)
         {
-            Debug.Log($"[WorkManager] Attempting to assign work to building. NPC: {(npcForAssignment != null ? npcForAssignment.name : "null")}, Task: {workTask.name}");
             
             if (workTask == null)
             {
@@ -96,11 +93,9 @@ namespace Managers
                 var previousWorker = GetPreviousWorkerForTask(workTask);
                 if (previousWorker == null)
                 {
-                    Debug.Log($"[WorkManager] No NPC available for task {workTask.name}");
                     PlayerUIManager.Instance.DisplayUIErrorMessage("No NPC available for work assignment");
                     return;
                 }
-                Debug.Log($"[WorkManager] Using previous worker {previousWorker.name} for task {workTask.name}");
                 SetNPCForAssignment(previousWorker);
             }
 
@@ -141,7 +136,6 @@ namespace Managers
             if (workTask.IsAssigned())
             {
                 SettlerNPC currentNPC = workTask.AssignedNPC;
-                Debug.Log($"[WorkManager] Unassigning current NPC: {currentNPC.name}");
                 currentNPC.ChangeTask(TaskType.WANDER);
                 workTask.UnassignNPC();
             }
@@ -149,16 +143,10 @@ namespace Managers
             // Store the previous worker
             if (workTask.AssignedNPC != null)
             {
-                Debug.Log($"[WorkManager] Storing previous worker: {workTask.AssignedNPC.name} for task {workTask.name}");
                 previousWorkers[workTask] = workTask.AssignedNPC;
-            }
-            else
-            {
-                Debug.Log($"[WorkManager] No worker to store as previous worker for task {workTask.name}");
             }
 
             // Assign the new NPC to the task
-            Debug.Log($"[WorkManager] Assigning new NPC: {npcForAssignment.name} to task: {workTask.name}");
             workTask.AssignNPC(npcForAssignment);
             npcForAssignment.AssignWork(workTask);
             npcForAssignment = null; // Clear the assignment NPC
@@ -166,24 +154,15 @@ namespace Managers
 
         public void StorePreviousWorker(WorkTask task, SettlerNPC worker)
         {
-            Debug.Log($"[WorkManager] Storing previous worker {worker.name} for task {task.name}");
             previousWorkers[task] = worker;
         }
 
         public SettlerNPC GetPreviousWorkerForTask(WorkTask task)
-        {
-            Debug.Log($"[WorkManager] Looking for previous worker for task {task.name}. Previous workers count: {previousWorkers.Count}");
-            foreach (var kvp in previousWorkers)
-            {
-                Debug.Log($"[WorkManager] Checking task {kvp.Key.name} with worker {kvp.Value.name}");
-            }
-            
+        {            
             if (previousWorkers.TryGetValue(task, out SettlerNPC previousWorker))
             {
-                Debug.Log($"[WorkManager] Found previous worker for task {task.name}: {previousWorker.name}");
                 return previousWorker;
             }
-            Debug.Log($"[WorkManager] No previous worker found for task {task.name}");
             return null;
         }
     }

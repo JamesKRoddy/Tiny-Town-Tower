@@ -96,14 +96,12 @@ public abstract class WorkTask : MonoBehaviour
     // Method to assign an NPC to this task
     public void AssignNPC(SettlerNPC npc)
     {
-        Debug.Log($"[WorkTask] Assigning NPC {npc.name} to task {name}");
         currentWorker = npc;
     }
 
     // Method to unassign the current NPC
     public void UnassignNPC()
     {
-        Debug.Log($"[WorkTask] Unassigning NPC {(currentWorker != null ? currentWorker.name : "null")} from task {name}");
         currentWorker = null;
     }
 
@@ -128,12 +126,10 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual method for completing work that can be overridden
     protected virtual void CompleteWork()
     {
-        Debug.Log($"[WorkTask] Completing work on task {name}. Current worker: {(currentWorker != null ? currentWorker.name : "null")}, Queue count: {taskQueue.Count}");
         
         // Store the current worker as previous worker before clearing
         if (currentWorker != null)
         {
-            Debug.Log($"[WorkTask] Storing current worker {currentWorker.name} as previous worker for task {name}");
             CampManager.Instance.WorkManager.StorePreviousWorker(this, currentWorker);
         }
         
@@ -148,14 +144,12 @@ public abstract class WorkTask : MonoBehaviour
         // Process next task in queue if available
         if (taskQueue.Count > 0)
         {
-            Debug.Log($"[WorkTask] Processing next task in queue for {name}");
             currentTaskData = taskQueue.Dequeue();
             SetupNextTask();
             
             // Start the next task immediately if we have a worker
             if (currentWorker != null)
             {
-                Debug.Log($"[WorkTask] Starting next task with worker {currentWorker.name}");
                 workCoroutine = StartCoroutine(WorkCoroutine());
             }
             else
@@ -165,7 +159,6 @@ public abstract class WorkTask : MonoBehaviour
         }
         else
         {
-            Debug.Log($"[WorkTask] No more tasks in queue for {name}. Clearing worker.");
             // Only clear the worker if there are no more tasks
             currentWorker = null;
         }
@@ -184,7 +177,6 @@ public abstract class WorkTask : MonoBehaviour
     // Method to add a task to the queue
     public virtual void QueueTask(object taskData)
     {
-        Debug.Log($"[WorkTask] Queueing new task. Current queue count: {taskQueue.Count}, Current worker: {(currentWorker != null ? currentWorker.name : "null")}");
         taskQueue.Enqueue(taskData);
         
         // If we have a previous worker and no current worker, assign them to the new task
@@ -194,15 +186,10 @@ public abstract class WorkTask : MonoBehaviour
             var previousWorker = CampManager.Instance.WorkManager.GetPreviousWorkerForTask(this);
             if (previousWorker != null)
             {
-                Debug.Log($"[WorkTask] Found previous worker {previousWorker.name} for task {name}. Setting as NPC for assignment.");
                 // Set the NPC for assignment before assigning the task
                 CampManager.Instance.WorkManager.SetNPCForAssignment(previousWorker);
                 AssignNPC(previousWorker);
                 previousWorker.ChangeTask(TaskType.WORK);
-            }
-            else
-            {
-                Debug.Log($"[WorkTask] No previous worker found for task {name}");
             }
         }
     }
