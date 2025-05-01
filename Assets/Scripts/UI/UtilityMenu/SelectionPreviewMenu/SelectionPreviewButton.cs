@@ -13,6 +13,66 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
     private CookingTask cookingTask;
     private ResourceUpgradeTask resourceUpgradeTask;
 
+public void SetupButton(ScriptableObject item, Building building, WorkType workType)
+    {        
+        this.building = building;
+        this.workType = workType;
+        string name = string.Empty;
+        Sprite sprite = null;
+
+        // Unsubscribe from previous tasks if they exist
+        if (cookingTask != null)
+        {
+            cookingTask.OnTaskCompleted -= OnTaskCompleted;
+        }
+        if (resourceUpgradeTask != null)
+        {
+            resourceUpgradeTask.OnTaskCompleted -= OnTaskCompleted;
+        }
+
+        switch (workType)
+        {
+            case WorkType.RESEARCH:
+                var research = item as ResearchScriptableObj;
+                if (research != null)
+                {
+                    name = research.objectName;
+                    sprite = research.sprite;
+                }
+                queueCountText.text = "";
+                break;
+            case WorkType.COOKING:
+                var recipe = item as CookingRecipeScriptableObj;
+                if (recipe != null)
+                {
+                    name = recipe.objectName;
+                    sprite = recipe.sprite;
+                    cookingTask = building.GetComponent<CookingTask>();
+                    if (cookingTask != null)
+                    {
+                        cookingTask.OnTaskCompleted += OnTaskCompleted;
+                    }
+                }
+                break;
+            case WorkType.UPGRADE_RESOURCE:
+                var upgrade = item as ResourceUpgradeScriptableObj;
+                if (upgrade != null)
+                {
+                    name = upgrade.objectName;
+                    sprite = upgrade.sprite;
+                    resourceUpgradeTask = building.GetComponent<ResourceUpgradeTask>();
+                    if (resourceUpgradeTask != null)
+                    {
+                        resourceUpgradeTask.OnTaskCompleted += OnTaskCompleted;
+                    }
+                }
+                break;
+        }
+
+        base.SetupButton(item, sprite, name);
+        UpdateQueueCount();
+    }
+    
     protected override void OnButtonClicked()
     {
         switch (workType)
@@ -32,7 +92,24 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
     private void HandleResearch()
     {
         var research = data as ResearchScriptableObj;
-        if (research == null) return;
+        if (research == null)
+        {
+            Debug.LogWarning("[SelectionPreviewButton] Attempted to handle research with null research");
+            return;
+        }
+
+        if (building == null)
+        {
+            Debug.LogWarning("[SelectionPreviewButton] Attempted to handle research with null building");
+            return;
+        }
+
+        var researchTask = building.GetComponent<ResearchTask>();
+        if (researchTask == null)
+        {
+            Debug.LogWarning($"[SelectionPreviewButton] No ResearchTask found on building {building.name}");
+            return;
+        }
 
         // Check if research can be started
         if (!CampManager.Instance.ResearchManager.CanStartResearch(research, out string errorMessage))
@@ -41,18 +118,16 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
             return;
         }
 
-        // Start the research
-        if (building != null)
+        // Only assign work if this is the first research
+        if (researchTask.CurrentResearch == null)
         {
-            var researchTask = building.GetComponent<ResearchTask>();
-            if (researchTask != null)
-            {
-                researchTask.SetResearch(research);
-                CampManager.Instance.WorkManager.AssignWorkToBuilding(researchTask);
-                // Don't close the menu, just update the preview
-                PlayerUIManager.Instance.selectionPreviewList.UpdatePreview(data);
-            }
+            CampManager.Instance.WorkManager.AssignWorkToBuilding(researchTask);
         }
+
+        researchTask.SetResearch(research);
+        
+        // Don't close the menu, just update the preview
+        PlayerUIManager.Instance.selectionPreviewList.UpdatePreview(data);
     }
 
     private void HandleCooking()
@@ -221,65 +296,6 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
 
     private void OnTaskCompleted()
     {
-        UpdateQueueCount();
-    }
-
-    public void SetupButton(ScriptableObject item, Building building, WorkType workType)
-    {        
-        this.building = building;
-        this.workType = workType;
-        string name = string.Empty;
-        Sprite sprite = null;
-
-        // Unsubscribe from previous tasks if they exist
-        if (cookingTask != null)
-        {
-            cookingTask.OnTaskCompleted -= OnTaskCompleted;
-        }
-        if (resourceUpgradeTask != null)
-        {
-            resourceUpgradeTask.OnTaskCompleted -= OnTaskCompleted;
-        }
-
-        switch (workType)
-        {
-            case WorkType.RESEARCH:
-                var research = item as ResearchScriptableObj;
-                if (research != null)
-                {
-                    name = research.objectName;
-                    sprite = research.sprite;
-                }
-                break;
-            case WorkType.COOKING:
-                var recipe = item as CookingRecipeScriptableObj;
-                if (recipe != null)
-                {
-                    name = recipe.objectName;
-                    sprite = recipe.sprite;
-                    cookingTask = building.GetComponent<CookingTask>();
-                    if (cookingTask != null)
-                    {
-                        cookingTask.OnTaskCompleted += OnTaskCompleted;
-                    }
-                }
-                break;
-            case WorkType.UPGRADE_RESOURCE:
-                var upgrade = item as ResourceUpgradeScriptableObj;
-                if (upgrade != null)
-                {
-                    name = upgrade.objectName;
-                    sprite = upgrade.sprite;
-                    resourceUpgradeTask = building.GetComponent<ResourceUpgradeTask>();
-                    if (resourceUpgradeTask != null)
-                    {
-                        resourceUpgradeTask.OnTaskCompleted += OnTaskCompleted;
-                    }
-                }
-                break;
-        }
-
-        base.SetupButton(item, sprite, name);
         UpdateQueueCount();
     }
 

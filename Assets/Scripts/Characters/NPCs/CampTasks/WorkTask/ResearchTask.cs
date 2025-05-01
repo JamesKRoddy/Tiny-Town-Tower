@@ -5,6 +5,7 @@ using Managers;
 public class ResearchTask : WorkTask
 {
     [SerializeField] private ResearchScriptableObj currentResearch;
+    public ResearchScriptableObj CurrentResearch => currentResearch;
 
     protected override void Start()
     {
@@ -14,16 +15,24 @@ public class ResearchTask : WorkTask
 
     public void SetResearch(ResearchScriptableObj research)
     {
-        currentResearch = research;
-        if (research != null)
+        if (research == null) return;
+
+        // Check if research can be started
+        if (!CampManager.Instance.ResearchManager.CanStartResearch(research, out string errorMessage))
         {
-            baseWorkTime = research.researchTime;
-            // Convert required resources from ResearchScriptableObj to ResourceItemCount[]
-            if (research.requiredResources != null)
-            {
-                requiredResources = research.requiredResources;
-            }
+            PlayerUIManager.Instance.DisplayUIErrorMessage(errorMessage);
+            return;
         }
+
+        // Try to start the research
+        if (!CampManager.Instance.ResearchManager.StartResearch(research))
+        {
+            return;
+        }
+
+        currentResearch = research;
+        baseWorkTime = research.researchTime;
+        requiredResources = research.requiredResources;
     }
 
     protected override void CompleteWork()

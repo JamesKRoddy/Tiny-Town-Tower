@@ -9,7 +9,6 @@ public class ResearchScriptableObj : WorldItemBase
     public ResourceItemCount[] requiredResources; // Resources required to start the research
     [Min(5f)]
     public float researchTime; // Time it takes to complete the research
-    public bool isUnlocked = false; //Has the research been completed?
 
     [Header("Research Prerequisites")]
     public ResearchScriptableObj[] requiredResearch; // Research that must be completed before this can be unlocked

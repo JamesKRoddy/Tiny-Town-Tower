@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 045927cf7c3483f49829a3b77db826ba, type: 3}
-  m_Name: _TestResearchScriptableObj
+  m_Name: _TestResearchScriptableObj 1
   m_EditorClassIdentifier: 
   objectName: _TestResearchScriptableObj
   description: _TestResearchScriptableObj desc
   sprite: {fileID: 0}
   requiredResources: []
   researchTime: 5
-  isUnlocked: 1
+  isUnlocked: 0
   requiredResearch: []
   requiredCampLevel: 0
   outputResources: []

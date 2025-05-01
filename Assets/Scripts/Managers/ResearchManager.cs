@@ -9,12 +9,14 @@ namespace Managers
         private List<ResearchScriptableObj> availableResearch = new List<ResearchScriptableObj>();
         private List<ResearchScriptableObj> completedResearch = new List<ResearchScriptableObj>();
         private List<WorldItemBase> unlockedItems = new List<WorldItemBase>();
+        private HashSet<ResearchScriptableObj> currentlyResearching = new HashSet<ResearchScriptableObj>();
 
         public void Initialize()
         {
             availableResearch = new List<ResearchScriptableObj>(allResearch);
             completedResearch = new List<ResearchScriptableObj>();
             unlockedItems = new List<WorldItemBase>();
+            currentlyResearching.Clear();
         }
 
         public List<ResearchScriptableObj> GetAllResearch()
@@ -52,14 +54,31 @@ namespace Managers
             return availableResearch.Contains(research);
         }
 
-        public bool CompleteResearch(ResearchScriptableObj research)
+        public bool IsResearching(ResearchScriptableObj research)
         {
-            if (!availableResearch.Contains(research) || research.isUnlocked)
-                return false;
+            return currentlyResearching.Contains(research);
+        }
 
-            research.isUnlocked = true;
+        public bool StartResearch(ResearchScriptableObj research)
+        {
+            if (!CanStartResearch(research, out string errorMessage))
+            {
+                Debug.LogWarning($"Cannot start research: {errorMessage}");
+                return false;
+            }
+
+            currentlyResearching.Add(research);
+            return true;
+        }
+
+        public void CompleteResearch(ResearchScriptableObj research)
+        {
+            if (!availableResearch.Contains(research) || IsResearchCompleted(research))
+                return;
+
             availableResearch.Remove(research);
             completedResearch.Add(research);
+            currentlyResearching.Remove(research);
 
             // Add any unlocked items to the unlocked items list
             if (research.unlockedItems != null && research.unlockType != ResearchUnlockType.NONE)
@@ -69,8 +88,6 @@ namespace Managers
                     unlockedItems.Add(item);
                 }
             }
-
-            return true;
         }
 
         public bool CanStartResearch(ResearchScriptableObj research, out string errorMessage)
@@ -83,9 +100,15 @@ namespace Managers
                 return false;
             }
 
-            if (research.isUnlocked)
+            if (IsResearchCompleted(research))
             {
                 errorMessage = "This research has already been completed!";
+                return false;
+            }
+
+            if (currentlyResearching.Contains(research))
+            {
+                errorMessage = "This research is already being researched!";
                 return false;
             }
 
@@ -94,7 +117,7 @@ namespace Managers
             {
                 foreach (var prereq in research.requiredResearch)
                 {
-                    if (!prereq.isUnlocked)
+                    if (!IsResearchCompleted(prereq))
                     {
                         errorMessage = "Research prerequisites not met!";
                         return false;

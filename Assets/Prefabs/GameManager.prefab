@@ -219,7 +219,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0bb889fce6c42b74bbe2eb91db08f574, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  allRecipes: []
+  allRecipes:
+  - {fileID: 11400000, guid: d51c519b25602f9488d4e8ced1e76a41, type: 2}
+  - {fileID: 11400000, guid: 10a8c2584240c3d4e90047f8699c1432, type: 2}
 --- !u!1 &1833866665787503918
 GameObject:
   m_ObjectHideFlags: 0
@@ -316,7 +318,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6aae3d28c67b84642bd256cf66c5a39f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  allUpgrades: []
+  allUpgrades:
+  - {fileID: 11400000, guid: 144d1835dd9ced84dbae0e287e506182, type: 2}
 --- !u!1 &2451805035808484079
 GameObject:
   m_ObjectHideFlags: 0
@@ -598,7 +601,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ffd17a8db7394c4b9b5fc83116749ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  allResearch: []
+  allResearch:
+  - {fileID: 11400000, guid: 75651721df6eaa54baf064af661ece2c, type: 2}
+  - {fileID: 11400000, guid: a3f9812e13d659b46960fa9c0eb6b511, type: 2}
 --- !u!1 &5144644167849349258
 GameObject:
   m_ObjectHideFlags: 0
@@ -650,12 +655,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dee95a5e4918df243930ec1ff64111dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  researchManager: {fileID: 6193134543259632268}
-  cleanlinessManager: {fileID: 8790787139558064541}
   workManager: {fileID: 1085350689453372493}
   buildManager: {fileID: 5302720283086380226}
-  cookingManager: {fileID: 0}
-  resourceUpgradeManager: {fileID: 0}
   maxCleanliness: 100
   currentCleanliness: 100
   dirtinessRate: 0.1
@@ -890,3 +891,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13be80af3e9d3e94b8ab9cae4ddd3f35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  buildingScriptableObjs:
+  - {fileID: 11400000, guid: 83f43f03ce31b054086c97c8e84c5597, type: 2}
+  - {fileID: 11400000, guid: b1d8c0aa446ef7e44be90aa0e9daf3a5, type: 2}
+  - {fileID: 11400000, guid: 605bb9e705d6b544b99ea27637527091, type: 2}
+  - {fileID: 11400000, guid: 49bee0bbd91f1ca45add82c8cc520e29, type: 2}
+  - {fileID: 11400000, guid: 9e5170ccb411c2e42bdfd9db2f15716f, type: 2}
+  - {fileID: 11400000, guid: afef9195e37c3ff41b2d1b6a40cbca7b, type: 2}
