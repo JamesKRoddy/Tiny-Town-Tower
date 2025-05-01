@@ -46,14 +46,6 @@ public class BuildingRepairTask : WorkTask
         CompleteWork();
     }
 
-    private void ConsumeResources()
-    {
-        foreach (var resourceItem in requiredResources)
-        {
-            CampManager.Instance.PlayerInventory.RemoveItem(resourceItem.resource, resourceItem.count);
-        }
-    }
-
     protected override void CompleteWork()
     {
         if (targetBuilding != null)

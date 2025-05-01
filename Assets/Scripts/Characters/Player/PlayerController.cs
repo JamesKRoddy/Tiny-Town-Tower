@@ -175,13 +175,16 @@ public class PlayerController : MonoBehaviour, IControllerInput
     {
         // Check for work tasks at the camera's detection point
         WorkTask workTask = playerCamera.GetWorkTaskAtDetectionPoint();
+
         if (workTask != null)
         {
             Building building = workTask.GetComponent<Building>();
+
             if (building != null)
             {
                 // Create selection options for each work task
                 var workTasks = building.GetComponents<WorkTask>();
+
                 var options = new List<SelectionPopup.SelectionOption>();
 
                 foreach (var task in workTasks)
@@ -193,8 +196,34 @@ public class PlayerController : MonoBehaviour, IControllerInput
                         {
                             optionName = "Research",
                             onSelected = () => {
-                                PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
                                 PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
+                                PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+                            },
+                            canSelect = () => true
+                        });
+                    }
+                    else if (task.workType == WorkType.COOKING)
+                    {
+                        // For cooking tasks, show the cooking selection screen
+                        options.Add(new SelectionPopup.SelectionOption
+                        {
+                            optionName = "Cook",
+                            onSelected = () => {
+                                PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
+                                PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+                            },
+                            canSelect = () => true
+                        });
+                    }
+                    else if (task.workType == WorkType.UPGRADE_RESOURCE)
+                    {
+                        // For resource upgrade tasks, show the resource upgrade selection screen
+                        options.Add(new SelectionPopup.SelectionOption
+                        {
+                            optionName = "Upgrade Resource",
+                            onSelected = () => {
+                                PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
+                                PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
                             },
                             canSelect = () => true
                         });
@@ -205,7 +234,9 @@ public class PlayerController : MonoBehaviour, IControllerInput
                         options.Add(new SelectionPopup.SelectionOption
                         {
                             optionName = task.workType.ToString(),
-                            onSelected = () => WorkManager.Instance.AssignWorkToBuilding(task),
+                            onSelected = () => {
+                                WorkManager.Instance.AssignWorkToBuilding(task);
+                            },
                             canSelect = () => task.CanPerformTask()
                         });
                     }

@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using Managers;
 
 public abstract class WorkTask : MonoBehaviour
@@ -8,7 +9,7 @@ public abstract class WorkTask : MonoBehaviour
     [HideInInspector] public WorkType workType;
     [SerializeField] protected Transform workLocationTransform; // Optional specific work location
     protected SettlerNPC currentWorker; // Reference to the NPC performing this task
-    [SerializeField] public ResourceItemCount[] requiredResources; // Resources needed to perform this task
+    public ResourceItemCount[] requiredResources; // Resources needed to perform this task
 
     // Work progress tracking
     protected float workProgress = 0f;
@@ -16,16 +17,20 @@ public abstract class WorkTask : MonoBehaviour
     protected int resourceAmount = 1;
     protected Coroutine workCoroutine;
 
+    // Task queue
+    public Queue<object> taskQueue = new Queue<object>();
+    protected object currentTaskData;
+
     // Property to access the assigned NPC
     public SettlerNPC AssignedNPC => currentWorker;
     public bool IsOccupied => currentWorker != null;
+    public bool HasQueuedTasks => taskQueue.Count > 0;
 
     // Abstract method for NPC to perform the work task
     public virtual void PerformTask(SettlerNPC npc)
     {
-        if (currentWorker == null)
+        if (currentWorker == npc)
         {
-            currentWorker = npc;
             workCoroutine = StartCoroutine(WorkCoroutine());
         }
     }
@@ -50,7 +55,7 @@ public abstract class WorkTask : MonoBehaviour
 
         foreach (var resource in requiredResources)
         {
-            if (PlayerInventory.Instance.GetItemCount(resource.resource) < resource.count)
+            if (PlayerInventory.Instance.GetItemCount(resource.resourceScriptableObj) < resource.count)
             {
                 return false;
             }
@@ -63,12 +68,14 @@ public abstract class WorkTask : MonoBehaviour
     {
         foreach (var resourceItem in requiredResources)
         {
-            PlayerInventory.Instance.RemoveItem(resourceItem.resource, resourceItem.count);
+            PlayerInventory.Instance.RemoveItem(resourceItem.resourceScriptableObj, resourceItem.count);
         }
     }
 
     // Declare StopWork as an event
     public event Action StopWork; // Called when a construction is complete, building is broken, etc..
+
+    public event Action OnTaskCompleted;
 
     protected virtual void Start()
     {
@@ -89,7 +96,6 @@ public abstract class WorkTask : MonoBehaviour
     // Method to assign an NPC to this task
     public void AssignNPC(SettlerNPC npc)
     {
-        Debug.Log("Assigning NPC to task: " + npc.name);
         currentWorker = npc;
     }
 
@@ -120,13 +126,83 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual method for completing work that can be overridden
     protected virtual void CompleteWork()
     {
+        
+        // Store the current worker as previous worker before clearing
+        if (currentWorker != null)
+        {
+            CampManager.Instance.WorkManager.StorePreviousWorker(this, currentWorker);
+        }
+        
         // Reset state
         workProgress = 0f;
-        currentWorker = null;
-        workCoroutine = null;
+        if (workCoroutine != null)
+        {
+            StopCoroutine(workCoroutine);
+            workCoroutine = null;
+        }
+        
+        // Process next task in queue if available
+        if (taskQueue.Count > 0)
+        {
+            currentTaskData = taskQueue.Dequeue();
+            SetupNextTask();
+            
+            // Start the next task immediately if we have a worker
+            if (currentWorker != null)
+            {
+                workCoroutine = StartCoroutine(WorkCoroutine());
+            }
+            else
+            {
+                Debug.LogWarning($"[WorkTask] No worker assigned for next task in {name}");
+            }
+        }
+        else
+        {
+            // Only clear the worker if there are no more tasks
+            currentWorker = null;
+        }
         
         // Notify completion
+        OnTaskCompleted?.Invoke();
         InvokeStopWork();
+    }
+
+    // Virtual method to setup the next task in queue
+    protected virtual void SetupNextTask()
+    {
+        // To be implemented by derived classes
+    }
+
+    // Method to add a task to the queue
+    public virtual void QueueTask(object taskData)
+    {
+        taskQueue.Enqueue(taskData);
+        
+        // If we have a previous worker and no current worker, assign them to the new task
+        if (currentWorker == null && taskQueue.Count == 1)
+        {
+            // Find the previous worker through the WorkManager
+            var previousWorker = CampManager.Instance.WorkManager.GetPreviousWorkerForTask(this);
+            if (previousWorker != null)
+            {
+                // Set the NPC for assignment before assigning the task
+                CampManager.Instance.WorkManager.SetNPCForAssignment(previousWorker);
+                AssignNPC(previousWorker);
+                previousWorker.ChangeTask(TaskType.WORK);
+            }
+        }
+    }
+
+    // Method to clear the task queue
+    public virtual void ClearTaskQueue()
+    {
+        taskQueue.Clear();
+    }
+
+    protected void AddResourceToInventory(ResourceItemCount resourceItemCount)
+    {
+        PlayerInventory.Instance.AddItem(resourceItemCount.resourceScriptableObj, resourceItemCount.count);
     }
 
     protected virtual void OnDisable()

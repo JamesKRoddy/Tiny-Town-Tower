@@ -23,9 +23,6 @@ public class Building : MonoBehaviour
     [SerializeField, ReadOnly] protected BuildingRepairTask repairTask;
     [SerializeField, ReadOnly] protected BuildingUpgradeTask upgradeTask;
 
-    [Header("Work Task")]
-    [SerializeField] protected WorkTask permanentWorkTask;
-
     // Events
     public event System.Action OnBuildingDestroyed;
     public event System.Action OnBuildingRepaired;
@@ -41,6 +38,11 @@ public class Building : MonoBehaviour
         SetupRepairTask();
         SetupUpgradeTask();
         SetupNavmeshObstacle();
+
+        if(GetComponent<Collider>() == null)
+        {
+            gameObject.AddComponent<BoxCollider>();        
+        }
     }
 
     private void SetupNavmeshObstacle()
@@ -146,7 +148,6 @@ public class Building : MonoBehaviour
     public float GetCurrentHealth() => currentHealth;
     public float GetMaxHealth() => buildingScriptableObj.maxHealth;
     public float GetTaskRadius() => buildingScriptableObj.taskRadius;
-    public WorkTask GetPermanentWorkTask() => permanentWorkTask;
 
     /// <summary>
     /// Checks if a position is within the work area of this building

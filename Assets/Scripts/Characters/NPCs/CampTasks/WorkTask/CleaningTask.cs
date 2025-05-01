@@ -11,8 +11,6 @@ public class CleaningTask : WorkTask
     [SerializeField] private float cleanlinessIncrease = 10f;
     
     private float cleaningProgress = 0f;
-    private SettlerNPC currentWorker;
-    private Coroutine cleaningCoroutine;
 
     protected override void Start()
     {
@@ -26,7 +24,7 @@ public class CleaningTask : WorkTask
         if (currentWorker == null)
         {
             currentWorker = npc;
-            cleaningCoroutine = StartCoroutine(CleaningCoroutine());
+            workCoroutine = StartCoroutine(CleaningCoroutine());
         }
     }
 
@@ -50,19 +48,10 @@ public class CleaningTask : WorkTask
         // Reset state
         cleaningProgress = 0f;
         currentWorker = null;
-        cleaningCoroutine = null;
+        workCoroutine = null;
         
         // Notify completion
         InvokeStopWork();
-    }
-
-    private void OnDisable()
-    {
-        if (cleaningCoroutine != null)
-        {
-            StopCoroutine(cleaningCoroutine);
-            cleaningCoroutine = null;
-        }
     }
 
     protected override void CompleteWork()

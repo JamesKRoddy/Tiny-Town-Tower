@@ -5,15 +5,13 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using Managers;
 
 public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptableObj>, IControllerInput
 {
     [Header("Build Menu Preview UI")]
     [SerializeField] GameObject previewResourceCostPrefab;
     [SerializeField] RectTransform previewResourceCostParent;
-
-    [Header("Full list of Building Scriptable Objs")]
-    public BuildingScriptableObj[] buildingScriptableObjs;
 
     private BuildingPreviewBtn selectedButton;
 
@@ -38,7 +36,7 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
 
     public override IEnumerable<BuildingScriptableObj> GetItems()
     {
-        return buildingScriptableObjs;
+        return CampManager.Instance.BuildManager.buildingScriptableObjs;
     }
 
     public override BuildingCategory GetItemCategory(BuildingScriptableObj item)
@@ -75,9 +73,9 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
         foreach (var resourceCost in item._resourceCost)
         {
             yield return (
-                resourceCost.resource.objectName,
+                resourceCost.resourceScriptableObj.objectName,
                 resourceCost.count,
-                PlayerInventory.Instance.GetItemCount(resourceCost.resource)
+                PlayerInventory.Instance.GetItemCount(resourceCost.resourceScriptableObj)
             );
         }
     }

@@ -23,10 +23,12 @@ namespace Managers
         }
 
         // References to other managers
-        [SerializeField] private ResearchManager researchManager;
-        [SerializeField] private CleanlinessManager cleanlinessManager;
+        private ResearchManager researchManager;
+        private CleanlinessManager cleanlinessManager;
         [SerializeField] private WorkManager workManager;
         [SerializeField] private BuildManager buildManager;
+        private CookingManager cookingManager;
+        private ResourceUpgradeManager resourceUpgradeManager;
 
         // Public access to other managers
         public ResearchManager ResearchManager => researchManager;
@@ -34,6 +36,9 @@ namespace Managers
         public PlayerInventory PlayerInventory => PlayerInventory.Instance;
         public WorkManager WorkManager => workManager;
         public BuildManager BuildManager => buildManager;
+        public CookingManager CookingManager => cookingManager;
+        public ResourceUpgradeManager ResourceUpgradeManager => resourceUpgradeManager;
+
 
         // Inventory Management
         private Dictionary<ResourceScriptableObj, int> resources = new Dictionary<ResourceScriptableObj, int>();
@@ -62,17 +67,21 @@ namespace Managers
         private void InitializeManagers()
         {
             // Find and cache references to other managers if not set in inspector
-            if (researchManager == null) researchManager = FindFirstObjectByType<ResearchManager>();
-            if (cleanlinessManager == null) cleanlinessManager = FindFirstObjectByType<CleanlinessManager>();
+            if (researchManager == null) researchManager = gameObject.GetComponentInChildren<ResearchManager>();
+            if (cleanlinessManager == null) cleanlinessManager = gameObject.GetComponentInChildren<CleanlinessManager>();
+            if (cookingManager == null) cookingManager = gameObject.GetComponentInChildren<CookingManager>();
+            if (resourceUpgradeManager == null) resourceUpgradeManager = gameObject.GetComponentInChildren<ResourceUpgradeManager>();
 
             // Log warnings for any missing managers
             if (researchManager == null) Debug.LogWarning("ResearchManager not found in scene!");
             if (cleanlinessManager == null) Debug.LogWarning("CleanlinessManager not found in scene!");
+            if (cookingManager == null) Debug.LogWarning("CookingManager not found in scene!");
+            if (resourceUpgradeManager == null) Debug.LogWarning("ResourceUpgradeManager not found in scene!");
 
-            researchManager.Initialize();
-            //cleanlinessManager.Initialize();
-            //workManager.Initialize();
-            //buildManager.Initialize();
+            // Initialize managers
+            if (researchManager != null) researchManager.Initialize();
+            if (cookingManager != null) cookingManager.Initialize();
+            if (resourceUpgradeManager != null) resourceUpgradeManager.Initialize();
         }
 
         private void Update()

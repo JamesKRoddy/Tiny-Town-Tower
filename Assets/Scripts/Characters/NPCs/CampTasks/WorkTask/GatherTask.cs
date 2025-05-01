@@ -6,7 +6,6 @@ public class GatherTask : WorkTask
 {
     [SerializeField] private float gatherTime = 20f;
     [SerializeField] private ResourceScriptableObj resource;
-    [SerializeField] private int resourceAmount = 1;
 
     protected override void Start()
     {

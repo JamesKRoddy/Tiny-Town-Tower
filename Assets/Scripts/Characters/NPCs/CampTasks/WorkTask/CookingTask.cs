@@ -1,48 +1,57 @@
 using UnityEngine;
 using System.Collections;
 using Managers;
+using System;
 
 public class CookingTask : WorkTask
 {
-    [SerializeField] private ResourceScriptableObj cookedFood;
-    [SerializeField] private int foodAmount = 1;
-    [SerializeField] private float cookingTime = 10f;
+    public CookingRecipeScriptableObj currentRecipe;
 
     protected override void Start()
     {
         base.Start();
         workType = WorkType.COOKING;
-        baseWorkTime = cookingTime;
     }
 
-    protected override IEnumerator WorkCoroutine()
+    public void SetRecipe(CookingRecipeScriptableObj recipe)
     {
-        // Check if we have all required ingredients
-        if (!HasRequiredResources())
-        {
-            Debug.LogWarning("Not enough ingredients for cooking");
-            yield break;
-        }
+        if (recipe == null) return;
+        
+        // Queue the recipe
+        QueueTask(recipe);
 
-        // Cook the food
-        while (workProgress < baseWorkTime)
+        // If no current recipe, set it up immediately
+        if (currentRecipe == null)
         {
-            workProgress += Time.deltaTime;
-            yield return null;
+            currentTaskData = taskQueue.Dequeue();
+            SetupNextTask();
         }
+    }
 
-        CompleteWork();
+    protected override void SetupNextTask()
+    {
+        if (currentTaskData is CookingRecipeScriptableObj nextRecipe)
+        {
+            currentRecipe = nextRecipe;
+            baseWorkTime = nextRecipe.cookingTime;
+            requiredResources = nextRecipe.requiredIngredients;
+        }
     }
 
     protected override void CompleteWork()
     {
-        // Create the cooked food
-        for (int i = 0; i < foodAmount; i++)
+        if (currentRecipe != null)
         {
-            Resource food = Instantiate(cookedFood.prefab, transform.position + Random.insideUnitSphere, Quaternion.identity).GetComponent<Resource>();
-            food.Initialize(cookedFood);
+            // Create the cooked food
+            for (int i = 0; i < currentRecipe.outputAmount; i++)
+            {
+                AddResourceToInventory(currentRecipe.outputFood);
+            }
         }
-
+        
+        // Clear the current recipe before completing the work
+        currentRecipe = null;
+        
         base.CompleteWork();
     }
 } 

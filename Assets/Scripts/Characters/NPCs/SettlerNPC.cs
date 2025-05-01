@@ -68,7 +68,6 @@ public class SettlerNPC : HumanCharacterController
 
     internal void AssignWork(WorkTask newTask)
     {
-        Debug.Log("Assigning work to NPC: " + name);
         (taskStates[TaskType.WORK] as WorkState).AssignTask(newTask);
         ChangeTask(TaskType.WORK);
     }

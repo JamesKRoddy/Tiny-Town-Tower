@@ -173,6 +173,9 @@ public class PlayerUIManager : MonoBehaviour
             case UtilityMenu:
                 utilityMenu.ReturnToGame();
                 break;
+            case SelectionPreviewList:
+                selectionPreviewList.ReturnToGame();
+                break;
             case BuildMenu:
             case GeneticMutationUI:
             case PlayerInventoryMenu:
@@ -187,6 +190,7 @@ public class PlayerUIManager : MonoBehaviour
                 pauseMenu.EnablePauseMenu();
                 break;
             default:
+                Debug.LogWarning("BackPressed no menu found");
                 break;  
         }
     }

@@ -29,11 +29,11 @@ namespace Managers
         public event TaskAvailable OnTaskAvailable;
 
         private SettlerNPC npcForAssignment;
+        private Dictionary<WorkTask, SettlerNPC> previousWorkers = new Dictionary<WorkTask, SettlerNPC>();
 
         // Method to add a new work task to the queue
         public void AddWorkTask(WorkTask newTask)
         {
-            Debug.Log($"<color=green>[WorkManager]</color> Adding work task: {newTask.name}");
             workQueue.Enqueue(newTask);
             // Notify that a new task is available
             OnTaskAvailable?.Invoke(newTask);
@@ -80,10 +80,23 @@ namespace Managers
 
         public void AssignWorkToBuilding(WorkTask workTask)
         {
-            if (npcForAssignment == null || workTask == null)
+            
+            if (workTask == null)
             {
-                PlayerUIManager.Instance.DisplayUIErrorMessage("No NPC selected for work assignment");
+                PlayerUIManager.Instance.DisplayUIErrorMessage("Invalid work task");
                 return;
+            }
+
+            // If we have no NPC for assignment, check if we can get a previous worker
+            if (npcForAssignment == null)
+            {
+                var previousWorker = GetPreviousWorkerForTask(workTask);
+                if (previousWorker == null)
+                {
+                    PlayerUIManager.Instance.DisplayUIErrorMessage("No NPC available for work assignment");
+                    return;
+                }
+                SetNPCForAssignment(previousWorker);
             }
 
             // Check if the task can be performed
@@ -107,11 +120,11 @@ namespace Managers
                 bool firstResource = true;
                 foreach (var resource in workTask.requiredResources)
                 {
-                    int playerCount = PlayerInventory.Instance.GetItemCount(resource.resource);
+                    int playerCount = PlayerInventory.Instance.GetItemCount(resource.resourceScriptableObj);
                     if (playerCount < resource.count)
                     {
                         if (!firstResource) resourceMessage += ", ";
-                        resourceMessage += $"{resource.resource.objectName} ({playerCount}/{resource.count})";
+                        resourceMessage += $"{resource.resourceScriptableObj.objectName} ({playerCount}/{resource.count})";
                         firstResource = false;
                     }
                 }
@@ -127,10 +140,30 @@ namespace Managers
                 workTask.UnassignNPC();
             }
 
+            // Store the previous worker
+            if (workTask.AssignedNPC != null)
+            {
+                previousWorkers[workTask] = workTask.AssignedNPC;
+            }
+
             // Assign the new NPC to the task
             workTask.AssignNPC(npcForAssignment);
             npcForAssignment.AssignWork(workTask);
             npcForAssignment = null; // Clear the assignment NPC
+        }
+
+        public void StorePreviousWorker(WorkTask task, SettlerNPC worker)
+        {
+            previousWorkers[task] = worker;
+        }
+
+        public SettlerNPC GetPreviousWorkerForTask(WorkTask task)
+        {            
+            if (previousWorkers.TryGetValue(task, out SettlerNPC previousWorker))
+            {
+                return previousWorker;
+            }
+            return null;
         }
     }
 }

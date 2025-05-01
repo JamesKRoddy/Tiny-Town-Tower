@@ -71,6 +71,8 @@ public interface IDamageable
 
     Can open and place mutations in the genetic mutation menu, while no npcs are possessed
     NPCs still sliding around when they are assigned a task
+
+    Construction site 2x2 is not working, causing errors of grid spaces not being found
     
  * Next work:
 

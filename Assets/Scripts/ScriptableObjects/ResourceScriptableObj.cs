@@ -27,6 +27,32 @@ public static class DifficultyRarityMapper
 [System.Serializable]
 public class ResourceItemCount
 {
-    public ResourceScriptableObj resource;
+    public ResourceScriptableObj resourceScriptableObj;
     public int count;
+
+    /// <summary>
+    /// Constructor to initialize the ResourcePickup.
+    /// </summary>
+    /// <param name="resourceObj">The ResourceScriptableObj for this pickup.</param>
+    /// <param name="initialCount">The initial count of the resource.</param>
+    public ResourceItemCount(ResourceScriptableObj resourceObj, int initialCount = 1)
+    {
+        resourceScriptableObj = resourceObj;
+        count = initialCount;
+    }
+
+    /// <summary>
+    /// Attempts to retrieve the chest item as a ResourceScriptableObj.
+    /// Logs an error if the cast fails.
+    /// </summary>
+    public ResourceScriptableObj GetResourceObj()
+    {
+        if (!resourceScriptableObj)
+        {
+            Debug.LogError("Resource has no item");
+            return null;
+        }
+
+        return resourceScriptableObj;
+    }
 }

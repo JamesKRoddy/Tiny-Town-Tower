@@ -2,10 +2,10 @@
 using System.Collections;
 using UnityEngine;
 
-public class Chest : MonoBehaviour, IInteractive<ResourcePickup>
+public class Chest : MonoBehaviour, IInteractive<ResourceItemCount>
 {
 
-    private ResourcePickup chestContents;
+    private ResourceItemCount chestContents;
 
     public bool isOpened = false;
 
@@ -83,7 +83,7 @@ public class Chest : MonoBehaviour, IInteractive<ResourcePickup>
 
     object IInteractiveBase.Interact() => Interact();
 
-    public ResourcePickup Interact()
+    public ResourceItemCount Interact()
     {
         if (isOpened)
         {

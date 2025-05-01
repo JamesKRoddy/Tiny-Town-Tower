@@ -4,15 +4,37 @@ using Managers;
 
 public class ResourceUpgradeTask : WorkTask
 {
-    [SerializeField] private ResourceScriptableObj outputResource;
-    [SerializeField] private int outputAmount = 1;
-    [SerializeField] private float upgradeTime = 15f;
+    public ResourceUpgradeScriptableObj currentUpgrade;
 
     protected override void Start()
     {
         base.Start();
         workType = WorkType.UPGRADE_RESOURCE;
-        baseWorkTime = upgradeTime;
+    }
+
+    public void SetUpgrade(ResourceUpgradeScriptableObj upgrade)
+    {
+        if (upgrade == null) return;
+        
+        // Queue the upgrade
+        QueueTask(upgrade);
+
+        // If no current upgrade, set it up immediately
+        if (currentUpgrade == null)
+        {
+            currentTaskData = taskQueue.Dequeue();
+            SetupNextTask();
+        }
+    }
+
+    protected override void SetupNextTask()
+    {
+        if (currentTaskData is ResourceUpgradeScriptableObj nextUpgrade)
+        {
+            currentUpgrade = nextUpgrade;
+            baseWorkTime = nextUpgrade.upgradeTime;
+            requiredResources = nextUpgrade.requiredResources;
+        }
     }
 
     protected override IEnumerator WorkCoroutine()
@@ -39,13 +61,18 @@ public class ResourceUpgradeTask : WorkTask
 
     protected override void CompleteWork()
     {
-        // Create the upgraded resources
-        for (int i = 0; i < outputAmount; i++)
+        if (currentUpgrade != null)
         {
-            Resource upgradedResource = Instantiate(outputResource.prefab, transform.position + Random.insideUnitSphere, Quaternion.identity).GetComponent<Resource>();
-            upgradedResource.Initialize(outputResource);
+            // Create the upgraded resources
+            for (int i = 0; i < currentUpgrade.outputAmount; i++)
+            {
+                AddResourceToInventory(currentUpgrade.outputResource);
+            }
         }
-
+        
+        // Clear the current upgrade before completing the work
+        currentUpgrade = null;
+        
         base.CompleteWork();
     }
 } 

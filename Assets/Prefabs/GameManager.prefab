@@ -175,6 +175,51 @@ MonoBehaviour:
   maxCleanliness: 100
   currentCleanliness: 100
   dirtinessRate: 0.1
+--- !u!1 &1370869420154002683
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4570279702760214629}
+  - component: {fileID: 9144480414453247263}
+  m_Layer: 0
+  m_Name: CookingManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4570279702760214629
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370869420154002683}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3868888678722008520}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9144480414453247263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1370869420154002683}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0bb889fce6c42b74bbe2eb91db08f574, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  allRecipes: []
 --- !u!1 &1833866665787503918
 GameObject:
   m_ObjectHideFlags: 0
@@ -227,6 +272,51 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _currentGameMode: 3
+--- !u!1 &2242077205400694440
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1841912673632380842}
+  - component: {fileID: 3451620289663002855}
+  m_Layer: 0
+  m_Name: ResourceUpgradeManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1841912673632380842
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2242077205400694440}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3868888678722008520}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3451620289663002855
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2242077205400694440}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6aae3d28c67b84642bd256cf66c5a39f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  allUpgrades: []
 --- !u!1 &2451805035808484079
 GameObject:
   m_ObjectHideFlags: 0
@@ -508,6 +598,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ffd17a8db7394c4b9b5fc83116749ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  allResearch: []
 --- !u!1 &5144644167849349258
 GameObject:
   m_ObjectHideFlags: 0
@@ -543,6 +634,8 @@ Transform:
   - {fileID: 1723987532010504097}
   - {fileID: 7934103378231939}
   - {fileID: 8385269320839992886}
+  - {fileID: 4570279702760214629}
+  - {fileID: 1841912673632380842}
   m_Father: {fileID: 4686915863895893509}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2800147835243380111
@@ -561,6 +654,8 @@ MonoBehaviour:
   cleanlinessManager: {fileID: 8790787139558064541}
   workManager: {fileID: 1085350689453372493}
   buildManager: {fileID: 5302720283086380226}
+  cookingManager: {fileID: 0}
+  resourceUpgradeManager: {fileID: 0}
   maxCleanliness: 100
   currentCleanliness: 100
   dirtinessRate: 0.1
