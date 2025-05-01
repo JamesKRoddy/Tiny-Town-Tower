@@ -6,10 +6,15 @@ Have to setup resource upgrade buildings, tasks and scriptable objs
 
 TODO Large things:
 
-
 Upgrading buildings
+
+Have to remove original building and spawn in new one
+
 Damaging buildings
 Repairing buildings
+Destroying buildings
+
+
 Removing work from NPCs
 
 
