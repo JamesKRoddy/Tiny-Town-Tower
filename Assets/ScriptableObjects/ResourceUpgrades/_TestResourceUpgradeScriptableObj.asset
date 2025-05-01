@@ -17,6 +17,8 @@ MonoBehaviour:
   sprite: {fileID: 0}
   isUnlocked: 0
   requiredResources: []
-  upgradeTime: 0
-  outputResource: {fileID: 0}
+  upgradeTime: 5
+  outputResource:
+    resourceScriptableObj: {fileID: 0}
+    count: 0
   outputAmount: 1

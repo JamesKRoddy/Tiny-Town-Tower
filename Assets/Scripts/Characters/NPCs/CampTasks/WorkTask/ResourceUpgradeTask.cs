@@ -14,11 +14,26 @@ public class ResourceUpgradeTask : WorkTask
 
     public void SetUpgrade(ResourceUpgradeScriptableObj upgrade)
     {
-        currentUpgrade = upgrade;
-        if (upgrade != null)
+        if (upgrade == null) return;
+        
+        // Queue the upgrade
+        QueueTask(upgrade);
+
+        // If no current upgrade, set it up immediately
+        if (currentUpgrade == null)
         {
-            baseWorkTime = upgrade.upgradeTime;
-            requiredResources = upgrade.requiredResources;
+            currentTaskData = taskQueue.Dequeue();
+            SetupNextTask();
+        }
+    }
+
+    protected override void SetupNextTask()
+    {
+        if (currentTaskData is ResourceUpgradeScriptableObj nextUpgrade)
+        {
+            currentUpgrade = nextUpgrade;
+            baseWorkTime = nextUpgrade.upgradeTime;
+            requiredResources = nextUpgrade.requiredResources;
         }
     }
 
@@ -54,6 +69,9 @@ public class ResourceUpgradeTask : WorkTask
                 AddResourceToInventory(currentUpgrade.outputResource);
             }
         }
+        
+        // Clear the current upgrade before completing the work
+        currentUpgrade = null;
         
         base.CompleteWork();
     }
