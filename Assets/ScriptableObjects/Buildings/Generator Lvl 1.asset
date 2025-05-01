@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d7f097ca34a0eb45a8b2d5ba0c3d616, type: 3}
   m_Name: Generator Lvl 1
   m_EditorClassIdentifier: 
-  objectName: Generator
-  description: Generator desc
+  objectName: Generator Lvl 1
+  description: Generator Lvl 1 desc
   sprite: {fileID: 0}
   _resourceCost: []
   prefab: {fileID: 153104, guid: 1f0d6dd4d6ad78b439bb2dad26c4dc58, type: 3}

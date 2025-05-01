@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d7f097ca34a0eb45a8b2d5ba0c3d616, type: 3}
   m_Name: Bed Lvl 1
   m_EditorClassIdentifier: 
-  objectName: Bed
-  description: Bed desc
+  objectName: Bed Lvl 1
+  description: Bed Lvl 1 desc
   sprite: {fileID: 0}
   _resourceCost: []
   prefab: {fileID: 1305933842384340, guid: ccb79d2f691e98548a17e09e7c6f22c3, type: 3}

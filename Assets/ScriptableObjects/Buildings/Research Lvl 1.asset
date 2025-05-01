@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d7f097ca34a0eb45a8b2d5ba0c3d616, type: 3}
   m_Name: Research Lvl 1
   m_EditorClassIdentifier: 
-  objectName: Research
-  description: Research desc
+  objectName: Research Lvl 1
+  description: Research Lvl 1 desc
   sprite: {fileID: 0}
   _resourceCost: []
   prefab: {fileID: 5397833359920250064, guid: 1ceb6a20cc53f3c4d8b871f14af8f2ff, type: 3}
