@@ -50,9 +50,9 @@ public class TurretMenu : PreviewListMenuBase<TurretCategory, TurretScriptableOb
         foreach (var resourceCost in item._resourceCost)
         {
             yield return (
-                resourceCost.resource.objectName,
+                resourceCost.resourceScriptableObj.objectName,
                 resourceCost.count,
-                PlayerInventory.Instance.GetItemCount(resourceCost.resource)
+                PlayerInventory.Instance.GetItemCount(resourceCost.resourceScriptableObj)
             );
         }
     }

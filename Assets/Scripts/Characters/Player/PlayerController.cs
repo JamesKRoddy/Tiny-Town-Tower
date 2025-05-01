@@ -215,6 +215,19 @@ public class PlayerController : MonoBehaviour, IControllerInput
                             canSelect = () => true
                         });
                     }
+                    else if (task.workType == WorkType.UPGRADE_RESOURCE)
+                    {
+                        // For resource upgrade tasks, show the resource upgrade selection screen
+                        options.Add(new SelectionPopup.SelectionOption
+                        {
+                            optionName = "Upgrade Resource",
+                            onSelected = () => {
+                                PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
+                                PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+                            },
+                            canSelect = () => true
+                        });
+                    }
                     else
                     {
                         // For other tasks, show the normal work assignment

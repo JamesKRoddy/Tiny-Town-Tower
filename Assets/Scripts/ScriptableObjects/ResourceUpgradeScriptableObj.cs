@@ -8,6 +8,6 @@ public class ResourceUpgradeScriptableObj : WorldItemBase
     public ResourceItemCount[] requiredResources;
     [Min(5f)]
     public float upgradeTime;
-    public ResourceScriptableObj outputResource;
+    public ResourceItemCount outputResource;
     public int outputAmount = 1;
 }

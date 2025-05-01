@@ -58,7 +58,7 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
                         description += "Required Resources:\n";
                         foreach (var resource in research.requiredResources)
                         {
-                            description += $"- {resource.resource.objectName}\n";
+                            description += $"- {resource.resourceScriptableObj.objectName}\n";
                         }
                     }
                     description += $"\nResearch Time: {research.researchTime} seconds";
@@ -83,7 +83,7 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
                         description += "Required Ingredients:\n";
                         foreach (var ingredient in recipe.requiredIngredients)
                         {
-                            description += $"- {ingredient.resource.objectName}\n";
+                            description += $"- {ingredient.resourceScriptableObj.objectName}\n";
                         }
                     }
                     description += $"\nCooking Time: {recipe.cookingTime} seconds";
@@ -100,7 +100,7 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
                         description += "Required Resources:\n";
                         foreach (var resource in upgrade.requiredResources)
                         {
-                            description += $"- {resource.resource.objectName}\n";
+                            description += $"- {resource.resourceScriptableObj.objectName}\n";
                         }
                     }
                     description += $"\nUpgrade Time: {upgrade.upgradeTime} seconds";
@@ -148,9 +148,9 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
             foreach (var resource in requiredResources)
             {
                 yield return (
-                    resource.resource.objectName,
+                    resource.resourceScriptableObj.objectName,
                     resource.count,
-                    PlayerInventory.Instance.GetItemCount(resource.resource)
+                    PlayerInventory.Instance.GetItemCount(resource.resourceScriptableObj)
                 );
             }
         }

@@ -72,7 +72,7 @@ namespace Managers
             {
                 foreach (var resource in upgrade.requiredResources)
                 {
-                    if (PlayerInventory.Instance.GetItemCount(resource.resource) < resource.count)
+                    if (PlayerInventory.Instance.GetItemCount(resource.resourceScriptableObj) < resource.count)
                     {
                         errorMessage = "Not enough resources!";
                         return false;

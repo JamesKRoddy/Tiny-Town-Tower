@@ -72,7 +72,7 @@ namespace Managers
             {
                 foreach (var ingredient in recipe.requiredIngredients)
                 {
-                    if (PlayerInventory.Instance.GetItemCount(ingredient.resource) < ingredient.count)
+                    if (PlayerInventory.Instance.GetItemCount(ingredient.resourceScriptableObj) < ingredient.count)
                     {
                         errorMessage = "Not enough ingredients!";
                         return false;

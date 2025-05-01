@@ -51,7 +51,7 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
         // Deduct the required resources from the player's inventory
         foreach (var requiredItem in selectedObject._resourceCost)
         {
-            PlayerInventory.Instance.RemoveItem(requiredItem.resource, requiredItem.count);
+            PlayerInventory.Instance.RemoveItem(requiredItem.resourceScriptableObj, requiredItem.count);
         }
 
         GameObject constructionSitePrefab = GetConstructionSitePrefab(selectedObject.size);

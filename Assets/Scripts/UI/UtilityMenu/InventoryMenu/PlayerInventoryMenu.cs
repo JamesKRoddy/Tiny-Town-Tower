@@ -13,9 +13,9 @@ public class PlayerInventoryMenu : PreviewListMenuBase<ResourceCategory, Resourc
         var inventory = PlayerInventory.Instance.GetFullInventory();
         foreach (var item in inventory)
         {
-            if (item.resource != null && item.count > 0)
+            if (item.resourceScriptableObj != null && item.count > 0)
             {
-                yield return item.resource;
+                yield return item.resourceScriptableObj;
             }
         }
     }

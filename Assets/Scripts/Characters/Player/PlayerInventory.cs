@@ -83,7 +83,12 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             ClearInteractive();
     }
 
-    public void AddToCharacterInventory(ResourcePickup resourcePickup)
+    public void AddToPlayerInventory(ResourceScriptableObj resource, int count = 1)
+    {
+        AddItem(resource, count);
+    }
+
+    public void AddToPlayerInventory(ResourceItemCount resourcePickup)
     {
         //TODO Display this on the UI so that the player can seee the inventory items being added
 
@@ -191,8 +196,8 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
             switch (interactReturnObj)
             {
-                case ResourcePickup resourcePickup:
-                    AddToCharacterInventory(resourcePickup);
+                case ResourceItemCount resourcePickup:
+                    AddToPlayerInventory(resourcePickup);
                     break;
                 case NarrativeAsset narrative:
                     PlayerUIManager.Instance.narrativeSystem.StartConversation(narrative);

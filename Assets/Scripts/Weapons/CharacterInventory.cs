@@ -40,20 +40,20 @@ public class CharacterInventory : MonoBehaviour
 
     public void AddItem(ResourceScriptableObj item, int count = 1)
     {
-        var existingItem = inventoryList.Find(i => i.resource == item);
+        var existingItem = inventoryList.Find(i => i.resourceScriptableObj == item);
         if (existingItem != null)
         {
             existingItem.count += count;
         }
         else
         {
-            inventoryList.Add(new ResourceItemCount { resource = item, count = count });
+            inventoryList.Add(new ResourceItemCount(item, count));
         }
     }
 
     public void RemoveItem(ResourceScriptableObj item, int count = 1)
     {
-        var existingItem = inventoryList.Find(i => i.resource == item);
+        var existingItem = inventoryList.Find(i => i.resourceScriptableObj == item);
         if (existingItem != null)
         {
             existingItem.count -= count;
@@ -66,12 +66,12 @@ public class CharacterInventory : MonoBehaviour
 
     public bool HasItemByName(string itemName)
     {
-        return inventoryList.Any(i => i.resource.objectName == itemName);
+        return inventoryList.Any(i => i.resourceScriptableObj.objectName == itemName);
     }
 
     public int GetItemCount(ResourceScriptableObj item)
     {
-        var existingItem = inventoryList.Find(i => i.resource == item);
+        var existingItem = inventoryList.Find(i => i.resourceScriptableObj == item);
         return existingItem != null ? existingItem.count : 0;
     }
 

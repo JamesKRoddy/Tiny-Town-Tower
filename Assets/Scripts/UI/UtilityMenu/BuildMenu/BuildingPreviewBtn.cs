@@ -11,7 +11,7 @@ public class BuildingPreviewBtn : PreviewButtonBase<BuildingScriptableObj>
 
         foreach (var requiredItem in data._resourceCost)
         {
-            int playerCount = PlayerInventory.Instance.GetItemCount(requiredItem.resource);
+            int playerCount = PlayerInventory.Instance.GetItemCount(requiredItem.resourceScriptableObj);
             if (playerCount < requiredItem.count)
             {
                 canBuild = false;

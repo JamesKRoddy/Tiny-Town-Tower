@@ -55,7 +55,7 @@ public abstract class WorkTask : MonoBehaviour
 
         foreach (var resource in requiredResources)
         {
-            if (PlayerInventory.Instance.GetItemCount(resource.resource) < resource.count)
+            if (PlayerInventory.Instance.GetItemCount(resource.resourceScriptableObj) < resource.count)
             {
                 return false;
             }
@@ -68,7 +68,7 @@ public abstract class WorkTask : MonoBehaviour
     {
         foreach (var resourceItem in requiredResources)
         {
-            PlayerInventory.Instance.RemoveItem(resourceItem.resource, resourceItem.count);
+            PlayerInventory.Instance.RemoveItem(resourceItem.resourceScriptableObj, resourceItem.count);
         }
     }
 
@@ -202,7 +202,7 @@ public abstract class WorkTask : MonoBehaviour
 
     protected void AddResourceToInventory(ResourceItemCount resourceItemCount)
     {
-        PlayerInventory.Instance.AddItem(resourceItemCount.resource, resourceItemCount.count);
+        PlayerInventory.Instance.AddItem(resourceItemCount.resourceScriptableObj, resourceItemCount.count);
     }
 
     protected virtual void OnDisable()

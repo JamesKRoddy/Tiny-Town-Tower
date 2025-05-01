@@ -120,11 +120,11 @@ namespace Managers
                 bool firstResource = true;
                 foreach (var resource in workTask.requiredResources)
                 {
-                    int playerCount = PlayerInventory.Instance.GetItemCount(resource.resource);
+                    int playerCount = PlayerInventory.Instance.GetItemCount(resource.resourceScriptableObj);
                     if (playerCount < resource.count)
                     {
                         if (!firstResource) resourceMessage += ", ";
-                        resourceMessage += $"{resource.resource.objectName} ({playerCount}/{resource.count})";
+                        resourceMessage += $"{resource.resourceScriptableObj.objectName} ({playerCount}/{resource.count})";
                         firstResource = false;
                     }
                 }

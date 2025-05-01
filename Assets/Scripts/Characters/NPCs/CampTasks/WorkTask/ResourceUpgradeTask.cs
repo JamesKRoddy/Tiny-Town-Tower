@@ -51,8 +51,7 @@ public class ResourceUpgradeTask : WorkTask
             // Create the upgraded resources
             for (int i = 0; i < currentUpgrade.outputAmount; i++)
             {
-                Resource upgradedResource = Instantiate(currentUpgrade.outputResource.prefab, transform.position + Random.insideUnitSphere, Quaternion.identity).GetComponent<Resource>();
-                upgradedResource.Initialize(currentUpgrade.outputResource);
+                AddResourceToInventory(currentUpgrade.outputResource);
             }
         }
         
