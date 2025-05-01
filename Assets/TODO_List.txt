@@ -17,8 +17,4 @@ Destroying buildings
 
 Removing work from NPCs
 
-
-
-Things to look at:
-
-Required resources on work tasks, are not needed, should be assigned automatically, have to look at this
+NPC Characteristics finally! what the whole branch was about!!!!
