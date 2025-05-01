@@ -14,6 +14,7 @@ public class SelectionPopup : PreviewPopupBase<object, string>
         public string optionName;
         public Action onSelected;
         public Func<bool> canSelect;
+        public WorkTask workTask; // Reference to the work task for tooltips
     }
 
     [Header("Selection Options")]
@@ -21,10 +22,16 @@ public class SelectionPopup : PreviewPopupBase<object, string>
 
     private List<SelectionOption> currentOptions = new List<SelectionOption>();
     private Action onClose;
+    private int currentSelectedIndex = -1;
+
+    [Header("Tootlip Options")]
+    [SerializeField] private GameObject tooltip;
+    [SerializeField] private TMP_Text tooltipText;
 
     protected override void Start()
     {
         base.Start();
+        tooltip.SetActive(false);
     }
 
     public void Setup(List<SelectionOption> options, GameObject element, Action onClose = null)
@@ -77,12 +84,60 @@ public class SelectionPopup : PreviewPopupBase<object, string>
                 int optionIndex = i; // Capture the index for the closure
                 button.onClick.RemoveAllListeners();
                 button.onClick.AddListener(() => OnOptionSelected(optionIndex));
+
+                // Add event triggers for tooltip
+                EventTrigger trigger = button.gameObject.GetComponent<EventTrigger>();
+                if (trigger == null)
+                {
+                    trigger = button.gameObject.AddComponent<EventTrigger>();
+                }
+                trigger.triggers.Clear();
+
+                // Add pointer enter event
+                EventTrigger.Entry enterEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+                enterEntry.callback.AddListener((data) => ShowTooltip(optionIndex));
+                trigger.triggers.Add(enterEntry);
+
+                // Add pointer exit event
+                EventTrigger.Entry exitEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+                exitEntry.callback.AddListener((data) => HideTooltip());
+                trigger.triggers.Add(exitEntry);
+
+                // Add select event for controller
+                EventTrigger.Entry selectEntry = new EventTrigger.Entry { eventID = EventTriggerType.Select };
+                selectEntry.callback.AddListener((data) => ShowTooltip(optionIndex));
+                trigger.triggers.Add(selectEntry);
+
+                // Add deselect event for controller
+                EventTrigger.Entry deselectEntry = new EventTrigger.Entry { eventID = EventTriggerType.Deselect };
+                deselectEntry.callback.AddListener((data) => HideTooltip());
+                trigger.triggers.Add(deselectEntry);
             }
             else
             {
                 optionButtons[i].gameObject.SetActive(false);
             }
         }
+    }
+
+    private void ShowTooltip(int optionIndex)
+    {
+        if (optionIndex >= 0 && optionIndex < currentOptions.Count)
+        {
+            var option = currentOptions[optionIndex];
+            if (option.workTask != null)
+            {
+                tooltipText.text = option.workTask.GetTooltipText();
+                tooltip.SetActive(true);
+                currentSelectedIndex = optionIndex;
+            }
+        }
+    }
+
+    private void HideTooltip()
+    {
+        tooltip.SetActive(false);
+        currentSelectedIndex = -1;
     }
 
     private void OnOptionSelected(int optionIndex)

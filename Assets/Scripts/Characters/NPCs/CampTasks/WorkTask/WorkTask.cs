@@ -9,7 +9,8 @@ public abstract class WorkTask : MonoBehaviour
     [HideInInspector] public WorkType workType;
     [SerializeField] protected Transform workLocationTransform; // Optional specific work location
     protected SettlerNPC currentWorker; // Reference to the NPC performing this task
-    public ResourceItemCount[] requiredResources; // Resources needed to perform this task
+    [HideInInspector] public ResourceItemCount[] requiredResources; // Resources needed to perform this task
+    [SerializeField] protected bool showTooltip = false; // Whether to show tooltips for this task
 
     // Work progress tracking
     protected float workProgress = 0f;
@@ -25,6 +26,26 @@ public abstract class WorkTask : MonoBehaviour
     public SettlerNPC AssignedNPC => currentWorker;
     public bool IsOccupied => currentWorker != null;
     public bool HasQueuedTasks => taskQueue.Count > 0;
+
+    // Virtual method for tooltip text
+    public virtual string GetTooltipText()
+    {
+        if (!showTooltip) return string.Empty;
+
+        string tooltip = $"{workType}\n";
+        tooltip += $"Time: {baseWorkTime} seconds\n";
+        
+        if (requiredResources != null)
+        {
+            tooltip += "Required Resources:\n";
+            foreach (var resource in requiredResources)
+            {
+                tooltip += $"- {resource.resourceScriptableObj.objectName}: {resource.count}\n";
+            }
+        }
+        
+        return tooltip;
+    }
 
     // Abstract method for NPC to perform the work task
     public virtual void PerformTask(SettlerNPC npc)
@@ -55,6 +76,12 @@ public abstract class WorkTask : MonoBehaviour
 
         foreach (var resource in requiredResources)
         {
+            if (resource == null || resource.resourceScriptableObj == null)
+            {
+                Debug.LogWarning($"[WorkTask] Invalid resource in requiredResources array");
+                return false;
+            }
+
             if (PlayerInventory.Instance.GetItemCount(resource.resourceScriptableObj) < resource.count)
             {
                 return false;
@@ -66,8 +93,17 @@ public abstract class WorkTask : MonoBehaviour
     // Method to consume required resources
     protected void ConsumeResources()
     {
+        if (requiredResources == null || requiredResources.Length == 0)
+            return; // No resources to consume
+
         foreach (var resourceItem in requiredResources)
         {
+            if (resourceItem == null || resourceItem.resourceScriptableObj == null)
+            {
+                Debug.LogWarning($"[WorkTask] Invalid resource in requiredResources array");
+                continue;
+            }
+
             PlayerInventory.Instance.RemoveItem(resourceItem.resourceScriptableObj, resourceItem.count);
         }
     }

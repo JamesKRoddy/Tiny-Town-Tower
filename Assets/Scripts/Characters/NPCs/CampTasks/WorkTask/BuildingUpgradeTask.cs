@@ -64,4 +64,23 @@ public class BuildingUpgradeTask : WorkTask
         // Check if the building has an upgrade target (can be upgraded)
         return upgradeTarget != null;
     }
+
+    public override string GetTooltipText()
+    {
+        if (upgradeTarget == null) return "No upgrade target selected";
+        
+        string tooltip = $"Upgrade to {upgradeTarget.objectName}\n";
+        tooltip += $"Time: {baseWorkTime} seconds\n";
+        
+        if (requiredResources != null)
+        {
+            tooltip += "Required Resources:\n";
+            foreach (var resource in requiredResources)
+            {
+                tooltip += $"- {resource.resourceScriptableObj.objectName}: {resource.count}\n";
+            }
+        }
+        
+        return tooltip;
+    }
 } 

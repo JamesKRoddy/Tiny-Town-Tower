@@ -4,11 +4,6 @@ More complex task animations and animation effects handle by animation state mac
 This evening!!!!!!
 Have to setup resource upgrade buildings, tasks and scriptable objs
 
-
-
-Research is on a camp basis
-Remove isunlock from research script obj, have it as a list
-
 TODO Large things:
 
 

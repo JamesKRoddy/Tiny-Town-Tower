@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5d7f097ca34a0eb45a8b2d5ba0c3d616, type: 3}
-  m_Name: Bed Lvl 1
+  m_Name: Bed Lvl 2
   m_EditorClassIdentifier: 
   objectName: Bed Lvl 1
   description: Bed Lvl 1 desc
@@ -24,7 +24,7 @@ MonoBehaviour:
   repairTime: 20
   healthRestoredPerRepair: 50
   repairResources: []
-  upgradeTarget: {fileID: 11400000, guid: 72ed54a28fe47144c9800c512bad508f, type: 2}
-  upgradeTime: 5
+  upgradeTarget: {fileID: 0}
+  upgradeTime: 30
   upgradeResources: []
   taskRadius: 2

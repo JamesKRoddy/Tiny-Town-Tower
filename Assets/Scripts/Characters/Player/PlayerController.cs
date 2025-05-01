@@ -199,7 +199,8 @@ public class PlayerController : MonoBehaviour, IControllerInput
                                 PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
                                 PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
                             },
-                            canSelect = () => true
+                            canSelect = () => true,
+                            workTask = task
                         });
                     }
                     else if (task.workType == WorkType.COOKING)
@@ -212,7 +213,8 @@ public class PlayerController : MonoBehaviour, IControllerInput
                                 PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
                                 PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
                             },
-                            canSelect = () => true
+                            canSelect = () => true,
+                            workTask = task
                         });
                     }
                     else if (task.workType == WorkType.UPGRADE_RESOURCE)
@@ -225,7 +227,8 @@ public class PlayerController : MonoBehaviour, IControllerInput
                                 PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
                                 PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
                             },
-                            canSelect = () => true
+                            canSelect = () => true,
+                            workTask = task
                         });
                     }
                     else
@@ -237,7 +240,8 @@ public class PlayerController : MonoBehaviour, IControllerInput
                             onSelected = () => {
                                 WorkManager.Instance.AssignWorkToBuilding(task);
                             },
-                            canSelect = () => task.CanPerformTask()
+                            canSelect = () => task.CanPerformTask(),
+                            workTask = task
                         });
                     }
                 }
