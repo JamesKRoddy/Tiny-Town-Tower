@@ -37,7 +37,8 @@ public enum WorkType //TODO remove? maybe just use class for work types
     COOKING,
     UPGRADE_BUILDING,
     REPAIR_BUILDING,
-    UPGRADE_RESOURCE
+    UPGRADE_RESOURCE,
+    DESTROY_STRUCTURE
 }
 
 public enum TaskType

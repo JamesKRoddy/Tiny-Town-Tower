@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.AI;
+using Managers;
 
 /// <summary>
 /// A building is a structure that can be built in the camp.
@@ -9,6 +10,7 @@ using UnityEngine.AI;
 /// 
 [RequireComponent(typeof(BuildingRepairTask))]
 [RequireComponent(typeof(BuildingUpgradeTask))]
+[RequireComponent(typeof(BuildingDestructionTask))]
 public class Building : MonoBehaviour
 {
     [Header("Building Configuration")]
@@ -22,6 +24,7 @@ public class Building : MonoBehaviour
     [Header("Repair and Upgrade")]
     [SerializeField, ReadOnly] protected BuildingRepairTask repairTask;
     [SerializeField, ReadOnly] protected BuildingUpgradeTask upgradeTask;
+    [SerializeField, ReadOnly] protected BuildingDestructionTask destructionTask;
 
     // Events
     public event System.Action OnBuildingDestroyed;
@@ -34,9 +37,10 @@ public class Building : MonoBehaviour
         this.buildingScriptableObj = buildingScriptableObj;
         currentHealth = buildingScriptableObj.maxHealth;
 
-        // Setup repair and upgrade tasks
+        // Setup repair, upgrade and destruction tasks
         SetupRepairTask();
         SetupUpgradeTask();
+        SetupDestructionTask();
         SetupNavmeshObstacle();
 
         if(GetComponent<Collider>() == null)
@@ -89,6 +93,17 @@ public class Building : MonoBehaviour
         );
     }
 
+    private void SetupDestructionTask()
+    {
+        destructionTask = GetComponent<BuildingDestructionTask>();
+        if (destructionTask == null)
+        {
+            destructionTask = gameObject.AddComponent<BuildingDestructionTask>();
+        }
+        destructionTask.transform.position = transform.position;
+        destructionTask.SetupDestructionTask(this);
+    }
+
     public virtual void CompleteConstruction()
     {
         isUnderConstruction = false;
@@ -135,10 +150,38 @@ public class Building : MonoBehaviour
         OnBuildingUpgraded?.Invoke();
     }
 
+    public void StartDestruction()
+    {
+        // Unassign any NPCs working on repair or upgrade tasks
+        if (repairTask.IsOccupied)
+        {
+            repairTask.UnassignNPC();
+        }
+        if (upgradeTask.IsOccupied)
+        {
+            upgradeTask.UnassignNPC();
+        }
+
+        // Add the destruction task to the work manager
+        if (CampManager.Instance != null)
+        {
+            CampManager.Instance.WorkManager.AddWorkTask(destructionTask);
+        }
+        else
+        {
+            Debug.LogError("CampManager.Instance is null. Cannot add destruction task.");
+        }
+    }
+
+    public BuildingScriptableObj GetBuildingScriptableObj()
+    {
+        return buildingScriptableObj;
+    }
+
     protected virtual void DestroyBuilding()
     {
         OnBuildingDestroyed?.Invoke();
-        Destroy(gameObject);
+        // The actual destruction is handled by the BuildingDestructionTask
     }
 
     // Getters

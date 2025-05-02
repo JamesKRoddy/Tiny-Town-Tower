@@ -25,6 +25,11 @@ public class BuildingScriptableObj : PlaceableObjectParent
     public float upgradeTime = 30f;
     public ResourceItemCount[] upgradeResources;
 
+    [Header("Destruction Parameters")]
+    public GameObject destructionPrefab;
+    public float destructionTime = 15f;
+    public ResourceItemCount[] reclaimedResources;
+
     [Header("Work Area")]
     public float taskRadius = 2f; // Radius around the building where NPCs can work
 
