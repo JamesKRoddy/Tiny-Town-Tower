@@ -5,6 +5,7 @@ public class BuildingDestructionTask : WorkTask
 {
     private Building building;
     private bool isDestroying = false;
+    private GameObject destructionGameobj;
 
     protected override void Start()
     {
@@ -30,7 +31,18 @@ public class BuildingDestructionTask : WorkTask
     {
         if (!isDestroying)
         {
+            // Destroy the building
+            Destroy(building.gameObject);
+
             isDestroying = true;
+            // Spawn destruction effect when task starts
+            GameObject destructionPrefab = BuildManager.Instance.GetDestructionPrefab(building.GetBuildingScriptableObj().size);
+            if (destructionPrefab != null)
+            {
+                destructionGameobj = Instantiate(destructionPrefab, 
+                    building.transform.position, 
+                    building.transform.rotation);
+            }
             base.PerformTask(npc);
         }
     }
@@ -44,17 +56,6 @@ public class BuildingDestructionTask : WorkTask
             {
                 PlayerInventory.Instance.AddItem(resource.resourceScriptableObj, resource.count);
             }
-
-            // Spawn destruction prefab
-            if (building.GetBuildingScriptableObj().destructionPrefab != null)
-            {
-                Instantiate(building.GetBuildingScriptableObj().destructionPrefab, 
-                    building.transform.position, 
-                    building.transform.rotation);
-            }
-
-            // Destroy the building
-            Destroy(building.gameObject);
         }
 
         base.CompleteWork();
@@ -66,6 +67,10 @@ public class BuildingDestructionTask : WorkTask
         if (building != null)
         {
             building = null;
+        }
+        if (destructionGameobj != null)
+        {
+            Destroy(destructionGameobj);
         }
     }
 } 
