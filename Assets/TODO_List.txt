@@ -1,17 +1,9 @@
 More complex task animations and animation effects handle by animation state machine behaviours
 
-
-This evening!!!!!!
-Have to setup resource upgrade buildings, tasks and scriptable objs
-
 TODO Large things:
 
-Upgrading buildings
-
-Have to remove original building and spawn in new one
-
-Damaging buildings
-Repairing buildings
+Damaging buildings: ties into turret system
+Repairing buildings: wait until damage is finished
 Destroying buildings
 
 
