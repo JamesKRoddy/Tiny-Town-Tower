@@ -2,22 +2,12 @@ using UnityEngine;
 using System.Collections.Generic;
 using Managers;
 
-[System.Serializable]
-public class ConstructionSiteMapping
-{
-    public Vector2Int gridSize;
-    public GameObject constructionSitePrefab;
-}
-
 public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
 {
     [Header("Building Grid")]
     [SerializeField] private Vector2 xBounds = new Vector2(-25f, 25f);
     [SerializeField] private Vector2 zBounds = new Vector2(-25f, 25f);
     [SerializeField] private bool showGridBounds;
-
-    [Header("Construction Sites")]
-    [SerializeField] private List<ConstructionSiteMapping> constructionSiteMappings = new List<ConstructionSiteMapping>();
 
     private static BuildingPlacer _instance;
 
@@ -54,7 +44,7 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
             PlayerInventory.Instance.RemoveItem(requiredItem.resourceScriptableObj, requiredItem.count);
         }
 
-        GameObject constructionSitePrefab = GetConstructionSitePrefab(selectedObject.size);
+        GameObject constructionSitePrefab = BuildManager.Instance.GetConstructionSitePrefab(selectedObject.size);
         GameObject constructionSite = Instantiate(constructionSitePrefab, currentPreview.transform.position, Quaternion.identity);
 
         if (constructionSite.TryGetComponent(out ConstructionTask constructionSiteScript)){
@@ -66,20 +56,6 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
         
         MarkGridSlotsOccupied(currentPreview.transform.position, selectedObject.size, constructionSite);
         CancelPlacement();
-    }
-
-    private GameObject GetConstructionSitePrefab(Vector2Int size)
-    {
-        foreach (var mapping in constructionSiteMappings)
-        {
-            if (mapping.gridSize == size)
-            {
-                return mapping.constructionSitePrefab;
-            }
-        }
-        
-        Debug.LogError($"No construction site prefab found for size {size.x}x{size.y}");
-        return constructionSiteMappings.Count > 0 ? constructionSiteMappings[0].constructionSitePrefab : null;
     }
 
     protected override bool IsValidPlacement(Vector3 position, out string errorMessage)
