@@ -48,10 +48,13 @@ public class BuildingUpgradeTask : WorkTask
 
     protected override void CompleteWork()
     {
-        if (targetBuilding != null)
+        if (targetBuilding != null && upgradeTarget != null)
         {
             targetBuilding.Upgrade(upgradeTarget);
-            Debug.Log($"Building upgrade completed!");
+        }
+        else
+        {
+            Debug.LogError("Building upgrade failed: targetBuilding or upgradeTarget is null");
         }
         
         base.CompleteWork();
