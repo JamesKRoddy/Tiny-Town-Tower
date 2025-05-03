@@ -6,7 +6,6 @@ namespace Characters.NPC.Mutations
     {
         protected NPCMutationScriptableObj mutation;
         protected SettlerNPC settlerNPC;
-        protected NPCStats npcStats;
         protected int activeInstances = 0;
 
         public virtual int ActiveInstances
@@ -23,7 +22,6 @@ namespace Characters.NPC.Mutations
         public virtual void OnEquip()
         {
             settlerNPC = GetComponentInParent<SettlerNPC>();
-            npcStats = GetComponentInParent<NPCStats>();
             ApplyEffect();
         }
 
