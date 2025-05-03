@@ -48,6 +48,12 @@ public class SettlerNPC : HumanCharacterController
         {
             ChangeState(taskStates[TaskType.WANDER]);
         }
+
+        // Apply random mutations after everything is initialized
+        if (mutationSystem != null)
+        {
+            mutationSystem.ApplyRandomMutations();
+        }
     }
 
     private void Update()
@@ -144,11 +150,16 @@ namespace Characters.NPC
             
             this.settlerNPC = settlerNPC;
             Debug.Log($"NPCMutationSystem: Initialized for NPC {settlerNPC.name}");
-            ApplyRandomMutations();
         }
 
-        private void ApplyRandomMutations()
+        public void ApplyRandomMutations()
         {
+            if (settlerNPC == null)
+            {
+                Debug.LogError("NPCMutationSystem: Cannot apply random mutations - settlerNPC is null");
+                return;
+            }
+
             // Determine if this NPC should get mutations
             if(Random.value > mutationSpawnChance)
             {
@@ -226,7 +237,7 @@ namespace Characters.NPC
                 BaseNPCMutationEffect effect = effectObj.GetComponent<BaseNPCMutationEffect>();
                 if (effect != null)
                 {
-                    effect.Initialize(mutation);
+                    effect.Initialize(mutation, settlerNPC);
                     effect.OnEquip();
                     activeEffects[mutation] = effect;
                     Debug.Log($"NPCMutationSystem: Successfully instantiated and initialized mutation effect {mutation.name} for {settlerNPC.name}");

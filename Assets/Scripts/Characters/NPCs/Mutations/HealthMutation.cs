@@ -33,12 +33,6 @@ namespace Characters.NPC.Mutations
             }
         }
 
-        public override void OnEquip()
-        {
-            base.OnEquip();
-            ApplyEffect();
-        }
-
         public override void OnUnequip()
         {
             RemoveEffect();

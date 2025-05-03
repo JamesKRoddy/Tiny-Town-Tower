@@ -10,29 +10,29 @@ namespace Characters.NPC.Mutations
 
         protected override void ApplyEffect()
         {
-            if (settlerNPC != null)
+            if (settlerNPC == null || settlerNPC.mutationSystem == null)
             {
-                // Store original max slots
-                originalMaxSlots = settlerNPC.mutationSystem.MaxMutations;
-                
-                // Increase max slots
-                settlerNPC.mutationSystem.SetMaxMutations(originalMaxSlots + additionalMutationSlots);
+                Debug.LogError($"AdditionalMutationSlotsMutation: settlerNPC or mutationSystem is null for mutation {mutation?.name}");
+                return;
             }
+
+            // Store original max slots
+            originalMaxSlots = settlerNPC.mutationSystem.MaxMutations;
+            
+            // Increase max slots
+            settlerNPC.mutationSystem.SetMaxMutations(originalMaxSlots + additionalMutationSlots);
         }
 
         protected override void RemoveEffect()
         {
-            if (settlerNPC != null)
+            if (settlerNPC == null || settlerNPC.mutationSystem == null)
             {
-                // Revert to original max slots
-                settlerNPC.mutationSystem.SetMaxMutations(originalMaxSlots);
+                Debug.LogError($"AdditionalMutationSlotsMutation: settlerNPC or mutationSystem is null for mutation {mutation?.name}");
+                return;
             }
-        }
 
-        public override void OnEquip()
-        {
-            base.OnEquip();
-            ApplyEffect();
+            // Revert to original max slots
+            settlerNPC.mutationSystem.SetMaxMutations(originalMaxSlots);
         }
 
         public override void OnUnequip()

@@ -14,19 +14,29 @@ namespace Characters.NPC.Mutations
             set => activeInstances = value;
         }
 
-        public void Initialize(NPCMutationScriptableObj mutation)
+        public void Initialize(NPCMutationScriptableObj mutation, SettlerNPC settlerNPC)
         {
             this.mutation = mutation;
+            this.settlerNPC = settlerNPC;
         }
 
         public virtual void OnEquip()
         {
-            settlerNPC = GetComponentInParent<SettlerNPC>();
+            if (settlerNPC == null)
+            {
+                Debug.LogError($"BaseNPCMutationEffect: settlerNPC is null for mutation {mutation?.name}");
+                return;
+            }
             ApplyEffect();
         }
 
         public virtual void OnUnequip()
         {
+            if (settlerNPC == null)
+            {
+                Debug.LogError($"BaseNPCMutationEffect: settlerNPC is null for mutation {mutation?.name}");
+                return;
+            }
             RemoveEffect();
         }
 
