@@ -10,7 +10,6 @@ using Managers;
 /// 
 [RequireComponent(typeof(BuildingRepairTask))]
 [RequireComponent(typeof(BuildingUpgradeTask))]
-[RequireComponent(typeof(BuildingDestructionTask))]
 public class Building : MonoBehaviour
 {
     [Header("Building Configuration")]
@@ -24,7 +23,6 @@ public class Building : MonoBehaviour
     [Header("Repair and Upgrade")]
     [SerializeField, ReadOnly] protected BuildingRepairTask repairTask;
     [SerializeField, ReadOnly] protected BuildingUpgradeTask upgradeTask;
-    [SerializeField, ReadOnly] protected BuildingDestructionTask destructionTask;
 
     // Events
     public event System.Action OnBuildingDestroyed;
@@ -37,10 +35,9 @@ public class Building : MonoBehaviour
         this.buildingScriptableObj = buildingScriptableObj;
         currentHealth = buildingScriptableObj.maxHealth;
 
-        // Setup repair, upgrade and destruction tasks
+        // Setup repair and upgrade tasks
         SetupRepairTask();
         SetupUpgradeTask();
-        SetupDestructionTask();
         SetupNavmeshObstacle();
 
         if(GetComponent<Collider>() == null)
@@ -91,17 +88,6 @@ public class Building : MonoBehaviour
             buildingScriptableObj.upgradeTarget,
             buildingScriptableObj.upgradeTime
         );
-    }
-
-    private void SetupDestructionTask()
-    {
-        destructionTask = GetComponent<BuildingDestructionTask>();
-        if (destructionTask == null)
-        {
-            destructionTask = gameObject.AddComponent<BuildingDestructionTask>();
-        }
-        destructionTask.transform.position = transform.position;
-        destructionTask.SetupDestructionTask(this);
     }
 
     public virtual void CompleteConstruction()
@@ -162,14 +148,29 @@ public class Building : MonoBehaviour
             upgradeTask.UnassignNPC();
         }
 
-        // Add the destruction task to the work manager
-        if (CampManager.Instance != null)
+        // Get the destruction prefab
+        GameObject destructionPrefab = BuildManager.Instance.GetDestructionPrefab(buildingScriptableObj.size);
+        if (destructionPrefab != null)
         {
-            CampManager.Instance.WorkManager.AddWorkTask(destructionTask);
-        }
-        else
-        {
-            Debug.LogError("CampManager.Instance is null. Cannot add destruction task.");
+            // Create the destruction task object
+            GameObject destructionTaskObj = Instantiate(destructionPrefab, transform.position, transform.rotation);
+            
+            // Add the destruction task component
+            BuildingDestructionTask destructionTask = destructionTaskObj.AddComponent<BuildingDestructionTask>();
+            destructionTask.SetupDestructionTask(this);
+
+            // Add the destruction task to the work manager
+            if (CampManager.Instance != null)
+            {
+                CampManager.Instance.WorkManager.AddWorkTask(destructionTask);
+            }
+            else
+            {
+                Debug.LogError("CampManager.Instance is null. Cannot add destruction task.");
+            }
+
+            // Destroy the building
+            Destroy(gameObject);
         }
     }
 

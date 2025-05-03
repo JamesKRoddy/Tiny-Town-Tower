@@ -27,4 +27,7 @@ MonoBehaviour:
   upgradeTarget: {fileID: 0}
   upgradeTime: 30
   upgradeResources: []
+  destructionPrefab: {fileID: 0}
+  destructionTime: 5
+  reclaimedResources: []
   taskRadius: 2

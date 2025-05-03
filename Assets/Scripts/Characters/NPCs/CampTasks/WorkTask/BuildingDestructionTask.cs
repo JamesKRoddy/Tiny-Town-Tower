@@ -1,73 +1,96 @@
 using UnityEngine;
 using Managers;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine.AI;
 
 public class BuildingDestructionTask : WorkTask
 {
-    private Building building;
-    private bool isDestroying = false;
+    private BuildingScriptableObj buildingScriptableObj;
+    private List<SettlerNPC> workers = new List<SettlerNPC>();
+    private bool isDestructionComplete = false;
     private GameObject destructionGameobj;
 
     protected override void Start()
     {
         base.Start();
         workType = WorkType.DESTROY_STRUCTURE;
-        building = GetComponent<Building>();
-        if (building == null)
-        {
-            Debug.LogError("BuildingDestructionTask requires a Building component on the same GameObject!");
-            enabled = false;
-        }
     }
 
     public void SetupDestructionTask(Building building)
     {
-        this.building = building;
-        baseWorkTime = building.GetBuildingScriptableObj().destructionTime;
+        this.buildingScriptableObj = building.GetBuildingScriptableObj();
+        baseWorkTime = buildingScriptableObj.destructionTime;
         requiredResources = new ResourceItemCount[0]; // No resources required for destruction
         AddWorkTask();
+
+        // Setup NavMeshObstacle on this object
+        NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
+        if (obstacle == null)
+        {
+            obstacle = gameObject.AddComponent<NavMeshObstacle>();
+        }
+        obstacle.carving = true;
+        obstacle.size = new Vector3(buildingScriptableObj.size.x, 1.0f, buildingScriptableObj.size.y);
     }
 
     public override void PerformTask(SettlerNPC npc)
     {
-        if (!isDestroying)
+        // Add worker to the task
+        if (!workers.Contains(npc))
         {
-            // Destroy the building
-            Destroy(building.gameObject);
-
-            isDestroying = true;
-            // Spawn destruction effect when task starts
-            GameObject destructionPrefab = BuildManager.Instance.GetDestructionPrefab(building.GetBuildingScriptableObj().size);
-            if (destructionPrefab != null)
-            {
-                destructionGameobj = Instantiate(destructionPrefab, 
-                    building.transform.position, 
-                    building.transform.rotation);
-            }
-            base.PerformTask(npc);
+            workers.Add(npc);
         }
+
+        // Start the destruction process if not already started
+        if (!isDestructionComplete && workCoroutine == null)
+        {
+            workCoroutine = StartCoroutine(WorkCoroutine());
+        }
+    }
+
+    protected override IEnumerator WorkCoroutine()
+    {
+        while (workProgress < baseWorkTime && workers.Count > 0)
+        {
+            float effectiveTime = baseWorkTime / Mathf.Sqrt(workers.Count);
+            workProgress += Time.deltaTime / effectiveTime;
+
+            if (workProgress >= baseWorkTime)
+            {
+                workProgress = baseWorkTime;
+                break;
+            }
+
+            yield return null;
+        }
+
+        CompleteWork();
     }
 
     protected override void CompleteWork()
     {
-        if (building != null)
+        foreach (var resource in buildingScriptableObj.reclaimedResources)
         {
-            // Reclaim resources
-            foreach (var resource in building.GetBuildingScriptableObj().reclaimedResources)
-            {
-                PlayerInventory.Instance.AddItem(resource.resourceScriptableObj, resource.count);
-            }
+            PlayerInventory.Instance.AddItem(resource.resourceScriptableObj, resource.count);
         }
 
+        isDestructionComplete = true;
         base.CompleteWork();
+        Destroy(gameObject);
+    }
+
+    public void RemoveWorker(SettlerNPC npc)
+    {
+        if (workers.Contains(npc))
+        {
+            workers.Remove(npc);
+        }
     }
 
     protected override void OnDisable()
     {
         base.OnDisable();
-        if (building != null)
-        {
-            building = null;
-        }
         if (destructionGameobj != null)
         {
             Destroy(destructionGameobj);

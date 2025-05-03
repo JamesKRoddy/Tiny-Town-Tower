@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: -3128080933102453849}
   - component: {fileID: -801814805303146503}
   - component: {fileID: -4966385171169535209}
-  - component: {fileID: 3905382848029107941}
   - component: {fileID: 3931027013512436579}
   m_Layer: 0
   m_Name: Research Lvl 1
@@ -90,7 +89,6 @@ MonoBehaviour:
   currentHealth: 0
   repairTask: {fileID: 0}
   upgradeTask: {fileID: 0}
-  destructionTask: {fileID: 0}
 --- !u!114 &-801814805303146503
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -117,22 +115,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 373ecb0abe322ff4aabb6fd998c82d4c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  workType: 0
-  workLocationTransform: {fileID: 0}
-  requiredResources: []
-  showTooltip: 0
---- !u!114 &3905382848029107941
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5397833359920250064}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b7caa2b29d17c4f41a513963fc69b507, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   workType: 0

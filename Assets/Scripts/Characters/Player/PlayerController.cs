@@ -187,6 +187,18 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
                 var options = new List<SelectionPopup.SelectionOption>();
 
+                // Add Destroy Building option first
+                options.Add(new SelectionPopup.SelectionOption
+                {
+                    optionName = "Destroy Building",
+                    onSelected = () => {
+                        building.StartDestruction();
+                        CloseSelectionPopup();
+                    },
+                    canSelect = () => !building.IsUnderConstruction(),
+                    workTask = null
+                });
+
                 foreach (var task in workTasks)
                 {
                     if (task.workType == WorkType.RESEARCH)

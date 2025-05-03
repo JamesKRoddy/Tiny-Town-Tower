@@ -21,10 +21,13 @@ MonoBehaviour:
   buildingCategory: 0
   constructionTime: 2
   maxHealth: 100
-  repairTime: 20
+  repairTime: 2
   healthRestoredPerRepair: 50
   repairResources: []
   upgradeTarget: {fileID: 11400000, guid: 72ed54a28fe47144c9800c512bad508f, type: 2}
   upgradeTime: 5
   upgradeResources: []
+  destructionPrefab: {fileID: 0}
+  destructionTime: 2
+  reclaimedResources: []
   taskRadius: 2
