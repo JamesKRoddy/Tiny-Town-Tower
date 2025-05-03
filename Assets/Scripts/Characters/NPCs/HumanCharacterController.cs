@@ -423,6 +423,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
 
+#region IDamageable Interface
+
     public void TakeDamage(float amount, Transform damageSource = null)
     {
         float previousHealth = health;
@@ -455,4 +457,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         Vector3 deathNormal = Vector3.up; // Default upward direction for death effects
         EffectManager.Instance.PlayDeathEffect(deathPoint, deathNormal, this);
     }
+
+#endregion
 }
