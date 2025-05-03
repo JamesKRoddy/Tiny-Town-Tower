@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Characters.NPC.Mutations;
+using Characters.NPC;
 
-namespace Characters.NPC.Mutations
+namespace Managers
 {
-    public class NPCMutationManager : MonoBehaviour
+    public class NPCManager : MonoBehaviour
     {
-        public static NPCMutationManager Instance { get; private set; }
+        public static NPCManager Instance { get; private set; }
 
         [Header("Mutation Settings")]
         [SerializeField] private List<NPCMutationScriptableObj> allMutations = new List<NPCMutationScriptableObj>();

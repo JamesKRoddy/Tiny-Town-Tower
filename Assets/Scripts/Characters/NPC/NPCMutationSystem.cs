@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Characters.NPC.Mutations;
+using Managers;
 
 namespace Characters.NPC
 {
@@ -40,7 +41,7 @@ namespace Characters.NPC
             if (Random.value > mutationSpawnChance) return;
 
             // Get all available mutations from the manager
-            List<NPCMutationScriptableObj> allMutations = NPCMutationManager.Instance.GetAllMutations();
+            List<NPCMutationScriptableObj> allMutations = NPCManager.Instance.GetAllMutations();
             if (allMutations.Count == 0) return;
 
             // Determine number of mutations
