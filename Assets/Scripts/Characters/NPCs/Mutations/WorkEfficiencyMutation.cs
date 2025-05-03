@@ -29,10 +29,6 @@ namespace Characters.NPC.Mutations
         public override void OnEquip()
         {
             base.OnEquip();
-            
-            // Get NPC components
-            settlerNPC = GetComponentInParent<SettlerNPC>();
-
             ApplyEffect();
         }
 

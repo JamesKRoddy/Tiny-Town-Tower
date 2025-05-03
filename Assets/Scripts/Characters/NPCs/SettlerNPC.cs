@@ -10,7 +10,7 @@ public class SettlerNPC : HumanCharacterController
 {
     [Header("NPC Data")]
     public SettlerNPCScriptableObj nPCDataObj;
-    [SerializeField, ReadOnly] private NPCMutationSystem mutationSystem;
+    [SerializeField, ReadOnly] internal NPCMutationSystem mutationSystem;
     private _TaskState currentState;
 
     [Header("Stamina")]
@@ -122,7 +122,7 @@ namespace Characters.NPC
     {
         [Header("Mutation Settings")]
         private int maxMutations = 3;
-        private float mutationSpawnChance = 0.3f;
+        private float mutationSpawnChance = 1f;
         private float rareMutationChance = 0.1f;
         private int minRandomMutations = 1;
         private int maxRandomMutations = 3;

@@ -6,49 +6,32 @@ namespace Characters.NPC.Mutations
     {
         [Header("Additional Mutation Slots Settings")]
         [SerializeField] private int additionalMutationSlots = 3;
-        private NPCMutationSystem npcMutationSystem;
         private int originalMaxSlots;
 
         protected override void ApplyEffect()
         {
-            if (npcMutationSystem != null)
-            {
-                // Store original max slots
-                originalMaxSlots = npcMutationSystem.MaxMutations;
-                
-                // Increase max slots
-                npcMutationSystem.SetMaxMutations(originalMaxSlots + additionalMutationSlots);
-            }
-
             if (settlerNPC != null)
             {
-                // Increase possession duration through the SettlerNPC's agent
-                // Note: You'll need to add a possessionDuration property to SettlerNPC if it doesn't exist
-                // settlerNPC.possessionDuration *= possessionDurationMultiplier;
+                // Store original max slots
+                originalMaxSlots = settlerNPC.mutationSystem.MaxMutations;
+                
+                // Increase max slots
+                settlerNPC.mutationSystem.SetMaxMutations(originalMaxSlots + additionalMutationSlots);
             }
         }
 
         protected override void RemoveEffect()
         {
-            if (npcMutationSystem != null)
-            {
-                // Revert to original max slots
-                npcMutationSystem.SetMaxMutations(originalMaxSlots);
-            }
-
             if (settlerNPC != null)
             {
-                // Revert possession duration
-                // settlerNPC.possessionDuration /= possessionDurationMultiplier;
+                // Revert to original max slots
+                settlerNPC.mutationSystem.SetMaxMutations(originalMaxSlots);
             }
         }
 
         public override void OnEquip()
         {
             base.OnEquip();
-            npcMutationSystem = GetComponentInParent<NPCMutationSystem>();
-            settlerNPC = GetComponentInParent<SettlerNPC>();
-
             ApplyEffect();
         }
 
