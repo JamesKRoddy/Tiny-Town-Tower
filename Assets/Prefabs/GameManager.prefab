@@ -273,7 +273,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98d2e6833a44b1d428a19f0d0fc29b9d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _currentGameMode: 3
+  _currentGameMode: 300
 --- !u!1 &2242077205400694440
 GameObject:
   m_ObjectHideFlags: 0
@@ -840,13 +840,6 @@ MonoBehaviour:
   xBounds: {x: -25, y: 25}
   zBounds: {x: -25, y: 25}
   showGridBounds: 1
-  constructionSiteMappings:
-  - gridSize: {x: 1, y: 1}
-    constructionSitePrefab: {fileID: 6308355632358144236, guid: 1f8c0a42a7bfa844784127d7e55f4c88, type: 3}
-  - gridSize: {x: 2, y: 2}
-    constructionSitePrefab: {fileID: 7583506354027141791, guid: fb5600eea4d0aa94dbaedd073a3bcf7e, type: 3}
-  - gridSize: {x: 3, y: 3}
-    constructionSitePrefab: {fileID: 4148604766521998765, guid: 4f1e7a0b6c61c1f4d81f9aada9e78969, type: 3}
 --- !u!1 &7892603899224520776
 GameObject:
   m_ObjectHideFlags: 0
@@ -898,3 +891,17 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 49bee0bbd91f1ca45add82c8cc520e29, type: 2}
   - {fileID: 11400000, guid: 9e5170ccb411c2e42bdfd9db2f15716f, type: 2}
   - {fileID: 11400000, guid: afef9195e37c3ff41b2d1b6a40cbca7b, type: 2}
+  constructionSiteMappings:
+  - gridSize: {x: 1, y: 1}
+    constructionSitePrefab: {fileID: 6308355632358144236, guid: 1f8c0a42a7bfa844784127d7e55f4c88, type: 3}
+  - gridSize: {x: 2, y: 2}
+    constructionSitePrefab: {fileID: 7583506354027141791, guid: fb5600eea4d0aa94dbaedd073a3bcf7e, type: 3}
+  - gridSize: {x: 3, y: 3}
+    constructionSitePrefab: {fileID: 4148604766521998765, guid: 4f1e7a0b6c61c1f4d81f9aada9e78969, type: 3}
+  destructionPrefabMappings:
+  - gridSize: {x: 1, y: 1}
+    destructionPrefab: {fileID: 6308355632358144236, guid: 8f9a1322f9c1bc14fb90e9124996efe0, type: 3}
+  - gridSize: {x: 2, y: 2}
+    destructionPrefab: {fileID: 7583506354027141791, guid: 8ba32c953c58fe44eb8f98f0cb0816df, type: 3}
+  - gridSize: {x: 3, y: 3}
+    destructionPrefab: {fileID: 4148604766521998765, guid: 261d26f2b8cdf6f40834bbd12dc1a6e2, type: 3}
