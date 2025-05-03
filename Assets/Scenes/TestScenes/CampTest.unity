@@ -206,6 +206,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: GameManager
       objectReference: {fileID: 0}
+    - target: {fileID: 2621122233910451308, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: allMutations.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2621122233910451308, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: 'allMutations.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 1b625b9d8abe06345a1c73f38c0ff940, type: 2}
     - target: {fileID: 4686915863895893509, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -245,90 +253,6 @@ PrefabInstance:
     - target: {fileID: 4686915863895893509, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.size
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: destructionPrefabMappings.Array.size
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.data[0].gridSize.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.data[0].gridSize.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.data[1].gridSize.x
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.data[1].gridSize.y
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.data[2].gridSize.x
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.data[2].gridSize.y
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: destructionPrefabMappings.Array.data[0].gridSize.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: destructionPrefabMappings.Array.data[0].gridSize.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: destructionPrefabMappings.Array.data[1].gridSize.x
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: destructionPrefabMappings.Array.data[1].gridSize.y
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: destructionPrefabMappings.Array.data[2].gridSize.x
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: destructionPrefabMappings.Array.data[2].gridSize.y
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: destructionPrefabMappings.Array.data[0].destructionPrefab
-      value: 
-      objectReference: {fileID: 6308355632358144236, guid: 8f9a1322f9c1bc14fb90e9124996efe0, type: 3}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: destructionPrefabMappings.Array.data[1].destructionPrefab
-      value: 
-      objectReference: {fileID: 7583506354027141791, guid: 8ba32c953c58fe44eb8f98f0cb0816df, type: 3}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: destructionPrefabMappings.Array.data[2].destructionPrefab
-      value: 
-      objectReference: {fileID: 4148604766521998765, guid: 261d26f2b8cdf6f40834bbd12dc1a6e2, type: 3}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.data[0].constructionSitePrefab
-      value: 
-      objectReference: {fileID: 6308355632358144236, guid: 1f8c0a42a7bfa844784127d7e55f4c88, type: 3}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.data[1].constructionSitePrefab
-      value: 
-      objectReference: {fileID: 7583506354027141791, guid: fb5600eea4d0aa94dbaedd073a3bcf7e, type: 3}
-    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: constructionSiteMappings.Array.data[2].constructionSitePrefab
-      value: 
-      objectReference: {fileID: 4148604766521998765, guid: 4f1e7a0b6c61c1f4d81f9aada9e78969, type: 3}
-    - target: {fileID: 6303821086052416740, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: _currentGameMode
-      value: 300
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -8,4 +8,7 @@ Repairing buildings: wait until damage is finished
 Electricity system, genereating and using electricity
 
 
-NPC Characteristics finally! what the whole branch was about!!!!
+Narrative diologue and recruiting NPCs
+
+
+Displaying npc mutations (chariteristics)
