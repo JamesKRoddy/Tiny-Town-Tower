@@ -17,5 +17,4 @@ MonoBehaviour:
   sprite: {fileID: 0}
   category: 0
   rarity: 0
-  prefab: {fileID: 0}
-  mutationEffectPrefab: {fileID: 0}
+  prefab: {fileID: 4105162914808201601, guid: 3e38c16d6ef100e4ca76c56cce6e26ca, type: 3}
