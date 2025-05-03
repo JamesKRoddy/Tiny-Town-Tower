@@ -85,9 +85,9 @@ namespace Characters.NPC
             equippedMutations.Add(mutation);
             
             // Instantiate and initialize the mutation effect
-            if (mutation.mutationEffectPrefab != null)
+            if (mutation.prefab != null)
             {
-                GameObject effectObj = Instantiate(mutation.mutationEffectPrefab, transform);
+                GameObject effectObj = Instantiate(mutation.prefab, transform);
                 BaseNPCMutationEffect effect = effectObj.GetComponent<BaseNPCMutationEffect>();
                 if (effect != null)
                 {
