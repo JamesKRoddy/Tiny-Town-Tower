@@ -4,10 +4,6 @@ TODO Large things:
 
 Damaging buildings: ties into turret system
 Repairing buildings: wait until damage is finished
-Destroying buildings:
-
-Removing work from NPCs
-If assigning a different npc remove original one
 
 Electricity system, genereating and using electricity
 
