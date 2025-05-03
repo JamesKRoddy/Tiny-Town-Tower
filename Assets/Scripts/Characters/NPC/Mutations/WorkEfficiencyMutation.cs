@@ -9,9 +9,6 @@ namespace Characters.NPC.Mutations
         [SerializeField] private float fatigueReductionMultiplier = 0.7f;
         [SerializeField] private float staminaRegenMultiplier = 1.3f;
 
-        private SettlerNPC settlerNPC;
-        private NPCStats npcStats;
-
         protected override void ApplyEffect()
         {
             if (settlerNPC != null)
