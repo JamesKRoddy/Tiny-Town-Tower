@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: -4989023149819986859}
   - component: {fileID: -563734167037574732}
   - component: {fileID: -2747996953383978377}
+  - component: {fileID: 3911347363407305177}
   m_Layer: 0
   m_Name: Cooking Lvl 1
   m_TagString: Untagged
@@ -106,6 +107,27 @@ MonoBehaviour:
   requiredResources: []
   showTooltip: 0
   currentRecipe: {fileID: 0}
+--- !u!65 &3911347363407305177
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6492940899744704284}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &1152049475754727655
 PrefabInstance:
   m_ObjectHideFlags: 0

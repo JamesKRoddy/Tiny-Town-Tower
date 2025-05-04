@@ -188,131 +188,44 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         }
     }
 
-    private void HandleInteraction()
+    private void OnBPressed()
     {
         if (currentInteractive != null && currentInteractive.CanInteract())
         {
             object interactReturnObj = currentInteractive.Interact();
+            HandleInteractionResult(interactReturnObj);
+        }
+    }
 
-            switch (interactReturnObj)
-            {
-                case ResourceItemCount resourcePickup:
-                    AddToPlayerInventory(resourcePickup);
-                    break;
-                case NarrativeAsset narrative:
-                    PlayerUIManager.Instance.narrativeSystem.StartConversation(narrative);
-                    break;
-                case RogueLiteDoor rogueLiteDoor:
-                    RogueLiteManager.Instance.EnterRoom(rogueLiteDoor);
-                    break;
-                case WorkTask workTask:
-                    if (PlayerController.Instance._possessedNPC is RobotCharacterController robot)
+    private void HandleInteractionResult(object result)
+    {
+        if (result == null) return;
+
+        switch (result)
+        {
+            case ResourceItemCount resourcePickup:
+                AddToPlayerInventory(resourcePickup);
+                break;
+            case NarrativeAsset narrative:
+                PlayerUIManager.Instance.narrativeSystem.StartConversation(narrative);
+                break;
+            case RogueLiteDoor rogueLiteDoor:
+                RogueLiteManager.Instance.EnterRoom(rogueLiteDoor);
+                break;
+            case Building building:
+                // Show the work task selection popup
+                CampManager.Instance.WorkManager.ShowWorkTaskOptions(building, (task) => {
+                    if (task != null && PlayerController.Instance._possessedNPC is RobotCharacterController robot)
                     {
-                        Building building = workTask.GetComponent<Building>();
-                        if (building != null)
-                        {
-                            CreateWorkTaskOptions(building, (task) => {
-                                robot.StartWork(task);
-                                CloseSelectionPopup();
-                            });
-                        }
+                        robot.StartWork(task);
                     }
-                    break;
-                case null:
-                    Debug.Log($"Cannot interact with {currentInteractive.GetType().Name}");
-                    break;
-                default:
-                    Debug.Log($"Unhandled interaction result type: {interactReturnObj.GetType().Name}");
-                    break;
-            }
+                    CampManager.Instance.WorkManager.CloseSelectionPopup();
+                });
+                break;
+            default:
+                Debug.Log($"Unhandled interaction result type: {result.GetType().Name}");
+                break;
         }
-    }
-
-    private void CreateWorkTaskOptions(Building building, Action<WorkTask> onTaskSelected)
-    {
-        // Create selection options for each work task
-        var workTasks = building.GetComponents<WorkTask>();
-
-        var options = new List<SelectionPopup.SelectionOption>();
-
-        // Add Destroy Building option first
-        options.Add(new SelectionPopup.SelectionOption
-        {
-            optionName = "Destroy Building",
-            onSelected = () => {
-                building.StartDestruction();
-                CloseSelectionPopup();
-            },
-            canSelect = () => !building.IsUnderConstruction(),
-            workTask = null
-        });
-
-        foreach (var task in workTasks)
-        {
-            if (task.workType == WorkType.RESEARCH)
-            {
-                // For research tasks, show the research selection screen
-                options.Add(new SelectionPopup.SelectionOption
-                {
-                    optionName = "Research",
-                    onSelected = () => {
-                        PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
-                        PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
-                    },
-                    canSelect = () => true,
-                    workTask = task
-                });
-            }
-            else if (task.workType == WorkType.COOKING)
-            {
-                // For cooking tasks, show the cooking selection screen
-                options.Add(new SelectionPopup.SelectionOption
-                {
-                    optionName = "Cook",
-                    onSelected = () => {
-                        PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
-                        PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
-                    },
-                    canSelect = () => true,
-                    workTask = task
-                });
-            }
-            else if (task.workType == WorkType.UPGRADE_RESOURCE)
-            {
-                // For resource upgrade tasks, show the resource upgrade selection screen
-                options.Add(new SelectionPopup.SelectionOption
-                {
-                    optionName = "Upgrade Resource",
-                    onSelected = () => {
-                        PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
-                        PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
-                    },
-                    canSelect = () => true,
-                    workTask = task
-                });
-            }
-            else
-            {
-                // For other tasks, show the normal work assignment
-                options.Add(new SelectionPopup.SelectionOption
-                {
-                    optionName = task.workType.ToString(),
-                    onSelected = () => {
-                        onTaskSelected(task);
-                    },
-                    canSelect = () => task.CanPerformTask(),
-                    workTask = task
-                });
-            }
-        }
-
-        // Show the selection popup
-        PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
-    }
-
-    private void CloseSelectionPopup()
-    {
-        PlayerUIManager.Instance.selectionPopup.OnCloseClicked();
     }
 
     public void SetPlayerControlType(PlayerControlType controlType)
@@ -320,13 +233,13 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         switch (controlType)
         {
             case PlayerControlType.COMBAT_NPC_MOVEMENT:
-                PlayerInput.Instance.OnBPressed += HandleInteraction;
+                PlayerInput.Instance.OnBPressed += OnBPressed;
                 break;
             case PlayerControlType.CAMP_NPC_MOVEMENT:
-                PlayerInput.Instance.OnBPressed += HandleInteraction;
+                PlayerInput.Instance.OnBPressed += OnBPressed;
                 break;
             case PlayerControlType.ROBOT_MOVEMENT:
-                PlayerInput.Instance.OnBPressed += HandleInteraction;
+                PlayerInput.Instance.OnBPressed += OnBPressed;
                 break;
             default:
                 break;
@@ -389,61 +302,5 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     public void SetMaxMutationSlots(int slots)
     {
         maxMutationSlots = slots;
-    }
-
-    private void HandleInteraction(GameObject target)
-    {
-        if (target == null) return;
-
-        // Check for IInteractiveBase first
-        var interactiveBase = target.GetComponent<IInteractiveBase>();
-        if (interactiveBase != null && interactiveBase.CanInteract())
-        {
-            var result = interactiveBase.Interact();
-            HandleInteractionResult(result);
-            return;
-        }
-
-        // Check for IPossessable for possession interactions
-        var possessable = target.GetComponent<IPossessable>();
-        if (possessable != null)
-        {
-            possessable.OnPossess();
-            return;
-        }
-    }
-
-    private void HandleInteractionResult(object result)
-    {
-        if (result == null) return;
-
-        switch (result)
-        {
-            case ResourceItemCount resourcePickup:
-                AddToPlayerInventory(resourcePickup);
-                break;
-            case NarrativeAsset narrative:
-                PlayerUIManager.Instance.narrativeSystem.StartConversation(narrative);
-                break;
-            case RogueLiteDoor rogueLiteDoor:
-                RogueLiteManager.Instance.EnterRoom(rogueLiteDoor);
-                break;
-            case WorkTask workTask:
-                if (PlayerController.Instance._possessedNPC is RobotCharacterController robot)
-                {
-                    Building building = workTask.GetComponent<Building>();
-                    if (building != null)
-                    {
-                        CampManager.Instance.WorkManager.ShowWorkTaskOptions(building, (task) => {
-                            robot.StartWork(task);
-                            CampManager.Instance.WorkManager.CloseSelectionPopup();
-                        });
-                    }
-                }
-                break;
-            default:
-                Debug.Log($"Unhandled interaction result type: {result.GetType().Name}");
-                break;
-        }
     }
 }

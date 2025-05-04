@@ -10,7 +10,7 @@ using Managers;
 /// 
 [RequireComponent(typeof(BuildingRepairTask))]
 [RequireComponent(typeof(BuildingUpgradeTask))]
-public class Building : MonoBehaviour, IInteractive<WorkTask>
+public class Building : MonoBehaviour, IInteractive<Building>
 {
     [Header("Building Configuration")]
     [SerializeField] BuildingScriptableObj buildingScriptableObj;
@@ -234,14 +234,9 @@ public class Building : MonoBehaviour, IInteractive<WorkTask>
         return Interact();
     }
 
-    public WorkTask Interact()
+    public Building Interact()
     {
-        // Return the most urgent task
-        if (repairTask != null && repairTask.CanPerformTask())
-            return repairTask;
-        if (upgradeTask != null && upgradeTask.CanPerformTask())
-            return upgradeTask;
-        return null;
+        return this;
     }
 }
 
