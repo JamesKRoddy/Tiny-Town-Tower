@@ -2,21 +2,45 @@ More complex task animations and animation effects handle by animation state mac
 
 TODO Large things:
 
+
+
+*********Player playing as the robot!
+
+Now able to interact with npcs, do tasks manually.
+
+Have to see what happens when kicking an npc off the work
+
+Update SelectionPreviewButton w/ robot
+NPC work is looking good
+Robot is getting through too quickly and i dont think its snapping into position
+
+*******TODOOOOOOOOOO have to refactor this system after because its gotten very messy.
+Overall human controller thats being assigned work is on the work manager, then tasks are assigned to it!
+
+_________________________________________________________________________
+
+Electricity system, genereating and using electricity
+
+
+
+
 Damaging buildings: ties into turret system
 Repairing buildings: wait until damage is finished
 
-Electricity system, genereating and using electricity
+
+
+
 Hunger system
 
-Player playing as the robot!
-Now able to interact with npcs, do tasks manually.
-
-Player controller, HandleRobotInteraction, theres already something doing the work task loop
 
 
 
 
 Narrative diologue and recruiting NPCs
+
+
+
+
 
 
 Displaying npc mutations (chariteristics)
