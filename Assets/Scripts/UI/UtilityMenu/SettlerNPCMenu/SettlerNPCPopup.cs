@@ -42,7 +42,7 @@ public class SettlerNPCPopup : PreviewPopupBase<HumanCharacterController, string
         {
             PlayerController.Instance.PossessNPC(currentItem);
             PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false, 0.05f);
-            PlayerUIManager.Instance.utilityMenu.ReturnToGame(PlayerControlType.CAMP_NPC_MOVEMENT);
+            PlayerUIManager.Instance.utilityMenu.ReturnToGame();
         }
         OnCloseClicked();
     }
