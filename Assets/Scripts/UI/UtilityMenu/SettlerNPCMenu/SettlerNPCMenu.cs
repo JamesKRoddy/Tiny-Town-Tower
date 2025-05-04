@@ -1,61 +1,88 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
-public class SettlerNPCMenu : PreviewListMenuBase<string, SettlerNPC>, IControllerInput
+public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterController>, IControllerInput
 {
-    // Retrieve all NPCs in the scene that inherit from SettlerNPC
-    public override IEnumerable<SettlerNPC> GetItems()
+    // Retrieve all NPCs in the scene that inherit from HumanCharacterController
+    public override IEnumerable<HumanCharacterController> GetItems()
     {
-        var npcs = FindObjectsByType<SettlerNPC>(FindObjectsSortMode.None);
+        // First, get the robot if it exists
+        var robot = FindFirstObjectByType<RobotCharacterController>();
+        if (robot != null)
+        {
+            yield return robot;
+        }
+
+        // Then get all settler NPCs
+        var npcs = FindObjectsByType<SettlerNPC>(FindObjectsSortMode.None)
+            .Where(npc => npc.nPCDataObj != null);
 
         foreach (var npc in npcs)
         {
-            if (npc.nPCDataObj != null)
-            {
-                yield return npc;
-            }
-            else
-            {
-                Debug.LogWarning($"Settler {npc.gameObject.name} has no NPCData!");
-            }
+            yield return npc;
         }
     }
 
-    public override string GetItemCategory(SettlerNPC item)
+    public override string GetItemCategory(HumanCharacterController item)
     {
         return "Default"; // Grouping not relevant; returning default category
     }
 
-    public override void SetupItemButton(SettlerNPC item, GameObject button)
+    public override void SetupItemButton(HumanCharacterController item, GameObject button)
     {
         var buttonComponent = button.GetComponent<SettlerPreviewBtn>();
-        buttonComponent.SetupButton(item);
+        if (item is RobotCharacterController robot)
+        {
+            // Special setup for robot
+            buttonComponent.SetupButton(robot);
+        }
+        else if (item is SettlerNPC settler)
+        {
+            buttonComponent.SetupButton(settler);
+        }
     }
 
-    public override string GetPreviewName(SettlerNPC item)
+    public override string GetPreviewName(HumanCharacterController item)
     {
-        return item.nPCDataObj.nPCName;
+        if (item is RobotCharacterController robot)
+        {
+            return "Robot";
+        }
+        else if (item is SettlerNPC settler)
+        {
+            return settler.nPCDataObj.nPCName;
+        }
+        return string.Empty;
     }
 
-    public override Sprite GetPreviewSprite(SettlerNPC item)
+    public override Sprite GetPreviewSprite(HumanCharacterController item)
     {
         return null; // Assuming no sprite for NPCs; modify if sprites exist
     }
 
-    public override string GetPreviewDescription(SettlerNPC item)
+    public override string GetPreviewDescription(HumanCharacterController item)
     {
-        return item.nPCDataObj.nPCDescription;
+        if (item is RobotCharacterController robot)
+        {
+            return "A versatile robot that can perform various tasks.";
+        }
+        else if (item is SettlerNPC settler)
+        {
+            return settler.nPCDataObj.nPCDescription;
+        }
+        return string.Empty;
     }
 
-    public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(SettlerNPC item)
+    public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(HumanCharacterController item)
     {
         yield break; // No resource costs for NPCs
     }
 
-    public override void UpdatePreviewSpecifics(SettlerNPC item)
+    public override void UpdatePreviewSpecifics(HumanCharacterController item)
     {
-        //Debug.Log($"Displaying details for NPC: {item.nPCDataObj.nPCName}");
+        //Debug.Log($"Displaying details for NPC: {GetPreviewName(item)}");
     }
 
     public override void DestroyPreviewSpecifics()

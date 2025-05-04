@@ -47,10 +47,10 @@ public abstract class WorkTask : MonoBehaviour
         return tooltip;
     }
 
-    // Abstract method for NPC to perform the work task
+    // Virtual method for NPC to perform the work task
     public virtual void PerformTask(SettlerNPC npc)
     {
-        if (currentWorker == npc)
+        if (currentWorker == npc || npc == null) // Allow null NPC for robot work
         {
             workCoroutine = StartCoroutine(WorkCoroutine());
         }
@@ -150,9 +150,20 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual work coroutine that can be overridden by specific tasks
     protected virtual IEnumerator WorkCoroutine()
     {
+        float workSpeed = 1f;
+        if (currentWorker == null)
+        {
+            // If no NPC is assigned (robot work), use robot's work speed
+            var robot = FindObjectOfType<RobotCharacterController>();
+            if (robot != null)
+            {
+                workSpeed = robot.GetWorkSpeedMultiplier();
+            }
+        }
+
         while (workProgress < baseWorkTime)
         {
-            workProgress += Time.deltaTime;
+            workProgress += Time.deltaTime * workSpeed;
             yield return null;
         }
 

@@ -70,7 +70,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         characterInventory = GetComponent<CharacterInventory>();
     }
 
-    public void PossessedUpdate()
+    public virtual void PossessedUpdate()
     {
         HandleDash();
         MoveCharacter();
@@ -273,7 +273,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     #region Movement
 
-    private void MoveCharacter()
+    protected void MoveCharacter()
     {
         if (isVaulting)
         {

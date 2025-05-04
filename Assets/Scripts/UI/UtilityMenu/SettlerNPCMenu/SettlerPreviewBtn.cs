@@ -1,17 +1,40 @@
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
+using Characters;
 
-public class SettlerPreviewBtn : PreviewButtonBase<SettlerNPC>
+public class SettlerPreviewBtn : MonoBehaviour
 {
-    protected override void OnButtonClicked()
+    [SerializeField] private TMP_Text nameText;
+    [SerializeField] private TMP_Text descriptionText;
+    [SerializeField] private Button button;
+
+    public void SetupButton(HumanCharacterController character)
     {
-        PlayerUIManager.Instance.settlerNPCMenu.DisplayPopup(data, gameObject);
+        if (character is RobotCharacterController robot)
+        {
+            nameText.text = "Robot";
+            descriptionText.text = "A versatile robot that can perform various tasks.";
+            button.onClick.AddListener(() => OnRobotSelected(robot));
+        }
+        else if (character is SettlerNPC settler)
+        {
+            nameText.text = settler.nPCDataObj.nPCName;
+            descriptionText.text = settler.nPCDataObj.nPCDescription;
+            button.onClick.AddListener(() => OnSettlerSelected(settler));
+        }
     }
 
-    public void SetupButton(SettlerNPC settlerNPC)
+    private void OnRobotSelected(RobotCharacterController robot)
     {
-        base.SetupButton(settlerNPC, null, settlerNPC?.nPCDataObj.nPCName ?? "Unknown");
+        PlayerController.Instance.PossessNPC(robot);
+        PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false);
+    }
+
+    private void OnSettlerSelected(SettlerNPC settler)
+    {
+        PlayerController.Instance.PossessNPC(settler);
+        PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false);
     }
 }
 

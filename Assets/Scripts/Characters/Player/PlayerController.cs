@@ -108,6 +108,17 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu(PlayerControlType.COMBAT_NPC_MOVEMENT);
                 break;
 
+            case PlayerControlType.ROBOT_MOVEMENT:
+                PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
+                PlayerInput.Instance.OnAPressed += HandleRobotInteraction;
+                PlayerInput.Instance.OnSelectPressed += () => OpenUtilityMenu(PlayerControlType.ROBOT_MOVEMENT);
+                PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu(PlayerControlType.ROBOT_MOVEMENT);
+                break;
+
+            case PlayerControlType.ROBOT_WORKING:
+                PlayerInput.Instance.OnBPressed += HandleRobotStopWork;
+                break;
+
             case PlayerControlType.CAMP_NPC_MOVEMENT:
             case PlayerControlType.CAMP_CAMERA_MOVEMENT:
                 PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
@@ -272,6 +283,69 @@ public class PlayerController : MonoBehaviour, IControllerInput
     private void CloseSelectionPopup()
     {
         PlayerUIManager.Instance.selectionPopup.OnCloseClicked();
+    }
+
+    private void HandleRobotInteraction()
+    {
+        if (_possessedNPC is RobotCharacterController robot)
+        {
+            // Check for work tasks at the camera's detection point
+            WorkTask workTask = playerCamera.GetWorkTaskAtDetectionPoint();
+
+            if (workTask != null)
+            {
+                Building building = workTask.GetComponent<Building>();
+
+                if (building != null)
+                {
+                    // Create selection options for each work task
+                    var workTasks = building.GetComponents<WorkTask>();
+
+                    var options = new List<SelectionPopup.SelectionOption>();
+
+                    foreach (var task in workTasks)
+                    {
+                        if (task.workType == WorkType.RESEARCH)
+                        {
+                            options.Add(new SelectionPopup.SelectionOption
+                            {
+                                optionName = "Research",
+                                onSelected = () => {
+                                    robot.StartWork(task);
+                                    CloseSelectionPopup();
+                                },
+                                canSelect = () => true,
+                                workTask = task
+                            });
+                        }
+                        else
+                        {
+                            options.Add(new SelectionPopup.SelectionOption
+                            {
+                                optionName = task.workType.ToString(),
+                                onSelected = () => {
+                                    robot.StartWork(task);
+                                    CloseSelectionPopup();
+                                },
+                                canSelect = () => task.CanPerformTask(),
+                                workTask = task
+                            });
+                        }
+                    }
+
+                    // Show the selection popup
+                    PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
+                }
+            }
+        }
+    }
+
+    private void HandleRobotStopWork()
+    {
+        if (_possessedNPC is RobotCharacterController robot)
+        {
+            robot.StopWork();
+        }
     }
 
     #endregion

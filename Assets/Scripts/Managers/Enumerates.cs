@@ -108,7 +108,14 @@ public enum PlayerControlType
     /// Genetic Mutation UI
     /// </summary>
 
-    GENETIC_MUTATION_MOVEMENT = 600 //Default
+    GENETIC_MUTATION_MOVEMENT = 600, //Default
+
+    /// <summary>
+    /// Robot
+    /// </summary>
+
+    ROBOT_MOVEMENT = 700, // Player's movement when controlling the robot
+    ROBOT_WORKING = 701, // Robot is performing a work task
 }
 
 // =========================

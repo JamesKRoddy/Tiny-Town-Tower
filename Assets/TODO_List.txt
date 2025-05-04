@@ -6,6 +6,14 @@ Damaging buildings: ties into turret system
 Repairing buildings: wait until damage is finished
 
 Electricity system, genereating and using electricity
+Hunger system
+
+Player playing as the robot!
+Now able to interact with npcs, do tasks manually.
+
+Player controller, HandleRobotInteraction, theres already something doing the work task loop
+
+
 
 
 Narrative diologue and recruiting NPCs
