@@ -12,7 +12,7 @@ namespace Managers
         public delegate void TaskAvailable(WorkTask task);
         public event TaskAvailable OnTaskAvailable;
 
-        private SettlerNPC npcForAssignment;
+        private HumanCharacterController npcForAssignment;
         private Dictionary<WorkTask, SettlerNPC> previousWorkers = new Dictionary<WorkTask, SettlerNPC>();
 
         // Method to add a new work task to the queue
@@ -57,29 +57,20 @@ namespace Managers
             task.PerformTask(npc);
         }
 
-        public void SetNPCForAssignment(SettlerNPC npc)
+        public void SetNPCForAssignment(HumanCharacterController npc)
         {
             npcForAssignment = npc;
         }
 
         public void AssignWorkToBuilding(WorkTask workTask)
         {
+            Debug.Log($"[WorkManager] Starting AssignWorkToBuilding for task: {workTask?.workType}");
+            
             if (workTask == null)
             {
+                Debug.LogWarning("[WorkManager] Attempted to assign null work task");
                 PlayerUIManager.Instance.DisplayUIErrorMessage("Invalid work task");
                 return;
-            }
-
-            // If we have no NPC for assignment, check if we can get a previous worker
-            if (npcForAssignment == null)
-            {
-                var previousWorker = GetPreviousWorkerForTask(workTask);
-                if (previousWorker == null)
-                {
-                    PlayerUIManager.Instance.DisplayUIErrorMessage("No NPC available for work assignment");
-                    return;
-                }
-                SetNPCForAssignment(previousWorker);
             }
 
             // Check if the task can be performed
@@ -92,6 +83,7 @@ namespace Managers
                     WorkType.CLEANING => "Camp is already clean",
                     _ => "Task cannot be performed at this time"
                 };
+                Debug.Log($"[WorkManager] Task cannot be performed: {errorMessage}");
                 PlayerUIManager.Instance.DisplayUIErrorMessage(errorMessage);
                 return;
             }
@@ -111,13 +103,32 @@ namespace Managers
                         firstResource = false;
                     }
                 }
+                Debug.Log($"[WorkManager] Missing required resources: {resourceMessage}");
                 PlayerUIManager.Instance.DisplayUIErrorMessage(resourceMessage);
                 return;
+            }
+
+            Debug.Log($"[WorkManager] Current npcForAssignment: {npcForAssignment?.GetType().Name ?? "null"}");
+
+            // If we have no NPC for assignment, check if we can get a previous worker
+            if (npcForAssignment == null)
+            {
+                Debug.Log("[WorkManager] No NPC assigned, checking for previous worker");
+                var previousWorker = GetPreviousWorkerForTask(workTask);
+                if (previousWorker == null)
+                {
+                    Debug.LogWarning("[WorkManager] No previous worker found for task");
+                    PlayerUIManager.Instance.DisplayUIErrorMessage("No NPC available for work assignment");
+                    return;
+                }
+                Debug.Log($"[WorkManager] Found previous worker: {previousWorker.name}");
+                SetNPCForAssignment(previousWorker);
             }
 
             // If the task already has an NPC assigned, unassign them
             if (workTask.IsAssigned())
             {
+                Debug.Log($"[WorkManager] Task already assigned to {workTask.AssignedNPC?.name}, unassigning");
                 SettlerNPC currentNPC = workTask.AssignedNPC;
                 currentNPC.ChangeTask(TaskType.WANDER);
                 workTask.UnassignNPC();
@@ -126,13 +137,30 @@ namespace Managers
             // Store the previous worker
             if (workTask.AssignedNPC != null)
             {
+                Debug.Log($"[WorkManager] Storing previous worker {workTask.AssignedNPC.name} for task");
                 previousWorkers[workTask] = workTask.AssignedNPC;
             }
 
             // Assign the new NPC to the task
-            workTask.AssignNPC(npcForAssignment);
-            npcForAssignment.AssignWork(workTask);
+            Debug.Log($"[WorkManager] Attempting to assign {npcForAssignment?.name} to task");
+            if (npcForAssignment is RobotCharacterController robot)
+            {
+                Debug.Log($"[WorkManager] Assigning robot {robot.name} to task");
+                robot.StartWork(workTask);
+            }
+            else if (npcForAssignment is SettlerNPC settler)
+            {
+                Debug.Log($"[WorkManager] Assigning settler {settler.name} to task");
+                workTask.AssignNPC(settler);
+                settler.AssignWork(workTask);
+            }
+            else
+            {
+                Debug.LogError($"[WorkManager] Invalid character type for assignment: {npcForAssignment?.GetType().Name ?? "null"}");
+            }
+            
             npcForAssignment = null; // Clear the assignment NPC
+            Debug.Log("[WorkManager] Assignment complete");
         }
 
         public void StorePreviousWorker(WorkTask task, SettlerNPC worker)
@@ -149,8 +177,14 @@ namespace Managers
             return null;
         }
 
-        public void ShowWorkTaskOptions(Building building, Action<WorkTask> onTaskSelected)
+        public void ShowWorkTaskOptions(Building building, HumanCharacterController characterToAssign, Action<WorkTask> onTaskSelected)
         {
+            if (characterToAssign == null)
+            {
+                characterToAssign = npcForAssignment;
+            }
+
+            Debug.Log($"Showing work task options for building: {building.name}");
             // Create selection options for each work task
             var workTasks = building.GetComponents<WorkTask>();
 
@@ -177,7 +211,7 @@ namespace Managers
                     {
                         optionName = "Research",
                         onSelected = () => {
-                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
+                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, building, characterToAssign);
                             PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
                         },
                         canSelect = () => true,
@@ -191,7 +225,7 @@ namespace Managers
                     {
                         optionName = "Cook",
                         onSelected = () => {
-                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
+                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, building, characterToAssign);
                             PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
                         },
                         canSelect = () => true,
@@ -205,7 +239,7 @@ namespace Managers
                     {
                         optionName = "Upgrade Resource",
                         onSelected = () => {
-                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
+                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, building, characterToAssign);
                             PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
                         },
                         canSelect = () => true,

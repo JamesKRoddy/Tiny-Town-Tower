@@ -8,6 +8,7 @@ public class RobotCharacterController : HumanCharacterController
     [SerializeField] private float workSpeedMultiplier = 1.5f;
     private WorkTask currentWorkTask;
     private bool isWorking = false;
+    private int workLayerIndex = -1;
 
     protected override void Awake()
     {
@@ -39,7 +40,7 @@ public class RobotCharacterController : HumanCharacterController
             currentWorkTask = workTask;
             isWorking = true;
             PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.ROBOT_WORKING);
-            animator.SetBool("IsWorking", true);
+            animator.Play(currentWorkTask.workType.ToString(), workLayerIndex);
         }
     }
 
@@ -50,7 +51,7 @@ public class RobotCharacterController : HumanCharacterController
             isWorking = false;
             currentWorkTask = null;
             PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.ROBOT_MOVEMENT);
-            animator.SetBool("IsWorking", false);
+            animator.Play("Empty", workLayerIndex);
         }
     }
 

@@ -51,6 +51,7 @@ public class SettlerNPCPopup : PreviewPopupBase<HumanCharacterController, string
     {
         if (currentItem != null && currentItem is SettlerNPC)
         {
+            PlayerController.Instance.PossessNPC(null);
             PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false, 0.05f);
             PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_WORK_ASSIGNMENT);
             // Store the NPC we're assigning work to

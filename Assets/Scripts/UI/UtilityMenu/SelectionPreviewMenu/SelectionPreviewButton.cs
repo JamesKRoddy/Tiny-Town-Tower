@@ -12,13 +12,17 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
     [SerializeField] private TMP_Text queueCountText;
     private CookingTask cookingTask;
     private ResourceUpgradeTask resourceUpgradeTask;
+    private HumanCharacterController characterToAssign;
 
-public void SetupButton(ScriptableObject item, Building building, WorkType workType)
+    public void SetupButton(ScriptableObject item, Building building, WorkType workType, HumanCharacterController characterToAssign = null)
     {        
         this.building = building;
         this.workType = workType;
+        this.characterToAssign = characterToAssign;
         string name = string.Empty;
         Sprite sprite = null;
+
+        
 
         // Unsubscribe from previous tasks if they exist
         if (cookingTask != null)
@@ -75,6 +79,8 @@ public void SetupButton(ScriptableObject item, Building building, WorkType workT
     
     protected override void OnButtonClicked()
     {
+        CampManager.Instance.WorkManager.SetNPCForAssignment(characterToAssign);
+        
         switch (workType)
         {
             case WorkType.RESEARCH:
@@ -114,14 +120,24 @@ public void SetupButton(ScriptableObject item, Building building, WorkType workT
         // Check if research can be started
         if (!CampManager.Instance.ResearchManager.CanStartResearch(research, out string errorMessage))
         {
+            Debug.Log($"[SelectionPreviewButton] Cannot start research: {errorMessage}");
             PlayerUIManager.Instance.DisplayUIErrorMessage(errorMessage);
             return;
         }
 
+        Debug.Log($"[SelectionPreviewButton] Starting research assignment for {research.objectName}");
         // Only assign work if this is the first research
         if (researchTask.CurrentResearch == null)
         {
-            CampManager.Instance.WorkManager.AssignWorkToBuilding(researchTask);
+            if (characterToAssign != null)
+            {
+                Debug.Log($"[SelectionPreviewButton] Assigning character {characterToAssign.name} to research");
+                CampManager.Instance.WorkManager.AssignWorkToBuilding(researchTask);
+            }
+            else
+            {
+                Debug.LogWarning("[SelectionPreviewButton] No character assigned for research");
+            }
         }
 
         researchTask.SetResearch(research);
@@ -152,10 +168,19 @@ public void SetupButton(ScriptableObject item, Building building, WorkType workT
             return;
         }
         
+        Debug.Log($"[SelectionPreviewButton] Starting cooking assignment for {recipe.objectName}");
         // Only assign work if this is the first recipe
         if (cookingTask.currentRecipe == null)
         {
-            CampManager.Instance.WorkManager.AssignWorkToBuilding(cookingTask);
+            if (characterToAssign != null)
+            {
+                Debug.Log($"[SelectionPreviewButton] Assigning character {characterToAssign.name} to cooking");
+                CampManager.Instance.WorkManager.AssignWorkToBuilding(cookingTask);
+            }
+            else
+            {
+                Debug.LogWarning("[SelectionPreviewButton] No character assigned for cooking");
+            }
         }
 
         cookingTask.SetRecipe(recipe);
@@ -187,10 +212,19 @@ public void SetupButton(ScriptableObject item, Building building, WorkType workT
             return;
         }
         
+        Debug.Log($"[SelectionPreviewButton] Starting resource upgrade assignment for {upgrade.objectName}");
         // Only assign work if this is the first upgrade
         if (upgradeTask.currentUpgrade == null)
         {
-            CampManager.Instance.WorkManager.AssignWorkToBuilding(upgradeTask);
+            if (characterToAssign != null)
+            {
+                Debug.Log($"[SelectionPreviewButton] Assigning character {characterToAssign.name} to resource upgrade");
+                CampManager.Instance.WorkManager.AssignWorkToBuilding(upgradeTask);
+            }
+            else
+            {
+                Debug.LogWarning("[SelectionPreviewButton] No character assigned for resource upgrade");
+            }
         }
 
         upgradeTask.SetUpgrade(upgrade);

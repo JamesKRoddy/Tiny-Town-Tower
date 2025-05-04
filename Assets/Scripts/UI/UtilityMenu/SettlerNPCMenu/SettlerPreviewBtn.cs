@@ -12,7 +12,7 @@ public class SettlerPreviewBtn : PreviewButtonBase<HumanCharacterController>
             // Immediately possess the robot
             PlayerController.Instance.PossessNPC(robot);
             PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false);
-            PlayerUIManager.Instance.utilityMenu.ReturnToGame();
+            PlayerUIManager.Instance.utilityMenu.ReturnToGame(PlayerControlType.ROBOT_MOVEMENT);
         }
         else if (data is SettlerNPC)
         {

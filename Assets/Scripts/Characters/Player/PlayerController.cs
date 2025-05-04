@@ -78,7 +78,11 @@ public class PlayerController : MonoBehaviour, IControllerInput
         PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
     }
 
-    public void PossessNPC(IPossessable npc)
+    /// <summary>
+    /// Possess a new NPC, pass null if just unpossessing.
+    /// </summary>
+    /// <param name="npc">The NPC to possess.</param>
+    public void PossessNPC(IPossessable npc = null)
     {
         // Unpossess current NPC if applicable
         _possessedNPC?.OnUnpossess();
@@ -219,7 +223,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
     private void CreateWorkTaskOptions(Building building, Action<WorkTask> onTaskSelected)
     {
-        CampManager.Instance.WorkManager.ShowWorkTaskOptions(building, (task) => {
+        CampManager.Instance.WorkManager.ShowWorkTaskOptions(building, null, (task) => {
             onTaskSelected(task);
             CampManager.Instance.WorkManager.CloseSelectionPopup();
         });

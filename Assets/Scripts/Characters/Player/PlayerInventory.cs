@@ -214,7 +214,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 break;
             case Building building:
                 // Show the work task selection popup
-                CampManager.Instance.WorkManager.ShowWorkTaskOptions(building, (task) => {
+                CampManager.Instance.WorkManager.ShowWorkTaskOptions(building, (HumanCharacterController)PlayerController.Instance._possessedNPC, (task) => {
                     if (task != null && PlayerController.Instance._possessedNPC is RobotCharacterController robot)
                     {
                         robot.StartWork(task);

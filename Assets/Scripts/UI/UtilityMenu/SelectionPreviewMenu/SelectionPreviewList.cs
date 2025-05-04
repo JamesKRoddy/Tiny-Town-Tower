@@ -7,11 +7,13 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
 {
     private WorkTask currentTask;
     private Building parentBuilding;
+    private HumanCharacterController characterToAssign;
 
-    public void Setup(WorkTask task, Building building)
+    public void Setup(WorkTask task, Building building, HumanCharacterController characterToAssign)
     {
         currentTask = task;
         parentBuilding = building;
+        this.characterToAssign = characterToAssign;
         RefreshUIAndSelectFirst();
     }
 
@@ -174,7 +176,7 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
     public override void SetupItemButton(ScriptableObject item, GameObject button)
     {
         var buttonComponent = button.GetComponent<SelectionPreviewButton>();
-        buttonComponent.SetupButton(item, parentBuilding, currentTask.workType);
+        buttonComponent.SetupButton(item, parentBuilding, currentTask.workType, characterToAssign);
     }
 
     public override void UpdatePreviewSpecifics(ScriptableObject item)
