@@ -20,8 +20,8 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
             .Where(npc => npc.nPCDataObj != null);
 
         foreach (var npc in npcs)
-        {
-            yield return npc;
+            {
+                yield return npc;
         }
     }
 
@@ -51,7 +51,7 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
             return "Robot";
         }
         else if (item is SettlerNPC settler)
-        {
+    {
             return settler.nPCDataObj.nPCName;
         }
         return string.Empty;
@@ -69,7 +69,7 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
             return "A versatile robot that can perform various tasks.";
         }
         else if (item is SettlerNPC settler)
-        {
+    {
             return settler.nPCDataObj.nPCDescription;
         }
         return string.Empty;

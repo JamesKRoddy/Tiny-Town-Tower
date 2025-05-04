@@ -10,7 +10,7 @@ using Managers;
 /// 
 [RequireComponent(typeof(BuildingRepairTask))]
 [RequireComponent(typeof(BuildingUpgradeTask))]
-public class Building : MonoBehaviour
+public class Building : MonoBehaviour, IInteractive<WorkTask>
 {
     [Header("Building Configuration")]
     [SerializeField] BuildingScriptableObj buildingScriptableObj;
@@ -210,5 +210,38 @@ public class Building : MonoBehaviour
     /// Gets the upgrade task for this building
     /// </summary>
     public BuildingUpgradeTask GetUpgradeTask() => upgradeTask;
+
+    public bool CanInteract()
+    {
+        return !isUnderConstruction && isOperational;
+    }
+
+    public string GetInteractionText()
+    {
+        if (isUnderConstruction) return "Building under construction";
+        if (!isOperational) return "Building not operational";
+        
+        string text = "Building Tasks:\n";
+        if (repairTask != null && repairTask.CanPerformTask())
+            text += "- Repair\n";
+        if (upgradeTask != null && upgradeTask.CanPerformTask())
+            text += "- Upgrade\n";
+        return text;
+    }
+
+    object IInteractiveBase.Interact()
+    {
+        return Interact();
+    }
+
+    public WorkTask Interact()
+    {
+        // Return the most urgent task
+        if (repairTask != null && repairTask.CanPerformTask())
+            return repairTask;
+        if (upgradeTask != null && upgradeTask.CanPerformTask())
+            return upgradeTask;
+        return null;
+    }
 }
 

@@ -54,7 +54,7 @@ public class SettlerNPCPopup : PreviewPopupBase<HumanCharacterController, string
             PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false, 0.05f);
             PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_WORK_ASSIGNMENT);
             // Store the NPC we're assigning work to
-            WorkManager.Instance.SetNPCForAssignment(currentItem as SettlerNPC);
+            CampManager.Instance.WorkManager.SetNPCForAssignment(currentItem as SettlerNPC);
         }
         OnCloseClicked();
     }

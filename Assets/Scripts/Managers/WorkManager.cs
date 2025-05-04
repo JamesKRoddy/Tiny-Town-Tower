@@ -1,27 +1,11 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 namespace Managers
 {
     public class WorkManager : MonoBehaviour
     {
-        private static WorkManager _instance;
-        public static WorkManager Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<WorkManager>();
-                    if (_instance == null)
-                    {
-                        Debug.LogWarning("WorkManager instance not found in the scene!");
-                    }
-                }
-                return _instance;
-            }
-        }
-
         private Queue<WorkTask> workQueue = new Queue<WorkTask>(); // Queue to hold available tasks
         
         // Event to notify NPCs when a task is available
@@ -80,7 +64,6 @@ namespace Managers
 
         public void AssignWorkToBuilding(WorkTask workTask)
         {
-            
             if (workTask == null)
             {
                 PlayerUIManager.Instance.DisplayUIErrorMessage("Invalid work task");
@@ -164,6 +147,93 @@ namespace Managers
                 return previousWorker;
             }
             return null;
+        }
+
+        public void ShowWorkTaskOptions(Building building, Action<WorkTask> onTaskSelected)
+        {
+            // Create selection options for each work task
+            var workTasks = building.GetComponents<WorkTask>();
+
+            var options = new List<SelectionPopup.SelectionOption>();
+
+            // Add Destroy Building option first
+            options.Add(new SelectionPopup.SelectionOption
+            {
+                optionName = "Destroy Building",
+                onSelected = () => {
+                    building.StartDestruction();
+                    CloseSelectionPopup();
+                },
+                canSelect = () => !building.IsUnderConstruction(),
+                workTask = null
+            });
+
+            foreach (var task in workTasks)
+            {
+                if (task.workType == WorkType.RESEARCH)
+                {
+                    // For research tasks, show the research selection screen
+                    options.Add(new SelectionPopup.SelectionOption
+                    {
+                        optionName = "Research",
+                        onSelected = () => {
+                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
+                            PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+                        },
+                        canSelect = () => true,
+                        workTask = task
+                    });
+                }
+                else if (task.workType == WorkType.COOKING)
+                {
+                    // For cooking tasks, show the cooking selection screen
+                    options.Add(new SelectionPopup.SelectionOption
+                    {
+                        optionName = "Cook",
+                        onSelected = () => {
+                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
+                            PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+                        },
+                        canSelect = () => true,
+                        workTask = task
+                    });
+                }
+                else if (task.workType == WorkType.UPGRADE_RESOURCE)
+                {
+                    // For resource upgrade tasks, show the resource upgrade selection screen
+                    options.Add(new SelectionPopup.SelectionOption
+                    {
+                        optionName = "Upgrade Resource",
+                        onSelected = () => {
+                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
+                            PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+                        },
+                        canSelect = () => true,
+                        workTask = task
+                    });
+                }
+                else
+                {
+                    // For other tasks, show the normal work assignment
+                    options.Add(new SelectionPopup.SelectionOption
+                    {
+                        optionName = task.workType.ToString(),
+                        onSelected = () => {
+                            onTaskSelected(task);
+                        },
+                        canSelect = () => task.CanPerformTask(),
+                        workTask = task
+                    });
+                }
+            }
+
+            // Show the selection popup
+            PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
+        }
+
+        public void CloseSelectionPopup()
+        {
+            PlayerUIManager.Instance.selectionPopup.OnCloseClicked();
         }
     }
 }
