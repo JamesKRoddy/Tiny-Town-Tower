@@ -3,35 +3,25 @@ using UnityEngine.UI;
 using TMPro;
 using Characters;
 
-public class SettlerPreviewBtn : MonoBehaviour
+public class SettlerPreviewBtn : PreviewButtonBase<HumanCharacterController>
 {
-    [SerializeField] private TMP_Text nameText;
-    [SerializeField] private Button button;
+    protected override void OnButtonClicked()
+    {
+        PlayerUIManager.Instance.settlerNPCMenu.DisplayPopup(data, gameObject);
+    }
 
     public void SetupButton(HumanCharacterController character)
     {
         if (character is RobotCharacterController robot)
         {
             nameText.text = "Robot";
-            button.onClick.AddListener(() => OnRobotSelected(robot));
+            base.SetupButton(robot, null, "Robot");
         }
         else if (character is SettlerNPC settler)
         {
             nameText.text = settler.nPCDataObj.nPCName;
-            button.onClick.AddListener(() => OnSettlerSelected(settler));
+            base.SetupButton(settler, null, settler.nPCDataObj.nPCName);
         }
-    }
-
-    private void OnRobotSelected(RobotCharacterController robot)
-    {
-        PlayerController.Instance.PossessNPC(robot);
-        PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false);
-    }
-
-    private void OnSettlerSelected(SettlerNPC settler)
-    {
-        PlayerController.Instance.PossessNPC(settler);
-        PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false);
     }
 }
 

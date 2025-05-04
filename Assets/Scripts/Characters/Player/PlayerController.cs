@@ -193,96 +193,11 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
             if (building != null)
             {
-                // Create selection options for each work task
-                var workTasks = building.GetComponents<WorkTask>();
-
-                var options = new List<SelectionPopup.SelectionOption>();
-
-                // Add Destroy Building option first
-                options.Add(new SelectionPopup.SelectionOption
-                {
-                    optionName = "Destroy Building",
-                    onSelected = () => {
-                        building.StartDestruction();
-                        CloseSelectionPopup();
-                    },
-                    canSelect = () => !building.IsUnderConstruction(),
-                    workTask = null
+                CreateWorkTaskOptions(building, (task) => {
+                    WorkManager.Instance.AssignWorkToBuilding(task);
                 });
-
-                foreach (var task in workTasks)
-                {
-                    if (task.workType == WorkType.RESEARCH)
-                    {
-                        // For research tasks, show the research selection screen
-                        options.Add(new SelectionPopup.SelectionOption
-                        {
-                            optionName = "Research",
-                            onSelected = () => {
-                                PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
-                                PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
-                            },
-                            canSelect = () => true,
-                            workTask = task
-                        });
-                    }
-                    else if (task.workType == WorkType.COOKING)
-                    {
-                        // For cooking tasks, show the cooking selection screen
-                        options.Add(new SelectionPopup.SelectionOption
-                        {
-                            optionName = "Cook",
-                            onSelected = () => {
-                                PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
-                                PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
-                            },
-                            canSelect = () => true,
-                            workTask = task
-                        });
-                    }
-                    else if (task.workType == WorkType.UPGRADE_RESOURCE)
-                    {
-                        // For resource upgrade tasks, show the resource upgrade selection screen
-                        options.Add(new SelectionPopup.SelectionOption
-                        {
-                            optionName = "Upgrade Resource",
-                            onSelected = () => {
-                                PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
-                                PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
-                            },
-                            canSelect = () => true,
-                            workTask = task
-                        });
-                    }
-                    else
-                    {
-                        // For other tasks, show the normal work assignment
-                        options.Add(new SelectionPopup.SelectionOption
-                        {
-                            optionName = task.workType.ToString(),
-                            onSelected = () => {
-                                WorkManager.Instance.AssignWorkToBuilding(task);
-                            },
-                            canSelect = () => task.CanPerformTask(),
-                            workTask = task
-                        });
-                    }
-                }
-
-                // Show the selection popup
-                PlayerUIManager.Instance.selectionPopup.Setup(options, null, null); //TODO might need to add a return to settler menu option here
             }
         }
-    }
-
-    private void ReturnToSettlerMenu()
-    {
-        PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(true, 0.05f);
-    }
-
-    private void CloseSelectionPopup()
-    {
-        PlayerUIManager.Instance.selectionPopup.OnCloseClicked();
     }
 
     private void HandleRobotInteraction()
@@ -298,46 +213,105 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
                 if (building != null)
                 {
-                    // Create selection options for each work task
-                    var workTasks = building.GetComponents<WorkTask>();
-
-                    var options = new List<SelectionPopup.SelectionOption>();
-
-                    foreach (var task in workTasks)
-                    {
-                        if (task.workType == WorkType.RESEARCH)
-                        {
-                            options.Add(new SelectionPopup.SelectionOption
-                            {
-                                optionName = "Research",
-                                onSelected = () => {
-                                    robot.StartWork(task);
-                                    CloseSelectionPopup();
-                                },
-                                canSelect = () => true,
-                                workTask = task
-                            });
-                        }
-                        else
-                        {
-                            options.Add(new SelectionPopup.SelectionOption
-                            {
-                                optionName = task.workType.ToString(),
-                                onSelected = () => {
-                                    robot.StartWork(task);
-                                    CloseSelectionPopup();
-                                },
-                                canSelect = () => task.CanPerformTask(),
-                                workTask = task
-                            });
-                        }
-                    }
-
-                    // Show the selection popup
-                    PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
+                    CreateWorkTaskOptions(building, (task) => {
+                        robot.StartWork(task);
+                    });
                 }
             }
         }
+    }
+
+    private void CreateWorkTaskOptions(Building building, Action<WorkTask> onTaskSelected)
+    {
+        // Create selection options for each work task
+        var workTasks = building.GetComponents<WorkTask>();
+
+        var options = new List<SelectionPopup.SelectionOption>();
+
+        // Add Destroy Building option first
+        options.Add(new SelectionPopup.SelectionOption
+        {
+            optionName = "Destroy Building",
+            onSelected = () => {
+                building.StartDestruction();
+                CloseSelectionPopup();
+            },
+            canSelect = () => !building.IsUnderConstruction(),
+            workTask = null
+        });
+
+        foreach (var task in workTasks)
+        {
+            if (task.workType == WorkType.RESEARCH)
+            {
+                // For research tasks, show the research selection screen
+                options.Add(new SelectionPopup.SelectionOption
+                {
+                    optionName = "Research",
+                    onSelected = () => {
+                        PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
+                        PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+                    },
+                    canSelect = () => true,
+                    workTask = task
+                });
+            }
+            else if (task.workType == WorkType.COOKING)
+            {
+                // For cooking tasks, show the cooking selection screen
+                options.Add(new SelectionPopup.SelectionOption
+                {
+                    optionName = "Cook",
+                    onSelected = () => {
+                        PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
+                        PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+                    },
+                    canSelect = () => true,
+                    workTask = task
+                });
+            }
+            else if (task.workType == WorkType.UPGRADE_RESOURCE)
+            {
+                // For resource upgrade tasks, show the resource upgrade selection screen
+                options.Add(new SelectionPopup.SelectionOption
+                {
+                    optionName = "Upgrade Resource",
+                    onSelected = () => {
+                        PlayerUIManager.Instance.selectionPreviewList.Setup(task, building);
+                        PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+                    },
+                    canSelect = () => true,
+                    workTask = task
+                });
+            }
+            else
+            {
+                // For other tasks, show the normal work assignment
+                options.Add(new SelectionPopup.SelectionOption
+                {
+                    optionName = task.workType.ToString(),
+                    onSelected = () => {
+                        onTaskSelected(task);
+                        CloseSelectionPopup();
+                    },
+                    canSelect = () => task.CanPerformTask(),
+                    workTask = task
+                });
+            }
+        }
+
+        // Show the selection popup
+        PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
+    }
+
+    private void ReturnToSettlerMenu()
+    {
+        PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(true, 0.05f);
+    }
+
+    private void CloseSelectionPopup()
+    {
+        PlayerUIManager.Instance.selectionPopup.OnCloseClicked();
     }
 
     private void HandleRobotStopWork()
