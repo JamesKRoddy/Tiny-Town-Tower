@@ -103,7 +103,7 @@ public class RobotCharacterController : HumanCharacterController
         }
         
         // Only stop work if there are truly no more tasks
-        if (currentWorkTask != null && !currentWorkTask.HasQueuedTasks)
+        if (currentWorkTask == null && !currentWorkTask.HasQueuedTasks)
         {
             Debug.Log("[RobotCharacterController] No more tasks, stopping work");
             StopWork();
