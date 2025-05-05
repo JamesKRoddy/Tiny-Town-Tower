@@ -5168,7 +5168,8 @@ MonoBehaviour:
   vaultOffset: 1
   health: 100
   maxHealth: 100
-  workSpeedMultiplier: 1.5
+  workSpeedMultiplier: 1
+  moveSpeed: 5
 --- !u!114 &1843348620600250297
 MonoBehaviour:
   m_ObjectHideFlags: 0

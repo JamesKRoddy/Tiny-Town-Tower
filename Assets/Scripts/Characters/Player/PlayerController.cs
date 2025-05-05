@@ -120,6 +120,8 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
             case PlayerControlType.ROBOT_WORKING:
                 PlayerInput.Instance.OnBPressed += HandleRobotStopWork;
+                PlayerInput.Instance.OnBPressed += () => PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.ROBOT_MOVEMENT);
+                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.BackPressed();
                 break;
 
             case PlayerControlType.CAMP_NPC_MOVEMENT:
