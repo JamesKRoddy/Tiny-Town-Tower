@@ -26,6 +26,7 @@ public abstract class WorkTask : MonoBehaviour
     public HumanCharacterController AssignedNPC => currentWorker;
     public bool IsOccupied => currentWorker != null;
     public bool HasQueuedTasks => taskQueue.Count > 0;
+    public bool IsTaskCompleted => currentTaskData == null && !HasQueuedTasks;
 
     // Helper method for derived classes to set up tasks
     protected void SetupTask(object taskData)
@@ -195,6 +196,8 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual method for completing work that can be overridden
     protected virtual void CompleteWork()
     {
+        currentTaskData = null;
+
         // Store the current worker as previous worker before clearing
         if (currentWorker != null)
         {

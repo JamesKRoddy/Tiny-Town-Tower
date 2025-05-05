@@ -182,6 +182,7 @@ public class WorkState : _TaskState
         if (assignedTask != null)
         {
             assignedTask.StopWork -= StopWork;
+            assignedTask = null;
         }
     }
 

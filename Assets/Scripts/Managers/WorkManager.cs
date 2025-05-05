@@ -161,6 +161,7 @@ namespace Managers
 
         public HumanCharacterController GetPreviousWorkerForTask(WorkTask task)
         {            
+            Debug.Log($"Getting previous worker for task: {task.workType}");
             if (previousWorkers.TryGetValue(task, out HumanCharacterController previousWorker))
             {
                 return previousWorker;

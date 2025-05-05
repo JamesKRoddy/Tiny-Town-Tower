@@ -9,7 +9,7 @@ public class RobotCharacterController : HumanCharacterController
     [SerializeField] private float moveSpeed = 5f;
     private WorkTask currentWorkTask;
     private bool isWorking = false;
-    private int workLayerIndex = -1;
+    private int workLayerIndex = 3;
 
     protected override void Awake()
     {
@@ -95,7 +95,7 @@ public class RobotCharacterController : HumanCharacterController
         Debug.Log($"[RobotCharacterController] Work task completed: {currentWorkTask?.workType}");
         
         // Check if there are more tasks in the queue
-        if (currentWorkTask != null && currentWorkTask.HasQueuedTasks)
+        if (currentWorkTask != null && !currentWorkTask.IsTaskCompleted)
         {
             Debug.Log("[RobotCharacterController] More tasks in queue, continuing work");
             // Keep the animation playing and let the WorkTask handle the next task
@@ -103,7 +103,7 @@ public class RobotCharacterController : HumanCharacterController
         }
         
         // Only stop work if there are truly no more tasks
-        if (currentWorkTask == null && !currentWorkTask.HasQueuedTasks)
+        if (currentWorkTask.IsTaskCompleted)
         {
             Debug.Log("[RobotCharacterController] No more tasks, stopping work");
             StopWork();
@@ -121,15 +121,5 @@ public class RobotCharacterController : HumanCharacterController
     public bool IsWorking()
     {
         return isWorking;
-    }
-
-    public WorkTask GetCurrentWorkTask()
-    {
-        return currentWorkTask;
-    }
-
-    public float GetWorkSpeedMultiplier()
-    {
-        return workSpeedMultiplier;
     }
 } 
