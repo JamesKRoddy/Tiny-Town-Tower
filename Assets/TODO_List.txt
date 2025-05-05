@@ -6,16 +6,11 @@ TODO Large things:
 
 *********Player playing as the robot!
 
-Now able to interact with npcs, do tasks manually.
-
 Have to see what happens when kicking an npc off the work
 
-Pressing B while doing work not closing menu
-Pressing B when finishing work reopens the selection popup
-
 *******TODOOOOOOOOOO have to refactor this system after because its gotten very messy.
-Overall human controller thats being assigned work is on the work manager, then tasks are assigned to it!
-Theres alot of this shit FindObjectOfType<RobotCharacterController>()
+Refactor WorkTask, RobotCharacterController and WorkState
+Basically the work task should be incharge of checking if the work is done not the characters!!!!
 
 _________________________________________________________________________
 
