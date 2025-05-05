@@ -72,8 +72,8 @@ public class RobotCharacterController : HumanCharacterController
             animator.Play(currentWorkTask.workType.ToString(), workLayerIndex);
             // Start the work task once
             currentWorkTask.PerformTask(null);
-            // Subscribe to the task completion event
-            currentWorkTask.OnTaskCompleted += HandleWorkCompleted;
+
+            currentWorkTask.StopWork += HandleWorkCompleted;
         }
     }
 
@@ -82,11 +82,9 @@ public class RobotCharacterController : HumanCharacterController
         if (isWorking)
         {
             Debug.Log($"[RobotCharacterController] Stopping work on task: {currentWorkTask?.workType}");
-            if (currentWorkTask != null)
-            {
-                currentWorkTask.OnTaskCompleted -= HandleWorkCompleted;
-            }
+            currentWorkTask.StopWork -= HandleWorkCompleted;
             isWorking = false;
+            currentWorkTask.StopWorkCoroutine();
             currentWorkTask = null;
             animator.Play("Empty", workLayerIndex);
         }
@@ -112,11 +110,11 @@ public class RobotCharacterController : HumanCharacterController
         }
     }
 
-    private void OnDisable()
+    protected void OnDisable()
     {
         if (currentWorkTask != null)
         {
-            currentWorkTask.OnTaskCompleted -= HandleWorkCompleted;
+            currentWorkTask.StopWork -= HandleWorkCompleted;
         }
     }
 

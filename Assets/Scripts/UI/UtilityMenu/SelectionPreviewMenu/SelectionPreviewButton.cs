@@ -80,7 +80,7 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
     protected override void OnButtonClicked()
     {
         CampManager.Instance.WorkManager.SetNPCForAssignment(characterToAssign);
-        
+
         switch (workType)
         {
             case WorkType.RESEARCH:
@@ -212,13 +212,11 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
             return;
         }
         
-        Debug.Log($"[SelectionPreviewButton] Starting resource upgrade assignment for {upgrade.objectName}");
         // Only assign work if this is the first upgrade
         if (upgradeTask.currentUpgrade == null)
         {
             if (characterToAssign != null)
             {
-                Debug.Log($"[SelectionPreviewButton] Assigning character {characterToAssign.name} to resource upgrade");
                 CampManager.Instance.WorkManager.AssignWorkToBuilding(upgradeTask);
             }
             else

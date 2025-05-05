@@ -27,6 +27,22 @@ public abstract class WorkTask : MonoBehaviour
     public bool IsOccupied => currentWorker != null;
     public bool HasQueuedTasks => taskQueue.Count > 0;
 
+    // Helper method for derived classes to set up tasks
+    protected void SetupTask(object taskData)
+    {
+        if (taskData == null) return;
+        
+        // Queue the task
+        QueueTask(taskData);
+
+        // If no current task, set it up immediately
+        if (currentTaskData == null)
+        {
+            currentTaskData = taskQueue.Dequeue();
+            SetupNextTask();
+        }
+    }
+
     // Virtual method for tooltip text
     public virtual string GetTooltipText()
     {
@@ -166,6 +182,16 @@ public abstract class WorkTask : MonoBehaviour
         CompleteWork();
     }
 
+    public void StopWorkCoroutine()
+    {
+        Debug.Log($"[WorkTask] Stopping work coroutine for {workType}");
+        if (workCoroutine != null)
+        {
+            StopCoroutine(workCoroutine);
+            workCoroutine = null;
+        }
+    }
+
     // Virtual method for completing work that can be overridden
     protected virtual void CompleteWork()
     {
@@ -177,16 +203,14 @@ public abstract class WorkTask : MonoBehaviour
         
         // Reset state
         workProgress = 0f;
-        if (workCoroutine != null)
-        {
-            StopCoroutine(workCoroutine);
-            workCoroutine = null;
-        }
+        
+        StopWorkCoroutine();
         
         // Process next task in queue if available
         if (taskQueue.Count > 0)
         {
             currentTaskData = taskQueue.Dequeue();
+            Debug.Log($"[WorkTask] Dequeued task {currentTaskData} for {workType} [Queue Count: {taskQueue.Count}]");
             SetupNextTask();
             
             // Start the next task immediately if we have a worker
@@ -215,6 +239,7 @@ public abstract class WorkTask : MonoBehaviour
     public virtual void QueueTask(object taskData)
     {
         taskQueue.Enqueue(taskData);
+        Debug.Log($"[WorkTask] Queueing task {taskData} for {workType} [Queue Count: {taskQueue.Count}]");
         
         // If we have a previous worker and no current worker, assign them to the new task
         if (currentWorker == null && taskQueue.Count == 1)
@@ -242,15 +267,12 @@ public abstract class WorkTask : MonoBehaviour
 
     protected void AddResourceToInventory(ResourceItemCount resourceItemCount)
     {
+        Debug.Log($"[WorkTask] Adding resource to inventory");
         PlayerInventory.Instance.AddItem(resourceItemCount.resourceScriptableObj, resourceItemCount.count);
     }
 
     protected virtual void OnDisable()
     {
-        if (workCoroutine != null)
-        {
-            StopCoroutine(workCoroutine);
-            workCoroutine = null;
-        }
+        StopWorkCoroutine();
     }
 }

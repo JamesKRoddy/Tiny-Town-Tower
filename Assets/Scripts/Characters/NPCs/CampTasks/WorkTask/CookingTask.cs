@@ -15,17 +15,7 @@ public class CookingTask : WorkTask
 
     public void SetRecipe(CookingRecipeScriptableObj recipe)
     {
-        if (recipe == null) return;
-        
-        // Queue the recipe
-        QueueTask(recipe);
-
-        // If no current recipe, set it up immediately
-        if (currentRecipe == null)
-        {
-            currentTaskData = taskQueue.Dequeue();
-            SetupNextTask();
-        }
+        SetupTask(recipe);
     }
 
     protected override void SetupNextTask()

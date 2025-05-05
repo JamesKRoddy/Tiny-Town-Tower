@@ -390,6 +390,7 @@ public class WorkState : _TaskState
 
     public void StopWork()
     {
+        Debug.Log($"[WorkState] Stopping work for {npc.name}");
         if (assignedTask != null && (assignedTask.HasQueuedTasks || assignedTask.IsOccupied))
         {
             return;

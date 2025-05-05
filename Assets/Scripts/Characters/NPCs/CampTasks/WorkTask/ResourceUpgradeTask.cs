@@ -14,17 +14,7 @@ public class ResourceUpgradeTask : WorkTask
 
     public void SetUpgrade(ResourceUpgradeScriptableObj upgrade)
     {
-        if (upgrade == null) return;
-        
-        // Queue the upgrade
-        QueueTask(upgrade);
-
-        // If no current upgrade, set it up immediately
-        if (currentUpgrade == null)
-        {
-            currentTaskData = taskQueue.Dequeue();
-            SetupNextTask();
-        }
+        SetupTask(upgrade);
     }
 
     protected override void SetupNextTask()

@@ -63,9 +63,7 @@ namespace Managers
         }
 
         public void AssignWorkToBuilding(WorkTask workTask)
-        {
-            Debug.Log($"[WorkManager] Starting AssignWorkToBuilding for task: {workTask?.workType}");
-            
+        {            
             if (workTask == null)
             {
                 Debug.LogWarning("[WorkManager] Attempted to assign null work task");
@@ -83,7 +81,6 @@ namespace Managers
                     WorkType.CLEANING => "Camp is already clean",
                     _ => "Task cannot be performed at this time"
                 };
-                Debug.Log($"[WorkManager] Task cannot be performed: {errorMessage}");
                 PlayerUIManager.Instance.DisplayUIErrorMessage(errorMessage);
                 return;
             }
@@ -103,17 +100,14 @@ namespace Managers
                         firstResource = false;
                     }
                 }
-                Debug.Log($"[WorkManager] Missing required resources: {resourceMessage}");
                 PlayerUIManager.Instance.DisplayUIErrorMessage(resourceMessage);
                 return;
             }
 
-            Debug.Log($"[WorkManager] Current npcForAssignment: {npcForAssignment?.GetType().Name ?? "null"}");
 
             // If we have no NPC for assignment, check if we can get a previous worker
             if (npcForAssignment == null)
             {
-                Debug.Log("[WorkManager] No NPC assigned, checking for previous worker");
                 var previousWorker = GetPreviousWorkerForTask(workTask);
                 if (previousWorker == null)
                 {
@@ -121,14 +115,12 @@ namespace Managers
                     PlayerUIManager.Instance.DisplayUIErrorMessage("No NPC available for work assignment");
                     return;
                 }
-                Debug.Log($"[WorkManager] Found previous worker: {previousWorker.name}");
                 SetNPCForAssignment(previousWorker);
             }
 
             // If the task already has an NPC assigned, unassign them
             if (workTask.IsAssigned())
             {
-                Debug.Log($"[WorkManager] Task already assigned to {workTask.AssignedNPC?.name}, unassigning");
                 HumanCharacterController currentNPC = workTask.AssignedNPC;
                 if (currentNPC is SettlerNPC settler)
                 {
@@ -140,21 +132,17 @@ namespace Managers
             // Store the previous worker
             if (workTask.AssignedNPC != null)
             {
-                Debug.Log($"[WorkManager] Storing previous worker {workTask.AssignedNPC.name} for task");
                 previousWorkers[workTask] = workTask.AssignedNPC;
             }
 
             // Assign the new NPC to the task
-            Debug.Log($"[WorkManager] Attempting to assign {npcForAssignment?.name} to task");
             if (npcForAssignment is RobotCharacterController robot)
             {
-                Debug.Log($"[WorkManager] Assigning robot {robot.name} to task");
                 workTask.AssignNPC(robot);
                 robot.StartWork(workTask);
             }
             else if (npcForAssignment is SettlerNPC settler)
             {
-                Debug.Log($"[WorkManager] Assigning settler {settler.name} to task");
                 workTask.AssignNPC(settler);
                 settler.AssignWork(workTask);
             }
@@ -164,7 +152,6 @@ namespace Managers
             }
             
             npcForAssignment = null; // Clear the assignment NPC
-            Debug.Log("[WorkManager] Assignment complete");
         }
 
         public void StorePreviousWorker(WorkTask task, HumanCharacterController worker)
@@ -188,7 +175,6 @@ namespace Managers
                 characterToAssign = npcForAssignment;
             }
 
-            Debug.Log($"Showing work task options for building: {building.name}");
             // Create selection options for each work task
             var workTasks = building.GetComponents<WorkTask>();
 
