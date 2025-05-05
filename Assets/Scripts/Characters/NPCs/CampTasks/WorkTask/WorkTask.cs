@@ -150,6 +150,9 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual work coroutine that can be overridden by specific tasks
     protected virtual IEnumerator WorkCoroutine()
     {
+        // Reset work progress at the start of each task
+        workProgress = 0f;
+        
         float workSpeed = 1f;
         if (currentWorker == null)
         {
@@ -167,13 +170,14 @@ public abstract class WorkTask : MonoBehaviour
             yield return null;
         }
 
+        // Ensure we don't exceed the base work time
+        workProgress = baseWorkTime;
         CompleteWork();
     }
 
     // Virtual method for completing work that can be overridden
     protected virtual void CompleteWork()
     {
-        
         // Store the current worker as previous worker before clearing
         if (currentWorker != null)
         {
@@ -201,7 +205,16 @@ public abstract class WorkTask : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning($"[WorkTask] No worker assigned for next task in {name}");
+                // For robots, start the next task immediately
+                var robot = FindObjectOfType<RobotCharacterController>();
+                if (robot != null && robot.IsWorking())
+                {
+                    workCoroutine = StartCoroutine(WorkCoroutine());
+                }
+                else
+                {
+                    Debug.LogWarning($"[WorkTask] No worker assigned for next task in {name}");
+                }
             }
         }
         else

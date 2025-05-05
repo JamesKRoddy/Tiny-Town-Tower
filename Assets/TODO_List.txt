@@ -10,12 +10,12 @@ Now able to interact with npcs, do tasks manually.
 
 Have to see what happens when kicking an npc off the work
 
-Update SelectionPreviewButton w/ robot
-NPC work is looking good
-Robot is getting through too quickly and i dont think its snapping into position
+Pressing B while doing work not closing menu
+Pressing B when finishing work reopens the selection popup
 
 *******TODOOOOOOOOOO have to refactor this system after because its gotten very messy.
 Overall human controller thats being assigned work is on the work manager, then tasks are assigned to it!
+Theres alot of this shit FindObjectOfType<RobotCharacterController>()
 
 _________________________________________________________________________
 
