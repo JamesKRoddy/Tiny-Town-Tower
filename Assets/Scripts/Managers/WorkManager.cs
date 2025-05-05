@@ -13,7 +13,7 @@ namespace Managers
         public event TaskAvailable OnTaskAvailable;
 
         private HumanCharacterController npcForAssignment;
-        private Dictionary<WorkTask, SettlerNPC> previousWorkers = new Dictionary<WorkTask, SettlerNPC>();
+        private Dictionary<WorkTask, HumanCharacterController> previousWorkers = new Dictionary<WorkTask, HumanCharacterController>();
 
         // Method to add a new work task to the queue
         public void AddWorkTask(WorkTask newTask)
@@ -129,8 +129,11 @@ namespace Managers
             if (workTask.IsAssigned())
             {
                 Debug.Log($"[WorkManager] Task already assigned to {workTask.AssignedNPC?.name}, unassigning");
-                SettlerNPC currentNPC = workTask.AssignedNPC;
-                currentNPC.ChangeTask(TaskType.WANDER);
+                HumanCharacterController currentNPC = workTask.AssignedNPC;
+                if (currentNPC is SettlerNPC settler)
+                {
+                    settler.ChangeTask(TaskType.WANDER);
+                }
                 workTask.UnassignNPC();
             }
 
@@ -146,6 +149,7 @@ namespace Managers
             if (npcForAssignment is RobotCharacterController robot)
             {
                 Debug.Log($"[WorkManager] Assigning robot {robot.name} to task");
+                workTask.AssignNPC(robot);
                 robot.StartWork(workTask);
             }
             else if (npcForAssignment is SettlerNPC settler)
@@ -163,14 +167,14 @@ namespace Managers
             Debug.Log("[WorkManager] Assignment complete");
         }
 
-        public void StorePreviousWorker(WorkTask task, SettlerNPC worker)
+        public void StorePreviousWorker(WorkTask task, HumanCharacterController worker)
         {
             previousWorkers[task] = worker;
         }
 
-        public SettlerNPC GetPreviousWorkerForTask(WorkTask task)
+        public HumanCharacterController GetPreviousWorkerForTask(WorkTask task)
         {            
-            if (previousWorkers.TryGetValue(task, out SettlerNPC previousWorker))
+            if (previousWorkers.TryGetValue(task, out HumanCharacterController previousWorker))
             {
                 return previousWorker;
             }

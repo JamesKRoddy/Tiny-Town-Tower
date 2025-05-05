@@ -8,7 +8,7 @@ public abstract class WorkTask : MonoBehaviour
 {
     [HideInInspector] public WorkType workType;
     [SerializeField] protected Transform workLocationTransform; // Optional specific work location
-    protected SettlerNPC currentWorker; // Reference to the NPC performing this task
+    protected HumanCharacterController currentWorker; // Reference to the NPC performing this task
     [HideInInspector] public ResourceItemCount[] requiredResources; // Resources needed to perform this task
     [SerializeField] protected bool showTooltip = false; // Whether to show tooltips for this task
 
@@ -23,7 +23,7 @@ public abstract class WorkTask : MonoBehaviour
     protected object currentTaskData;
 
     // Property to access the assigned NPC
-    public SettlerNPC AssignedNPC => currentWorker;
+    public HumanCharacterController AssignedNPC => currentWorker;
     public bool IsOccupied => currentWorker != null;
     public bool HasQueuedTasks => taskQueue.Count > 0;
 
@@ -130,7 +130,7 @@ public abstract class WorkTask : MonoBehaviour
     }
 
     // Method to assign an NPC to this task
-    public void AssignNPC(SettlerNPC npc)
+    public void AssignNPC(HumanCharacterController npc)
     {
         currentWorker = npc;
     }
@@ -154,15 +154,6 @@ public abstract class WorkTask : MonoBehaviour
         workProgress = 0f;
         
         float workSpeed = 1f;
-        if (currentWorker == null)
-        {
-            // If no NPC is assigned (robot work), use robot's work speed
-            var robot = FindObjectOfType<RobotCharacterController>();
-            if (robot != null)
-            {
-                workSpeed = robot.GetWorkSpeedMultiplier();
-            }
-        }
 
         while (workProgress < baseWorkTime)
         {
@@ -203,24 +194,10 @@ public abstract class WorkTask : MonoBehaviour
             {
                 workCoroutine = StartCoroutine(WorkCoroutine());
             }
-            else
-            {
-                // For robots, start the next task immediately
-                var robot = FindObjectOfType<RobotCharacterController>();
-                if (robot != null && robot.IsWorking())
-                {
-                    workCoroutine = StartCoroutine(WorkCoroutine());
-                }
-                else
-                {
-                    Debug.LogWarning($"[WorkTask] No worker assigned for next task in {name}");
-                }
-            }
         }
         else
         {
-            // Only clear the worker if there are no more tasks
-            currentWorker = null;
+            UnassignNPC();
         }
         
         // Notify completion
@@ -249,7 +226,10 @@ public abstract class WorkTask : MonoBehaviour
                 // Set the NPC for assignment before assigning the task
                 CampManager.Instance.WorkManager.SetNPCForAssignment(previousWorker);
                 AssignNPC(previousWorker);
-                previousWorker.ChangeTask(TaskType.WORK);
+                if (previousWorker is SettlerNPC settler)
+                {
+                    settler.ChangeTask(TaskType.WORK);
+                }
             }
         }
     }
