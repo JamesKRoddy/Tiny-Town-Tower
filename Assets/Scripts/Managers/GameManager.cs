@@ -58,9 +58,17 @@ namespace Managers
                     return PlayerControlType.COMBAT_NPC_MOVEMENT;
                 case GameMode.CAMP:
                     if (PlayerController.Instance._possessedNPC != null)
-                        return PlayerControlType.CAMP_NPC_MOVEMENT;
-                    else
-                        return PlayerControlType.CAMP_CAMERA_MOVEMENT;
+                    {
+                        return PlayerController.Instance._possessedNPC switch
+                        {
+                            SettlerNPC => PlayerControlType.CAMP_NPC_MOVEMENT,
+                            RobotCharacterController robot => robot.IsWorking() 
+                                ? PlayerControlType.ROBOT_WORKING 
+                                : PlayerControlType.ROBOT_MOVEMENT,
+                            _ => PlayerControlType.CAMP_CAMERA_MOVEMENT
+                        };
+                    }
+                    return PlayerControlType.CAMP_CAMERA_MOVEMENT;
                 case GameMode.TURRET:
                     return PlayerControlType.TURRET_CAMERA_MOVEMENT;
                 default:

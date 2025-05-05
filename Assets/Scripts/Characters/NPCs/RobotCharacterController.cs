@@ -69,7 +69,6 @@ public class RobotCharacterController : HumanCharacterController
         {
             currentWorkTask = workTask;
             isWorking = true;
-            PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.ROBOT_WORKING);
             animator.Play(currentWorkTask.workType.ToString(), workLayerIndex);
             // Start the work task once
             currentWorkTask.PerformTask(null);
@@ -89,7 +88,6 @@ public class RobotCharacterController : HumanCharacterController
             }
             isWorking = false;
             currentWorkTask = null;
-            PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.ROBOT_MOVEMENT);
             animator.Play("Empty", workLayerIndex);
         }
     }
