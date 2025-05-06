@@ -71,7 +71,7 @@ public class RobotCharacterController : HumanCharacterController
             isWorking = true;
             animator.Play(currentWorkTask.workType.ToString(), workLayerIndex);
             // Start the work task once
-            currentWorkTask.PerformTask(null);
+            currentWorkTask.PerformTask(this);
 
             currentWorkTask.StopWork += HandleWorkCompleted;
         }

@@ -65,9 +65,9 @@ public abstract class WorkTask : MonoBehaviour
     }
 
     // Virtual method for NPC to perform the work task
-    public virtual void PerformTask(SettlerNPC npc)
+    public virtual void PerformTask(HumanCharacterController npc)
     {
-        if (currentWorker == npc || npc == null) // Allow null NPC for robot work
+        if (currentWorker == npc)
         {
             workCoroutine = StartCoroutine(WorkCoroutine());
         }
@@ -185,7 +185,6 @@ public abstract class WorkTask : MonoBehaviour
 
     public void StopWorkCoroutine()
     {
-        Debug.Log($"[WorkTask] Stopping work coroutine for {workType}");
         if (workCoroutine != null)
         {
             StopCoroutine(workCoroutine);
@@ -213,7 +212,7 @@ public abstract class WorkTask : MonoBehaviour
         if (taskQueue.Count > 0)
         {
             currentTaskData = taskQueue.Dequeue();
-            Debug.Log($"[WorkTask] Dequeued task {currentTaskData} for {workType} [Queue Count: {taskQueue.Count}]");
+
             SetupNextTask();
             
             // Start the next task immediately if we have a worker

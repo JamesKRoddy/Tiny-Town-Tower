@@ -27,12 +27,6 @@ public class BuildingUpgradeTask : WorkTask
 
     protected override IEnumerator WorkCoroutine()
     {
-        if (!HasRequiredResources())
-        {
-            Debug.LogWarning("Not enough resources for upgrade");
-            yield break;
-        }
-
         // Consume resources
         ConsumeResources();
 

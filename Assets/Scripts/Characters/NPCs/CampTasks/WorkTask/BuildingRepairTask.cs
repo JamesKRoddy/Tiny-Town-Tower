@@ -27,12 +27,6 @@ public class BuildingRepairTask : WorkTask
 
     protected override IEnumerator WorkCoroutine()
     {
-        if (!HasRequiredResources())
-        {
-            Debug.LogWarning("Not enough resources for repair");
-            yield break;
-        }
-
         // Consume resources
         ConsumeResources();
 

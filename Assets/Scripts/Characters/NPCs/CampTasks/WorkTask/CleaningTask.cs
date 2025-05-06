@@ -19,15 +19,6 @@ public class CleaningTask : WorkTask
         baseWorkTime = cleaningTime;
     }
 
-    public override void PerformTask(SettlerNPC npc)
-    {
-        if (currentWorker == null)
-        {
-            currentWorker = npc;
-            workCoroutine = StartCoroutine(CleaningCoroutine());
-        }
-    }
-
     private IEnumerator CleaningCoroutine()
     {
         while (cleaningProgress < cleaningTime)

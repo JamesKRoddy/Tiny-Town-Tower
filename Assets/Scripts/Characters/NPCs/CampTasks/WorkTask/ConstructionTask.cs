@@ -11,7 +11,7 @@ public class ConstructionTask : WorkTask
 {
     private GameObject finalBuildingPrefab;
     private BuildingScriptableObj buildingScriptableObj;
-    private List<SettlerNPC> workers = new List<SettlerNPC>();
+    private List<HumanCharacterController> workers = new List<HumanCharacterController>();
     private bool isConstructionComplete = false;
 
     protected override void Start()
@@ -29,7 +29,7 @@ public class ConstructionTask : WorkTask
         obstacle.size = new Vector3(buildingScriptableObj.size.x, 1.0f, buildingScriptableObj.size.y);
     }
 
-    public override void PerformTask(SettlerNPC npc)
+    public override void PerformTask(HumanCharacterController npc)
     {
         // Add worker to the task
         if (!workers.Contains(npc))
