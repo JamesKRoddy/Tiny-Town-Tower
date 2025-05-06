@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1018587713710511494}
+  - component: {fileID: 8909381485726452188}
   m_Layer: 0
   m_Name: Construction1x1
   m_TagString: Untagged
@@ -34,6 +35,27 @@ Transform:
   - {fileID: 3909606948529774208}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &8909381485726452188
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6308355632358144236}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.8, y: 2.5, z: 1.8}
+  m_Center: {x: 0, y: 1.25, z: 0}
 --- !u!1001 &166685050132993662
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -84,6 +106,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4760333434543446, guid: 3bf3d9d0c5774c94c843e59f5a4e7f04, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 64295570333503200, guid: 3bf3d9d0c5774c94c843e59f5a4e7f04, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -148,6 +174,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 64287779146001008, guid: 83e697fb292efa341802e0ee594fc5ce, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -208,6 +238,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4256763629015948, guid: 321822315a9069f4ea2b84dc2c4704da, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 64785064066576788, guid: 321822315a9069f4ea2b84dc2c4704da, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
