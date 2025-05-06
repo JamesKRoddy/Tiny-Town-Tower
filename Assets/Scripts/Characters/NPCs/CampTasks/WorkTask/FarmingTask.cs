@@ -14,7 +14,6 @@ public class FarmingTask : WorkTask
     protected override void Start()
     {
         base.Start();
-        workType = WorkType.FARMING;
         baseWorkTime = harvestTime;
     }
 
@@ -59,5 +58,10 @@ public class FarmingTask : WorkTask
         }
 
         base.CompleteWork();
+    }
+
+    public override string GetAnimationClipName()
+    {
+        return TaskAnimation.FARMING.ToString();
     }
 } 

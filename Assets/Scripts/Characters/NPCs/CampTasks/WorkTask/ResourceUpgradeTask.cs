@@ -9,7 +9,6 @@ public class ResourceUpgradeTask : WorkTask
     protected override void Start()
     {
         base.Start();
-        workType = WorkType.UPGRADE_RESOURCE;
     }
 
     public void SetUpgrade(ResourceUpgradeScriptableObj upgrade)
@@ -57,5 +56,10 @@ public class ResourceUpgradeTask : WorkTask
         currentUpgrade = null;
         
         base.CompleteWork();
+    }
+
+    public override string GetAnimationClipName()
+    {
+        return TaskAnimation.UPGRADE_RESOURCE.ToString();
     }
 } 

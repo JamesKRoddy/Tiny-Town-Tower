@@ -74,11 +74,11 @@ namespace Managers
             // Check if the task can be performed
             if (!workTask.CanPerformTask())
             {
-                string errorMessage = workTask.workType switch
+                string errorMessage = workTask switch
                 {
-                    WorkType.REPAIR_BUILDING => "Building is already at full health",
-                    WorkType.UPGRADE_BUILDING => "Building cannot be upgraded further",
-                    WorkType.CLEANING => "Camp is already clean",
+                    BuildingRepairTask => "Building is already at full health",
+                    BuildingUpgradeTask => "Building cannot be upgraded further",
+                    CleaningTask => "Camp is already clean",
                     _ => "Task cannot be performed at this time"
                 };
                 PlayerUIManager.Instance.DisplayUIErrorMessage(errorMessage);
@@ -161,22 +161,16 @@ namespace Managers
 
         public HumanCharacterController GetPreviousWorkerForTask(WorkTask task)
         {            
-            Debug.Log($"Getting previous worker for task: {task.workType}");
+            Debug.Log($"Getting previous worker for task: {task.GetType().Name}");
             if (previousWorkers.TryGetValue(task, out HumanCharacterController previousWorker))
             {
                 return previousWorker;
             }
             return null;
         }
-
+        
         public void ShowWorkTaskOptions(Building building, HumanCharacterController characterToAssign, Action<WorkTask> onTaskSelected)
         {
-            if (characterToAssign == null)
-            {
-                characterToAssign = npcForAssignment;
-            }
-
-            // Create selection options for each work task
             var workTasks = building.GetComponents<WorkTask>();
 
             var options = new List<SelectionPopup.SelectionOption>();
@@ -193,44 +187,61 @@ namespace Managers
                 workTask = null
             });
 
+            ShowWorkTaskOptions(workTasks, characterToAssign, onTaskSelected, options);
+        }
+
+
+        public void ShowWorkTaskOptions(WorkTask[] workTasks, HumanCharacterController characterToAssign, Action<WorkTask> onTaskSelected, List<SelectionPopup.SelectionOption> options = null)
+        {
+            if (characterToAssign == null)
+            {
+                characterToAssign = npcForAssignment;
+            }
+
+            if (options == null)
+            {
+                options = new List<SelectionPopup.SelectionOption>();
+            }
+
+            // Create selection options for each work task         
             foreach (var task in workTasks)
             {
-                if (task.workType == WorkType.RESEARCH)
+                if (task is ResearchTask)
                 {
                     // For research tasks, show the research selection screen
                     options.Add(new SelectionPopup.SelectionOption
                     {
                         optionName = "Research",
                         onSelected = () => {
-                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, building, characterToAssign);
+                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, characterToAssign);
                             PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
                         },
                         canSelect = () => true,
                         workTask = task
                     });
                 }
-                else if (task.workType == WorkType.COOKING)
+                else if (task is CookingTask)
                 {
                     // For cooking tasks, show the cooking selection screen
                     options.Add(new SelectionPopup.SelectionOption
                     {
                         optionName = "Cook",
                         onSelected = () => {
-                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, building, characterToAssign);
+                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, characterToAssign);
                             PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
                         },
                         canSelect = () => true,
                         workTask = task
                     });
                 }
-                else if (task.workType == WorkType.UPGRADE_RESOURCE)
+                else if (task is ResourceUpgradeTask)
                 {
                     // For resource upgrade tasks, show the resource upgrade selection screen
                     options.Add(new SelectionPopup.SelectionOption
                     {
                         optionName = "Upgrade Resource",
                         onSelected = () => {
-                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, building, characterToAssign);
+                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, characterToAssign);
                             PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
                         },
                         canSelect = () => true,
@@ -242,7 +253,7 @@ namespace Managers
                     // For other tasks, show the normal work assignment
                     options.Add(new SelectionPopup.SelectionOption
                     {
-                        optionName = task.workType.ToString(),
+                        optionName = task.GetType().Name.Replace("Task", ""),
                         onSelected = () => {
                             onTaskSelected(task);
                         },

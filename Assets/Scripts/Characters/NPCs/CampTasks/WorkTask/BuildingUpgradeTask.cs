@@ -10,7 +10,6 @@ public class BuildingUpgradeTask : WorkTask
     protected override void Start()
     {
         base.Start();
-        workType = WorkType.UPGRADE_BUILDING;
         targetBuilding = GetComponent<Building>();
         if (targetBuilding == null)
         {
@@ -60,6 +59,11 @@ public class BuildingUpgradeTask : WorkTask
         
         // Check if the building has an upgrade target (can be upgraded)
         return upgradeTarget != null;
+    }
+
+    public override string GetAnimationClipName()
+    {
+        return TaskAnimation.UPGRADE_BUILDING.ToString();
     }
 
     public override string GetTooltipText()

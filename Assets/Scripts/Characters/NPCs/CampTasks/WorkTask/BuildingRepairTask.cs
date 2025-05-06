@@ -10,7 +10,6 @@ public class BuildingRepairTask : WorkTask
     protected override void Start()
     {
         base.Start();
-        workType = WorkType.REPAIR_BUILDING;
         targetBuilding = GetComponent<Building>();
         if (targetBuilding == null)
         {
@@ -57,5 +56,10 @@ public class BuildingRepairTask : WorkTask
         
         // Check if the building needs repair (is not at full health)
         return targetBuilding.GetCurrentHealth() < targetBuilding.GetMaxHealth();
+    }
+
+    public override string GetAnimationClipName()
+    {
+        return TaskAnimation.REPAIR_BUILDING.ToString();
     }
 } 

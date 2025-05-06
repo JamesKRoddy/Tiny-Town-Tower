@@ -6,7 +6,6 @@ using Managers;
 
 public abstract class WorkTask : MonoBehaviour
 {
-    [HideInInspector] public WorkType workType;
     [SerializeField] protected Transform workLocationTransform; // Optional specific work location
     protected HumanCharacterController currentWorker; // Reference to the NPC performing this task
     [HideInInspector] public ResourceItemCount[] requiredResources; // Resources needed to perform this task
@@ -49,7 +48,7 @@ public abstract class WorkTask : MonoBehaviour
     {
         if (!showTooltip) return string.Empty;
 
-        string tooltip = $"{workType}\n";
+        string tooltip = $"{GetType().Name}\n";
         tooltip += $"Time: {baseWorkTime} seconds\n";
         
         if (requiredResources != null)
@@ -241,7 +240,7 @@ public abstract class WorkTask : MonoBehaviour
     public virtual void QueueTask(object taskData)
     {
         taskQueue.Enqueue(taskData);
-        Debug.Log($"[WorkTask] Queueing task {taskData} for {workType} [Queue Count: {taskQueue.Count}]");
+        Debug.Log($"[WorkTask] Queueing task {taskData} for {GetType().Name} [Queue Count: {taskQueue.Count}]");
         
         // If we have a previous worker and no current worker, assign them to the new task
         if (currentWorker == null && taskQueue.Count == 1)
@@ -259,6 +258,11 @@ public abstract class WorkTask : MonoBehaviour
                 }
             }
         }
+    }
+    public virtual string GetAnimationClipName()
+    {
+        Debug.LogWarning($"[WorkTask] GetAnimationClipName not implemented for {GetType().Name}");
+        return "Empty";
     }
 
     // Method to clear the task queue

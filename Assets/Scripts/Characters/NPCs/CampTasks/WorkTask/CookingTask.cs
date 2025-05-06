@@ -10,7 +10,6 @@ public class CookingTask : WorkTask
     protected override void Start()
     {
         base.Start();
-        workType = WorkType.COOKING;
     }
 
     public void SetRecipe(CookingRecipeScriptableObj recipe)
@@ -43,5 +42,10 @@ public class CookingTask : WorkTask
         currentRecipe = null;
         
         base.CompleteWork();
+    }
+
+    public override string GetAnimationClipName()
+    {
+        return TaskAnimation.COOKING.ToString();
     }
 } 

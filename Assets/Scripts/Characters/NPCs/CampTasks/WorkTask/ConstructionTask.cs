@@ -7,7 +7,7 @@ using UnityEngine.AI;
 /// <summary>
 /// Used by construction sites to build buildings.
 /// </summary>
-public class ConstructionTask : WorkTask
+public class ConstructionTask : WorkTask, IInteractive<object>
 {
     private GameObject finalBuildingPrefab;
     private BuildingScriptableObj buildingScriptableObj;
@@ -18,7 +18,6 @@ public class ConstructionTask : WorkTask
     {
         base.Start();
         AddWorkTask();
-        workType = WorkType.BUILD_STRUCTURE;
 
         NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
         if (obstacle == null)
@@ -94,6 +93,26 @@ public class ConstructionTask : WorkTask
         {
             workers.Remove(npc);
         }
+    }
+
+    public bool CanInteract()
+    {
+        return true;
+    }
+
+    public string GetInteractionText()
+    {
+        return "Build " + buildingScriptableObj.name;
+    }
+
+    public override string GetAnimationClipName()
+    {
+        return TaskAnimation.BUILD_STRUCTURE.ToString();
+    }
+
+    public object Interact()
+    {
+        return this;
     }
 }
 

@@ -156,7 +156,7 @@ public class WorkState : _TaskState
             assignedTask.PerformTask(npc);
             if (workLayerIndex != -1)
             {
-                animator.Play(assignedTask.workType.ToString(), workLayerIndex);
+                animator.Play(assignedTask.GetAnimationClipName(), workLayerIndex);
             }
             isTaskBeingPerformed = true;
         }

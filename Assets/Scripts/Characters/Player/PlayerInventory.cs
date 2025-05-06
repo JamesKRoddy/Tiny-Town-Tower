@@ -83,11 +83,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             ClearInteractive();
     }
 
-    public void AddToPlayerInventory(ResourceScriptableObj resource, int count = 1)
-    {
-        AddItem(resource, count);
-    }
-
     public void AddToPlayerInventory(ResourceItemCount resourcePickup)
     {
         //TODO Display this on the UI so that the player can seee the inventory items being added
@@ -168,9 +163,16 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             IInteractiveBase interactive = hit.collider.GetComponent<IInteractiveBase>();
             if (interactive != null && interactive.CanInteract())
             {
-                currentInteractive = (IInteractive<object>)interactive;
-                PlayerUIManager.Instance.InteractionPrompt(interactive.GetInteractionText());
-                return;
+                if (interactive is IInteractive<object> typedInteractive)
+                {
+                    currentInteractive = typedInteractive;
+                    PlayerUIManager.Instance.InteractionPrompt(interactive.GetInteractionText());
+                    return;
+                }
+                else
+                {
+                    Debug.LogWarning($"Interactive object {interactive.GetType().Name} does not implement IInteractive<object>. Full type: {interactive.GetType().FullName}");
+                }
             }
         }
 
@@ -221,6 +223,21 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                     }
                     CampManager.Instance.WorkManager.CloseSelectionPopup();
                 });
+                break;
+            case WorkTask[] workTasks:
+                CampManager.Instance.WorkManager.ShowWorkTaskOptions(workTasks, (HumanCharacterController)PlayerController.Instance._possessedNPC, (task) => {
+                    if (task != null && PlayerController.Instance._possessedNPC is RobotCharacterController robot)
+                    {
+                        robot.StartWork(task);
+                    }
+                    CampManager.Instance.WorkManager.CloseSelectionPopup();
+                });
+                break;
+            case WorkTask workTask:
+                if (PlayerController.Instance._possessedNPC is RobotCharacterController robot)
+                {
+                    robot.StartWork(workTask);
+                }
                 break;
             default:
                 Debug.Log($"Unhandled interaction result type: {result.GetType().Name}");

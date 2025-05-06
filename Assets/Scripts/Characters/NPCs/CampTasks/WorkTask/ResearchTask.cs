@@ -10,7 +10,6 @@ public class ResearchTask : WorkTask
     protected override void Start()
     {
         base.Start();
-        workType = WorkType.RESEARCH;
     }
 
     public void SetResearch(ResearchScriptableObj research)
@@ -60,5 +59,10 @@ public class ResearchTask : WorkTask
         }
         
         base.CompleteWork();
+    }
+
+    public override string GetAnimationClipName()
+    {
+        return TaskAnimation.RESEARCH.ToString();
     }
 } 

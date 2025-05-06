@@ -6,13 +6,11 @@ using Managers;
 public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject>
 {
     private WorkTask currentTask;
-    private Building parentBuilding;
     private HumanCharacterController characterToAssign;
 
-    public void Setup(WorkTask task, Building building, HumanCharacterController characterToAssign)
+    public void Setup(WorkTask task, HumanCharacterController characterToAssign)
     {
         currentTask = task;
-        parentBuilding = building;
         this.characterToAssign = characterToAssign;
         RefreshUIAndSelectFirst();
     }
@@ -31,118 +29,120 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
     public override IEnumerable<ScriptableObject> GetItems()
     {
         // Return items based on the current task type
-        switch (currentTask.workType)
+        if (currentTask is ResearchTask)
         {
-            case WorkType.RESEARCH:
-                return CampManager.Instance.ResearchManager.GetAllResearch();
-            case WorkType.COOKING:
-                // Return cooking recipes
-                return CampManager.Instance.CookingManager.GetAllRecipes();
-            case WorkType.UPGRADE_RESOURCE:
-                // Return resource upgrade options
-                return CampManager.Instance.ResourceUpgradeManager.GetAllUpgrades();
-            default:
-                return new List<ScriptableObject>();
+            return CampManager.Instance.ResearchManager.GetAllResearch();
         }
+        else if (currentTask is CookingTask)
+        {
+            return CampManager.Instance.CookingManager.GetAllRecipes();
+        }
+        else if (currentTask is ResourceUpgradeTask)
+        {
+            return CampManager.Instance.ResourceUpgradeManager.GetAllUpgrades();
+        }
+        return new List<ScriptableObject>();
     }
 
     public override string GetPreviewDescription(ScriptableObject item)
     {
-        switch (currentTask.workType)
+        if (currentTask is ResearchTask)
         {
-            case WorkType.RESEARCH:
-                var research = item as ResearchScriptableObj;
-                if (research != null)
+            var research = item as ResearchScriptableObj;
+            if (research != null)
+            {
+                string description = research.description + "\n\n";
+                if (research.requiredResources != null && research.requiredResources.Length > 0)
                 {
-                    string description = research.description + "\n\n";
-                    if (research.requiredResources != null && research.requiredResources.Length > 0)
+                    description += "Required Resources:\n";
+                    foreach (var resource in research.requiredResources)
                     {
-                        description += "Required Resources:\n";
-                        foreach (var resource in research.requiredResources)
-                        {
-                            description += $"- {resource.resourceScriptableObj.objectName}\n";
-                        }
+                        description += $"- {resource.resourceScriptableObj.objectName}\n";
                     }
-                    description += $"\nResearch Time: {research.researchTime} seconds";
-                    if (research.unlockedItems != null && research.unlockedItems.Length > 0)
-                    {
-                        description += $"\n\nUnlocks:";
-                        foreach (var unlockedItem in research.unlockedItems)
-                        {
-                            description += $"\n- {unlockedItem.objectName}";
-                        }
-                    }
-                    return description;
                 }
-                break;
-            case WorkType.COOKING:
-                var recipe = item as CookingRecipeScriptableObj;
-                if (recipe != null)
+                description += $"\nResearch Time: {research.researchTime} seconds";
+                if (research.unlockedItems != null && research.unlockedItems.Length > 0)
                 {
-                    string description = recipe.description + "\n\n";
-                    if (recipe.requiredIngredients != null && recipe.requiredIngredients.Length > 0)
+                    description += $"\n\nUnlocks:";
+                    foreach (var unlockedItem in research.unlockedItems)
                     {
-                        description += "Required Ingredients:\n";
-                        foreach (var ingredient in recipe.requiredIngredients)
-                        {
-                            description += $"- {ingredient.resourceScriptableObj.objectName}\n";
-                        }
+                        description += $"\n- {unlockedItem.objectName}";
                     }
-                    description += $"\nCooking Time: {recipe.cookingTime} seconds";
-                    return description;
                 }
-                break;
-            case WorkType.UPGRADE_RESOURCE:
-                var upgrade = item as ResourceUpgradeScriptableObj;
-                if (upgrade != null)
+                return description;
+            }
+        }
+        else if (currentTask is CookingTask)
+        {
+            var recipe = item as CookingRecipeScriptableObj;
+            if (recipe != null)
+            {
+                string description = recipe.description + "\n\n";
+                if (recipe.requiredIngredients != null && recipe.requiredIngredients.Length > 0)
                 {
-                    string description = upgrade.description + "\n\n";
-                    if (upgrade.requiredResources != null && upgrade.requiredResources.Length > 0)
+                    description += "Required Ingredients:\n";
+                    foreach (var ingredient in recipe.requiredIngredients)
                     {
-                        description += "Required Resources:\n";
-                        foreach (var resource in upgrade.requiredResources)
-                        {
-                            description += $"- {resource.resourceScriptableObj.objectName}\n";
-                        }
+                        description += $"- {ingredient.resourceScriptableObj.objectName}\n";
                     }
-                    description += $"\nUpgrade Time: {upgrade.upgradeTime} seconds";
-                    return description;
                 }
-                break;
+                description += $"\nCooking Time: {recipe.cookingTime} seconds";
+                return description;
+            }
+        }
+        else if (currentTask is ResourceUpgradeTask)
+        {
+            var upgrade = item as ResourceUpgradeScriptableObj;
+            if (upgrade != null)
+            {
+                string description = upgrade.description + "\n\n";
+                if (upgrade.requiredResources != null && upgrade.requiredResources.Length > 0)
+                {
+                    description += "Required Resources:\n";
+                    foreach (var resource in upgrade.requiredResources)
+                    {
+                        description += $"- {resource.resourceScriptableObj.objectName}\n";
+                    }
+                }
+                description += $"\nUpgrade Time: {upgrade.upgradeTime} seconds";
+                return description;
+            }
         }
         return string.Empty;
     }
 
     public override string GetPreviewName(ScriptableObject item)
     {
-        switch (currentTask.workType)
+        if (currentTask is ResearchTask)
         {
-            case WorkType.RESEARCH:
-                return (item as ResearchScriptableObj)?.objectName ?? string.Empty;
-            case WorkType.COOKING:
-                return (item as CookingRecipeScriptableObj)?.objectName ?? string.Empty;
-            case WorkType.UPGRADE_RESOURCE:
-                return (item as ResourceUpgradeScriptableObj)?.objectName ?? string.Empty;
-            default:
-                return string.Empty;
+            return (item as ResearchScriptableObj)?.objectName ?? string.Empty;
         }
+        else if (currentTask is CookingTask)
+        {
+            return (item as CookingRecipeScriptableObj)?.objectName ?? string.Empty;
+        }
+        else if (currentTask is ResourceUpgradeTask)
+        {
+            return (item as ResourceUpgradeScriptableObj)?.objectName ?? string.Empty;
+        }
+        return string.Empty;
     }
 
     public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(ScriptableObject item)
     {
         ResourceItemCount[] requiredResources = null;
         
-        switch (currentTask.workType)
+        if (currentTask is ResearchTask)
         {
-            case WorkType.RESEARCH:
-                requiredResources = (item as ResearchScriptableObj)?.requiredResources;
-                break;
-            case WorkType.COOKING:
-                requiredResources = (item as CookingRecipeScriptableObj)?.requiredIngredients;
-                break;
-            case WorkType.UPGRADE_RESOURCE:
-                requiredResources = (item as ResourceUpgradeScriptableObj)?.requiredResources;
-                break;
+            requiredResources = (item as ResearchScriptableObj)?.requiredResources;
+        }
+        else if (currentTask is CookingTask)
+        {
+            requiredResources = (item as CookingRecipeScriptableObj)?.requiredIngredients;
+        }
+        else if (currentTask is ResourceUpgradeTask)
+        {
+            requiredResources = (item as ResourceUpgradeScriptableObj)?.requiredResources;
         }
 
         if (requiredResources != null)
@@ -160,23 +160,25 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
 
     public override Sprite GetPreviewSprite(ScriptableObject item)
     {
-        switch (currentTask.workType)
+        if (currentTask is ResearchTask)
         {
-            case WorkType.RESEARCH:
-                return (item as ResearchScriptableObj)?.sprite;
-            case WorkType.COOKING:
-                return (item as CookingRecipeScriptableObj)?.sprite;
-            case WorkType.UPGRADE_RESOURCE:
-                return (item as ResourceUpgradeScriptableObj)?.sprite;
-            default:
-                return null;
+            return (item as ResearchScriptableObj)?.sprite;
         }
+        else if (currentTask is CookingTask)
+        {
+            return (item as CookingRecipeScriptableObj)?.sprite;
+        }
+        else if (currentTask is ResourceUpgradeTask)
+        {
+            return (item as ResourceUpgradeScriptableObj)?.sprite;
+        }
+        return null;
     }
 
     public override void SetupItemButton(ScriptableObject item, GameObject button)
     {
         var buttonComponent = button.GetComponent<SelectionPreviewButton>();
-        buttonComponent.SetupButton(item, parentBuilding, currentTask.workType, characterToAssign);
+        buttonComponent.SetupButton(item, currentTask, characterToAssign);
     }
 
     public override void UpdatePreviewSpecifics(ScriptableObject item)

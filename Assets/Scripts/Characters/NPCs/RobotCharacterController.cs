@@ -69,7 +69,7 @@ public class RobotCharacterController : HumanCharacterController
         {
             currentWorkTask = workTask;
             isWorking = true;
-            animator.Play(currentWorkTask.workType.ToString(), workLayerIndex);
+            animator.Play(currentWorkTask.GetAnimationClipName(), workLayerIndex);
             // Start the work task once
             currentWorkTask.PerformTask(this);
 
@@ -81,7 +81,6 @@ public class RobotCharacterController : HumanCharacterController
     {
         if (isWorking)
         {
-            Debug.Log($"[RobotCharacterController] Stopping work on task: {currentWorkTask?.workType}");
             currentWorkTask.StopWork -= HandleWorkCompleted;
             isWorking = false;
             currentWorkTask.StopWorkCoroutine();
@@ -91,13 +90,10 @@ public class RobotCharacterController : HumanCharacterController
     }
 
     private void HandleWorkCompleted()
-    {
-        Debug.Log($"[RobotCharacterController] Work task completed: {currentWorkTask?.workType}");
-        
+    {        
         // Check if there are more tasks in the queue
         if (currentWorkTask != null && !currentWorkTask.IsTaskCompleted)
         {
-            Debug.Log("[RobotCharacterController] More tasks in queue, continuing work");
             // Keep the animation playing and let the WorkTask handle the next task
             return;
         }
@@ -105,7 +101,6 @@ public class RobotCharacterController : HumanCharacterController
         // Only stop work if there are truly no more tasks
         if (currentWorkTask.IsTaskCompleted)
         {
-            Debug.Log("[RobotCharacterController] No more tasks, stopping work");
             StopWork();
         }
     }
