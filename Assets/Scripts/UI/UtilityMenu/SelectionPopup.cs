@@ -33,6 +33,7 @@ public class SelectionPopup : PreviewPopupBase<object, string>
     {
         base.Start();
         tooltip.SetActive(false);
+        closeButton.onClick.AddListener(ReturnToGame);
     }
 
     public void Setup(List<SelectionOption> options, GameObject element, Action onClose = null)
@@ -169,10 +170,14 @@ public class SelectionPopup : PreviewPopupBase<object, string>
         EventSystem.current.SetSelectedGameObject(button);
     }
 
+    void ReturnToGame()
+    {
+        PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
+    }
+
     public override void OnCloseClicked()
     {
         base.OnCloseClicked();
-        PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
         onClose?.Invoke();
     }
 } 

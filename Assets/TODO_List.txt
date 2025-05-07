@@ -10,8 +10,9 @@ Have to see what happens when kicking an npc off the work
 
 *******TODOOOOOOOOOO have to refactor this system after because its gotten very messy.
 
-Cool so robot is moving to the centree of the building site, should stay at edge
-Trying to interact with task while doing it, just have to disable interation raycast with certain control types
+Starting queued task again not working
+
+Trying to open pause or utility menus after robot possession doesnt work
 
 _________________________________________________________________________
 
