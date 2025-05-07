@@ -96,6 +96,10 @@ public class RobotCharacterController : HumanCharacterController
             currentWorkTask.StopWorkCoroutine();
             currentWorkTask = null;
             animator.Play("Empty", workLayerIndex);
+
+            if(PlayerInput.Instance.CurrentControlType != PlayerControlType.IN_MENU){
+                PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.ROBOT_MOVEMENT);
+            }
         }
     }
 
