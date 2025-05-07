@@ -69,11 +69,15 @@ public class RobotCharacterController : HumanCharacterController
         }
     }
 
-    public void StartWork(WorkTask workTask)
+    public override void StartWork(WorkTask newTask)
     {
-        if (workTask != null && !isWorking)
+        if(newTask == currentWorkTask){
+            return;
+        }
+        
+        if (newTask != null && !isWorking)
         {
-            currentWorkTask = workTask;
+            currentWorkTask = newTask;
             isWorking = true;
             animator.Play(currentWorkTask.GetAnimationClipName(), workLayerIndex);
             // Start the work task once

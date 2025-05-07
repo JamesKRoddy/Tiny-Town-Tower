@@ -66,8 +66,10 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual method for NPC to perform the work task
     public virtual void PerformTask(HumanCharacterController npc)
     {
+        Debug.Log($"[WorkTask] Performing task {GetType().Name} with NPC {npc.name}");
         if (currentWorker == npc)
         {
+            Debug.Log($"[WorkTask] Starting work coroutine for {GetType().Name}");
             workCoroutine = StartCoroutine(WorkCoroutine());
         }
     }

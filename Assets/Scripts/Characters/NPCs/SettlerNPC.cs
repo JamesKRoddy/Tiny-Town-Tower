@@ -92,8 +92,12 @@ public class SettlerNPC : HumanCharacterController
         }
     }
 
-    internal void AssignWork(WorkTask newTask)
+    public override void StartWork(WorkTask newTask)
     {
+        if((taskStates[TaskType.WORK] as WorkState).assignedTask == newTask){
+            return;
+        }
+
         (taskStates[TaskType.WORK] as WorkState).AssignTask(newTask);
         ChangeTask(TaskType.WORK);
     }

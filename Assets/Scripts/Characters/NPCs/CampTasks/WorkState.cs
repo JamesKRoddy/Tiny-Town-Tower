@@ -6,7 +6,7 @@ using Managers;
 public class WorkState : _TaskState
 {
     #region Task State
-    private WorkTask assignedTask;
+    public WorkTask assignedTask;
     private bool isTaskBeingPerformed = false;
     private bool hasReachedTask = false;
     private float timeAtTaskLocation = 0f;

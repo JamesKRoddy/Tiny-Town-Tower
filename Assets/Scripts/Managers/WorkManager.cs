@@ -144,7 +144,7 @@ namespace Managers
             else if (npcForAssignment is SettlerNPC settler)
             {
                 workTask.AssignNPC(settler);
-                settler.AssignWork(workTask);
+                settler.StartWork(workTask);
             }
             else
             {
@@ -213,6 +213,9 @@ namespace Managers
                     {
                         optionName = "Research",
                         onSelected = () => {
+                            if(!task.IsTaskCompleted){
+                                characterToAssign.StartWork(task);
+                            }                            
                             PlayerUIManager.Instance.selectionPreviewList.Setup(task, characterToAssign);
                             PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
                         },
@@ -227,6 +230,9 @@ namespace Managers
                     {
                         optionName = "Cook",
                         onSelected = () => {
+                            if(!task.IsTaskCompleted){
+                                characterToAssign.StartWork(task);
+                            }
                             PlayerUIManager.Instance.selectionPreviewList.Setup(task, characterToAssign);
                             PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
                         },
@@ -241,6 +247,9 @@ namespace Managers
                     {
                         optionName = "Upgrade Resource",
                         onSelected = () => {
+                            if(!task.IsTaskCompleted){
+                                characterToAssign.StartWork(task);
+                            }
                             PlayerUIManager.Instance.selectionPreviewList.Setup(task, characterToAssign);
                             PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
                         },

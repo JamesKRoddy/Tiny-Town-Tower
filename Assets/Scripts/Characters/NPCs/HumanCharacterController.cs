@@ -458,5 +458,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         EffectManager.Instance.PlayDeathEffect(deathPoint, deathNormal, this);
     }
 
-#endregion
+    public virtual void StartWork(WorkTask newTask)
+    {
+        
+    }
+
+    #endregion
 }

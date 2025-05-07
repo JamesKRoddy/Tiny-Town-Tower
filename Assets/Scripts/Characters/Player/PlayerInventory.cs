@@ -236,6 +236,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             case WorkTask workTask:
                 if (PlayerController.Instance._possessedNPC is RobotCharacterController robot)
                 {
+                    PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.ROBOT_WORKING);
                     robot.StartWork(workTask);
                 }
                 break;
