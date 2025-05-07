@@ -77,7 +77,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         if (PlayerController.Instance._possessedNPC == null)
             return;
 
-        if (PlayerInput.Instance.CurrentControlType != PlayerControlType.IN_CONVERSATION)
+        if (PlayerInput.Instance.CurrentControlType != PlayerControlType.IN_CONVERSATION && PlayerInput.Instance.CurrentControlType != PlayerControlType.ROBOT_WORKING)
             DetectInteraction(); // Detect if the player is looking at a chest
         else
             ClearInteractive();
