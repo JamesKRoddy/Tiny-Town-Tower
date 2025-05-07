@@ -40,7 +40,7 @@ public class RobotCharacterController : HumanCharacterController
         if (currentWorkTask == null) return;
 
         Transform workLocation = currentWorkTask.WorkTaskTransform();
-        if (workLocation != null)
+        if (workLocation != currentWorkTask.transform)
         {
             // Move to work location
             Vector3 targetPosition = workLocation.position;
@@ -60,6 +60,12 @@ public class RobotCharacterController : HumanCharacterController
                 // We're close enough, just handle rotation
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 5f);
             }
+        }
+        else{
+            // We're at the work location, just rotate to face it
+            Vector3 directionToWork = (currentWorkTask.transform.position - transform.position).normalized;
+            Quaternion lookRotation = Quaternion.LookRotation(directionToWork);
+            transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 5f);
         }
     }
 
