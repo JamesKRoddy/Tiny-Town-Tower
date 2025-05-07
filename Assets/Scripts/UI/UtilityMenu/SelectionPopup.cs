@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System;
 using TMPro;
 using System.Collections;
+using Managers;
 
 public class SelectionPopup : PreviewPopupBase<object, string>
 {
@@ -171,6 +172,7 @@ public class SelectionPopup : PreviewPopupBase<object, string>
     public override void OnCloseClicked()
     {
         base.OnCloseClicked();
+        PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
         onClose?.Invoke();
     }
 } 
