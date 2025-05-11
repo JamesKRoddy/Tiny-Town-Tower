@@ -83,7 +83,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     {
         SetAIControl(false);
         transform.parent = PlayerController.Instance.transform;
-        PlayerController.Instance.playerCamera.UpdateTarget(transform);
     }
 
     public void OnUnpossess()

@@ -110,12 +110,14 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 PlayerInput.Instance.OnAPressed += HandleAInput;
                 PlayerInput.Instance.OnSelectPressed += () => OpenUtilityMenu();
                 PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu();
+                playerCamera.UpdateTarget((_possessedNPC as MonoBehaviour)?.transform);
                 break;
 
             case PlayerControlType.ROBOT_MOVEMENT:
                 PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
                 PlayerInput.Instance.OnSelectPressed += () => OpenUtilityMenu();
                 PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu();
+                playerCamera.UpdateTarget((_possessedNPC as MonoBehaviour)?.transform);
                 break;
 
             case PlayerControlType.ROBOT_WORKING:
@@ -129,6 +131,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
                 PlayerInput.Instance.OnSelectPressed += () => OpenUtilityMenu();
                 PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu();
+                playerCamera.UpdateTarget((_possessedNPC as MonoBehaviour)?.transform);
                 break;
 
             case PlayerControlType.CAMP_WORK_ASSIGNMENT:
