@@ -2,12 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-[System.Serializable]
-public class InventoryItem
-{
-    public ResourceScriptableObj resource;
-    public int count;
-}
+
 
 /// <summary>
 /// This is the NPCs characters inventory 
@@ -23,7 +18,7 @@ public class CharacterInventory : MonoBehaviour
 
     [Header("Inventory")]
     [SerializeField]
-    private List<InventoryItem> inventoryList = new List<InventoryItem>();
+    private List<ResourceItemCount> inventoryList = new List<ResourceItemCount>();
 
     // Event for when a weapon is equipped
     public event System.Action<WeaponScriptableObj> OnWeaponEquipped;
@@ -45,20 +40,20 @@ public class CharacterInventory : MonoBehaviour
 
     public void AddItem(ResourceScriptableObj item, int count = 1)
     {
-        var existingItem = inventoryList.Find(i => i.resource == item);
+        var existingItem = inventoryList.Find(i => i.resourceScriptableObj == item);
         if (existingItem != null)
         {
             existingItem.count += count;
         }
         else
         {
-            inventoryList.Add(new InventoryItem { resource = item, count = count });
+            inventoryList.Add(new ResourceItemCount(item, count));
         }
     }
 
     public void RemoveItem(ResourceScriptableObj item, int count = 1)
     {
-        var existingItem = inventoryList.Find(i => i.resource == item);
+        var existingItem = inventoryList.Find(i => i.resourceScriptableObj == item);
         if (existingItem != null)
         {
             existingItem.count -= count;
@@ -71,16 +66,16 @@ public class CharacterInventory : MonoBehaviour
 
     public bool HasItemByName(string itemName)
     {
-        return inventoryList.Any(i => i.resource.objectName == itemName);
+        return inventoryList.Any(i => i.resourceScriptableObj.objectName == itemName);
     }
 
     public int GetItemCount(ResourceScriptableObj item)
     {
-        var existingItem = inventoryList.Find(i => i.resource == item);
+        var existingItem = inventoryList.Find(i => i.resourceScriptableObj == item);
         return existingItem != null ? existingItem.count : 0;
     }
 
-    public List<InventoryItem> GetFullInventory()
+    public List<ResourceItemCount> GetFullInventory()
     {
         return inventoryList;
     }

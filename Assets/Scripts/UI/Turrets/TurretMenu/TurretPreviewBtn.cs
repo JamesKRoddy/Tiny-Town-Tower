@@ -10,7 +10,7 @@ public class TurretPreviewBtn : PreviewButtonBase<TurretScriptableObject>
 
         foreach (var requiredItem in data._resourceCost)
         {
-            int playerCount = PlayerInventory.Instance.GetItemCount(requiredItem.resource);
+            int playerCount = PlayerInventory.Instance.GetItemCount(requiredItem.resourceScriptableObj);
             if (playerCount < requiredItem.count)
             {
                 canPlace = false;
@@ -30,7 +30,7 @@ public class TurretPreviewBtn : PreviewButtonBase<TurretScriptableObject>
 
     public void SetupButton(TurretScriptableObject turretObjRef)
     {
-        base.SetupButton(turretObjRef, turretObjRef._sprite, turretObjRef._name);
+        base.SetupButton(turretObjRef, turretObjRef.sprite, turretObjRef.objectName);
     }
 }
 

@@ -32,17 +32,17 @@ public class TurretMenu : PreviewListMenuBase<TurretCategory, TurretScriptableOb
 
     public override string GetPreviewName(TurretScriptableObject item)
     {
-        return item._name;
+        return item.objectName;
     }
 
     public override Sprite GetPreviewSprite(TurretScriptableObject item)
     {
-        return item._sprite;
+        return item.sprite;
     }
 
     public override string GetPreviewDescription(TurretScriptableObject item)
     {
-        return item._description;
+        return item.description;
     }
 
     public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(TurretScriptableObject item)
@@ -50,9 +50,9 @@ public class TurretMenu : PreviewListMenuBase<TurretCategory, TurretScriptableOb
         foreach (var resourceCost in item._resourceCost)
         {
             yield return (
-                resourceCost.resource.objectName,
+                resourceCost.resourceScriptableObj.objectName,
                 resourceCost.count,
-                PlayerInventory.Instance.GetItemCount(resourceCost.resource)
+                PlayerInventory.Instance.GetItemCount(resourceCost.resourceScriptableObj)
             );
         }
     }

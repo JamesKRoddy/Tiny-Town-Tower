@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Managers;
+
 public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
 {
     [Header("Building Grid")]
@@ -40,16 +41,17 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
         // Deduct the required resources from the player's inventory
         foreach (var requiredItem in selectedObject._resourceCost)
         {
-            PlayerInventory.Instance.RemoveItem(requiredItem.resource, requiredItem.count);
+            PlayerInventory.Instance.RemoveItem(requiredItem.resourceScriptableObj, requiredItem.count);
         }
 
-        GameObject constructionSite = Instantiate(selectedObject.constructionSite, currentPreview.transform.position, Quaternion.identity);
+        GameObject constructionSitePrefab = BuildManager.Instance.GetConstructionSitePrefab(selectedObject.size);
+        GameObject constructionSite = Instantiate(constructionSitePrefab, currentPreview.transform.position, Quaternion.identity);
 
-        if (constructionSite.TryGetComponent(out ConstructionSite constructionSiteScript)){
+        if (constructionSite.TryGetComponent(out ConstructionTask constructionSiteScript)){
             constructionSiteScript.SetupConstruction(selectedObject);
         } else {
-            constructionSite.AddComponent<ConstructionSite>();
-            constructionSite.GetComponent<ConstructionSite>().SetupConstruction(selectedObject);
+            constructionSite.AddComponent<ConstructionTask>();
+            constructionSite.GetComponent<ConstructionTask>().SetupConstruction(selectedObject);
         }
         
         MarkGridSlotsOccupied(currentPreview.transform.position, selectedObject.size, constructionSite);

@@ -1,15 +1,11 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "ResourceScriptableObj", menuName = "Scriptable Objects/Camp/ResourceScriptableObj")]
-public class ResourceScriptableObj : ScriptableObject
+public class ResourceScriptableObj : WorldItemBase
 {
     [Header("Resource Information")]
-    public string objectName; // Name of the resource
-    [TextArea(3, 5)] // Allows for multi-line text in the Inspector
-    public string description; // Description of the resource
     public ResourceCategory category;
     public ResourceRarity rarity;
-    public Sprite sprite; // Sprite for the UI representation
     public GameObject prefab;
 }
 
@@ -25,5 +21,38 @@ public static class DifficultyRarityMapper
             return ResourceRarity.EPIC;
 
         return ResourceRarity.LEGENDARY;
+    }
+}
+
+[System.Serializable]
+public class ResourceItemCount
+{
+    public ResourceScriptableObj resourceScriptableObj;
+    public int count;
+
+    /// <summary>
+    /// Constructor to initialize the ResourcePickup.
+    /// </summary>
+    /// <param name="resourceObj">The ResourceScriptableObj for this pickup.</param>
+    /// <param name="initialCount">The initial count of the resource.</param>
+    public ResourceItemCount(ResourceScriptableObj resourceObj, int initialCount = 1)
+    {
+        resourceScriptableObj = resourceObj;
+        count = initialCount;
+    }
+
+    /// <summary>
+    /// Attempts to retrieve the chest item as a ResourceScriptableObj.
+    /// Logs an error if the cast fails.
+    /// </summary>
+    public ResourceScriptableObj GetResourceObj()
+    {
+        if (!resourceScriptableObj)
+        {
+            Debug.LogError("Resource has no item");
+            return null;
+        }
+
+        return resourceScriptableObj;
     }
 }

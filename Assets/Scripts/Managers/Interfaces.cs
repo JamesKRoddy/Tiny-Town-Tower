@@ -68,8 +68,15 @@ public interface IDamageable
     Unity.AI.Navigation.NavMeshSurface:BuildNavMesh () (at ./Library/PackageCache/com.unity.ai.navigation@9f76b145f0a8/Runtime/NavMeshSurface.cs:272)
     RoomSectionRandomizer/<DelayedBakeNavMesh>d__13:MoveNext () (at Assets/Scripts/RogueLite/RoomLevels/RoomSectionRandomizer.cs:135)
     UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+    Can open and place mutations in the genetic mutation menu, while no npcs are possessed
+    NPCs still sliding around when they are assigned a task
+
+    Construction site 2x2 is not working, causing errors of grid spaces not being found
     
  * Next work:
+
+    ******Combat and Boss******
 
     Setup different hitboxes on the weapons for horizontal and vertical attacks
     
@@ -87,7 +94,25 @@ public interface IDamageable
 
     Can do a runningtowards the player attack, nav agent and animation should work for this.
 
- */
+    ******Camp Management******
+    
+    A camp inventory system to track resources
+    A building health system
+    A research system
+    A cleanliness system for the camp
+
+    Have to setup a menu for task details, they should all use the same preview menu just with different entries. tasks that need this are:
+    ResearchTask, use the research manager to track whats been researched and what can be researched, scriptable obj for research items
+    ResourceUpgradeTask
+    Later:
+    FarmingTask
+    CookingTask
+
+    ******UI******
+
+    See if preview base prefabs (buttons and screens) can be more generic and share the same prefab
+
+*/
 
 // ========================================
 // Next Large Things to Move Onto

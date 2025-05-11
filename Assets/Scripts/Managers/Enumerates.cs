@@ -2,6 +2,9 @@
 // BUILDING ENUMS
 // =========================
 
+/// <summary>
+/// Building type used in roguelike section to determine the type of building and floor to spawn
+/// </summary>
 public enum BuildingType
 {
     NONE
@@ -14,25 +17,12 @@ public enum BuildingCategory
     FOOD,
     ELECTRICITY,
     DECORATION,
-    WEAPONS,
-    CAMP_UPKEEP
+    WEAPONS
 }
 
 // =========================
 // WORK AND TASK ENUMS
 // =========================
-
-public enum WorkType
-{
-    NONE,
-    FARMING,
-    GATHER_WOOD,
-    GATHER_ROCK,
-    WEAVE_FABRIC,
-    MAKE_AMMO,
-    GENERATE_ELECTRICITY,
-    BUILD_STRUCTURE,
-}
 
 public enum TaskType
 {
@@ -43,48 +33,88 @@ public enum TaskType
     TEND_CROPS
 }
 
+[System.Serializable]
+public enum TaskAnimation
+{
+    NONE,
+    RESEARCH,
+    COOKING,
+    UPGRADE_RESOURCE,
+    BUILD_STRUCTURE,
+    REPAIR_BUILDING,
+    CLEAN,
+    FARMING,
+    DESTROY_STRUCTURE,
+    UPGRADE_BUILDING,
+    GATHER
+}
+
+// =========================
+// RESEARCH ENUMS
+// =========================
+
+[System.Serializable]
+public enum ResearchUnlockType //TODO: Use enum for research unlock types for menus
+{
+    NONE,
+    BUILDING,    // Unlocks new building types
+    RESOURCE,    // Unlocks new resources
+    TECHNOLOGY,  // Unlocks new technologies
+    WEAPON,      // Unlocks new weapons
+    TURRET,      // Unlocks new turrets
+    UPGRADE      // Unlocks upgrades for existing items
+}
+
 // =========================
 // PLAYER AND CONTROL ENUMS
 // =========================
 
 public enum PlayerControlType
 {
-    NONE, // Default
-    MAIN_MENU,
+    NONE = 0, // Default
+    MAIN_MENU = 100,
 
     /// <summary>
     /// RogueLike
     /// </summary>
 
-    COMBAT_NPC_MOVEMENT, // In combat during roguelike sections
+    COMBAT_NPC_MOVEMENT = 200, // In combat during roguelike sections
 
     /// <summary>
     /// Camp
     /// </summary>
 
-    CAMP_NPC_MOVEMENT, // Player's movement in the camp
-    CAMP_CAMERA_MOVEMENT, //Default
-    BUILDING_PLACEMENT, // Placing a building from the build menu
+    CAMP_NPC_MOVEMENT = 300, // Player's movement in the camp
+    CAMP_CAMERA_MOVEMENT = 301, //Default
+    CAMP_WORK_ASSIGNMENT = 302, // Assigning work to a settler
+    BUILDING_PLACEMENT = 303, // Placing a building from the build menu
 
     /// <summary>
     /// Menus
     /// </summary>
 
-    IN_CONVERSATION, // Talking to an NPC
-    IN_MENU, // In any menu
+    IN_CONVERSATION = 400, // Talking to an NPC
+    IN_MENU = 401, // In any menu
 
     /// <summary>
     /// Turret
     /// </summary>
 
-    TURRET_CAMERA_MOVEMENT, //Default
-    TURRET_PLACEMENT, // Placing a turret from the turret menu
+    TURRET_CAMERA_MOVEMENT = 500, //Default
+    TURRET_PLACEMENT = 501, // Placing a turret from the turret menu
 
     /// <summary>
     /// Genetic Mutation UI
     /// </summary>
 
-    GENETIC_MUTATION_MOVEMENT //Default
+    GENETIC_MUTATION_MOVEMENT = 600, //Default
+
+    /// <summary>
+    /// Robot
+    /// </summary>
+
+    ROBOT_MOVEMENT = 700, // Player's movement when controlling the robot
+    ROBOT_WORKING = 701, // Robot is performing a work task
 }
 
 // =========================
@@ -93,11 +123,11 @@ public enum PlayerControlType
 
 public enum GameMode
 {
-    NONE,
-    MAIN_MENU,
-    ROGUE_LITE,
-    CAMP,
-    TURRET
+    NONE = 0,
+    MAIN_MENU = 100,
+    ROGUE_LITE = 200,
+    CAMP = 300,
+    TURRET = 500
 }
 
 public enum EnemySetupState
@@ -152,7 +182,7 @@ public enum EnemyTargetType
 // =========================
 
 [System.Serializable]
-public enum ResourceCategory
+public enum ResourceCategory //TODO: Use enum for resource categories for inventory menus
 {
     GENERAL,
     FOOD,
@@ -232,24 +262,29 @@ public enum Allegiance
 
 public enum CharacterType
 {
-    NONE,
-    // Human Types
-    HUMAN_MALE_1,
-    HUMAN_MALE_2,
-    HUMAN_FEMALE_1,
-    HUMAN_FEMALE_2,
-    // Zombie Types
-    ZOMBIE_MELEE,
-    ZOMBIE_SPITTER,
-    ZOMBIE_TANK,
-    // Machine Types
-    MACHINE_DRONE,
-    MACHINE_TURRET_BASE_TARGET,
-    MACHINE_ROBOT,
-    // Special Types
-    BOSS_1,
-    BOSS_2,
-    BOSS_3
+    // Category 0: None/Default
+    NONE = 0,
+
+    // Category 1: Human Types (1xx)
+    HUMAN_MALE_1 = 101,
+    HUMAN_MALE_2 = 102,
+    HUMAN_FEMALE_1 = 103,
+    HUMAN_FEMALE_2 = 104,
+
+    // Category 2: Zombie Types (2xx)
+    ZOMBIE_MELEE = 201,
+    ZOMBIE_SPITTER = 202,
+    ZOMBIE_TANK = 203,
+
+    // Category 3: Machine Types (3xx)
+    MACHINE_DRONE = 301,
+    MACHINE_TURRET_BASE_TARGET = 302,
+    MACHINE_ROBOT = 303,
+
+    // Category 4: Boss Types (4xx)
+    BOSS_1 = 401,
+    BOSS_2 = 402,
+    BOSS_3 = 403
 }
 
 // =========================

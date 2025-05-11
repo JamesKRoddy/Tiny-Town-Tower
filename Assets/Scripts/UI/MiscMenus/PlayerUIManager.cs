@@ -3,6 +3,7 @@ using TMPro;
 using System.Collections;
 using System;
 
+
 public class PlayerUIManager : MonoBehaviour
 {
     // Static instance of the PlayerUIManager class
@@ -30,8 +31,8 @@ public class PlayerUIManager : MonoBehaviour
     }
 
     [Header("UI References")]
-    public MenuBase currentMenu;
-    public MenuBase previousMenu;
+    [SerializeField, ReadOnly] public MenuBase currentMenu;
+    [SerializeField, ReadOnly] public MenuBase previousMenu;
 
     [Header("Pause Menu References")]
     public PauseMenu pauseMenu;
@@ -47,6 +48,8 @@ public class PlayerUIManager : MonoBehaviour
     public TurretMenu turretMenu;
     public TurretUpgradeMenu turretUpgradeMenu;
     public GeneticMutationUI geneticMutationMenu;
+    public SelectionPopup selectionPopup;
+    public SelectionPreviewList selectionPreviewList;
 
     [Header("Overlay Menu References")]
     [SerializeField] TMP_Text errorMessage;
@@ -162,7 +165,6 @@ public class PlayerUIManager : MonoBehaviour
 
     internal void BackPressed()
     {
-        Debug.Log("BackPressed " + currentMenu.name);
         switch (currentMenu)
         {
             case PauseMenu:
@@ -170,6 +172,9 @@ public class PlayerUIManager : MonoBehaviour
                 break;
             case UtilityMenu:
                 utilityMenu.ReturnToGame();
+                break;
+            case SelectionPreviewList:
+                selectionPreviewList.ReturnToGame();
                 break;
             case BuildMenu:
             case GeneticMutationUI:
@@ -185,6 +190,7 @@ public class PlayerUIManager : MonoBehaviour
                 pauseMenu.EnablePauseMenu();
                 break;
             default:
+                Debug.LogWarning("BackPressed no menu found");
                 break;  
         }
     }

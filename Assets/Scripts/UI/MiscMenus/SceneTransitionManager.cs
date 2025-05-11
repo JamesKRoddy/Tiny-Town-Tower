@@ -52,7 +52,6 @@ public class SceneTransitionManager : MonoBehaviour
         else
         {
             _instance = this; // Set the instance
-            DontDestroyOnLoad(gameObject); // Optionally persist across scenes
         }
     }
 

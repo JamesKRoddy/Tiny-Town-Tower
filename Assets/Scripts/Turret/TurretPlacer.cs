@@ -39,7 +39,7 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
         // Deduct the required resources from the player's inventory.
         foreach (var requiredItem in selectedObject._resourceCost)
         {
-            PlayerInventory.Instance.RemoveItem(requiredItem.resource, requiredItem.count);
+            PlayerInventory.Instance.RemoveItem(requiredItem.resourceScriptableObj, requiredItem.count);
         }
 
         GameObject turret = Instantiate(selectedObject.prefab, currentPreview.transform.position, Quaternion.identity);

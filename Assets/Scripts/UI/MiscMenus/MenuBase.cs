@@ -48,11 +48,15 @@ public abstract class MenuBase : MonoBehaviour, IControllerInput
         switch (controlType)
         {
             case PlayerControlType.IN_MENU:
-                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.BackPressed();
+                PlayerInput.Instance.OnBPressed += () => BackPressed();
                 break;
             default:
                 break;
         }
+    }
+
+    protected virtual void BackPressed(){
+        PlayerUIManager.Instance.BackPressed();
     }
 
     public virtual void OnDestroy()

@@ -70,7 +70,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         characterInventory = GetComponent<CharacterInventory>();
     }
 
-    public void PossessedUpdate()
+    public virtual void PossessedUpdate()
     {
         HandleDash();
         MoveCharacter();
@@ -83,7 +83,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     {
         SetAIControl(false);
         transform.parent = PlayerController.Instance.transform;
-        PlayerController.Instance.playerCamera.UpdateTarget(transform);
     }
 
     public void OnUnpossess()
@@ -273,7 +272,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     #region Movement
 
-    private void MoveCharacter()
+    protected void MoveCharacter()
     {
         if (isVaulting)
         {
@@ -423,6 +422,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
 
+#region IDamageable Interface
+
     public void TakeDamage(float amount, Transform damageSource = null)
     {
         float previousHealth = health;
@@ -455,4 +456,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         Vector3 deathNormal = Vector3.up; // Default upward direction for death effects
         EffectManager.Instance.PlayDeathEffect(deathPoint, deathNormal, this);
     }
+
+    public virtual void StartWork(WorkTask newTask)
+    {
+        
+    }
+
+    #endregion
 }

@@ -66,26 +66,26 @@ public class PauseMenu : MenuBase, IControllerInput
         PlayerUIManager.Instance.quitMenu.SetScreenActive(true, 0.1f);
     }
 
-    internal void OpenMenu(PlayerControlType playerControlType)
+    internal void OpenMenu()
     {
         resumeGameBtn.gameObject.SetActive(false);
         settingsBtn.gameObject.SetActive(false);
         returnToCampBtn.gameObject.SetActive(false);
         quitGameBtn.gameObject.SetActive(false);
 
-        switch (playerControlType)
+        switch (GameManager.Instance.CurrentGameMode)
         {
-            case PlayerControlType.COMBAT_NPC_MOVEMENT:
+            case GameMode.ROGUE_LITE:
                 resumeGameBtn.gameObject.SetActive(true);
                 settingsBtn.gameObject.SetActive(true);
                 returnToCampBtn.gameObject.SetActive(true);
                 break;
-            case PlayerControlType.CAMP_NPC_MOVEMENT:
+            case GameMode.CAMP:
                 resumeGameBtn.gameObject.SetActive(true);
                 settingsBtn.gameObject.SetActive(true);
                 quitGameBtn.gameObject.SetActive(true);
                 break;
-            case PlayerControlType.TURRET_CAMERA_MOVEMENT:
+            case GameMode.TURRET:
                 resumeGameBtn.gameObject.SetActive(true);
                 settingsBtn.gameObject.SetActive(true);
                 returnToCampBtn.gameObject.SetActive(true);

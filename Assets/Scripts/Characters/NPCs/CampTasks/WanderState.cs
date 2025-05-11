@@ -1,30 +1,53 @@
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
+using System.Diagnostics;
+using Managers;
 
 public class WanderState : _TaskState
 {
     private bool isWandering = false;
-    private float wanderIntervalMin = 5f;
-    private float wanderIntervalMax = 10f;
+    [SerializeField] private float wanderIntervalMin = 5f;
+    [SerializeField] private float wanderIntervalMax = 10f;
     private Coroutine wanderCoroutine;
+    private float destinationReachedThreshold = 0.5f;
+    private float stuckTime = 0f;
+    private float stuckThreshold = 3f;
+    private Vector3 lastPosition;
+    private float positionCheckInterval = 0.5f;
+    private float lastPositionCheckTime;
+    private bool isWaiting = false;
+    private float waitTime = 0f;
+    private float waitDuration = 2f;
 
-
-    public float wanderRadius = 10f; // Allow wander radius to be modified in the Inspector
+    [SerializeField] private float wanderRadius = 10f;
 
     protected override void Awake()
     {
         base.Awake();
     }
 
-    private void OnDisable() //TODO do this for all states
+    private void OnDisable()
     {
+        if (wanderCoroutine != null)
+        {
+            npc.StopCoroutine(wanderCoroutine);
+            wanderCoroutine = null;
+        }
         OnExitState();
+    }
+
+    private void OnEnable()
+    {
+        if (isWandering)
+        {
+            OnEnterState();
+        }
     }
 
     public override TaskType GetTaskType()
     {
-        return TaskType.WANDER; // Return the task type associated with this state
+        return TaskType.WANDER;
     }
 
     public override void OnEnterState()
@@ -32,10 +55,14 @@ public class WanderState : _TaskState
         if (!isWandering)
         {
             isWandering = true;
-            agent.speed = MaxSpeed(); // Reduce speed for wandering
-            agent.angularSpeed = npc.rotationSpeed / 2f; // Reduce rotation speed for wandering
-            wanderCoroutine = npc.StartCoroutine(WanderCoroutine()); // Start the wandering coroutine
-            WorkManager.Instance.OnTaskAssigned += WorkAvalible;
+            isWaiting = false;
+            agent.speed = MaxSpeed();
+            agent.angularSpeed = npc.rotationSpeed / 2f;
+            agent.stoppingDistance = destinationReachedThreshold;
+            wanderCoroutine = npc.StartCoroutine(WanderCoroutine());
+            CampManager.Instance.WorkManager.OnTaskAvailable += WorkAvalible;
+            lastPosition = npc.transform.position;
+            lastPositionCheckTime = Time.time;
         }
     }
 
@@ -44,61 +71,104 @@ public class WanderState : _TaskState
         if (isWandering)
         {
             isWandering = false;
-            npc.StopCoroutine(wanderCoroutine); // Stop the wandering coroutine
-            agent.speed = npc.moveMaxSpeed; // Reset speed
-            agent.angularSpeed = npc.rotationSpeed; // Reset rotation speed
-
-            if(WorkManager.Instance)
-                WorkManager.Instance.OnTaskAssigned -= WorkAvalible;
+            isWaiting = false;
+            if (wanderCoroutine != null)
+            {
+                npc.StopCoroutine(wanderCoroutine);
+                wanderCoroutine = null;
+            }
+            agent.speed = npc.moveMaxSpeed;
+            agent.angularSpeed = npc.rotationSpeed;
+            CampManager.Instance.WorkManager.OnTaskAvailable -= WorkAvalible;
         }
     }
 
     public override void UpdateState()
     {
-        
+        if (isWandering)
+        {
+            float currentTime = Time.time;
+            if (currentTime - lastPositionCheckTime >= positionCheckInterval)
+            {
+                Vector3 currentPosition = npc.transform.position;
+                float distanceMoved = Vector3.Distance(currentPosition, lastPosition);
+                
+                if (distanceMoved < 0.01f)
+                {
+                    stuckTime += positionCheckInterval;
+                    
+                    if (stuckTime >= stuckThreshold)
+                    {
+                        SetNewWanderPoint();
+                        stuckTime = 0f;
+                    }
+                }
+                else
+                {
+                    stuckTime = 0f;
+                }
+                
+                lastPosition = currentPosition;
+                lastPositionCheckTime = currentTime;
+            }
+
+            // Check if we've reached our destination
+            if (!agent.pathPending && agent.remainingDistance <= destinationReachedThreshold)
+            {
+                if (!isWaiting)
+                {
+                    isWaiting = true;
+                    waitTime = 0f;
+                }
+                else
+                {
+                    waitTime += Time.deltaTime;
+                    if (waitTime >= waitDuration)
+                    {
+                        SetNewWanderPoint();
+                        isWaiting = false;
+                    }
+                }
+            }
+            else
+            {
+                isWaiting = false;
+            }
+        }
     }
 
-    private void WorkAvalible(WorkTask newTask)
+    private void SetNewWanderPoint()
     {
-        npc.AssignWork(newTask);
+        Vector3 randomDirection = Random.insideUnitSphere * wanderRadius;
+        randomDirection.y = 0;
+        Vector3 newPosition = npc.transform.position + randomDirection;
+
+        NavMeshHit hit;
+        if (NavMesh.SamplePosition(newPosition, out hit, wanderRadius, NavMesh.AllAreas))
+        {
+            agent.SetDestination(hit.position);
+        }
     }
 
     private IEnumerator WanderCoroutine()
     {
         while (isWandering)
         {
-            // Pick a new wander point
-            SetNewWanderPoint();
-
-            // Wait for the NPC to reach the point
-            while (!agent.pathPending && agent.remainingDistance > 0.5f)
+            if (!isWaiting)
             {
-                yield return null; // Wait until the NPC reaches the destination
+                SetNewWanderPoint();
             }
-
-            // Once reached, wait for a random duration between wanderIntervalMin and wanderIntervalMax
-            float waitTime = Random.Range(wanderIntervalMin, wanderIntervalMax);
-            yield return new WaitForSeconds(waitTime); // Wait at the destination
-
-            // After waiting, pick a new wander point
+            yield return new WaitForSeconds(Random.Range(wanderIntervalMin, wanderIntervalMax));
         }
     }
 
-    private void SetNewWanderPoint()
+    private void WorkAvalible(WorkTask newTask)
     {
-        // Pick a random point within the wander radius
-        Vector3 randomDirection = Random.insideUnitSphere * wanderRadius;
-        randomDirection += npc.transform.position;
-
-        NavMeshHit hit;
-        if (NavMesh.SamplePosition(randomDirection, out hit, wanderRadius, NavMesh.AllAreas))
-        {
-            agent.SetDestination(hit.position); // Move towards the new point
-        }
+        npc.StartWork(newTask);
     }
 
     public override float MaxSpeed()
     {
-        return npc.moveMaxSpeed * 0.2f; // Reduce speed for wandering
+        return npc.moveMaxSpeed * 0.2f;
     }
 }

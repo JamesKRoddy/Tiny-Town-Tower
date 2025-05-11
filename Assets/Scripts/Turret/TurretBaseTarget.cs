@@ -2,6 +2,10 @@ using System;
 using UnityEngine;
 using Managers;
 using Enemies;
+
+/// <summary>
+/// Class for the point zombies are trying to reach.
+/// </summary>
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(Rigidbody))]
 public class TurretBaseTarget : MonoBehaviour, IDamageable

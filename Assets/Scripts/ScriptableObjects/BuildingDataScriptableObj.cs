@@ -1,6 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Used for buildings in the roguelite section of the game
+/// </summary>
+
 [CreateAssetMenu(fileName = "BuildingDataScriptableObj", menuName = "Scriptable Objects/Roguelite/BuildingDataScriptableObj")]
 public class BuildingDataScriptableObj : ScriptableObject
 {

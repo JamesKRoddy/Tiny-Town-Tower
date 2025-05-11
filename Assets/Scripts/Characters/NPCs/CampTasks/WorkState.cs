@@ -1,10 +1,26 @@
 using UnityEngine;
 using UnityEngine.AI;
+using System.Collections;
+using Managers;
 
 public class WorkState : _TaskState
 {
-    private WorkTask assignedTask;
-    private bool isTaskBeingPerformed;
+    #region Task State
+    public WorkTask assignedTask;
+    private bool isTaskBeingPerformed = false;
+    private bool hasReachedTask = false;
+    private float timeAtTaskLocation = 0f;
+    private int workLayerIndex = -1;
+    #endregion
+
+    #region Movement Parameters
+    private class MovementSettings
+    {
+        public float minDistanceToTask = 0.5f;
+        public float taskStartDelay = 0.5f;
+    }
+    private MovementSettings movementSettings;
+    #endregion
 
     protected override void Awake()
     {
@@ -12,91 +28,179 @@ public class WorkState : _TaskState
     }
 
     public override void OnEnterState()
-    {
-        // Work state logic can be added here
-        Debug.Log("Starting Work task");
-
-        // If a task is assigned, move to the closest reachable position near the task
-        if (assignedTask != null)
+    {        
+        if (assignedTask == null)
         {
-            Transform taskTransform = assignedTask.WorkTaskTransform();
-            if (taskTransform != null)
-            {
-                // Try to find the closest reachable point on the NavMesh to the task location
-                NavMeshHit hit;
-                if (NavMesh.SamplePosition(taskTransform.position, out hit, 1f, NavMesh.AllAreas))
-                {
-                    // Move NPC to the closest reachable position
-                    agent.SetDestination(hit.position);
-                }
-                else
-                {
-                    // If no reachable position is found, stop the agent (or handle this case appropriately)
-                    Debug.LogWarning("No reachable position found near the work task.");
-                }
-            }
+            Debug.LogWarning($"[WorkState] {gameObject.name} entered work state with no assigned task");
+            return;
         }
 
+        InitializeWorkState();
+        SetupNavMeshPath();
+    }
+
+    private void InitializeWorkState()
+    {
+        workLayerIndex = animator.GetLayerIndex("Work Layer");
+        if (workLayerIndex == -1)
+        {
+            Debug.LogError($"[WorkState] Could not find 'Work Layer' in animator for {gameObject.name}");
+        }
+
+        movementSettings = new MovementSettings();
         assignedTask.StopWork += StopWork;
+    }
+
+    private void SetupNavMeshPath()
+    {
+        Vector3 taskPosition = assignedTask.WorkTaskTransform().position;
+        agent.stoppingDistance = movementSettings.minDistanceToTask;
+        agent.SetDestination(taskPosition);
+        agent.speed = MaxSpeed();
+        agent.angularSpeed = npc.rotationSpeed;
+        agent.isStopped = false;
     }
 
     public override void OnExitState()
     {
-        // Exit work state logic
-        Debug.Log("Exiting Work task");
-        animator.SetInteger("WorkType", 0);
-        assignedTask.StopWork -= StopWork;
-        assignedTask = null; // Reset task        
+        if (isTaskBeingPerformed)
+        {
+            animator.Play("Empty", workLayerIndex);
+            isTaskBeingPerformed = false;
+        }
+        
+        ResetAgentState();
+        
+        if (assignedTask != null)
+        {
+            assignedTask.StopWork -= StopWork;
+            assignedTask = null;
+        }
+    }
+
+    private void ResetAgentState()
+    {
+        agent.speed = MaxSpeed();
+        agent.angularSpeed = npc.rotationSpeed;
+        agent.isStopped = false;
+        agent.stoppingDistance = stoppingDistance;
+        agent.updatePosition = true;
+        agent.updateRotation = true;
     }
 
     public override void UpdateState()
     {
-        if (assignedTask != null)
-        {
-            float distanceToTask = Vector3.Distance(agent.transform.position, assignedTask.WorkTaskTransform().position);
+        if (assignedTask == null) return;
 
-            // Only check if the NPC has reached the task location
-            if (distanceToTask <= agent.stoppingDistance)
+        float distanceToTask = Vector3.Distance(transform.position, assignedTask.WorkTaskTransform().position);
+
+        if (!agent.pathPending && agent.remainingDistance <= movementSettings.minDistanceToTask)
+        {
+            HandleReachedTask();
+        }
+        else
+        {
+            HandleMovingToTask();
+        }
+
+        UpdateAnimations();
+    }
+
+    private void HandleReachedTask()
+    {
+        if (!hasReachedTask)
+        {
+            hasReachedTask = true;
+            agent.isStopped = true;
+            agent.velocity = Vector3.zero;
+            timeAtTaskLocation = 0f;
+            
+            if(assignedTask.WorkTaskTransform() != assignedTask.transform)
             {
-                // Perform the task only once if the NPC has arrived at the location
-                if (!isTaskBeingPerformed)
-                {
-                    assignedTask.PerformTask(npc);
-                    animator.SetInteger("WorkType", (int)assignedTask.workType);  // Set animator for the task
-                    isTaskBeingPerformed = true;  // Prevent multiple task starts
-                }
+                agent.updatePosition = false;
+                agent.updateRotation = false;
             }
-            else
+        }
+
+        UpdatePositionAndRotation();
+        StartTaskIfReady();
+    }
+
+    private void UpdatePositionAndRotation()
+    {
+        if(assignedTask.WorkTaskTransform() != assignedTask.transform)
+        {
+            transform.position = Vector3.Lerp(transform.position, assignedTask.WorkTaskTransform().position, 
+                Time.deltaTime * 5f);
+            transform.rotation = Quaternion.Slerp(transform.rotation, assignedTask.WorkTaskTransform().rotation, 
+                Time.deltaTime * 5f);
+        }
+        else
+        {
+            Vector3 directionToTask = (assignedTask.WorkTaskTransform().position - transform.position).normalized;
+            directionToTask.y = 0;
+            if (directionToTask != Vector3.zero)
             {
-                // Reset animator when the NPC leaves the task location
-                if (isTaskBeingPerformed)
-                {
-                    animator.SetInteger("WorkType", 0);  // Reset the WorkType
-                    isTaskBeingPerformed = false;  // Reset task flag
-                }
+                Quaternion targetRotation = Quaternion.LookRotation(directionToTask);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 
+                    npc.rotationSpeed * Time.deltaTime);
             }
         }
     }
 
-    public override float MaxSpeed()
+    private void StartTaskIfReady()
     {
-        return npc.moveMaxSpeed; // Work might have normal speed
+        timeAtTaskLocation += Time.deltaTime;
+        if (timeAtTaskLocation >= movementSettings.taskStartDelay && !isTaskBeingPerformed)
+        {
+            assignedTask.PerformTask(npc);
+            if (workLayerIndex != -1)
+            {
+                animator.Play(assignedTask.GetAnimationClipName(), workLayerIndex);
+            }
+            isTaskBeingPerformed = true;
+        }
+    }
+
+    private void HandleMovingToTask()
+    {
+        if (hasReachedTask)
+        {
+            hasReachedTask = false;
+            agent.isStopped = false;
+            if(assignedTask.WorkTaskTransform() != assignedTask.transform)
+            {
+                agent.updatePosition = true;
+                agent.updateRotation = true;
+            }
+        }
+    }
+
+    private void UpdateAnimations()
+    {
+        float maxSpeed = MaxSpeed();
+        float currentSpeedNormalized = agent.velocity.magnitude / maxSpeed;
+        animator.SetFloat("Speed", currentSpeedNormalized);
     }
 
     public override TaskType GetTaskType()
     {
-        return TaskType.WORK; // TaskType for this state
+        return TaskType.WORK;
     }
 
-    // Assign work manually
-    public void AssignWork(WorkTask task)
+    public void AssignTask(WorkTask task)
     {
-        assignedTask = task; // Assign a task to the NPC
-        npc.ChangeTask(TaskType.WORK);
+        assignedTask = task;
     }
 
     public void StopWork()
     {
+        Debug.Log($"[WorkState] Stopping work for {npc.name}");
+        if (assignedTask != null && (assignedTask.HasQueuedTasks || assignedTask.IsOccupied))
+        {
+            return;
+        }
+
         npc.ChangeTask(TaskType.WANDER);
     }
 }

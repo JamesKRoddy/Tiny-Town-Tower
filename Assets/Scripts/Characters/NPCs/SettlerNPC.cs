@@ -1,14 +1,23 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
+using Characters.NPC;
+using Characters.NPC.Mutations;
+using Managers;
 using UnityEngine;
 using UnityEngine.AI;
 
-[RequireComponent(typeof(UnityEngine.AI.NavMeshAgent))]
+[RequireComponent(typeof(NavMeshAgent))]
 public class SettlerNPC : HumanCharacterController
 {
+    [Header("NPC Data")]
     public SettlerNPCScriptableObj nPCDataObj;
+    [SerializeField, ReadOnly] internal NPCMutationSystem mutationSystem;
     private _TaskState currentState;
+
+    [Header("Stamina")]
+    public float maxStamina = 100f;
+    public float currentStamina = 100f;
+    public float staminaRegenRate = 5f;
+    public float fatigueRate = 2f;
 
     // Dictionary that maps TaskType to TaskState
     Dictionary<TaskType, _TaskState> taskStates = new Dictionary<TaskType, _TaskState>();
@@ -16,6 +25,9 @@ public class SettlerNPC : HumanCharacterController
     protected override void Awake()
     {
         base.Awake();
+
+        // Initialize mutation system
+        mutationSystem = new NPCMutationSystem(this);
 
         // Get all TaskState components attached to the SettlerNPC GameObject
         _TaskState[] states = GetComponents<_TaskState>();
@@ -36,17 +48,29 @@ public class SettlerNPC : HumanCharacterController
         {
             ChangeState(taskStates[TaskType.WANDER]);
         }
+
+        // Apply random mutations after everything is initialized
+        if (mutationSystem != null)
+        {
+            mutationSystem.ApplyRandomMutations();
+        }
     }
 
     private void Update()
     {
-        //base.Update();        
-
         if (currentState != null)
         {
             animator.SetFloat("Speed", agent.velocity.magnitude / 3.5f);
             currentState.UpdateState(); // Call UpdateState on the current state
         }
+
+        // Regenerate stamina
+        currentStamina = Mathf.Min(maxStamina, currentStamina + staminaRegenRate * Time.deltaTime);
+    }
+
+    public void UseStamina(float amount)
+    {
+        currentStamina = Mathf.Max(0, currentStamina - amount);
     }
 
     // Method to change states
@@ -68,9 +92,14 @@ public class SettlerNPC : HumanCharacterController
         }
     }
 
-    internal void AssignWork(WorkTask newTask)
+    public override void StartWork(WorkTask newTask)
     {
-        (taskStates[TaskType.WORK] as WorkState).AssignWork(newTask);
+        if((taskStates[TaskType.WORK] as WorkState).assignedTask == newTask){
+            return;
+        }
+
+        (taskStates[TaskType.WORK] as WorkState).AssignTask(newTask);
+        ChangeTask(TaskType.WORK);
     }
 
     // Method to change task and update state
@@ -96,3 +125,196 @@ public class SettlerNPC : HumanCharacterController
         return animator;
     }
 }
+
+namespace Characters.NPC
+{
+    public class NPCMutationSystem
+    {
+        [Header("Mutation Settings")]
+        private int maxMutations = 3;
+        private float mutationSpawnChance = 1f;
+        private float rareMutationChance = 0.1f;
+        private int minRandomMutations = 1;
+        private int maxRandomMutations = 3;
+
+        [SerializeField, ReadOnly] private List<NPCMutationScriptableObj> equippedMutations = new List<NPCMutationScriptableObj>();
+        private Dictionary<NPCMutationScriptableObj, BaseNPCMutationEffect> activeEffects = new Dictionary<NPCMutationScriptableObj, BaseNPCMutationEffect>();
+        private SettlerNPC settlerNPC;
+
+        public int MaxMutations => maxMutations;
+        public List<NPCMutationScriptableObj> EquippedMutations => equippedMutations;
+
+        public NPCMutationSystem(SettlerNPC settlerNPC)
+        {
+            if (settlerNPC == null)
+            {
+                Debug.LogError("NPCMutationSystem: Cannot initialize with null SettlerNPC reference");
+                return;
+            }
+            
+            this.settlerNPC = settlerNPC;
+        }
+
+        public void ApplyRandomMutations()
+        {
+            if (settlerNPC == null)
+            {
+                Debug.LogError("NPCMutationSystem: Cannot apply random mutations - settlerNPC is null");
+                return;
+            }
+
+            // Determine if this NPC should get mutations
+            if(Random.value > mutationSpawnChance)
+            {
+                Debug.Log($"NPCMutationSystem: {settlerNPC.name} did not receive mutations (chance roll failed)");
+                return;
+            }
+
+            // Get all available mutations from the manager
+            List<NPCMutationScriptableObj> allMutations = NPCManager.Instance.GetAllMutations();
+            if (allMutations.Count == 0)
+            {
+                Debug.LogWarning($"NPCMutationSystem: No mutations available in NPCManager for {settlerNPC.name}");
+                return;
+            }
+
+            // Determine number of mutations
+            int numMutations = Random.Range(minRandomMutations, maxRandomMutations + 1);
+
+            if (allMutations.Count == 0) return;
+
+            for (int i = 0; i < numMutations; i++)
+            {
+                if (allMutations.Count == 0) break;
+
+                // Select a random mutation
+                int index = Random.Range(0, allMutations.Count);
+                NPCMutationScriptableObj mutation = allMutations[index];
+
+                // Check rarity
+                if (mutation.rarity == ResourceRarity.RARE || mutation.rarity == ResourceRarity.LEGENDARY)
+                {
+                    if (Random.value > rareMutationChance)
+                    {
+                        continue;
+                    }
+                }
+
+                // Add mutation to NPC
+                EquipMutation(mutation);
+
+                // Remove from valid mutations to prevent duplicates
+                allMutations.RemoveAt(index);
+            }
+        }
+
+        public void EquipMutation(NPCMutationScriptableObj mutation)
+        {
+            if (mutation == null)
+            {
+                Debug.LogError($"NPCMutationSystem: Cannot equip null mutation to {settlerNPC.name}");
+                return;
+            }
+
+            if (equippedMutations.Count >= maxMutations)
+            {
+                Debug.LogWarning($"NPCMutationSystem: Cannot equip mutation {mutation.name} to {settlerNPC.name} - maximum mutations reached");
+                return;
+            }
+
+            if (equippedMutations.Contains(mutation))
+            {
+                Debug.LogWarning($"NPCMutationSystem: {settlerNPC.name} already has mutation {mutation.name}");
+                return;
+            }
+
+            equippedMutations.Add(mutation);
+            
+            // Instantiate and initialize the mutation effect
+            if (mutation.prefab != null)
+            {
+                GameObject effectObj = Object.Instantiate(mutation.prefab, settlerNPC.transform);
+                BaseNPCMutationEffect effect = effectObj.GetComponent<BaseNPCMutationEffect>();
+                if (effect != null)
+                {
+                    effect.Initialize(mutation, settlerNPC);
+                    effect.OnEquip();
+                    activeEffects[mutation] = effect;
+                }
+                else
+                {
+                    Debug.LogError($"NPCMutationSystem: Mutation prefab {mutation.name} does not have a BaseNPCMutationEffect component");
+                    Object.Destroy(effectObj);
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"NPCMutationSystem: Mutation {mutation.name} has no prefab assigned");
+            }
+        }
+
+        public void RemoveMutation(NPCMutationScriptableObj mutation)
+        {
+            if (mutation == null)
+            {
+                Debug.LogError($"NPCMutationSystem: Cannot remove null mutation from {settlerNPC.name}");
+                return;
+            }
+
+            if (equippedMutations.Remove(mutation))
+            {
+                // Remove and cleanup the mutation effect
+                if (activeEffects.TryGetValue(mutation, out BaseNPCMutationEffect effect))
+                {
+                    effect.OnUnequip();
+                    Object.Destroy(effect.gameObject);
+                    activeEffects.Remove(mutation);
+                }
+                else
+                {
+                    Debug.LogWarning($"NPCMutationSystem: No active effect found for mutation {mutation.name} on {settlerNPC.name}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"NPCMutationSystem: Mutation {mutation.name} not found in equipped mutations for {settlerNPC.name}");
+            }
+        }
+
+        public void SetMaxMutations(int count)
+        {
+            if (count < 0)
+            {
+                Debug.LogError($"NPCMutationSystem: Cannot set max mutations to negative value {count} for {settlerNPC.name}");
+                return;
+            }
+
+            if (count < equippedMutations.Count)
+            {
+                Debug.LogWarning($"NPCMutationSystem: Setting max mutations to {count} for {settlerNPC.name} which has {equippedMutations.Count} equipped mutations");
+            }
+
+            maxMutations = count;
+        }
+
+        // Helper method to check if NPC has a specific mutation
+        public bool HasMutation(NPCMutationScriptableObj mutation)
+        {
+            return equippedMutations.Contains(mutation);
+        }
+
+        // Helper method to get all active effects of a specific type
+        public List<T> GetActiveEffectsOfType<T>() where T : BaseNPCMutationEffect
+        {
+            List<T> effects = new List<T>();
+            foreach (var effect in activeEffects.Values)
+            {
+                if (effect is T typedEffect)
+                {
+                    effects.Add(typedEffect);
+                }
+            }
+            return effects;
+        }
+    }
+} 

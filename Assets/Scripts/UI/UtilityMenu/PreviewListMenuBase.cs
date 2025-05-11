@@ -19,6 +19,7 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
     [SerializeField] protected Image previewImage;
     [SerializeField] protected TMP_Text previewName;
     [SerializeField] protected TMP_Text previewDesc;
+    [SerializeField] protected PreviewPopupBase<TItem, TCategory> selectionPopup;
 
     protected Dictionary<TCategory, GameObject> screens = new Dictionary<TCategory, GameObject>();
     protected TCategory currentCategory;
@@ -45,12 +46,26 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
             }
             else
             {
+                if (selectionPopup != null)
+                {
+                    selectionPopup.OnCloseClicked();
+                }
                 CleanupScreens();
                 CleanupScreenButtons();
             }
             onDone?.Invoke();
         });
     }    
+
+    protected override void BackPressed(){
+        if(selectionPopup != null && selectionPopup.isActive){
+            selectionPopup.OnCloseClicked();
+        }
+        else{
+            PlayerUIManager.Instance.BackPressed();
+        }
+    }
+
     private void SetupScreenButtons()
     {
         if (rightScreenBtn != null)
@@ -223,6 +238,13 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         if (selectedObject != null)
         {
             EventSystem.current.SetSelectedGameObject(selectedObject);
+        }
+    }
+
+    public void DisplayPopup(TItem item, GameObject selectedObject = null){
+        if (selectionPopup != null)
+        {
+            selectionPopup.Setup(item, this, selectedObject);
         }
     }
 
