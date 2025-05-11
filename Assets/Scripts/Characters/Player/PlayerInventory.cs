@@ -77,15 +77,10 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         if (PlayerController.Instance._possessedNPC == null)
             return;
 
-        if (PlayerInput.Instance.CurrentControlType != PlayerControlType.IN_CONVERSATION)
+        if (PlayerInput.Instance.CurrentControlType != PlayerControlType.IN_CONVERSATION && PlayerInput.Instance.CurrentControlType != PlayerControlType.ROBOT_WORKING)
             DetectInteraction(); // Detect if the player is looking at a chest
         else
             ClearInteractive();
-    }
-
-    public void AddToPlayerInventory(ResourceScriptableObj resource, int count = 1)
-    {
-        AddItem(resource, count);
     }
 
     public void AddToPlayerInventory(ResourceItemCount resourcePickup)
@@ -168,9 +163,16 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             IInteractiveBase interactive = hit.collider.GetComponent<IInteractiveBase>();
             if (interactive != null && interactive.CanInteract())
             {
-                currentInteractive = (IInteractive<object>)interactive;
-                PlayerUIManager.Instance.InteractionPrompt(interactive.GetInteractionText());
-                return;
+                if (interactive is IInteractive<object> typedInteractive)
+                {
+                    currentInteractive = typedInteractive;
+                    PlayerUIManager.Instance.InteractionPrompt(interactive.GetInteractionText());
+                    return;
+                }
+                else
+                {
+                    Debug.LogWarning($"Interactive object {interactive.GetType().Name} does not implement IInteractive<object>. Full type: {interactive.GetType().FullName}");
+                }
             }
         }
 
@@ -188,30 +190,59 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         }
     }
 
-    private void HandleInteraction()
+    private void OnBPressed()
     {
         if (currentInteractive != null && currentInteractive.CanInteract())
         {
             object interactReturnObj = currentInteractive.Interact();
+            HandleInteractionResult(interactReturnObj);
+        }
+    }
 
-            switch (interactReturnObj)
-            {
-                case ResourceItemCount resourcePickup:
-                    AddToPlayerInventory(resourcePickup);
-                    break;
-                case NarrativeAsset narrative:
-                    PlayerUIManager.Instance.narrativeSystem.StartConversation(narrative);
-                    break;
-                case RogueLiteDoor rogueLiteDoor:
-                    RogueLiteManager.Instance.EnterRoom(rogueLiteDoor);
-                    break;
-                case null:
-                    Debug.Log($"Cannot interact with {currentInteractive.GetType().Name}");
-                    break;
-                default:
-                    Debug.Log($"Unhandled interaction result type: {interactReturnObj.GetType().Name}");
-                    break;
-            }
+    private void HandleInteractionResult(object result)
+    {
+        if (result == null) return;
+
+        switch (result)
+        {
+            case ResourceItemCount resourcePickup:
+                AddToPlayerInventory(resourcePickup);
+                break;
+            case NarrativeAsset narrative:
+                PlayerUIManager.Instance.narrativeSystem.StartConversation(narrative);
+                break;
+            case RogueLiteDoor rogueLiteDoor:
+                RogueLiteManager.Instance.EnterRoom(rogueLiteDoor);
+                break;
+            case Building building:
+                // Show the work task selection popup
+                CampManager.Instance.WorkManager.ShowWorkTaskOptions(building, (HumanCharacterController)PlayerController.Instance._possessedNPC, (task) => {
+                    if (task != null && PlayerController.Instance._possessedNPC is RobotCharacterController robot)
+                    {
+                        robot.StartWork(task);
+                    }
+                    CampManager.Instance.WorkManager.CloseSelectionPopup();
+                });
+                break;
+            case WorkTask[] workTasks:
+                CampManager.Instance.WorkManager.ShowWorkTaskOptions(workTasks, (HumanCharacterController)PlayerController.Instance._possessedNPC, (task) => {
+                    if (task != null && PlayerController.Instance._possessedNPC is RobotCharacterController robot)
+                    {
+                        robot.StartWork(task);
+                    }
+                    CampManager.Instance.WorkManager.CloseSelectionPopup();
+                });
+                break;
+            case WorkTask workTask:
+                if (PlayerController.Instance._possessedNPC is RobotCharacterController robot)
+                {
+                    PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.ROBOT_WORKING);
+                    robot.StartWork(workTask);
+                }
+                break;
+            default:
+                Debug.Log($"Unhandled interaction result type: {result.GetType().Name}");
+                break;
         }
     }
 
@@ -220,10 +251,13 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         switch (controlType)
         {
             case PlayerControlType.COMBAT_NPC_MOVEMENT:
-                PlayerInput.Instance.OnBPressed += HandleInteraction;
+                PlayerInput.Instance.OnBPressed += OnBPressed;
                 break;
             case PlayerControlType.CAMP_NPC_MOVEMENT:
-                PlayerInput.Instance.OnBPressed += HandleInteraction;
+                PlayerInput.Instance.OnBPressed += OnBPressed;
+                break;
+            case PlayerControlType.ROBOT_MOVEMENT:
+                PlayerInput.Instance.OnBPressed += OnBPressed;
                 break;
             default:
                 break;

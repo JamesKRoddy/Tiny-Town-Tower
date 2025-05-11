@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System;
 using TMPro;
 using System.Collections;
+using Managers;
 
 public class SelectionPopup : PreviewPopupBase<object, string>
 {
@@ -32,6 +33,7 @@ public class SelectionPopup : PreviewPopupBase<object, string>
     {
         base.Start();
         tooltip.SetActive(false);
+        closeButton.onClick.AddListener(ReturnToGame);
     }
 
     public void Setup(List<SelectionOption> options, GameObject element, Action onClose = null)
@@ -166,6 +168,11 @@ public class SelectionPopup : PreviewPopupBase<object, string>
     {
         yield return new WaitForSeconds(0.5f); // Wait for 0.5 seconds before selecting the button
         EventSystem.current.SetSelectedGameObject(button);
+    }
+
+    void ReturnToGame()
+    {
+        PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
     }
 
     public override void OnCloseClicked()

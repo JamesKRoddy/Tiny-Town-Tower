@@ -4,17 +4,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.AI;
 
-public class BuildingDestructionTask : WorkTask
+public class BuildingDestructionTask : WorkTask, IInteractive<object>
 {
     private BuildingScriptableObj buildingScriptableObj;
-    private List<SettlerNPC> workers = new List<SettlerNPC>();
+    private List<HumanCharacterController> workers = new List<HumanCharacterController>();
     private bool isDestructionComplete = false;
     private GameObject destructionGameobj;
 
     protected override void Start()
     {
         base.Start();
-        workType = WorkType.DESTROY_STRUCTURE;
     }
 
     public void SetupDestructionTask(Building building)
@@ -34,7 +33,7 @@ public class BuildingDestructionTask : WorkTask
         obstacle.size = new Vector3(buildingScriptableObj.size.x, 1.0f, buildingScriptableObj.size.y);
     }
 
-    public override void PerformTask(SettlerNPC npc)
+    public override void PerformTask(HumanCharacterController npc)
     {
         // Add worker to the task
         if (!workers.Contains(npc))
@@ -86,6 +85,26 @@ public class BuildingDestructionTask : WorkTask
         {
             workers.Remove(npc);
         }
+    }
+
+    public bool CanInteract()
+    {
+        return true;
+    }
+
+    public string GetInteractionText()
+    {
+        return "Destroy " + buildingScriptableObj.name;
+    }
+
+    public object Interact()
+    {
+        return this;
+    }
+
+    public override string GetAnimationClipName()
+    {
+        return TaskAnimation.DESTROY_STRUCTURE.ToString();
     }
 
     protected override void OnDisable()

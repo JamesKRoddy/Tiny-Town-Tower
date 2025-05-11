@@ -70,7 +70,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         characterInventory = GetComponent<CharacterInventory>();
     }
 
-    public void PossessedUpdate()
+    public virtual void PossessedUpdate()
     {
         HandleDash();
         MoveCharacter();
@@ -83,7 +83,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     {
         SetAIControl(false);
         transform.parent = PlayerController.Instance.transform;
-        PlayerController.Instance.playerCamera.UpdateTarget(transform);
     }
 
     public void OnUnpossess()
@@ -273,7 +272,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     #region Movement
 
-    private void MoveCharacter()
+    protected void MoveCharacter()
     {
         if (isVaulting)
         {
@@ -458,5 +457,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         EffectManager.Instance.PlayDeathEffect(deathPoint, deathNormal, this);
     }
 
-#endregion
+    public virtual void StartWork(WorkTask newTask)
+    {
+        
+    }
+
+    #endregion
 }

@@ -92,7 +92,7 @@ public class UtilityMenu : MenuBase, IControllerInput
 
     #endregion
 
-    internal void OpenMenu(PlayerControlType playerControlType)//TODO change this to use GameMode instead of player controls
+    internal void OpenMenu()
     {
         playerInventoryBtn.gameObject.SetActive(false);
         buildMenuBtn.gameObject.SetActive(false);
@@ -100,23 +100,23 @@ public class UtilityMenu : MenuBase, IControllerInput
         turretBuildBtn.gameObject.SetActive(false);
         geneticMutationBtn.gameObject.SetActive(false);
 
-        switch (playerControlType)
-        {
-            case PlayerControlType.COMBAT_NPC_MOVEMENT:
+        switch(GameManager.Instance.CurrentGameMode){
+            case GameMode.ROGUE_LITE:
                 playerInventoryBtn.gameObject.SetActive(true);
                 geneticMutationBtn.gameObject.SetActive(true);
                 break;
-            case PlayerControlType.CAMP_NPC_MOVEMENT:
+            case GameMode.CAMP:
                 playerInventoryBtn.gameObject.SetActive(true);
                 buildMenuBtn.gameObject.SetActive(true);
                 settlerNPCBtn.gameObject.SetActive(true);
                 geneticMutationBtn.gameObject.SetActive(true);
                 break;
-            case PlayerControlType.TURRET_CAMERA_MOVEMENT:
+            case GameMode.TURRET:
                 playerInventoryBtn.gameObject.SetActive(true);
                 turretBuildBtn.gameObject.SetActive(true);
                 break;
             default:
+                Debug.LogError("UtilityMenu: OpenMenu: Invalid game mode");
                 break;
         }
 

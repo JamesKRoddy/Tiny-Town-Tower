@@ -6,9 +6,8 @@ using Managers;
 
 public abstract class WorkTask : MonoBehaviour
 {
-    [HideInInspector] public WorkType workType;
     [SerializeField] protected Transform workLocationTransform; // Optional specific work location
-    protected SettlerNPC currentWorker; // Reference to the NPC performing this task
+    protected HumanCharacterController currentWorker; // Reference to the NPC performing this task
     [HideInInspector] public ResourceItemCount[] requiredResources; // Resources needed to perform this task
     [SerializeField] protected bool showTooltip = false; // Whether to show tooltips for this task
 
@@ -23,16 +22,33 @@ public abstract class WorkTask : MonoBehaviour
     protected object currentTaskData;
 
     // Property to access the assigned NPC
-    public SettlerNPC AssignedNPC => currentWorker;
+    public HumanCharacterController AssignedNPC => currentWorker;
     public bool IsOccupied => currentWorker != null;
     public bool HasQueuedTasks => taskQueue.Count > 0;
+    public bool IsTaskCompleted => currentTaskData == null && !HasQueuedTasks;
+
+    // Helper method for derived classes to set up tasks
+    protected void SetupTask(object taskData)
+    {
+        if (taskData == null) return;
+        
+        // Queue the task
+        QueueTask(taskData);
+
+        // If no current task, set it up immediately
+        if (currentTaskData == null)
+        {
+            currentTaskData = taskQueue.Dequeue();
+            SetupNextTask();
+        }
+    }
 
     // Virtual method for tooltip text
     public virtual string GetTooltipText()
     {
         if (!showTooltip) return string.Empty;
 
-        string tooltip = $"{workType}\n";
+        string tooltip = $"{GetType().Name}\n";
         tooltip += $"Time: {baseWorkTime} seconds\n";
         
         if (requiredResources != null)
@@ -47,11 +63,13 @@ public abstract class WorkTask : MonoBehaviour
         return tooltip;
     }
 
-    // Abstract method for NPC to perform the work task
-    public virtual void PerformTask(SettlerNPC npc)
+    // Virtual method for NPC to perform the work task
+    public virtual void PerformTask(HumanCharacterController npc)
     {
+        Debug.Log($"[WorkTask] Performing task {GetType().Name} with NPC {npc.name}");
         if (currentWorker == npc)
         {
+            Debug.Log($"[WorkTask] Starting work coroutine for {GetType().Name}");
             workCoroutine = StartCoroutine(WorkCoroutine());
         }
     }
@@ -130,7 +148,7 @@ public abstract class WorkTask : MonoBehaviour
     }
 
     // Method to assign an NPC to this task
-    public void AssignNPC(SettlerNPC npc)
+    public void AssignNPC(HumanCharacterController npc)
     {
         currentWorker = npc;
     }
@@ -150,19 +168,36 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual work coroutine that can be overridden by specific tasks
     protected virtual IEnumerator WorkCoroutine()
     {
+        // Reset work progress at the start of each task
+        workProgress = 0f;
+        
+        float workSpeed = 1f;
+
         while (workProgress < baseWorkTime)
         {
-            workProgress += Time.deltaTime;
+            workProgress += Time.deltaTime * workSpeed;
             yield return null;
         }
 
+        // Ensure we don't exceed the base work time
+        workProgress = baseWorkTime;
         CompleteWork();
+    }
+
+    public void StopWorkCoroutine()
+    {
+        if (workCoroutine != null)
+        {
+            StopCoroutine(workCoroutine);
+            workCoroutine = null;
+        }
     }
 
     // Virtual method for completing work that can be overridden
     protected virtual void CompleteWork()
     {
-        
+        currentTaskData = null;
+
         // Store the current worker as previous worker before clearing
         if (currentWorker != null)
         {
@@ -171,16 +206,14 @@ public abstract class WorkTask : MonoBehaviour
         
         // Reset state
         workProgress = 0f;
-        if (workCoroutine != null)
-        {
-            StopCoroutine(workCoroutine);
-            workCoroutine = null;
-        }
+        
+        StopWorkCoroutine();
         
         // Process next task in queue if available
         if (taskQueue.Count > 0)
         {
             currentTaskData = taskQueue.Dequeue();
+
             SetupNextTask();
             
             // Start the next task immediately if we have a worker
@@ -188,15 +221,10 @@ public abstract class WorkTask : MonoBehaviour
             {
                 workCoroutine = StartCoroutine(WorkCoroutine());
             }
-            else
-            {
-                Debug.LogWarning($"[WorkTask] No worker assigned for next task in {name}");
-            }
         }
         else
         {
-            // Only clear the worker if there are no more tasks
-            currentWorker = null;
+            UnassignNPC();
         }
         
         // Notify completion
@@ -214,6 +242,7 @@ public abstract class WorkTask : MonoBehaviour
     public virtual void QueueTask(object taskData)
     {
         taskQueue.Enqueue(taskData);
+        Debug.Log($"[WorkTask] Queueing task {taskData} for {GetType().Name} [Queue Count: {taskQueue.Count}]");
         
         // If we have a previous worker and no current worker, assign them to the new task
         if (currentWorker == null && taskQueue.Count == 1)
@@ -225,9 +254,17 @@ public abstract class WorkTask : MonoBehaviour
                 // Set the NPC for assignment before assigning the task
                 CampManager.Instance.WorkManager.SetNPCForAssignment(previousWorker);
                 AssignNPC(previousWorker);
-                previousWorker.ChangeTask(TaskType.WORK);
+                if (previousWorker is SettlerNPC settler)
+                {
+                    settler.ChangeTask(TaskType.WORK);
+                }
             }
         }
+    }
+    public virtual string GetAnimationClipName()
+    {
+        Debug.LogWarning($"[WorkTask] GetAnimationClipName not implemented for {GetType().Name}");
+        return "Empty";
     }
 
     // Method to clear the task queue
@@ -238,15 +275,12 @@ public abstract class WorkTask : MonoBehaviour
 
     protected void AddResourceToInventory(ResourceItemCount resourceItemCount)
     {
+        Debug.Log($"[WorkTask] Adding resource to inventory");
         PlayerInventory.Instance.AddItem(resourceItemCount.resourceScriptableObj, resourceItemCount.count);
     }
 
     protected virtual void OnDisable()
     {
-        if (workCoroutine != null)
-        {
-            StopCoroutine(workCoroutine);
-            workCoroutine = null;
-        }
+        StopWorkCoroutine();
     }
 }

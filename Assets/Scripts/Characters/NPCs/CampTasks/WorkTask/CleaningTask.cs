@@ -15,17 +15,7 @@ public class CleaningTask : WorkTask
     protected override void Start()
     {
         base.Start();
-        workType = WorkType.CLEANING;
         baseWorkTime = cleaningTime;
-    }
-
-    public override void PerformTask(SettlerNPC npc)
-    {
-        if (currentWorker == null)
-        {
-            currentWorker = npc;
-            workCoroutine = StartCoroutine(CleaningCoroutine());
-        }
     }
 
     private IEnumerator CleaningCoroutine()
@@ -67,5 +57,10 @@ public class CleaningTask : WorkTask
     {
         // Check if the camp's cleanliness is below maximum
         return CampManager.Instance.CleanlinessManager.GetCleanliness() < CampManager.Instance.CleanlinessManager.GetCleanlinessPercentage();
+    }
+
+    public override string GetAnimationClipName()
+    {
+        return TaskAnimation.CLEAN.ToString();
     }
 } 

@@ -7,16 +7,16 @@ using System;
 
 public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
 {
-    private Building building;
-    private WorkType workType;
+    private WorkTask workTask;
     [SerializeField] private TMP_Text queueCountText;
     private CookingTask cookingTask;
     private ResourceUpgradeTask resourceUpgradeTask;
+    private HumanCharacterController characterToAssign;
 
-public void SetupButton(ScriptableObject item, Building building, WorkType workType)
+    public void SetupButton(ScriptableObject item, WorkTask workTask, HumanCharacterController characterToAssign = null)
     {        
-        this.building = building;
-        this.workType = workType;
+        this.workTask = workTask;
+        this.characterToAssign = characterToAssign;
         string name = string.Empty;
         Sprite sprite = null;
 
@@ -30,43 +30,43 @@ public void SetupButton(ScriptableObject item, Building building, WorkType workT
             resourceUpgradeTask.OnTaskCompleted -= OnTaskCompleted;
         }
 
-        switch (workType)
+        if (workTask is ResearchTask)
         {
-            case WorkType.RESEARCH:
-                var research = item as ResearchScriptableObj;
-                if (research != null)
+            var research = item as ResearchScriptableObj;
+            if (research != null)
+            {
+                name = research.objectName;
+                sprite = research.sprite;
+            }
+            queueCountText.text = "";
+        }
+        else if (workTask is CookingTask)
+        {
+            var recipe = item as CookingRecipeScriptableObj;
+            if (recipe != null)
+            {
+                name = recipe.objectName;
+                sprite = recipe.sprite;
+                cookingTask = workTask as CookingTask;
+                if (cookingTask != null)
                 {
-                    name = research.objectName;
-                    sprite = research.sprite;
+                    cookingTask.OnTaskCompleted += OnTaskCompleted;
                 }
-                queueCountText.text = "";
-                break;
-            case WorkType.COOKING:
-                var recipe = item as CookingRecipeScriptableObj;
-                if (recipe != null)
+            }
+        }
+        else if (workTask is ResourceUpgradeTask)
+        {
+            var upgrade = item as ResourceUpgradeScriptableObj;
+            if (upgrade != null)
+            {
+                name = upgrade.objectName;
+                sprite = upgrade.sprite;
+                resourceUpgradeTask = workTask as ResourceUpgradeTask;
+                if (resourceUpgradeTask != null)
                 {
-                    name = recipe.objectName;
-                    sprite = recipe.sprite;
-                    cookingTask = building.GetComponent<CookingTask>();
-                    if (cookingTask != null)
-                    {
-                        cookingTask.OnTaskCompleted += OnTaskCompleted;
-                    }
+                    resourceUpgradeTask.OnTaskCompleted += OnTaskCompleted;
                 }
-                break;
-            case WorkType.UPGRADE_RESOURCE:
-                var upgrade = item as ResourceUpgradeScriptableObj;
-                if (upgrade != null)
-                {
-                    name = upgrade.objectName;
-                    sprite = upgrade.sprite;
-                    resourceUpgradeTask = building.GetComponent<ResourceUpgradeTask>();
-                    if (resourceUpgradeTask != null)
-                    {
-                        resourceUpgradeTask.OnTaskCompleted += OnTaskCompleted;
-                    }
-                }
-                break;
+            }
         }
 
         base.SetupButton(item, sprite, name);
@@ -75,17 +75,19 @@ public void SetupButton(ScriptableObject item, Building building, WorkType workT
     
     protected override void OnButtonClicked()
     {
-        switch (workType)
+        CampManager.Instance.WorkManager.SetNPCForAssignment(characterToAssign);
+
+        if (workTask is ResearchTask)
         {
-            case WorkType.RESEARCH:
-                HandleResearch();
-                break;
-            case WorkType.COOKING:
-                HandleCooking();
-                break;
-            case WorkType.UPGRADE_RESOURCE:
-                HandleResourceUpgrade();
-                break;
+            HandleResearch();
+        }
+        else if (workTask is CookingTask)
+        {
+            HandleCooking();
+        }
+        else if (workTask is ResourceUpgradeTask)
+        {
+            HandleResourceUpgrade();
         }
     }
 
@@ -98,30 +100,34 @@ public void SetupButton(ScriptableObject item, Building building, WorkType workT
             return;
         }
 
-        if (building == null)
-        {
-            Debug.LogWarning("[SelectionPreviewButton] Attempted to handle research with null building");
-            return;
-        }
-
-        var researchTask = building.GetComponent<ResearchTask>();
+        var researchTask = workTask as ResearchTask;
         if (researchTask == null)
         {
-            Debug.LogWarning($"[SelectionPreviewButton] No ResearchTask found on building {building.name}");
+            Debug.LogWarning($"[SelectionPreviewButton] No ResearchTask found on building");
             return;
         }
 
         // Check if research can be started
         if (!CampManager.Instance.ResearchManager.CanStartResearch(research, out string errorMessage))
         {
+            Debug.Log($"[SelectionPreviewButton] Cannot start research: {errorMessage}");
             PlayerUIManager.Instance.DisplayUIErrorMessage(errorMessage);
             return;
         }
 
+        Debug.Log($"[SelectionPreviewButton] Starting research assignment for {research.objectName}");
         // Only assign work if this is the first research
         if (researchTask.CurrentResearch == null)
         {
-            CampManager.Instance.WorkManager.AssignWorkToBuilding(researchTask);
+            if (characterToAssign != null)
+            {
+                Debug.Log($"[SelectionPreviewButton] Assigning character {characterToAssign.name} to research");
+                CampManager.Instance.WorkManager.AssignWorkToBuilding(researchTask);
+            }
+            else
+            {
+                Debug.LogWarning("[SelectionPreviewButton] No character assigned for research");
+            }
         }
 
         researchTask.SetResearch(research);
@@ -139,23 +145,26 @@ public void SetupButton(ScriptableObject item, Building building, WorkType workT
             return;
         }
 
-        if (building == null)
-        {
-            Debug.LogWarning("[SelectionPreviewButton] Attempted to handle cooking with null building");
-            return;
-        }
-
-        var cookingTask = building.GetComponent<CookingTask>();
+        var cookingTask = workTask as CookingTask;
         if (cookingTask == null)
         {
-            Debug.LogWarning($"[SelectionPreviewButton] No CookingTask found on building {building.name}");
+            Debug.LogWarning($"[SelectionPreviewButton] No CookingTask found on building");
             return;
         }
         
+        Debug.Log($"[SelectionPreviewButton] Starting cooking assignment for {recipe.objectName}");
         // Only assign work if this is the first recipe
         if (cookingTask.currentRecipe == null)
         {
-            CampManager.Instance.WorkManager.AssignWorkToBuilding(cookingTask);
+            if (characterToAssign != null)
+            {
+                Debug.Log($"[SelectionPreviewButton] Assigning character {characterToAssign.name} to cooking");
+                CampManager.Instance.WorkManager.AssignWorkToBuilding(cookingTask);
+            }
+            else
+            {
+                Debug.LogWarning("[SelectionPreviewButton] No character assigned for cooking");
+            }
         }
 
         cookingTask.SetRecipe(recipe);
@@ -174,23 +183,24 @@ public void SetupButton(ScriptableObject item, Building building, WorkType workT
             return;
         }
 
-        if (building == null)
-        {
-            Debug.LogWarning("[SelectionPreviewButton] Attempted to handle resource upgrade with null building");
-            return;
-        }
-
-        var upgradeTask = building.GetComponent<ResourceUpgradeTask>();
+        var upgradeTask = workTask as ResourceUpgradeTask;
         if (upgradeTask == null)
         {
-            Debug.LogWarning($"[SelectionPreviewButton] No ResourceUpgradeTask found on building {building.name}");
+            Debug.LogWarning($"[SelectionPreviewButton] No ResourceUpgradeTask found on building");
             return;
         }
         
         // Only assign work if this is the first upgrade
         if (upgradeTask.currentUpgrade == null)
         {
-            CampManager.Instance.WorkManager.AssignWorkToBuilding(upgradeTask);
+            if (characterToAssign != null)
+            {
+                CampManager.Instance.WorkManager.AssignWorkToBuilding(upgradeTask);
+            }
+            else
+            {
+                Debug.LogWarning("[SelectionPreviewButton] No character assigned for resource upgrade");
+            }
         }
 
         upgradeTask.SetUpgrade(upgrade);
@@ -208,89 +218,67 @@ public void SetupButton(ScriptableObject item, Building building, WorkType workT
             return;
         }
 
-        if (building == null)
+        if (workTask is CookingTask cookingTask)
         {
-            Debug.LogWarning("[SelectionPreviewButton] building is null");
-            return;
-        }
-
-        switch (workType)
-        {
-            case WorkType.COOKING:
-                var cookingTask = building.GetComponent<CookingTask>();
-                if (cookingTask == null)
+            // Count how many of this specific recipe are in the queue
+            int cookingCount = 0;
+            var currentRecipe = data as CookingRecipeScriptableObj;
+            
+            if (currentRecipe != null)
+            {
+                // Count current recipe if it matches
+                if (cookingTask.currentRecipe == currentRecipe)
                 {
-                    Debug.LogWarning($"[SelectionPreviewButton] No CookingTask found on building {building.name}");
-                    return;
+                    cookingCount++;
                 }
-
-                // Count how many of this specific recipe are in the queue
-                int cookingCount = 0;
-                var currentRecipe = data as CookingRecipeScriptableObj;
                 
-                if (currentRecipe != null)
+                // Count matching recipes in queue
+                foreach (var queuedRecipe in cookingTask.taskQueue)
                 {
-                    // Count current recipe if it matches
-                    if (cookingTask.currentRecipe == currentRecipe)
+                    if (queuedRecipe is CookingRecipeScriptableObj recipe && recipe == currentRecipe)
                     {
                         cookingCount++;
                     }
-                    
-                    // Count matching recipes in queue
-                    foreach (var queuedRecipe in cookingTask.taskQueue)
-                    {
-                        if (queuedRecipe is CookingRecipeScriptableObj recipe && recipe == currentRecipe)
-                        {
-                            cookingCount++;
-                        }
-                    }
                 }
-                else
+            }
+            else
+            {
+                Debug.LogWarning("[SelectionPreviewButton] No current recipe found");
+            }
+            
+            queueCountText.text = cookingCount > 0 ? cookingCount.ToString() : "";
+            queueCountText.gameObject.SetActive(cookingCount > 0);
+        }
+        else if (workTask is ResourceUpgradeTask upgradeTask)
+        {
+            // Count how many of this specific upgrade are in the queue
+            int upgradeCount = 0;
+            var currentUpgrade = data as ResourceUpgradeScriptableObj;
+            
+            if (currentUpgrade != null)
+            {
+                // Count current upgrade if it matches
+                if (upgradeTask.currentUpgrade == currentUpgrade)
                 {
-                    Debug.LogWarning("[SelectionPreviewButton] No current recipe found");
+                    upgradeCount++;
                 }
                 
-                queueCountText.text = cookingCount > 0 ? cookingCount.ToString() : "";
-                queueCountText.gameObject.SetActive(cookingCount > 0);
-                break;
-
-            case WorkType.UPGRADE_RESOURCE:
-                var upgradeTask = building.GetComponent<ResourceUpgradeTask>();
-                if (upgradeTask == null)
+                // Count matching upgrades in queue
+                foreach (var queuedUpgrade in upgradeTask.taskQueue)
                 {
-                    Debug.LogWarning($"[SelectionPreviewButton] No ResourceUpgradeTask found on building {building.name}");
-                    return;
-                }
-
-                // Count how many of this specific upgrade are in the queue
-                int upgradeCount = 0;
-                var currentUpgrade = data as ResourceUpgradeScriptableObj;
-                
-                if (currentUpgrade != null)
-                {
-                    // Count current upgrade if it matches
-                    if (upgradeTask.currentUpgrade == currentUpgrade)
+                    if (queuedUpgrade is ResourceUpgradeScriptableObj upgrade && upgrade == currentUpgrade)
                     {
                         upgradeCount++;
                     }
-                    
-                    // Count matching upgrades in queue
-                    foreach (var queuedUpgrade in upgradeTask.taskQueue)
-                    {
-                        if (queuedUpgrade is ResourceUpgradeScriptableObj upgrade && upgrade == currentUpgrade)
-                        {
-                            upgradeCount++;
-                        }
-                    }
                 }
-                else
-                {
-                    Debug.LogWarning("[SelectionPreviewButton] No current upgrade found");
-                }
-                
-                queueCountText.text = upgradeCount > 0 ? upgradeCount.ToString() : "";
-                queueCountText.gameObject.SetActive(upgradeCount > 0);
-                break;
+            }
+            else
+            {
+                Debug.LogWarning("[SelectionPreviewButton] No current upgrade found");
+            }
+            
+            queueCountText.text = upgradeCount > 0 ? upgradeCount.ToString() : "";
+            queueCountText.gameObject.SetActive(upgradeCount > 0);
         }
     }
 

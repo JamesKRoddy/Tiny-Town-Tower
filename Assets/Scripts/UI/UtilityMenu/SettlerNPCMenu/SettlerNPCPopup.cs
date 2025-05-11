@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 using System.Collections.Generic;
 using Managers;
 
-public class SettlerNPCPopup : PreviewPopupBase<SettlerNPC, string>
+public class SettlerNPCPopup : PreviewPopupBase<HumanCharacterController, string>
 {
     [Header("Work Assignment UI")]
     [SerializeField] private Button possessButton;
@@ -23,7 +23,7 @@ public class SettlerNPCPopup : PreviewPopupBase<SettlerNPC, string>
             removeWorkButton.onClick.AddListener(OnRemoveWorkClicked);
     }
 
-    public override void Setup(SettlerNPC npc, PreviewListMenuBase<string, SettlerNPC> menu, GameObject element)
+    public override void Setup(HumanCharacterController npc, PreviewListMenuBase<string, HumanCharacterController> menu, GameObject element)
     {
         base.Setup(npc, menu, element);
     }
@@ -42,19 +42,20 @@ public class SettlerNPCPopup : PreviewPopupBase<SettlerNPC, string>
         {
             PlayerController.Instance.PossessNPC(currentItem);
             PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false, 0.05f);
-            PlayerUIManager.Instance.utilityMenu.ReturnToGame(PlayerControlType.CAMP_NPC_MOVEMENT);
+            PlayerUIManager.Instance.utilityMenu.ReturnToGame();
         }
         OnCloseClicked();
     }
 
     private void OnAssignWorkClicked()
     {
-        if (currentItem != null)
+        if (currentItem != null && currentItem is SettlerNPC)
         {
+            PlayerController.Instance.PossessNPC(null);
             PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false, 0.05f);
             PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_WORK_ASSIGNMENT);
             // Store the NPC we're assigning work to
-            WorkManager.Instance.SetNPCForAssignment(currentItem);
+            CampManager.Instance.WorkManager.SetNPCForAssignment(currentItem as SettlerNPC);
         }
         OnCloseClicked();
     }
@@ -64,7 +65,7 @@ public class SettlerNPCPopup : PreviewPopupBase<SettlerNPC, string>
         if (currentItem != null)
         {
             // TODO: Remove current work assignment
-            Debug.Log($"Removing work from {currentItem.nPCDataObj.nPCName}");
+            Debug.Log($"Removing work from {(currentItem as SettlerNPC).nPCDataObj.nPCName}");
         }
         OnCloseClicked();
     }

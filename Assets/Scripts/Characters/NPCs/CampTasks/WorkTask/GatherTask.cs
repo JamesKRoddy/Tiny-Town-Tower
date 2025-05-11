@@ -10,8 +10,12 @@ public class GatherTask : WorkTask
     protected override void Start()
     {
         base.Start();
-        workType = WorkType.GATHER;
         baseWorkTime = gatherTime;
+    }
+
+    public override string GetAnimationClipName()
+    {
+        return TaskAnimation.GATHER.ToString();
     }
 
     protected override void CompleteWork()

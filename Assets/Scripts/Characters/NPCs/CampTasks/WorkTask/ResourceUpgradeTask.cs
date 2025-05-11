@@ -9,22 +9,11 @@ public class ResourceUpgradeTask : WorkTask
     protected override void Start()
     {
         base.Start();
-        workType = WorkType.UPGRADE_RESOURCE;
     }
 
     public void SetUpgrade(ResourceUpgradeScriptableObj upgrade)
     {
-        if (upgrade == null) return;
-        
-        // Queue the upgrade
-        QueueTask(upgrade);
-
-        // If no current upgrade, set it up immediately
-        if (currentUpgrade == null)
-        {
-            currentTaskData = taskQueue.Dequeue();
-            SetupNextTask();
-        }
+        SetupTask(upgrade);
     }
 
     protected override void SetupNextTask()
@@ -39,13 +28,6 @@ public class ResourceUpgradeTask : WorkTask
 
     protected override IEnumerator WorkCoroutine()
     {
-        // Check if we have the required input resources
-        if (!HasRequiredResources())
-        {
-            Debug.LogWarning("Not enough resources for upgrade");
-            yield break;
-        }
-
         // Consume input resources
         ConsumeResources();
 
@@ -74,5 +56,10 @@ public class ResourceUpgradeTask : WorkTask
         currentUpgrade = null;
         
         base.CompleteWork();
+    }
+
+    public override string GetAnimationClipName()
+    {
+        return TaskAnimation.UPGRADE_RESOURCE.ToString();
     }
 } 

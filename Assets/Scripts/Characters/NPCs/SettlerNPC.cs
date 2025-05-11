@@ -92,8 +92,12 @@ public class SettlerNPC : HumanCharacterController
         }
     }
 
-    internal void AssignWork(WorkTask newTask)
+    public override void StartWork(WorkTask newTask)
     {
+        if((taskStates[TaskType.WORK] as WorkState).assignedTask == newTask){
+            return;
+        }
+
         (taskStates[TaskType.WORK] as WorkState).AssignTask(newTask);
         ChangeTask(TaskType.WORK);
     }
@@ -149,7 +153,6 @@ namespace Characters.NPC
             }
             
             this.settlerNPC = settlerNPC;
-            Debug.Log($"NPCMutationSystem: Initialized for NPC {settlerNPC.name}");
         }
 
         public void ApplyRandomMutations()
@@ -177,7 +180,6 @@ namespace Characters.NPC
 
             // Determine number of mutations
             int numMutations = Random.Range(minRandomMutations, maxRandomMutations + 1);
-            Debug.Log($"NPCMutationSystem: Attempting to apply {numMutations} mutations to {settlerNPC.name}");
 
             if (allMutations.Count == 0) return;
 
@@ -194,14 +196,12 @@ namespace Characters.NPC
                 {
                     if (Random.value > rareMutationChance)
                     {
-                        Debug.Log($"NPCMutationSystem: {settlerNPC.name} failed to get rare mutation {mutation.name}");
                         continue;
                     }
                 }
 
                 // Add mutation to NPC
                 EquipMutation(mutation);
-                Debug.Log($"NPCMutationSystem: Applied mutation {mutation.name} to {settlerNPC.name}");
 
                 // Remove from valid mutations to prevent duplicates
                 allMutations.RemoveAt(index);
@@ -240,7 +240,6 @@ namespace Characters.NPC
                     effect.Initialize(mutation, settlerNPC);
                     effect.OnEquip();
                     activeEffects[mutation] = effect;
-                    Debug.Log($"NPCMutationSystem: Successfully instantiated and initialized mutation effect {mutation.name} for {settlerNPC.name}");
                 }
                 else
                 {
@@ -270,7 +269,6 @@ namespace Characters.NPC
                     effect.OnUnequip();
                     Object.Destroy(effect.gameObject);
                     activeEffects.Remove(mutation);
-                    Debug.Log($"NPCMutationSystem: Successfully removed mutation {mutation.name} from {settlerNPC.name}");
                 }
                 else
                 {
@@ -297,7 +295,6 @@ namespace Characters.NPC
             }
 
             maxMutations = count;
-            Debug.Log($"NPCMutationSystem: Set max mutations to {count} for {settlerNPC.name}");
         }
 
         // Helper method to check if NPC has a specific mutation

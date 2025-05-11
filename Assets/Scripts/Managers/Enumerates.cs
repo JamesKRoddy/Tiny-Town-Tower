@@ -24,23 +24,6 @@ public enum BuildingCategory
 // WORK AND TASK ENUMS
 // =========================
 
-public enum WorkType //TODO remove? maybe just use class for work types
-{
-    NONE,
-    FARMING,
-    GATHER,
-    MAKE_AMMO,
-    GENERATE_ELECTRICITY,
-    BUILD_STRUCTURE,
-    RESEARCH,
-    CLEANING,
-    COOKING,
-    UPGRADE_BUILDING,
-    REPAIR_BUILDING,
-    UPGRADE_RESOURCE,
-    DESTROY_STRUCTURE
-}
-
 public enum TaskType
 {
     NONE,
@@ -48,6 +31,22 @@ public enum TaskType
     WANDER,
     ATTACK,
     TEND_CROPS
+}
+
+[System.Serializable]
+public enum TaskAnimation
+{
+    NONE,
+    RESEARCH,
+    COOKING,
+    UPGRADE_RESOURCE,
+    BUILD_STRUCTURE,
+    REPAIR_BUILDING,
+    CLEAN,
+    FARMING,
+    DESTROY_STRUCTURE,
+    UPGRADE_BUILDING,
+    GATHER
 }
 
 // =========================
@@ -108,7 +107,14 @@ public enum PlayerControlType
     /// Genetic Mutation UI
     /// </summary>
 
-    GENETIC_MUTATION_MOVEMENT = 600 //Default
+    GENETIC_MUTATION_MOVEMENT = 600, //Default
+
+    /// <summary>
+    /// Robot
+    /// </summary>
+
+    ROBOT_MOVEMENT = 700, // Player's movement when controlling the robot
+    ROBOT_WORKING = 701, // Robot is performing a work task
 }
 
 // =========================

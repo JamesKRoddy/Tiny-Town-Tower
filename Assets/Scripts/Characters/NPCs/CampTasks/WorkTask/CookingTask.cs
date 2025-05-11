@@ -10,22 +10,11 @@ public class CookingTask : WorkTask
     protected override void Start()
     {
         base.Start();
-        workType = WorkType.COOKING;
     }
 
     public void SetRecipe(CookingRecipeScriptableObj recipe)
     {
-        if (recipe == null) return;
-        
-        // Queue the recipe
-        QueueTask(recipe);
-
-        // If no current recipe, set it up immediately
-        if (currentRecipe == null)
-        {
-            currentTaskData = taskQueue.Dequeue();
-            SetupNextTask();
-        }
+        SetupTask(recipe);
     }
 
     protected override void SetupNextTask()
@@ -53,5 +42,10 @@ public class CookingTask : WorkTask
         currentRecipe = null;
         
         base.CompleteWork();
+    }
+
+    public override string GetAnimationClipName()
+    {
+        return TaskAnimation.COOKING.ToString();
     }
 } 

@@ -2,13 +2,36 @@ More complex task animations and animation effects handle by animation state mac
 
 TODO Large things:
 
-Damaging buildings: ties into turret system
-Repairing buildings: wait until damage is finished
+
+
+*********Player playing as the robot!
+
+Have to see what happens when kicking an npc off the work
+
+_________________________________________________________________________
 
 Electricity system, genereating and using electricity
 
 
+
+
+Damaging buildings: ties into turret system
+Repairing buildings: wait until damage is finished
+
+
+
+
+Hunger system
+
+
+
+
+
 Narrative diologue and recruiting NPCs
+
+
+
+
 
 
 Displaying npc mutations (chariteristics)

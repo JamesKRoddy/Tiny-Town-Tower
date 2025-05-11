@@ -164,7 +164,7 @@ public class WanderState : _TaskState
 
     private void WorkAvalible(WorkTask newTask)
     {
-        npc.AssignWork(newTask);
+        npc.StartWork(newTask);
     }
 
     public override float MaxSpeed()
