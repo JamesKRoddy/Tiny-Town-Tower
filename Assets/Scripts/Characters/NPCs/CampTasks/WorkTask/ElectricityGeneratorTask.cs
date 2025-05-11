@@ -1,6 +1,6 @@
 using UnityEngine;
 using Managers;
-
+using System.Collections;
 public class ElectricityGeneratorTask : WorkTask
 {
     [Header("Electricity Generation")]
