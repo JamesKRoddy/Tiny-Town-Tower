@@ -51,6 +51,11 @@ namespace Managers
         [SerializeField] private float currentCleanliness = 100f;
         [SerializeField] private float dirtinessRate = 0.1f;
 
+        // Electricity Management
+        [SerializeField] private float maxElectricity = 1000f;
+        [SerializeField] private float currentElectricity = 0f;
+        [SerializeField] private float electricityConsumptionRate = 1f; // Per second consumption rate
+
         private void Awake()
         {
             if (_instance != null && _instance != this)
@@ -88,6 +93,9 @@ namespace Managers
         {
             // Gradually decrease cleanliness over time
             currentCleanliness = Mathf.Max(0, currentCleanliness - dirtinessRate * Time.deltaTime);
+
+            // Gradually decrease electricity over time
+            currentElectricity = Mathf.Max(0, currentElectricity - electricityConsumptionRate * Time.deltaTime);
         }
 
         // Inventory Methods
@@ -190,6 +198,42 @@ namespace Managers
         public float GetCleanlinessPercentage()
         {
             return (currentCleanliness / maxCleanliness) * 100f;
+        }
+
+        // Electricity Methods
+        public void AddElectricity(float amount)
+        {
+            currentElectricity = Mathf.Min(maxElectricity, currentElectricity + amount);
+        }
+
+        public bool ConsumeElectricity(float amount)
+        {
+            if (currentElectricity >= amount)
+            {
+                currentElectricity -= amount;
+                return true;
+            }
+            return false;
+        }
+
+        public float GetElectricityPercentage()
+        {
+            return (currentElectricity / maxElectricity) * 100f;
+        }
+
+        public float GetCurrentElectricity()
+        {
+            return currentElectricity;
+        }
+
+        public float GetMaxElectricity()
+        {
+            return maxElectricity;
+        }
+
+        public bool HasEnoughElectricity(float requiredAmount)
+        {
+            return currentElectricity >= requiredAmount;
         }
     } 
 }

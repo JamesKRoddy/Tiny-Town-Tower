@@ -11,6 +11,10 @@ public abstract class WorkTask : MonoBehaviour
     [HideInInspector] public ResourceItemCount[] requiredResources; // Resources needed to perform this task
     [SerializeField] protected bool showTooltip = false; // Whether to show tooltips for this task
 
+    // Electricity requirements
+    [SerializeField] protected float electricityRequired = 0f;
+    [SerializeField] protected bool isOperational = true;
+
     // Work progress tracking
     protected float workProgress = 0f;
     protected float baseWorkTime = 5f;
@@ -50,6 +54,13 @@ public abstract class WorkTask : MonoBehaviour
 
         string tooltip = $"{GetType().Name}\n";
         tooltip += $"Time: {baseWorkTime} seconds\n";
+        tooltip += $"Status: {(isOperational ? "Operational" : "Not Operational")}\n";
+        
+        if (electricityRequired > 0)
+        {
+            tooltip += $"Electricity Required: {electricityRequired}\n";
+            tooltip += $"Current Power: {CampManager.Instance.GetElectricityPercentage():F1}%\n";
+        }
         
         if (requiredResources != null)
         {
@@ -83,7 +94,19 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual method to check if the task can be performed
     public virtual bool CanPerformTask()
     {
-        return true; // Default implementation assumes task can always be performed
+        if (!isOperational)
+        {
+            return false;
+        }
+
+        // Check if we have enough electricity
+        if (electricityRequired > 0 && !CampManager.Instance.HasEnoughElectricity(electricityRequired))
+        {
+            SetOperationalStatus(false);
+            return false;
+        }
+
+        return true;
     }
 
     // Method to check if the player has required resources
@@ -282,5 +305,57 @@ public abstract class WorkTask : MonoBehaviour
     protected virtual void OnDisable()
     {
         StopWorkCoroutine();
+    }
+
+    public void SetOperationalStatus(bool operational)
+    {
+        if (isOperational != operational)
+        {
+            isOperational = operational;
+            
+            if (!isOperational)
+            {
+                // Stop current work if any
+                StopWorkCoroutine();
+                
+                // Unassign current worker if any
+                if (currentWorker != null)
+                {
+                    if (currentWorker is SettlerNPC settler)
+                    {
+                        settler.ChangeTask(TaskType.WANDER);
+                    }
+                    else if (currentWorker is RobotCharacterController robot)
+                    {
+                        robot.StopWork();
+                    }
+                    UnassignNPC();
+                }
+            }
+            else
+            {
+                // If we become operational again and have a previous worker, try to reassign them
+                var previousWorker = CampManager.Instance.WorkManager.GetPreviousWorkerForTask(this);
+                if (previousWorker != null)
+                {
+                    CampManager.Instance.WorkManager.SetNPCForAssignment(previousWorker);
+                    AssignNPC(previousWorker);
+                    if (previousWorker is SettlerNPC settler)
+                    {
+                        settler.ChangeTask(TaskType.WORK);
+                    }
+                }
+            }
+        }
+    }
+
+    public bool IsOperational()
+    {
+        return isOperational;
+    }
+
+    public float GetElectricityRequired()
+    {
+        return electricityRequired;
     }
 }
