@@ -12,12 +12,6 @@ public class GatherTask : WorkTask
         base.Start();
         baseWorkTime = gatherTime;
     }
-
-    public override string GetAnimationClipName()
-    {
-        return TaskAnimation.GATHER.ToString();
-    }
-
     protected override void CompleteWork()
     {   
         // Add gathered resources to player inventory

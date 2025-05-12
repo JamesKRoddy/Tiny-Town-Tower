@@ -59,9 +59,4 @@ public class FarmingTask : WorkTask
 
         base.CompleteWork();
     }
-
-    public override string GetAnimationClipName()
-    {
-        return TaskAnimation.FARMING.ToString();
-    }
 } 

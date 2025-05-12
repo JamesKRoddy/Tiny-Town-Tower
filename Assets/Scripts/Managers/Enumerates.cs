@@ -37,16 +37,11 @@ public enum TaskType
 public enum TaskAnimation
 {
     NONE,
-    RESEARCH,
-    COOKING,
-    UPGRADE_RESOURCE,
-    BUILD_STRUCTURE,
-    REPAIR_BUILDING,
-    CLEAN,
-    FARMING,
-    DESTROY_STRUCTURE,
-    UPGRADE_BUILDING,
-    GATHER
+    COOKING_POT_STIR,
+    RESEARCH_COUNTER,
+    HAMMER_STANDING,
+    HAMMER_COUNTER,
+    GENERATE_ELECTRICITY_HAND
 }
 
 // =========================

@@ -14,6 +14,7 @@ public class BuildingDestructionTask : WorkTask, IInteractive<object>
     protected override void Start()
     {
         base.Start();
+        taskAnimation = TaskAnimation.HAMMER_STANDING;
     }
 
     public void SetupDestructionTask(Building building)
@@ -100,11 +101,6 @@ public class BuildingDestructionTask : WorkTask, IInteractive<object>
     public object Interact()
     {
         return this;
-    }
-
-    public override string GetAnimationClipName()
-    {
-        return TaskAnimation.DESTROY_STRUCTURE.ToString();
     }
 
     protected override void OnDisable()

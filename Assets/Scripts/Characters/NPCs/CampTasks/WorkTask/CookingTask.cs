@@ -5,7 +5,7 @@ using System;
 
 public class CookingTask : WorkTask
 {
-    public CookingRecipeScriptableObj currentRecipe;
+    [ReadOnly] public CookingRecipeScriptableObj currentRecipe;
 
     protected override void Start()
     {
@@ -42,10 +42,5 @@ public class CookingTask : WorkTask
         currentRecipe = null;
         
         base.CompleteWork();
-    }
-
-    public override string GetAnimationClipName()
-    {
-        return TaskAnimation.COOKING.ToString();
     }
 } 

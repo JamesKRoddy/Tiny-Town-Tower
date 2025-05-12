@@ -6,14 +6,18 @@ using Managers;
 
 public abstract class WorkTask : MonoBehaviour
 {
+    [Header("Task Settings")]
     [SerializeField] protected Transform workLocationTransform; // Optional specific work location
     protected HumanCharacterController currentWorker; // Reference to the NPC performing this task
     [HideInInspector] public ResourceItemCount[] requiredResources; // Resources needed to perform this task
     [SerializeField] protected bool showTooltip = false; // Whether to show tooltips for this task
 
-    // Electricity requirements
+    [Header("Electricity Requirements")]
     [SerializeField] protected float electricityRequired = 0f;
-    [SerializeField] protected bool isOperational = true; // Whether the task is operational, different from the buildings operational status
+    protected bool isOperational = true; // Whether the task is operational, different from the buildings operational status
+
+    [Header("Task Animation")]
+    public TaskAnimation taskAnimation;
 
     // Work progress tracking
     protected float workProgress = 0f;
@@ -306,10 +310,9 @@ public abstract class WorkTask : MonoBehaviour
             }
         }
     }
-    public virtual string GetAnimationClipName()
+    public string GetAnimationClipName()
     {
-        Debug.LogWarning($"[WorkTask] GetAnimationClipName not implemented for {GetType().Name}");
-        return "Empty";
+        return taskAnimation.ToString();
     }
 
     // Method to clear the task queue

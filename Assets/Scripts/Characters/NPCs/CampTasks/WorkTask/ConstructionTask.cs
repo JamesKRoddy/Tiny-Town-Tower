@@ -18,7 +18,7 @@ public class ConstructionTask : WorkTask, IInteractive<object>
     {
         base.Start();
         AddWorkTask();
-
+        taskAnimation = TaskAnimation.HAMMER_STANDING;
         NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
         if (obstacle == null)
         {
@@ -47,7 +47,7 @@ public class ConstructionTask : WorkTask, IInteractive<object>
     {
         while (workProgress < baseWorkTime && workers.Count > 0)
         {
-            float effectiveTime = baseWorkTime / Mathf.Sqrt(workers.Count);
+            float effectiveTime = baseWorkTime / workers.Count;
             workProgress += Time.deltaTime / effectiveTime;
 
             if (workProgress >= baseWorkTime)
@@ -103,11 +103,6 @@ public class ConstructionTask : WorkTask, IInteractive<object>
     public string GetInteractionText()
     {
         return "Build " + buildingScriptableObj.name;
-    }
-
-    public override string GetAnimationClipName()
-    {
-        return TaskAnimation.BUILD_STRUCTURE.ToString();
     }
 
     public object Interact()

@@ -57,9 +57,4 @@ public class ResourceUpgradeTask : WorkTask
         
         base.CompleteWork();
     }
-
-    public override string GetAnimationClipName()
-    {
-        return TaskAnimation.UPGRADE_RESOURCE.ToString();
-    }
 } 

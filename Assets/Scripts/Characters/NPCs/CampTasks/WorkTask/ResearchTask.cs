@@ -60,9 +60,4 @@ public class ResearchTask : WorkTask
         
         base.CompleteWork();
     }
-
-    public override string GetAnimationClipName()
-    {
-        return TaskAnimation.RESEARCH.ToString();
-    }
 } 

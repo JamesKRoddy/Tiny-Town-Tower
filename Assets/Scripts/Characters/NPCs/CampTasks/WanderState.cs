@@ -79,7 +79,10 @@ public class WanderState : _TaskState
             }
             agent.speed = npc.moveMaxSpeed;
             agent.angularSpeed = npc.rotationSpeed;
-            CampManager.Instance.WorkManager.OnTaskAvailable -= WorkAvalible;
+            if (CampManager.Instance != null)
+            {
+                CampManager.Instance.WorkManager.OnTaskAvailable -= WorkAvalible;
+            }
         }
     }
 

@@ -1,6 +1,7 @@
 using UnityEngine;
 using Managers;
 using System.Collections;
+
 public class ElectricityGeneratorTask : WorkTask
 {
     [Header("Electricity Generation")]
@@ -11,7 +12,7 @@ public class ElectricityGeneratorTask : WorkTask
     protected override void Start()
     {
         base.Start();
-        baseWorkTime = generationInterval;
+        baseWorkTime = float.MaxValue; // Set to max value so it never completes automatically
     }
 
     protected override IEnumerator WorkCoroutine()
@@ -19,7 +20,7 @@ public class ElectricityGeneratorTask : WorkTask
         workProgress = 0f;
         generationTimer = 0f;
 
-        while (workProgress < baseWorkTime)
+        while (true) // Continue indefinitely until stopped
         {
             workProgress += Time.deltaTime;
             generationTimer += Time.deltaTime;
@@ -33,13 +34,6 @@ public class ElectricityGeneratorTask : WorkTask
 
             yield return null;
         }
-
-        CompleteWork();
-    }
-
-    public override string GetAnimationClipName()
-    {
-        return "Work"; // Replace with your actual animation clip name
     }
 
     public override string GetTooltipText()
