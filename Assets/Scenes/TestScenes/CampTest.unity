@@ -214,6 +214,10 @@ PrefabInstance:
       propertyPath: 'allMutations.Array.data[0]'
       value: 
       objectReference: {fileID: 11400000, guid: 1b625b9d8abe06345a1c73f38c0ff940, type: 2}
+    - target: {fileID: 2800147835243380111, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: currentElectricity
+      value: 1000
+      objectReference: {fileID: 0}
     - target: {fileID: 4686915863895893509, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

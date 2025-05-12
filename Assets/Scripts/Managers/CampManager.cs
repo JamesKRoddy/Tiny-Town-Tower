@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Collections;
 
 namespace Managers
 {
@@ -54,7 +55,12 @@ namespace Managers
         // Electricity Management
         [SerializeField] private float maxElectricity = 1000f;
         [SerializeField] private float currentElectricity = 0f;
-        [SerializeField] private float electricityConsumptionRate = 1f; // Per second consumption rate
+        private float totalBuildingConsumption = 0f;
+        private Dictionary<WorkTask, float> buildingConsumption = new Dictionary<WorkTask, float>();
+
+        // Events
+        public event System.Action<float> OnElectricityChanged;
+        public event System.Action<float> OnCleanlinessChanged;
 
         private void Awake()
         {
@@ -66,6 +72,7 @@ namespace Managers
             {
                 _instance = this;
                 InitializeManagers();
+                StartResourceCoroutines();
             }
         }
 
@@ -89,105 +96,62 @@ namespace Managers
             if (resourceUpgradeManager != null) resourceUpgradeManager.Initialize();
         }
 
-        private void Update()
+        private void StartResourceCoroutines()
         {
-            // Gradually decrease cleanliness over time
-            currentCleanliness = Mathf.Max(0, currentCleanliness - dirtinessRate * Time.deltaTime);
-
-            // Gradually decrease electricity over time
-            currentElectricity = Mathf.Max(0, currentElectricity - electricityConsumptionRate * Time.deltaTime);
+            StartCoroutine(CleanlinessCoroutine());
+            StartCoroutine(ElectricityConsumptionCoroutine());
         }
 
-        // Inventory Methods
-        public void AddResource(ResourceScriptableObj resource, int amount = 1)
+        private System.Collections.IEnumerator CleanlinessCoroutine()
         {
-            if (resources.ContainsKey(resource))
-            {
-                resources[resource] += amount;
-            }
-            else
-            {
-                resources.Add(resource, amount);
-            }
-        }
+            WaitForSeconds wait = new WaitForSeconds(0.1f); // Check every 0.1 seconds
 
-        public bool RemoveResource(ResourceScriptableObj resource, int amount = 1)
-        {
-            if (resources.ContainsKey(resource) && resources[resource] >= amount)
+            while (true)
             {
-                resources[resource] -= amount;
-                if (resources[resource] <= 0)
+                float previousCleanliness = currentCleanliness;
+                currentCleanliness = Mathf.Max(0, currentCleanliness - dirtinessRate * 0.1f);
+                
+                if (previousCleanliness != currentCleanliness)
                 {
-                    resources.Remove(resource);
+                    OnCleanlinessChanged?.Invoke(GetCleanlinessPercentage());
                 }
-                return true;
+
+                yield return wait;
             }
-            return false;
         }
 
-        public int GetResourceCount(ResourceScriptableObj resource)
+        private System.Collections.IEnumerator ElectricityConsumptionCoroutine()
         {
-            return resources.ContainsKey(resource) ? resources[resource] : 0;
-        }
+            WaitForSeconds wait = new WaitForSeconds(0.1f); // Check every 0.1 seconds
 
-        public bool HasResources(ResourceScriptableObj[] requiredResources, int[] amounts)
-        {
-            if (requiredResources.Length != amounts.Length)
+            while (true)
             {
-                Debug.LogError("Resource arrays length mismatch");
-                return false;
-            }
-
-            for (int i = 0; i < requiredResources.Length; i++)
-            {
-                if (GetResourceCount(requiredResources[i]) < amounts[i])
+                if (totalBuildingConsumption > 0)
                 {
-                    return false;
+                    float previousElectricity = currentElectricity;
+                    currentElectricity = Mathf.Max(0, currentElectricity - totalBuildingConsumption * 0.1f);
+                    
+                    if (previousElectricity != currentElectricity)
+                    {
+                        OnElectricityChanged?.Invoke(GetElectricityPercentage());
+                    }
                 }
+
+                yield return wait;
             }
-            return true;
-        }
-
-        public bool ConsumeResources(ResourceScriptableObj[] requiredResources, int[] amounts)
-        {
-            if (!HasResources(requiredResources, amounts))
-            {
-                return false;
-            }
-
-            for (int i = 0; i < requiredResources.Length; i++)
-            {
-                RemoveResource(requiredResources[i], amounts[i]);
-            }
-            return true;
-        }
-
-        // Research Methods
-        public void AddResearchPoints(int points)
-        {
-            researchPoints += points;
-            Debug.Log($"Total research points: {researchPoints}");
-        }
-
-        public bool SpendResearchPoints(int points)
-        {
-            if (researchPoints >= points)
-            {
-                researchPoints -= points;
-                return true;
-            }
-            return false;
-        }
-
-        public int GetResearchPoints()
-        {
-            return researchPoints;
         }
 
         // Cleanliness Methods
         public void IncreaseCleanliness(float amount)
         {
+            float previousCleanliness = currentCleanliness;
             currentCleanliness = Mathf.Min(maxCleanliness, currentCleanliness + amount);
+            
+            // Only trigger event if cleanliness actually changed
+            if (previousCleanliness != currentCleanliness)
+            {
+                OnCleanlinessChanged?.Invoke(GetCleanlinessPercentage());
+            }
         }
 
         public float GetCleanliness()
@@ -201,16 +165,49 @@ namespace Managers
         }
 
         // Electricity Methods
+        public void RegisterBuildingConsumption(WorkTask building, float consumption)
+        {
+            if (building == null) return;
+
+            if (buildingConsumption.ContainsKey(building))
+            {
+                totalBuildingConsumption -= buildingConsumption[building];
+            }
+
+            buildingConsumption[building] = consumption;
+            totalBuildingConsumption += consumption;
+        }
+
+        public void UnregisterBuildingConsumption(WorkTask building)
+        {
+            if (building == null || !buildingConsumption.ContainsKey(building)) return;
+
+            totalBuildingConsumption -= buildingConsumption[building];
+            buildingConsumption.Remove(building);
+        }
+
         public void AddElectricity(float amount)
         {
+            float previousElectricity = currentElectricity;
             currentElectricity = Mathf.Min(maxElectricity, currentElectricity + amount);
+            
+            if (previousElectricity != currentElectricity)
+            {
+                OnElectricityChanged?.Invoke(GetElectricityPercentage());
+            }
         }
 
         public bool ConsumeElectricity(float amount)
         {
             if (currentElectricity >= amount)
             {
+                float previousElectricity = currentElectricity;
                 currentElectricity -= amount;
+                
+                if (previousElectricity != currentElectricity)
+                {
+                    OnElectricityChanged?.Invoke(GetElectricityPercentage());
+                }
                 return true;
             }
             return false;
@@ -234,6 +231,11 @@ namespace Managers
         public bool HasEnoughElectricity(float requiredAmount)
         {
             return currentElectricity >= requiredAmount;
+        }
+
+        public float GetTotalBuildingConsumption()
+        {
+            return totalBuildingConsumption;
         }
     } 
 }

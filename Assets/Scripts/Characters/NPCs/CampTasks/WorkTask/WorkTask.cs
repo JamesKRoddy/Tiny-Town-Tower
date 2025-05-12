@@ -99,8 +99,8 @@ public abstract class WorkTask : MonoBehaviour
             return false;
         }
 
-        // Check if we have enough electricity
-        if (electricityRequired > 0 && !CampManager.Instance.HasEnoughElectricity(electricityRequired))
+        // Check if there is any electricity available
+        if (electricityRequired > 0 && CampManager.Instance.GetCurrentElectricity() <= 0)
         {
             SetOperationalStatus(false);
             return false;
@@ -156,7 +156,11 @@ public abstract class WorkTask : MonoBehaviour
 
     protected virtual void Start()
     {
-        
+    }
+
+    protected virtual void OnDestroy()
+    {
+
     }
 
     protected void AddWorkTask()
@@ -191,6 +195,12 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual work coroutine that can be overridden by specific tasks
     protected virtual IEnumerator WorkCoroutine()
     {
+        // Register electricity consumption when starting work
+        if (electricityRequired > 0)
+        {
+            CampManager.Instance.RegisterBuildingConsumption(this, electricityRequired);
+        }
+
         // Reset work progress at the start of each task
         workProgress = 0f;
         
@@ -211,6 +221,12 @@ public abstract class WorkTask : MonoBehaviour
     {
         if (workCoroutine != null)
         {
+            // Unregister electricity consumption when work is stopped
+            if (electricityRequired > 0)
+            {
+                CampManager.Instance.UnregisterBuildingConsumption(this);
+            }
+
             StopCoroutine(workCoroutine);
             workCoroutine = null;
         }
@@ -219,6 +235,12 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual method for completing work that can be overridden
     protected virtual void CompleteWork()
     {
+        // Unregister electricity consumption when work is complete
+        if (electricityRequired > 0)
+        {
+            CampManager.Instance.UnregisterBuildingConsumption(this);
+        }
+
         currentTaskData = null;
 
         // Store the current worker as previous worker before clearing

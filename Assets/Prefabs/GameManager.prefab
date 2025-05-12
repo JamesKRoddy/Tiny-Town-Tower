@@ -707,6 +707,9 @@ MonoBehaviour:
   maxCleanliness: 100
   currentCleanliness: 100
   dirtinessRate: 0.1
+  maxElectricity: 1000
+  currentElectricity: 1000
+  electricityConsumptionRate: 1
 --- !u!1 &5367248056921035292
 GameObject:
   m_ObjectHideFlags: 0
