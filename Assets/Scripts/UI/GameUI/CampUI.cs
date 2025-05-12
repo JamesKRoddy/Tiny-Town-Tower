@@ -23,7 +23,7 @@ public class CampUI : MonoBehaviour
 
     void Start()
     {
-        UpdateElectricityUI(CampManager.Instance.GetElectricityPercentage());
+        UpdateElectricityUI(CampManager.Instance.ElectricityManager.GetElectricityPercentage());
         UpdateCleanlinessUI(CampManager.Instance.GetCleanlinessPercentage());
     }
 
@@ -33,14 +33,14 @@ public class CampUI : MonoBehaviour
         GameManager.Instance.OnGameModeChanged += OnGameModeChanged;
         
         // Subscribe to camp events
-        CampManager.Instance.OnElectricityChanged += UpdateElectricityUI;
+        CampManager.Instance.ElectricityManager.OnElectricityChanged += UpdateElectricityUI;
         CampManager.Instance.OnCleanlinessChanged += UpdateCleanlinessUI;
 
         // Initialize UI values
         if (electricitySlider != null)
         {
             electricitySlider.maxValue = 100f;
-            electricitySlider.value = CampManager.Instance.GetElectricityPercentage();
+            electricitySlider.value = CampManager.Instance.ElectricityManager.GetElectricityPercentage();
         }
 
         if (cleanlinessSlider != null)
@@ -108,7 +108,7 @@ public class CampUI : MonoBehaviour
         // Unsubscribe from camp events
         if (CampManager.Instance != null)
         {
-            CampManager.Instance.OnElectricityChanged -= UpdateElectricityUI;
+            CampManager.Instance.ElectricityManager.OnElectricityChanged -= UpdateElectricityUI;
             CampManager.Instance.OnCleanlinessChanged -= UpdateCleanlinessUI;
         }
     }

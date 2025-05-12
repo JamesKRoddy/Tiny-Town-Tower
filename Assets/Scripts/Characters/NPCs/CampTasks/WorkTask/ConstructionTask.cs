@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using UnityEngine.AI;
+using Managers;
 
 /// <summary>
 /// Used by construction sites to build buildings.
@@ -40,6 +41,12 @@ public class ConstructionTask : WorkTask, IInteractive<object>
         if (!isConstructionComplete && workCoroutine == null)
         {
             workCoroutine = StartCoroutine(WorkCoroutine());
+
+            // Register electricity consumption when the task starts
+            if (electricityRequired > 0)
+            {
+                CampManager.Instance.ElectricityManager.RegisterBuildingConsumption(this, electricityRequired);
+            }
         }
     }
 

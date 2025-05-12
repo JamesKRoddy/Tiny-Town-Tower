@@ -138,7 +138,7 @@ MonoBehaviour:
   workLocationTransform: {fileID: 8294776679550274538}
   requiredResources: []
   showTooltip: 0
-  electricityRequired: 0
+  electricityRequired: 5
   taskAnimation: 2
   currentResearch: {fileID: 0}
 --- !u!1001 &409922906333630591

@@ -26,10 +26,11 @@ namespace Managers
         // References to other managers
         private ResearchManager researchManager;
         private CleanlinessManager cleanlinessManager;
-        [SerializeField] private WorkManager workManager;
-        [SerializeField] private BuildManager buildManager;
+        private WorkManager workManager;
+        private BuildManager buildManager;
         private CookingManager cookingManager;
         private ResourceUpgradeManager resourceUpgradeManager;
+        private ElectricityManager electricityManager;
 
         // Public access to other managers
         public ResearchManager ResearchManager => researchManager;
@@ -39,7 +40,7 @@ namespace Managers
         public BuildManager BuildManager => buildManager;
         public CookingManager CookingManager => cookingManager;
         public ResourceUpgradeManager ResourceUpgradeManager => resourceUpgradeManager;
-
+        public ElectricityManager ElectricityManager => electricityManager;
 
         // Inventory Management
         private Dictionary<ResourceScriptableObj, int> resources = new Dictionary<ResourceScriptableObj, int>();
@@ -52,14 +53,7 @@ namespace Managers
         [SerializeField] private float currentCleanliness = 100f;
         [SerializeField] private float dirtinessRate = 0.1f;
 
-        // Electricity Management
-        [SerializeField] private float maxElectricity = 1000f;
-        [SerializeField] private float currentElectricity = 0f;
-        private float totalBuildingConsumption = 0f;
-        private Dictionary<WorkTask, float> buildingConsumption = new Dictionary<WorkTask, float>();
-
         // Events
-        public event System.Action<float> OnElectricityChanged;
         public event System.Action<float> OnCleanlinessChanged;
 
         private void Awake()
@@ -83,23 +77,27 @@ namespace Managers
             if (cleanlinessManager == null) cleanlinessManager = gameObject.GetComponentInChildren<CleanlinessManager>();
             if (cookingManager == null) cookingManager = gameObject.GetComponentInChildren<CookingManager>();
             if (resourceUpgradeManager == null) resourceUpgradeManager = gameObject.GetComponentInChildren<ResourceUpgradeManager>();
-
+            if (workManager == null) workManager = gameObject.GetComponentInChildren<WorkManager>();
+            if (buildManager == null) buildManager = gameObject.GetComponentInChildren<BuildManager>();
+            if (electricityManager == null) electricityManager = gameObject.GetComponentInChildren<ElectricityManager>();
             // Log warnings for any missing managers
             if (researchManager == null) Debug.LogWarning("ResearchManager not found in scene!");
             if (cleanlinessManager == null) Debug.LogWarning("CleanlinessManager not found in scene!");
             if (cookingManager == null) Debug.LogWarning("CookingManager not found in scene!");
             if (resourceUpgradeManager == null) Debug.LogWarning("ResourceUpgradeManager not found in scene!");
-
+            if (workManager == null) Debug.LogWarning("WorkManager not found in scene!");
+            if (buildManager == null) Debug.LogWarning("BuildManager not found in scene!");
+            if (electricityManager == null) Debug.LogWarning("ElectricityManager not found in scene!");
             // Initialize managers
             if (researchManager != null) researchManager.Initialize();
             if (cookingManager != null) cookingManager.Initialize();
             if (resourceUpgradeManager != null) resourceUpgradeManager.Initialize();
+            if (electricityManager != null) electricityManager.Initialize();
         }
 
         private void StartResourceCoroutines()
         {
             StartCoroutine(CleanlinessCoroutine());
-            StartCoroutine(ElectricityConsumptionCoroutine());
         }
 
         private System.Collections.IEnumerator CleanlinessCoroutine()
@@ -114,27 +112,6 @@ namespace Managers
                 if (previousCleanliness != currentCleanliness)
                 {
                     OnCleanlinessChanged?.Invoke(GetCleanlinessPercentage());
-                }
-
-                yield return wait;
-            }
-        }
-
-        private System.Collections.IEnumerator ElectricityConsumptionCoroutine()
-        {
-            WaitForSeconds wait = new WaitForSeconds(0.1f); // Check every 0.1 seconds
-
-            while (true)
-            {
-                if (totalBuildingConsumption > 0)
-                {
-                    float previousElectricity = currentElectricity;
-                    currentElectricity = Mathf.Max(0, currentElectricity - totalBuildingConsumption * 0.1f);
-                    
-                    if (previousElectricity != currentElectricity)
-                    {
-                        OnElectricityChanged?.Invoke(GetElectricityPercentage());
-                    }
                 }
 
                 yield return wait;
@@ -162,80 +139,6 @@ namespace Managers
         public float GetCleanlinessPercentage()
         {
             return (currentCleanliness / maxCleanliness) * 100f;
-        }
-
-        // Electricity Methods
-        public void RegisterBuildingConsumption(WorkTask building, float consumption)
-        {
-            if (building == null) return;
-
-            if (buildingConsumption.ContainsKey(building))
-            {
-                totalBuildingConsumption -= buildingConsumption[building];
-            }
-
-            buildingConsumption[building] = consumption;
-            totalBuildingConsumption += consumption;
-        }
-
-        public void UnregisterBuildingConsumption(WorkTask building)
-        {
-            if (building == null || !buildingConsumption.ContainsKey(building)) return;
-
-            totalBuildingConsumption -= buildingConsumption[building];
-            buildingConsumption.Remove(building);
-        }
-
-        public void AddElectricity(float amount)
-        {
-            float previousElectricity = currentElectricity;
-            currentElectricity = Mathf.Min(maxElectricity, currentElectricity + amount);
-            
-            if (previousElectricity != currentElectricity)
-            {
-                OnElectricityChanged?.Invoke(GetElectricityPercentage());
-            }
-        }
-
-        public bool ConsumeElectricity(float amount)
-        {
-            if (currentElectricity >= amount)
-            {
-                float previousElectricity = currentElectricity;
-                currentElectricity -= amount;
-                
-                if (previousElectricity != currentElectricity)
-                {
-                    OnElectricityChanged?.Invoke(GetElectricityPercentage());
-                }
-                return true;
-            }
-            return false;
-        }
-
-        public float GetElectricityPercentage()
-        {
-            return (currentElectricity / maxElectricity) * 100f;
-        }
-
-        public float GetCurrentElectricity()
-        {
-            return currentElectricity;
-        }
-
-        public float GetMaxElectricity()
-        {
-            return maxElectricity;
-        }
-
-        public bool HasEnoughElectricity(float requiredAmount)
-        {
-            return currentElectricity >= requiredAmount;
-        }
-
-        public float GetTotalBuildingConsumption()
-        {
-            return totalBuildingConsumption;
         }
     } 
 }

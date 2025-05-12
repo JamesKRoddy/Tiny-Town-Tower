@@ -28,7 +28,7 @@ public class ElectricityGeneratorTask : WorkTask
             // Generate electricity at regular intervals
             if (generationTimer >= generationInterval)
             {
-                CampManager.Instance.AddElectricity(electricityGeneratedPerCycle);
+                CampManager.Instance.ElectricityManager.AddElectricity(electricityGeneratedPerCycle);
                 generationTimer = 0f;
             }
 
@@ -42,7 +42,7 @@ public class ElectricityGeneratorTask : WorkTask
 
         string tooltip = "Electricity Generator\n";
         tooltip += $"Generates: {electricityGeneratedPerCycle} units per {generationInterval} seconds\n";
-        tooltip += $"Current Power: {CampManager.Instance.GetElectricityPercentage():F1}%\n";
+        tooltip += $"Current Power: {CampManager.Instance.ElectricityManager.GetElectricityPercentage():F1}%\n";
         
         if (requiredResources != null)
         {

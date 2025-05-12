@@ -19,7 +19,7 @@ MonoBehaviour:
   prefab: {fileID: 2987017761979798469, guid: 9917a0e8b336f354bac3583e4a108729, type: 3}
   size: {x: 3, y: 3}
   buildingCategory: 2
-  constructionTime: 10
+  constructionTime: 1
   maxHealth: 100
   repairTime: 5
   healthRestoredPerRepair: 50

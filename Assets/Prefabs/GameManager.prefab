@@ -688,6 +688,7 @@ Transform:
   - {fileID: 4570279702760214629}
   - {fileID: 1841912673632380842}
   - {fileID: 5968417578407724118}
+  - {fileID: 2472993140973372753}
   m_Father: {fileID: 4686915863895893509}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2800147835243380111
@@ -702,14 +703,55 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dee95a5e4918df243930ec1ff64111dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  workManager: {fileID: 1085350689453372493}
-  buildManager: {fileID: 5302720283086380226}
   maxCleanliness: 100
   currentCleanliness: 100
   dirtinessRate: 0.1
+--- !u!1 &5361118978591634034
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2472993140973372753}
+  - component: {fileID: 4395694227193339372}
+  m_Layer: 0
+  m_Name: ElectricityManaager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2472993140973372753
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5361118978591634034}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3868888678722008520}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4395694227193339372
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5361118978591634034}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ac2cb4d61cc02c4087f689d543467b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
   maxElectricity: 1000
-  currentElectricity: 1000
-  electricityConsumptionRate: 1
+  currentElectricity: 500
 --- !u!1 &5367248056921035292
 GameObject:
   m_ObjectHideFlags: 0

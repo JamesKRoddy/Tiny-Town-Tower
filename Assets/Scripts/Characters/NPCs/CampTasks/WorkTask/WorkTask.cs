@@ -63,7 +63,7 @@ public abstract class WorkTask : MonoBehaviour
         if (electricityRequired > 0)
         {
             tooltip += $"Electricity Required: {electricityRequired}\n";
-            tooltip += $"Current Power: {CampManager.Instance.GetElectricityPercentage():F1}%\n";
+            tooltip += $"Current Power: {CampManager.Instance.ElectricityManager.GetElectricityPercentage():F1}%\n";
         }
         
         if (requiredResources != null)
@@ -86,6 +86,12 @@ public abstract class WorkTask : MonoBehaviour
         {
             Debug.Log($"[WorkTask] Starting work coroutine for {GetType().Name}");
             workCoroutine = StartCoroutine(WorkCoroutine());
+
+            // Register electricity consumption when the task starts
+            if (electricityRequired > 0)
+            {
+                CampManager.Instance.ElectricityManager.RegisterBuildingConsumption(this, electricityRequired);
+            }
         }
     }
     
@@ -104,7 +110,7 @@ public abstract class WorkTask : MonoBehaviour
         }
 
         // Check if there is any electricity available
-        if (electricityRequired > 0 && CampManager.Instance.GetCurrentElectricity() <= 0)
+        if (electricityRequired > 0 && CampManager.Instance.ElectricityManager.GetCurrentElectricity() <= 0)
         {
             SetOperationalStatus(false);
             return false;
@@ -160,11 +166,16 @@ public abstract class WorkTask : MonoBehaviour
 
     protected virtual void Start()
     {
+
     }
 
     protected virtual void OnDestroy()
     {
-
+        // Unregister electricity consumption when the task is destroyed
+        if (electricityRequired > 0)
+        {
+            CampManager.Instance.ElectricityManager.UnregisterBuildingConsumption(this);
+        }
     }
 
     protected void AddWorkTask()
@@ -199,12 +210,6 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual work coroutine that can be overridden by specific tasks
     protected virtual IEnumerator WorkCoroutine()
     {
-        // Register electricity consumption when starting work
-        if (electricityRequired > 0)
-        {
-            CampManager.Instance.RegisterBuildingConsumption(this, electricityRequired);
-        }
-
         // Reset work progress at the start of each task
         workProgress = 0f;
         
@@ -225,12 +230,6 @@ public abstract class WorkTask : MonoBehaviour
     {
         if (workCoroutine != null)
         {
-            // Unregister electricity consumption when work is stopped
-            if (electricityRequired > 0)
-            {
-                CampManager.Instance.UnregisterBuildingConsumption(this);
-            }
-
             StopCoroutine(workCoroutine);
             workCoroutine = null;
         }
@@ -239,12 +238,6 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual method for completing work that can be overridden
     protected virtual void CompleteWork()
     {
-        // Unregister electricity consumption when work is complete
-        if (electricityRequired > 0)
-        {
-            CampManager.Instance.UnregisterBuildingConsumption(this);
-        }
-
         currentTaskData = null;
 
         // Store the current worker as previous worker before clearing
@@ -274,6 +267,12 @@ public abstract class WorkTask : MonoBehaviour
         else
         {
             UnassignNPC();
+
+            // Unregister electricity consumption when work is complete
+            if (electricityRequired > 0)
+            {
+                CampManager.Instance.ElectricityManager.UnregisterBuildingConsumption(this);
+            }
         }
         
         // Notify completion
