@@ -13,7 +13,7 @@ public abstract class WorkTask : MonoBehaviour
 
     // Electricity requirements
     [SerializeField] protected float electricityRequired = 0f;
-    [SerializeField] protected bool isOperational = true;
+    [SerializeField] protected bool isOperational = true; // Whether the task is operational, different from the buildings operational status
 
     // Work progress tracking
     protected float workProgress = 0f;
