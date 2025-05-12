@@ -2,15 +2,14 @@ More complex task animations and animation effects handle by animation state mac
 
 TODO Large things:
 
-
-
-*********Player playing as the robot!
-
-Have to see what happens when kicking an npc off the work
-
 _________________________________________________________________________
 
-Electricity system, genereating and using electricity
+***NEXT*** Camp default is the camp selection
+
+
+
+
+FIIIIIRST THING!!!!! just separate out cleaning manager
 
 
 
@@ -21,9 +20,14 @@ Repairing buildings: wait until damage is finished
 
 
 
-Hunger system
+***Hunger system***
+Canteen building
+Able to select it and queue cooking items
+Farms to produce food
 
 
+
+***Cleanliness system****
 
 
 
