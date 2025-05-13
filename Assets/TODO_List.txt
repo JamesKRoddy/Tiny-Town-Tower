@@ -9,11 +9,6 @@ _________________________________________________________________________
 
 
 
-FIIIIIRST THING!!!!! just separate out cleaning manager
-
-
-
-
 Damaging buildings: ties into turret system
 Repairing buildings: wait until damage is finished
 
