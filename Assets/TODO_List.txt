@@ -4,8 +4,24 @@ TODO Large things:
 
 _________________________________________________________________________
 
-***NEXT*** Camp default is the camp selection
 
+At the moment:
+Checking that the cleaning station works
+Have to see what the bins actually do!
+
+
+
+***NEXT*** Camp default is the camp selection!!!!!!!!!!!!!!!!!!!!!!
+Also have to check this works after exiting out of 
+
+
+
+Cleaning system
+NPCs have to use toilets, need to figure out timers for when they need it
+
+
+
+I think the npc work state needs to have a system for walking towards different work points (like faming and cleaning) picking stuff up and dropping it off somewhere.
 
 
 
@@ -23,10 +39,7 @@ Farms to produce food
 
 
 ***Cleanliness system****
-Create prefabs for:
-DirtPile
-Toilet
-WasteBin
+Create prefabs/scriptable objs for:
 CleaningStation
 
 
