@@ -7,50 +7,51 @@ using Managers;
 /// </summary>
 public class CleaningTask : WorkTask
 {
-    [SerializeField] private float cleaningTime = 5f;
-    [SerializeField] private float cleanlinessIncrease = 10f;
-    
-    private float cleaningProgress = 0f;
+    private DirtPile targetDirtPile;
+    private float cleanProgress = 0f;
+    private float cleanSpeed = 1f;
 
-    protected override void Start()
+    public void SetupTask(DirtPile dirtPile)
     {
-        base.Start();
-        baseWorkTime = cleaningTime;
-    }
-
-    private IEnumerator CleaningCoroutine()
-    {
-        while (cleaningProgress < cleaningTime)
-        {
-            cleaningProgress += Time.deltaTime;
-            yield return null;
-        }
-
-        CompleteCleaning();
-    }
-
-    private void CompleteCleaning()
-    {
-        // Increase the camp's cleanliness
-        CampManager.Instance.CleanlinessManager.IncreaseCleanliness(cleanlinessIncrease);
-        Debug.Log($"Cleaning completed! Increased cleanliness by {cleanlinessIncrease}");
-        
-        // Reset state
-        cleaningProgress = 0f;
-        currentWorker = null;
-        workCoroutine = null;
-        
-        // Notify completion
-        InvokeStopWork();
+        targetDirtPile = dirtPile;
+        baseWorkTime = 5f;
+        workLocationTransform = dirtPile.transform;
     }
 
     protected override void CompleteWork()
     {
-        // Increase the camp's cleanliness
-        CampManager.Instance.CleanlinessManager.IncreaseCleanliness(cleanlinessIncrease);
-        Debug.Log($"Cleaning completed! Increased cleanliness by {cleanlinessIncrease}");
-        
+        if (targetDirtPile != null)
+        {
+            targetDirtPile.StopCleaning();
+        }
         base.CompleteWork();
+    }
+
+    protected override IEnumerator WorkCoroutine()
+    {
+        if (targetDirtPile == null) yield break;
+
+        targetDirtPile.StartCleaning();
+        cleanProgress = 0f;
+
+        while (cleanProgress < baseWorkTime)
+        {
+            cleanProgress += Time.deltaTime * cleanSpeed;
+            targetDirtPile.AddCleanProgress(Time.deltaTime * cleanSpeed);
+            yield return null;
+        }
+
+        CompleteWork();
+    }
+
+    public override string GetTooltipText()
+    {
+        if (!showTooltip) return string.Empty;
+
+        string tooltip = "Cleaning Task\n";
+        tooltip += $"Time: {baseWorkTime} seconds\n";
+        tooltip += $"Status: {(isOperational ? "Operational" : "Not Operational")}\n";
+        return tooltip;
     }
 
     public override bool CanPerformTask()

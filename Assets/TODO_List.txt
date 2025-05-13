@@ -23,6 +23,11 @@ Farms to produce food
 
 
 ***Cleanliness system****
+Create prefabs for:
+DirtPile
+Toilet
+WasteBin
+CleaningStation
 
 
 

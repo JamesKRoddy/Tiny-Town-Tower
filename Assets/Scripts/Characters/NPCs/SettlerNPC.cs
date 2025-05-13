@@ -54,6 +54,18 @@ public class SettlerNPC : HumanCharacterController
         {
             mutationSystem.ApplyRandomMutations();
         }
+
+        // Register with NPCManager
+        NPCManager.Instance.RegisterNPC(this);
+    }
+
+    private void OnDestroy()
+    {
+        // Unregister from NPCManager
+        if (NPCManager.Instance != null)
+        {
+            NPCManager.Instance.UnregisterNPC(this);
+        }
     }
 
     private void Update()

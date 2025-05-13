@@ -12,6 +12,10 @@ namespace Managers
         [Header("Mutation Settings")]
         [SerializeField] private List<NPCMutationScriptableObj> allMutations = new List<NPCMutationScriptableObj>();
 
+        [Header("NPC Tracking")]
+        private List<SettlerNPC> activeNPCs = new List<SettlerNPC>();
+        public int TotalNPCs => activeNPCs.Count;
+
         private void Awake()
         {
             if (Instance == null)
@@ -21,6 +25,31 @@ namespace Managers
             else
             {
                 Destroy(gameObject);
+            }
+        }
+
+        public void RegisterNPC(SettlerNPC npc)
+        {
+            if (!activeNPCs.Contains(npc))
+            {
+                activeNPCs.Add(npc);
+                // Notify CleanlinessManager of NPC count change
+                if (CampManager.Instance != null)
+                {
+                    CampManager.Instance.CleanlinessManager.OnNPCCountChanged(TotalNPCs);
+                }
+            }
+        }
+
+        public void UnregisterNPC(SettlerNPC npc)
+        {
+            if (activeNPCs.Remove(npc))
+            {
+                // Notify CleanlinessManager of NPC count change
+                if (CampManager.Instance != null)
+                {
+                    CampManager.Instance.CleanlinessManager.OnNPCCountChanged(TotalNPCs);
+                }
             }
         }
 

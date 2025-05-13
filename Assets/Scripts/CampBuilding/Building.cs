@@ -30,6 +30,11 @@ public class Building : MonoBehaviour, IInteractive<Building>
     public event System.Action OnBuildingUpgraded;
     public event System.Action<float> OnHealthChanged;
 
+    protected virtual void Start()
+    {
+
+    }
+
     public virtual void SetupBuilding(BuildingScriptableObj buildingScriptableObj)
     {
         this.buildingScriptableObj = buildingScriptableObj;
@@ -237,6 +242,11 @@ public class Building : MonoBehaviour, IInteractive<Building>
     public Building Interact()
     {
         return this;
+    }
+
+    protected virtual void OnDestroy()
+    {
+
     }
 }
 
