@@ -1,6 +1,7 @@
 using UnityEngine;
 using Managers;
 
+[RequireComponent(typeof(ToiletCleaningTask))]
 public class Toilet : Building
 {
     [Header("Toilet Settings")]
@@ -9,11 +10,14 @@ public class Toilet : Building
     [SerializeField] private float fillRate = 1f;
     [SerializeField] private float emptyTime = 10f;
     private bool isBeingEmptied = false;
+    private ToiletCleaningTask cleaningTask;
 
     protected override void Start()
     {
         base.Start();
         CampManager.Instance.CleanlinessManager.RegisterToilet(this);
+        cleaningTask = GetComponent<ToiletCleaningTask>();
+        cleaningTask.SetupTask(this);
     }
 
     protected override void OnDestroy()
@@ -72,5 +76,10 @@ public class Toilet : Building
     public bool IsBeingEmptied()
     {
         return isBeingEmptied;
+    }
+
+    public ToiletCleaningTask GetCleaningTask()
+    {
+        return cleaningTask;
     }
 } 

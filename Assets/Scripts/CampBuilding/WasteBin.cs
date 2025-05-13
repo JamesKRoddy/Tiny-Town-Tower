@@ -1,6 +1,7 @@
 using UnityEngine;
 using Managers;
 
+[RequireComponent(typeof(BinCleaningTask))]
 public class WasteBin : Building
 {
     [Header("Waste Bin Settings")]
@@ -9,11 +10,14 @@ public class WasteBin : Building
     [SerializeField] private float fillRate = 0.5f;
     [SerializeField] private float emptyTime = 5f;
     private bool isBeingEmptied = false;
+    private BinCleaningTask cleaningTask;
 
     protected override void Start()
     {
         base.Start();
         CampManager.Instance.CleanlinessManager.RegisterWasteBin(this);
+        cleaningTask = GetComponent<BinCleaningTask>();
+        cleaningTask.SetupTask(this);
     }
 
     protected override void OnDestroy()
@@ -72,5 +76,10 @@ public class WasteBin : Building
     public bool IsBeingEmptied()
     {
         return isBeingEmptied;
+    }
+
+    public BinCleaningTask GetCleaningTask()
+    {
+        return cleaningTask;
     }
 } 

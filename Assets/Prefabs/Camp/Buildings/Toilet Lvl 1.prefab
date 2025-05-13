@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4883260232030172622}
   - component: {fileID: 6599020316941827138}
   - component: {fileID: 386427430785238419}
+  - component: {fileID: -8385904791503164396}
   m_Layer: 0
   m_Name: Toilet Lvl 1
   m_TagString: Untagged
@@ -93,6 +94,23 @@ MonoBehaviour:
   currentCapacity: 0
   fillRate: 1
   emptyTime: 10
+--- !u!114 &-8385904791503164396
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3825875165448761601}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 069ea5a0d645105468a561bce78060da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  workLocationTransform: {fileID: 0}
+  requiredResources: []
+  showTooltip: 0
+  electricityRequired: 0
+  taskAnimation: 0
 --- !u!1001 &587033746441389218
 PrefabInstance:
   m_ObjectHideFlags: 0

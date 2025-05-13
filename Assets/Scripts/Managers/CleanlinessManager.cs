@@ -7,7 +7,7 @@ namespace Managers
     {
         [Header("Cleanliness Settings")]
         [SerializeField] private float maxCleanliness = 100f;
-        [SerializeField] private float currentCleanliness = 100f;
+        [ReadOnly, SerializeField] private float currentCleanliness = 100f;
         [SerializeField] private float baseDirtinessRate = 0.1f;
         [SerializeField] private float npcDirtinessMultiplier = 0.05f;
         [SerializeField] private float fullToiletDirtinessMultiplier = 2f;
@@ -117,9 +117,39 @@ namespace Managers
 
         private Vector3 GetRandomNavMeshPosition()
         {
-            // Implementation to find a random position on the NavMesh
-            // This is a placeholder - you'll need to implement proper NavMesh sampling
-            Debug.LogWarning("Getting random NavMesh position");
+            // Try up to 30 times to find a valid position
+            for (int i = 0; i < 30; i++)
+            {
+                // Get a random point within the camp bounds
+                Vector3 randomPoint = new Vector3(
+                    UnityEngine.Random.Range(-50f, 50f),
+                    0f,
+                    UnityEngine.Random.Range(-50f, 50f)
+                );
+
+                // Sample the NavMesh at this point
+                UnityEngine.AI.NavMeshHit hit;
+                if (UnityEngine.AI.NavMesh.SamplePosition(randomPoint, out hit, 10f, UnityEngine.AI.NavMesh.AllAreas))
+                {
+                    // Check if the position is far enough from other dirt piles
+                    bool tooClose = false;
+                    foreach (var dirtPile in activeDirtPiles)
+                    {
+                        if (Vector3.Distance(hit.position, dirtPile.transform.position) < 5f)
+                        {
+                            tooClose = true;
+                            break;
+                        }
+                    }
+
+                    if (!tooClose)
+                    {
+                        return hit.position;
+                    }
+                }
+            }
+
+            Debug.LogWarning("[CleanlinessManager] Failed to find valid NavMesh position for dirt pile");
             return Vector3.zero;
         }
 

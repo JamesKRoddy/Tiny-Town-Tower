@@ -47,6 +47,15 @@ public class BinCleaningTask : WorkTask
         string tooltip = "Bin Cleaning Task\n";
         tooltip += $"Time: {baseWorkTime} seconds\n";
         tooltip += $"Status: {(isOperational ? "Operational" : "Not Operational")}\n";
+        if (targetBin != null)
+        {
+            tooltip += $"Fill Level: {targetBin.GetFillPercentage():F1}%\n";
+        }
         return tooltip;
+    }
+
+    public override bool CanPerformTask()
+    {
+        return targetBin != null && targetBin.IsFull() && !targetBin.IsBeingEmptied();
     }
 } 

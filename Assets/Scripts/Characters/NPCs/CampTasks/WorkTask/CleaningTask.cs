@@ -15,7 +15,10 @@ public class CleaningTask : WorkTask
     {
         targetDirtPile = dirtPile;
         baseWorkTime = 5f;
-        workLocationTransform = dirtPile.transform;
+        if (dirtPile != null)
+        {
+            workLocationTransform = dirtPile.transform;
+        }
     }
 
     protected override void CompleteWork()
@@ -23,13 +26,19 @@ public class CleaningTask : WorkTask
         if (targetDirtPile != null)
         {
             targetDirtPile.StopCleaning();
+            targetDirtPile = null;
         }
         base.CompleteWork();
     }
 
     protected override IEnumerator WorkCoroutine()
     {
-        if (targetDirtPile == null) yield break;
+        if (targetDirtPile == null)
+        {
+            // If no target, wait a bit and then check for new tasks
+            yield return new WaitForSeconds(1f);
+            yield break;
+        }
 
         targetDirtPile.StartCleaning();
         cleanProgress = 0f;
@@ -51,6 +60,15 @@ public class CleaningTask : WorkTask
         string tooltip = "Cleaning Task\n";
         tooltip += $"Time: {baseWorkTime} seconds\n";
         tooltip += $"Status: {(isOperational ? "Operational" : "Not Operational")}\n";
+        if (targetDirtPile != null)
+        {
+            tooltip += $"Current Task: Cleaning Dirt Pile\n";
+            tooltip += $"Progress: {(cleanProgress / baseWorkTime * 100):F1}%\n";
+        }
+        else
+        {
+            tooltip += "Current Task: Looking for cleaning tasks\n";
+        }
         return tooltip;
     }
 

@@ -1,17 +1,20 @@
 using UnityEngine;
 using Managers;
 
+[RequireComponent(typeof(CleaningTask))]
 public class CleaningStation : Building
 {
     [Header("Cleaning Station Settings")]
-    [SerializeField] private float cleaningRange = 10f;
     [SerializeField] private float checkInterval = 5f;
     private float lastCheckTime;
+    private CleaningTask cleaningTask;
 
     protected override void Start()
     {
         base.Start();
         CampManager.Instance.CleanlinessManager.RegisterCleaningStation(this);
+        cleaningTask = GetComponent<CleaningTask>();
+        cleaningTask.SetupTask(null); // Initialize with no target
     }
 
     protected override void OnDestroy()
@@ -36,17 +39,21 @@ public class CleaningStation : Building
 
     private void CheckForCleaningTasks()
     {
-        // Check for dirt piles
+        // First check if we need to assign a cleaner
+        if (!cleaningTask.IsAssigned())
+        {
+            CampManager.Instance.WorkManager.AddWorkTask(cleaningTask);
+            return;
+        }
+
+        // If we have an assigned cleaner, check for tasks that need cleaning
         var dirtPiles = CampManager.Instance.CleanlinessManager.GetActiveDirtPiles();
         foreach (var dirtPile in dirtPiles)
         {
-            if (Vector3.Distance(transform.position, dirtPile.transform.position) <= cleaningRange)
+            if (!dirtPile.IsBeingCleaned())
             {
-                if (!dirtPile.IsBeingCleaned())
-                {
-                    CreateCleaningTask(dirtPile);
-                    return;
-                }
+                AssignCleaningTask(dirtPile);
+                return;
             }
         }
 
@@ -54,13 +61,10 @@ public class CleaningStation : Building
         var fullToilets = CampManager.Instance.CleanlinessManager.GetFullToilets();
         foreach (var toilet in fullToilets)
         {
-            if (Vector3.Distance(transform.position, toilet.transform.position) <= cleaningRange)
+            if (!toilet.IsBeingEmptied())
             {
-                if (!toilet.IsBeingEmptied())
-                {
-                    CreateToiletTask(toilet);
-                    return;
-                }
+                AssignToiletTask(toilet);
+                return;
             }
         }
 
@@ -68,35 +72,37 @@ public class CleaningStation : Building
         var fullBins = CampManager.Instance.CleanlinessManager.GetFullWasteBins();
         foreach (var bin in fullBins)
         {
-            if (Vector3.Distance(transform.position, bin.transform.position) <= cleaningRange)
+            if (!bin.IsBeingEmptied())
             {
-                if (!bin.IsBeingEmptied())
-                {
-                    CreateBinTask(bin);
-                    return;
-                }
+                AssignBinTask(bin);
+                return;
             }
         }
     }
 
-    private void CreateCleaningTask(DirtPile dirtPile)
+    private void AssignCleaningTask(DirtPile dirtPile)
     {
-        CleaningTask task = gameObject.AddComponent<CleaningTask>();
-        task.SetupTask(dirtPile);
-        CampManager.Instance.WorkManager.AddWorkTask(task);
+        if (cleaningTask != null)
+        {
+            cleaningTask.SetupTask(dirtPile);
+        }
     }
 
-    private void CreateToiletTask(Toilet toilet)
+    private void AssignToiletTask(Toilet toilet)
     {
-        ToiletCleaningTask task = gameObject.AddComponent<ToiletCleaningTask>();
-        task.SetupTask(toilet);
-        CampManager.Instance.WorkManager.AddWorkTask(task);
+        var task = toilet.GetCleaningTask();
+        if (task != null)
+        {
+            CampManager.Instance.WorkManager.AddWorkTask(task);
+        }
     }
 
-    private void CreateBinTask(WasteBin bin)
+    private void AssignBinTask(WasteBin bin)
     {
-        BinCleaningTask task = gameObject.AddComponent<BinCleaningTask>();
-        task.SetupTask(bin);
-        CampManager.Instance.WorkManager.AddWorkTask(task);
+        var task = bin.GetCleaningTask();
+        if (task != null)
+        {
+            CampManager.Instance.WorkManager.AddWorkTask(task);
+        }
     }
 } 

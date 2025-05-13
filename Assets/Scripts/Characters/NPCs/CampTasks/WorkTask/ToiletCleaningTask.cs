@@ -47,6 +47,15 @@ public class ToiletCleaningTask : WorkTask
         string tooltip = "Toilet Cleaning Task\n";
         tooltip += $"Time: {baseWorkTime} seconds\n";
         tooltip += $"Status: {(isOperational ? "Operational" : "Not Operational")}\n";
+        if (targetToilet != null)
+        {
+            tooltip += $"Fill Level: {targetToilet.GetFillPercentage():F1}%\n";
+        }
         return tooltip;
+    }
+
+    public override bool CanPerformTask()
+    {
+        return targetToilet != null && targetToilet.IsFull() && !targetToilet.IsBeingEmptied();
     }
 } 
