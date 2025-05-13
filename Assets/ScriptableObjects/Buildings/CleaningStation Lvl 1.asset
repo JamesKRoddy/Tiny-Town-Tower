@@ -10,23 +10,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5d7f097ca34a0eb45a8b2d5ba0c3d616, type: 3}
-  m_Name: Research Lvl 1
+  m_Name: CleaningStation Lvl 1
   m_EditorClassIdentifier: 
-  objectName: Research Lvl 1
-  description: Research Lvl 1 desc
+  objectName: CleaningStation Lvl 1
+  description: CleaningStation Lvl 1 desc
   sprite: {fileID: 0}
   _resourceCost: []
-  prefab: {fileID: 5397833359920250064, guid: 1ceb6a20cc53f3c4d8b871f14af8f2ff, type: 3}
-  size: {x: 3, y: 3}
-  buildingCategory: 6
-  constructionTime: 2
+  prefab: {fileID: 5197058900223480449, guid: d495c8f2b08fd824fac7b4edb0cae9ba, type: 3}
+  size: {x: 1, y: 1}
+  buildingCategory: 5
+  constructionTime: 1
   maxHealth: 100
-  repairTime: 5
+  repairTime: 20
   healthRestoredPerRepair: 50
   repairResources: []
   upgradeTarget: {fileID: 0}
   upgradeTime: 30
   upgradeResources: []
-  destructionTime: 5
+  destructionTime: 15
   reclaimedResources: []
   taskRadius: 2

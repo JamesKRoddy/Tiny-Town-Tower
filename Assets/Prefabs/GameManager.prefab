@@ -174,7 +174,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxCleanliness: 100
   currentCleanliness: 100
-  dirtinessRate: 0.1
+  baseDirtinessRate: 0.1
+  npcDirtinessMultiplier: 0.05
+  fullToiletDirtinessMultiplier: 2
+  fullBinDirtinessMultiplier: 1.5
+  dirtPilePrefab: {fileID: 0}
+  dirtPileSpawnThreshold: 30
+  dirtPileSpawnInterval: 60
 --- !u!1 &1370869420154002683
 GameObject:
   m_ObjectHideFlags: 0
@@ -703,9 +709,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dee95a5e4918df243930ec1ff64111dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxCleanliness: 100
-  currentCleanliness: 100
-  dirtinessRate: 0.1
 --- !u!1 &5361118978591634034
 GameObject:
   m_ObjectHideFlags: 0
@@ -978,11 +981,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   buildingScriptableObjs:
   - {fileID: 11400000, guid: 83f43f03ce31b054086c97c8e84c5597, type: 2}
+  - {fileID: 11400000, guid: 72ed54a28fe47144c9800c512bad508f, type: 2}
+  - {fileID: 11400000, guid: 9030e12690d243445835fa1263c9a8b7, type: 2}
   - {fileID: 11400000, guid: b1d8c0aa446ef7e44be90aa0e9daf3a5, type: 2}
   - {fileID: 11400000, guid: 605bb9e705d6b544b99ea27637527091, type: 2}
   - {fileID: 11400000, guid: 49bee0bbd91f1ca45add82c8cc520e29, type: 2}
   - {fileID: 11400000, guid: 9e5170ccb411c2e42bdfd9db2f15716f, type: 2}
   - {fileID: 11400000, guid: afef9195e37c3ff41b2d1b6a40cbca7b, type: 2}
+  - {fileID: 11400000, guid: ca0521093fdd8a545acc6ba406f41798, type: 2}
+  - {fileID: 11400000, guid: 7bbd785e8bc86ee428ebb8c9a7126145, type: 2}
   constructionSiteMappings:
   - gridSize: {x: 1, y: 1}
     constructionSitePrefab: {fileID: 6308355632358144236, guid: 1f8c0a42a7bfa844784127d7e55f4c88, type: 3}

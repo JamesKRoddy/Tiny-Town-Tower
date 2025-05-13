@@ -26,7 +26,6 @@ public class BuildingScriptableObj : PlaceableObjectParent
     public ResourceItemCount[] upgradeResources;
 
     [Header("Destruction Parameters")]
-    public GameObject destructionPrefab;
     public float destructionTime = 15f;
     public ResourceItemCount[] reclaimedResources;
 

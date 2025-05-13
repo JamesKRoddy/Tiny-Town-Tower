@@ -17,7 +17,9 @@ public enum BuildingCategory
     FOOD,
     ELECTRICITY,
     DECORATION,
-    WEAPONS
+    WEAPONS,
+    CLEANING,
+    RESOURCES
 }
 
 // =========================

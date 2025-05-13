@@ -18,7 +18,7 @@ MonoBehaviour:
   _resourceCost: []
   prefab: {fileID: 1937038487231511915, guid: ce61a9ef4dd437443bc98b65ceebaeba, type: 3}
   size: {x: 3, y: 3}
-  buildingCategory: 0
+  buildingCategory: 6
   constructionTime: 1
   maxHealth: 100
   repairTime: 5
@@ -27,7 +27,6 @@ MonoBehaviour:
   upgradeTarget: {fileID: 0}
   upgradeTime: 30
   upgradeResources: []
-  destructionPrefab: {fileID: 0}
   destructionTime: 5
   reclaimedResources: []
   taskRadius: 2
