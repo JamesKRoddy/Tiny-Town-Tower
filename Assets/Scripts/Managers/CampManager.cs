@@ -42,20 +42,6 @@ namespace Managers
         public ResourceUpgradeManager ResourceUpgradeManager => resourceUpgradeManager;
         public ElectricityManager ElectricityManager => electricityManager;
 
-        // Inventory Management
-        private Dictionary<ResourceScriptableObj, int> resources = new Dictionary<ResourceScriptableObj, int>();
-
-        // Research Management
-        private int researchPoints = 0;
-
-        // Cleanliness Management
-        [SerializeField] private float maxCleanliness = 100f;
-        [SerializeField] private float currentCleanliness = 100f;
-        [SerializeField] private float dirtinessRate = 0.1f;
-
-        // Events
-        public event System.Action<float> OnCleanlinessChanged;
-
         private void Awake()
         {
             if (_instance != null && _instance != this)
@@ -66,7 +52,6 @@ namespace Managers
             {
                 _instance = this;
                 InitializeManagers();
-                StartResourceCoroutines();
             }
         }
 
@@ -93,52 +78,8 @@ namespace Managers
             if (cookingManager != null) cookingManager.Initialize();
             if (resourceUpgradeManager != null) resourceUpgradeManager.Initialize();
             if (electricityManager != null) electricityManager.Initialize();
+            if (cleanlinessManager != null) cleanlinessManager.Initialize();
         }
 
-        private void StartResourceCoroutines()
-        {
-            StartCoroutine(CleanlinessCoroutine());
-        }
-
-        private System.Collections.IEnumerator CleanlinessCoroutine()
-        {
-            WaitForSeconds wait = new WaitForSeconds(0.1f); // Check every 0.1 seconds
-
-            while (true)
-            {
-                float previousCleanliness = currentCleanliness;
-                currentCleanliness = Mathf.Max(0, currentCleanliness - dirtinessRate * 0.1f);
-                
-                if (previousCleanliness != currentCleanliness)
-                {
-                    OnCleanlinessChanged?.Invoke(GetCleanlinessPercentage());
-                }
-
-                yield return wait;
-            }
-        }
-
-        // Cleanliness Methods
-        public void IncreaseCleanliness(float amount)
-        {
-            float previousCleanliness = currentCleanliness;
-            currentCleanliness = Mathf.Min(maxCleanliness, currentCleanliness + amount);
-            
-            // Only trigger event if cleanliness actually changed
-            if (previousCleanliness != currentCleanliness)
-            {
-                OnCleanlinessChanged?.Invoke(GetCleanlinessPercentage());
-            }
-        }
-
-        public float GetCleanliness()
-        {
-            return currentCleanliness;
-        }
-
-        public float GetCleanlinessPercentage()
-        {
-            return (currentCleanliness / maxCleanliness) * 100f;
-        }
     } 
 }

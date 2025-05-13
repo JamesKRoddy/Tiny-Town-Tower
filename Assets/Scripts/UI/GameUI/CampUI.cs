@@ -24,7 +24,7 @@ public class CampUI : MonoBehaviour
     void Start()
     {
         UpdateElectricityUI(CampManager.Instance.ElectricityManager.GetElectricityPercentage());
-        UpdateCleanlinessUI(CampManager.Instance.GetCleanlinessPercentage());
+        UpdateCleanlinessUI(CampManager.Instance.CleanlinessManager.GetCleanlinessPercentage());
     }
 
     public void Setup()
@@ -34,7 +34,7 @@ public class CampUI : MonoBehaviour
         
         // Subscribe to camp events
         CampManager.Instance.ElectricityManager.OnElectricityChanged += UpdateElectricityUI;
-        CampManager.Instance.OnCleanlinessChanged += UpdateCleanlinessUI;
+        CampManager.Instance.CleanlinessManager.OnCleanlinessChanged += UpdateCleanlinessUI;
 
         // Initialize UI values
         if (electricitySlider != null)
@@ -46,7 +46,7 @@ public class CampUI : MonoBehaviour
         if (cleanlinessSlider != null)
         {
             cleanlinessSlider.maxValue = 100f;
-            cleanlinessSlider.value = CampManager.Instance.GetCleanlinessPercentage();
+            cleanlinessSlider.value = CampManager.Instance.CleanlinessManager.GetCleanlinessPercentage();
         }
 
         // Set initial visibility based on current game mode
@@ -109,7 +109,7 @@ public class CampUI : MonoBehaviour
         if (CampManager.Instance != null)
         {
             CampManager.Instance.ElectricityManager.OnElectricityChanged -= UpdateElectricityUI;
-            CampManager.Instance.OnCleanlinessChanged -= UpdateCleanlinessUI;
+            CampManager.Instance.CleanlinessManager.OnCleanlinessChanged -= UpdateCleanlinessUI;
         }
     }
 } 

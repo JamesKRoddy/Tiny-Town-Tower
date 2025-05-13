@@ -12,12 +12,14 @@ namespace Managers
         private float totalBuildingConsumption = 0f;
         private Dictionary<WorkTask, float> buildingConsumption = new Dictionary<WorkTask, float>();
 
+        private Coroutine electricityConsumptionCoroutine;
+
         // Events
         public event System.Action<float> OnElectricityChanged;
 
         public void Initialize()
         {
-            StartCoroutine(ElectricityConsumptionCoroutine());
+            electricityConsumptionCoroutine = StartCoroutine(ElectricityConsumptionCoroutine());
         }
 
         private IEnumerator ElectricityConsumptionCoroutine()
