@@ -71,10 +71,4 @@ public class CleaningTask : WorkTask
         }
         return tooltip;
     }
-
-    public override bool CanPerformTask()
-    {
-        // Check if the camp's cleanliness is below maximum
-        return CampManager.Instance.CleanlinessManager.GetCleanliness() < CampManager.Instance.CleanlinessManager.GetCleanlinessPercentage();
-    }
 } 

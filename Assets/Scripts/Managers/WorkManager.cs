@@ -204,7 +204,7 @@ namespace Managers
             }
 
             // Create selection options for each work task         
-            foreach (var task in workTasks)
+            foreach (var task in workTasks) //TODO maybe condense this into a single case statement since they are all work tasks
             {
                 if (task is ResearchTask)
                 {
