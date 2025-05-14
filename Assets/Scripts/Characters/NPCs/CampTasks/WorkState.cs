@@ -55,7 +55,7 @@ public class WorkState : _TaskState
 
     private void SetupNavMeshPath()
     {
-        Vector3 taskPosition = assignedTask.WorkTaskTransform().position;
+        Vector3 taskPosition = assignedTask.GetNavMeshDestination().position;
         agent.stoppingDistance = movementSettings.minDistanceToTask;
         agent.SetDestination(taskPosition);
         agent.speed = MaxSpeed();
@@ -108,7 +108,7 @@ public class WorkState : _TaskState
     {
         if (assignedTask == null) return;
 
-        float distanceToTask = Vector3.Distance(transform.position, assignedTask.WorkTaskTransform().position);
+        float distanceToTask = Vector3.Distance(transform.position, assignedTask.GetNavMeshDestination().position);
 
         if (!agent.pathPending && agent.remainingDistance <= movementSettings.minDistanceToTask)
         {
@@ -132,13 +132,21 @@ public class WorkState : _TaskState
             timeAtTaskLocation = 0f;
 
             // Check if we need precise positioning
-            float distanceToExactPosition = Vector3.Distance(transform.position, assignedTask.WorkTaskTransform().position);
-            needsPrecisePositioning = distanceToExactPosition > movementSettings.precisePositioningThreshold;
-            
-            if (needsPrecisePositioning)
+            var precisePosition = assignedTask.GetPrecisePosition();
+            if (precisePosition != null)
             {
-                agent.updatePosition = false;
-                agent.updateRotation = false;
+                float distanceToExactPosition = Vector3.Distance(transform.position, precisePosition.position);
+                needsPrecisePositioning = distanceToExactPosition > movementSettings.precisePositioningThreshold;
+                
+                if (needsPrecisePositioning)
+                {
+                    agent.updatePosition = false;
+                    agent.updateRotation = false;
+                }
+            }
+            else
+            {
+                needsPrecisePositioning = false;
             }
         }
 
@@ -152,21 +160,22 @@ public class WorkState : _TaskState
 
     private void UpdatePositionAndRotation()
     {
-        if (needsPrecisePositioning)
+        var precisePosition = assignedTask.GetPrecisePosition();
+        if (needsPrecisePositioning && precisePosition != null)
         {
             // Use lerping for precise positioning
-            transform.position = Vector3.Lerp(transform.position, assignedTask.WorkTaskTransform().position, 
+            transform.position = Vector3.Lerp(transform.position, precisePosition.position, 
                 Time.deltaTime * 5f);
-            transform.rotation = Quaternion.Slerp(transform.rotation, assignedTask.WorkTaskTransform().rotation, 
+            transform.rotation = Quaternion.Slerp(transform.rotation, precisePosition.rotation, 
                 Time.deltaTime * 5f);
 
             // Check if we've reached the precise position
-            float distanceToExactPosition = Vector3.Distance(transform.position, assignedTask.WorkTaskTransform().position);
+            float distanceToExactPosition = Vector3.Distance(transform.position, precisePosition.position);
             if (distanceToExactPosition <= movementSettings.precisePositioningThreshold)
             {
                 needsPrecisePositioning = false;
-                transform.position = assignedTask.WorkTaskTransform().position;
-                transform.rotation = assignedTask.WorkTaskTransform().rotation;
+                transform.position = precisePosition.position;
+                transform.rotation = precisePosition.rotation;
             }
         }
     }

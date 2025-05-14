@@ -98,7 +98,25 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual method that can be overridden by specific tasks
     public virtual Transform WorkTaskTransform()
     {
-        return workLocationTransform != null ? workLocationTransform : transform;
+        return workLocationTransform;
+    }
+
+    // Method for NavMeshAgent pathfinding - should always return a valid position
+    public virtual Transform GetNavMeshDestination()
+    {
+        // If we have a specific work location, use that
+        if (workLocationTransform != null)
+        {
+            return workLocationTransform;
+        }
+        // Otherwise use the task's position
+        return transform;
+    }
+
+    // Method for precise positioning - can return null if no precise position needed
+    public virtual Transform GetPrecisePosition()
+    {
+        return workLocationTransform;
     }
 
     // Virtual method to check if the task can be performed
