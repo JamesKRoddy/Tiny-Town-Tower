@@ -11,6 +11,7 @@ public class WorkState : _TaskState
     private bool hasReachedTask = false;
     private float timeAtTaskLocation = 0f;
     private int workLayerIndex = -1;
+    private bool needsPrecisePositioning = false;
     #endregion
 
     #region Movement Parameters
@@ -18,6 +19,7 @@ public class WorkState : _TaskState
     {
         public float minDistanceToTask = 0.5f;
         public float taskStartDelay = 0.5f;
+        public float precisePositioningThreshold = 0.1f;
     }
     private MovementSettings movementSettings;
     #endregion
@@ -59,6 +61,20 @@ public class WorkState : _TaskState
         agent.speed = MaxSpeed();
         agent.angularSpeed = npc.rotationSpeed;
         agent.isStopped = false;
+        agent.updatePosition = true;
+        agent.updateRotation = true;
+        needsPrecisePositioning = false;
+    }
+
+    public void UpdateTaskDestination()
+    {
+        if (assignedTask != null)
+        {
+            hasReachedTask = false;
+            isTaskBeingPerformed = false;
+            timeAtTaskLocation = 0f;
+            SetupNavMeshPath();
+        }
     }
 
     public override void OnExitState()
@@ -114,36 +130,43 @@ public class WorkState : _TaskState
             agent.isStopped = true;
             agent.velocity = Vector3.zero;
             timeAtTaskLocation = 0f;
+
+            // Check if we need precise positioning
+            float distanceToExactPosition = Vector3.Distance(transform.position, assignedTask.WorkTaskTransform().position);
+            needsPrecisePositioning = distanceToExactPosition > movementSettings.precisePositioningThreshold;
             
-            if(assignedTask.WorkTaskTransform() != assignedTask.transform)
+            if (needsPrecisePositioning)
             {
                 agent.updatePosition = false;
                 agent.updateRotation = false;
             }
         }
 
-        UpdatePositionAndRotation();
+        if (needsPrecisePositioning)
+        {
+            UpdatePositionAndRotation();
+        }
+
         StartTaskIfReady();
     }
 
     private void UpdatePositionAndRotation()
     {
-        if(assignedTask.WorkTaskTransform() != assignedTask.transform)
+        if (needsPrecisePositioning)
         {
+            // Use lerping for precise positioning
             transform.position = Vector3.Lerp(transform.position, assignedTask.WorkTaskTransform().position, 
                 Time.deltaTime * 5f);
             transform.rotation = Quaternion.Slerp(transform.rotation, assignedTask.WorkTaskTransform().rotation, 
                 Time.deltaTime * 5f);
-        }
-        else
-        {
-            Vector3 directionToTask = (assignedTask.WorkTaskTransform().position - transform.position).normalized;
-            directionToTask.y = 0;
-            if (directionToTask != Vector3.zero)
+
+            // Check if we've reached the precise position
+            float distanceToExactPosition = Vector3.Distance(transform.position, assignedTask.WorkTaskTransform().position);
+            if (distanceToExactPosition <= movementSettings.precisePositioningThreshold)
             {
-                Quaternion targetRotation = Quaternion.LookRotation(directionToTask);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 
-                    npc.rotationSpeed * Time.deltaTime);
+                needsPrecisePositioning = false;
+                transform.position = assignedTask.WorkTaskTransform().position;
+                transform.rotation = assignedTask.WorkTaskTransform().rotation;
             }
         }
     }
@@ -151,7 +174,7 @@ public class WorkState : _TaskState
     private void StartTaskIfReady()
     {
         timeAtTaskLocation += Time.deltaTime;
-        if (timeAtTaskLocation >= movementSettings.taskStartDelay && !isTaskBeingPerformed)
+        if (timeAtTaskLocation >= movementSettings.taskStartDelay && !isTaskBeingPerformed && !needsPrecisePositioning)
         {
             assignedTask.PerformTask(npc);
             if (workLayerIndex != -1)
@@ -168,11 +191,9 @@ public class WorkState : _TaskState
         {
             hasReachedTask = false;
             agent.isStopped = false;
-            if(assignedTask.WorkTaskTransform() != assignedTask.transform)
-            {
-                agent.updatePosition = true;
-                agent.updateRotation = true;
-            }
+            agent.updatePosition = true;
+            agent.updateRotation = true;
+            needsPrecisePositioning = false;
         }
     }
 
@@ -181,6 +202,11 @@ public class WorkState : _TaskState
         float maxSpeed = MaxSpeed();
         float currentSpeedNormalized = agent.velocity.magnitude / maxSpeed;
         animator.SetFloat("Speed", currentSpeedNormalized);
+    }
+
+    public override float MaxSpeed()
+    {
+        return npc.moveMaxSpeed * 0.4f;
     }
 
     public override TaskType GetTaskType()
