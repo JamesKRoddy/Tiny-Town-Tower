@@ -4,9 +4,15 @@ TODO Large things:
 
 _________________________________________________________________________
 
+When Im back:
+Refactor after making dirt pile a task
+Just have to make it use the stuff in the base class rather than in its own class
+Have issues swapping the work progress and cleaning times
+Have to make sure the player can also interact with it
+
+
 
 At the moment:
-Refactor after making dirt pile a task
 Checking that the cleaning station works
 Have to see what the bins actually do!
 
