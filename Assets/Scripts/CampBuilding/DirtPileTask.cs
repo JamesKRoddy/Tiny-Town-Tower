@@ -1,7 +1,7 @@
 using UnityEngine;
 using Managers;
 
-public class DirtPile : MonoBehaviour
+public class DirtPileTask : WorkTask
 {
     [SerializeField] private float cleanTime = 5f;
     [SerializeField] private float currentCleanProgress = 0f;

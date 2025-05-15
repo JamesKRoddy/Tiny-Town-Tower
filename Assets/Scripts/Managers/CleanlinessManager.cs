@@ -20,15 +20,15 @@ namespace Managers
         private float lastDirtPileSpawnTime;
 
         private Coroutine cleanlinessCoroutine;
-        private List<DirtPile> activeDirtPiles = new List<DirtPile>();
+        private List<DirtPileTask> activeDirtPiles = new List<DirtPileTask>();
         private List<Toilet> toilets = new List<Toilet>();
         private List<WasteBin> wasteBins = new List<WasteBin>();
         private List<CleaningStation> cleaningStations = new List<CleaningStation>();
 
         // Events
         public event System.Action<float> OnCleanlinessChanged;
-        public event System.Action<DirtPile> OnDirtPileSpawned;
-        public event System.Action<DirtPile> OnDirtPileCleaned;
+        public event System.Action<DirtPileTask> OnDirtPileSpawned;
+        public event System.Action<DirtPileTask> OnDirtPileCleaned;
 
         public void Initialize()
         {
@@ -106,7 +106,7 @@ namespace Managers
             // Find a random position on the NavMesh
             Vector3 randomPosition = GetRandomNavMeshPosition();
             GameObject dirtPileObj = Instantiate(dirtPilePrefab, randomPosition, Quaternion.identity);
-            DirtPile dirtPile = dirtPileObj.GetComponent<DirtPile>();
+            DirtPileTask dirtPile = dirtPileObj.GetComponent<DirtPileTask>();
             
             if (dirtPile != null)
             {
@@ -192,7 +192,7 @@ namespace Managers
             cleaningStations.Remove(station);
         }
 
-        public void HandleDirtPileCleaned(DirtPile dirtPile)
+        public void HandleDirtPileCleaned(DirtPileTask dirtPile)
         {
             if (activeDirtPiles.Remove(dirtPile))
             {
@@ -227,9 +227,9 @@ namespace Managers
             return (currentCleanliness / maxCleanliness) * 100f;
         }
 
-        public List<DirtPile> GetActiveDirtPiles()
+        public List<DirtPileTask> GetActiveDirtPiles()
         {
-            return new List<DirtPile>(activeDirtPiles);
+            return new List<DirtPileTask>(activeDirtPiles);
         }
 
         public List<Toilet> GetFullToilets()

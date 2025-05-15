@@ -95,18 +95,11 @@ public interface IDamageable
     Can do a runningtowards the player attack, nav agent and animation should work for this.
 
     ******Camp Management******
-    
-    A camp inventory system to track resources
-    A building health system
-    A research system
-    A cleanliness system for the camp
 
     Have to setup a menu for task details, they should all use the same preview menu just with different entries. tasks that need this are:
     ResearchTask, use the research manager to track whats been researched and what can be researched, scriptable obj for research items
-    ResourceUpgradeTask
     Later:
     FarmingTask
-    CookingTask
 
     ******UI******
 

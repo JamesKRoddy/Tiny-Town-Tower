@@ -7,12 +7,12 @@ using Managers;
 /// </summary>
 public class CleaningTask : WorkTask
 {
-    private DirtPile targetDirtPile;
+    private DirtPileTask targetDirtPile;
     private float cleanProgress = 0f;
     private float cleanSpeed = 1f;
     private bool hasStartedCleaning = false;
 
-    public DirtPile GetCurrentTarget() => targetDirtPile;
+    public DirtPileTask GetCurrentTarget() => targetDirtPile;
 
     protected override void Start()
     {
@@ -29,7 +29,7 @@ public class CleaningTask : WorkTask
         }
     }
 
-    private void HandleDirtPileSpawned(DirtPile dirtPile)
+    private void HandleDirtPileSpawned(DirtPileTask dirtPile)
     {
         // If we have a worker but no current target, start cleaning the new dirt pile
         if (currentWorker != null && targetDirtPile == null)
@@ -39,7 +39,7 @@ public class CleaningTask : WorkTask
         }
     }
 
-    public void SetupTask(DirtPile dirtPile)
+    public void SetupTask(DirtPileTask dirtPile)
     {
         targetDirtPile = dirtPile;
         baseWorkTime = 5f;
