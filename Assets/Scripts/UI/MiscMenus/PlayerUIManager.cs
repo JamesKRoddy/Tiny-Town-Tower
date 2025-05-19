@@ -171,12 +171,15 @@ public class PlayerUIManager : MonoBehaviour
         {
             case PauseMenu:
                 pauseMenu.ReturnToGame();
+                currentMenu = null;
                 break;
             case UtilityMenu:
                 utilityMenu.ReturnToGame();
+                currentMenu = null;
                 break;
             case SelectionPreviewList:
                 selectionPreviewList.ReturnToGame();
+                currentMenu = null;
                 break;
             case BuildMenu:
             case GeneticMutationUI:

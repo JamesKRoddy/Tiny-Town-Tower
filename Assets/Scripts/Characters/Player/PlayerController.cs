@@ -122,8 +122,13 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
             case PlayerControlType.ROBOT_WORKING:
                 PlayerInput.Instance.OnBPressed += HandleRobotStopWork;
-                PlayerInput.Instance.OnBPressed += () => PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.ROBOT_MOVEMENT);
-                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.BackPressed();
+                
+                if(PlayerUIManager.Instance.currentMenu != null) //Only swap back to the game if we are not in a menu
+                {
+                    PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.BackPressed();
+                } else{
+                    PlayerInput.Instance.OnBPressed += () => PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.ROBOT_MOVEMENT);
+                }
                 break;
 
             case PlayerControlType.CAMP_NPC_MOVEMENT:
