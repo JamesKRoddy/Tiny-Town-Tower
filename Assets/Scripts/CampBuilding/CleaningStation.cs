@@ -33,7 +33,7 @@ public class CleaningStation : Building
             var activeDirtPiles = CampManager.Instance.CleanlinessManager.GetActiveDirtPiles();
             foreach (var dirtPile in activeDirtPiles)
             {
-                if (!dirtPile.IsBeingCleaned())
+                if (!dirtPile.IsOccupied)
                 {
                     cleaningTask.SetupTask(dirtPile);
                     break;

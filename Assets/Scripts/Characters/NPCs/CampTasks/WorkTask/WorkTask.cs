@@ -244,7 +244,7 @@ public abstract class WorkTask : MonoBehaviour
         CompleteWork();
     }
 
-    public void StopWorkCoroutine()
+    public virtual void StopWorkCoroutine()
     {
         if (workCoroutine != null)
         {
@@ -399,5 +399,10 @@ public abstract class WorkTask : MonoBehaviour
     public float GetElectricityRequired()
     {
         return electricityRequired;
+    }
+
+    public float GetProgress()
+    {
+        return workProgress / baseWorkTime;
     }
 }

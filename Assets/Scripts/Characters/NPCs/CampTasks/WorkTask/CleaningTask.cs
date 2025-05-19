@@ -5,12 +5,9 @@ using Managers;
 /// <summary>
 /// Used by dirt piles to clean them.
 /// </summary>
-public class CleaningTask : WorkTask
+public class CleaningTask : ManagerTask
 {
     private DirtPileTask targetDirtPile;
-    private float cleanProgress = 0f;
-    private float cleanSpeed = 1f;
-    private bool hasStartedCleaning = false;
 
     public DirtPileTask GetCurrentTarget() => targetDirtPile;
 
@@ -35,18 +32,17 @@ public class CleaningTask : WorkTask
         if (currentWorker != null && targetDirtPile == null)
         {
             SetupTask(dirtPile);
-            workCoroutine = StartCoroutine(WorkCoroutine());
         }
     }
 
     public void SetupTask(DirtPileTask dirtPile)
     {
         targetDirtPile = dirtPile;
-        baseWorkTime = 5f;
-        hasStartedCleaning = false;
         if (dirtPile != null)
         {
             workLocationTransform = dirtPile.transform;
+            dirtPile.StartCleaning();
+            
             // Notify the worker's WorkState to update its path
             if (currentWorker != null)
             {
@@ -66,7 +62,6 @@ public class CleaningTask : WorkTask
             targetDirtPile.StopCleaning();
             targetDirtPile = null;
         }
-        hasStartedCleaning = false;
         
         // Look for next dirt pile
         FindNextDirtPile();
@@ -78,62 +73,32 @@ public class CleaningTask : WorkTask
         
         foreach (var dirtPile in dirtPiles)
         {
-            if (dirtPile != null && !dirtPile.IsBeingCleaned())
+            if (dirtPile != null && !dirtPile.IsOccupied)
             {
-                StopWorkCoroutine();
                 SetupTask(dirtPile);
-                
-                if (currentWorker != null)
-                {
-                    workCoroutine = StartCoroutine(WorkCoroutine());
-                }
                 return;
             }
         }
-        
-        // No dirt piles found, wait for new ones
-        if (currentWorker != null)
+    }
+
+    public override void PerformTask(HumanCharacterController npc)
+    {
+        if (targetDirtPile != null)
         {
-            workCoroutine = StartCoroutine(WorkCoroutine());
+            // Transition to the dirt pile task
+            TransitionToSubtask(targetDirtPile, npc);
+        }
+        else
+        {
+            base.PerformTask(npc);
         }
     }
 
-    protected override IEnumerator WorkCoroutine()
+    protected override void HandleSubtaskCompleted()
     {
-        if (targetDirtPile == null)
-        {
-            // Wait a bit and check for new dirt piles
-            yield return new WaitForSeconds(1f);
-            FindNextDirtPile();
-            yield break;
-        }
-
-        // Wait until the NPC is close enough to the dirt pile
-        while (!hasStartedCleaning && targetDirtPile != null)
-        {
-            float distanceToDirtPile = Vector3.Distance(currentWorker.transform.position, targetDirtPile.transform.position);
-            if (distanceToDirtPile <= 1f) // NPC is close enough to start cleaning
-            {
-                hasStartedCleaning = true;
-                targetDirtPile.StartCleaning();
-                cleanProgress = 0f;
-                break;
-            }
-            yield return null;
-        }
-
-        // Now start the actual cleaning process
-        while (cleanProgress < baseWorkTime && targetDirtPile != null && hasStartedCleaning)
-        {
-            cleanProgress += Time.deltaTime * cleanSpeed;
-            if (targetDirtPile != null)
-            {
-                targetDirtPile.AddCleanProgress(Time.deltaTime * cleanSpeed);
-            }
-            yield return null;
-        }
-
-        CompleteWork();
+        base.HandleSubtaskCompleted();
+        targetDirtPile = null;
+        FindNextDirtPile();
     }
 
     public override string GetTooltipText()
@@ -141,20 +106,12 @@ public class CleaningTask : WorkTask
         if (!showTooltip) return string.Empty;
 
         string tooltip = "Cleaning Task\n";
-        tooltip += $"Time: {baseWorkTime} seconds\n";
         tooltip += $"Status: {(isOperational ? "Operational" : "Not Operational")}\n";
         
         if (targetDirtPile != null)
         {
             tooltip += $"Current Task: Cleaning Dirt Pile\n";
-            if (hasStartedCleaning)
-            {
-                tooltip += $"Progress: {(cleanProgress / baseWorkTime * 100):F1}%\n";
-            }
-            else
-            {
-                tooltip += "Moving to dirt pile...\n";
-            }
+            tooltip += $"Progress: {(targetDirtPile.GetProgress() * 100):F1}%\n";
         }
         else
         {
