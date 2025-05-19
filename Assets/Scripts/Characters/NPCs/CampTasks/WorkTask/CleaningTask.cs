@@ -20,7 +20,7 @@ public class CleaningTask : ManagerTask
     protected override void OnDestroy()
     {
         base.OnDestroy();
-        if (CampManager.Instance != null && CampManager.Instance.CleanlinessManager != null)
+        if (CampManager.Instance?.CleanlinessManager != null)
         {
             CampManager.Instance.CleanlinessManager.OnDirtPileSpawned -= HandleDirtPileSpawned;
         }
@@ -37,21 +37,17 @@ public class CleaningTask : ManagerTask
 
     public void SetupTask(DirtPileTask dirtPile)
     {
+        if (dirtPile == null) return;
+
         targetDirtPile = dirtPile;
-        if (dirtPile != null)
+        workLocationTransform = dirtPile.transform;
+        dirtPile.StartCleaning();
+        
+        // Notify the worker's WorkState to update its path
+        if (currentWorker != null)
         {
-            workLocationTransform = dirtPile.transform;
-            dirtPile.StartCleaning();
-            
-            // Notify the worker's WorkState to update its path
-            if (currentWorker != null)
-            {
-                var workState = currentWorker.GetComponent<WorkState>();
-                if (workState != null)
-                {
-                    workState.UpdateTaskDestination();
-                }
-            }
+            var workState = currentWorker.GetComponent<WorkState>();
+            workState?.UpdateTaskDestination();
         }
     }
 

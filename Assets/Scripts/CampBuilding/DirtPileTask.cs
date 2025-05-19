@@ -4,6 +4,8 @@ using System.Collections;
 
 public class DirtPileTask : WorkTask
 {
+    private const float CLEANING_DISTANCE = 1f;
+
     protected override void Start()
     {
         base.Start();
@@ -28,7 +30,7 @@ public class DirtPileTask : WorkTask
         while (workProgress == 0f)
         {
             float distanceToDirtPile = Vector3.Distance(currentWorker.transform.position, transform.position);
-            if (distanceToDirtPile <= 1f) // NPC is close enough to start cleaning
+            if (distanceToDirtPile <= CLEANING_DISTANCE)
             {
                 break;
             }
