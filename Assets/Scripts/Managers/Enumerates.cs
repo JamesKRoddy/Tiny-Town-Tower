@@ -32,7 +32,7 @@ public enum TaskType
     WORK,
     WANDER,
     ATTACK,
-    TEND_CROPS
+    EAT
 }
 
 [System.Serializable]

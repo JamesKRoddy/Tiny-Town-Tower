@@ -6,10 +6,16 @@ using System;
 public class CookingTask : WorkTask
 {
     [ReadOnly] public CookingRecipeScriptableObj currentRecipe;
+    private CanteenBuilding canteenBuilding;
 
     protected override void Start()
     {
         base.Start();
+        canteenBuilding = GetComponent<CanteenBuilding>();
+        if (canteenBuilding == null)
+        {
+            Debug.LogError("CookingTask requires a CanteenBuilding component!");
+        }
     }
 
     public void SetRecipe(CookingRecipeScriptableObj recipe)
@@ -29,12 +35,20 @@ public class CookingTask : WorkTask
 
     protected override void CompleteWork()
     {
-        if (currentRecipe != null)
+        if (currentRecipe != null && canteenBuilding != null)
         {
-            // Create the cooked food
+            // Create the cooked food and store it in the canteen
             for (int i = 0; i < currentRecipe.outputAmount; i++)
             {
-                AddResourceToInventory(currentRecipe.outputFood);
+                if (canteenBuilding.CanStoreMoreMeals())
+                {
+                    canteenBuilding.AddMeal();
+                }
+                else
+                {
+                    // If canteen is full, store in player inventory as backup
+                    AddResourceToInventory(currentRecipe.outputFood);
+                }
             }
         }
         

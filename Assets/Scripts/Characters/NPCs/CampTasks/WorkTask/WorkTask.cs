@@ -233,6 +233,19 @@ public abstract class WorkTask : MonoBehaviour
 
         while (workProgress < baseWorkTime)
         {
+            // Apply hunger-based work speed multiplier
+            if (currentWorker != null)
+            {
+                workSpeed = (currentWorker as SettlerNPC).GetWorkSpeedMultiplier();
+                
+                // If starving, stop working
+                if (workSpeed <= 0)
+                {
+                    StopWorkCoroutine();
+                    yield break;
+                }
+            }
+
             workProgress += Time.deltaTime * workSpeed;
             yield return null;
         }

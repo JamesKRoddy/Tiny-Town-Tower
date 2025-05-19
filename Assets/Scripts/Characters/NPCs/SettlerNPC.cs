@@ -1,9 +1,11 @@
 using System.Collections.Generic;
+using System;
 using Characters.NPC;
 using Characters.NPC.Mutations;
 using Managers;
 using UnityEngine;
 using UnityEngine.AI;
+
 
 [RequireComponent(typeof(NavMeshAgent))]
 public class SettlerNPC : HumanCharacterController
@@ -18,6 +20,19 @@ public class SettlerNPC : HumanCharacterController
     public float currentStamina = 100f;
     public float staminaRegenRate = 5f;
     public float fatigueRate = 2f;
+
+    [Header("Hunger System")]
+    [SerializeField] private float maxHunger = 100f;
+    [SerializeField] private float currentHunger = 100f;
+    [SerializeField] private float hungerDecreaseRate = 1f; // Hunger points per second
+    [SerializeField] private float hungerThreshold = 30f; // When to start looking for food
+    [SerializeField] private float starvationThreshold = 10f; // When to stop working
+    [SerializeField] private float mealHungerRestore = 50f; // How much hunger is restored per meal
+    [SerializeField] private float workSpeedMultiplier = 1f; // Current work speed multiplier based on hunger
+
+    public event Action<float, float> OnHungerChanged; // Current hunger, max hunger
+    public event Action OnStarving;
+    public event Action OnNoLongerStarving;
 
     // Dictionary that maps TaskType to TaskState
     Dictionary<TaskType, _TaskState> taskStates = new Dictionary<TaskType, _TaskState>();
@@ -78,6 +93,38 @@ public class SettlerNPC : HumanCharacterController
 
         // Regenerate stamina
         currentStamina = Mathf.Min(maxStamina, currentStamina + staminaRegenRate * Time.deltaTime);
+
+        // Update hunger
+        if (currentHunger > 0)
+        {
+            currentHunger = Mathf.Max(0, currentHunger - (hungerDecreaseRate * Time.deltaTime));
+            OnHungerChanged?.Invoke(currentHunger, maxHunger);
+
+            // Update work speed multiplier based on hunger
+            if (currentHunger <= starvationThreshold)
+            {
+                workSpeedMultiplier = 0f;
+                if (currentHunger == 0)
+                {
+                    OnStarving?.Invoke();
+                }
+            }
+            else if (currentHunger <= hungerThreshold)
+            {
+                workSpeedMultiplier = 0.5f;
+                
+                // If we're hungry and not already eating, change to eat state
+                if (GetCurrentTaskType() != TaskType.EAT)
+                {
+                    ChangeTask(TaskType.EAT);
+                }
+            }
+            else
+            {
+                workSpeedMultiplier = 1f;
+                OnNoLongerStarving?.Invoke();
+            }
+        }
     }
 
     public void UseStamina(float amount)
@@ -136,6 +183,41 @@ public class SettlerNPC : HumanCharacterController
     {
         return animator;
     }
+
+    public TaskType GetCurrentTaskType()
+    {
+        if (currentState != null)
+        {
+            return currentState.GetTaskType();
+        }
+        return TaskType.WANDER;
+    }
+
+    public bool IsHungry()
+    {
+        return currentHunger <= hungerThreshold;
+    }
+
+    public bool IsStarving()
+    {
+        return currentHunger <= starvationThreshold;
+    }
+
+    public float GetHungerPercentage()
+    {
+        return currentHunger / maxHunger;
+    }
+
+    public void EatMeal()
+    {
+        currentHunger = Mathf.Min(maxHunger, currentHunger + mealHungerRestore);
+        OnHungerChanged?.Invoke(currentHunger, maxHunger);
+    }
+
+    public float GetWorkSpeedMultiplier()
+    {
+        return workSpeedMultiplier;
+    }
 }
 
 namespace Characters.NPC
@@ -176,7 +258,7 @@ namespace Characters.NPC
             }
 
             // Determine if this NPC should get mutations
-            if(Random.value > mutationSpawnChance)
+            if(UnityEngine.Random.value > mutationSpawnChance)
             {
                 Debug.Log($"NPCMutationSystem: {settlerNPC.name} did not receive mutations (chance roll failed)");
                 return;
@@ -191,7 +273,7 @@ namespace Characters.NPC
             }
 
             // Determine number of mutations
-            int numMutations = Random.Range(minRandomMutations, maxRandomMutations + 1);
+            int numMutations = UnityEngine.Random.Range(minRandomMutations, maxRandomMutations + 1);
 
             if (allMutations.Count == 0) return;
 
@@ -200,13 +282,13 @@ namespace Characters.NPC
                 if (allMutations.Count == 0) break;
 
                 // Select a random mutation
-                int index = Random.Range(0, allMutations.Count);
+                int index = UnityEngine.Random.Range(0, allMutations.Count);
                 NPCMutationScriptableObj mutation = allMutations[index];
 
                 // Check rarity
                 if (mutation.rarity == ResourceRarity.RARE || mutation.rarity == ResourceRarity.LEGENDARY)
                 {
-                    if (Random.value > rareMutationChance)
+                    if (UnityEngine.Random.value > rareMutationChance)
                     {
                         continue;
                     }
@@ -245,7 +327,7 @@ namespace Characters.NPC
             // Instantiate and initialize the mutation effect
             if (mutation.prefab != null)
             {
-                GameObject effectObj = Object.Instantiate(mutation.prefab, settlerNPC.transform);
+                GameObject effectObj = GameObject.Instantiate(mutation.prefab, settlerNPC.transform);
                 BaseNPCMutationEffect effect = effectObj.GetComponent<BaseNPCMutationEffect>();
                 if (effect != null)
                 {
@@ -256,7 +338,7 @@ namespace Characters.NPC
                 else
                 {
                     Debug.LogError($"NPCMutationSystem: Mutation prefab {mutation.name} does not have a BaseNPCMutationEffect component");
-                    Object.Destroy(effectObj);
+                    GameObject.Destroy(effectObj);
                 }
             }
             else
@@ -279,7 +361,7 @@ namespace Characters.NPC
                 if (activeEffects.TryGetValue(mutation, out BaseNPCMutationEffect effect))
                 {
                     effect.OnUnequip();
-                    Object.Destroy(effect.gameObject);
+                    GameObject.Destroy(effect.gameObject);
                     activeEffects.Remove(mutation);
                 }
                 else

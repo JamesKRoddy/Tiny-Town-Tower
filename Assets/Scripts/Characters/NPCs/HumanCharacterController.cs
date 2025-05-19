@@ -55,9 +55,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public event Action<float, float> OnDamageTaken;
     public event Action<float, float> OnHeal;
     public event Action OnDeath;
-
-    public float Health { get => health; set => health = value; }
-    public float MaxHealth { get => maxHealth; set => maxHealth = value; }
     public CharacterType CharacterType => characterType;
 
     protected virtual void Awake()
@@ -463,4 +460,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     }
 
     #endregion
+
+    public float Health { get => health; set => health = value; }
+    public float MaxHealth { get => maxHealth; set => maxHealth = value; }
 }
