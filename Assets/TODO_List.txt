@@ -4,17 +4,13 @@ TODO Large things:
 
 _________________________________________________________________________
 
-When Im back:
-Refactor after making dirt pile a task
-Just have to make it use the stuff in the base class rather than in its own class
-Have issues swapping the work progress and cleaning times
-Have to make sure the player can also interact with it
-
 
 
 At the moment:
-Checking that the cleaning station works
-Have to see what the bins actually do!
+***Hunger system***
+Canteen building (just put prepared food infront of the cooking building and let npcs eat, building upgrades mean more food can be stored there)
+NPC hunger system (Gets hungry over time, eat when food is avalibe from above, will slow down work, get unhappy etc when hungry, will stop completely when starving)
+Farms to produce food
 
 
 
@@ -45,10 +41,7 @@ Repairing buildings: wait until damage is finished
 
 
 
-***Hunger system***
-Canteen building
-Able to select it and queue cooking items
-Farms to produce food
+
 
 
 
