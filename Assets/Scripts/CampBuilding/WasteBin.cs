@@ -36,6 +36,12 @@ public class WasteBin : Building
         currentCapacity = Mathf.Min(maxCapacity, currentCapacity + fillRate * Time.deltaTime);
     }
 
+    public void AddWaste(float amount)
+    {
+        if (!isOperational || isBeingEmptied) return;
+        currentCapacity = Mathf.Min(maxCapacity, currentCapacity + amount);
+    }
+
     public void StartEmptying()
     {
         isBeingEmptied = true;

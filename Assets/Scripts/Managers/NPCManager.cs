@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Characters.NPC.Mutations;
 using Characters.NPC;
+using System;
 
 namespace Managers
 {
@@ -15,6 +16,9 @@ namespace Managers
         [Header("NPC Tracking")]
         private List<SettlerNPC> activeNPCs = new List<SettlerNPC>();
         public int TotalNPCs => activeNPCs.Count;
+
+        // Event for NPC count changes
+        public event Action<int> OnNPCCountChanged;
 
         private void Awake()
         {
@@ -33,11 +37,7 @@ namespace Managers
             if (!activeNPCs.Contains(npc))
             {
                 activeNPCs.Add(npc);
-                // Notify CleanlinessManager of NPC count change
-                if (CampManager.Instance != null)
-                {
-                    CampManager.Instance.CleanlinessManager.OnNPCCountChanged(TotalNPCs);
-                }
+                OnNPCCountChanged?.Invoke(TotalNPCs);
             }
         }
 
@@ -45,11 +45,7 @@ namespace Managers
         {
             if (activeNPCs.Remove(npc))
             {
-                // Notify CleanlinessManager of NPC count change
-                if (CampManager.Instance != null)
-                {
-                    CampManager.Instance.CleanlinessManager.OnNPCCountChanged(TotalNPCs);
-                }
+                OnNPCCountChanged?.Invoke(TotalNPCs);
             }
         }
 

@@ -8,18 +8,15 @@ namespace Managers
         [Header("Cleanliness Settings")]
         [SerializeField] private float maxCleanliness = 100f;
         [ReadOnly, SerializeField] private float currentCleanliness = 100f;
-        [SerializeField] private float baseDirtinessRate = 0.1f;
-        [SerializeField] private float npcDirtinessMultiplier = 0.05f;
-        [SerializeField] private float fullToiletDirtinessMultiplier = 2f;
-        [SerializeField] private float fullBinDirtinessMultiplier = 1.5f;
+        [SerializeField] private float dirtPileSpawnInterval = 60f;
+        [SerializeField] private float npcDirtinessMultiplier = 0.05f; // How much each NPC increases dirt pile spawn chance
+        [SerializeField] private int maxDirtPiles = 10; // Maximum number of dirt piles allowed
+        private float lastDirtPileSpawnTime;
 
         [Header("Dirt Pile Settings")]
         [SerializeField] private GameObject dirtPilePrefab;
-        [SerializeField] private float dirtPileSpawnThreshold = 30f;
-        [SerializeField] private float dirtPileSpawnInterval = 60f;
-        private float lastDirtPileSpawnTime;
+        [SerializeField] private float dirtPileCleanlinessDecrease = 10f;
 
-        private Coroutine cleanlinessCoroutine;
         private List<DirtPileTask> activeDirtPiles = new List<DirtPileTask>();
         private List<Toilet> toilets = new List<Toilet>();
         private List<WasteBin> wasteBins = new List<WasteBin>();
@@ -32,71 +29,92 @@ namespace Managers
 
         public void Initialize()
         {
-            cleanlinessCoroutine = StartCoroutine(CleanlinessCoroutine());
             lastDirtPileSpawnTime = Time.time;
+            StartCoroutine(DirtPileSpawnCheckCoroutine());
+            
+            // Subscribe to NPC count changes
+            if (NPCManager.Instance != null)
+            {
+                NPCManager.Instance.OnNPCCountChanged += HandleNPCCountChanged;
+            }
         }
 
-        private System.Collections.IEnumerator CleanlinessCoroutine()
+        private void OnDestroy()
+        {
+            // Unsubscribe from NPC count changes
+            if (NPCManager.Instance != null)
+            {
+                NPCManager.Instance.OnNPCCountChanged -= HandleNPCCountChanged;
+            }
+        }
+
+        private void HandleNPCCountChanged(int newCount)
+        {
+            // NPC count changed, this will affect the spawn chance in CheckAndSpawnDirtPile
+            // No need to do anything here as the count is checked when spawning
+        }
+
+        private System.Collections.IEnumerator DirtPileSpawnCheckCoroutine()
         {
             WaitForSeconds wait = new WaitForSeconds(0.1f);
 
             while (true)
             {
-                float previousCleanliness = currentCleanliness;
-                float dirtinessRate = CalculateDirtinessRate();
-                currentCleanliness = Mathf.Max(0, currentCleanliness - dirtinessRate * 0.1f);
-                
-                if (previousCleanliness != currentCleanliness)
-                {
-                    OnCleanlinessChanged?.Invoke(GetCleanlinessPercentage());
-                }
-
-                // Check for dirt pile spawning
                 if (Time.time - lastDirtPileSpawnTime >= dirtPileSpawnInterval)
                 {
                     CheckAndSpawnDirtPile();
                     lastDirtPileSpawnTime = Time.time;
                 }
-
                 yield return wait;
             }
         }
 
-        private float CalculateDirtinessRate()
-        {
-            float rate = baseDirtinessRate;
-            
-            // Add NPC-based dirtiness
-            int npcCount = NPCManager.Instance.TotalNPCs;
-            rate += npcCount * npcDirtinessMultiplier;
-
-            // Add toilet-based dirtiness
-            foreach (var toilet in toilets)
-            {
-                if (toilet.IsFull())
-                {
-                    rate *= fullToiletDirtinessMultiplier;
-                }
-            }
-
-            // Add bin-based dirtiness
-            foreach (var bin in wasteBins)
-            {
-                if (bin.IsFull())
-                {
-                    rate *= fullBinDirtinessMultiplier;
-                }
-            }
-
-            return rate;
-        }
-
         private void CheckAndSpawnDirtPile()
         {
-            if (GetCleanlinessPercentage() <= dirtPileSpawnThreshold)
+            // Don't spawn if we've reached max dirt piles or cleanliness is zero
+            if (activeDirtPiles.Count >= maxDirtPiles || currentCleanliness <= 0)
             {
-                SpawnDirtPile();
+                Debug.Log($"Not spawning: Max piles reached: {activeDirtPiles.Count >= maxDirtPiles}, Cleanliness zero: {currentCleanliness <= 0}");
+                return;
             }
+
+            // Calculate spawn chance based on NPC count
+            float npcCount = NPCManager.Instance.TotalNPCs;
+            float spawnChance = 1f + (npcCount * npcDirtinessMultiplier);
+            Debug.Log($"Spawn chance: {spawnChance} (NPCs: {npcCount})");
+
+            // Only proceed if random roll succeeds
+            if (Random.value <= spawnChance)
+            {
+                Debug.Log("Spawning dirt pile");
+                // Try to find a waste bin with space
+                WasteBin availableBin = FindAvailableWasteBin();
+                
+                if (availableBin != null)
+                {
+                    Debug.Log("Adding waste to bin");
+                    // Add waste to the bin instead of spawning a dirt pile
+                    availableBin.AddWaste(dirtPileCleanlinessDecrease);
+                }
+                else
+                {
+                    Debug.Log("No available bins, spawning dirt pile");
+                    // No available bins, spawn a dirt pile
+                    SpawnDirtPile();
+                }
+            }
+        }
+
+        private WasteBin FindAvailableWasteBin()
+        {
+            foreach (var bin in wasteBins)
+            {
+                if (!bin.IsFull())
+                {
+                    return bin;
+                }
+            }
+            return null;
         }
 
         private void SpawnDirtPile()
@@ -111,6 +129,7 @@ namespace Managers
             if (dirtPile != null)
             {
                 activeDirtPiles.Add(dirtPile);
+                DecreaseCleanliness(dirtPileCleanlinessDecrease);
                 OnDirtPileSpawned?.Invoke(dirtPile);
             }
         }
@@ -201,9 +220,15 @@ namespace Managers
             }
         }
 
-        public void OnNPCCountChanged(int newCount)
+        private void DecreaseCleanliness(float amount)
         {
-            // NPC count changed, dirtiness rate will be updated in the next coroutine iteration
+            float previousCleanliness = currentCleanliness;
+            currentCleanliness = Mathf.Max(0, currentCleanliness - amount);
+            
+            if (previousCleanliness != currentCleanliness)
+            {
+                OnCleanlinessChanged?.Invoke(GetCleanlinessPercentage());
+            }
         }
 
         public void IncreaseCleanliness(float amount)
