@@ -7,7 +7,6 @@ public class WasteBin : Building
     [Header("Waste Bin Settings")]
     [SerializeField] private float maxCapacity = 100f;
     [SerializeField] private float currentCapacity = 0f;
-    [SerializeField] private float fillRate = 0.5f;
     [SerializeField] private float emptyTime = 5f;
     private bool isBeingEmptied = false;
     private BinCleaningTask cleaningTask;
@@ -29,17 +28,18 @@ public class WasteBin : Building
         }
     }
 
-    private void Update()
-    {
-        if (!isOperational || isBeingEmptied) return;
-
-        currentCapacity = Mathf.Min(maxCapacity, currentCapacity + fillRate * Time.deltaTime);
-    }
-
     public void AddWaste(float amount)
     {
         if (!isOperational || isBeingEmptied) return;
+        
+        float previousCapacity = currentCapacity;
         currentCapacity = Mathf.Min(maxCapacity, currentCapacity + amount);
+        
+        // Notify if the bin just became full
+        if (previousCapacity < maxCapacity && currentCapacity >= maxCapacity)
+        {
+            CampManager.Instance.CleanlinessManager.NotifyWasteBinFull(this);
+        }
     }
 
     public void StartEmptying()

@@ -18,11 +18,6 @@ public class DirtPileTask : WorkTask, IInteractive<DirtPileTask>
         workProgress = 0f;
     }
 
-    public void StopCleaning()
-    {
-        StopWorkCoroutine();
-    }
-
     protected override IEnumerator WorkCoroutine()
     {
         if (currentWorker == null) yield break;
@@ -50,13 +45,20 @@ public class DirtPileTask : WorkTask, IInteractive<DirtPileTask>
 
     private void CompleteCleaning()
     {
+        // Notify the CleanlinessManager first
         CampManager.Instance.CleanlinessManager.HandleDirtPileCleaned(this);
-        Destroy(gameObject);
+        
+        // Call base CompleteWork to trigger OnTaskCompleted event
+        base.CompleteWork();
+        
+        // Wait one frame to ensure all completion handlers have run
+        StartCoroutine(DestroyAfterCompletion());
     }
 
-    protected override void CompleteWork()
+    private IEnumerator DestroyAfterCompletion()
     {
-        CompleteCleaning();
+        yield return null;  // Wait one frame
+        Destroy(gameObject);
     }
 
     public override string GetTooltipText()

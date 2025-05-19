@@ -11,7 +11,6 @@ public class CleaningStation : Building
         base.Start();
         CampManager.Instance.CleanlinessManager.RegisterCleaningStation(this);
         cleaningTask = GetComponent<CleaningTask>();
-        cleaningTask.SetupTask(null);
     }
 
     protected override void OnDestroy()
@@ -20,25 +19,6 @@ public class CleaningStation : Building
         if (CampManager.Instance != null)
         {
             CampManager.Instance.CleanlinessManager.UnregisterCleaningStation(this);
-        }
-    }
-
-    private void Update()
-    {
-        if (!isOperational) return;
-
-        // If we have an assigned worker and they're not cleaning anything, find a new dirt pile
-        if (cleaningTask.IsAssigned() && cleaningTask.GetCurrentTarget() == null)
-        {
-            var activeDirtPiles = CampManager.Instance.CleanlinessManager.GetActiveDirtPiles();
-            foreach (var dirtPile in activeDirtPiles)
-            {
-                if (!dirtPile.IsOccupied)
-                {
-                    cleaningTask.SetupTask(dirtPile);
-                    break;
-                }
-            }
         }
     }
 } 

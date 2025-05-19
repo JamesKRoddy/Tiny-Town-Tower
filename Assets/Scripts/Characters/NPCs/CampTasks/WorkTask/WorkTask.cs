@@ -81,10 +81,8 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual method for NPC to perform the work task
     public virtual void PerformTask(HumanCharacterController npc)
     {
-        Debug.Log($"[WorkTask] Performing task {GetType().Name} with NPC {npc.name}");
         if (currentWorker == npc)
         {
-            Debug.Log($"[WorkTask] Starting work coroutine for {GetType().Name}");
             workCoroutine = StartCoroutine(WorkCoroutine());
 
             // Register electricity consumption when the task starts
@@ -308,7 +306,6 @@ public abstract class WorkTask : MonoBehaviour
     public virtual void QueueTask(object taskData)
     {
         taskQueue.Enqueue(taskData);
-        Debug.Log($"[WorkTask] Queueing task {taskData} for {GetType().Name} [Queue Count: {taskQueue.Count}]");
         
         // If we have a previous worker and no current worker, assign them to the new task
         if (currentWorker == null && taskQueue.Count == 1)
@@ -340,7 +337,6 @@ public abstract class WorkTask : MonoBehaviour
 
     protected void AddResourceToInventory(ResourceItemCount resourceItemCount)
     {
-        Debug.Log($"[WorkTask] Adding resource to inventory");
         PlayerInventory.Instance.AddItem(resourceItemCount.resourceScriptableObj, resourceItemCount.count);
     }
 

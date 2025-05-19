@@ -26,6 +26,12 @@ namespace Managers
         public event System.Action<float> OnCleanlinessChanged;
         public event System.Action<DirtPileTask> OnDirtPileSpawned;
         public event System.Action<DirtPileTask> OnDirtPileCleaned;
+        public event System.Action<WasteBin> OnWasteBinFull;
+
+        public void NotifyWasteBinFull(WasteBin bin)
+        {
+            OnWasteBinFull?.Invoke(bin);
+        }
 
         public void Initialize()
         {
@@ -74,31 +80,26 @@ namespace Managers
             // Don't spawn if we've reached max dirt piles or cleanliness is zero
             if (activeDirtPiles.Count >= maxDirtPiles || currentCleanliness <= 0)
             {
-                Debug.Log($"Not spawning: Max piles reached: {activeDirtPiles.Count >= maxDirtPiles}, Cleanliness zero: {currentCleanliness <= 0}");
                 return;
             }
 
             // Calculate spawn chance based on NPC count
             float npcCount = NPCManager.Instance.TotalNPCs;
             float spawnChance = 1f + (npcCount * npcDirtinessMultiplier);
-            Debug.Log($"Spawn chance: {spawnChance} (NPCs: {npcCount})");
 
             // Only proceed if random roll succeeds
             if (Random.value <= spawnChance)
             {
-                Debug.Log("Spawning dirt pile");
                 // Try to find a waste bin with space
                 WasteBin availableBin = FindAvailableWasteBin();
                 
                 if (availableBin != null)
                 {
-                    Debug.Log("Adding waste to bin");
                     // Add waste to the bin instead of spawning a dirt pile
                     availableBin.AddWaste(dirtPileCleanlinessDecrease);
                 }
                 else
                 {
-                    Debug.Log("No available bins, spawning dirt pile");
                     // No available bins, spawn a dirt pile
                     SpawnDirtPile();
                 }
@@ -190,6 +191,11 @@ namespace Managers
             if (!wasteBins.Contains(bin))
             {
                 wasteBins.Add(bin);
+                // Check if the bin is already full
+                if (bin.IsFull())
+                {
+                    NotifyWasteBinFull(bin);
+                }
             }
         }
 

@@ -52,7 +52,7 @@ public abstract class ManagerTask : WorkTask
         }
     }
 
-    protected virtual void HandleSubtaskCompleted()
+    public virtual void HandleSubtaskCompleted()
     {
         if (currentSubtask != null)
         {
