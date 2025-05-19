@@ -40,7 +40,7 @@ public class RobotCharacterController : HumanCharacterController
         if (currentWorkTask == null) return;
 
         Transform workLocation = currentWorkTask.WorkTaskTransform();
-        if (workLocation != currentWorkTask.transform)
+        if (workLocation != null && workLocation != currentWorkTask.transform)
         {
             // Move to work location
             Vector3 targetPosition = workLocation.position;

@@ -2,9 +2,10 @@ using UnityEngine;
 using Managers;
 using System.Collections;
 
-public class DirtPileTask : WorkTask
+public class DirtPileTask : WorkTask, IInteractive<DirtPileTask>
 {
     private const float CLEANING_DISTANCE = 1f;
+    private const float PLAYER_CLEAN_SPEED = 2f; // Player cleans faster than NPCs
 
     protected override void Start()
     {
@@ -76,5 +77,44 @@ public class DirtPileTask : WorkTask
             tooltip += "Needs cleaning\n";
         }
         return tooltip;
+    }
+
+    // IInteractive implementation
+    public DirtPileTask Interact()
+    {
+        if (!CanInteract()) return null;
+
+        // Start cleaning process for player
+        StartCleaning();
+        StartCoroutine(PlayerCleanCoroutine());
+        return this;
+    }
+
+    private IEnumerator PlayerCleanCoroutine()
+    {
+        while (workProgress < baseWorkTime)
+        {
+            workProgress += Time.deltaTime * PLAYER_CLEAN_SPEED;
+            yield return null;
+        }
+
+        CompleteCleaning();
+    }
+
+    public bool CanInteract()
+    {
+        // Can interact if not already being cleaned
+        return !IsOccupied;
+    }
+
+    public string GetInteractionText()
+    {
+        if (!CanInteract()) return "Cannot clean - already being cleaned";
+        return "Clean dirt pile";
+    }
+
+    object IInteractiveBase.Interact()
+    {
+        return Interact();
     }
 } 
