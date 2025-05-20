@@ -99,8 +99,11 @@ public class EatState : _TaskState
         // Eat the meal
         if (targetCanteen.HasAvailableMeals())
         {
-            targetCanteen.RemoveMeal();
-            npc.EatMeal();
+            CookingRecipeScriptableObj recipe = targetCanteen.RemoveMeal();
+            if (recipe != null)
+            {
+                npc.EatMeal(recipe);
+            }
         }
 
         // Return to wandering

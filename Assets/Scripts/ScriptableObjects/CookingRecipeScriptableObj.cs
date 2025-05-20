@@ -10,4 +10,6 @@ public class CookingRecipeScriptableObj : WorldItemBase
     public float cookingTime;
     public ResourceItemCount outputFood;
     public int outputAmount = 1;
+    [Min(0f)]
+    public float hungerRestoreAmount = 50f; // How much hunger this meal restores
 }

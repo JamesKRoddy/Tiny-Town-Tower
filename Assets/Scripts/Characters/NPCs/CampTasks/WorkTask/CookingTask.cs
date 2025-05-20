@@ -42,7 +42,7 @@ public class CookingTask : WorkTask
             {
                 if (canteenBuilding.CanStoreMoreMeals())
                 {
-                    canteenBuilding.AddMeal();
+                    canteenBuilding.AddMeal(currentRecipe);
                 }
                 else
                 {

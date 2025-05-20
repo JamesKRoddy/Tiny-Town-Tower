@@ -27,7 +27,6 @@ public class SettlerNPC : HumanCharacterController
     [SerializeField] private float hungerDecreaseRate = 1f; // Hunger points per second
     [SerializeField] private float hungerThreshold = 30f; // When to start looking for food
     [SerializeField] private float starvationThreshold = 10f; // When to stop working
-    [SerializeField] private float mealHungerRestore = 50f; // How much hunger is restored per meal
     [SerializeField] private float workSpeedMultiplier = 1f; // Current work speed multiplier based on hunger
 
     public event Action<float, float> OnHungerChanged; // Current hunger, max hunger
@@ -208,9 +207,19 @@ public class SettlerNPC : HumanCharacterController
         return currentHunger / maxHunger;
     }
 
-    public void EatMeal()
+    public void EatMeal(CookingRecipeScriptableObj recipe)
     {
-        currentHunger = Mathf.Min(maxHunger, currentHunger + mealHungerRestore);
+        // Base hunger restoration from the meal
+        float hungerRestore = recipe.hungerRestoreAmount;
+        
+        // If we have a recipe, we could potentially add bonuses or effects based on the recipe
+        if (recipe != null)
+        {
+            // TODO: Add any special effects or bonuses based on the recipe
+            // For now, we'll just use the recipe's hunger restoration
+        }
+        
+        currentHunger = Mathf.Min(maxHunger, currentHunger + hungerRestore);
         OnHungerChanged?.Invoke(currentHunger, maxHunger);
     }
 

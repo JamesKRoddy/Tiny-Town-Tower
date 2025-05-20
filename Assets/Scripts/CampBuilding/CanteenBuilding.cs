@@ -1,13 +1,27 @@
 using UnityEngine;
 using Managers;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(CookingTask))]
 public class CanteenBuilding : Building
 {
+    [System.Serializable]
+    private class StoredMeal
+    {
+        public CookingRecipeScriptableObj recipe;
+        public GameObject visualRepresentation;
+
+        public StoredMeal(CookingRecipeScriptableObj recipe, GameObject visualRepresentation)
+        {
+            this.recipe = recipe;
+            this.visualRepresentation = visualRepresentation;
+        }
+    }
+
     [Header("Canteen Settings")]
     [SerializeField] private int maxStoredMeals = 10;
     [SerializeField] private Transform foodStoragePoint; // Where the food will be visually stored
-    private int currentStoredMeals = 0;
+    private List<StoredMeal> storedMeals = new List<StoredMeal>();
 
     private CookingTask cookingTask;
 
@@ -33,30 +47,40 @@ public class CanteenBuilding : Building
 
     public bool HasAvailableMeals()
     {
-        return currentStoredMeals > 0;
+        return storedMeals.Count > 0;
     }
 
     public bool CanStoreMoreMeals()
     {
-        return currentStoredMeals < maxStoredMeals;
+        return storedMeals.Count < maxStoredMeals;
     }
 
-    public void AddMeal()
+    public void AddMeal(CookingRecipeScriptableObj recipe)
     {
         if (CanStoreMoreMeals())
         {
-            currentStoredMeals++;
-            // TODO: Spawn visual representation of food
+            // TODO: Spawn visual representation of food based on recipe
+            GameObject foodVisual = null; // Replace with actual food visual spawning
+            storedMeals.Add(new StoredMeal(recipe, foodVisual));
         }
     }
 
-    public void RemoveMeal()
+    public CookingRecipeScriptableObj RemoveMeal()
     {
-        if (currentStoredMeals > 0)
+        if (storedMeals.Count > 0)
         {
-            currentStoredMeals--;
+            StoredMeal meal = storedMeals[0];
+            storedMeals.RemoveAt(0);
+            
             // TODO: Remove visual representation of food
+            if (meal.visualRepresentation != null)
+            {
+                Destroy(meal.visualRepresentation);
+            }
+            
+            return meal.recipe;
         }
+        return null;
     }
 
     public Transform GetFoodStoragePoint()
@@ -66,7 +90,7 @@ public class CanteenBuilding : Building
 
     public int GetStoredMealsCount()
     {
-        return currentStoredMeals;
+        return storedMeals.Count;
     }
 
     public int GetMaxStoredMeals()
