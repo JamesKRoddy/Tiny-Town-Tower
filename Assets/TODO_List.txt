@@ -8,9 +8,9 @@ _________________________________________________________________________
 
 At the moment:
 ***Hunger system***
-Canteen building (just put prepared food infront of the cooking building and let npcs eat, building upgrades mean more food can be stored there)
-NPC hunger system (Gets hungry over time, eat when food is avalibe from above, will slow down work, get unhappy etc when hungry, will stop completely when starving)
 Farms to produce food
+Have to setup a farm buildings
+NPCs get seeds, go to a field, plant them, time passes as they grow, an npc has to tend them, water them etc or after too long of being left alont the crops die, dead crops need to be removed before planting more, after fully growing the crops are harvested
 
 
 
