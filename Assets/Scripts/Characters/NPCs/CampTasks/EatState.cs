@@ -40,8 +40,15 @@ public class EatState : _TaskState
         }
         else
         {
-            // No canteen with food available, go back to wandering
-            npc.ChangeTask(TaskType.WANDER);
+            // No canteen with food available, return to work if we were on break
+            if (npc.HasAssignedWork())
+            {
+                npc.ReturnToWork();
+            }
+            else
+            {
+                npc.ChangeTask(TaskType.WANDER);
+            }
         }
     }
 
@@ -106,8 +113,15 @@ public class EatState : _TaskState
             }
         }
 
-        // Return to wandering
-        npc.ChangeTask(TaskType.WANDER);
+        // Return to work if we were on break, otherwise wander
+        if (npc.HasAssignedWork())
+        {
+            npc.ReturnToWork();
+        }
+        else
+        {
+            npc.ChangeTask(TaskType.WANDER);
+        }
     }
 
     private CanteenBuilding FindNearestCanteen()

@@ -5,6 +5,7 @@ using Characters.NPC.Mutations;
 using Managers;
 using UnityEngine;
 using UnityEngine.AI;
+using Mono.Cecil.Cil;
 
 
 [RequireComponent(typeof(NavMeshAgent))]
@@ -14,6 +15,8 @@ public class SettlerNPC : HumanCharacterController
     public SettlerNPCScriptableObj nPCDataObj;
     [SerializeField, ReadOnly] internal NPCMutationSystem mutationSystem;
     private _TaskState currentState;
+    private WorkTask assignedWorkTask; // Track the assigned work task
+    private bool isOnBreak = false; // Track if NPC is on break
 
     [Header("Stamina")]
     public float maxStamina = 100f;
@@ -134,6 +137,14 @@ public class SettlerNPC : HumanCharacterController
     // Method to change states
     public void ChangeState(_TaskState newState)
     {
+
+        if(currentState == newState){
+            Debug.Log($"<color=blue> {gameObject.name} </color>: <color=yellow> {name} </color> is already in state <color=green> {newState?.GetTaskType().ToString()} </color>");
+            return;
+        }
+
+        Debug.Log($"<color=blue> {gameObject.name} </color>: Changing state from <color=red> {currentState?.GetTaskType().ToString() ?? "null"} </color> to <color=green> {newState?.GetTaskType().ToString() ?? "null"} </color>");
+
         if (currentState != null)
         {
             currentState.OnExitState(); // Exit the old state
@@ -156,8 +167,56 @@ public class SettlerNPC : HumanCharacterController
             return;
         }
 
+        assignedWorkTask = newTask; // Store the assigned task
         (taskStates[TaskType.WORK] as WorkState).AssignTask(newTask);
         ChangeTask(TaskType.WORK);
+    }
+
+    public void TakeBreak()
+    {
+        if (assignedWorkTask != null)
+        {
+            isOnBreak = true;
+            // Don't unassign from the task, just change state
+            ChangeTask(TaskType.EAT);
+        }
+        else
+        {
+            Debug.LogWarning($"<color=blue>{gameObject.name}</color>: Attempted to take break but no work task assigned");
+        }
+    }
+
+    public void ReturnToWork()
+    {
+        if (assignedWorkTask != null && isOnBreak)
+        {
+            isOnBreak = false;
+            
+            // Reassign the task to the WorkState
+            (taskStates[TaskType.WORK] as WorkState).AssignTask(assignedWorkTask);
+            
+            ChangeTask(TaskType.WORK);
+        }
+        else
+        {
+            Debug.LogWarning($"<color=blue>{gameObject.name}</color>: Cannot return to work - AssignedTask: {(assignedWorkTask != null ? assignedWorkTask.name : "null")}, IsOnBreak: {isOnBreak}");
+        }
+    }
+
+    public bool HasAssignedWork()
+    {
+        return assignedWorkTask != null;
+    }
+
+    public WorkTask GetAssignedWork()
+    {
+        return assignedWorkTask;
+    }
+
+    public void ClearAssignedWork()
+    {
+        assignedWorkTask = null;
+        isOnBreak = false;
     }
 
     // Method to change task and update state
@@ -165,6 +224,12 @@ public class SettlerNPC : HumanCharacterController
     {
         if (taskStates.ContainsKey(newTask))
         {
+            // If we're changing from work to eat, set isOnBreak
+            if (currentState != null && currentState.GetTaskType() == TaskType.WORK && newTask == TaskType.EAT)
+            {
+                isOnBreak = true;
+            }
+            
             ChangeState(taskStates[newTask]);
         }
         else
@@ -269,7 +334,6 @@ namespace Characters.NPC
             // Determine if this NPC should get mutations
             if(UnityEngine.Random.value > mutationSpawnChance)
             {
-                Debug.Log($"NPCMutationSystem: {settlerNPC.name} did not receive mutations (chance roll failed)");
                 return;
             }
 

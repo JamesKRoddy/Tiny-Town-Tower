@@ -241,6 +241,10 @@ public abstract class WorkTask : MonoBehaviour
                 // If starving, stop working
                 if (workSpeed <= 0)
                 {
+                    if (currentWorker is SettlerNPC settler)
+                    {
+                        settler.TakeBreak(); // Take a break instead of stopping work completely
+                    }
                     StopWorkCoroutine();
                     yield break;
                 }
@@ -374,6 +378,7 @@ public abstract class WorkTask : MonoBehaviour
                 {
                     if (currentWorker is SettlerNPC settler)
                     {
+                        settler.ClearAssignedWork(); // Clear the assigned work
                         settler.ChangeTask(TaskType.WANDER);
                     }
                     else if (currentWorker is RobotCharacterController robot)
@@ -393,7 +398,7 @@ public abstract class WorkTask : MonoBehaviour
                     AssignNPC(previousWorker);
                     if (previousWorker is SettlerNPC settler)
                     {
-                        settler.ChangeTask(TaskType.WORK);
+                        settler.StartWork(this);
                     }
                 }
             }

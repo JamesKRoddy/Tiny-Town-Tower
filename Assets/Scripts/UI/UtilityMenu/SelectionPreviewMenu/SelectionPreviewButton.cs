@@ -152,13 +152,11 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
             return;
         }
         
-        Debug.Log($"[SelectionPreviewButton] Starting cooking assignment for {recipe.objectName}");
         // Only assign work if this is the first recipe
         if (cookingTask.currentRecipe == null)
         {
             if (characterToAssign != null)
             {
-                Debug.Log($"[SelectionPreviewButton] Assigning character {characterToAssign.name} to cooking");
                 CampManager.Instance.WorkManager.AssignWorkToBuilding(cookingTask);
             }
             else
