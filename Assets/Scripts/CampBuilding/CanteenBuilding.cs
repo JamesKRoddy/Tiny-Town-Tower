@@ -45,6 +45,18 @@ public class CanteenBuilding : Building
         }
     }
 
+    public override void CompleteConstruction()
+    {
+        base.CompleteConstruction();
+        CookingManager.Instance.RegisterCanteen(this);
+    }
+
+    public override void StartDestruction()
+    {
+        CookingManager.Instance.UnregisterCanteen(this);
+        base.StartDestruction();
+    }
+
     public bool HasAvailableMeals()
     {
         return storedMeals.Count > 0;

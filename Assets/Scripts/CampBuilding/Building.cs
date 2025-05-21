@@ -99,7 +99,6 @@ public class Building : MonoBehaviour, IInteractive<Building>
     {
         isUnderConstruction = false;
         isOperational = true;
-        // Additional completion logic can be added in derived classes
     }
 
     public virtual void TakeDamage(float damage)
@@ -141,7 +140,7 @@ public class Building : MonoBehaviour, IInteractive<Building>
         OnBuildingUpgraded?.Invoke();
     }
 
-    public void StartDestruction()
+    public virtual void StartDestruction()
     {
         // Unassign any NPCs working on repair or upgrade tasks
         if (repairTask.IsOccupied)
@@ -246,7 +245,6 @@ public class Building : MonoBehaviour, IInteractive<Building>
 
     protected virtual void OnDestroy()
     {
-
     }
 }
 

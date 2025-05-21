@@ -129,10 +129,10 @@ public class EatState : _TaskState
         CanteenBuilding nearest = null;
         float nearestDistance = float.MaxValue;
 
-        var canteens = FindObjectsOfType<CanteenBuilding>();
+        var canteens = CookingManager.Instance.GetRegisteredCanteens();
         foreach (var canteen in canteens)
         {
-            if (canteen.HasAvailableMeals())
+            if (canteen.HasAvailableMeals() && canteen.IsOperational())
             {
                 float distance = Vector3.Distance(transform.position, canteen.transform.position);
                 if (distance < nearestDistance)

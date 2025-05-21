@@ -5,14 +5,51 @@ namespace Managers
 {
     public class CookingManager : MonoBehaviour
     {
+        public static CookingManager Instance { get; private set; }
+
         [SerializeField] private List<CookingRecipeScriptableObj> allRecipes = new List<CookingRecipeScriptableObj>();
         private List<CookingRecipeScriptableObj> availableRecipes = new List<CookingRecipeScriptableObj>();
         private List<CookingRecipeScriptableObj> unlockedRecipes = new List<CookingRecipeScriptableObj>();
+        private List<CanteenBuilding> registeredCanteens = new List<CanteenBuilding>();
+
+        private void Awake()
+        {
+            if (Instance == null)
+            {
+                Instance = this;
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
+        }
 
         public void Initialize()
         {
             availableRecipes = new List<CookingRecipeScriptableObj>(allRecipes);
             unlockedRecipes = new List<CookingRecipeScriptableObj>();
+            registeredCanteens = new List<CanteenBuilding>();
+        }
+
+        public void RegisterCanteen(CanteenBuilding canteen)
+        {
+            if (canteen != null && !registeredCanteens.Contains(canteen))
+            {
+                registeredCanteens.Add(canteen);
+            }
+        }
+
+        public void UnregisterCanteen(CanteenBuilding canteen)
+        {
+            if (canteen != null)
+            {
+                registeredCanteens.Remove(canteen);
+            }
+        }
+
+        public List<CanteenBuilding> GetRegisteredCanteens()
+        {
+            return new List<CanteenBuilding>(registeredCanteens);
         }
 
         public List<CookingRecipeScriptableObj> GetAllRecipes()
