@@ -3,12 +3,13 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 using Managers;
+using CampBuilding;
 using System;
 
 public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
 {
     private WorkTask workTask;
-    [SerializeField] private TMP_Text queueCountText;
+    [SerializeField] private TMP_Text countText;
     private CookingTask cookingTask;
     private ResourceUpgradeTask resourceUpgradeTask;
     private HumanCharacterController characterToAssign;
@@ -38,7 +39,7 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
                 name = research.objectName;
                 sprite = research.sprite;
             }
-            queueCountText.text = "";
+            countText.text = "";
         }
         else if (workTask is CookingTask)
         {
@@ -70,7 +71,7 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
         }
 
         base.SetupButton(item, sprite, name);
-        UpdateQueueCount();
+        UpdateCount();
     }
     
     protected override void OnButtonClicked()
@@ -88,7 +89,52 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
         else if (workTask is ResourceUpgradeTask)
         {
             HandleResourceUpgrade();
+        } else if (workTask is FarmingTask){
+            HandleFarming();
         }
+    }
+
+    private void HandleFarming()
+    {
+        var seed = data as ResourceScriptableObj;
+        if (seed == null)
+        {
+            Debug.LogWarning("[SelectionPreviewButton] Attempted to handle farming with null seed");
+            return;
+        }
+
+        var farmingTask = workTask as FarmingTask;
+        if (farmingTask == null)
+        {
+            Debug.LogWarning($"[SelectionPreviewButton] No FarmingTask found on building");
+            return;
+        }
+
+        // Check if we have the required seeds
+        if (PlayerInventory.Instance.GetItemCount(seed) < 1)
+        {
+            PlayerUIManager.Instance.DisplayUIErrorMessage($"Not enough {seed.objectName} seeds");
+            return;
+        }
+
+        // Set the required resources for the farming task
+        farmingTask.requiredResources = new ResourceItemCount[] { new ResourceItemCount(seed, 1) };
+
+        // Only assign work if the farm is empty
+        if (!farmingTask.GetComponent<FarmBuilding>().IsOccupied)
+        {
+            if (characterToAssign != null)
+            {
+                CampManager.Instance.WorkManager.AssignWorkToBuilding(farmingTask);
+            }
+            else
+            {
+                Debug.LogWarning("[SelectionPreviewButton] No character assigned for farming");
+            }
+        }
+        
+        // Don't close the menu, just update the preview
+        PlayerUIManager.Instance.selectionPreviewList.ReturnToGame();
     }
 
     private void HandleResearch()
@@ -169,7 +215,7 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
         
         // Don't close the menu, just update the preview
         PlayerUIManager.Instance.selectionPreviewList.UpdatePreview(data);
-        UpdateQueueCount();
+        UpdateCount();
     }
 
     private void HandleResourceUpgrade()
@@ -205,12 +251,12 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
         
         // Don't close the menu, just update the preview
         PlayerUIManager.Instance.selectionPreviewList.UpdatePreview(data);
-        UpdateQueueCount();
+        UpdateCount();
     }
 
-    private void UpdateQueueCount()
+    private void UpdateCount()
     {
-        if (queueCountText == null)
+        if (countText == null)
         {
             Debug.LogWarning("[SelectionPreviewButton] queueCountText is null");
             return;
@@ -244,8 +290,8 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
                 Debug.LogWarning("[SelectionPreviewButton] No current recipe found");
             }
             
-            queueCountText.text = cookingCount > 0 ? cookingCount.ToString() : "";
-            queueCountText.gameObject.SetActive(cookingCount > 0);
+            countText.text = cookingCount > 0 ? cookingCount.ToString() : "";
+            countText.gameObject.SetActive(cookingCount > 0);
         }
         else if (workTask is ResourceUpgradeTask upgradeTask)
         {
@@ -275,14 +321,24 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
                 Debug.LogWarning("[SelectionPreviewButton] No current upgrade found");
             }
             
-            queueCountText.text = upgradeCount > 0 ? upgradeCount.ToString() : "";
-            queueCountText.gameObject.SetActive(upgradeCount > 0);
+            countText.text = upgradeCount > 0 ? upgradeCount.ToString() : "";
+            countText.gameObject.SetActive(upgradeCount > 0);
+        }
+        else if (workTask is FarmingTask farmingTask)
+        {
+            var seed = data as ResourceScriptableObj;
+            if (seed != null)
+            {
+                int seedCount = PlayerInventory.Instance.GetItemCount(seed);
+                countText.text = seedCount > 0 ? seedCount.ToString() : "";
+                countText.gameObject.SetActive(seedCount > 0);
+            }
         }
     }
 
     private void OnTaskCompleted()
     {
-        UpdateQueueCount();
+        UpdateCount();
     }
 
     private void OnDestroy()

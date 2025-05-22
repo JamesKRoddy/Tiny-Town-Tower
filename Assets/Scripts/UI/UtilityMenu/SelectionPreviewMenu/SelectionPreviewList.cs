@@ -110,6 +110,12 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
                 description += $"\nUpgrade Time: {upgrade.upgradeTime} seconds";
                 return description;
             }
+        } else if (currentTask is FarmingTask){
+            var crop = item as ResourceScriptableObj;
+            if (crop != null)
+            {
+                return crop.description;
+            }
         }
         return string.Empty;
     }
