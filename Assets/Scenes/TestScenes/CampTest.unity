@@ -1022,6 +1022,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
+      propertyPath: inventoryList.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
+      propertyPath: inventoryList.Array.data[0].count
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
+      propertyPath: inventoryList.Array.data[0].resourceScriptableObj
+      value: 
+      objectReference: {fileID: 11400000, guid: 9a2ee96a3b540424babd72eb01b5ce73, type: 2}
     - target: {fileID: 7548868999691077552, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: m_Materials.Array.size
       value: 1

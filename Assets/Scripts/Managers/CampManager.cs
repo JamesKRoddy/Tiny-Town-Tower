@@ -41,7 +41,6 @@ namespace Managers
         public CookingManager CookingManager => cookingManager;
         public ResourceUpgradeManager ResourceUpgradeManager => resourceUpgradeManager;
         public ElectricityManager ElectricityManager => electricityManager;
-
         public FarmingManager FarmingManager => farmingManager;
 
         private void Awake()
@@ -67,6 +66,7 @@ namespace Managers
             if (workManager == null) workManager = gameObject.GetComponentInChildren<WorkManager>();
             if (buildManager == null) buildManager = gameObject.GetComponentInChildren<BuildManager>();
             if (electricityManager == null) electricityManager = gameObject.GetComponentInChildren<ElectricityManager>();
+            if (farmingManager == null) farmingManager = gameObject.GetComponentInChildren<FarmingManager>();
             // Log warnings for any missing managers
             if (researchManager == null) Debug.LogWarning("ResearchManager not found in scene!");
             if (cleanlinessManager == null) Debug.LogWarning("CleanlinessManager not found in scene!");
@@ -75,6 +75,7 @@ namespace Managers
             if (workManager == null) Debug.LogWarning("WorkManager not found in scene!");
             if (buildManager == null) Debug.LogWarning("BuildManager not found in scene!");
             if (electricityManager == null) Debug.LogWarning("ElectricityManager not found in scene!");
+            if (farmingManager == null) Debug.LogWarning("FarmingManager not found in scene!");
             // Initialize managers
             if (researchManager != null) researchManager.Initialize();
             if (cookingManager != null) cookingManager.Initialize();

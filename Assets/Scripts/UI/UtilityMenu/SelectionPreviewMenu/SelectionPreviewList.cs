@@ -116,19 +116,7 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
 
     public override string GetPreviewName(ScriptableObject item)
     {
-        if (currentTask is ResearchTask)
-        {
-            return (item as ResearchScriptableObj)?.objectName ?? string.Empty;
-        }
-        else if (currentTask is CookingTask)
-        {
-            return (item as CookingRecipeScriptableObj)?.objectName ?? string.Empty;
-        }
-        else if (currentTask is ResourceUpgradeTask)
-        {
-            return (item as ResourceUpgradeScriptableObj)?.objectName ?? string.Empty;
-        }
-        return string.Empty;
+        return (item as WorldItemBase)?.objectName;
     }
 
     public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(ScriptableObject item)
@@ -163,19 +151,7 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
 
     public override Sprite GetPreviewSprite(ScriptableObject item)
     {
-        if (currentTask is ResearchTask)
-        {
-            return (item as ResearchScriptableObj)?.sprite;
-        }
-        else if (currentTask is CookingTask)
-        {
-            return (item as CookingRecipeScriptableObj)?.sprite;
-        }
-        else if (currentTask is ResourceUpgradeTask)
-        {
-            return (item as ResourceUpgradeScriptableObj)?.sprite;
-        }
-        return null;
+        return (item as WorldItemBase)?.sprite;
     }
 
     public override void SetupItemButton(ScriptableObject item, GameObject button)
