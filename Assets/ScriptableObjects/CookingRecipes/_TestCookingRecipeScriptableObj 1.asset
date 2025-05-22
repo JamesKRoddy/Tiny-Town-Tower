@@ -19,6 +19,7 @@ MonoBehaviour:
   requiredIngredients: []
   cookingTime: 5
   outputFood:
-    resource: {fileID: 0}
+    resourceScriptableObj: {fileID: 0}
     count: 0
   outputAmount: 1
+  hungerRestoreAmount: 50
