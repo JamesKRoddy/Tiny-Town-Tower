@@ -153,7 +153,7 @@ public class Building : MonoBehaviour, IInteractive<Building>
         }
 
         // Get the destruction prefab
-        GameObject destructionPrefab = BuildManager.Instance.GetDestructionPrefab(buildingScriptableObj.size);
+        GameObject destructionPrefab = CampManager.Instance.BuildManager.GetDestructionPrefab(buildingScriptableObj.size);
         if (destructionPrefab != null)
         {
             // Create the destruction task object

@@ -48,12 +48,12 @@ public class CanteenBuilding : Building
     public override void CompleteConstruction()
     {
         base.CompleteConstruction();
-        CookingManager.Instance.RegisterCanteen(this);
+        CampManager.Instance.CookingManager.RegisterCanteen(this);
     }
 
     public override void StartDestruction()
     {
-        CookingManager.Instance.UnregisterCanteen(this);
+        CampManager.Instance.CookingManager.UnregisterCanteen(this);
         base.StartDestruction();
     }
 

@@ -44,7 +44,7 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
             PlayerInventory.Instance.RemoveItem(requiredItem.resourceScriptableObj, requiredItem.count);
         }
 
-        GameObject constructionSitePrefab = BuildManager.Instance.GetConstructionSitePrefab(selectedObject.size);
+        GameObject constructionSitePrefab = CampManager.Instance.BuildManager.GetConstructionSitePrefab(selectedObject.size);
         GameObject constructionSite = Instantiate(constructionSitePrefab, currentPreview.transform.position, Quaternion.identity);
 
         if (constructionSite.TryGetComponent(out ConstructionTask constructionSiteScript)){

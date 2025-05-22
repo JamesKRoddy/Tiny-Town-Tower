@@ -5,24 +5,10 @@ namespace Managers
 {
     public class CookingManager : MonoBehaviour
     {
-        public static CookingManager Instance { get; private set; }
-
         [SerializeField] private List<CookingRecipeScriptableObj> allRecipes = new List<CookingRecipeScriptableObj>();
         private List<CookingRecipeScriptableObj> availableRecipes = new List<CookingRecipeScriptableObj>();
         private List<CookingRecipeScriptableObj> unlockedRecipes = new List<CookingRecipeScriptableObj>();
         private List<CanteenBuilding> registeredCanteens = new List<CanteenBuilding>();
-
-        private void Awake()
-        {
-            if (Instance == null)
-            {
-                Instance = this;
-            }
-            else
-            {
-                Destroy(gameObject);
-            }
-        }
 
         public void Initialize()
         {
