@@ -80,6 +80,10 @@ public class CharacterInventory : MonoBehaviour
         return inventoryList;
     }
 
+    public List<ResourceScriptableObj> GetAllItemsOfCategory(ResourceCategory resourceCategory){
+        return inventoryList.Where(i => i.resourceScriptableObj.category == resourceCategory).Select(i => i.resourceScriptableObj).ToList();
+    }
+
     #endregion
 
     #region NPC_Weapon

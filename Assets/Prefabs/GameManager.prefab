@@ -174,13 +174,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxCleanliness: 100
   currentCleanliness: 100
-  baseDirtinessRate: 0.1
+  dirtPileSpawnInterval: 5
   npcDirtinessMultiplier: 0.05
-  fullToiletDirtinessMultiplier: 2
-  fullBinDirtinessMultiplier: 1.5
-  dirtPilePrefab: {fileID: 0}
-  dirtPileSpawnThreshold: 30
-  dirtPileSpawnInterval: 60
+  maxDirtPiles: 10
+  dirtPilePrefab: {fileID: 3294733483711447885, guid: d66f9c826f9fb9c42a38fe7508bfde35, type: 3}
+  dirtPileCleanlinessDecrease: 10
 --- !u!1 &1370869420154002683
 GameObject:
   m_ObjectHideFlags: 0
@@ -695,6 +693,7 @@ Transform:
   - {fileID: 1841912673632380842}
   - {fileID: 5968417578407724118}
   - {fileID: 2472993140973372753}
+  - {fileID: 6426126539344263338}
   m_Father: {fileID: 4686915863895893509}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2800147835243380111
@@ -990,6 +989,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: afef9195e37c3ff41b2d1b6a40cbca7b, type: 2}
   - {fileID: 11400000, guid: ca0521093fdd8a545acc6ba406f41798, type: 2}
   - {fileID: 11400000, guid: 7bbd785e8bc86ee428ebb8c9a7126145, type: 2}
+  - {fileID: 11400000, guid: e4d284cd3c502834ba8775cf60430499, type: 2}
   constructionSiteMappings:
   - gridSize: {x: 1, y: 1}
     constructionSitePrefab: {fileID: 6308355632358144236, guid: 1f8c0a42a7bfa844784127d7e55f4c88, type: 3}
@@ -1004,3 +1004,47 @@ MonoBehaviour:
     destructionPrefab: {fileID: 7583506354027141791, guid: 8ba32c953c58fe44eb8f98f0cb0816df, type: 3}
   - gridSize: {x: 3, y: 3}
     destructionPrefab: {fileID: 4148604766521998765, guid: 261d26f2b8cdf6f40834bbd12dc1a6e2, type: 3}
+--- !u!1 &8937295529231746835
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6426126539344263338}
+  - component: {fileID: 1883302859053038256}
+  m_Layer: 0
+  m_Name: FarmingManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6426126539344263338
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8937295529231746835}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3868888678722008520}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1883302859053038256
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8937295529231746835}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2bcf1d55019ed8d47bd4ba22f1c4ef7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

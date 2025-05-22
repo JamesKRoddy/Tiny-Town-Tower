@@ -15,7 +15,7 @@ public class GatherTask : WorkTask
     protected override void CompleteWork()
     {   
         // Add gathered resources to player inventory
-        CampManager.Instance.PlayerInventory.AddItem(resource, resourceAmount);
+        PlayerInventory.Instance.AddItem(resource, resourceAmount);
         Debug.Log($"Gathering completed! Added {resourceAmount} {resource.objectName}");
         
         base.CompleteWork();

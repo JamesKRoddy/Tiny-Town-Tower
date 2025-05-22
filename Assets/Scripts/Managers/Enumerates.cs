@@ -188,6 +188,7 @@ public enum ResourceCategory //TODO: Use enum for resource categories for invent
     WEAPONS,
     BASIC_BUILDING_MATERIAL,
     AMMO,
+    CROP_SEED,
     QUEST_ITEM
 }
 

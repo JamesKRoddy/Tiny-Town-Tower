@@ -40,6 +40,9 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
         else if (currentTask is ResourceUpgradeTask)
         {
             return CampManager.Instance.ResourceUpgradeManager.GetAllUpgrades();
+        } else if (currentTask is FarmingTask)
+        {
+            return CampManager.Instance.FarmingManager.GetAllCrops();
         }
         return new List<ScriptableObject>();
     }

@@ -31,16 +31,18 @@ namespace Managers
         private CookingManager cookingManager;
         private ResourceUpgradeManager resourceUpgradeManager;
         private ElectricityManager electricityManager;
+        private FarmingManager farmingManager;
 
         // Public access to other managers
         public ResearchManager ResearchManager => researchManager;
         public CleanlinessManager CleanlinessManager => cleanlinessManager;
-        public PlayerInventory PlayerInventory => PlayerInventory.Instance;
         public WorkManager WorkManager => workManager;
         public BuildManager BuildManager => buildManager;
         public CookingManager CookingManager => cookingManager;
         public ResourceUpgradeManager ResourceUpgradeManager => resourceUpgradeManager;
         public ElectricityManager ElectricityManager => electricityManager;
+
+        public FarmingManager FarmingManager => farmingManager;
 
         private void Awake()
         {
@@ -79,6 +81,7 @@ namespace Managers
             if (resourceUpgradeManager != null) resourceUpgradeManager.Initialize();
             if (electricityManager != null) electricityManager.Initialize();
             if (cleanlinessManager != null) cleanlinessManager.Initialize();
+            if (farmingManager != null) farmingManager.Initialize();
         }
 
     } 

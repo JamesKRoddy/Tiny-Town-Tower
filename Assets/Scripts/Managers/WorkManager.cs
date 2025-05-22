@@ -257,6 +257,23 @@ namespace Managers
                         workTask = task
                     });
                 }
+                else if (task is FarmingTask)
+                {
+                    // For farming tasks, show the farming selection screen
+                    options.Add(new SelectionPopup.SelectionOption
+                    {
+                        optionName = "Farm",
+                        onSelected = () => {
+                            if(!task.IsTaskCompleted){
+                                characterToAssign.StartWork(task);
+                            }
+                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, characterToAssign);
+                            PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+                        },
+                        canSelect = () => true,
+                        workTask = task
+                    });
+                }
                 else
                 {
                     // For other tasks, show the normal work assignment

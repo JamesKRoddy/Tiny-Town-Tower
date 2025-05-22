@@ -206,18 +206,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: GameManager
       objectReference: {fileID: 0}
-    - target: {fileID: 2621122233910451308, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: allMutations.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2621122233910451308, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: 'allMutations.Array.data[0]'
-      value: 
-      objectReference: {fileID: 11400000, guid: 1b625b9d8abe06345a1c73f38c0ff940, type: 2}
-    - target: {fileID: 2800147835243380111, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: currentElectricity
-      value: 1000
-      objectReference: {fileID: 0}
     - target: {fileID: 4686915863895893509, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -270,10 +258,6 @@ PrefabInstance:
       propertyPath: dirtPilePrefab
       value: 
       objectReference: {fileID: 3294733483711447885, guid: d66f9c826f9fb9c42a38fe7508bfde35, type: 3}
-    - target: {fileID: 8790787139558064541, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: baseDirtinessRate
-      value: 5
-      objectReference: {fileID: 0}
     - target: {fileID: 8790787139558064541, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: dirtPileSpawnInterval
       value: 5
