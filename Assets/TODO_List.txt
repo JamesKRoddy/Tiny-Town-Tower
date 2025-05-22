@@ -9,7 +9,8 @@ _________________________________________________________________________
 At the moment:
 ***Hunger system***
 
-Setup selection menu for selecting and planting seeds
+Have to check if NPCs automatically stop farming after its complete
+Have to check what happens with dead plants, so unassign NPCs while farming
 
 Maybe expand on the tasks to work with the NPC Work state to change animations, moving around to different point etc. Can be used on the farm to switch between planting/watering/harvesting/digging up old plants
 

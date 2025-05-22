@@ -9,12 +9,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fffb52b3d2a52944aafbf14c5b6debab, type: 3}
+  m_Script: {fileID: 11500000, guid: 9a1ac472374c00943ad21416dc5f24a0, type: 3}
   m_Name: _TestCropSeed
   m_EditorClassIdentifier: 
   objectName: _TestCropSeed
-  description: _TestCropSeed desc
+  description: '_TestCropSeed Desc
+
+'
   sprite: {fileID: 0}
   category: 7
   rarity: 0
   prefab: {fileID: 0}
+  cropToGrow: {fileID: 0}
+  growthRate: 10
+  yieldAmount: 10
