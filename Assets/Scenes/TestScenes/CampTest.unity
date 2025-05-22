@@ -258,6 +258,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: buildingScriptableObjs.Array.size
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: 'buildingScriptableObjs.Array.data[10]'
+      value: 
+      objectReference: {fileID: 11400000, guid: e4d284cd3c502834ba8775cf60430499, type: 2}
     - target: {fileID: 8790787139558064541, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: dirtPilePrefab
       value: 
@@ -1102,7 +1110,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4293730999149118539, guid: 7fba0b97e93f1164daa30fcdc523d076, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

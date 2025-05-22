@@ -14,7 +14,6 @@ public class FarmingTask : WorkTask
     [SerializeField] private int harvestAmount = 3;
 
     private FarmBuilding farmBuilding;
-    private FarmPlot currentPlot;
     private FarmingAction currentAction = FarmingAction.None;
 
     private enum FarmingAction
@@ -38,15 +37,7 @@ public class FarmingTask : WorkTask
 
     protected override IEnumerator WorkCoroutine()
     {
-        if (currentPlot == null)
-        {
-            DetermineNextAction();
-        }
-
-        if (currentPlot == null)
-        {
-            yield break;
-        }
+        DetermineNextAction();
 
         switch (currentAction)
         {
@@ -64,40 +55,35 @@ public class FarmingTask : WorkTask
                 break;
         }
 
-        currentPlot = null;
         currentAction = FarmingAction.None;
         CompleteWork();
     }
 
     private void DetermineNextAction()
     {
-        // Priority order: Clear dead plots -> Harvest ready plots -> Tend needy plots -> Plant new crops
-        currentPlot = farmBuilding.GetDeadPlot();
-        if (currentPlot != null)
+        // Priority order: Clear dead crop -> Harvest ready crop -> Tend needy crop -> Plant new crop
+        if (farmBuilding.IsDead)
         {
             currentAction = FarmingAction.Clearing;
             baseWorkTime = clearingTime;
             return;
         }
 
-        currentPlot = farmBuilding.GetPlotNeedingHarvest();
-        if (currentPlot != null)
+        if (farmBuilding.IsReadyForHarvest)
         {
             currentAction = FarmingAction.Harvesting;
             baseWorkTime = harvestingTime;
             return;
         }
 
-        currentPlot = farmBuilding.GetPlotNeedingTending();
-        if (currentPlot != null)
+        if (farmBuilding.NeedsTending)
         {
             currentAction = FarmingAction.Tending;
             baseWorkTime = tendingTime;
             return;
         }
 
-        currentPlot = farmBuilding.GetAvailablePlot();
-        if (currentPlot != null)
+        if (!farmBuilding.IsOccupied)
         {
             currentAction = FarmingAction.Planting;
             baseWorkTime = plantingTime;
@@ -122,7 +108,7 @@ public class FarmingTask : WorkTask
 
         // Consume seeds and plant crop
         ConsumeResources();
-        currentPlot.PlantCrop(requiredResources[0].resourceScriptableObj);
+        farmBuilding.PlantCrop(requiredResources[0].resourceScriptableObj);
     }
 
     private IEnumerator TendingCoroutine()
@@ -133,7 +119,7 @@ public class FarmingTask : WorkTask
             yield return null;
         }
 
-        currentPlot.TendPlot();
+        farmBuilding.TendPlot();
     }
 
     private IEnumerator HarvestingCoroutine()
@@ -147,13 +133,13 @@ public class FarmingTask : WorkTask
         // Create harvested resources
         for (int i = 0; i < harvestAmount; i++)
         {
-            Resource resource = Instantiate(currentPlot.plantedCrop.prefab, 
-                currentPlot.plotTransform.position + Random.insideUnitSphere, 
+            Resource resource = Instantiate(farmBuilding.PlantedCrop.prefab, 
+                farmBuilding.CropPoint.position + Random.insideUnitSphere, 
                 Quaternion.identity).GetComponent<Resource>();
-            resource.Initialize(currentPlot.plantedCrop);
+            resource.Initialize(farmBuilding.PlantedCrop);
         }
 
-        currentPlot.ClearPlot();
+        farmBuilding.ClearPlot();
     }
 
     private IEnumerator ClearingCoroutine()
@@ -164,40 +150,33 @@ public class FarmingTask : WorkTask
             yield return null;
         }
 
-        currentPlot.ClearPlot();
+        farmBuilding.ClearPlot();
     }
 
     public override string GetTooltipText()
     {
         if (!showTooltip) return string.Empty;
 
-        string tooltip = "Farm Plot\n";
+        string tooltip = "Farm\n";
         
-        if (currentPlot != null)
+        switch (currentAction)
         {
-            switch (currentAction)
-            {
-                case FarmingAction.Planting:
-                    tooltip += "Action: Planting\n";
-                    break;
-                case FarmingAction.Tending:
-                    tooltip += "Action: Tending\n";
-                    break;
-                case FarmingAction.Harvesting:
-                    tooltip += "Action: Harvesting\n";
-                    break;
-                case FarmingAction.Clearing:
-                    tooltip += "Action: Clearing Dead Crops\n";
-                    break;
-            }
+            case FarmingAction.Planting:
+                tooltip += "Action: Planting\n";
+                break;
+            case FarmingAction.Tending:
+                tooltip += "Action: Tending\n";
+                break;
+            case FarmingAction.Harvesting:
+                tooltip += "Action: Harvesting\n";
+                break;
+            case FarmingAction.Clearing:
+                tooltip += "Action: Clearing Dead Crop\n";
+                break;
+            default:
+                tooltip += "No current action\n";
+                break;
         }
-        else
-        {
-            tooltip += "No current action\n";
-        }
-
-        tooltip += $"Total Plots: {farmBuilding.GetTotalPlots()}\n";
-        tooltip += $"Occupied Plots: {farmBuilding.GetOccupiedPlots()}\n";
 
         if (requiredResources != null && requiredResources.Length > 0)
         {

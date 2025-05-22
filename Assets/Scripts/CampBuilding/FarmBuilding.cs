@@ -9,9 +9,15 @@ namespace CampBuilding
     public class FarmBuilding : Building
     {
         [Header("Farm Settings")]
-        [SerializeField] private int maxFarmPlots = 4;
-        [SerializeField] private Transform[] farmPlotPoints; // Points where crops can be planted
-        private List<FarmPlot> farmPlots = new List<FarmPlot>();
+        [SerializeField] private Transform cropPoint; // Where the crop will be planted
+        private ResourceScriptableObj plantedCrop;
+        private float growthProgress;
+        private float timeSinceLastTended;
+        private bool isOccupied;
+        private bool isDead;
+
+        private const float MAX_TIME_WITHOUT_TENDING = 60f; // 1 minute without tending before death
+        private const float TENDING_THRESHOLD = 30f; // Need tending every 30 seconds
 
         private FarmingTask farmingTask;
 
@@ -25,26 +31,13 @@ namespace CampBuilding
         {
             base.SetupBuilding(buildingScriptableObj);
             
-            // Setup farm plot points if not set
-            if (farmPlotPoints == null || farmPlotPoints.Length == 0)
+            // Setup crop point if not set
+            if (cropPoint == null)
             {
-                farmPlotPoints = new Transform[maxFarmPlots];
-                for (int i = 0; i < maxFarmPlots; i++)
-                {
-                    GameObject plotPoint = new GameObject($"FarmPlot_{i}");
-                    plotPoint.transform.SetParent(transform);
-                    // Arrange plots in a grid pattern
-                    float x = (i % 2) * 2f - 1f;
-                    float z = (i / 2) * 2f - 1f;
-                    plotPoint.transform.localPosition = new Vector3(x, 0, z);
-                    farmPlotPoints[i] = plotPoint.transform;
-                }
-            }
-
-            // Initialize farm plots
-            for (int i = 0; i < maxFarmPlots; i++)
-            {
-                farmPlots.Add(new FarmPlot(farmPlotPoints[i]));
+                GameObject point = new GameObject("CropPoint");
+                point.transform.SetParent(transform);
+                point.transform.localPosition = new Vector3(0, 0, 0);
+                cropPoint = point.transform;
             }
         }
 
@@ -58,65 +51,6 @@ namespace CampBuilding
         {
             // Unregister from any managers
             base.StartDestruction();
-        }
-
-        public FarmPlot GetAvailablePlot()
-        {
-            return farmPlots.Find(plot => !plot.IsOccupied);
-        }
-
-        public FarmPlot GetPlotNeedingTending()
-        {
-            return farmPlots.Find(plot => plot.NeedsTending);
-        }
-
-        public FarmPlot GetPlotNeedingHarvest()
-        {
-            return farmPlots.Find(plot => plot.IsReadyForHarvest);
-        }
-
-        public FarmPlot GetDeadPlot()
-        {
-            return farmPlots.Find(plot => plot.IsDead);
-        }
-
-        public int GetTotalPlots()
-        {
-            return farmPlots.Count;
-        }
-
-        public int GetOccupiedPlots()
-        {
-            return farmPlots.Count(plot => plot.IsOccupied);
-        }
-    }
-
-    // Helper class to manage individual farm plots
-    public class FarmPlot
-    {
-        public Transform plotTransform;
-        public ResourceScriptableObj plantedCrop;
-        public float growthProgress;
-        public float timeSinceLastTended;
-        public bool isOccupied;
-        public bool isDead;
-
-        private const float MAX_TIME_WITHOUT_TENDING = 60f; // 1 minute without tending before death
-        private const float TENDING_THRESHOLD = 30f; // Need tending every 30 seconds
-
-        public FarmPlot(Transform transform)
-        {
-            plotTransform = transform;
-            Reset();
-        }
-
-        public void Reset()
-        {
-            plantedCrop = null;
-            growthProgress = 0f;
-            timeSinceLastTended = 0f;
-            isOccupied = false;
-            isDead = false;
         }
 
         public void PlantCrop(ResourceScriptableObj crop)
@@ -152,12 +86,18 @@ namespace CampBuilding
 
         public void ClearPlot()
         {
-            Reset();
+            plantedCrop = null;
+            growthProgress = 0f;
+            timeSinceLastTended = 0f;
+            isOccupied = false;
+            isDead = false;
         }
 
         public bool IsOccupied => isOccupied;
         public bool IsDead => isDead;
         public bool NeedsTending => isOccupied && !isDead && timeSinceLastTended >= TENDING_THRESHOLD;
         public bool IsReadyForHarvest => isOccupied && !isDead && growthProgress >= 100f;
+        public ResourceScriptableObj PlantedCrop => plantedCrop;
+        public Transform CropPoint => cropPoint;
     }
 } 
