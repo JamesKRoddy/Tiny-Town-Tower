@@ -20,6 +20,6 @@ MonoBehaviour:
   category: 7
   rarity: 0
   prefab: {fileID: 0}
-  cropToGrow: {fileID: 0}
-  growthRate: 10
+  cropToGrow: {fileID: 11400000, guid: 74701f8e255f24a4980777d43c0b6edf, type: 2}
+  growthRate: 1
   yieldAmount: 10

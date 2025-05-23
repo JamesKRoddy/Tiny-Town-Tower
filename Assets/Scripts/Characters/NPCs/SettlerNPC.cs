@@ -163,6 +163,7 @@ public class SettlerNPC : HumanCharacterController
 
     public override void PlayWorkAnimation(string animationName)
     {
+        Debug.Log($"<color=blue> {gameObject.name} </color>: Playing work animation <color=green> {animationName} </color> at layer <color=red> {(taskStates[TaskType.WORK] as WorkState).workLayerIndex} </color>");
         animator.Play(animationName, (taskStates[TaskType.WORK] as WorkState).workLayerIndex);
     }
 

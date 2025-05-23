@@ -17,6 +17,7 @@ public class FarmingTask : WorkTask
     private FarmBuilding farmBuilding;
     private FarmingAction currentAction = FarmingAction.None;
     private float lastTendingTime = 0f;
+    private Coroutine currentActionCoroutine;
 
     private enum FarmingAction
     {
@@ -45,7 +46,6 @@ public class FarmingTask : WorkTask
         {
             currentAction = FarmingAction.Clearing;
             baseWorkTime = clearingTime;
-            Debug.Log($"<color=red>[FarmingTask] Found dead crop, will clear it</color>");
             return;
         }
 
@@ -53,7 +53,6 @@ public class FarmingTask : WorkTask
         {
             currentAction = FarmingAction.Harvesting;
             baseWorkTime = harvestingTime;
-            Debug.Log($"<color=yellow>[FarmingTask] Crop ready for harvest</color>");
             return;
         }
 
@@ -64,11 +63,9 @@ public class FarmingTask : WorkTask
             {
                 currentAction = FarmingAction.Planting;
                 baseWorkTime = plantingTime;
-                Debug.Log($"<color=blue>[FarmingTask] Farm is empty, ready for planting</color>");
             }
             else
             {
-                Debug.Log($"<color=orange>[FarmingTask] No seeds available, stopping farming task</color>");
                 CompleteWork();
                 return;
             }
@@ -83,7 +80,6 @@ public class FarmingTask : WorkTask
             {
                 currentAction = FarmingAction.Tending;
                 baseWorkTime = tendingTime;
-                Debug.Log($"<color=orange>[FarmingTask] Crop needs immediate tending</color>");
                 return;
             }
             
@@ -93,18 +89,15 @@ public class FarmingTask : WorkTask
                 currentAction = FarmingAction.Tending;
                 baseWorkTime = tendingTime;
                 lastTendingTime = Time.time;
-                Debug.Log($"<color=orange>[FarmingTask] Performing periodic tending</color>");
                 return;
             }
 
             currentAction = FarmingAction.None;
-            Debug.Log($"<color=cyan>[FarmingTask] Crop is growing, next tending in {tendingInterval - (Time.time - lastTendingTime):F1} seconds</color>");
             return;
         }
 
         // If we get here, there's nothing to do right now
         currentAction = FarmingAction.None;
-        Debug.Log($"<color=cyan>[FarmingTask] No action needed</color>");
     }
 
     protected override IEnumerator WorkCoroutine()
@@ -117,36 +110,53 @@ public class FarmingTask : WorkTask
             // If no action is needed, wait a bit and check again
             if (currentAction == FarmingAction.None)
             {
-                Debug.Log($"<color=cyan>[FarmingTask] No immediate action needed, waiting...</color>");
                 yield return new WaitForSeconds(5f); // Longer wait time when no action needed
                 continue;
             }
 
             Debug.Log($"<color=cyan>[FarmingTask] Starting {currentAction} action</color>");
 
-            switch (currentAction)
+            // Stop any existing action coroutine
+            if (currentActionCoroutine != null)
             {
+                StopCoroutine(currentActionCoroutine);
+                currentActionCoroutine = null;
+            }
+
+            // Start and wait for the current action to complete
+            switch (currentAction)
+            {                
                 case FarmingAction.Planting:
-                    yield return StartCoroutine(PlantingCoroutine());
+                    Debug.Log($"<color=cyan>[FarmingTask] Starting Planting action</color>");
+                    currentActionCoroutine = StartCoroutine(PlantingCoroutine());
+                    yield return currentActionCoroutine;
+                    currentActionCoroutine = null;
                     break;
                 case FarmingAction.Tending:
-                    yield return StartCoroutine(TendingCoroutine());
+                    Debug.Log($"<color=cyan>[FarmingTask] Starting Tending action</color>");
+                    currentActionCoroutine = StartCoroutine(TendingCoroutine());
+                    yield return currentActionCoroutine;
+                    currentActionCoroutine = null;
                     break;
                 case FarmingAction.Harvesting:
-                    yield return StartCoroutine(HarvestingCoroutine());
+                    Debug.Log($"<color=cyan>[FarmingTask] Starting Harvesting action</color>");
+                    currentActionCoroutine = StartCoroutine(HarvestingCoroutine());
+                    yield return currentActionCoroutine;
+                    currentActionCoroutine = null;
                     break;
                 case FarmingAction.Clearing:
-                    yield return StartCoroutine(ClearingCoroutine());
+                    Debug.Log($"<color=cyan>[FarmingTask] Starting Clearing action</color>");
+                    currentActionCoroutine = StartCoroutine(ClearingCoroutine());
+                    yield return currentActionCoroutine;
+                    currentActionCoroutine = null;
                     break;
             }
 
-            Debug.Log($"<color=green>[FarmingTask] Completed {currentAction} action</color>");
             currentAction = FarmingAction.None;
 
             // If the farm is empty and we don't have seeds, stop farming
             if (!farmBuilding.IsOccupied && !HasRequiredResources())
             {
-                Debug.Log($"<color=orange>[FarmingTask] No seeds available, stopping farming task</color>");
                 CompleteWork();
                 yield break;
             }
@@ -156,17 +166,25 @@ public class FarmingTask : WorkTask
         }
     }
 
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+        if (currentActionCoroutine != null)
+        {
+            StopCoroutine(currentActionCoroutine);
+            currentActionCoroutine = null;
+        }
+    }
+
     private IEnumerator PlantingCoroutine()
     {
         // Check if we have seeds
         if (!HasRequiredResources())
         {
-            Debug.Log($"<color=red>[FarmingTask] Not enough seeds to plant</color>");
             CompleteWork();
             yield break;
         }
 
-        Debug.Log($"<color=blue>[FarmingTask] Starting to plant {requiredResources[0].resourceScriptableObj.objectName}</color>");
         if (currentWorker != null)
         {
             taskAnimation = TaskAnimation.PLANTING_SEEDS;
@@ -183,12 +201,10 @@ public class FarmingTask : WorkTask
         // Consume seeds and plant crop
         ConsumeResources();
         farmBuilding.PlantCrop(requiredResources[0].resourceScriptableObj);
-        Debug.Log($"<color=green>[FarmingTask] Successfully planted {requiredResources[0].resourceScriptableObj.objectName}</color>");
     }
 
     private IEnumerator TendingCoroutine()
     {
-        Debug.Log($"<color=orange>[FarmingTask] Starting to tend crop</color>");
         if (currentWorker != null)
         {
             taskAnimation = TaskAnimation.WATERING_PLANTS;
@@ -202,13 +218,10 @@ public class FarmingTask : WorkTask
         }
 
         farmBuilding.TendPlot();
-        Debug.Log($"<color=green>[FarmingTask] Successfully tended crop</color>");
     }
 
     private IEnumerator HarvestingCoroutine()
     {
-        Debug.Log($"<color=yellow>[FarmingTask] Starting to harvest crop</color>");
-        
         // Stop growth when harvesting starts
         farmBuilding.StartHarvesting();
         
@@ -246,16 +259,7 @@ public class FarmingTask : WorkTask
             if (PlayerInventory.Instance != null)
             {
                 PlayerInventory.Instance.AddItem(harvestedCrop, yieldAmount);
-                Debug.Log($"<color=green>[FarmingTask] Successfully harvested {yieldAmount} {harvestedCrop.objectName} and added to inventory</color>");
             }
-            else
-            {
-                Debug.LogError($"<color=red>[FarmingTask] Failed to add resources to inventory - PlayerInventory is null</color>");
-            }
-        }
-        else
-        {
-            Debug.LogError($"<color=red>[FarmingTask] Failed to harvest - no crop found</color>");
         }
 
         farmBuilding.ClearPlot();
@@ -263,7 +267,6 @@ public class FarmingTask : WorkTask
 
     private IEnumerator ClearingCoroutine()
     {
-        Debug.Log($"<color=red>[FarmingTask] Starting to clear dead crop</color>");
         if (currentWorker != null)
         {
             taskAnimation = TaskAnimation.CLEARING_PLOT;
@@ -277,7 +280,6 @@ public class FarmingTask : WorkTask
         }
 
         farmBuilding.ClearPlot();
-        Debug.Log($"<color=green>[FarmingTask] Successfully cleared dead crop</color>");
     }
 
     public override string GetTooltipText()
