@@ -70,6 +70,7 @@ public class FarmingTask : WorkTask
             {
                 Debug.Log($"<color=orange>[FarmingTask] No seeds available, stopping farming task</color>");
                 CompleteWork();
+                return;
             }
             return;
         }
@@ -142,6 +143,14 @@ public class FarmingTask : WorkTask
             Debug.Log($"<color=green>[FarmingTask] Completed {currentAction} action</color>");
             currentAction = FarmingAction.None;
 
+            // If the farm is empty and we don't have seeds, stop farming
+            if (!farmBuilding.IsOccupied && !HasRequiredResources())
+            {
+                Debug.Log($"<color=orange>[FarmingTask] No seeds available, stopping farming task</color>");
+                CompleteWork();
+                yield break;
+            }
+
             // Small delay between actions
             yield return new WaitForSeconds(0.5f);
         }
@@ -160,7 +169,8 @@ public class FarmingTask : WorkTask
         Debug.Log($"<color=blue>[FarmingTask] Starting to plant {requiredResources[0].resourceScriptableObj.objectName}</color>");
         if (currentWorker != null)
         {
-            currentWorker.PlayWorkAnimation(TaskAnimation.PLANTING_SEEDS.ToString());
+            taskAnimation = TaskAnimation.PLANTING_SEEDS;
+            currentWorker.PlayWorkAnimation(taskAnimation.ToString());
         }
         
         // Plant the crop
@@ -181,7 +191,8 @@ public class FarmingTask : WorkTask
         Debug.Log($"<color=orange>[FarmingTask] Starting to tend crop</color>");
         if (currentWorker != null)
         {
-            currentWorker.PlayWorkAnimation(TaskAnimation.WATERING_PLANTS.ToString());
+            taskAnimation = TaskAnimation.WATERING_PLANTS;
+            currentWorker.PlayWorkAnimation(taskAnimation.ToString());
         }
         
         while (workProgress < baseWorkTime)
@@ -255,7 +266,8 @@ public class FarmingTask : WorkTask
         Debug.Log($"<color=red>[FarmingTask] Starting to clear dead crop</color>");
         if (currentWorker != null)
         {
-            currentWorker.PlayWorkAnimation(TaskAnimation.CLEARING_PLOT.ToString());
+            taskAnimation = TaskAnimation.CLEARING_PLOT;
+            currentWorker.PlayWorkAnimation(taskAnimation.ToString());
         }
         
         while (workProgress < baseWorkTime)
