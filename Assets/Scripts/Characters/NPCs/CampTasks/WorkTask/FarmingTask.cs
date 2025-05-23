@@ -38,47 +38,6 @@ public class FarmingTask : WorkTask
         lastTendingTime = Time.time;
     }
 
-    protected override IEnumerator WorkCoroutine()
-    {
-        while (true)
-        {
-            workProgress = 0f; // Reset work progress at the start of each cycle
-            DetermineNextAction();
-            
-            // If no action is needed, wait a bit and check again
-            if (currentAction == FarmingAction.None)
-            {
-                Debug.Log($"<color=cyan>[FarmingTask] No immediate action needed, waiting...</color>");
-                yield return new WaitForSeconds(5f); // Longer wait time when no action needed
-                continue;
-            }
-
-            Debug.Log($"<color=cyan>[FarmingTask] Starting {currentAction} action</color>");
-
-            switch (currentAction)
-            {
-                case FarmingAction.Planting:
-                    yield return StartCoroutine(PlantingCoroutine());
-                    break;
-                case FarmingAction.Tending:
-                    yield return StartCoroutine(TendingCoroutine());
-                    break;
-                case FarmingAction.Harvesting:
-                    yield return StartCoroutine(HarvestingCoroutine());
-                    break;
-                case FarmingAction.Clearing:
-                    yield return StartCoroutine(ClearingCoroutine());
-                    break;
-            }
-
-            Debug.Log($"<color=green>[FarmingTask] Completed {currentAction} action</color>");
-            currentAction = FarmingAction.None;
-
-            // Small delay between actions
-            yield return new WaitForSeconds(0.5f);
-        }
-    }
-
     private void DetermineNextAction()
     {
         // Priority order: Clear dead crop -> Harvest ready crop -> Tend needy crop -> Plant new crop
@@ -147,6 +106,47 @@ public class FarmingTask : WorkTask
         Debug.Log($"<color=cyan>[FarmingTask] No action needed</color>");
     }
 
+    protected override IEnumerator WorkCoroutine()
+    {
+        while (true)
+        {
+            workProgress = 0f; // Reset work progress at the start of each cycle
+            DetermineNextAction();
+            
+            // If no action is needed, wait a bit and check again
+            if (currentAction == FarmingAction.None)
+            {
+                Debug.Log($"<color=cyan>[FarmingTask] No immediate action needed, waiting...</color>");
+                yield return new WaitForSeconds(5f); // Longer wait time when no action needed
+                continue;
+            }
+
+            Debug.Log($"<color=cyan>[FarmingTask] Starting {currentAction} action</color>");
+
+            switch (currentAction)
+            {
+                case FarmingAction.Planting:
+                    yield return StartCoroutine(PlantingCoroutine());
+                    break;
+                case FarmingAction.Tending:
+                    yield return StartCoroutine(TendingCoroutine());
+                    break;
+                case FarmingAction.Harvesting:
+                    yield return StartCoroutine(HarvestingCoroutine());
+                    break;
+                case FarmingAction.Clearing:
+                    yield return StartCoroutine(ClearingCoroutine());
+                    break;
+            }
+
+            Debug.Log($"<color=green>[FarmingTask] Completed {currentAction} action</color>");
+            currentAction = FarmingAction.None;
+
+            // Small delay between actions
+            yield return new WaitForSeconds(0.5f);
+        }
+    }
+
     private IEnumerator PlantingCoroutine()
     {
         // Check if we have seeds
@@ -158,6 +158,10 @@ public class FarmingTask : WorkTask
         }
 
         Debug.Log($"<color=blue>[FarmingTask] Starting to plant {requiredResources[0].resourceScriptableObj.objectName}</color>");
+        if (currentWorker != null)
+        {
+            currentWorker.PlayWorkAnimation(TaskAnimation.PLANTING_SEEDS.ToString());
+        }
         
         // Plant the crop
         while (workProgress < baseWorkTime)
@@ -175,6 +179,10 @@ public class FarmingTask : WorkTask
     private IEnumerator TendingCoroutine()
     {
         Debug.Log($"<color=orange>[FarmingTask] Starting to tend crop</color>");
+        if (currentWorker != null)
+        {
+            currentWorker.PlayWorkAnimation(TaskAnimation.WATERING_PLANTS.ToString());
+        }
         
         while (workProgress < baseWorkTime)
         {
@@ -193,9 +201,26 @@ public class FarmingTask : WorkTask
         // Stop growth when harvesting starts
         farmBuilding.StartHarvesting();
         
+        // Alternate between standing and kneeling animations during harvest
+        bool isKneeling = false;
+        float animationSwitchTime = 0f;
+        
         while (workProgress < baseWorkTime)
         {
             workProgress += Time.deltaTime;
+            
+            // Switch animation every 2 seconds
+            if (Time.time - animationSwitchTime >= 2f)
+            {
+                isKneeling = !isKneeling;
+                if (currentWorker != null)
+                {
+                    taskAnimation = isKneeling ? TaskAnimation.HARVEST_PLANT_KNEELING : TaskAnimation.HARVEST_PLANT_STANDING;
+                    currentWorker.PlayWorkAnimation(taskAnimation.ToString());
+                }
+                animationSwitchTime = Time.time;
+            }
+            
             yield return null;
         }
 
@@ -228,6 +253,10 @@ public class FarmingTask : WorkTask
     private IEnumerator ClearingCoroutine()
     {
         Debug.Log($"<color=red>[FarmingTask] Starting to clear dead crop</color>");
+        if (currentWorker != null)
+        {
+            currentWorker.PlayWorkAnimation(TaskAnimation.CLEARING_PLOT.ToString());
+        }
         
         while (workProgress < baseWorkTime)
         {

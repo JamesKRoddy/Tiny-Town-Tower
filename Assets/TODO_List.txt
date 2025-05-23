@@ -11,6 +11,8 @@ At the moment:
 
 Have to check if NPCs automatically stop farming after its complete
 Have to check what happens with dead plants, so unassign NPCs while farming
+Setup NPC farming animations/vfx
+Setup farming growing models
 
 Maybe expand on the tasks to work with the NPC Work state to change animations, moving around to different point etc. Can be used on the farm to switch between planting/watering/harvesting/digging up old plants
 

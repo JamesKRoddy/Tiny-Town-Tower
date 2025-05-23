@@ -161,6 +161,11 @@ public class SettlerNPC : HumanCharacterController
         }
     }
 
+    public override void PlayWorkAnimation(string animationName)
+    {
+        animator.Play(animationName, (taskStates[TaskType.WORK] as WorkState).workLayerIndex);
+    }
+
     public override void StartWork(WorkTask newTask)
     {
         if((taskStates[TaskType.WORK] as WorkState).assignedTask == newTask){

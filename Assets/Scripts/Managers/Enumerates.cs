@@ -43,7 +43,13 @@ public enum TaskAnimation
     RESEARCH_COUNTER,
     HAMMER_STANDING,
     HAMMER_COUNTER,
-    GENERATE_ELECTRICITY_HAND
+    GENERATE_ELECTRICITY_HAND,
+    //Farming animations
+    PLANTING_SEEDS,
+    WATERING_PLANTS,
+    HARVEST_PLANT_STANDING,
+    HARVEST_PLANT_KNEELING,
+    CLEARING_PLOT
 }
 
 // =========================

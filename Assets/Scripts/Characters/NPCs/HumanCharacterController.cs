@@ -386,6 +386,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         animator.SetFloat("Speed", currentSpeedNormalized);
     }
 
+    public virtual void PlayWorkAnimation(string animationName)
+    {
+        
+    }
+
     #endregion
 
     private void OnDrawGizmos()

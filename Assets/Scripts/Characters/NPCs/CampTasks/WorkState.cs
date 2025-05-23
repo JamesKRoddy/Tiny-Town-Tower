@@ -10,7 +10,7 @@ public class WorkState : _TaskState
     private bool isTaskBeingPerformed = false;
     private bool hasReachedTask = false;
     private float timeAtTaskLocation = 0f;
-    private int workLayerIndex = -1;
+    [HideInInspector] public int workLayerIndex = -1;
     private bool needsPrecisePositioning = false;
     #endregion
 
@@ -188,7 +188,7 @@ public class WorkState : _TaskState
             assignedTask.PerformTask(npc);
             if (workLayerIndex != -1)
             {
-                animator.Play(assignedTask.GetAnimationClipName(), workLayerIndex);
+                npc.PlayWorkAnimation(assignedTask.GetAnimationClipName());
             }
             isTaskBeingPerformed = true;
         }

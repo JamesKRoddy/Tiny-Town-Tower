@@ -79,7 +79,7 @@ public class RobotCharacterController : HumanCharacterController
         {
             currentWorkTask = newTask;
             isWorking = true;
-            animator.Play(currentWorkTask.GetAnimationClipName(), workLayerIndex);
+            PlayWorkAnimation(currentWorkTask.GetAnimationClipName());
             // Start the work task once
             currentWorkTask.PerformTask(this);
 
