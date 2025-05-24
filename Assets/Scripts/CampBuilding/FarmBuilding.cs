@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Managers;
 using System.Collections;
+using System;
 
 namespace CampBuilding
 {
@@ -14,7 +15,7 @@ namespace CampBuilding
         private SeedScriptableObject plantedSeed;
         private float growthProgress;
         private float timeSinceLastTended;
-        private bool isOccupied;
+        private bool isOccupiedWithCrop;
         private bool isDead;
         private Coroutine growthCoroutine;
 
@@ -69,7 +70,7 @@ namespace CampBuilding
                 plantedSeed = seed;
                 growthProgress = 0f;
                 timeSinceLastTended = 0f;
-                isOccupied = true;
+                isOccupiedWithCrop = true;
                 isDead = false;
 
                 // Start growth coroutine
@@ -87,7 +88,7 @@ namespace CampBuilding
 
         private IEnumerator GrowthCoroutine()
         {
-            while (isOccupied && !isDead && isOperational)
+            while (isOccupiedWithCrop && !isDead && isOperational)
             {
                 // Update time since last tending
                 timeSinceLastTended += GROWTH_CHECK_INTERVAL;
@@ -145,14 +146,14 @@ namespace CampBuilding
             plantedSeed = null;
             growthProgress = 0f;
             timeSinceLastTended = 0f;
-            isOccupied = false;
+            isOccupiedWithCrop = false;
             isDead = false;
         }
 
-        public bool IsOccupied => isOccupied;
+        public bool IsOccupied => isOccupiedWithCrop;
         public bool IsDead => isDead;
-        public bool NeedsTending => isOccupied && !isDead && timeSinceLastTended >= TENDING_THRESHOLD;
-        public bool IsReadyForHarvest => isOccupied && !isDead && growthProgress >= 100f;
+        public bool NeedsTending => isOccupiedWithCrop && !isDead && timeSinceLastTended >= TENDING_THRESHOLD;
+        public bool IsReadyForHarvest => isOccupiedWithCrop && !isDead && growthProgress >= 100f;
         public ResourceScriptableObj PlantedCrop => plantedSeed?.cropToGrow;
         public SeedScriptableObject PlantedSeed => plantedSeed;
         public Transform CropPoint => cropPoint;

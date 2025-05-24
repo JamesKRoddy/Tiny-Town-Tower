@@ -39,6 +39,11 @@ public class FarmingTask : WorkTask
         lastTendingTime = Time.time;
     }
 
+    public bool IsOccupiedWithCrop()
+    {
+        return farmBuilding.IsOccupied;
+    }
+
     private void DetermineNextAction()
     {
         // Priority order: Clear dead crop -> Harvest ready crop -> Tend needy crop -> Plant new crop

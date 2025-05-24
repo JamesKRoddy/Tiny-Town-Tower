@@ -232,7 +232,16 @@ namespace Managers
                 ResearchTask => ("Research", previewListAction),
                 CookingTask => ("Cook", previewListAction),
                 ResourceUpgradeTask => ("Upgrade Resource", previewListAction),
-                FarmingTask => ("Farm", previewListAction),
+                FarmingTask => ("Farm", () => {
+                    if ((task as FarmingTask)?.IsOccupiedWithCrop() ?? false)
+                    {
+                        characterToAssign.StartWork(task);
+                    }
+                    else
+                    {
+                        previewListAction();
+                    }
+                }),
                 _ => (task.GetType().Name.Replace("Task", ""), () => onTaskSelected(task))
             };
 
