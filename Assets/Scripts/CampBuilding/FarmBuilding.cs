@@ -78,7 +78,6 @@ namespace CampBuilding
                     StopCoroutine(growthCoroutine);
                 }
                 growthCoroutine = StartCoroutine(GrowthCoroutine());
-                Debug.Log($"<color=blue>[FarmBuilding] Planted {seed.objectName} with growth rate {seed.growthRate}</color>");
             }
             else
             {
@@ -97,7 +96,6 @@ namespace CampBuilding
                 if (timeSinceLastTended >= MAX_TIME_WITHOUT_TENDING)
                 {
                     isDead = true;
-                    Debug.Log($"<color=red>[FarmBuilding] Crop has died due to lack of tending</color>");
                     break;
                 }
 
@@ -107,16 +105,10 @@ namespace CampBuilding
                     // Use the seed's growth rate to determine growth speed
                     float growthAmount = GROWTH_CHECK_INTERVAL * plantedSeed.growthRate;
                     growthProgress += growthAmount;
-                    Debug.Log($"<color=green>[FarmBuilding] Growth progress: {growthProgress:F1}% (Rate: {plantedSeed.growthRate}x)</color>");
                 }
                 else if (growthProgress >= 100f)
                 {
-                    Debug.Log($"<color=yellow>[FarmBuilding] Crop is ready for harvest</color>");
                     yield return new WaitForSeconds(GROWTH_CHECK_INTERVAL);
-                }
-                else
-                {
-                    Debug.Log($"<color=orange>[FarmBuilding] Growth paused - needs tending</color>");
                 }
 
                 yield return new WaitForSeconds(GROWTH_CHECK_INTERVAL);
@@ -133,14 +125,12 @@ namespace CampBuilding
             {
                 StopCoroutine(growthCoroutine);
                 growthCoroutine = null;
-                Debug.Log($"<color=cyan>[FarmBuilding] Growth stopped - harvesting in progress</color>");
             }
         }
 
         public void TendPlot()
         {
             timeSinceLastTended = 0f;
-            Debug.Log($"<color=blue>[FarmBuilding] Crop has been tended</color>");
         }
 
         public void ClearPlot()
@@ -157,7 +147,6 @@ namespace CampBuilding
             timeSinceLastTended = 0f;
             isOccupied = false;
             isDead = false;
-            Debug.Log($"<color=cyan>[FarmBuilding] Plot has been cleared</color>");
         }
 
         public bool IsOccupied => isOccupied;

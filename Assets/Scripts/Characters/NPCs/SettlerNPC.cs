@@ -156,11 +156,9 @@ public class SettlerNPC : HumanCharacterController
     {
 
         if(currentState == newState){
-            Debug.Log($"<color=blue> {gameObject.name} </color>: <color=yellow> {name} </color> is already in state <color=green> {newState?.GetTaskType().ToString()} </color>");
             return;
         }
 
-        Debug.Log($"<color=blue> {gameObject.name} </color>: Changing state from <color=red> {currentState?.GetTaskType().ToString() ?? "null"} </color> to <color=green> {newState?.GetTaskType().ToString() ?? "null"} </color>");
 
         if (currentState != null)
         {
@@ -180,7 +178,6 @@ public class SettlerNPC : HumanCharacterController
 
     public override void PlayWorkAnimation(string animationName)
     {
-        Debug.Log($"<color=blue> {gameObject.name} </color>: Playing work animation <color=green> {animationName} </color> at layer <color=red> {(taskStates[TaskType.WORK] as WorkState).workLayerIndex} </color>");
         animator.Play(animationName, (taskStates[TaskType.WORK] as WorkState).workLayerIndex);
     }
 
@@ -191,7 +188,8 @@ public class SettlerNPC : HumanCharacterController
         }
 
         assignedWorkTask = newTask; // Store the assigned task
-        (taskStates[TaskType.WORK] as WorkState).AssignTask(newTask);
+        var workState = taskStates[TaskType.WORK] as WorkState;
+        workState.AssignTask(newTask);
         ChangeTask(TaskType.WORK);
     }
 
@@ -236,14 +234,9 @@ public class SettlerNPC : HumanCharacterController
         return assignedWorkTask;
     }
 
-    public void ClearAssignedWork()
-    {
-        assignedWorkTask = null;
-        isOnBreak = false;
-    }
-
     public void StopWork()
     {
+        
         if (assignedWorkTask != null)
         {
             // Stop the current work
@@ -252,10 +245,22 @@ public class SettlerNPC : HumanCharacterController
             
             // Clear the assigned work and change task
             ClearAssignedWork();
-            ChangeTask(TaskType.WANDER);
             
-            Debug.Log($"Stopped work for {nPCDataObj.nPCName}");
+            // Clear the WorkState's assigned task
+            var workState = taskStates[TaskType.WORK] as WorkState;
+            if (workState != null)
+            {
+                workState.AssignTask(null);
+            }
+            
+            ChangeTask(TaskType.WANDER);
         }
+    }
+
+    public void ClearAssignedWork()
+    {
+        assignedWorkTask = null;
+        isOnBreak = false;
     }
 
     // Method to change task and update state
