@@ -35,6 +35,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3736914555306234412}
+  - {fileID: 6629884397764255123}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &3076515277584886302
@@ -110,8 +111,7 @@ MonoBehaviour:
   currentHealth: 0
   repairTask: {fileID: 0}
   upgradeTask: {fileID: 0}
-  maxFarmPlots: 4
-  farmPlotPoints: []
+  cropPoint: {fileID: 6629884397764255123}
 --- !u!114 &8383710638259805026
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -133,7 +133,38 @@ MonoBehaviour:
   tendingTime: 3
   harvestingTime: 5
   clearingTime: 4
-  harvestAmount: 3
+  tendingInterval: 30
+--- !u!1 &4009391834786182209
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6629884397764255123}
+  m_Layer: 0
+  m_Name: CropPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6629884397764255123
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4009391834786182209}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2.5, y: 0, z: -2.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2577605167010737963}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &3734463061736637120
 PrefabInstance:
   m_ObjectHideFlags: 0

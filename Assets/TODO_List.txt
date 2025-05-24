@@ -9,7 +9,6 @@ _________________________________________________________________________
 At the moment:
 ***Hunger system***
 
-Have to check if NPCs automatically stop farming after its complete
 Have to check what happens with dead plants, so unassign NPCs while farming
 Setup NPC farming animations/vfx
 Setup farming growing models

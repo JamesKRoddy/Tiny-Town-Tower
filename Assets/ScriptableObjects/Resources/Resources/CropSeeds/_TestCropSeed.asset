@@ -23,3 +23,7 @@ MonoBehaviour:
   cropToGrow: {fileID: 11400000, guid: 74701f8e255f24a4980777d43c0b6edf, type: 2}
   growthRate: 1
   yieldAmount: 10
+  growthStagePrefabs:
+  - {fileID: 1030394373860896, guid: f1d92f6821039a348b0b295e7a96c45d, type: 3}
+  - {fileID: 1292480058924560, guid: 49683e4468311674398fda816c18b177, type: 3}
+  - {fileID: 1923504114950040, guid: 272677d9f8d9003418e2054d1e88d350, type: 3}

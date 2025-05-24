@@ -1028,7 +1028,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: inventoryList.Array.data[0].count
-      value: 10
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: inventoryList.Array.data[0].resourceScriptableObj

@@ -18,6 +18,8 @@ namespace CampBuilding
         private bool isOccupiedWithCrop;
         private bool isDead;
         private Coroutine growthCoroutine;
+        private GameObject currentGrowthStage; // Reference to the currently spawned growth stage
+        private int currentStageIndex = -1; // Track the current growth stage index
 
         private const float MAX_TIME_WITHOUT_TENDING = 60f; // 1 minute without tending before death
         private const float TENDING_THRESHOLD = 30f; // Need tending every 30 seconds
@@ -63,6 +65,33 @@ namespace CampBuilding
             base.StartDestruction();
         }
 
+        private void UpdateGrowthVisual()
+        {
+            if (plantedSeed == null || plantedSeed.growthStagePrefabs == null || plantedSeed.growthStagePrefabs.Length == 0)
+            {
+                Debug.LogError($"<color=red>[FarmBuilding] Cannot update growth visual - missing prefabs for {plantedSeed?.objectName}</color>");
+                return;
+            }
+            
+            // Destroy current growth stage if it exists
+            if (currentGrowthStage != null)
+            {
+                Destroy(currentGrowthStage);
+            }
+
+            // Spawn new growth stage
+            if (plantedSeed.growthStagePrefabs[currentStageIndex] != null)
+            {
+                currentGrowthStage = Instantiate(plantedSeed.growthStagePrefabs[currentStageIndex], cropPoint);
+                currentGrowthStage.transform.localPosition = Vector3.zero;
+                currentGrowthStage.transform.localRotation = Quaternion.identity;
+            }
+            else
+            {
+                Debug.LogError($"<color=red>[FarmBuilding] Missing prefab for stage {currentStageIndex} of {plantedSeed.objectName}</color>");
+            }
+        }
+
         public void PlantCrop(ResourceScriptableObj crop)
         {
             if (crop is SeedScriptableObject seed)
@@ -72,6 +101,7 @@ namespace CampBuilding
                 timeSinceLastTended = 0f;
                 isOccupiedWithCrop = true;
                 isDead = false;
+                currentStageIndex = -1; // Reset stage index when planting new crop
 
                 // Start growth coroutine
                 if (growthCoroutine != null)
@@ -79,6 +109,9 @@ namespace CampBuilding
                     StopCoroutine(growthCoroutine);
                 }
                 growthCoroutine = StartCoroutine(GrowthCoroutine());
+                
+                // Initial growth visual update
+                UpdateGrowthVisual();
             }
             else
             {
@@ -96,7 +129,13 @@ namespace CampBuilding
                 // Check if crop has died
                 if (timeSinceLastTended >= MAX_TIME_WITHOUT_TENDING)
                 {
+                    Debug.Log($"<color=red>[FarmBuilding] Crop died due to lack of tending: {plantedSeed.objectName}</color>");
                     isDead = true;
+                    if (currentGrowthStage != null)
+                    {
+                        Destroy(currentGrowthStage);
+                        currentGrowthStage = null;
+                    }
                     break;
                 }
 
@@ -106,6 +145,17 @@ namespace CampBuilding
                     // Use the seed's growth rate to determine growth speed
                     float growthAmount = GROWTH_CHECK_INTERVAL * plantedSeed.growthRate;
                     growthProgress += growthAmount;
+
+                    // Calculate new stage index
+                    int newStageIndex = Mathf.FloorToInt((growthProgress / 100f) * (plantedSeed.growthStagePrefabs.Length - 1));
+                    newStageIndex = Mathf.Clamp(newStageIndex, 0, plantedSeed.growthStagePrefabs.Length - 1);
+
+                    // Only update visual if stage has changed
+                    if (newStageIndex != currentStageIndex)
+                    {
+                        currentStageIndex = newStageIndex;
+                        UpdateGrowthVisual();
+                    }
                 }
                 else if (growthProgress >= 100f)
                 {
@@ -143,11 +193,19 @@ namespace CampBuilding
                 growthCoroutine = null;
             }
 
+            // Clean up current growth stage
+            if (currentGrowthStage != null)
+            {
+                Destroy(currentGrowthStage);
+                currentGrowthStage = null;
+            }
+
             plantedSeed = null;
             growthProgress = 0f;
             timeSinceLastTended = 0f;
             isOccupiedWithCrop = false;
             isDead = false;
+            currentStageIndex = -1;
         }
 
         public bool IsOccupied => isOccupiedWithCrop;

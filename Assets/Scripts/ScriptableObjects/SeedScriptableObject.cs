@@ -8,4 +8,6 @@ public class SeedScriptableObject : ResourceScriptableObj
     public int growthRate;
     public int yieldAmount;
     
+    [Header("Growth Visuals")]
+    public GameObject[] growthStagePrefabs; // Prefabs representing different growth stages
 }

@@ -11,7 +11,6 @@ public class FarmingTask : WorkTask
     [SerializeField] private float tendingTime = 3f;
     [SerializeField] private float harvestingTime = 5f;
     [SerializeField] private float clearingTime = 4f;
-    [SerializeField] private int harvestAmount = 3;
     [SerializeField] private float tendingInterval = 30f; // Time between tending checks
 
     private FarmBuilding farmBuilding;
@@ -50,6 +49,7 @@ public class FarmingTask : WorkTask
         if (farmBuilding.IsDead)
         {
             currentAction = FarmingAction.Clearing;
+            Debug.Log($"<color=cyan>[FarmingTask] Starting Clearing action</color>");
             baseWorkTime = clearingTime;
             return;
         }
@@ -57,6 +57,7 @@ public class FarmingTask : WorkTask
         if (farmBuilding.IsReadyForHarvest)
         {
             currentAction = FarmingAction.Harvesting;
+            Debug.Log($"<color=cyan>[FarmingTask] Starting Harvesting action</color>");
             baseWorkTime = harvestingTime;
             return;
         }
@@ -67,6 +68,7 @@ public class FarmingTask : WorkTask
             if (HasRequiredResources())
             {
                 currentAction = FarmingAction.Planting;
+                Debug.Log($"<color=cyan>[FarmingTask] Starting Planting action</color>");
                 baseWorkTime = plantingTime;
             }
             else
@@ -84,6 +86,7 @@ public class FarmingTask : WorkTask
             if (farmBuilding.NeedsTending)
             {
                 currentAction = FarmingAction.Tending;
+                Debug.Log($"<color=cyan>[FarmingTask] Starting Tending action</color>");
                 baseWorkTime = tendingTime;
                 return;
             }
@@ -92,6 +95,7 @@ public class FarmingTask : WorkTask
             if (Time.time - lastTendingTime >= tendingInterval)
             {
                 currentAction = FarmingAction.Tending;
+                Debug.Log($"<color=cyan>[FarmingTask] Starting Tending action</color>");
                 baseWorkTime = tendingTime;
                 lastTendingTime = Time.time;
                 return;
