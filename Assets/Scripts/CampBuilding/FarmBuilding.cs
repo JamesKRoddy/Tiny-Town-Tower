@@ -136,6 +136,13 @@ namespace CampBuilding
                         Destroy(currentGrowthStage);
                         currentGrowthStage = null;
                     }
+                    // Show dead crop model
+                    if (plantedSeed.deadCropPrefab != null)
+                    {
+                        currentGrowthStage = Instantiate(plantedSeed.deadCropPrefab, cropPoint);
+                        currentGrowthStage.transform.localPosition = Vector3.zero;
+                        currentGrowthStage.transform.localRotation = Quaternion.identity;
+                    }
                     break;
                 }
 
