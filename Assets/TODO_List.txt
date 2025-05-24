@@ -9,19 +9,9 @@ _________________________________________________________________________
 At the moment:
 ***Hunger system***
 
-Have to check what happens with dead plants, so unassign NPCs while farming
-Setup NPC farming animations/vfx
-Setup farming growing models
-
-Maybe expand on the tasks to work with the NPC Work state to change animations, moving around to different point etc. Can be used on the farm to switch between planting/watering/harvesting/digging up old plants
-
-Farms to produce ingredients
-NPCs get seeds, go to a field, plant them, time passes as they grow, an npc has to tend them, water them etc or after too long of being left alont the crops die, dead crops need to be removed before planting more, after fully growing the crops are harvested
-
 
 
 Have to do some refactoring on the npc animator and what has access to it
-
 
 
 
