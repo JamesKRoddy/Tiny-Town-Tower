@@ -279,6 +279,22 @@ PrefabInstance:
       propertyPath: characterType
       value: 101
       objectReference: {fileID: 0}
+    - target: {fileID: 2254817619120094739, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+      propertyPath: taskEffects.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2254817619120094739, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+      propertyPath: taskEffects.Array.data[0].effect
+      value: 
+      objectReference: {fileID: 11400000, guid: 42781ed0b7fd7e942adea3ed0df0a09e, type: 2}
+    - target: {fileID: 2254817619120094739, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+      propertyPath: taskEffects.Array.data[0].ikPoint
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2254817619120094739, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+      propertyPath: taskEffects.Array.data[0].taskAnimation
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 2985604360754162274, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
       propertyPath: m_Name
       value: Test_Character_Player_NPC

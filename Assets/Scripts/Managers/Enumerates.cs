@@ -53,6 +53,22 @@ public enum TaskAnimation
 }
 
 // =========================
+// IK POINT ENUMS
+// =========================
+
+[System.Serializable]
+public enum IKPoint
+{
+    NONE,
+    LEFT_HAND,
+    RIGHT_HAND,
+    LEFT_FOOT,
+    RIGHT_FOOT,
+    HEAD,
+    WEAPON
+}
+
+// =========================
 // RESEARCH ENUMS
 // =========================
 

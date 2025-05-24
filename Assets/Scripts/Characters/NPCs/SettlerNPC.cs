@@ -38,6 +38,8 @@ public class SettlerNPC : HumanCharacterController
     public event Action OnStarving;
     public event Action OnNoLongerStarving;
 
+    private int workLayerIndex;
+
     // Dictionary that maps TaskType to TaskState
     Dictionary<TaskType, _TaskState> taskStates = new Dictionary<TaskType, _TaskState>();
 
@@ -59,8 +61,15 @@ public class SettlerNPC : HumanCharacterController
         }
     }
 
-    private void Start()
+    protected override void Start()
     {
+        base.Start();
+        workLayerIndex = animator.GetLayerIndex("Work Layer");
+        if (workLayerIndex == -1)
+        {
+            Debug.LogError($"[WorkState] Could not find 'Work Layer' in animator for {gameObject.name}");
+        }
+
         // Ensure NPC reference is set for each state component
         // Default to WanderState
         if (taskStates.ContainsKey(TaskType.WANDER))
@@ -154,11 +163,12 @@ public class SettlerNPC : HumanCharacterController
     // Method to change states
     public void ChangeState(_TaskState newState)
     {
+        
+        animator.Play("Empty", workLayerIndex);
 
         if(currentState == newState){
             return;
         }
-
 
         if (currentState != null)
         {
@@ -178,7 +188,7 @@ public class SettlerNPC : HumanCharacterController
 
     public override void PlayWorkAnimation(string animationName)
     {
-        animator.Play(animationName, (taskStates[TaskType.WORK] as WorkState).workLayerIndex);
+        animator.Play(animationName, workLayerIndex);
     }
 
     public override void StartWork(WorkTask newTask)

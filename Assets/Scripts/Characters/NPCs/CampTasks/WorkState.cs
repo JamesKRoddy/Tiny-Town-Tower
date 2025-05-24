@@ -10,7 +10,6 @@ public class WorkState : _TaskState
     private bool isTaskBeingPerformed = false;
     private bool hasReachedTask = false;
     private float timeAtTaskLocation = 0f;
-    [HideInInspector] public int workLayerIndex = -1;
     private bool needsPrecisePositioning = false;
     #endregion
 
@@ -43,12 +42,6 @@ public class WorkState : _TaskState
 
     private void InitializeWorkState()
     {
-        workLayerIndex = animator.GetLayerIndex("Work Layer");
-        if (workLayerIndex == -1)
-        {
-            Debug.LogError($"[WorkState] Could not find 'Work Layer' in animator for {gameObject.name}");
-        }
-
         movementSettings = new MovementSettings();
         assignedTask.StopWork += StopWork;
     }
@@ -81,7 +74,6 @@ public class WorkState : _TaskState
     {
         if (isTaskBeingPerformed)
         {
-            animator.Play("Empty", workLayerIndex);
             isTaskBeingPerformed = false;
         }
         
@@ -186,10 +178,7 @@ public class WorkState : _TaskState
         if (timeAtTaskLocation >= movementSettings.taskStartDelay && !isTaskBeingPerformed && !needsPrecisePositioning)
         {
             assignedTask.PerformTask(npc);
-            if (workLayerIndex != -1)
-            {
-                npc.PlayWorkAnimation(assignedTask.GetAnimationClipName());
-            }
+            npc.PlayWorkAnimation(assignedTask.GetAnimationClipName());
             isTaskBeingPerformed = true;
         }
     }

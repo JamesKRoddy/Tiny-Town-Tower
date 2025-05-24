@@ -20,6 +20,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     protected bool isAttacking; // Whether the player is currently attacking
 
     protected Animator animator;
+    public Animator Animator => animator;
     protected CharacterCombat characterCombat;
     protected NavMeshAgent agent; // Reference to NavMeshAgent
     protected CharacterInventory characterInventory;
@@ -67,6 +68,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         characterInventory = GetComponent<CharacterInventory>();
     }
 
+    protected virtual void Start()
+    {
+        GetComponent<CharacterAnimationEvents>().Setup(characterCombat, this, characterInventory);
+    }
+
     public virtual void PossessedUpdate()
     {
         HandleDash();
@@ -111,12 +117,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         if (isAIControlled)
         {
             settlerNPC?.ChangeTask(TaskType.WANDER);
-            GetComponent<CharacterAnimationEvents>().Setup();
         }
         else
         {
-            settlerNPC?.ChangeState(null);
-            GetComponent<CharacterAnimationEvents>().Setup(characterCombat, this, characterInventory);
+            settlerNPC?.ChangeState(null);            
         }
     }
 

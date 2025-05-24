@@ -290,4 +290,68 @@ namespace Managers
             }
         }
     }
+    
+    /// <summary>
+    /// Helper class for playing effects with delays and automatic positioning.
+    /// Used primarily by boss attacks to manage effect timing and positioning.
+    /// </summary>
+    public class EffectPlayer
+    {
+        private readonly MonoBehaviour owner;
+        private readonly EffectDefinition effect;
+        private readonly float delay;
+        private Coroutine activeCoroutine;
+
+        /// <summary>
+        /// Creates a new EffectPlayer instance.
+        /// </summary>
+        /// <param name="owner">The MonoBehaviour that owns this effect player (used for coroutines)</param>
+        /// <param name="effect">The effect definition to play</param>
+        /// <param name="delay">Delay in seconds before playing the effect</param>
+        public EffectPlayer(MonoBehaviour owner, EffectDefinition effect, float delay)
+        {
+            this.owner = owner;
+            this.effect = effect;
+            this.delay = delay;
+        }
+
+        /// <summary>
+        /// Plays the effect with optional position, normal, rotation and parent.
+        /// If not specified, uses the owner's position and forward direction.
+        /// </summary>
+        public void Play(Vector3? position = null, Vector3? normal = null, Quaternion? rotation = null, Transform parent = null)
+        {
+            if (effect == null) return;
+            
+            Vector3 effectPosition = position ?? owner.transform.position;
+            Vector3 effectNormal = normal ?? owner.transform.forward;
+            Quaternion effectRotation = rotation ?? Quaternion.LookRotation(effectNormal);
+            
+            Debug.Log($"[EffectPlayer] Play - Effect Position: {effectPosition}, Normal: {effectNormal}, Rotation: {effectRotation.eulerAngles}, Parent: {parent?.name}, Owner Position: {owner.transform.position}");
+            
+            activeCoroutine = owner.StartCoroutine(PlayWithDelay(effectPosition, effectNormal, effectRotation, parent));
+        }
+
+        /// <summary>
+        /// Stops any currently playing delayed effect.
+        /// </summary>
+        public void Stop()
+        {
+            if (activeCoroutine != null)
+            {
+                owner.StopCoroutine(activeCoroutine);
+                activeCoroutine = null;
+            }
+        }
+
+        private IEnumerator PlayWithDelay(Vector3 position, Vector3 normal, Quaternion rotation, Transform parent)
+        {
+            if (delay > 0)
+            {
+                yield return new WaitForSeconds(delay);
+            }
+            Debug.Log($"[EffectPlayer] PlayWithDelay - Final Position: {position}, Normal: {normal}, Rotation: {rotation.eulerAngles}, Parent: {parent?.name}");
+            EffectManager.Instance.PlayEffect(position, normal, rotation, parent, effect);
+        }
+    }
 } 
