@@ -1,10 +1,14 @@
 using UnityEngine;
 using Managers;
 using System.Collections.Generic;
+using System;
 
 [RequireComponent(typeof(CookingTask))]
 public class CanteenBuilding : Building
 {
+    // Event to notify when food becomes available
+    public event Action<CanteenBuilding> OnFoodAvailable;
+
     [System.Serializable]
     private class StoredMeal
     {
@@ -74,6 +78,9 @@ public class CanteenBuilding : Building
             // TODO: Spawn visual representation of food based on recipe
             GameObject foodVisual = null; // Replace with actual food visual spawning
             storedMeals.Add(new StoredMeal(recipe, foodVisual));
+            
+            // Notify listeners that food is available
+            OnFoodAvailable?.Invoke(this);
         }
     }
 

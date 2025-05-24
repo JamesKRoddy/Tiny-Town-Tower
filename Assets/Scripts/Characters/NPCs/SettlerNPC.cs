@@ -31,6 +31,8 @@ public class SettlerNPC : HumanCharacterController
     [SerializeField] private float hungerThreshold = 30f; // When to start looking for food
     [SerializeField] private float starvationThreshold = 10f; // When to stop working
     [SerializeField] private float workSpeedMultiplier = 1f; // Current work speed multiplier based on hunger
+    [SerializeField] private float noFoodCooldown = 10f; // Cooldown period when no food is available
+    private float lastNoFoodTime = -10f; // Initialize to allow immediate first check
 
     public event Action<float, float> OnHungerChanged; // Current hunger, max hunger
     public event Action OnStarving;
@@ -85,6 +87,19 @@ public class SettlerNPC : HumanCharacterController
         }
     }
 
+    private bool HasAvailableFood()
+    {
+        var canteens = CampManager.Instance.CookingManager.GetRegisteredCanteens();
+        foreach (var canteen in canteens)
+        {
+            if (canteen.HasAvailableMeals() && canteen.IsOperational())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void Update()
     {
         if (currentState != null)
@@ -115,8 +130,10 @@ public class SettlerNPC : HumanCharacterController
             {
                 workSpeedMultiplier = 0.5f;
                 
-                // If we're hungry and not already eating, change to eat state
-                if (GetCurrentTaskType() != TaskType.EAT)
+                // If we're hungry and not already eating, and not in cooldown, and food is available, change to eat state
+                if (GetCurrentTaskType() != TaskType.EAT && 
+                    Time.time - lastNoFoodTime >= noFoodCooldown && 
+                    HasAvailableFood())
                 {
                     ChangeTask(TaskType.EAT);
                 }
@@ -225,6 +242,22 @@ public class SettlerNPC : HumanCharacterController
         isOnBreak = false;
     }
 
+    public void StopWork()
+    {
+        if (assignedWorkTask != null)
+        {
+            // Stop the current work
+            assignedWorkTask.StopWorkCoroutine();
+            assignedWorkTask.UnassignNPC();
+            
+            // Clear the assigned work and change task
+            ClearAssignedWork();
+            ChangeTask(TaskType.WANDER);
+            
+            Debug.Log($"Stopped work for {nPCDataObj.nPCName}");
+        }
+    }
+
     // Method to change task and update state
     public void ChangeTask(TaskType newTask)
     {
@@ -297,6 +330,11 @@ public class SettlerNPC : HumanCharacterController
     public float GetWorkSpeedMultiplier()
     {
         return workSpeedMultiplier;
+    }
+
+    public void SetNoFoodCooldown()
+    {
+        lastNoFoodTime = Time.time;
     }
 }
 

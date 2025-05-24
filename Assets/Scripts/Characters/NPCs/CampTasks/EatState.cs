@@ -28,6 +28,9 @@ public class EatState : _TaskState
             agent = npc.GetAgent();
         }
 
+        // Subscribe to food availability events
+        CampManager.Instance.CookingManager.OnFoodAvailable += HandleFoodAvailable;
+
         // Find nearest canteen with food
         targetCanteen = FindNearestCanteen();
         if (targetCanteen != null)
@@ -40,7 +43,8 @@ public class EatState : _TaskState
         }
         else
         {
-            // No canteen with food available, return to work if we were on break
+            // No canteen with food available, set cooldown and return to previous state
+            npc.SetNoFoodCooldown();
             if (npc.HasAssignedWork())
             {
                 npc.ReturnToWork();
@@ -54,6 +58,12 @@ public class EatState : _TaskState
 
     public override void OnExitState()
     {
+        // Unsubscribe from food availability events
+        if (CampManager.Instance?.CookingManager != null)
+        {
+            CampManager.Instance.CookingManager.OnFoodAvailable -= HandleFoodAvailable;
+        }
+
         if (eatingCoroutine != null)
         {
             npc.StopCoroutine(eatingCoroutine);
@@ -63,6 +73,22 @@ public class EatState : _TaskState
         isEating = false;
         targetCanteen = null;
         ResetAgentState();
+    }
+
+    private void HandleFoodAvailable(CanteenBuilding canteen)
+    {
+        // If we don't have a target or the new food is closer, update our target
+        if (targetCanteen == null || 
+            Vector3.Distance(transform.position, canteen.transform.position) < 
+            Vector3.Distance(transform.position, targetCanteen.transform.position))
+        {
+            targetCanteen = canteen;
+            agent.stoppingDistance = minDistanceToCanteen;
+            agent.SetDestination(targetCanteen.GetFoodStoragePoint().position);
+            agent.speed = MaxSpeed();
+            agent.angularSpeed = npc.rotationSpeed;
+            agent.isStopped = false;
+        }
     }
 
     public override void UpdateState()

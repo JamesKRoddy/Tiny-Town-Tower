@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 namespace Managers
 {
@@ -9,6 +10,9 @@ namespace Managers
         private List<CookingRecipeScriptableObj> availableRecipes = new List<CookingRecipeScriptableObj>();
         private List<CookingRecipeScriptableObj> unlockedRecipes = new List<CookingRecipeScriptableObj>();
         private List<CanteenBuilding> registeredCanteens = new List<CanteenBuilding>();
+
+        // Event to notify when food becomes available in a canteen
+        public event Action<CanteenBuilding> OnFoodAvailable;
 
         public void Initialize()
         {
@@ -22,6 +26,8 @@ namespace Managers
             if (canteen != null && !registeredCanteens.Contains(canteen))
             {
                 registeredCanteens.Add(canteen);
+                // Subscribe to the canteen's food availability event
+                canteen.OnFoodAvailable += HandleCanteenFoodAvailable;
             }
         }
 
@@ -30,7 +36,14 @@ namespace Managers
             if (canteen != null)
             {
                 registeredCanteens.Remove(canteen);
+                // Unsubscribe from the canteen's food availability event
+                canteen.OnFoodAvailable -= HandleCanteenFoodAvailable;
             }
+        }
+
+        private void HandleCanteenFoodAvailable(CanteenBuilding canteen)
+        {
+            OnFoodAvailable?.Invoke(canteen);
         }
 
         public List<CanteenBuilding> GetRegisteredCanteens()

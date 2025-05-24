@@ -62,10 +62,9 @@ public class SettlerNPCPopup : PreviewPopupBase<HumanCharacterController, string
 
     private void OnRemoveWorkClicked()
     {
-        if (currentItem != null)
+        if (currentItem != null && currentItem is SettlerNPC settler)
         {
-            // TODO: Remove current work assignment
-            Debug.Log($"Removing work from {(currentItem as SettlerNPC).nPCDataObj.nPCName}");
+            settler.StopWork();
         }
         OnCloseClicked();
     }
