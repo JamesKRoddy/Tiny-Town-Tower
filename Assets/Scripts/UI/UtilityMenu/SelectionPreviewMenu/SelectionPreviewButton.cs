@@ -121,6 +121,7 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
                         return;
                     }
                     farmingTask.requiredResources = new ResourceItemCount[] { new ResourceItemCount(seed, 1) };
+                    PlayerUIManager.Instance.selectionPreviewList.ReturnToGame();
                 }
                 break;
         }
