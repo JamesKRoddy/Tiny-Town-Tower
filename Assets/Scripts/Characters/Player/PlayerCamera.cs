@@ -41,15 +41,16 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
             case PlayerControlType.TURRET_PLACEMENT:
                 break;
             case PlayerControlType.TURRET_CAMERA_MOVEMENT:
-                target = defaultTarget; // Detach from target to allow free camera movement
+                UpdateTarget(defaultTarget); // Detach from target to allow free camera movement
                 PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystickInput; // Subscribe to joystick input
                 break;
             case PlayerControlType.CAMP_CAMERA_MOVEMENT:
-                target = defaultTarget; // Detach from target to allow free camera movement
+                UpdateTarget(defaultTarget); // Detach from target to allow free camera movement
                 PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystickInput; // Subscribe to joystick input
+                workDetectionPoint.SetActive(true); // Enable work detection point
                 break;
             case PlayerControlType.CAMP_WORK_ASSIGNMENT:
-                target = defaultTarget; // Detach from target to allow free camera movement
+                UpdateTarget(defaultTarget); // Detach from target to allow free camera movement
                 PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystickInput; // Subscribe to joystick input
                 workDetectionPoint.SetActive(true); // Enable work detection point
                 break;

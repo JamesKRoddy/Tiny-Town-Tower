@@ -55,5 +55,23 @@ namespace Managers
             Debug.LogError($"No destruction prefab found for size {size.x}x{size.y}");
             return destructionPrefabMappings.Count > 0 ? destructionPrefabMappings[0].destructionPrefab : null;
         }
+
+        public void BuildingSelectionOptions(Building building){
+            var options = new List<SelectionPopup.SelectionOption>();
+
+            // Add Destroy Building option first
+            options.Add(new SelectionPopup.SelectionOption
+            {
+                optionName = "Building Stats",
+                onSelected = () => {
+                    PlayerUIManager.Instance.DisplayTextPopup(building.GetBuildingStatsText());
+                    PlayerUIManager.Instance.selectionPopup.OnCloseClicked();
+                },
+                workTask = null
+            });
+
+            // Show the selection popup
+            PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
+        }
     }
 }

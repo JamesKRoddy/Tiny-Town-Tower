@@ -57,6 +57,11 @@ namespace Managers
             task.PerformTask(npc);
         }
 
+        public bool IsNPCForAssignmentSet()
+        {
+            return npcForAssignment != null;
+        }
+
         public void SetNPCForAssignment(HumanCharacterController npc)
         {
             npcForAssignment = npc;
@@ -105,7 +110,7 @@ namespace Managers
             }
 
 
-            // If we have no NPC for assignment, check if we can get a previous worker
+            // If we have no NPC for assignment, check if we can get a previous worker            
             if (npcForAssignment == null)
             {
                 var previousWorker = GetPreviousWorkerForTask(workTask);

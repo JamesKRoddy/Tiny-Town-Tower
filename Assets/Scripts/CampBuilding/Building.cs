@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.AI;
 using Managers;
+using System;
 
 /// <summary>
 /// A building is a structure that can be built in the camp.
@@ -245,6 +246,18 @@ public class Building : MonoBehaviour, IInteractive<Building>
 
     protected virtual void OnDestroy()
     {
+    }
+
+    internal string GetBuildingStatsText()
+    {
+        return $"Building Stats:\n" +
+               $"Health: {currentHealth}/{buildingScriptableObj.maxHealth}\n" +
+               $"Repair Time: {buildingScriptableObj.repairTime} seconds\n" +
+               $"Upgrade Time: {buildingScriptableObj.upgradeTime} seconds\n" +
+               $"Task Radius: {buildingScriptableObj.taskRadius} meters\n" +
+               $"Max Health: {buildingScriptableObj.maxHealth}\n" +
+               $"Health Restored Per Repair: {buildingScriptableObj.healthRestoredPerRepair}\n" +
+               $"Upgrade Target: {buildingScriptableObj.upgradeTarget}\n";
     }
 }
 

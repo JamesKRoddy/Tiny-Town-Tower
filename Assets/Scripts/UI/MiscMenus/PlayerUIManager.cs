@@ -54,6 +54,7 @@ public class PlayerUIManager : MonoBehaviour
     [Header("Overlay Menu References")]
     [SerializeField] TMP_Text errorMessage;
     [SerializeField] UIPanelController interactionPromptUI; // UI text for interactionPromptUI
+    [SerializeField] TextPopup textPopup;
     public NarrativeSystem narrativeSystem;
     public WeaponComparisonMenu weaponComparisonMenu;
 
@@ -125,6 +126,11 @@ public class PlayerUIManager : MonoBehaviour
         errorMessage.text = message;
         PlayerInput.Instance.DisablePlayerInput(true);
         StartCoroutine(HideErrorMessageAfterDelay(duration));
+    }
+
+    public void DisplayTextPopup(string message)
+    {
+        textPopup.Setup(message);
     }
 
     private IEnumerator HideErrorMessageAfterDelay(float delay)
