@@ -79,6 +79,15 @@ namespace Managers
                 },
             });
 
+            if(building.GetCurrentWorkTask() != null && building.GetCurrentWorkTask().HasQueuedTasks){
+                options.Add(new SelectionPopup.SelectionOption
+                {
+                    optionName = "Work Queue",
+                    onSelected = () => {
+                        PlayerUIManager.Instance.selectionPreviewList.Setup(building.GetCurrentWorkTask(), null);
+                    },
+                });
+            }
             // Show the selection popup
             PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
         }

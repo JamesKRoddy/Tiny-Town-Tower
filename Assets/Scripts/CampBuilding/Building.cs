@@ -15,6 +15,9 @@ public class Building : MonoBehaviour, IInteractive<Building>
 {
     [Header("Building Configuration")]
     [SerializeField] BuildingScriptableObj buildingScriptableObj;
+
+    [Header("Current Work Task")]
+    [SerializeField, ReadOnly] protected WorkTask currentWorkTask;
     
     [Header("Building State")]
     [SerializeField, ReadOnly] protected bool isOperational = false;
@@ -215,6 +218,13 @@ public class Building : MonoBehaviour, IInteractive<Building>
     /// Gets the upgrade task for this building
     /// </summary>
     public BuildingUpgradeTask GetUpgradeTask() => upgradeTask;
+
+    public WorkTask GetCurrentWorkTask() => currentWorkTask;
+
+    public void SetCurrentWorkTask(WorkTask workTask)
+    {
+        currentWorkTask = workTask;
+    }
 
     public bool CanInteract()
     {

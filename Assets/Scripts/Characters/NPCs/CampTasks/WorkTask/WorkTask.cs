@@ -35,6 +35,13 @@ public abstract class WorkTask : MonoBehaviour
     public bool HasQueuedTasks => taskQueue.Count > 0;
     public bool IsTaskCompleted => currentTaskData == null && !HasQueuedTasks;
 
+    private Building taskBuilding;
+
+    protected virtual void Start()
+    {
+        taskBuilding = GetComponent<Building>();
+    }
+
     // Helper method for derived classes to set up tasks
     protected void SetupTask(object taskData)
     {
@@ -180,11 +187,6 @@ public abstract class WorkTask : MonoBehaviour
 
     public event Action OnTaskCompleted;
 
-    protected virtual void Start()
-    {
-
-    }
-
     protected virtual void OnDestroy()
     {
         // Unregister electricity consumption when the task is destroyed
@@ -209,12 +211,14 @@ public abstract class WorkTask : MonoBehaviour
     public void AssignNPC(HumanCharacterController npc)
     {
         currentWorker = npc;
+        taskBuilding.SetCurrentWorkTask(this);
     }
 
     // Method to unassign the current NPC
     public void UnassignNPC()
     {
         currentWorker = null;
+        taskBuilding.SetCurrentWorkTask(null);
     }
 
     // Method to check if the task is currently assigned
