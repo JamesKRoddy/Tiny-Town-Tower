@@ -25,37 +25,17 @@ public abstract class WorkTask : MonoBehaviour
     protected int resourceAmount = 1;
     protected Coroutine workCoroutine;
 
-    // Task queue
-    public Queue<object> taskQueue = new Queue<object>();
-    protected object currentTaskData;
-
     // Property to access the assigned NPC
     public HumanCharacterController AssignedNPC => currentWorker;
     public bool IsOccupied => currentWorker != null;
-    public bool HasQueuedTasks => taskQueue.Count > 0;
-    public bool IsTaskCompleted => currentTaskData == null && !HasQueuedTasks;
+    public virtual bool IsTaskCompleted => true; // Base WorkTask is always completed when done
+    public virtual bool HasQueuedTasks => false; // Base WorkTask has no queue
 
     private Building taskBuilding;
 
     protected virtual void Start()
     {
         taskBuilding = GetComponent<Building>();
-    }
-
-    // Helper method for derived classes to set up tasks
-    protected void SetupTask(object taskData)
-    {
-        if (taskData == null) return;
-        
-        // Queue the task
-        QueueTask(taskData);
-
-        // If no current task, set it up immediately
-        if (currentTaskData == null)
-        {
-            currentTaskData = taskQueue.Dequeue();
-            SetupNextTask();
-        }
     }
 
     // Virtual method for tooltip text
@@ -211,14 +191,20 @@ public abstract class WorkTask : MonoBehaviour
     public void AssignNPC(HumanCharacterController npc)
     {
         currentWorker = npc;
-        taskBuilding.SetCurrentWorkTask(this);
+        if(taskBuilding != null)
+        {
+            taskBuilding.SetCurrentWorkTask(this);
+        }
     }
 
     // Method to unassign the current NPC
     public void UnassignNPC()
     {
         currentWorker = null;
-        taskBuilding.SetCurrentWorkTask(null);
+        if(taskBuilding != null)
+        {
+            taskBuilding.SetCurrentWorkTask(null);
+        }
     }
 
     // Method to check if the task is currently assigned
@@ -275,8 +261,6 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual method for completing work that can be overridden
     protected virtual void CompleteWork()
     {
-        currentTaskData = null;
-
         // Store the current worker as previous worker before clearing
         if (currentWorker != null)
         {
@@ -288,28 +272,12 @@ public abstract class WorkTask : MonoBehaviour
         
         StopWorkCoroutine();
         
-        // Process next task in queue if available
-        if (taskQueue.Count > 0)
-        {
-            currentTaskData = taskQueue.Dequeue();
+        UnassignNPC();
 
-            SetupNextTask();
-            
-            // Start the next task immediately if we have a worker
-            if (currentWorker != null)
-            {
-                workCoroutine = StartCoroutine(WorkCoroutine());
-            }
-        }
-        else
+        // Unregister electricity consumption when work is complete
+        if (electricityRequired > 0)
         {
-            UnassignNPC();
-
-            // Unregister electricity consumption when work is complete
-            if (electricityRequired > 0)
-            {
-                CampManager.Instance.ElectricityManager.UnregisterBuildingConsumption(this);
-            }
+            CampManager.Instance.ElectricityManager.UnregisterBuildingConsumption(this);
         }
         
         // Notify completion
@@ -317,43 +285,15 @@ public abstract class WorkTask : MonoBehaviour
         InvokeStopWork();
     }
 
-    // Virtual method to setup the next task in queue
-    protected virtual void SetupNextTask()
+    // New method to notify task completion without stopping work
+    protected void NotifyTaskCompletion()
     {
-        // To be implemented by derived classes
+        OnTaskCompleted?.Invoke();
     }
 
-    // Method to add a task to the queue
-    public virtual void QueueTask(object taskData)
-    {
-        taskQueue.Enqueue(taskData);
-        
-        // If we have a previous worker and no current worker, assign them to the new task
-        if (currentWorker == null && taskQueue.Count == 1)
-        {
-            // Find the previous worker through the WorkManager
-            var previousWorker = CampManager.Instance.WorkManager.GetPreviousWorkerForTask(this);
-            if (previousWorker != null)
-            {
-                // Set the NPC for assignment before assigning the task
-                CampManager.Instance.WorkManager.SetNPCForAssignment(previousWorker);
-                AssignNPC(previousWorker);
-                if (previousWorker is SettlerNPC settler)
-                {
-                    settler.ChangeTask(TaskType.WORK);
-                }
-            }
-        }
-    }
     public string GetAnimationClipName()
     {
         return taskAnimation.ToString();
-    }
-
-    // Method to clear the task queue
-    public virtual void ClearTaskQueue()
-    {
-        taskQueue.Clear();
     }
 
     protected void AddResourceToInventory(ResourceItemCount resourceItemCount)

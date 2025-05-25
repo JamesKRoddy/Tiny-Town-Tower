@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using Managers;
 
-public class ResourceUpgradeTask : WorkTask
+public class ResourceUpgradeTask : QueuedWorkTask
 {
     public ResourceUpgradeScriptableObj currentUpgrade;
 

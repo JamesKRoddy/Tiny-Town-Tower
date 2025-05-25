@@ -3,7 +3,7 @@ using System.Collections;
 using Managers;
 using System;
 
-public class CookingTask : WorkTask
+public class CookingTask : QueuedWorkTask
 {
     [ReadOnly] public CookingRecipeScriptableObj currentRecipe;
     private CanteenBuilding canteenBuilding;

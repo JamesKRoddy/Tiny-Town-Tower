@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using Managers;
 
-public class ResearchTask : WorkTask
+public class ResearchTask : QueuedWorkTask
 {
     [SerializeField] private ResearchScriptableObj currentResearch;
     public ResearchScriptableObj CurrentResearch => currentResearch;
@@ -29,9 +29,17 @@ public class ResearchTask : WorkTask
             return;
         }
 
-        currentResearch = research;
-        baseWorkTime = research.researchTime;
-        requiredResources = research.requiredResources;
+        SetupTask(research);
+    }
+
+    protected override void SetupNextTask()
+    {
+        if (currentTaskData is ResearchScriptableObj nextResearch)
+        {
+            currentResearch = nextResearch;
+            baseWorkTime = nextResearch.researchTime;
+            requiredResources = nextResearch.requiredResources;
+        }
     }
 
     protected override void CompleteWork()

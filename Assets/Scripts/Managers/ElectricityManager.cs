@@ -36,7 +36,6 @@ namespace Managers
                     
                     if (previousElectricity != currentElectricity)
                     {
-                        Debug.Log($"[ElectricityManager] Electricity consumed: {consumption:F2}, Total: {currentElectricity:F2}, Buildings consuming: {totalBuildingConsumption:F2}");
                         OnElectricityChanged?.Invoke(GetElectricityPercentage());
                     }
                 }
@@ -52,16 +51,10 @@ namespace Managers
             if (buildingConsumption.ContainsKey(building))
             {
                 totalBuildingConsumption -= buildingConsumption[building];
-                Debug.Log($"[ElectricityManager] Updating building consumption for {building.GetType().Name}: {buildingConsumption[building]} -> {consumption}");
-            }
-            else
-            {
-                Debug.Log($"[ElectricityManager] Registering new building consumption: {building.GetType().Name} consuming {consumption}");
             }
 
             buildingConsumption[building] = consumption;
             totalBuildingConsumption += consumption;
-            Debug.Log($"[ElectricityManager] Total building consumption: {totalBuildingConsumption}");
         }
 
         public void UnregisterBuildingConsumption(WorkTask building)
@@ -71,7 +64,6 @@ namespace Managers
             float consumption = buildingConsumption[building];
             totalBuildingConsumption -= consumption;
             buildingConsumption.Remove(building);
-            Debug.Log($"[ElectricityManager] Unregistered building consumption: {building.GetType().Name} was consuming {consumption}, New total: {totalBuildingConsumption}");
         }
 
         public void AddElectricity(float amount)
@@ -81,7 +73,6 @@ namespace Managers
             
             if (previousElectricity != currentElectricity)
             {
-                Debug.Log($"[ElectricityManager] Electricity added: {amount}, New total: {currentElectricity}");
                 OnElectricityChanged?.Invoke(GetElectricityPercentage());
             }
         }
