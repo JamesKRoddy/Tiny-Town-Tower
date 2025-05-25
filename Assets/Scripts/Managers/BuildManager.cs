@@ -70,6 +70,15 @@ namespace Managers
                 workTask = null
             });
 
+            options.Add(new SelectionPopup.SelectionOption
+            {
+                optionName = "Assign Worker",
+                onSelected = () => {
+                    CampManager.Instance.WorkManager.buildingForAssignment = building;
+                    PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(true);
+                },
+            });
+
             // Show the selection popup
             PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
         }

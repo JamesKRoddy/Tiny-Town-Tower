@@ -15,6 +15,8 @@ namespace Managers
         private HumanCharacterController npcForAssignment;
         private Dictionary<WorkTask, HumanCharacterController> previousWorkers = new Dictionary<WorkTask, HumanCharacterController>();
 
+        public Building buildingForAssignment;
+
         // Method to add a new work task to the queue
         public void AddWorkTask(WorkTask newTask)
         {
