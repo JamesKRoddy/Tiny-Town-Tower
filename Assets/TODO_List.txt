@@ -16,26 +16,13 @@ Have to do some refactoring on the npc animator and what has access to it
 
 
 ***NEXT*** Camp default is the camp selection!!!!!!!!!!!!!!!!!!!!!!
-Seting work/buildings and assigning npcs to them
-removing CAMP_CAMERA_MOVEMENT and replacing it with a slightly different version of CAMP_WORK_ASSIGNMENT
-will have to do the same/tie in with TURRET_CAMERA_MOVEMENT
-
-Flow->Select building->Open popup-Make selection and open approriate screen
-
-Popup contains options:
-
-View queue (where applicable) STILL LEFT!!!!! build manager line 85
-
-	
+will have to do the same/tie in with TURRET_CAMERA_MOVEMENT	
 
 
 
 Cleaning system
 NPCs have to use toilets, need to figure out timers for when they need it
 
-
-
-I think the npc work state needs to have a system for walking towards different work points (like faming and cleaning) picking stuff up and dropping it off somewhere.
 
 
 
