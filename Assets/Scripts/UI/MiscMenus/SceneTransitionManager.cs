@@ -38,11 +38,14 @@ public class SceneTransitionManager : MonoBehaviour
     public string NextScene { get; private set; }
     public GameMode NextGameMode { get; private set; }
 
+    // Event that fires when a scene transition begins, passing the next game mode
+    public event System.Action<GameMode> OnSceneTransitionBegin;
+
     // The name of your dedicated loading scene.
     [SerializeField]
     private string loadingSceneName = "LoadingScene";
 
-    // Ensure that there is only one instance of PlayerCombat
+    // Ensure that there is only one instance
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -105,6 +108,7 @@ public class SceneTransitionManager : MonoBehaviour
         PreviousScene = SceneManager.GetActiveScene().name;
         NextScene = sceneName;
         NextGameMode = nextGameMode;
+        OnSceneTransitionBegin?.Invoke(nextGameMode); // Pass the next game mode to subscribers
         SceneManager.LoadScene(loadingSceneName);
     }
 
