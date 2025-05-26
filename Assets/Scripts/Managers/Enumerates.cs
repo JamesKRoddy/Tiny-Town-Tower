@@ -17,7 +17,9 @@ public enum BuildingCategory
     FOOD,
     ELECTRICITY,
     DECORATION,
-    WEAPONS
+    WEAPONS,
+    CLEANING,
+    RESOURCES
 }
 
 // =========================
@@ -30,23 +32,40 @@ public enum TaskType
     WORK,
     WANDER,
     ATTACK,
-    TEND_CROPS
+    EAT
 }
 
 [System.Serializable]
 public enum TaskAnimation
 {
     NONE,
-    RESEARCH,
-    COOKING,
-    UPGRADE_RESOURCE,
-    BUILD_STRUCTURE,
-    REPAIR_BUILDING,
-    CLEAN,
-    FARMING,
-    DESTROY_STRUCTURE,
-    UPGRADE_BUILDING,
-    GATHER
+    COOKING_POT_STIR,
+    RESEARCH_COUNTER,
+    HAMMER_STANDING,
+    HAMMER_COUNTER,
+    GENERATE_ELECTRICITY_HAND,
+    //Farming animations
+    PLANTING_SEEDS,
+    WATERING_PLANTS,
+    HARVEST_PLANT_STANDING,
+    HARVEST_PLANT_KNEELING,
+    CLEARING_PLOT
+}
+
+// =========================
+// IK POINT ENUMS
+// =========================
+
+[System.Serializable]
+public enum IKPoint
+{
+    NONE,
+    LEFT_HAND,
+    RIGHT_HAND,
+    LEFT_FOOT,
+    RIGHT_FOOT,
+    HEAD,
+    WEAPON
 }
 
 // =========================
@@ -191,6 +210,7 @@ public enum ResourceCategory //TODO: Use enum for resource categories for invent
     WEAPONS,
     BASIC_BUILDING_MATERIAL,
     AMMO,
+    CROP_SEED,
     QUEST_ITEM
 }
 

@@ -1562,6 +1562,7 @@ GameObject:
   - component: {fileID: 4868853620621953941}
   - component: {fileID: 3754499901241065424}
   - component: {fileID: 6110800992483955535}
+  - component: {fileID: 5759801616001992186}
   m_Layer: 0
   m_Name: Test_Character_Player_NPC
   m_TagString: Untagged
@@ -1740,7 +1741,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54c2a897229fb6d4a8117c1e3843c816, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  characterType: 1
+  characterType: 101
   moveMaxSpeed: 10
   rotationSpeed: 720
   attackRotationSpeed: 120
@@ -1763,6 +1764,17 @@ MonoBehaviour:
   health: 100
   maxHealth: 100
   nPCDataObj: {fileID: 11400000, guid: ff84a74ffbac90849b0eb152033e7ac8, type: 2}
+  maxStamina: 100
+  currentStamina: 100
+  staminaRegenRate: 5
+  fatigueRate: 2
+  maxHunger: 100
+  currentHunger: 100
+  hungerDecreaseRate: 1
+  hungerThreshold: 30
+  starvationThreshold: 10
+  mealHungerRestore: 50
+  workSpeedMultiplier: 1
 --- !u!114 &4868853620621953941
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1775,6 +1787,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4bec3cd022eca33488ae7211ad5dfb1a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  wanderIntervalMin: 5
+  wanderIntervalMax: 10
   wanderRadius: 10
 --- !u!114 &3754499901241065424
 MonoBehaviour:
@@ -1798,6 +1812,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d58c74adaeb650d4aac7a57e5850b240, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  assignedTask: {fileID: 0}
+--- !u!114 &5759801616001992186
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2985604360754162274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb3a4d561b7046549b52f7e3431f2e15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &3466425493041804734

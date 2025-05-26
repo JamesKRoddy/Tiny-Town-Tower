@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.AI;
 using Managers;
+using System;
 
 /// <summary>
 /// A building is a structure that can be built in the camp.
@@ -14,6 +15,9 @@ public class Building : MonoBehaviour, IInteractive<Building>
 {
     [Header("Building Configuration")]
     [SerializeField] BuildingScriptableObj buildingScriptableObj;
+
+    [Header("Current Work Task")]
+    [SerializeField, ReadOnly] protected WorkTask currentWorkTask;
     
     [Header("Building State")]
     [SerializeField, ReadOnly] protected bool isOperational = false;
@@ -29,6 +33,11 @@ public class Building : MonoBehaviour, IInteractive<Building>
     public event System.Action OnBuildingRepaired;
     public event System.Action OnBuildingUpgraded;
     public event System.Action<float> OnHealthChanged;
+
+    protected virtual void Start()
+    {
+
+    }
 
     public virtual void SetupBuilding(BuildingScriptableObj buildingScriptableObj)
     {
@@ -94,7 +103,6 @@ public class Building : MonoBehaviour, IInteractive<Building>
     {
         isUnderConstruction = false;
         isOperational = true;
-        // Additional completion logic can be added in derived classes
     }
 
     public virtual void TakeDamage(float damage)
@@ -136,7 +144,7 @@ public class Building : MonoBehaviour, IInteractive<Building>
         OnBuildingUpgraded?.Invoke();
     }
 
-    public void StartDestruction()
+    public virtual void StartDestruction()
     {
         // Unassign any NPCs working on repair or upgrade tasks
         if (repairTask.IsOccupied)
@@ -149,7 +157,7 @@ public class Building : MonoBehaviour, IInteractive<Building>
         }
 
         // Get the destruction prefab
-        GameObject destructionPrefab = BuildManager.Instance.GetDestructionPrefab(buildingScriptableObj.size);
+        GameObject destructionPrefab = CampManager.Instance.BuildManager.GetDestructionPrefab(buildingScriptableObj.size);
         if (destructionPrefab != null)
         {
             // Create the destruction task object
@@ -211,6 +219,13 @@ public class Building : MonoBehaviour, IInteractive<Building>
     /// </summary>
     public BuildingUpgradeTask GetUpgradeTask() => upgradeTask;
 
+    public WorkTask GetCurrentWorkTask() => currentWorkTask;
+
+    public void SetCurrentWorkTask(WorkTask workTask)
+    {
+        currentWorkTask = workTask;
+    }
+
     public bool CanInteract()
     {
         return !isUnderConstruction && isOperational;
@@ -237,6 +252,22 @@ public class Building : MonoBehaviour, IInteractive<Building>
     public Building Interact()
     {
         return this;
+    }
+
+    protected virtual void OnDestroy()
+    {
+    }
+
+    internal string GetBuildingStatsText()
+    {
+        return $"Building Stats:\n" +
+               $"Health: {currentHealth}/{buildingScriptableObj.maxHealth}\n" +
+               $"Repair Time: {buildingScriptableObj.repairTime} seconds\n" +
+               $"Upgrade Time: {buildingScriptableObj.upgradeTime} seconds\n" +
+               $"Task Radius: {buildingScriptableObj.taskRadius} meters\n" +
+               $"Max Health: {buildingScriptableObj.maxHealth}\n" +
+               $"Health Restored Per Repair: {buildingScriptableObj.healthRestoredPerRepair}\n" +
+               $"Upgrade Target: {buildingScriptableObj.upgradeTarget}\n";
     }
 }
 

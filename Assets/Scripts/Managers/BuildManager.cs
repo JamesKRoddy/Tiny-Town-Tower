@@ -28,23 +28,6 @@ namespace Managers
         [Header("Destruction Prefabs")]
         [SerializeField] private List<DestructionPrefabMapping> destructionPrefabMappings = new List<DestructionPrefabMapping>();
 
-        private static BuildManager _instance;
-        public static BuildManager Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<BuildManager>();
-                    if (_instance == null)
-                    {
-                        Debug.LogError("BuildManager instance not found in the scene!");
-                    }
-                }
-                return _instance;
-            }
-        }
-
         public GameObject GetConstructionSitePrefab(Vector2Int size)
         {
             foreach (var mapping in constructionSiteMappings)
@@ -71,6 +54,47 @@ namespace Managers
             
             Debug.LogError($"No destruction prefab found for size {size.x}x{size.y}");
             return destructionPrefabMappings.Count > 0 ? destructionPrefabMappings[0].destructionPrefab : null;
+        }
+
+        public void BuildingSelectionOptions(Building building){
+            var options = new List<SelectionPopup.SelectionOption>();
+
+            // Add Destroy Building option first
+            options.Add(new SelectionPopup.SelectionOption
+            {
+                optionName = "Building Stats",
+                onSelected = () => {
+                    PlayerUIManager.Instance.DisplayTextPopup(building.GetBuildingStatsText());
+                    PlayerUIManager.Instance.selectionPopup.OnCloseClicked();
+                },
+                workTask = null
+            });
+
+            options.Add(new SelectionPopup.SelectionOption
+            {
+                optionName = "Assign Worker",
+                onSelected = () => {
+                    CampManager.Instance.WorkManager.buildingForAssignment = building;
+                    PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(true);
+                },
+            });
+
+            foreach(var workTask in building.GetComponents<WorkTask>()){
+                if(workTask is QueuedWorkTask queuedTask && queuedTask.HasQueuedTasks){
+                    options.Add(new SelectionPopup.SelectionOption
+                    {
+                        optionName = $"Work Queue: {workTask.GetType().Name.Replace("Task", "")}",
+                        onSelected = () => {
+                            PlayerUIManager.Instance.selectionPreviewList.Setup(building.GetCurrentWorkTask(), null);
+                            PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+                        },
+                        workTask = workTask
+                    });
+                }
+            }
+
+            // Show the selection popup
+            PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
         }
     }
 }

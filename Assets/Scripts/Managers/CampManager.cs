@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Collections;
 
 namespace Managers
 {
@@ -25,31 +26,22 @@ namespace Managers
         // References to other managers
         private ResearchManager researchManager;
         private CleanlinessManager cleanlinessManager;
-        [SerializeField] private WorkManager workManager;
-        [SerializeField] private BuildManager buildManager;
+        private WorkManager workManager;
+        private BuildManager buildManager;
         private CookingManager cookingManager;
         private ResourceUpgradeManager resourceUpgradeManager;
+        private ElectricityManager electricityManager;
+        private FarmingManager farmingManager;
 
         // Public access to other managers
         public ResearchManager ResearchManager => researchManager;
         public CleanlinessManager CleanlinessManager => cleanlinessManager;
-        public PlayerInventory PlayerInventory => PlayerInventory.Instance;
         public WorkManager WorkManager => workManager;
         public BuildManager BuildManager => buildManager;
         public CookingManager CookingManager => cookingManager;
         public ResourceUpgradeManager ResourceUpgradeManager => resourceUpgradeManager;
-
-
-        // Inventory Management
-        private Dictionary<ResourceScriptableObj, int> resources = new Dictionary<ResourceScriptableObj, int>();
-
-        // Research Management
-        private int researchPoints = 0;
-
-        // Cleanliness Management
-        [SerializeField] private float maxCleanliness = 100f;
-        [SerializeField] private float currentCleanliness = 100f;
-        [SerializeField] private float dirtinessRate = 0.1f;
+        public ElectricityManager ElectricityManager => electricityManager;
+        public FarmingManager FarmingManager => farmingManager;
 
         private void Awake()
         {
@@ -71,125 +63,27 @@ namespace Managers
             if (cleanlinessManager == null) cleanlinessManager = gameObject.GetComponentInChildren<CleanlinessManager>();
             if (cookingManager == null) cookingManager = gameObject.GetComponentInChildren<CookingManager>();
             if (resourceUpgradeManager == null) resourceUpgradeManager = gameObject.GetComponentInChildren<ResourceUpgradeManager>();
-
+            if (workManager == null) workManager = gameObject.GetComponentInChildren<WorkManager>();
+            if (buildManager == null) buildManager = gameObject.GetComponentInChildren<BuildManager>();
+            if (electricityManager == null) electricityManager = gameObject.GetComponentInChildren<ElectricityManager>();
+            if (farmingManager == null) farmingManager = gameObject.GetComponentInChildren<FarmingManager>();
             // Log warnings for any missing managers
             if (researchManager == null) Debug.LogWarning("ResearchManager not found in scene!");
             if (cleanlinessManager == null) Debug.LogWarning("CleanlinessManager not found in scene!");
             if (cookingManager == null) Debug.LogWarning("CookingManager not found in scene!");
             if (resourceUpgradeManager == null) Debug.LogWarning("ResourceUpgradeManager not found in scene!");
-
+            if (workManager == null) Debug.LogWarning("WorkManager not found in scene!");
+            if (buildManager == null) Debug.LogWarning("BuildManager not found in scene!");
+            if (electricityManager == null) Debug.LogWarning("ElectricityManager not found in scene!");
+            if (farmingManager == null) Debug.LogWarning("FarmingManager not found in scene!");
             // Initialize managers
             if (researchManager != null) researchManager.Initialize();
             if (cookingManager != null) cookingManager.Initialize();
             if (resourceUpgradeManager != null) resourceUpgradeManager.Initialize();
+            if (electricityManager != null) electricityManager.Initialize();
+            if (cleanlinessManager != null) cleanlinessManager.Initialize();
+            if (farmingManager != null) farmingManager.Initialize();
         }
 
-        private void Update()
-        {
-            // Gradually decrease cleanliness over time
-            currentCleanliness = Mathf.Max(0, currentCleanliness - dirtinessRate * Time.deltaTime);
-        }
-
-        // Inventory Methods
-        public void AddResource(ResourceScriptableObj resource, int amount = 1)
-        {
-            if (resources.ContainsKey(resource))
-            {
-                resources[resource] += amount;
-            }
-            else
-            {
-                resources.Add(resource, amount);
-            }
-        }
-
-        public bool RemoveResource(ResourceScriptableObj resource, int amount = 1)
-        {
-            if (resources.ContainsKey(resource) && resources[resource] >= amount)
-            {
-                resources[resource] -= amount;
-                if (resources[resource] <= 0)
-                {
-                    resources.Remove(resource);
-                }
-                return true;
-            }
-            return false;
-        }
-
-        public int GetResourceCount(ResourceScriptableObj resource)
-        {
-            return resources.ContainsKey(resource) ? resources[resource] : 0;
-        }
-
-        public bool HasResources(ResourceScriptableObj[] requiredResources, int[] amounts)
-        {
-            if (requiredResources.Length != amounts.Length)
-            {
-                Debug.LogError("Resource arrays length mismatch");
-                return false;
-            }
-
-            for (int i = 0; i < requiredResources.Length; i++)
-            {
-                if (GetResourceCount(requiredResources[i]) < amounts[i])
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        public bool ConsumeResources(ResourceScriptableObj[] requiredResources, int[] amounts)
-        {
-            if (!HasResources(requiredResources, amounts))
-            {
-                return false;
-            }
-
-            for (int i = 0; i < requiredResources.Length; i++)
-            {
-                RemoveResource(requiredResources[i], amounts[i]);
-            }
-            return true;
-        }
-
-        // Research Methods
-        public void AddResearchPoints(int points)
-        {
-            researchPoints += points;
-            Debug.Log($"Total research points: {researchPoints}");
-        }
-
-        public bool SpendResearchPoints(int points)
-        {
-            if (researchPoints >= points)
-            {
-                researchPoints -= points;
-                return true;
-            }
-            return false;
-        }
-
-        public int GetResearchPoints()
-        {
-            return researchPoints;
-        }
-
-        // Cleanliness Methods
-        public void IncreaseCleanliness(float amount)
-        {
-            currentCleanliness = Mathf.Min(maxCleanliness, currentCleanliness + amount);
-        }
-
-        public float GetCleanliness()
-        {
-            return currentCleanliness;
-        }
-
-        public float GetCleanlinessPercentage()
-        {
-            return (currentCleanliness / maxCleanliness) * 100f;
-        }
     } 
 }

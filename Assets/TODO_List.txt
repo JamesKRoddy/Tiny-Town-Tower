@@ -2,15 +2,26 @@ More complex task animations and animation effects handle by animation state mac
 
 TODO Large things:
 
-
-
-*********Player playing as the robot!
-
-Have to see what happens when kicking an npc off the work
-
 _________________________________________________________________________
 
-Electricity system, genereating and using electricity
+
+
+At the moment:
+***Hunger system***
+
+
+
+Have to do some refactoring on the npc animator and what has access to it
+
+
+
+***NEXT*** Camp default is the camp selection!!!!!!!!!!!!!!!!!!!!!!
+will have to do the same/tie in with TURRET_CAMERA_MOVEMENT	
+
+
+
+Cleaning system
+NPCs have to use toilets, need to figure out timers for when they need it
 
 
 
@@ -21,9 +32,13 @@ Repairing buildings: wait until damage is finished
 
 
 
-Hunger system
 
 
+
+
+***Cleanliness system****
+Create prefabs/scriptable objs for:
+CleaningStation
 
 
 

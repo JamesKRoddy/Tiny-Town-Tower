@@ -15,6 +15,8 @@ namespace Managers
         private HumanCharacterController npcForAssignment;
         private Dictionary<WorkTask, HumanCharacterController> previousWorkers = new Dictionary<WorkTask, HumanCharacterController>();
 
+        public Building buildingForAssignment;
+
         // Method to add a new work task to the queue
         public void AddWorkTask(WorkTask newTask)
         {
@@ -55,6 +57,11 @@ namespace Managers
 
             // Assign the task to the NPC
             task.PerformTask(npc);
+        }
+
+        public bool IsNPCForAssignmentSet()
+        {
+            return npcForAssignment != null;
         }
 
         public void SetNPCForAssignment(HumanCharacterController npc)
@@ -105,7 +112,7 @@ namespace Managers
             }
 
 
-            // If we have no NPC for assignment, check if we can get a previous worker
+            // If we have no NPC for assignment, check if we can get a previous worker            
             if (npcForAssignment == null)
             {
                 var previousWorker = GetPreviousWorkerForTask(workTask);
@@ -198,82 +205,60 @@ namespace Managers
                 characterToAssign = npcForAssignment;
             }
 
-            if (options == null)
-            {
-                options = new List<SelectionPopup.SelectionOption>();
-            }
+            options ??= new List<SelectionPopup.SelectionOption>();
 
-            // Create selection options for each work task         
+            // Create selection options for each work task
             foreach (var task in workTasks)
             {
-                if (task is ResearchTask)
+                var option = CreateWorkTaskOption(task, characterToAssign, onTaskSelected);
+                if (option != null)
                 {
-                    // For research tasks, show the research selection screen
-                    options.Add(new SelectionPopup.SelectionOption
-                    {
-                        optionName = "Research",
-                        onSelected = () => {
-                            if(!task.IsTaskCompleted){
-                                characterToAssign.StartWork(task);
-                            }                            
-                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, characterToAssign);
-                            PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
-                        },
-                        canSelect = () => true,
-                        workTask = task
-                    });
-                }
-                else if (task is CookingTask)
-                {
-                    // For cooking tasks, show the cooking selection screen
-                    options.Add(new SelectionPopup.SelectionOption
-                    {
-                        optionName = "Cook",
-                        onSelected = () => {
-                            if(!task.IsTaskCompleted){
-                                characterToAssign.StartWork(task);
-                            }
-                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, characterToAssign);
-                            PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
-                        },
-                        canSelect = () => true,
-                        workTask = task
-                    });
-                }
-                else if (task is ResourceUpgradeTask)
-                {
-                    // For resource upgrade tasks, show the resource upgrade selection screen
-                    options.Add(new SelectionPopup.SelectionOption
-                    {
-                        optionName = "Upgrade Resource",
-                        onSelected = () => {
-                            if(!task.IsTaskCompleted){
-                                characterToAssign.StartWork(task);
-                            }
-                            PlayerUIManager.Instance.selectionPreviewList.Setup(task, characterToAssign);
-                            PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
-                        },
-                        canSelect = () => true,
-                        workTask = task
-                    });
-                }
-                else
-                {
-                    // For other tasks, show the normal work assignment
-                    options.Add(new SelectionPopup.SelectionOption
-                    {
-                        optionName = task.GetType().Name.Replace("Task", ""),
-                        onSelected = () => {
-                            onTaskSelected(task);
-                        },
-                        canSelect = () => task.CanPerformTask(),
-                        workTask = task
-                    });
+                    options.Add(option);
                 }
             }
 
             // Show the selection popup
             PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
+        }
+
+        private SelectionPopup.SelectionOption CreateWorkTaskOption(WorkTask task, HumanCharacterController characterToAssign, Action<WorkTask> onTaskSelected)
+        {
+            // Common action for tasks that use the selection preview list
+            Action previewListAction = () => {
+                if (!task.IsTaskCompleted)
+                {
+                    characterToAssign.StartWork(task);
+                }
+                PlayerUIManager.Instance.selectionPreviewList.Setup(task, characterToAssign);
+                PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+            };
+
+            // Get option name and action based on task type
+            (string name, Action action) = task switch
+            {
+                ResearchTask => ("Research", previewListAction),
+                CookingTask => ("Cook", previewListAction),
+                ResourceUpgradeTask => ("Upgrade Resource", previewListAction),
+                FarmingTask => ("Farm", () => {
+                    if ((task as FarmingTask)?.IsOccupiedWithCrop() ?? false)
+                    {
+                        characterToAssign.StartWork(task);
+                    }
+                    else
+                    {
+                        previewListAction();
+                    }
+                }),
+                _ => (task.GetType().Name.Replace("Task", ""), () => onTaskSelected(task))
+            };
+
+            return new SelectionPopup.SelectionOption
+            {
+                optionName = name,
+                onSelected = action,
+                canSelect = () => task.CanPerformTask(),
+                workTask = task
+            };
         }
 
         public void CloseSelectionPopup()

@@ -1,9 +1,12 @@
 using System.Collections.Generic;
+using System;
 using Characters.NPC;
 using Characters.NPC.Mutations;
 using Managers;
 using UnityEngine;
 using UnityEngine.AI;
+using Mono.Cecil.Cil;
+
 
 [RequireComponent(typeof(NavMeshAgent))]
 public class SettlerNPC : HumanCharacterController
@@ -12,12 +15,30 @@ public class SettlerNPC : HumanCharacterController
     public SettlerNPCScriptableObj nPCDataObj;
     [SerializeField, ReadOnly] internal NPCMutationSystem mutationSystem;
     private _TaskState currentState;
+    private WorkTask assignedWorkTask; // Track the assigned work task
+    private bool isOnBreak = false; // Track if NPC is on break
 
     [Header("Stamina")]
     public float maxStamina = 100f;
     public float currentStamina = 100f;
     public float staminaRegenRate = 5f;
     public float fatigueRate = 2f;
+
+    [Header("Hunger System")]
+    [SerializeField] private float maxHunger = 100f;
+    [SerializeField] private float currentHunger = 100f;
+    [SerializeField] private float hungerDecreaseRate = 1f; // Hunger points per second
+    [SerializeField] private float hungerThreshold = 30f; // When to start looking for food
+    [SerializeField] private float starvationThreshold = 10f; // When to stop working
+    [SerializeField] private float workSpeedMultiplier = 1f; // Current work speed multiplier based on hunger
+    [SerializeField] private float noFoodCooldown = 10f; // Cooldown period when no food is available
+    private float lastNoFoodTime = -10f; // Initialize to allow immediate first check
+
+    public event Action<float, float> OnHungerChanged; // Current hunger, max hunger
+    public event Action OnStarving;
+    public event Action OnNoLongerStarving;
+
+    private int workLayerIndex;
 
     // Dictionary that maps TaskType to TaskState
     Dictionary<TaskType, _TaskState> taskStates = new Dictionary<TaskType, _TaskState>();
@@ -40,8 +61,15 @@ public class SettlerNPC : HumanCharacterController
         }
     }
 
-    private void Start()
+    protected override void Start()
     {
+        base.Start();
+        workLayerIndex = animator.GetLayerIndex("Work Layer");
+        if (workLayerIndex == -1)
+        {
+            Debug.LogError($"[WorkState] Could not find 'Work Layer' in animator for {gameObject.name}");
+        }
+
         // Ensure NPC reference is set for each state component
         // Default to WanderState
         if (taskStates.ContainsKey(TaskType.WANDER))
@@ -54,6 +82,31 @@ public class SettlerNPC : HumanCharacterController
         {
             mutationSystem.ApplyRandomMutations();
         }
+
+        // Register with NPCManager
+        NPCManager.Instance.RegisterNPC(this);
+    }
+
+    private void OnDestroy()
+    {
+        // Unregister from NPCManager
+        if (NPCManager.Instance != null)
+        {
+            NPCManager.Instance.UnregisterNPC(this);
+        }
+    }
+
+    private bool HasAvailableFood()
+    {
+        var canteens = CampManager.Instance.CookingManager.GetRegisteredCanteens();
+        foreach (var canteen in canteens)
+        {
+            if (canteen.HasAvailableMeals() && canteen.IsOperational())
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void Update()
@@ -66,6 +119,40 @@ public class SettlerNPC : HumanCharacterController
 
         // Regenerate stamina
         currentStamina = Mathf.Min(maxStamina, currentStamina + staminaRegenRate * Time.deltaTime);
+
+        // Update hunger
+        if (currentHunger > 0)
+        {
+            currentHunger = Mathf.Max(0, currentHunger - (hungerDecreaseRate * Time.deltaTime));
+            OnHungerChanged?.Invoke(currentHunger, maxHunger);
+
+            // Update work speed multiplier based on hunger
+            if (currentHunger <= starvationThreshold)
+            {
+                workSpeedMultiplier = 0f;
+                if (currentHunger == 0)
+                {
+                    OnStarving?.Invoke();
+                }
+            }
+            else if (currentHunger <= hungerThreshold)
+            {
+                workSpeedMultiplier = 0.5f;
+                
+                // If we're hungry and not already eating, and not in cooldown, and food is available, change to eat state
+                if (GetCurrentTaskType() != TaskType.EAT && 
+                    Time.time - lastNoFoodTime >= noFoodCooldown && 
+                    HasAvailableFood())
+                {
+                    ChangeTask(TaskType.EAT);
+                }
+            }
+            else
+            {
+                workSpeedMultiplier = 1f;
+                OnNoLongerStarving?.Invoke();
+            }
+        }
     }
 
     public void UseStamina(float amount)
@@ -76,6 +163,13 @@ public class SettlerNPC : HumanCharacterController
     // Method to change states
     public void ChangeState(_TaskState newState)
     {
+        
+        animator.Play("Empty", workLayerIndex);
+
+        if(currentState == newState){
+            return;
+        }
+
         if (currentState != null)
         {
             currentState.OnExitState(); // Exit the old state
@@ -92,14 +186,91 @@ public class SettlerNPC : HumanCharacterController
         }
     }
 
+    public override void PlayWorkAnimation(string animationName)
+    {
+        animator.Play(animationName, workLayerIndex);
+    }
+
     public override void StartWork(WorkTask newTask)
     {
         if((taskStates[TaskType.WORK] as WorkState).assignedTask == newTask){
             return;
         }
 
-        (taskStates[TaskType.WORK] as WorkState).AssignTask(newTask);
+        assignedWorkTask = newTask; // Store the assigned task
+        var workState = taskStates[TaskType.WORK] as WorkState;
+        workState.AssignTask(newTask);
         ChangeTask(TaskType.WORK);
+    }
+
+    public void TakeBreak()
+    {
+        if (assignedWorkTask != null)
+        {
+            isOnBreak = true;
+            // Don't unassign from the task, just change state
+            ChangeTask(TaskType.EAT);
+        }
+        else
+        {
+            Debug.LogWarning($"<color=blue>{gameObject.name}</color>: Attempted to take break but no work task assigned");
+        }
+    }
+
+    public void ReturnToWork()
+    {
+        if (assignedWorkTask != null && isOnBreak)
+        {
+            isOnBreak = false;
+            
+            // Reassign the task to the WorkState
+            (taskStates[TaskType.WORK] as WorkState).AssignTask(assignedWorkTask);
+            
+            ChangeTask(TaskType.WORK);
+        }
+        else
+        {
+            Debug.LogWarning($"<color=blue>{gameObject.name}</color>: Cannot return to work - AssignedTask: {(assignedWorkTask != null ? assignedWorkTask.name : "null")}, IsOnBreak: {isOnBreak}");
+        }
+    }
+
+    public bool HasAssignedWork()
+    {
+        return assignedWorkTask != null;
+    }
+
+    public WorkTask GetAssignedWork()
+    {
+        return assignedWorkTask;
+    }
+
+    public void StopWork()
+    {
+        
+        if (assignedWorkTask != null)
+        {
+            // Stop the current work
+            assignedWorkTask.StopWorkCoroutine();
+            assignedWorkTask.UnassignNPC();
+            
+            // Clear the assigned work and change task
+            ClearAssignedWork();
+            
+            // Clear the WorkState's assigned task
+            var workState = taskStates[TaskType.WORK] as WorkState;
+            if (workState != null)
+            {
+                workState.AssignTask(null);
+            }
+            
+            ChangeTask(TaskType.WANDER);
+        }
+    }
+
+    public void ClearAssignedWork()
+    {
+        assignedWorkTask = null;
+        isOnBreak = false;
     }
 
     // Method to change task and update state
@@ -107,6 +278,12 @@ public class SettlerNPC : HumanCharacterController
     {
         if (taskStates.ContainsKey(newTask))
         {
+            // If we're changing from work to eat, set isOnBreak
+            if (currentState != null && currentState.GetTaskType() == TaskType.WORK && newTask == TaskType.EAT)
+            {
+                isOnBreak = true;
+            }
+            
             ChangeState(taskStates[newTask]);
         }
         else
@@ -123,6 +300,56 @@ public class SettlerNPC : HumanCharacterController
     public Animator GetAnimator()
     {
         return animator;
+    }
+
+    public TaskType GetCurrentTaskType()
+    {
+        if (currentState != null)
+        {
+            return currentState.GetTaskType();
+        }
+        return TaskType.WANDER;
+    }
+
+    public bool IsHungry()
+    {
+        return currentHunger <= hungerThreshold;
+    }
+
+    public bool IsStarving()
+    {
+        return currentHunger <= starvationThreshold;
+    }
+
+    public float GetHungerPercentage()
+    {
+        return currentHunger / maxHunger;
+    }
+
+    public void EatMeal(CookingRecipeScriptableObj recipe)
+    {
+        // Base hunger restoration from the meal
+        float hungerRestore = recipe.hungerRestoreAmount;
+        
+        // If we have a recipe, we could potentially add bonuses or effects based on the recipe
+        if (recipe != null)
+        {
+            // TODO: Add any special effects or bonuses based on the recipe
+            // For now, we'll just use the recipe's hunger restoration
+        }
+        
+        currentHunger = Mathf.Min(maxHunger, currentHunger + hungerRestore);
+        OnHungerChanged?.Invoke(currentHunger, maxHunger);
+    }
+
+    public float GetWorkSpeedMultiplier()
+    {
+        return workSpeedMultiplier;
+    }
+
+    public void SetNoFoodCooldown()
+    {
+        lastNoFoodTime = Time.time;
     }
 }
 
@@ -164,9 +391,8 @@ namespace Characters.NPC
             }
 
             // Determine if this NPC should get mutations
-            if(Random.value > mutationSpawnChance)
+            if(UnityEngine.Random.value > mutationSpawnChance)
             {
-                Debug.Log($"NPCMutationSystem: {settlerNPC.name} did not receive mutations (chance roll failed)");
                 return;
             }
 
@@ -179,7 +405,7 @@ namespace Characters.NPC
             }
 
             // Determine number of mutations
-            int numMutations = Random.Range(minRandomMutations, maxRandomMutations + 1);
+            int numMutations = UnityEngine.Random.Range(minRandomMutations, maxRandomMutations + 1);
 
             if (allMutations.Count == 0) return;
 
@@ -188,13 +414,13 @@ namespace Characters.NPC
                 if (allMutations.Count == 0) break;
 
                 // Select a random mutation
-                int index = Random.Range(0, allMutations.Count);
+                int index = UnityEngine.Random.Range(0, allMutations.Count);
                 NPCMutationScriptableObj mutation = allMutations[index];
 
                 // Check rarity
                 if (mutation.rarity == ResourceRarity.RARE || mutation.rarity == ResourceRarity.LEGENDARY)
                 {
-                    if (Random.value > rareMutationChance)
+                    if (UnityEngine.Random.value > rareMutationChance)
                     {
                         continue;
                     }
@@ -233,7 +459,7 @@ namespace Characters.NPC
             // Instantiate and initialize the mutation effect
             if (mutation.prefab != null)
             {
-                GameObject effectObj = Object.Instantiate(mutation.prefab, settlerNPC.transform);
+                GameObject effectObj = GameObject.Instantiate(mutation.prefab, settlerNPC.transform);
                 BaseNPCMutationEffect effect = effectObj.GetComponent<BaseNPCMutationEffect>();
                 if (effect != null)
                 {
@@ -244,7 +470,7 @@ namespace Characters.NPC
                 else
                 {
                     Debug.LogError($"NPCMutationSystem: Mutation prefab {mutation.name} does not have a BaseNPCMutationEffect component");
-                    Object.Destroy(effectObj);
+                    GameObject.Destroy(effectObj);
                 }
             }
             else
@@ -267,7 +493,7 @@ namespace Characters.NPC
                 if (activeEffects.TryGetValue(mutation, out BaseNPCMutationEffect effect))
                 {
                     effect.OnUnequip();
-                    Object.Destroy(effect.gameObject);
+                    GameObject.Destroy(effect.gameObject);
                     activeEffects.Remove(mutation);
                 }
                 else

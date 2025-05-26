@@ -10,7 +10,7 @@ public class WorkState : _TaskState
     private bool isTaskBeingPerformed = false;
     private bool hasReachedTask = false;
     private float timeAtTaskLocation = 0f;
-    private int workLayerIndex = -1;
+    private bool needsPrecisePositioning = false;
     #endregion
 
     #region Movement Parameters
@@ -18,6 +18,7 @@ public class WorkState : _TaskState
     {
         public float minDistanceToTask = 0.5f;
         public float taskStartDelay = 0.5f;
+        public float precisePositioningThreshold = 0.1f;
     }
     private MovementSettings movementSettings;
     #endregion
@@ -41,31 +42,38 @@ public class WorkState : _TaskState
 
     private void InitializeWorkState()
     {
-        workLayerIndex = animator.GetLayerIndex("Work Layer");
-        if (workLayerIndex == -1)
-        {
-            Debug.LogError($"[WorkState] Could not find 'Work Layer' in animator for {gameObject.name}");
-        }
-
         movementSettings = new MovementSettings();
         assignedTask.StopWork += StopWork;
     }
 
     private void SetupNavMeshPath()
     {
-        Vector3 taskPosition = assignedTask.WorkTaskTransform().position;
+        Vector3 taskPosition = assignedTask.GetNavMeshDestination().position;
         agent.stoppingDistance = movementSettings.minDistanceToTask;
         agent.SetDestination(taskPosition);
         agent.speed = MaxSpeed();
         agent.angularSpeed = npc.rotationSpeed;
         agent.isStopped = false;
+        agent.updatePosition = true;
+        agent.updateRotation = true;
+        needsPrecisePositioning = false;
+    }
+
+    public void UpdateTaskDestination()
+    {
+        if (assignedTask != null)
+        {
+            hasReachedTask = false;
+            isTaskBeingPerformed = false;
+            timeAtTaskLocation = 0f;
+            SetupNavMeshPath();
+        }
     }
 
     public override void OnExitState()
     {
         if (isTaskBeingPerformed)
         {
-            animator.Play("Empty", workLayerIndex);
             isTaskBeingPerformed = false;
         }
         
@@ -92,7 +100,7 @@ public class WorkState : _TaskState
     {
         if (assignedTask == null) return;
 
-        float distanceToTask = Vector3.Distance(transform.position, assignedTask.WorkTaskTransform().position);
+        float distanceToTask = Vector3.Distance(transform.position, assignedTask.GetNavMeshDestination().position);
 
         if (!agent.pathPending && agent.remainingDistance <= movementSettings.minDistanceToTask)
         {
@@ -114,36 +122,52 @@ public class WorkState : _TaskState
             agent.isStopped = true;
             agent.velocity = Vector3.zero;
             timeAtTaskLocation = 0f;
-            
-            if(assignedTask.WorkTaskTransform() != assignedTask.transform)
+
+            // Check if we need precise positioning
+            var precisePosition = assignedTask.GetPrecisePosition();
+            if (precisePosition != null)
             {
-                agent.updatePosition = false;
-                agent.updateRotation = false;
+                float distanceToExactPosition = Vector3.Distance(transform.position, precisePosition.position);
+                needsPrecisePositioning = distanceToExactPosition > movementSettings.precisePositioningThreshold;
+                
+                if (needsPrecisePositioning)
+                {
+                    agent.updatePosition = false;
+                    agent.updateRotation = false;
+                }
+            }
+            else
+            {
+                needsPrecisePositioning = false;
             }
         }
 
-        UpdatePositionAndRotation();
+        if (needsPrecisePositioning)
+        {
+            UpdatePositionAndRotation();
+        }
+
         StartTaskIfReady();
     }
 
     private void UpdatePositionAndRotation()
     {
-        if(assignedTask.WorkTaskTransform() != assignedTask.transform)
+        var precisePosition = assignedTask.GetPrecisePosition();
+        if (needsPrecisePositioning && precisePosition != null)
         {
-            transform.position = Vector3.Lerp(transform.position, assignedTask.WorkTaskTransform().position, 
+            // Use lerping for precise positioning
+            transform.position = Vector3.Lerp(transform.position, precisePosition.position, 
                 Time.deltaTime * 5f);
-            transform.rotation = Quaternion.Slerp(transform.rotation, assignedTask.WorkTaskTransform().rotation, 
+            transform.rotation = Quaternion.Slerp(transform.rotation, precisePosition.rotation, 
                 Time.deltaTime * 5f);
-        }
-        else
-        {
-            Vector3 directionToTask = (assignedTask.WorkTaskTransform().position - transform.position).normalized;
-            directionToTask.y = 0;
-            if (directionToTask != Vector3.zero)
+
+            // Check if we've reached the precise position
+            float distanceToExactPosition = Vector3.Distance(transform.position, precisePosition.position);
+            if (distanceToExactPosition <= movementSettings.precisePositioningThreshold)
             {
-                Quaternion targetRotation = Quaternion.LookRotation(directionToTask);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 
-                    npc.rotationSpeed * Time.deltaTime);
+                needsPrecisePositioning = false;
+                transform.position = precisePosition.position;
+                transform.rotation = precisePosition.rotation;
             }
         }
     }
@@ -151,13 +175,10 @@ public class WorkState : _TaskState
     private void StartTaskIfReady()
     {
         timeAtTaskLocation += Time.deltaTime;
-        if (timeAtTaskLocation >= movementSettings.taskStartDelay && !isTaskBeingPerformed)
+        if (timeAtTaskLocation >= movementSettings.taskStartDelay && !isTaskBeingPerformed && !needsPrecisePositioning)
         {
             assignedTask.PerformTask(npc);
-            if (workLayerIndex != -1)
-            {
-                animator.Play(assignedTask.GetAnimationClipName(), workLayerIndex);
-            }
+            npc.PlayWorkAnimation(assignedTask.GetAnimationClipName());
             isTaskBeingPerformed = true;
         }
     }
@@ -168,11 +189,9 @@ public class WorkState : _TaskState
         {
             hasReachedTask = false;
             agent.isStopped = false;
-            if(assignedTask.WorkTaskTransform() != assignedTask.transform)
-            {
-                agent.updatePosition = true;
-                agent.updateRotation = true;
-            }
+            agent.updatePosition = true;
+            agent.updateRotation = true;
+            needsPrecisePositioning = false;
         }
     }
 
@@ -181,6 +200,11 @@ public class WorkState : _TaskState
         float maxSpeed = MaxSpeed();
         float currentSpeedNormalized = agent.velocity.magnitude / maxSpeed;
         animator.SetFloat("Speed", currentSpeedNormalized);
+    }
+
+    public override float MaxSpeed()
+    {
+        return npc.moveMaxSpeed * 0.4f;
     }
 
     public override TaskType GetTaskType()
@@ -195,7 +219,6 @@ public class WorkState : _TaskState
 
     public void StopWork()
     {
-        Debug.Log($"[WorkState] Stopping work for {npc.name}");
         if (assignedTask != null && (assignedTask.HasQueuedTasks || assignedTask.IsOccupied))
         {
             return;

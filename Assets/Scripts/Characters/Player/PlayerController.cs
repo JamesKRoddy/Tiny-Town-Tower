@@ -122,16 +122,26 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
             case PlayerControlType.ROBOT_WORKING:
                 PlayerInput.Instance.OnBPressed += HandleRobotStopWork;
-                PlayerInput.Instance.OnBPressed += () => PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.ROBOT_MOVEMENT);
-                PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.BackPressed();
+                
+                if(PlayerUIManager.Instance.currentMenu != null) //Only swap back to the game if we are not in a menu
+                {
+                    PlayerInput.Instance.OnBPressed += () => PlayerUIManager.Instance.BackPressed();
+                } else{
+                    PlayerInput.Instance.OnBPressed += () => PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.ROBOT_MOVEMENT);
+                }
                 break;
 
             case PlayerControlType.CAMP_NPC_MOVEMENT:
-            case PlayerControlType.CAMP_CAMERA_MOVEMENT:
                 PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
                 PlayerInput.Instance.OnSelectPressed += () => OpenUtilityMenu();
                 PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu();
                 playerCamera.UpdateTarget((_possessedNPC as MonoBehaviour)?.transform);
+                break;
+            case PlayerControlType.CAMP_CAMERA_MOVEMENT:
+                PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
+                PlayerInput.Instance.OnSelectPressed += () => OpenUtilityMenu();
+                PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu();
+                PlayerInput.Instance.OnAPressed += HandleWorkAssignment;
                 break;
 
             case PlayerControlType.CAMP_WORK_ASSIGNMENT:
@@ -201,9 +211,13 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
             if (building != null)
             {
-                CreateWorkTaskOptions(building, (task) => {
-                    CampManager.Instance.WorkManager.AssignWorkToBuilding(task);
-                });
+                if(CampManager.Instance.WorkManager.IsNPCForAssignmentSet()){
+                    CreateWorkTaskOptions(building, (task) => {
+                        CampManager.Instance.WorkManager.AssignWorkToBuilding(task);
+                    });
+                } else{
+                    CampManager.Instance.BuildManager.BuildingSelectionOptions(building);
+                }
             }
         }
     }

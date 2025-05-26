@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using UnityEngine.AI;
+using Managers;
 
 /// <summary>
 /// Used by construction sites to build buildings.
@@ -18,7 +19,7 @@ public class ConstructionTask : WorkTask, IInteractive<object>
     {
         base.Start();
         AddWorkTask();
-
+        taskAnimation = TaskAnimation.HAMMER_STANDING;
         NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
         if (obstacle == null)
         {
@@ -40,6 +41,12 @@ public class ConstructionTask : WorkTask, IInteractive<object>
         if (!isConstructionComplete && workCoroutine == null)
         {
             workCoroutine = StartCoroutine(WorkCoroutine());
+
+            // Register electricity consumption when the task starts
+            if (electricityRequired > 0)
+            {
+                CampManager.Instance.ElectricityManager.RegisterBuildingConsumption(this, electricityRequired);
+            }
         }
     }
 
@@ -47,7 +54,7 @@ public class ConstructionTask : WorkTask, IInteractive<object>
     {
         while (workProgress < baseWorkTime && workers.Count > 0)
         {
-            float effectiveTime = baseWorkTime / Mathf.Sqrt(workers.Count);
+            float effectiveTime = baseWorkTime / workers.Count;
             workProgress += Time.deltaTime / effectiveTime;
 
             if (workProgress >= baseWorkTime)
@@ -103,11 +110,6 @@ public class ConstructionTask : WorkTask, IInteractive<object>
     public string GetInteractionText()
     {
         return "Build " + buildingScriptableObj.name;
-    }
-
-    public override string GetAnimationClipName()
-    {
-        return TaskAnimation.BUILD_STRUCTURE.ToString();
     }
 
     public object Interact()

@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using Managers;
 
-public class ResourceUpgradeTask : WorkTask
+public class ResourceUpgradeTask : QueuedWorkTask
 {
     public ResourceUpgradeScriptableObj currentUpgrade;
 
@@ -56,10 +56,5 @@ public class ResourceUpgradeTask : WorkTask
         currentUpgrade = null;
         
         base.CompleteWork();
-    }
-
-    public override string GetAnimationClipName()
-    {
-        return TaskAnimation.UPGRADE_RESOURCE.ToString();
     }
 } 

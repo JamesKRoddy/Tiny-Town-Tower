@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 7053634894083483151}
   - component: {fileID: -3448397618030527587}
   - component: {fileID: -4989023149819986859}
-  - component: {fileID: -563734167037574732}
+  - component: {fileID: -96529985476548174}
   - component: {fileID: -2747996953383978377}
   - component: {fileID: 3911347363407305177}
   m_Layer: 0
@@ -52,10 +52,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a23b8e719dbaec4eb808d85c61f96be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  workType: 0
   workLocationTransform: {fileID: 0}
   requiredResources: []
   showTooltip: 0
+  electricityRequired: 0
+  taskAnimation: 0
 --- !u!114 &-4989023149819986859
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -68,11 +69,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 373ecb0abe322ff4aabb6fd998c82d4c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  workType: 0
   workLocationTransform: {fileID: 0}
   requiredResources: []
   showTooltip: 0
---- !u!114 &-563734167037574732
+  electricityRequired: 0
+  taskAnimation: 0
+--- !u!114 &-96529985476548174
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -81,15 +83,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 6492940899744704284}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: efc1c87e71385d5499cb35389a7f7a07, type: 3}
+  m_Script: {fileID: 11500000, guid: f7e6a307944ac1f42868f797475b407f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buildingScriptableObj: {fileID: 0}
+  buildingScriptableObj: {fileID: 11400000, guid: b1d8c0aa446ef7e44be90aa0e9daf3a5, type: 2}
   isOperational: 0
   isUnderConstruction: 1
   currentHealth: 0
   repairTask: {fileID: 0}
   upgradeTask: {fileID: 0}
+  maxStoredMeals: 10
+  foodStoragePoint: {fileID: 0}
 --- !u!114 &-2747996953383978377
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -102,10 +106,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d370ab63bbb41da4cb9a1ef803ae1182, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  workType: 0
   workLocationTransform: {fileID: 6070360099067448806}
   requiredResources: []
   showTooltip: 0
+  electricityRequired: 0
+  taskAnimation: 1
   currentRecipe: {fileID: 0}
 --- !u!65 &3911347363407305177
 BoxCollider:

@@ -53,7 +53,16 @@ public class SettlerNPCPopup : PreviewPopupBase<HumanCharacterController, string
         {
             PlayerController.Instance.PossessNPC(null);
             PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false, 0.05f);
-            PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_WORK_ASSIGNMENT);
+            // If there is no building for assignment, we are assigning work to the NPC. Happens by selecting an npc first then a building.
+            if(CampManager.Instance.WorkManager.buildingForAssignment == null){
+                PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_WORK_ASSIGNMENT);
+            }
+            // If there is a building for assignment, we are assigning work to the building. Happens by selecting a building first then an npc.
+            else{
+                CampManager.Instance.WorkManager.ShowWorkTaskOptions(CampManager.Instance.WorkManager.buildingForAssignment, currentItem, (task) => {
+                    CampManager.Instance.WorkManager.AssignWorkToBuilding(task);
+                });
+            }
             // Store the NPC we're assigning work to
             CampManager.Instance.WorkManager.SetNPCForAssignment(currentItem as SettlerNPC);
         }
@@ -62,10 +71,9 @@ public class SettlerNPCPopup : PreviewPopupBase<HumanCharacterController, string
 
     private void OnRemoveWorkClicked()
     {
-        if (currentItem != null)
+        if (currentItem != null && currentItem is SettlerNPC settler)
         {
-            // TODO: Remove current work assignment
-            Debug.Log($"Removing work from {(currentItem as SettlerNPC).nPCDataObj.nPCName}");
+            settler.StopWork();
         }
         OnCloseClicked();
     }

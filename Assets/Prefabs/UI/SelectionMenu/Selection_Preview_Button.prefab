@@ -410,4 +410,4 @@ MonoBehaviour:
   button: {fileID: 3521595180707107549}
   previewImage: {fileID: 6573310334195328695}
   nameText: {fileID: 3136177978789284010}
-  queueCountText: {fileID: 3295416209439505341}
+  countText: {fileID: 3295416209439505341}

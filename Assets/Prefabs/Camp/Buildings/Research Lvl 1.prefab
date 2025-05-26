@@ -101,10 +101,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a23b8e719dbaec4eb808d85c61f96be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  workType: 0
   workLocationTransform: {fileID: 0}
   requiredResources: []
   showTooltip: 0
+  electricityRequired: 0
+  taskAnimation: 0
 --- !u!114 &-4966385171169535209
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -117,10 +118,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 373ecb0abe322ff4aabb6fd998c82d4c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  workType: 0
   workLocationTransform: {fileID: 0}
   requiredResources: []
   showTooltip: 0
+  electricityRequired: 0
+  taskAnimation: 0
 --- !u!114 &3931027013512436579
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -133,10 +135,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdf43f19fe0d7b64cb71767339099b6f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  workType: 0
   workLocationTransform: {fileID: 8294776679550274538}
   requiredResources: []
   showTooltip: 0
+  electricityRequired: 5
+  taskAnimation: 2
   currentResearch: {fileID: 0}
 --- !u!1001 &409922906333630591
 PrefabInstance:

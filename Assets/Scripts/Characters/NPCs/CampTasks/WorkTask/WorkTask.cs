@@ -6,10 +6,18 @@ using Managers;
 
 public abstract class WorkTask : MonoBehaviour
 {
+    [Header("Task Settings")]
     [SerializeField] protected Transform workLocationTransform; // Optional specific work location
     protected HumanCharacterController currentWorker; // Reference to the NPC performing this task
     [HideInInspector] public ResourceItemCount[] requiredResources; // Resources needed to perform this task
     [SerializeField] protected bool showTooltip = false; // Whether to show tooltips for this task
+
+    [Header("Electricity Requirements")]
+    [SerializeField] protected float electricityRequired = 0f;
+    protected bool isOperational = true; // Whether the task is operational, different from the buildings operational status
+
+    [Header("Task Animation")]
+    public TaskAnimation taskAnimation;
 
     // Work progress tracking
     protected float workProgress = 0f;
@@ -17,30 +25,17 @@ public abstract class WorkTask : MonoBehaviour
     protected int resourceAmount = 1;
     protected Coroutine workCoroutine;
 
-    // Task queue
-    public Queue<object> taskQueue = new Queue<object>();
-    protected object currentTaskData;
-
     // Property to access the assigned NPC
     public HumanCharacterController AssignedNPC => currentWorker;
     public bool IsOccupied => currentWorker != null;
-    public bool HasQueuedTasks => taskQueue.Count > 0;
-    public bool IsTaskCompleted => currentTaskData == null && !HasQueuedTasks;
+    public virtual bool IsTaskCompleted => true; // Base WorkTask is always completed when done
+    public virtual bool HasQueuedTasks => false; // Base WorkTask has no queue
 
-    // Helper method for derived classes to set up tasks
-    protected void SetupTask(object taskData)
+    private Building taskBuilding;
+
+    protected virtual void Start()
     {
-        if (taskData == null) return;
-        
-        // Queue the task
-        QueueTask(taskData);
-
-        // If no current task, set it up immediately
-        if (currentTaskData == null)
-        {
-            currentTaskData = taskQueue.Dequeue();
-            SetupNextTask();
-        }
+        taskBuilding = GetComponent<Building>();
     }
 
     // Virtual method for tooltip text
@@ -50,6 +45,13 @@ public abstract class WorkTask : MonoBehaviour
 
         string tooltip = $"{GetType().Name}\n";
         tooltip += $"Time: {baseWorkTime} seconds\n";
+        tooltip += $"Status: {(isOperational ? "Operational" : "Not Operational")}\n";
+        
+        if (electricityRequired > 0)
+        {
+            tooltip += $"Electricity Required: {electricityRequired}\n";
+            tooltip += $"Current Power: {CampManager.Instance.ElectricityManager.GetElectricityPercentage():F1}%\n";
+        }
         
         if (requiredResources != null)
         {
@@ -66,24 +68,58 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual method for NPC to perform the work task
     public virtual void PerformTask(HumanCharacterController npc)
     {
-        Debug.Log($"[WorkTask] Performing task {GetType().Name} with NPC {npc.name}");
         if (currentWorker == npc)
         {
-            Debug.Log($"[WorkTask] Starting work coroutine for {GetType().Name}");
             workCoroutine = StartCoroutine(WorkCoroutine());
+
+            // Register electricity consumption when the task starts
+            if (electricityRequired > 0)
+            {
+                CampManager.Instance.ElectricityManager.RegisterBuildingConsumption(this, electricityRequired);
+            }
         }
     }
     
     // Virtual method that can be overridden by specific tasks
     public virtual Transform WorkTaskTransform()
     {
-        return workLocationTransform != null ? workLocationTransform : transform;
+        return workLocationTransform;
+    }
+
+    // Method for NavMeshAgent pathfinding - should always return a valid position
+    public virtual Transform GetNavMeshDestination()
+    {
+        // If we have a specific work location, use that
+        if (workLocationTransform != null)
+        {
+            return workLocationTransform;
+        }
+        // Otherwise use the task's position
+        return transform;
+    }
+
+    // Method for precise positioning - can return null if no precise position needed
+    public virtual Transform GetPrecisePosition()
+    {
+        return workLocationTransform;
     }
 
     // Virtual method to check if the task can be performed
     public virtual bool CanPerformTask()
     {
-        return true; // Default implementation assumes task can always be performed
+        if (!isOperational)
+        {
+            return false;
+        }
+
+        // Check if there is any electricity available
+        if (electricityRequired > 0 && CampManager.Instance.ElectricityManager.GetCurrentElectricity() <= 0)
+        {
+            SetOperationalStatus(false);
+            return false;
+        }
+
+        return true;
     }
 
     // Method to check if the player has required resources
@@ -131,9 +167,13 @@ public abstract class WorkTask : MonoBehaviour
 
     public event Action OnTaskCompleted;
 
-    protected virtual void Start()
+    protected virtual void OnDestroy()
     {
-        
+        // Unregister electricity consumption when the task is destroyed
+        if (electricityRequired > 0)
+        {
+            CampManager.Instance.ElectricityManager.UnregisterBuildingConsumption(this);
+        }
     }
 
     protected void AddWorkTask()
@@ -151,12 +191,20 @@ public abstract class WorkTask : MonoBehaviour
     public void AssignNPC(HumanCharacterController npc)
     {
         currentWorker = npc;
+        if(taskBuilding != null)
+        {
+            taskBuilding.SetCurrentWorkTask(this);
+        }
     }
 
     // Method to unassign the current NPC
     public void UnassignNPC()
     {
         currentWorker = null;
+        if(taskBuilding != null)
+        {
+            taskBuilding.SetCurrentWorkTask(null);
+        }
     }
 
     // Method to check if the task is currently assigned
@@ -175,6 +223,23 @@ public abstract class WorkTask : MonoBehaviour
 
         while (workProgress < baseWorkTime)
         {
+            // Apply hunger-based work speed multiplier
+            if (currentWorker != null)
+            {
+                workSpeed = (currentWorker as SettlerNPC).GetWorkSpeedMultiplier();
+                
+                // If starving, stop working
+                if (workSpeed <= 0)
+                {
+                    if (currentWorker is SettlerNPC settler)
+                    {
+                        settler.TakeBreak(); // Take a break instead of stopping work completely
+                    }
+                    StopWorkCoroutine();
+                    yield break;
+                }
+            }
+
             workProgress += Time.deltaTime * workSpeed;
             yield return null;
         }
@@ -184,7 +249,7 @@ public abstract class WorkTask : MonoBehaviour
         CompleteWork();
     }
 
-    public void StopWorkCoroutine()
+    public virtual void StopWorkCoroutine()
     {
         if (workCoroutine != null)
         {
@@ -196,8 +261,6 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual method for completing work that can be overridden
     protected virtual void CompleteWork()
     {
-        currentTaskData = null;
-
         // Store the current worker as previous worker before clearing
         if (currentWorker != null)
         {
@@ -209,22 +272,12 @@ public abstract class WorkTask : MonoBehaviour
         
         StopWorkCoroutine();
         
-        // Process next task in queue if available
-        if (taskQueue.Count > 0)
-        {
-            currentTaskData = taskQueue.Dequeue();
+        UnassignNPC();
 
-            SetupNextTask();
-            
-            // Start the next task immediately if we have a worker
-            if (currentWorker != null)
-            {
-                workCoroutine = StartCoroutine(WorkCoroutine());
-            }
-        }
-        else
+        // Unregister electricity consumption when work is complete
+        if (electricityRequired > 0)
         {
-            UnassignNPC();
+            CampManager.Instance.ElectricityManager.UnregisterBuildingConsumption(this);
         }
         
         // Notify completion
@@ -232,55 +285,82 @@ public abstract class WorkTask : MonoBehaviour
         InvokeStopWork();
     }
 
-    // Virtual method to setup the next task in queue
-    protected virtual void SetupNextTask()
+    // New method to notify task completion without stopping work
+    protected void NotifyTaskCompletion()
     {
-        // To be implemented by derived classes
+        OnTaskCompleted?.Invoke();
     }
 
-    // Method to add a task to the queue
-    public virtual void QueueTask(object taskData)
+    public string GetAnimationClipName()
     {
-        taskQueue.Enqueue(taskData);
-        Debug.Log($"[WorkTask] Queueing task {taskData} for {GetType().Name} [Queue Count: {taskQueue.Count}]");
-        
-        // If we have a previous worker and no current worker, assign them to the new task
-        if (currentWorker == null && taskQueue.Count == 1)
-        {
-            // Find the previous worker through the WorkManager
-            var previousWorker = CampManager.Instance.WorkManager.GetPreviousWorkerForTask(this);
-            if (previousWorker != null)
-            {
-                // Set the NPC for assignment before assigning the task
-                CampManager.Instance.WorkManager.SetNPCForAssignment(previousWorker);
-                AssignNPC(previousWorker);
-                if (previousWorker is SettlerNPC settler)
-                {
-                    settler.ChangeTask(TaskType.WORK);
-                }
-            }
-        }
-    }
-    public virtual string GetAnimationClipName()
-    {
-        Debug.LogWarning($"[WorkTask] GetAnimationClipName not implemented for {GetType().Name}");
-        return "Empty";
-    }
-
-    // Method to clear the task queue
-    public virtual void ClearTaskQueue()
-    {
-        taskQueue.Clear();
+        return taskAnimation.ToString();
     }
 
     protected void AddResourceToInventory(ResourceItemCount resourceItemCount)
     {
-        Debug.Log($"[WorkTask] Adding resource to inventory");
         PlayerInventory.Instance.AddItem(resourceItemCount.resourceScriptableObj, resourceItemCount.count);
     }
 
     protected virtual void OnDisable()
     {
         StopWorkCoroutine();
+    }
+
+    public void SetOperationalStatus(bool operational)
+    {
+        if (isOperational != operational)
+        {
+            isOperational = operational;
+            
+            if (!isOperational)
+            {
+                // Stop current work if any
+                StopWorkCoroutine();
+                
+                // Unassign current worker if any
+                if (currentWorker != null)
+                {
+                    if (currentWorker is SettlerNPC settler)
+                    {
+                        settler.ClearAssignedWork(); // Clear the assigned work
+                        settler.ChangeTask(TaskType.WANDER);
+                    }
+                    else if (currentWorker is RobotCharacterController robot)
+                    {
+                        robot.StopWork();
+                    }
+                    UnassignNPC();
+                }
+            }
+            else
+            {
+                // If we become operational again and have a previous worker, try to reassign them
+                var previousWorker = CampManager.Instance.WorkManager.GetPreviousWorkerForTask(this);
+                if (previousWorker != null)
+                {
+                    CampManager.Instance.WorkManager.SetNPCForAssignment(previousWorker);
+                    AssignNPC(previousWorker);
+                    if (previousWorker is SettlerNPC settler)
+                    {
+                        settler.StartWork(this);
+                    }
+                }
+            }
+        }
+    }
+
+    public bool IsOperational()
+    {
+        return isOperational;
+    }
+
+    public float GetElectricityRequired()
+    {
+        return electricityRequired;
+    }
+
+    public float GetProgress()
+    {
+        return workProgress / baseWorkTime;
     }
 }

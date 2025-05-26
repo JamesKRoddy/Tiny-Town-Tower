@@ -40,7 +40,7 @@ public class RobotCharacterController : HumanCharacterController
         if (currentWorkTask == null) return;
 
         Transform workLocation = currentWorkTask.WorkTaskTransform();
-        if (workLocation != currentWorkTask.transform)
+        if (workLocation != null && workLocation != currentWorkTask.transform)
         {
             // Move to work location
             Vector3 targetPosition = workLocation.position;
@@ -79,7 +79,7 @@ public class RobotCharacterController : HumanCharacterController
         {
             currentWorkTask = newTask;
             isWorking = true;
-            animator.Play(currentWorkTask.GetAnimationClipName(), workLayerIndex);
+            PlayWorkAnimation(currentWorkTask.GetAnimationClipName());
             // Start the work task once
             currentWorkTask.PerformTask(this);
 
@@ -96,10 +96,6 @@ public class RobotCharacterController : HumanCharacterController
             currentWorkTask.StopWorkCoroutine();
             currentWorkTask = null;
             animator.Play("Empty", workLayerIndex);
-
-            if(PlayerInput.Instance.CurrentControlType != PlayerControlType.IN_MENU){
-                PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.ROBOT_MOVEMENT);
-            }
         }
     }
 

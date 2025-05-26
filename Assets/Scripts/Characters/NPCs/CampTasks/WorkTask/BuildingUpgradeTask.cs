@@ -11,6 +11,7 @@ public class BuildingUpgradeTask : WorkTask
     {
         base.Start();
         targetBuilding = GetComponent<Building>();
+        taskAnimation = TaskAnimation.HAMMER_STANDING;
         if (targetBuilding == null)
         {
             Debug.LogError("BuildingUpgradeTask requires a Building component on the same GameObject!");
@@ -59,11 +60,6 @@ public class BuildingUpgradeTask : WorkTask
         
         // Check if the building has an upgrade target (can be upgraded)
         return upgradeTarget != null;
-    }
-
-    public override string GetAnimationClipName()
-    {
-        return TaskAnimation.UPGRADE_BUILDING.ToString();
     }
 
     public override string GetTooltipText()

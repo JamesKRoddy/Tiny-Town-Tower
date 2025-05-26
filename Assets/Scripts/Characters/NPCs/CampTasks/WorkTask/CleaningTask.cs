@@ -3,64 +3,201 @@ using System.Collections;
 using Managers;
 
 /// <summary>
-/// Used by dirt piles to clean them.
+/// Used by dirt piles and waste bins to clean them.
 /// </summary>
-public class CleaningTask : WorkTask
+public class CleaningTask : ManagerTask
 {
-    [SerializeField] private float cleaningTime = 5f;
-    [SerializeField] private float cleanlinessIncrease = 10f;
-    
-    private float cleaningProgress = 0f;
+    private DirtPileTask targetDirtPile;
+    private WasteBin targetWasteBin;
+
+    public DirtPileTask GetCurrentDirtPileTarget() => targetDirtPile;
+    public WasteBin GetCurrentWasteBinTarget() => targetWasteBin;
 
     protected override void Start()
     {
         base.Start();
-        baseWorkTime = cleaningTime;
+        CampManager.Instance.CleanlinessManager.OnDirtPileSpawned += HandleDirtPileSpawned;
+        CampManager.Instance.CleanlinessManager.OnWasteBinFull += HandleWasteBinFull;
     }
 
-    private IEnumerator CleaningCoroutine()
+    protected override void OnDestroy()
     {
-        while (cleaningProgress < cleaningTime)
+        base.OnDestroy();
+        if (CampManager.Instance?.CleanlinessManager != null)
         {
-            cleaningProgress += Time.deltaTime;
-            yield return null;
+            CampManager.Instance.CleanlinessManager.OnDirtPileSpawned -= HandleDirtPileSpawned;
+            CampManager.Instance.CleanlinessManager.OnWasteBinFull -= HandleWasteBinFull;
+        }
+    }
+
+    private void HandleDirtPileSpawned(DirtPileTask dirtPile)
+    {
+        // If we have a worker but no current target, start cleaning the new dirt pile
+        if (currentWorker != null && targetDirtPile == null && targetWasteBin == null)
+        {
+            SetupDirtPileTask(dirtPile);
+        }
+    }
+
+    private void HandleWasteBinFull(WasteBin bin)
+    {
+        // If we have a worker but no current target, start emptying the full bin
+        if (currentWorker != null && targetDirtPile == null && targetWasteBin == null)
+        {
+            SetupWasteBinTask(bin);
+        }
+    }
+
+    public void SetupDirtPileTask(DirtPileTask dirtPile)
+    {
+        if (dirtPile == null) return;
+
+        targetDirtPile = dirtPile;
+        targetWasteBin = null;
+        workLocationTransform = dirtPile.transform;
+        dirtPile.StartCleaning();
+        
+        // Subscribe to the task completion event
+        dirtPile.OnTaskCompleted += HandleSubtaskCompleted;
+        
+        // Notify the worker's WorkState to update its path
+        if (currentWorker != null)
+        {
+            var workState = currentWorker.GetComponent<WorkState>();
+            workState?.UpdateTaskDestination();
+        }
+    }
+
+    public void SetupWasteBinTask(WasteBin bin)
+    {
+        if (bin == null) return;
+
+        targetWasteBin = bin;
+        targetDirtPile = null;
+        workLocationTransform = bin.transform;
+        
+        // Subscribe to the task completion event
+        var binTask = bin.GetCleaningTask();
+        if (binTask != null)
+        {
+            binTask.OnTaskCompleted += HandleSubtaskCompleted;
+        }
+        
+        // Notify the worker's WorkState to update its path
+        if (currentWorker != null)
+        {
+            var workState = currentWorker.GetComponent<WorkState>();
+            workState?.UpdateTaskDestination();
+        }
+    }
+
+    private void FindNextCleaningTask()
+    {
+        if (!isOperational || currentWorker == null)
+        {
+            return;
         }
 
-        CompleteCleaning();
+        // First check for full waste bins
+        var fullBins = CampManager.Instance.CleanlinessManager.GetFullWasteBins();
+        foreach (var bin in fullBins)
+        {
+            if (bin != null && !bin.IsBeingEmptied())
+            {
+                SetupWasteBinTask(bin);
+                return;
+            }
+        }
+
+        // If no full bins, check for dirt piles
+        var dirtPiles = CampManager.Instance.CleanlinessManager.GetActiveDirtPiles();
+        foreach (var dirtPile in dirtPiles)
+        {
+            if (dirtPile != null && !dirtPile.IsOccupied)
+            {
+                SetupDirtPileTask(dirtPile);
+                return;
+            }
+        }
     }
 
-    private void CompleteCleaning()
+    public override void PerformTask(HumanCharacterController npc)
     {
-        // Increase the camp's cleanliness
-        CampManager.Instance.CleanlinessManager.IncreaseCleanliness(cleanlinessIncrease);
-        Debug.Log($"Cleaning completed! Increased cleanliness by {cleanlinessIncrease}");
+        // If we don't have a current task, look for one
+        if (targetDirtPile == null && targetWasteBin == null)
+        {
+            FindNextCleaningTask();
+        }
+
+        if (targetDirtPile != null)
+        {
+            // Transition to the dirt pile task
+            TransitionToSubtask(targetDirtPile, npc);
+        }
+        else if (targetWasteBin != null)
+        {
+            // Transition to the waste bin task
+            var binTask = targetWasteBin.GetCleaningTask();
+            if (binTask != null)
+            {
+                TransitionToSubtask(binTask, npc);
+            }
+        }
+        else
+        {
+            base.PerformTask(npc);
+        }
+    }
+
+    public override void HandleSubtaskCompleted()
+    {        
+        // Unsubscribe from the completed task
+        if (targetDirtPile != null)
+        {
+            targetDirtPile.OnTaskCompleted -= HandleSubtaskCompleted;
+            targetDirtPile = null;
+        }
+        else if (targetWasteBin != null)
+        {
+            var binTask = targetWasteBin.GetCleaningTask();
+            if (binTask != null)
+            {
+                binTask.OnTaskCompleted -= HandleSubtaskCompleted;
+            }
+            targetWasteBin = null;
+        }
         
-        // Reset state
-        cleaningProgress = 0f;
-        currentWorker = null;
-        workCoroutine = null;
+        // Call base to handle any base class cleanup
+        base.HandleSubtaskCompleted();
         
-        // Notify completion
-        InvokeStopWork();
+        // Look for the next task
+        if (currentWorker != null)
+        {
+            FindNextCleaningTask();
+        }
     }
 
-    protected override void CompleteWork()
+    public override string GetTooltipText()
     {
-        // Increase the camp's cleanliness
-        CampManager.Instance.CleanlinessManager.IncreaseCleanliness(cleanlinessIncrease);
-        Debug.Log($"Cleaning completed! Increased cleanliness by {cleanlinessIncrease}");
+        if (!showTooltip) return string.Empty;
+
+        string tooltip = "Cleaning Task\n";
+        tooltip += $"Status: {(isOperational ? "Operational" : "Not Operational")}\n";
         
-        base.CompleteWork();
-    }
-
-    public override bool CanPerformTask()
-    {
-        // Check if the camp's cleanliness is below maximum
-        return CampManager.Instance.CleanlinessManager.GetCleanliness() < CampManager.Instance.CleanlinessManager.GetCleanlinessPercentage();
-    }
-
-    public override string GetAnimationClipName()
-    {
-        return TaskAnimation.CLEAN.ToString();
+        if (targetDirtPile != null)
+        {
+            tooltip += $"Current Task: Cleaning Dirt Pile\n";
+            tooltip += $"Progress: {(targetDirtPile.GetProgress() * 100):F1}%\n";
+        }
+        else if (targetWasteBin != null)
+        {
+            tooltip += $"Current Task: Emptying Waste Bin\n";
+            tooltip += $"Fill Level: {targetWasteBin.GetFillPercentage():F1}%\n";
+        }
+        else
+        {
+            tooltip += "Current Task: Looking for cleaning tasks\n";
+        }
+        return tooltip;
     }
 } 

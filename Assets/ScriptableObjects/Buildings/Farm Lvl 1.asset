@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d7f097ca34a0eb45a8b2d5ba0c3d616, type: 3}
+  m_Name: Farm Lvl 1
+  m_EditorClassIdentifier: 
+  objectName: Farm Lvl 1
+  description: Farm Lvl 1 desc
+  sprite: {fileID: 0}
+  _resourceCost: []
+  prefab: {fileID: 2327569056814844101, guid: a1e197faf1249b0428993a2829666ee8, type: 3}
+  size: {x: 3, y: 3}
+  buildingCategory: 1
+  constructionTime: 1
+  maxHealth: 100
+  repairTime: 20
+  healthRestoredPerRepair: 50
+  repairResources: []
+  upgradeTarget: {fileID: 0}
+  upgradeTime: 30
+  upgradeResources: []
+  destructionTime: 15
+  reclaimedResources: []
+  taskRadius: 2

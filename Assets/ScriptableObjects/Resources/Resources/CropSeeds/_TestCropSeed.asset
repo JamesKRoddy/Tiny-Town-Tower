@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a1ac472374c00943ad21416dc5f24a0, type: 3}
+  m_Name: _TestCropSeed
+  m_EditorClassIdentifier: 
+  objectName: _TestCropSeed
+  description: '_TestCropSeed Desc
+
+'
+  sprite: {fileID: 0}
+  category: 7
+  rarity: 0
+  prefab: {fileID: 0}
+  cropToGrow: {fileID: 11400000, guid: 74701f8e255f24a4980777d43c0b6edf, type: 2}
+  growthRate: 1
+  yieldAmount: 10
+  growthStagePrefabs:
+  - {fileID: 1030394373860896, guid: f1d92f6821039a348b0b295e7a96c45d, type: 3}
+  - {fileID: 1292480058924560, guid: 49683e4468311674398fda816c18b177, type: 3}
+  - {fileID: 1923504114950040, guid: 272677d9f8d9003418e2054d1e88d350, type: 3}
+  deadCropPrefab: {fileID: 1678985673880670, guid: 6348e51cddb9c4b4a9b0a5787f6651e4, type: 3}

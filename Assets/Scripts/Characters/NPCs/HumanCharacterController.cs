@@ -20,6 +20,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     protected bool isAttacking; // Whether the player is currently attacking
 
     protected Animator animator;
+    public Animator Animator => animator;
     protected CharacterCombat characterCombat;
     protected NavMeshAgent agent; // Reference to NavMeshAgent
     protected CharacterInventory characterInventory;
@@ -55,9 +56,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public event Action<float, float> OnDamageTaken;
     public event Action<float, float> OnHeal;
     public event Action OnDeath;
-
-    public float Health { get => health; set => health = value; }
-    public float MaxHealth { get => maxHealth; set => maxHealth = value; }
     public CharacterType CharacterType => characterType;
 
     protected virtual void Awake()
@@ -68,6 +66,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         humanCollider = GetComponent<Collider>();
         characterCombat = GetComponent<CharacterCombat>();
         characterInventory = GetComponent<CharacterInventory>();
+    }
+
+    protected virtual void Start()
+    {
+        GetComponent<CharacterAnimationEvents>().Setup(characterCombat, this, characterInventory);
     }
 
     public virtual void PossessedUpdate()
@@ -114,12 +117,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         if (isAIControlled)
         {
             settlerNPC?.ChangeTask(TaskType.WANDER);
-            GetComponent<CharacterAnimationEvents>().Setup();
         }
         else
         {
-            settlerNPC?.ChangeState(null);
-            GetComponent<CharacterAnimationEvents>().Setup(characterCombat, this, characterInventory);
+            settlerNPC?.ChangeState(null);            
         }
     }
 
@@ -389,6 +390,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         animator.SetFloat("Speed", currentSpeedNormalized);
     }
 
+    public virtual void PlayWorkAnimation(string animationName)
+    {
+        
+    }
+
     #endregion
 
     private void OnDrawGizmos()
@@ -463,4 +469,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     }
 
     #endregion
+
+    public float Health { get => health; set => health = value; }
+    public float MaxHealth { get => maxHealth; set => maxHealth = value; }
 }

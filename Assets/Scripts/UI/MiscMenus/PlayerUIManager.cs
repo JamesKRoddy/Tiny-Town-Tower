@@ -54,11 +54,13 @@ public class PlayerUIManager : MonoBehaviour
     [Header("Overlay Menu References")]
     [SerializeField] TMP_Text errorMessage;
     [SerializeField] UIPanelController interactionPromptUI; // UI text for interactionPromptUI
+    [SerializeField] TextPopup textPopup;
     public NarrativeSystem narrativeSystem;
     public WeaponComparisonMenu weaponComparisonMenu;
 
     [Header("Game UI References")]
     public RogueLikeGameUI rogueLikeGameUI;
+    public CampUI campUI;
 
 
     private Coroutine openingMenuCoroutine;
@@ -80,6 +82,7 @@ public class PlayerUIManager : MonoBehaviour
     void Start()
     {
         rogueLikeGameUI.Setup();
+        campUI.Setup();
     }
 
     /// <summary>
@@ -123,6 +126,11 @@ public class PlayerUIManager : MonoBehaviour
         errorMessage.text = message;
         PlayerInput.Instance.DisablePlayerInput(true);
         StartCoroutine(HideErrorMessageAfterDelay(duration));
+    }
+
+    public void DisplayTextPopup(string message)
+    {
+        textPopup.Setup(message);
     }
 
     private IEnumerator HideErrorMessageAfterDelay(float delay)
@@ -169,12 +177,15 @@ public class PlayerUIManager : MonoBehaviour
         {
             case PauseMenu:
                 pauseMenu.ReturnToGame();
+                currentMenu = null;
                 break;
             case UtilityMenu:
                 utilityMenu.ReturnToGame();
+                currentMenu = null;
                 break;
             case SelectionPreviewList:
                 selectionPreviewList.ReturnToGame();
+                currentMenu = null;
                 break;
             case BuildMenu:
             case GeneticMutationUI:

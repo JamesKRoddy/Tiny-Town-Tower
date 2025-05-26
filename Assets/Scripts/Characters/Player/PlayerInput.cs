@@ -4,6 +4,7 @@ using UnityEngine.InputSystem.LowLevel;
 using static UnityEditor.Searcher.SearcherWindow.Alignment;
 using System.Collections;
 using Managers;
+using UnityEngine.EventSystems;
 
 /// <summary>
 /// Handles all player input events and control type management.
@@ -91,6 +92,9 @@ public class PlayerInput : MonoBehaviour
     public void UpdatePlayerControls(PlayerControlType playerControlType)
     {
         Debug.Log($"Update Controls playerControlType : <color=cyan> {playerControlType} </color>");
+
+        // Clear any lingering menu input
+        EventSystem.current.SetSelectedGameObject(null);
 
         if(playerControlType == PlayerControlType.IN_MENU)
         {
