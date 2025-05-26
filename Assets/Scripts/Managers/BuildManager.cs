@@ -84,7 +84,11 @@ namespace Managers
                     options.Add(new SelectionPopup.SelectionOption
                     {
                         optionName = $"Work Queue: {workTask.GetType().Name.Replace("Task", "")}",
-                        onSelected = () => PlayerUIManager.Instance.selectionPreviewList.Setup(building.GetCurrentWorkTask(), null)
+                        onSelected = () => {
+                            PlayerUIManager.Instance.selectionPreviewList.Setup(building.GetCurrentWorkTask(), null);
+                            PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+                        },
+                        workTask = workTask
                     });
                 }
             }
