@@ -65,8 +65,6 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
     
     protected override void OnButtonClicked()
     {
-        CampManager.Instance.WorkManager.SetNPCForAssignment(characterToAssign);
-
         if (workTask == null)
         {
             Debug.LogWarning("[SelectionPreviewButton] No work task assigned");
@@ -76,6 +74,7 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
         // Handle task assignment
         if (characterToAssign != null && !workTask.IsOccupied)
         {
+            CampManager.Instance.WorkManager.SetNPCForAssignment(characterToAssign);
             CampManager.Instance.WorkManager.AssignWorkToBuilding(workTask);
         }
 

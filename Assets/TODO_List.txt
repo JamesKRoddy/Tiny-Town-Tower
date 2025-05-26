@@ -20,6 +20,14 @@ Seting work/buildings and assigning npcs to them
 removing CAMP_CAMERA_MOVEMENT and replacing it with a slightly different version of CAMP_WORK_ASSIGNMENT
 will have to do the same/tie in with TURRET_CAMERA_MOVEMENT
 
+Flow->Select building->Open popup-Make selection and open approriate screen
+
+Popup contains options:
+
+View queue (where applicable) STILL LEFT!!!!! build manager line 85
+
+	
+
 
 
 Cleaning system
