@@ -45,7 +45,6 @@ public class CharacterAnimationEvents : MonoBehaviour
 
     public void Setup(CharacterCombat characterCombat =  null, HumanCharacterController characterController = null, CharacterInventory characterInventory = null)
     {
-        Debug.Log($"Setting up CharacterAnimationEvents for {gameObject.name}");
         combat = characterCombat;
         controller = characterController;
         inventory = characterInventory;

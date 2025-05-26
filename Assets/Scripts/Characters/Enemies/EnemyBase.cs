@@ -201,7 +201,6 @@ namespace Enemies
 
         public void TakeDamage(float amount, Transform damageSource = null)
         {
-            Debug.Log("Enemy took damage: " + amount);
             float previousHealth = Health;
             Health -= amount;
 

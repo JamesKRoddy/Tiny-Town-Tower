@@ -135,8 +135,6 @@ namespace Managers
                 Debug.LogWarning("[EffectManager] Attempted to play null effect");
                 return;
             }
-            
-            Debug.Log($"[EffectManager] PlayEffect - Position: {position}, Normal: {normal}, Rotation: {rotation.eulerAngles}, Parent: {parent?.name}, Effect: {effect.name}");
 
             // If the effect isn't in our pools yet, initialize it
             if (!effectPools.ContainsKey(effect))
