@@ -44,4 +44,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efedfaad91c785f4d9b29a7b4dfd5f10, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  enemyTargetType: 0
+  spawnEffect: {fileID: 0}
   cooldownDuration: 2

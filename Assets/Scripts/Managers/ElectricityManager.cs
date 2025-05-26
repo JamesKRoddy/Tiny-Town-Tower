@@ -37,8 +37,10 @@ namespace Managers
 
         private void HandleSceneTransitionBegin(GameMode nextGameMode)
         {
-            StopCoroutine(electricityConsumptionCoroutine);
-            electricityConsumptionCoroutine = null;
+            if(electricityConsumptionCoroutine != null){
+                StopCoroutine(electricityConsumptionCoroutine);
+                electricityConsumptionCoroutine = null;
+            }
 
             if(nextGameMode == GameMode.CAMP){
                 electricityConsumptionCoroutine = StartCoroutine(ElectricityConsumptionCoroutine());

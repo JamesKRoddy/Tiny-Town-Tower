@@ -67,8 +67,10 @@ namespace Managers
 
         private void HandleSceneTransitionBegin(GameMode nextGameMode)
         {
-            StopCoroutine(dirtPileSpawnCheckCoroutine);
-            dirtPileSpawnCheckCoroutine = null;
+            if(dirtPileSpawnCheckCoroutine != null){
+                StopCoroutine(dirtPileSpawnCheckCoroutine);
+                dirtPileSpawnCheckCoroutine = null;
+            }
 
             if(nextGameMode == GameMode.CAMP){
                 lastDirtPileSpawnTime = Time.time;

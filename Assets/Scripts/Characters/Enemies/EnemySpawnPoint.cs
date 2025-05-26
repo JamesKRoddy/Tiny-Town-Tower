@@ -7,6 +7,7 @@ namespace Enemies
     public class EnemySpawnPoint : MonoBehaviour
     {
         public EnemyTargetType enemyTargetType;
+        [SerializeField] private ParticleSystem spawnEffect;
         private bool isAvailable = true;
         public float cooldownDuration = 2f;
 
@@ -34,6 +35,11 @@ namespace Enemies
 
             // Instantiate the enemy at this spawn point's position and rotation
             GameObject enemy = Instantiate(enemyPrefab, transform.position, transform.rotation);
+
+            if (spawnEffect != null)
+            {
+                spawnEffect.Play();
+            }
 
             Transform enemyTarget;
             EnemyBase enemyBase = enemy.GetComponent<EnemyBase>();
