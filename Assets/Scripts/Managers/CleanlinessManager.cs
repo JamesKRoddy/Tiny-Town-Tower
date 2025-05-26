@@ -36,8 +36,7 @@ namespace Managers
         }
 
         public void Initialize()
-        {           
-            
+        {        
             // Subscribe to NPC count changes
             if (NPCManager.Instance != null)
             {
@@ -68,6 +67,7 @@ namespace Managers
 
         private void HandleSceneTransitionBegin(GameMode nextGameMode)
         {
+            StopCoroutine(dirtPileSpawnCheckCoroutine);
             dirtPileSpawnCheckCoroutine = null;
 
             if(nextGameMode == GameMode.CAMP){

@@ -19,7 +19,30 @@ namespace Managers
 
         public void Initialize()
         {
-            electricityConsumptionCoroutine = StartCoroutine(ElectricityConsumptionCoroutine());
+            // Subscribe to scene transition events
+            if (SceneTransitionManager.Instance != null)
+            {
+                SceneTransitionManager.Instance.OnSceneTransitionBegin += HandleSceneTransitionBegin;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            // Unsubscribe from scene transition events
+            if (SceneTransitionManager.Instance != null)
+            {
+                SceneTransitionManager.Instance.OnSceneTransitionBegin -= HandleSceneTransitionBegin;
+            }
+        }
+
+        private void HandleSceneTransitionBegin(GameMode nextGameMode)
+        {
+            StopCoroutine(electricityConsumptionCoroutine);
+            electricityConsumptionCoroutine = null;
+
+            if(nextGameMode == GameMode.CAMP){
+                electricityConsumptionCoroutine = StartCoroutine(ElectricityConsumptionCoroutine());
+            }
         }
 
         private IEnumerator ElectricityConsumptionCoroutine()
