@@ -235,14 +235,14 @@ namespace Enemies
 
         protected virtual void HandleDamageReaction(Transform damageSource)
         {
-            if (!isAttacking)
-            {
+            //if (!isAttacking)
+            //{
                 Vector3 direction = (damageSource.position - transform.position).normalized;
                 direction.y = 0;
                 if (direction != Vector3.zero)
                 {
                     Quaternion targetRotation = Quaternion.LookRotation(direction);
-                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 0.5f);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 10f);
 
                     // Add knockback effect
                     Vector3 knockbackDirection = -direction;
@@ -256,7 +256,7 @@ namespace Enemies
                         StartCoroutine(KnockbackRoutine(hit.position));
                     }
                 }
-            }
+            //}
         }
 
         private IEnumerator KnockbackRoutine(Vector3 targetPosition)
@@ -287,6 +287,7 @@ namespace Enemies
             {
                 animator.SetTrigger("Dead");
             }
+            isAttacking = false;
             agent.enabled = false;
             GetComponent<Collider>().enabled = false;
 
