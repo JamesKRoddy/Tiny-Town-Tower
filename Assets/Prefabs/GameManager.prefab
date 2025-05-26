@@ -277,7 +277,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98d2e6833a44b1d428a19f0d0fc29b9d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _currentGameMode: 300
+  _currentGameMode: 100
 --- !u!1 &2242077205400694440
 GameObject:
   m_ObjectHideFlags: 0
@@ -607,6 +607,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26c2b1d435a05d44f819fc1fa1cf1cba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  buildingForAssignment: {fileID: 0}
 --- !u!1 &5084882977589491775
 GameObject:
   m_ObjectHideFlags: 0

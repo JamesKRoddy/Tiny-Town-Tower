@@ -885,6 +885,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6303821086052416740, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: _currentGameMode
+      value: 100
+      objectReference: {fileID: 0}
     - target: {fileID: 7451046357896141963, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: characterEffects.Array.size
       value: 2

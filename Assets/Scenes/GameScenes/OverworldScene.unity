@@ -385,7 +385,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1647695797651180896, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
       propertyPath: nextSceneGameMode
-      value: 2
+      value: 200
       objectReference: {fileID: 0}
     - target: {fileID: 5734485923781513847, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
       propertyPath: m_Name
