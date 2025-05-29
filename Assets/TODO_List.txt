@@ -1,46 +1,49 @@
-More complex task animations and animation effects handle by animation state machine behaviours
+*****Current Work*****
 
-TODO Large things:
-
-_________________________________________________________________________
+Roguelike Complete Level
 
 
+Process:
 
-At the moment:
-***Hunger system***
+Player collisions with the wall
+UI to display wave start and end
+Game loop of entering a building, completing waves, moving onto the next room, reaching the end of the building, transporting back to the overworld to the entrance of the building entered, either returning to camp or progressing onto another building.
+After returning to camp adding picked up inventory items back to the inventory, unpossess npc, remove their genetic mutations.
+Displaying npc mutations (charicteristics)
+Implement a day/night cycle for the entire game.
+Figure out what happens in the camp while youre gone, does progress on stuff freeze? Does it keep going or does it progress but slower?
+Block interactions with doors/weapons etc. while wave is active
+Visual queues on open doors when waves finished
+Zombie sound effects
+Enviromental hazzards, electrical/acid etc.
+Visual effects from elemental weapons eg. zombies get shocked by electrical wepon, they freeze and particles are emitted.
+Picking up genetic mutations and assigning them to the player, opening the screen placing them, showing mutation details when highlighted, exit popup to let player know unequipped ones will be dropped, discarding unequipped ones.
+Expanding the overworld, having more options of buildings to select.
+Creating more rooms and buildings.
+Setup some new enemies: Spitter that shoots acid at the player, boomer that runs towards you and explodes.
 
 
+
+Bug!
+RuntimeNavMeshBuilder: Source mesh SM_Wep_Bat_01 does not allow read access. This will work in playmode in the editor but not in player
+UnityEngine.AI.NavMeshBuilder:BuildNavMeshData (UnityEngine.AI.NavMeshBuildSettings,System.Collections.Generic.List`1<UnityEngine.AI.NavMeshBuildSource>,UnityEngine.Bounds,UnityEngine.Vector3,UnityEngine.Quaternion)
+Unity.AI.Navigation.NavMeshSurface:BuildNavMesh () (at ./Library/PackageCache/com.unity.ai.navigation@9f76b145f0a8/Runtime/NavMeshSurface.cs:272)
+RoomSectionRandomizer/<DelayedBakeNavMesh>d__13:MoveNext () (at Assets/Scripts/RogueLite/RoomLevels/RoomSectionRandomizer.cs:135)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+
+
+
+******Stuff for later******
 
 Have to do some refactoring on the npc animator and what has access to it
 
+Turret selection with default controls will have to do the same/tie in with TURRET_CAMERA_MOVEMENT	
 
-
-***NEXT*** Camp default is the camp selection!!!!!!!!!!!!!!!!!!!!!!
-will have to do the same/tie in with TURRET_CAMERA_MOVEMENT	
-
-
-
-Cleaning system
 NPCs have to use toilets, need to figure out timers for when they need it
-
-
-
 
 Damaging buildings: ties into turret system
 Repairing buildings: wait until damage is finished
-
-
-
-
-
-
-
-
-***Cleanliness system****
-Create prefabs/scriptable objs for:
-CleaningStation
-
-
 
 Narrative diologue and recruiting NPCs
 
@@ -49,4 +52,4 @@ Narrative diologue and recruiting NPCs
 
 
 
-Displaying npc mutations (chariteristics)
+
