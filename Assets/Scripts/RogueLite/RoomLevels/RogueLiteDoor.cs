@@ -1,8 +1,9 @@
 using UnityEngine;
 using Managers;
 
-public class RogueLiteDoor : MonoBehaviour, IInteractiveBase
+public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IInteractiveBase
 {
+
     [Header("Door Settings")]
     public DoorStatus doorType;
     public BuildingType buildingType;
@@ -71,10 +72,16 @@ public class RogueLiteDoor : MonoBehaviour, IInteractiveBase
         Gizmos.DrawSphere(position + forward, 0.1f); // Draw a sphere at the arrowhead
     }
 
-    object IInteractiveBase.Interact() => Interact();
+    // IInteractiveBase implementation
+    object IInteractiveBase.Interact()
+    {
+        return Interact();
+    }
 
+    // IInteractive<RogueLiteDoor> implementation
     public RogueLiteDoor Interact()
     {
+        OnDoorEntered();
         return this;
     }
 
@@ -105,7 +112,7 @@ public class RogueLiteDoor : MonoBehaviour, IInteractiveBase
             case DoorStatus.ENTRANCE:
                 return "Enter Room";
             case DoorStatus.EXIT:
-                return "Cant Go Back";
+                return "Can't Go Back";
             default:
                 return "INVALID";
         }

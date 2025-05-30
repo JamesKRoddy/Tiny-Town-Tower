@@ -7,12 +7,14 @@ namespace Managers
     {
         [Header("Building Settings")]
         [SerializeField] private List<BuildingDataScriptableObj> buildingDataScriptableObjs;
+        [SerializeField] private RoomManager roomManager;
         
         private BuildingType currentBuilding = BuildingType.NONE;
         private GameObject currentBuildingParent;
         private int buildingDifficulty;
         private int currentRoom;
         private int currentRoomDifficulty;
+        private Vector3 lastPlayerSpawnPoint;
 
         public BuildingType CurrentBuilding => currentBuilding;
         public int BuildingDifficulty => buildingDifficulty;
@@ -42,21 +44,36 @@ namespace Managers
 
         private void SetupLevel(BuildingType buildingType)
         {
+            // Store the current player spawn point before destroying the old building
             if (currentBuildingParent != null)
             {
-                Destroy(currentBuildingParent);
+                RoomSectionRandomizer oldRandomizer = currentBuildingParent.GetComponent<RoomSectionRandomizer>();
+                if (oldRandomizer != null)
+                {
+                    lastPlayerSpawnPoint = oldRandomizer.GetPlayerSpawnPoint();
+                }
             }
 
+            // Create the new building
             int difficulty = GetCurrentWaveDifficulty();
-            currentBuildingParent = Instantiate(GetBuildingParent(buildingType, difficulty, out BuildingDataScriptableObj selectedBuilding));
+            GameObject newBuildingParent = Instantiate(GetBuildingParent(buildingType, difficulty, out BuildingDataScriptableObj selectedBuilding));
 
-            if (currentBuildingParent != null && selectedBuilding != null)
+            if (newBuildingParent != null && selectedBuilding != null)
             {
-                RoomSectionRandomizer randomizer = currentBuildingParent.GetComponent<RoomSectionRandomizer>();
+                // Set up the new building before destroying the old one
+                RoomSectionRandomizer randomizer = newBuildingParent.GetComponent<RoomSectionRandomizer>();
                 if (randomizer != null)
                 {
                     randomizer.GenerateRandomRooms(selectedBuilding);
                 }
+
+                // Now safe to destroy the old building
+                if (currentBuildingParent != null)
+                {
+                    Destroy(currentBuildingParent);
+                }
+
+                currentBuildingParent = newBuildingParent;
             }
             else
             {
@@ -86,13 +103,26 @@ namespace Managers
 
         public void SetupPlayer(Transform playerTransform)
         {
-            if (playerTransform != null && currentBuildingParent != null)
+            if (playerTransform == null) return;
+
+            if (currentBuildingParent != null)
             {
                 RoomSectionRandomizer randomizer = currentBuildingParent.GetComponent<RoomSectionRandomizer>();
                 if (randomizer != null)
                 {
-                    playerTransform.position = randomizer.GetPlayerSpawnPoint();
+                    Vector3 spawnPoint = randomizer.GetPlayerSpawnPoint();
+                    if (spawnPoint != Vector3.zero)
+                    {
+                        playerTransform.position = spawnPoint;
+                        return;
+                    }
                 }
+            }
+
+            // Fallback to last known spawn point if current building setup fails
+            if (lastPlayerSpawnPoint != Vector3.zero)
+            {
+                playerTransform.position = lastPlayerSpawnPoint;
             }
         }
     }

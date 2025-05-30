@@ -16,7 +16,7 @@ public class RoomSectionRandomizer : MonoBehaviour
     public Transform leftTransform;
     public Transform rightTransform;
 
-    Transform playerSpawnPoint;
+    private Transform playerSpawnPoint;
     private List<GameObject> roomPrefabs;
     private NavMeshSurface navMeshSurface;
     private Dictionary<Vector3, GameObject> spawnedRooms = new Dictionary<Vector3, GameObject>();
@@ -201,7 +201,13 @@ public class RoomSectionRandomizer : MonoBehaviour
 
     internal Vector3 GetPlayerSpawnPoint()
     {
-        return playerSpawnPoint.position;
+        if (playerSpawnPoint != null)
+        {
+            return playerSpawnPoint.position;
+        }
+        
+        // Fallback to center piece if no spawn point is set
+        return centerPiece != null ? centerPiece.position : Vector3.zero;
     }
 
     public void SetupChests()
