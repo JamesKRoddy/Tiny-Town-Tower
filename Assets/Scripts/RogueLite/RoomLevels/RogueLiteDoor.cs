@@ -1,12 +1,51 @@
 using UnityEngine;
 using Managers;
-public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>
+
+public class RogueLiteDoor : MonoBehaviour, IInteractiveBase
 {
-    public GameObject doorModel; // TODO: Door models will change based on room difficulty and loot. GetCurrentRoomDifficulty
-    public Transform playerSpawn;
+    [Header("Door Settings")]
     public DoorStatus doorType;
+    public BuildingType buildingType;
     public int doorRoomDifficulty;
-    internal BuildingType buildingType; //The type of room this door leads to
+    public Transform playerSpawn;
+
+    private RogueLiteRoom parentRoom;
+    private bool isLocked;
+
+    public void Initialize(RogueLiteRoom room)
+    {
+        parentRoom = room;
+        isLocked = doorType == DoorStatus.LOCKED;
+    }
+
+    public void SetLocked(bool locked)
+    {
+        isLocked = locked;
+        doorType = locked ? DoorStatus.LOCKED : DoorStatus.ENTRANCE;
+    }
+
+    public void Reset()
+    {
+        isLocked = doorType == DoorStatus.LOCKED;
+    }
+
+    public void OnDoorEntered()
+    {
+        if (isLocked) return;
+
+        if (doorType == DoorStatus.ENTRANCE)
+        {
+            RogueLiteManager.Instance.EnterRoom(this);
+        }
+        else if (doorType == DoorStatus.EXIT)
+        {
+            // Handle exit door logic
+            if (parentRoom != null)
+            {
+                parentRoom.OnRoomExited(this);
+            }
+        }
+    }
 
     // Draw a gizmo arrow to show the door's local forward direction
     private void OnDrawGizmos()
