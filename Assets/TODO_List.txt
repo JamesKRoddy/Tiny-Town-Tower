@@ -5,24 +5,30 @@ Roguelike Complete Level
 
 Process:
 
-Player collisions with the wall
+Screen going black after opening a door then showing again when in the next room
 UI to display wave start and end
 Add in a bit of a delay between entering the room and spawning enemies
-Instead of spawning enemies from the same points, add in code to select randow points on the nave mesh to spawn, spawn points!!!
-Game loop of entering a building, completing waves, moving onto the next room, reaching the end of the building, transporting back to the overworld to the entrance of the building entered, either returning to camp or progressing onto another building.
-After returning to camp adding picked up inventory items back to the inventory, unpossess npc, remove their genetic mutations.
-Displaying npc mutations (charicteristics)
-Implement a day/night cycle for the entire game.
-Figure out what happens in the camp while youre gone, does progress on stuff freeze? Does it keep going or does it progress but slower?
 Block interactions with doors/weapons etc. while wave is active
 Visual queues on open doors when waves finished
+Game loop of entering a building, completing waves, moving onto the next room, reaching the end of the building, transporting back to the overworld to the entrance of the building entered, either returning to camp or progressing onto another building.
+
+Picking up genetic mutations and assigning them to the player, opening the screen placing them, showing mutation details when highlighted, exit popup to let player know unequipped ones will be dropped, discarding unequipped ones.
+
+Instead of spawning enemies from the same points, add in code to select randow points on the nave mesh to spawn, spawn points!!!
+
+After returning to camp adding picked up inventory items back to the inventory, unpossess npc, remove their genetic mutations.
+Displaying npc mutations (charicteristics)
+
+Implement a day/night cycle for the entire game.
+Figure out what happens in the camp while youre gone, does progress on stuff freeze? Does it keep going or does it progress but slower?
+
+
 Zombie sound effects
 Enviromental hazzards, electrical/acid etc.
 Visual effects from elemental weapons eg. zombies get shocked by electrical wepon, they freeze and particles are emitted.
-Picking up genetic mutations and assigning them to the player, opening the screen placing them, showing mutation details when highlighted, exit popup to let player know unequipped ones will be dropped, discarding unequipped ones.
 Expanding the overworld, having more options of buildings to select.
 Creating more rooms and buildings.
-Setup some new enemies: Spitter that shoots acid at the player, boomer that runs towards you and explodes.
+Setup some new enemies: Boomer that runs towards you and explodes.
 
 
 
