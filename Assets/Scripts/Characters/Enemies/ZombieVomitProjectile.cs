@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 namespace Enemies
 {
@@ -14,7 +15,6 @@ namespace Enemies
         private bool hasHit = false;
 
         [SerializeField] public GameObject vomitPoolPrefab; // Made public to allow setting from RangedZombie
-        [SerializeField] private float poolDuration = 5f; // Duration for which the vomit pool will stay
         [SerializeField] private float maxLifetime = 10f; // Maximum time before projectile is destroyed
         [SerializeField] private float maxHeight = 5f; // Maximum height of the arc
 
@@ -85,18 +85,15 @@ namespace Enemies
             GameObject vomitPool = Instantiate(vomitPoolPrefab, transform.position, Quaternion.identity);
             
             // Set up the vomit pool
-            DamageArea poolScript = vomitPool.GetComponent<DamageArea>();
+            ZombieVomitPool poolScript = vomitPool.GetComponent<ZombieVomitPool>();
             if (poolScript != null)
             {
-                poolScript.SetDamage(damage);
+                poolScript.Setup(damage, 5.0f, 0.5f, new Vector3(0.7f, 0.4f, 0.7f));
             }
             else
             {
-                Debug.LogError("VomitPool component not found on vomit pool prefab");
+                Debug.LogError("ZombieVomitPool component not found on vomit pool prefab");
             }
-
-            // Destroy the pool after duration
-            Destroy(vomitPool, poolDuration);
         }
 
         // Optional: Visualize the projectile path in editor
