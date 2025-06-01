@@ -11,6 +11,7 @@ Add in a bit of a delay between entering the room and spawning enemies
 Block interactions with doors/weapons etc. while wave is active
 Visual queues on open doors when waves finished
 Game loop of entering a building, completing waves, moving onto the next room, reaching the end of the building, transporting back to the overworld to the entrance of the building entered, either returning to camp or progressing onto another building.
+Player death loop, loosing the npc and loot, loading back to the camp
 
 Picking up genetic mutations and assigning them to the player, opening the screen placing them, showing mutation details when highlighted, exit popup to let player know unequipped ones will be dropped, discarding unequipped ones.
 
