@@ -6,8 +6,9 @@ Roguelike Complete Level
 Process:
 
 Player collisions with the wall
-Review enemy pathfinding and attacking, running past player, not reaching player, running in random directions, not facing the player while attacking
 UI to display wave start and end
+Add in a bit of a delay between entering the room and spawning enemies
+Instead of spawning enemies from the same points, add in code to select randow points on the nave mesh to spawn, spawn points!!!
 Game loop of entering a building, completing waves, moving onto the next room, reaching the end of the building, transporting back to the overworld to the entrance of the building entered, either returning to camp or progressing onto another building.
 After returning to camp adding picked up inventory items back to the inventory, unpossess npc, remove their genetic mutations.
 Displaying npc mutations (charicteristics)

@@ -1701,6 +1701,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8cdfbceb3c91a894d88c2ce9d8d2e34b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  taskEffects: []
 --- !u!114 &8320294776751182447
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1773,8 +1774,8 @@ MonoBehaviour:
   hungerDecreaseRate: 1
   hungerThreshold: 30
   starvationThreshold: 10
-  mealHungerRestore: 50
   workSpeedMultiplier: 1
+  noFoodCooldown: 10
 --- !u!114 &4868853620621953941
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4554,6 +4555,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4023079707919572210}
     m_Modifications:
+    - target: {fileID: 2312577079656741781, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+      propertyPath: dashElementVfxPrefabs.Array.size
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2686641998464454413, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

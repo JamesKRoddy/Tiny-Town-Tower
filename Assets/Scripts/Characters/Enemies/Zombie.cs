@@ -30,7 +30,6 @@ namespace Enemies
             
             // Debug distance and attack state
             Debug.DrawLine(transform.position, navMeshTarget.position, Color.yellow);
-            Debug.Log($"Distance to target: {distanceToTarget}, Attack Range: {attackRange}, Is Attacking: {isAttacking}, Can Attack: {Time.time >= lastAttackTime + attackCooldown}");
 
             // Adjust speed based on distance to target
             if (!isAttacking)

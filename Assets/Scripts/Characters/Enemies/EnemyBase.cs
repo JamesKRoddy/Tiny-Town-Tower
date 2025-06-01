@@ -85,6 +85,21 @@ namespace Enemies
             }
         }
 
+        IEnumerator Start(){
+
+            if(MaxHealth == 0)
+                MaxHealth = 10f;
+
+            Health = MaxHealth;
+
+            yield return new WaitForSeconds(0.5f);
+
+            if(navMeshTarget == null){
+                Debug.LogWarning($"Enemy {gameObject.name} has no target set");
+                navMeshTarget = PlayerController.Instance._possessedNPC.GetTransform();
+            }           
+        }
+
         protected virtual void SetupRootMotion()
         {
             agent.updatePosition = false;
@@ -179,14 +194,6 @@ namespace Enemies
                     agent.Warp(transform.position);
                 }
             }
-        }
-
-        private void Start()
-        {
-            if(MaxHealth == 0)
-                MaxHealth = 10f;
-
-            Health = MaxHealth;
         }
 
         internal void Setup(Transform navAgentTarget)

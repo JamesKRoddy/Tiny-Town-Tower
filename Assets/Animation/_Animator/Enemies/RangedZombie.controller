@@ -49,7 +49,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 2150617662367034487, guid: 7b5d8264bea67ae489a81e6787a0c3ba, type: 3}
+  m_Motion: {fileID: -4469183485442372851, guid: df2dbbbaf8dcc2442b41e65b8f81b8f5, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -102,37 +102,6 @@ MonoBehaviour:
   paramType: 0
   paramName: WalkType
   numberOfAnimations: 9
---- !u!206 &-7293067331770594432
-BlendTree:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Blend Tree
-  m_Childs:
-  - serializedVersion: 2
-    m_Motion: {fileID: 2865731219371085131, guid: 7a75b7ceb0293c54dbedafe8f4486b14, type: 3}
-    m_Threshold: 0
-    m_Position: {x: 0, y: 0}
-    m_TimeScale: 1
-    m_CycleOffset: 0
-    m_DirectBlendParameter: AttackType
-    m_Mirror: 0
-  - serializedVersion: 2
-    m_Motion: {fileID: 6892558210871818666, guid: 7a75b7ceb0293c54dbedafe8f4486b14, type: 3}
-    m_Threshold: 1
-    m_Position: {x: 0, y: 0}
-    m_TimeScale: 1
-    m_CycleOffset: 0
-    m_DirectBlendParameter: AttackType
-    m_Mirror: 0
-  m_BlendParameter: AttackType
-  m_BlendParameterY: AttackType
-  m_MinThreshold: 0
-  m_MaxThreshold: 1
-  m_UseAutomaticThresholds: 0
-  m_NormalizedBlendValues: 0
-  m_BlendType: 0
 --- !u!1101 &-7043741770548990784
 AnimatorStateTransition:
   m_ObjectHideFlags: 1
@@ -221,9 +190,6 @@ AnimatorStateMachine:
     m_State: {fileID: 7063798718289512588}
     m_Position: {x: 290, y: 120, z: 0}
   - serializedVersion: 1
-    m_State: {fileID: -3328221904006041087}
-    m_Position: {x: 570, y: -120, z: 0}
-  - serializedVersion: 1
     m_State: {fileID: -5684331309165627378}
     m_Position: {x: 580, y: 120, z: 0}
   - serializedVersion: 1
@@ -233,9 +199,6 @@ AnimatorStateMachine:
     m_State: {fileID: -1789426732708039173}
     m_Position: {x: 1240, y: 250, z: 0}
   - serializedVersion: 1
-    m_State: {fileID: 5310672015597494487}
-    m_Position: {x: 840, y: -120, z: 0}
-  - serializedVersion: 1
     m_State: {fileID: 542956527775770945}
     m_Position: {x: 900, y: 60, z: 0}
   - serializedVersion: 1
@@ -243,7 +206,7 @@ AnimatorStateMachine:
     m_Position: {x: 910, y: 210, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -1591327031371810047}
-    m_Position: {x: 1210, y: 120, z: 0}
+    m_Position: {x: 1240, y: 120, z: 0}
   m_ChildStateMachines: []
   m_AnyStateTransitions: []
   m_EntryTransitions: []
@@ -517,12 +480,6 @@ AnimatorStateMachine:
     m_State: {fileID: 1740153739696664794}
     m_Position: {x: 480, y: 120, z: 0}
   - serializedVersion: 1
-    m_State: {fileID: -3419793829658244674}
-    m_Position: {x: 750, y: -230, z: 0}
-  - serializedVersion: 1
-    m_State: {fileID: 4494586059888895767}
-    m_Position: {x: 750, y: -160, z: 0}
-  - serializedVersion: 1
     m_State: {fileID: 4640610065976507783}
     m_Position: {x: -10, y: 120, z: 0}
   - serializedVersion: 1
@@ -613,59 +570,6 @@ AnimatorStateTransition:
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 1
---- !u!1102 &-3419793829658244674
-AnimatorState:
-  serializedVersion: 6
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Zombie_Crawl_1_Loop
-  m_Speed: 1
-  m_CycleOffset: 0
-  m_Transitions: []
-  m_StateMachineBehaviours: []
-  m_Position: {x: 50, y: 50, z: 0}
-  m_IKOnFeet: 0
-  m_WriteDefaultValues: 1
-  m_Mirror: 0
-  m_SpeedParameterActive: 0
-  m_MirrorParameterActive: 0
-  m_CycleOffsetParameterActive: 0
-  m_TimeParameterActive: 0
-  m_Motion: {fileID: -7183005398510591069, guid: 049d964cbdb5afd479b7f33bcbc4524c, type: 3}
-  m_Tag: 
-  m_SpeedParameter: 
-  m_MirrorParameter: 
-  m_CycleOffsetParameter: 
-  m_TimeParameter: 
---- !u!1102 &-3328221904006041087
-AnimatorState:
-  serializedVersion: 6
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Crawl
-  m_Speed: 1
-  m_CycleOffset: 0
-  m_Transitions:
-  - {fileID: -2792702761329995203}
-  m_StateMachineBehaviours: []
-  m_Position: {x: 50, y: 50, z: 0}
-  m_IKOnFeet: 0
-  m_WriteDefaultValues: 1
-  m_Mirror: 0
-  m_SpeedParameterActive: 0
-  m_MirrorParameterActive: 0
-  m_CycleOffsetParameterActive: 0
-  m_TimeParameterActive: 0
-  m_Motion: {fileID: 0}
-  m_Tag: 
-  m_SpeedParameter: 
-  m_MirrorParameter: 
-  m_CycleOffsetParameter: 
-  m_TimeParameter: 
 --- !u!114 &-3224747475474671571
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -679,7 +583,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   functionCalls:
-  - componentTypeName: Enemies.MeleeZombie
+  - componentTypeName: Enemies.RangedZombie
     functionName: EndAttack
     callOnEnter: 1
     callOnExit: 0
@@ -705,31 +609,6 @@ AnimatorStateTransition:
   m_TransitionDuration: 0
   m_TransitionOffset: 0
   m_ExitTime: 0.75000006
-  m_HasExitTime: 0
-  m_HasFixedDuration: 1
-  m_InterruptionSource: 0
-  m_OrderedInterruption: 1
-  m_CanTransitionToSelf: 1
---- !u!1101 &-2792702761329995203
-AnimatorStateTransition:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_Conditions:
-  - m_ConditionMode: 1
-    m_ConditionEvent: Attack
-    m_EventTreshold: 0
-  m_DstStateMachine: {fileID: 0}
-  m_DstState: {fileID: 5310672015597494487}
-  m_Solo: 0
-  m_Mute: 0
-  m_IsExit: 0
-  serializedVersion: 3
-  m_TransitionDuration: 0.25
-  m_TransitionOffset: 0
-  m_ExitTime: 0.75
   m_HasExitTime: 0
   m_HasFixedDuration: 1
   m_InterruptionSource: 0
@@ -778,7 +657,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -7293067331770594432}
+  m_Motion: {fileID: -203655887218126122, guid: df2dbbbaf8dcc2442b41e65b8f81b8f5, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -805,7 +684,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -5184055235209660357, guid: 9e0b723c63daff94da1897b4897362dc, type: 3}
+  m_Motion: {fileID: -203655887218126122, guid: df2dbbbaf8dcc2442b41e65b8f81b8f5, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -872,7 +751,7 @@ AnimatorController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: BasicZombie
+  m_Name: RangedZombie
   serializedVersion: 5
   m_AnimatorParameters:
   - m_Name: WalkType
@@ -1028,7 +907,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 2297896391904763659, guid: 2172339ac5d242c4690ca5f31c81f819, type: 3}
+  m_Motion: {fileID: -4469183485442372851, guid: df2dbbbaf8dcc2442b41e65b8f81b8f5, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -1262,8 +1141,8 @@ AnimatorStateTransition:
   m_IsExit: 0
   serializedVersion: 3
   m_TransitionDuration: 0
-  m_TransitionOffset: 0
-  m_ExitTime: 0.97088253
+  m_TransitionOffset: 0.20251828
+  m_ExitTime: 0.9708826
   m_HasExitTime: 1
   m_HasFixedDuration: 1
   m_InterruptionSource: 0
@@ -1338,32 +1217,6 @@ AnimatorStateTransition:
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 1
---- !u!1102 &4494586059888895767
-AnimatorState:
-  serializedVersion: 6
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Zombie_Crawl_2_Loop
-  m_Speed: 1
-  m_CycleOffset: 0
-  m_Transitions: []
-  m_StateMachineBehaviours: []
-  m_Position: {x: 50, y: 50, z: 0}
-  m_IKOnFeet: 0
-  m_WriteDefaultValues: 1
-  m_Mirror: 0
-  m_SpeedParameterActive: 0
-  m_MirrorParameterActive: 0
-  m_CycleOffsetParameterActive: 0
-  m_TimeParameterActive: 0
-  m_Motion: {fileID: -7508130206645400724, guid: 33179f3890bca9a4da853fe5cb300f0f, type: 3}
-  m_Tag: 
-  m_SpeedParameter: 
-  m_MirrorParameter: 
-  m_CycleOffsetParameter: 
-  m_TimeParameter: 
 --- !u!1102 &4640610065976507783
 AnimatorState:
   serializedVersion: 6
@@ -1430,39 +1283,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   functionCalls:
-  - componentTypeName: Enemies.MeleeZombie
+  - componentTypeName: Enemies.RangedZombie
     functionName: EndAttack
     callOnEnter: 1
     callOnExit: 0
     callOnUpdate: 0
   parameterModifications: []
---- !u!1102 &5310672015597494487
-AnimatorState:
-  serializedVersion: 6
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Crawl Attack
-  m_Speed: 1
-  m_CycleOffset: 0
-  m_Transitions:
-  - {fileID: 7029349538314067074}
-  m_StateMachineBehaviours: []
-  m_Position: {x: 50, y: 50, z: 0}
-  m_IKOnFeet: 0
-  m_WriteDefaultValues: 1
-  m_Mirror: 0
-  m_SpeedParameterActive: 0
-  m_MirrorParameterActive: 0
-  m_CycleOffsetParameterActive: 0
-  m_TimeParameterActive: 0
-  m_Motion: {fileID: -203655887218126122, guid: 7c2c8f3948d72ce46b072ec10001cc7f, type: 3}
-  m_Tag: 
-  m_SpeedParameter: 
-  m_MirrorParameter: 
-  m_CycleOffsetParameter: 
-  m_TimeParameter: 
 --- !u!1101 &5514491661958709568
 AnimatorStateTransition:
   m_ObjectHideFlags: 1
@@ -1557,7 +1383,7 @@ AnimatorStateTransition:
   m_IsExit: 0
   serializedVersion: 3
   m_TransitionDuration: 0.06121862
-  m_TransitionOffset: 0
+  m_TransitionOffset: 0.20918041
   m_ExitTime: 0.9513669
   m_HasExitTime: 1
   m_HasFixedDuration: 1
@@ -1608,31 +1434,6 @@ AnimatorStateTransition:
   m_TransitionOffset: 0
   m_ExitTime: 0.28196725
   m_HasExitTime: 1
-  m_HasFixedDuration: 1
-  m_InterruptionSource: 0
-  m_OrderedInterruption: 1
-  m_CanTransitionToSelf: 1
---- !u!1101 &7029349538314067074
-AnimatorStateTransition:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_Conditions:
-  - m_ConditionMode: 2
-    m_ConditionEvent: Attack
-    m_EventTreshold: 0
-  m_DstStateMachine: {fileID: 0}
-  m_DstState: {fileID: -3328221904006041087}
-  m_Solo: 0
-  m_Mute: 0
-  m_IsExit: 0
-  serializedVersion: 3
-  m_TransitionDuration: 0.25
-  m_TransitionOffset: 0
-  m_ExitTime: 0.89285713
-  m_HasExitTime: 0
   m_HasFixedDuration: 1
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
