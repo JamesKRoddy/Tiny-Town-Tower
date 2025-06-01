@@ -4233,7 +4233,7 @@ MonoBehaviour:
   attackCooldown: 1.5
   approachDistance: 3
   projectilePrefab: {fileID: 6065242573691159738, guid: 7e578001f97bebc49b72fa440fc01405, type: 3}
-  vomitPoolPrefab: {fileID: 0}
+  vomitPoolPrefab: {fileID: 5463006163525327907, guid: 939d8c9032b9deb4f93ed8d2a0b94d39, type: 3}
   rangedDamage: 15
   shootCooldown: 2
   minAttackRange: 5

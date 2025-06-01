@@ -85,7 +85,7 @@ namespace Enemies
             GameObject vomitPool = Instantiate(vomitPoolPrefab, transform.position, Quaternion.identity);
             
             // Set up the vomit pool
-            VomitPool poolScript = vomitPool.GetComponent<VomitPool>();
+            DamageArea poolScript = vomitPool.GetComponent<DamageArea>();
             if (poolScript != null)
             {
                 poolScript.SetDamage(damage);
