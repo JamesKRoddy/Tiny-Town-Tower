@@ -4232,14 +4232,14 @@ MonoBehaviour:
   attackRange: 2
   attackCooldown: 1.5
   approachDistance: 3
-  projectilePrefab: {fileID: 6065242573691159738, guid: 7e578001f97bebc49b72fa440fc01405, type: 3}
-  vomitPoolPrefab: {fileID: 5463006163525327907, guid: 939d8c9032b9deb4f93ed8d2a0b94d39, type: 3}
   rangedDamage: 15
   shootCooldown: 2
   minAttackRange: 5
   maxAttackRange: 15
   attackRotationSpeed: 2
   postAttackRotationPause: 0.5
+  vomitProjectileEffect: {fileID: 11400000, guid: 94e6acf029b2a8e4f947c2e75662ee75, type: 2}
+  vomitPoolEffect: {fileID: 11400000, guid: 2f3ea51455a426f48b24456a8147c1f2, type: 2}
 --- !u!4 &6487575940494068221
 Transform:
   m_ObjectHideFlags: 0

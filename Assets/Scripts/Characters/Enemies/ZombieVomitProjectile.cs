@@ -1,5 +1,5 @@
 using UnityEngine;
-using System.Collections;
+using Managers;
 
 namespace Enemies
 {
@@ -14,15 +14,16 @@ namespace Enemies
         private float timeAlive = 0f;
         private bool hasHit = false;
 
-        [SerializeField] public GameObject vomitPoolPrefab; // Made public to allow setting from RangedZombie
         [SerializeField] private float maxLifetime = 10f; // Maximum time before projectile is destroyed
         [SerializeField] private float maxHeight = 5f; // Maximum height of the arc
+        [SerializeField] private EffectDefinition vomitPoolEffect;
 
-        public void Initialize(Vector3 direction, float dmg)
+        public void Initialize(Vector3 direction, float dmg, EffectDefinition poolEffect)
         {
             initialPosition = transform.position;
             launchDirection = direction;
             damage = dmg;
+            vomitPoolEffect = poolEffect;
             timeAlive = 0f;
             hasHit = false;
 
@@ -75,24 +76,32 @@ namespace Enemies
             if (hasHit) return;
             hasHit = true;
 
-            if (vomitPoolPrefab == null)
+            Debug.Log("Creating vomit pool");
+            if (vomitPoolEffect == null)
             {
-                Debug.LogError("Vomit pool prefab is not assigned to ZombieVomitProjectile on " + gameObject.name);
+                Debug.LogError("Vomit pool effect is not assigned to ZombieVomitProjectile on " + gameObject.name);
                 return;
             }
 
-            // Instantiate the vomit pool at the projectile's position
-            GameObject vomitPool = Instantiate(vomitPoolPrefab, transform.position, Quaternion.identity);
-            
-            // Set up the vomit pool
-            ZombieVomitPool poolScript = vomitPool.GetComponent<ZombieVomitPool>();
-            if (poolScript != null)
+            // Play the vomit pool effect and get the spawned GameObject
+            GameObject poolObj = EffectManager.Instance.PlayEffect(
+                transform.position,
+                Vector3.up,
+                Quaternion.identity,
+                null,
+                vomitPoolEffect,
+                5.0f
+            );
+
+            // Initialize the vomit pool
+            if (poolObj != null)
             {
-                poolScript.Setup(damage, 5.0f, 0.5f, new Vector3(0.7f, 0.4f, 0.7f));
-            }
-            else
-            {
-                Debug.LogError("ZombieVomitPool component not found on vomit pool prefab");
+                ZombieVomitPool pool = poolObj.GetComponent<ZombieVomitPool>();
+                if (pool == null)
+                {
+                    pool = poolObj.AddComponent<ZombieVomitPool>();
+                }
+                pool.Setup(damage, 0.5f, new Vector3(0.7f, 0.4f, 0.7f));
             }
         }
 

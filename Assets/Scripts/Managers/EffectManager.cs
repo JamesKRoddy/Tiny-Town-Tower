@@ -128,12 +128,12 @@ namespace Managers
             return null;
         }
 
-        public void PlayEffect(Vector3 position, Vector3 normal, Quaternion rotation, Transform parent, EffectDefinition effect)
+        public GameObject PlayEffect(Vector3 position, Vector3 normal, Quaternion rotation, Transform parent, EffectDefinition effect, float duration = 0f)
         {
             if (effect == null)
             {
                 Debug.LogWarning("[EffectManager] Attempted to play null effect");
-                return;
+                return null;
             }
 
             // If the effect isn't in our pools yet, initialize it
@@ -163,7 +163,7 @@ namespace Managers
             if (vfx == null)
             {
                 Debug.LogError($"[EffectManager] Failed to create effect instance for: {effect.name}");
-                return;
+                return null;
             }
 
             // Set parent first to ensure proper local space calculations
@@ -227,8 +227,12 @@ namespace Managers
                 }
             }
 
-            float duration = effect.duration > 0 ? effect.duration : Mathf.Max(particleDuration, audioDuration);
+            if (duration <= 0)
+                duration = effect.duration > 0 ? effect.duration : Mathf.Max(particleDuration, audioDuration);
+
             StartCoroutine(ReturnToPoolAfterDuration(vfx, effect, duration));
+
+            return vfx;
         }
 
         private GameObject GetPooledObject(EffectDefinition effect)

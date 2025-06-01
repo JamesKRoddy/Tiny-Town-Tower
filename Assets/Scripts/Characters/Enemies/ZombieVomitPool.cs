@@ -7,21 +7,18 @@ namespace Enemies
     {
         private Coroutine scaleCoroutine;
 
-        public void Setup(float damage, float poolDuration, float scaleDuration, Vector3 targetScale)
+        public void Setup(float damage,float scaleDuration, Vector3 targetScale)
         {
             SetDamage(damage);
             
             // Set initial scale
-            transform.localScale = new Vector3(0f, 0.4f, 0f);
+            transform.localScale = new Vector3(0f, 0.3f, 0f);
             
             // Start scaling animation
-            scaleCoroutine = StartCoroutine(ScaleAnimation(poolDuration, scaleDuration, targetScale));
-            
-            // Destroy after duration
-            Destroy(gameObject, poolDuration);
+            scaleCoroutine = StartCoroutine(ScaleAnimation(scaleDuration, targetScale));
         }
 
-        private IEnumerator ScaleAnimation(float poolDuration, float scaleDuration, Vector3 targetScale)
+        private IEnumerator ScaleAnimation(float scaleDuration, Vector3 targetScale)
         {
             float elapsedTime = 0f;
             Vector3 startScale = transform.localScale;
