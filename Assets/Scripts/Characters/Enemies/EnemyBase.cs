@@ -15,6 +15,11 @@ namespace Enemies
 
         [Header("Movement Settings")]
         [SerializeField] protected bool useRootMotion = false;
+        [SerializeField] protected float stoppingDistance = 1.5f;
+        [SerializeField] protected float rotationSpeed = 10f;
+        [SerializeField] protected float movementSpeed = 3.5f;
+        [SerializeField] protected float acceleration = 8f;
+        [SerializeField] protected float angularSpeed = 120f;
 
         protected NavMeshAgent agent;
         protected Animator animator;
@@ -55,6 +60,14 @@ namespace Enemies
         {
             agent = GetComponent<NavMeshAgent>();
             animator = GetComponent<Animator>();
+            
+            // Configure NavMeshAgent
+            agent.stoppingDistance = stoppingDistance;
+            agent.speed = movementSpeed;
+            agent.acceleration = acceleration;
+            agent.angularSpeed = angularSpeed;
+            agent.updateRotation = true;
+            agent.updateUpAxis = false;
             
             // Get the SkinnedMeshRenderer and store original material
             skinnedMeshRenderer = GetComponentInChildren<SkinnedMeshRenderer>();
@@ -99,6 +112,18 @@ namespace Enemies
             {
                 // Update the destination continuously
                 agent.SetDestination(navMeshTarget.position);
+                
+                // Handle rotation towards target
+                if (agent.velocity.magnitude > 0.1f)
+                {
+                    Vector3 direction = (navMeshTarget.position - transform.position).normalized;
+                    direction.y = 0;
+                    if (direction != Vector3.zero)
+                    {
+                        Quaternion targetRotation = Quaternion.LookRotation(direction);
+                        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+                    }
+                }
             }
         }
 
@@ -112,6 +137,18 @@ namespace Enemies
             {
                 // Update the destination continuously
                 agent.SetDestination(navMeshTarget.position);
+                
+                // Handle rotation towards target
+                if (agent.velocity.magnitude > 0.1f)
+                {
+                    Vector3 direction = (navMeshTarget.position - transform.position).normalized;
+                    direction.y = 0;
+                    if (direction != Vector3.zero)
+                    {
+                        Quaternion targetRotation = Quaternion.LookRotation(direction);
+                        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+                    }
+                }
             }
         }
 
@@ -170,7 +207,7 @@ namespace Enemies
         /// <summary>
         /// Called by the child classes to start the attack animation and disable the nav mesh agent rotation
         /// </summary>
-        protected void BeginAttackSequence()
+        protected virtual void BeginAttackSequence()
         {
             // Trigger attack animation, this should transition to attack animations via root motion
             animator.SetBool("Attack", true);
@@ -185,7 +222,7 @@ namespace Enemies
         /// <summary>
         /// Called by the child classes to end the attack animation and re-enable the nav mesh agent rotation
         /// </summary>
-        protected void EndAttack()
+        protected virtual void EndAttack()
         {
             // Reset isAttacking flag after the attack animation finishes
             animator.SetBool("Attack", false);

@@ -6,33 +6,112 @@ namespace Enemies
 {
     public class Zombie : EnemyBase
     {
-        public float attackRange = 2f;
+        [Header("Attack Settings")]
+        [SerializeField] protected float attackRange = 2f;
+        [SerializeField] protected float attackCooldown = 1.5f;
+        [SerializeField] protected float approachDistance = 3f; // Distance at which to start slowing down
+        protected float lastAttackTime;
+        protected float originalSpeed;
 
         protected override void Awake()
         {
             useRootMotion = true; // Enable root motion for the zombie
             base.Awake();
+            originalSpeed = agent.speed; // Store original speed
         }
 
         protected override void Update()
         {
             base.Update(); // Call base Update to handle destination setting
 
-            // Check for attack range
-            if (navMeshTarget != null && Vector3.Distance(transform.position, navMeshTarget.position) <= attackRange && !isAttacking)
+            if (navMeshTarget == null) return;
+
+            float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
+            
+            // Debug distance and attack state
+            Debug.DrawLine(transform.position, navMeshTarget.position, Color.yellow);
+            Debug.Log($"Distance to target: {distanceToTarget}, Attack Range: {attackRange}, Is Attacking: {isAttacking}, Can Attack: {Time.time >= lastAttackTime + attackCooldown}");
+
+            // Adjust speed based on distance to target
+            if (!isAttacking)
             {
-                BeginAttackSequence();
+                if (distanceToTarget <= attackRange)
+                {
+                    // Stop completely when in attack range
+                    agent.speed = 0f;
+                }
+                else if (distanceToTarget <= approachDistance)
+                {
+                    // Slow down when approaching attack range
+                    float speedFactor = (distanceToTarget - attackRange) / (approachDistance - attackRange);
+                    agent.speed = originalSpeed * speedFactor;
+                }
+                else
+                {
+                    // Normal speed when far away
+                    agent.speed = originalSpeed;
+                }
             }
+
+            // Check for attack range and cooldown
+            if (distanceToTarget <= attackRange && !isAttacking && Time.time >= lastAttackTime + attackCooldown)
+            {
+                // Face the target before attacking
+                Vector3 direction = (navMeshTarget.position - transform.position).normalized;
+                direction.y = 0;
+                if (direction != Vector3.zero)
+                {
+                    Quaternion targetRotation = Quaternion.LookRotation(direction);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+                }
+
+                // Only attack if we're facing the target (within 30 degrees)
+                float angleToTarget = Vector3.Angle(transform.forward, direction);
+                if (angleToTarget <= 30f)
+                {
+                    BeginAttackSequence();
+                    lastAttackTime = Time.time;
+                }
+            }
+        }
+
+        protected override void BeginAttackSequence()
+        {
+            base.BeginAttackSequence();
+            
+            // Stop movement during attack
+            if (agent != null)
+            {
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
+            }
+
+            // Debug attack start
+            Debug.Log("Starting attack sequence");
+        }
+
+        protected override void EndAttack()
+        {
+            base.EndAttack();
+            
+            // Resume movement after attack
+            if (agent != null)
+            {
+                agent.isStopped = false;
+                agent.speed = originalSpeed; // Reset to original speed
+            }
+
+            // Debug attack end
+            Debug.Log("Ending attack sequence");
         }
 
         protected virtual void MoveTowardsPlayer()
         {
-            if (!isAttacking)
+            if (!isAttacking && navMeshTarget != null)
             {
                 // The NavMeshAgent moves the zombie, but root motion from animation drives actual movement
                 SetEnemyDestination(navMeshTarget.position);
             }
         }
-
     }
 }
