@@ -114,6 +114,7 @@ namespace Managers
                     if (spawnPoint != Vector3.zero)
                     {
                         playerTransform.position = spawnPoint;
+                        Debug.Log($"Player spawned at {spawnPoint}");
                         return;
                     }
                 }

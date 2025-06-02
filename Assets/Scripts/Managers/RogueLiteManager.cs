@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Collections;
 
 namespace Managers
 {
@@ -75,8 +76,9 @@ namespace Managers
                     EnemySpawnManager.Instance.ResetWaveCount();
                     break;
                 case EnemySetupState.PRE_ENEMY_SPAWNING:
-                    SetupPlayer();
-                    SetEnemySetupState(EnemySetupState.ENEMIES_SPAWNED);
+                    SetupPlayer();                    
+                    break;
+                case EnemySetupState.ENEMY_SPAWN_START:
                     EnemySpawnManager.Instance.StartSpawningEnemies(GetWaveConfig(GetCurrentWaveDifficulty()));
                     break;
                 case EnemySetupState.ENEMIES_SPAWNED:
@@ -96,10 +98,45 @@ namespace Managers
             }
         }
 
-        public void EnterRoom(RogueLiteDoor rogueLiteDoor)
+        public void EnterRoomWithTransition(RogueLiteDoor door)
         {
+            if (transitionCoroutine != null)
+            {
+                StopCoroutine(transitionCoroutine);
+            }
+            transitionCoroutine = StartCoroutine(EnterRoomSequence(door));
+        }
+
+        private Coroutine transitionCoroutine;
+
+        private IEnumerator EnterRoomSequence(RogueLiteDoor door)
+        {
+            // 1. Fade in
+            yield return PlayerUIManager.Instance.transitionMenu.FadeIn();
+            
+            // 2. Setup room
             SetEnemySetupState(EnemySetupState.WAVE_START);
-            buildingManager.EnterRoom(rogueLiteDoor);
+            buildingManager.EnterRoom(door);
+
+            // 3. Move Player
+            SetEnemySetupState(EnemySetupState.PRE_ENEMY_SPAWNING);
+                        
+            // 4. Short pause for camera transition
+            yield return new WaitForSeconds(0.5f);
+
+            // 5. Fade out
+            yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
+
+            // Wait before enemies are spawned
+            yield return new WaitForSeconds(1.0f);
+            
+            // 6. Spawn enemies
+            SetEnemySetupState(EnemySetupState.ENEMY_SPAWN_START);
+
+            // 7. Finish spawning enemies
+            SetEnemySetupState(EnemySetupState.ENEMIES_SPAWNED);
+
+            transitionCoroutine = null;
         }
 
         public override int GetCurrentWaveDifficulty()

@@ -155,7 +155,6 @@ public class RoomSectionRandomizer : MonoBehaviour
         if (navMeshSurface != null)
         {
             navMeshSurface.BuildNavMesh();            
-            rogueLiteManager.SetEnemySetupState(EnemySetupState.PRE_ENEMY_SPAWNING);
         }
         else
         {

@@ -63,39 +63,6 @@ public class SceneTransitionManager : MonoBehaviour
         StartCoroutine(LoadSceneNextFrame(sceneName, nextGameMode, keepPossessedNPC));
     }
 
-    public void EnterRoomWithTransition(RogueLiteDoor door)
-    {
-        if (transitionCoroutine != null)
-        {
-            StopCoroutine(transitionCoroutine);
-        }
-        transitionCoroutine = StartCoroutine(EnterRoomWithTransitionCoroutine(door));
-    }
-
-    private Coroutine transitionCoroutine;
-
-    private IEnumerator EnterRoomWithTransitionCoroutine(RogueLiteDoor door)
-    {
-        // Fade in
-        yield return PlayerUIManager.Instance.transitionMenu.FadeIn();
-        
-        // Enter the room
-        RogueLiteManager.Instance.EnterRoom(door);
-        
-        // Wait for NavMesh to finish baking
-        yield return new WaitForSeconds(0.5f); // Give some time for NavMesh to start baking
-        
-        // Wait until the room is ready
-        while (RogueLiteManager.Instance.GetEnemySetupState() != EnemySetupState.ENEMIES_SPAWNED)
-        {
-            yield return null;
-        }
-        
-        // Fade out
-        yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
-        transitionCoroutine = null;
-    }
-
     /// <summary>
     /// Used when npcs are unpossessed to move them back to be destroyed
     /// </summary>

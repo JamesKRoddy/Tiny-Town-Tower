@@ -211,9 +211,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             case NarrativeAsset narrative:
                 PlayerUIManager.Instance.narrativeSystem.StartConversation(narrative);
                 break;
-            case RogueLiteDoor rogueLiteDoor:
-                RogueLiteManager.Instance.EnterRoom(rogueLiteDoor);
-                break;
             case Building building:
                 // Show the work task selection popup
                 CampManager.Instance.WorkManager.ShowWorkTaskOptions(building, (HumanCharacterController)PlayerController.Instance._possessedNPC, (task) => {

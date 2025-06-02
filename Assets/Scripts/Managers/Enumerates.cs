@@ -155,6 +155,7 @@ public enum EnemySetupState
     NONE,
     WAVE_START, //Player choses to open a door
     PRE_ENEMY_SPAWNING, //Period when the new room is spawned in, props, chests etc. are spawned in and nav mesh is baked
+    ENEMY_SPAWN_START, //Enemies are spawned in
     ENEMIES_SPAWNED, //The room game play has started
     ALL_WAVES_CLEARED // enemies are all dea, player is free the move around and choose the next path
 }

@@ -37,7 +37,7 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
 
         if (doorType == DoorStatus.ENTRANCE)
         {
-            SceneTransitionManager.Instance.EnterRoomWithTransition(this);
+            RogueLiteManager.Instance.EnterRoomWithTransition(this);
         }
         else if (doorType == DoorStatus.EXIT)
         {
