@@ -5,9 +5,8 @@ Roguelike Complete Level
 
 Process:
 
-Screen going black after opening a door then showing again when in the next room (add this into the scene transition manager, have it happen for the loading screen too, disable controls) BUNCH OF ISSUES!!!!
+
 UI to display wave start and end
-Add in a bit of a delay between entering the room and spawning enemies
 Block interactions with doors/weapons etc. while wave is active
 Visual queues on open doors when waves finished
 Game loop of entering a building, completing waves, moving onto the next room, reaching the end of the building, transporting back to the overworld to the entrance of the building entered, either returning to camp or progressing onto another building.
