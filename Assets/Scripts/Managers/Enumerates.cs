@@ -92,6 +92,7 @@ public enum PlayerControlType
 {
     NONE = 0, // Default
     MAIN_MENU = 100,
+    TRANSITION = 101, // Used for transition between scenes, disables all player input
 
     /// <summary>
     /// RogueLike

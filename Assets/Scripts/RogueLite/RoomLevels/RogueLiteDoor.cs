@@ -1,5 +1,6 @@
 using UnityEngine;
 using Managers;
+using System.Collections;
 
 public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IInteractiveBase
 {
@@ -36,7 +37,7 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
 
         if (doorType == DoorStatus.ENTRANCE)
         {
-            RogueLiteManager.Instance.EnterRoom(this);
+            SceneTransitionManager.Instance.EnterRoomWithTransition(this);
         }
         else if (doorType == DoorStatus.EXIT)
         {

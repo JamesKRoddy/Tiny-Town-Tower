@@ -63,6 +63,39 @@ public class SceneTransitionManager : MonoBehaviour
         StartCoroutine(LoadSceneNextFrame(sceneName, nextGameMode, keepPossessedNPC));
     }
 
+    public void EnterRoomWithTransition(RogueLiteDoor door)
+    {
+        if (transitionCoroutine != null)
+        {
+            StopCoroutine(transitionCoroutine);
+        }
+        transitionCoroutine = StartCoroutine(EnterRoomWithTransitionCoroutine(door));
+    }
+
+    private Coroutine transitionCoroutine;
+
+    private IEnumerator EnterRoomWithTransitionCoroutine(RogueLiteDoor door)
+    {
+        // Fade in
+        yield return PlayerUIManager.Instance.transitionMenu.FadeIn();
+        
+        // Enter the room
+        RogueLiteManager.Instance.EnterRoom(door);
+        
+        // Wait for NavMesh to finish baking
+        yield return new WaitForSeconds(0.5f); // Give some time for NavMesh to start baking
+        
+        // Wait until the room is ready
+        while (RogueLiteManager.Instance.GetEnemySetupState() != EnemySetupState.ENEMIES_SPAWNED)
+        {
+            yield return null;
+        }
+        
+        // Fade out
+        yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
+        transitionCoroutine = null;
+    }
+
     /// <summary>
     /// Used when npcs are unpossessed to move them back to be destroyed
     /// </summary>
@@ -124,29 +157,37 @@ public class SceneTransitionManager : MonoBehaviour
 
     private IEnumerator LoadNextSceneAsync(Action<float> progressCallback)
     {
+        // Fade in and wait for it to complete
+        if (PlayerUIManager.Instance.transitionMenu != null)
+        {
+            yield return PlayerUIManager.Instance.transitionMenu.FadeIn();
+        }
+
         AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(NextScene);
-        // Prevent immediate activation until loading is complete (or until you choose to activate it).
         asyncOperation.allowSceneActivation = false;
 
         while (!asyncOperation.isDone)
         {
-            // Unity's asyncOperation.progress value goes from 0 to 0.9 while loading.
             float progress = Mathf.Clamp01(asyncOperation.progress / 0.9f);
             progressCallback?.Invoke(progress);
 
-            // When progress reaches 0.9, the scene is fully loaded.
             if (asyncOperation.progress >= 0.9f)
             {
-                // Optionally, add a delay or wait for user input before activating the scene.
                 asyncOperation.allowSceneActivation = true;
             }
             yield return null;
         }
 
-        // Update scene tracking after the new scene is active.
+        // Update scene tracking after the new scene is active
         CurrentScene = NextScene;
         NextScene = string.Empty;
         GameManager.Instance.CurrentGameMode = NextGameMode;
+
+        // Fade out
+        if (PlayerUIManager.Instance.transitionMenu != null)
+        {
+            yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
+        }
     }
 
     #endregion

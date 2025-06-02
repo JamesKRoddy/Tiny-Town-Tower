@@ -84,9 +84,6 @@ namespace Enemies
                 agent.isStopped = true;
                 agent.velocity = Vector3.zero;
             }
-
-            // Debug attack start
-            Debug.Log("Starting attack sequence");
         }
 
         protected override void EndAttack()
@@ -100,8 +97,6 @@ namespace Enemies
                 agent.speed = originalSpeed; // Reset to original speed
             }
 
-            // Debug attack end
-            Debug.Log("Ending attack sequence");
         }
 
         protected virtual void MoveTowardsPlayer()

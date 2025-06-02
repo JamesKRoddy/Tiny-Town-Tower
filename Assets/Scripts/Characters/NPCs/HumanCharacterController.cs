@@ -361,7 +361,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     private bool IsObstacleInPath(Vector3 direction, out RaycastHit hitInfo)
     {
-        Vector3 capsuleBottom = transform.position + Vector3.up * 0.1f; // Slightly above ground to avoid terrain issues
+        Vector3 capsuleBottom = transform.position + Vector3.up * 0.3f; // Slightly above ground to avoid terrain issues
         Vector3 capsuleTop = transform.position + Vector3.up * humanCollider.bounds.size.y;
 
         // Check against each obstacle layer

@@ -15,15 +15,12 @@ namespace Enemies
             if (navMeshTarget == null) return;
 
             float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
-            Debug.Log($"MeleeAttack called - Distance to target: {distanceToTarget}, Attack Range: {attackRange}");
 
             if (distanceToTarget <= attackRange)
             {
                 // Check if target is in front of us
                 Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
                 float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
-                
-                Debug.Log($"Angle to target: {angleToTarget}");
 
                 if (angleToTarget <= 45f) // Allow a wider attack angle
                 {
@@ -39,14 +36,6 @@ namespace Enemies
                         Debug.LogWarning("Target does not implement IDamageable");
                     }
                 }
-                else
-                {
-                    Debug.Log("Target not in attack angle");
-                }
-            }
-            else
-            {
-                Debug.Log("Target out of range for melee attack");
             }
         }
 
