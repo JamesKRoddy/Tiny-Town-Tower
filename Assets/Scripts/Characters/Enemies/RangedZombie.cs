@@ -109,12 +109,12 @@ namespace Enemies
                 ZombieVomitProjectile projectile = projectileObj.GetComponent<ZombieVomitProjectile>();
                 if (projectile != null)
                 {
-                    projectile.Initialize(direction, rangedDamage, vomitPoolEffect);
+                    projectile.Initialize(navMeshTarget.position, rangedDamage, vomitPoolEffect);
                 }
                 else
                 {
                     projectile = projectileObj.AddComponent<ZombieVomitProjectile>();
-                    projectile.Initialize(direction, rangedDamage, vomitPoolEffect);
+                    projectile.Initialize(navMeshTarget.position, rangedDamage, vomitPoolEffect);
                     Debug.LogWarning("ZombieVomitProjectile component not found on spawned projectile, added it to the projectile object");
                 }
             }

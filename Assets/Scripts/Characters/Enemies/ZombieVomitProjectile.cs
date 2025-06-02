@@ -7,38 +7,31 @@ namespace Enemies
     {
         private Vector3 initialPosition;
         private Vector3 targetPosition;
-        private Vector3 launchDirection;
         private float damage;
         [SerializeField] private float speed = 10f;
-        [SerializeField] private float gravity = -9.81f;  // Simple gravity to simulate arc motion
-        private float timeAlive = 0f;
-        private bool hasHit = false;
-
-        [SerializeField] private float maxLifetime = 10f; // Maximum time before projectile is destroyed
-        [SerializeField] private float maxHeight = 5f; // Maximum height of the arc
+        [SerializeField] private float maxHeight = 5f;
+        [SerializeField] private float maxLifetime = 10f;
         [SerializeField] private EffectDefinition vomitPoolEffect;
 
-        public void Initialize(Vector3 direction, float dmg, EffectDefinition poolEffect)
+        private float timeAlive = 0f;
+        private bool hasHit = false;
+        private float jumpDuration;
+
+        public void Initialize(Vector3 targetPos, float dmg, EffectDefinition poolEffect)
         {
             initialPosition = transform.position;
-            launchDirection = direction;
+            targetPosition = targetPos;
             damage = dmg;
             vomitPoolEffect = poolEffect;
             timeAlive = 0f;
             hasHit = false;
 
-            // Calculate initial velocity for arc
-            float horizontalDistance = Vector3.Distance(
+            // Calculate the duration based on distance and speed
+            float distance = Vector3.Distance(
                 new Vector3(initialPosition.x, 0, initialPosition.z),
-                new Vector3(initialPosition.x + direction.x * 10f, 0, initialPosition.z + direction.z * 10f)
+                new Vector3(targetPosition.x, 0, targetPosition.z)
             );
-
-            // Calculate initial vertical velocity to reach maxHeight
-            float initialVerticalVelocity = Mathf.Sqrt(2f * -gravity * maxHeight);
-            
-            // Set the launch direction with proper vertical component
-            launchDirection.y = initialVerticalVelocity / speed;
-            launchDirection = launchDirection.normalized;
+            jumpDuration = distance / speed;
         }
 
         void Update()
@@ -55,13 +48,16 @@ namespace Enemies
                 return;
             }
 
-            // Calculate new position using projectile motion equations
-            float horizontalSpeed = speed * Mathf.Sqrt(1 - (launchDirection.y * launchDirection.y));
-            Vector3 horizontalMovement = new Vector3(launchDirection.x, 0, launchDirection.z) * horizontalSpeed * timeAlive;
-            float verticalMovement = (launchDirection.y * speed * timeAlive) + (0.5f * gravity * timeAlive * timeAlive);
+            float progress = timeAlive / jumpDuration;
+
+            // Calculate the current position in the jump arc
+            Vector3 currentPosition = Vector3.Lerp(initialPosition, targetPosition, progress);
+            
+            // Add vertical movement using a sine wave
+            currentPosition.y += Mathf.Sin(progress * Mathf.PI) * maxHeight;
 
             // Update position
-            transform.position = initialPosition + horizontalMovement + Vector3.up * verticalMovement;
+            transform.position = currentPosition;
 
             // Check if the projectile has hit the ground
             if (transform.position.y <= 0.1f)
@@ -108,8 +104,23 @@ namespace Enemies
         // Optional: Visualize the projectile path in editor
         private void OnDrawGizmos()
         {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(transform.position, 0.2f);
+            if (Application.isPlaying && !hasHit)
+            {
+                // Draw projectile path
+                Gizmos.color = Color.yellow;
+                int segments = 20;
+                for (int i = 0; i < segments; i++)
+                {
+                    float progress = i / (float)segments;
+                    Vector3 point = Vector3.Lerp(initialPosition, targetPosition, progress);
+                    point.y += Mathf.Sin(progress * Mathf.PI) * maxHeight;
+                    Gizmos.DrawSphere(point, 0.2f);
+                }
+
+                // Draw target position
+                Gizmos.color = Color.red;
+                Gizmos.DrawWireSphere(targetPosition, 0.5f);
+            }
         }
     }
 }

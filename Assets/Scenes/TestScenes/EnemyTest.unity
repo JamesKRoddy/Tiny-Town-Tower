@@ -4236,10 +4236,10 @@ MonoBehaviour:
   attackRange: 2
   attackCooldown: 1.5
   approachDistance: 3
-  rangedDamage: 15
+  rangedDamage: 5
   shootCooldown: 2
   minAttackRange: 5
-  maxAttackRange: 15
+  maxAttackRange: 10
   attackRotationSpeed: 2
   postAttackRotationPause: 0.5
   vomitProjectileEffect: {fileID: 11400000, guid: 94e6acf029b2a8e4f947c2e75662ee75, type: 2}
