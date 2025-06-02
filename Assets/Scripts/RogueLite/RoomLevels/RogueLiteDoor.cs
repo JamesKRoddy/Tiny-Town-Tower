@@ -1,6 +1,7 @@
 using UnityEngine;
 using Managers;
 using System.Collections;
+using System;
 
 public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IInteractiveBase
 {
@@ -10,6 +11,8 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
     public BuildingType buildingType;
     public int doorRoomDifficulty;
     public Transform playerSpawn;
+    [SerializeField] private GameObject lockedDoorEffect;
+    [SerializeField] private GameObject unlockedDoorEffect;
 
     private RogueLiteRoom parentRoom;
     private bool isLocked;
@@ -18,6 +21,20 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
     {
         parentRoom = room;
         isLocked = doorType == DoorStatus.LOCKED;
+        RogueLiteManager.Instance.OnEnemySetupStateChanged += OnEnemySetupStateChanged;
+    }
+
+    private void OnEnemySetupStateChanged(EnemySetupState state)
+    {
+        if(state == EnemySetupState.ALL_WAVES_CLEARED)
+        {
+            if(doorType == DoorStatus.EXIT)
+            {
+                unlockedDoorEffect.SetActive(true);
+            } else {
+                lockedDoorEffect.SetActive(true);
+            }
+        }
     }
 
     public void SetLocked(bool locked)

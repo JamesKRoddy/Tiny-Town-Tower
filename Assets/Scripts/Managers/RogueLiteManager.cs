@@ -15,6 +15,9 @@ namespace Managers
         public RoomManager RoomManager => roomManager;
         public BuildingManager BuildingManager => buildingManager;
 
+        private EnemySetupState currentEnemySetupState;
+        public bool IsWaveActive => currentEnemySetupState != EnemySetupState.ALL_WAVES_CLEARED;
+
         // Singleton instance
         private static RogueLiteManager _instance;
 
@@ -68,6 +71,9 @@ namespace Managers
 
         protected override void EnemySetupStateChanged(EnemySetupState newState)
         {
+            Debug.Log($"<color=magenta>EnemySetupStateChanged: {newState}</color>");
+            currentEnemySetupState = newState;
+
             switch (newState)
             {
                 case EnemySetupState.NONE:
