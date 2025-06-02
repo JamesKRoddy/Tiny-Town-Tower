@@ -154,6 +154,12 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     private void DetectInteraction()
     {
+        // If the game is in rogue lite mode and the wave is active, don't allow the player to interact
+        if (GameManager.Instance.CurrentGameMode == GameMode.ROGUE_LITE && RogueLiteManager.Instance.IsWaveActive)
+        {
+            return;
+        }
+
         RaycastHit hit;
         Vector3 startPos = PlayerController.Instance._possessedNPC.GetTransform().position + Vector3.up;
         Vector3 direction = PlayerController.Instance._possessedNPC.GetTransform().forward;
