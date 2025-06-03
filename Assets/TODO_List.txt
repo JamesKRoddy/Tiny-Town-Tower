@@ -33,8 +33,6 @@ Setup some new enemies: Boomer that runs towards you and explodes.
 
 Bugs
 
-Open doors are maked with locked vfx?? Can open then so not sure what happening there
-Pressing the utility menu button quickly then resets it and doesnt allow the first selected button
 Player feels sticky when running into walls at an angle
 Player moving through walls while attack animation is running
 Enemy still doing attack flash while dead

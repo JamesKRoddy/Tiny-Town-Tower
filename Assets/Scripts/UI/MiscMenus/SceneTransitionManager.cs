@@ -145,16 +145,16 @@ public class SceneTransitionManager : MonoBehaviour
             yield return null;
         }
 
-        // Update scene tracking after the new scene is active
-        CurrentScene = NextScene;
-        NextScene = string.Empty;
-        GameManager.Instance.CurrentGameMode = NextGameMode;
-
         // Fade out
         if (PlayerUIManager.Instance.transitionMenu != null)
         {
             yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
         }
+
+        // Update scene tracking after the new scene is active
+        CurrentScene = NextScene;
+        NextScene = string.Empty;
+        GameManager.Instance.CurrentGameMode = NextGameMode;
     }
 
     #endregion
