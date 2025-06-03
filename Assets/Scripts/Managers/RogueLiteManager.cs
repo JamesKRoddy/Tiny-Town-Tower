@@ -7,12 +7,10 @@ namespace Managers
     public class RogueLiteManager : GameModeManager<RogueLikeEnemyWaveConfig>
     {
         [Header("RogueLite Manager References")]
-        private RoomManager roomManager;
         private BuildingManager buildingManager;
         
         private int currentEnemyCount;
 
-        public RoomManager RoomManager => roomManager;
         public BuildingManager BuildingManager => buildingManager;
 
         private EnemySetupState currentEnemySetupState;
@@ -55,10 +53,8 @@ namespace Managers
         private void InitializeManagers()
         {
             // Find and cache references to other managers
-            if (roomManager == null) roomManager = gameObject.GetComponentInChildren<RoomManager>();
             if (buildingManager == null) buildingManager = gameObject.GetComponentInChildren<BuildingManager>();
             // Log warnings for any missing managers
-            if (roomManager == null) Debug.LogWarning("RoomManager not found in scene!");
             if (buildingManager == null) Debug.LogWarning("BuildingManager not found in scene!");
             // Initialize managers
         }

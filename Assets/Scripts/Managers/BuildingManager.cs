@@ -9,12 +9,12 @@ namespace Managers
         [SerializeField] private List<BuildingDataScriptableObj> buildingDataScriptableObjs;
         
         private BuildingType currentBuildingType = BuildingType.NONE;
-        private GameObject currentBuildingParent;
+        private GameObject currentRoomParent;        
         private int buildingDifficulty;
         private int currentRoom;
         private int currentRoomDifficulty;
         private Vector3 lastPlayerSpawnPoint;
-        private List<GameObject> spawnedBuildings = new List<GameObject>(); // Track all spawned buildings
+        private float roomSpacing = 100f;
 
         public BuildingType CurrentBuilding => currentBuildingType;
         public int BuildingDifficulty => buildingDifficulty;
@@ -32,22 +32,41 @@ namespace Managers
             }
 
             // Calculate the new room position
-            Vector3 currentPosition = currentBuildingParent != null ? currentBuildingParent.transform.position : Vector3.zero;
-            Vector3 newPosition = RogueLiteManager.Instance.RoomManager.CalculateNewRoomPosition(currentPosition, rogueLiteDoor);
+            Vector3 currentPosition = currentRoomParent != null ? currentRoomParent.transform.position : Vector3.zero;
+            Vector3 newPosition = CalculateNewRoomPosition(currentPosition, rogueLiteDoor);
 
             Debug.Log($"Entering room: Current={currentPosition}, New={newPosition}, Door={rogueLiteDoor.transform.position}");
 
-            SetupLevel(currentBuildingType, newPosition);
+            SpawnRoom(currentBuildingType, newPosition);
         }
 
-        private void SetupLevel(BuildingType buildingType, Vector3 position)
+        private Vector3 CalculateNewRoomPosition(Vector3 currentPosition, RogueLiteDoor entranceDoor)
+        {
+            // Get the door's forward direction in world space
+            Vector3 doorDirection = entranceDoor.transform.forward;
+            
+            // Calculate the new position based on the door's direction
+            Vector3 newPosition = currentPosition + (doorDirection * roomSpacing);
+            
+            // Round the position to avoid floating point issues
+            newPosition = new Vector3(
+                Mathf.Round(newPosition.x / roomSpacing) * roomSpacing,
+                Mathf.Round(newPosition.y / roomSpacing) * roomSpacing,
+                Mathf.Round(newPosition.z / roomSpacing) * roomSpacing
+            );
+            
+            Debug.Log($"Calculating new room position: Current={currentPosition}, Door Direction={doorDirection}, New={newPosition}");
+            return newPosition;
+        }
+
+        private void SpawnRoom(BuildingType buildingType, Vector3 position)
         {
             Debug.Log($"Setting up level at position: {position}");
 
             // Store the current player spawn point before creating the new building
-            if (currentBuildingParent != null)
+            if (currentRoomParent != null)
             {
-                RogueLiteRoomParent oldRandomizer = currentBuildingParent.GetComponent<RogueLiteRoomParent>();
+                RogueLiteRoomParent oldRandomizer = currentRoomParent.GetComponent<RogueLiteRoomParent>();
                 if (oldRandomizer != null)
                 {
                     lastPlayerSpawnPoint = oldRandomizer.GetPlayerSpawnPoint();
@@ -75,9 +94,7 @@ namespace Managers
                     Debug.LogError("RoomSectionRandomizer component not found on new building parent!");
                 }
 
-                // Add to spawned buildings list and update current
-                spawnedBuildings.Add(newBuildingParent);
-                currentBuildingParent = newBuildingParent;
+                currentRoomParent = newBuildingParent;
             }
             else
             {
@@ -109,9 +126,9 @@ namespace Managers
         {
             if (playerTransform == null) return;
 
-            if (currentBuildingParent != null)
+            if (currentRoomParent != null)
             {
-                RogueLiteRoomParent randomizer = currentBuildingParent.GetComponent<RogueLiteRoomParent>();
+                RogueLiteRoomParent randomizer = currentRoomParent.GetComponent<RogueLiteRoomParent>();
                 if (randomizer != null)
                 {
                     Vector3 spawnPoint = randomizer.GetPlayerSpawnPoint();
