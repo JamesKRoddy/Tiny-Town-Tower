@@ -116,6 +116,7 @@ public class RoomSectionRandomizer : MonoBehaviour
     private void InstantiateRoom(Transform targetTransform, RoomPosition roomPosition)
     {
         GameObject randomPrefab = roomPrefabs[Random.Range(0, roomPrefabs.Count)];
+        Debug.Log($"Instantiating room from prefab: {randomPrefab.name} at position: {roomPosition}");
 
         if (!randomPrefab.GetComponent<RogueLiteRoom>())
         {
@@ -123,15 +124,19 @@ public class RoomSectionRandomizer : MonoBehaviour
             return;
         }
 
-        GameObject room = Instantiate(randomPrefab, targetTransform.position, targetTransform.rotation, targetTransform);
-        spawnedRooms[targetTransform.position] = room;
+        // Calculate the world position for the room
+        Vector3 worldPosition = targetTransform.position;
+        Debug.Log($"Instantiating room at world position: {worldPosition}");
+
+        GameObject room = Instantiate(randomPrefab, worldPosition, targetTransform.rotation, targetTransform);
+        spawnedRooms[worldPosition] = room;
 
         RogueLiteRoom roomComponent = room.GetComponent<RogueLiteRoom>();
         roomComponent.roomDifficulty = rogueLiteManager.GetCurrentWaveDifficulty();
         roomComponent.Setup();
 
-        // Register the room with RoomManager
-        rogueLiteManager.RoomManager.RegisterRoom(room, targetTransform.position, roomComponent.roomDifficulty);
+        // Register the room with RoomManager using world position
+        rogueLiteManager.RoomManager.RegisterRoom(room, worldPosition, roomComponent.roomDifficulty);
 
         RandomizePropsInSection(room.transform);
     }
@@ -172,19 +177,24 @@ public class RoomSectionRandomizer : MonoBehaviour
             return;
         }
 
+        Debug.Log($"Setting up {doors.Count} doors");
+
         // Assign a random door as the entrance
         int entranceIndex = Random.Range(0, doors.Count);
         playerSpawnPoint = doors[entranceIndex].playerSpawn;
         doors[entranceIndex].doorType = DoorStatus.EXIT;
+        Debug.Log($"Set door {entranceIndex} as EXIT");
 
         doors.RemoveAt(entranceIndex);
 
         int exitCount = Mathf.Clamp(Random.Range(1, 4), 1, doors.Count);
+        Debug.Log($"Setting up {exitCount} entrance doors");
 
         for (int i = 0; i < exitCount; i++)
         {
             int randomIndex = Random.Range(0, doors.Count);
             doors[randomIndex].doorType = DoorStatus.ENTRANCE;
+            Debug.Log($"Set door {randomIndex} as ENTRANCE");
             doors.RemoveAt(randomIndex);
         }
 
@@ -195,6 +205,7 @@ public class RoomSectionRandomizer : MonoBehaviour
             {
                 door.gameObject.SetActive(false);
             }
+            Debug.Log($"Set remaining door as LOCKED and {(door.gameObject.activeSelf ? "active" : "inactive")}");
         }
     }
 

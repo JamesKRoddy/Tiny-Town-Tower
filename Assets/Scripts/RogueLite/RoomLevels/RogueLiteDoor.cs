@@ -34,6 +34,9 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
             } else {
                 lockedDoorEffect.SetActive(true);
             }
+        } else{
+            lockedDoorEffect.SetActive(false);
+            unlockedDoorEffect.SetActive(false);
         }
     }
 
@@ -58,11 +61,7 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
         }
         else if (doorType == DoorStatus.EXIT)
         {
-            // Handle exit door logic
-            if (parentRoom != null)
-            {
-                parentRoom.OnRoomExited(this);
-            }
+            Debug.LogError("Exit Door not setup, move back to last room");
         }
     }
 

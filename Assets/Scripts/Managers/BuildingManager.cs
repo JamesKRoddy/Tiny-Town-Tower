@@ -7,26 +7,36 @@ namespace Managers
     {
         [Header("Building Settings")]
         [SerializeField] private List<BuildingDataScriptableObj> buildingDataScriptableObjs;
-        [SerializeField] private RoomManager roomManager;
         
-        private BuildingType currentBuilding = BuildingType.NONE;
+        private BuildingType currentBuildingType = BuildingType.NONE;
         private GameObject currentBuildingParent;
         private int buildingDifficulty;
         private int currentRoom;
         private int currentRoomDifficulty;
         private Vector3 lastPlayerSpawnPoint;
+        private List<GameObject> spawnedBuildings = new List<GameObject>(); // Track all spawned buildings
 
-        public BuildingType CurrentBuilding => currentBuilding;
+        public BuildingType CurrentBuilding => currentBuildingType;
         public int BuildingDifficulty => buildingDifficulty;
         public int CurrentRoom => currentRoom;
         public int CurrentRoomDifficulty => currentRoomDifficulty;
 
         public void InitializeBuilding(BuildingType buildingType, int difficulty)
         {
-            currentBuilding = buildingType;
+            currentBuildingType = buildingType;
             buildingDifficulty = difficulty;
             currentRoom = 0;
             currentRoomDifficulty = 0;
+            
+            // Clear any existing buildings
+            foreach (var building in spawnedBuildings)
+            {
+                if (building != null)
+                {
+                    Destroy(building);
+                }
+            }
+            spawnedBuildings.Clear();
         }
 
         public void EnterRoom(RogueLiteDoor rogueLiteDoor)
@@ -34,17 +44,33 @@ namespace Managers
             currentRoomDifficulty = rogueLiteDoor.doorRoomDifficulty;
             currentRoom++;
 
-            if (currentBuilding == BuildingType.NONE)
+            if (currentBuildingType == BuildingType.NONE)
             {
-                currentBuilding = rogueLiteDoor.buildingType;
+                currentBuildingType = rogueLiteDoor.buildingType;
             }
 
-            SetupLevel(currentBuilding);
+            // Calculate the new room position
+            Vector3 currentPosition = currentBuildingParent != null ? currentBuildingParent.transform.position : Vector3.zero;
+            Vector3 newPosition = RogueLiteManager.Instance.RoomManager.CalculateNewRoomPosition(currentPosition, rogueLiteDoor);
+
+            Debug.Log($"Entering room: Current={currentPosition}, New={newPosition}, Door={rogueLiteDoor.transform.position}");
+
+            // Check if a room already exists at this position
+            if (RogueLiteManager.Instance.RoomManager.GetRoomAtPosition(newPosition) != null)
+            {
+                Debug.LogWarning($"Room already exists at position {newPosition}, using existing room");
+                RogueLiteManager.Instance.RoomManager.EnterRoom(newPosition, rogueLiteDoor);
+                return;
+            }
+
+            SetupLevel(currentBuildingType, newPosition);
         }
 
-        private void SetupLevel(BuildingType buildingType)
+        private void SetupLevel(BuildingType buildingType, Vector3 position)
         {
-            // Store the current player spawn point before destroying the old building
+            Debug.Log($"Setting up level at position: {position}");
+
+            // Store the current player spawn point before creating the new building
             if (currentBuildingParent != null)
             {
                 RoomSectionRandomizer oldRandomizer = currentBuildingParent.GetComponent<RoomSectionRandomizer>();
@@ -60,20 +86,31 @@ namespace Managers
 
             if (newBuildingParent != null && selectedBuilding != null)
             {
-                // Set up the new building before destroying the old one
+                // Set the position of the new building
+                newBuildingParent.transform.position = position;
+                Debug.Log($"New building parent position set to: {position}");
+
+                // Set up the new building
                 RoomSectionRandomizer randomizer = newBuildingParent.GetComponent<RoomSectionRandomizer>();
                 if (randomizer != null)
                 {
                     randomizer.GenerateRandomRooms(selectedBuilding);
                 }
-
-                // Now safe to destroy the old building
-                if (currentBuildingParent != null)
+                else
                 {
-                    Destroy(currentBuildingParent);
+                    Debug.LogError("RoomSectionRandomizer component not found on new building parent!");
                 }
 
+                // Add to spawned buildings list and update current
+                spawnedBuildings.Add(newBuildingParent);
                 currentBuildingParent = newBuildingParent;
+
+                // Get the current room data after setup
+                var currentRoom = RogueLiteManager.Instance.RoomManager.GetCurrentRoom();
+                if (currentRoom != null)
+                {
+                    Debug.Log($"Current room setup complete at {position} with difficulty {currentRoom.difficulty}");
+                }
             }
             else
             {
