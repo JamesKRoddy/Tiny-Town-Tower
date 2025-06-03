@@ -4,6 +4,7 @@ using Unity.AI.Navigation;
 using UnityEngine;
 using System.Linq;
 using Managers;
+using Enemies;
 
 public class RogueLiteRoomParent : MonoBehaviour
 {
@@ -166,7 +167,7 @@ public class RogueLiteRoomParent : MonoBehaviour
 
     private void SetupDoors()
     {
-        List<RogueLiteDoor> doors = new List<RogueLiteDoor>(FindObjectsByType<RogueLiteDoor>(FindObjectsSortMode.None));
+        List<RogueLiteDoor> doors = new List<RogueLiteDoor>(transform.GetComponentsInChildren<RogueLiteDoor>());
 
         if (doors == null || doors.Count == 0)
         {
@@ -202,7 +203,6 @@ public class RogueLiteRoomParent : MonoBehaviour
             {
                 door.gameObject.SetActive(false);
             }
-            Debug.Log($"Set remaining door as LOCKED and {(door.gameObject.activeSelf ? "active" : "inactive")}");
         }
     }
 
@@ -219,7 +219,7 @@ public class RogueLiteRoomParent : MonoBehaviour
 
     public void SetupChests()
     {
-        List<ChestParent> chests = new List<ChestParent>(FindObjectsByType<ChestParent>(FindObjectsSortMode.None));
+        List<ChestParent> chests = new List<ChestParent>(transform.GetComponentsInChildren<ChestParent>());
 
         if (chests == null || chests.Count == 0)
         {
@@ -237,5 +237,10 @@ public class RogueLiteRoomParent : MonoBehaviour
 
             chest.SetupChest(rogueLiteManager.GetCurrentWaveDifficulty());
         }
+    }
+
+    public List<EnemySpawnPoint> GetEnemySpawnPoints()
+    {
+        return new List<EnemySpawnPoint>(transform.GetComponentsInChildren<EnemySpawnPoint>());
     }
 }

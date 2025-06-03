@@ -16,6 +16,8 @@ namespace Managers
         private Vector3 lastPlayerSpawnPoint;
         private float roomSpacing = 100f;
 
+        public GameObject CurrentRoomParent => currentRoomParent;
+
         public BuildingType CurrentBuilding => currentBuildingType;
         public int BuildingDifficulty => buildingDifficulty;
         public int CurrentRoom => currentRoom;
@@ -102,7 +104,7 @@ namespace Managers
             }
         }
 
-        public GameObject GetBuildingParent(BuildingType buildingType, int difficulty, out BuildingDataScriptableObj selectedBuilding)
+        private GameObject GetBuildingParent(BuildingType buildingType, int difficulty, out BuildingDataScriptableObj selectedBuilding)
         {
             foreach (var buildingData in buildingDataScriptableObjs)
             {

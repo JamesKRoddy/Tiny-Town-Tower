@@ -68,8 +68,17 @@ namespace Managers
 
             currentWaveConfig = waveConfig;
 
-            // Get all spawn points in the scene
-            spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
+            if(GameManager.Instance.CurrentGameMode == GameMode.ROGUE_LITE)
+            {
+                spawnPoints = new List<EnemySpawnPoint>(RogueLiteManager.Instance.BuildingManager.CurrentRoomParent.GetComponent<RogueLiteRoomParent>().GetEnemySpawnPoints());
+
+            } else if(GameManager.Instance.CurrentGameMode == GameMode.TURRET)
+            {
+                // Get all spawn points in the scene
+                spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
+            }
+
+            
             if (spawnPoints.Count == 0)
             {
                 Debug.LogError("No spawn points found!");
