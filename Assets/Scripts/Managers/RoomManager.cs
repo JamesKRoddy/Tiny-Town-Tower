@@ -91,36 +91,6 @@ namespace Managers
             RoomData roomData = roomGrid[position];
         }
 
-        public void ExitRoom(Vector3 position, RogueLiteDoor exitDoor)
-        {
-            if (!roomGrid.ContainsKey(position))
-            {
-                Debug.LogError($"Attempted to exit non-existent room at {position}");
-                return;
-            }
-
-            Debug.Log($"Exiting room at {position} through door at {exitDoor.transform.position}");
-
-            RoomData roomData = roomGrid[position];
-        }
-
-        public bool CanMoveBack()
-        {
-            return roomHistory.Count > 0;
-        }
-
-        public Vector3 GetPreviousRoomPosition()
-        {
-            if (roomHistory.Count > 0)
-            {
-                Vector3 previousPos = roomHistory.Peek();
-                Debug.Log($"Getting previous room position: {previousPos}");
-                return previousPos;
-            }
-            Debug.LogWarning("No previous room in history");
-            return Vector3.zero;
-        }
-
         public RoomData GetCurrentRoom()
         {
             if (roomGrid.ContainsKey(currentRoomPosition))
@@ -141,20 +111,6 @@ namespace Managers
             }
             Debug.LogWarning($"No room found at position {position}");
             return null;
-        }
-
-        public void ClearCurrentRoom()
-        {
-            if (roomGrid.ContainsKey(currentRoomPosition))
-            {
-                RoomData roomData = roomGrid[currentRoomPosition];
-                roomData.isCleared = true;
-                Debug.Log($"Cleared room at {currentRoomPosition}");
-            }
-            else
-            {
-                Debug.LogWarning($"Attempted to clear non-existent room at {currentRoomPosition}");
-            }
         }
     } 
 }

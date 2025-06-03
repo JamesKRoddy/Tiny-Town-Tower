@@ -40,17 +40,6 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
         }
     }
 
-    public void SetLocked(bool locked)
-    {
-        isLocked = locked;
-        doorType = locked ? DoorStatus.LOCKED : DoorStatus.ENTRANCE;
-    }
-
-    public void Reset()
-    {
-        isLocked = doorType == DoorStatus.LOCKED;
-    }
-
     public void OnDoorEntered()
     {
         if (isLocked) return;

@@ -149,24 +149,5 @@ namespace Managers
         {
             return buildingManager.GetCurrentWaveDifficulty();
         }
-
-        public int GetCurrentEnemyCount()
-        {
-            return currentEnemyCount;
-        }
-
-        public void OnEnemySpawned()
-        {
-            currentEnemyCount++;
-        }
-
-        public void OnEnemyDefeated()
-        {
-            currentEnemyCount--;
-            if (currentEnemyCount <= 0)
-            {
-                SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
-            }
-        }
     }
 }

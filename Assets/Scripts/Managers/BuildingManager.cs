@@ -21,24 +21,6 @@ namespace Managers
         public int CurrentRoom => currentRoom;
         public int CurrentRoomDifficulty => currentRoomDifficulty;
 
-        public void InitializeBuilding(BuildingType buildingType, int difficulty)
-        {
-            currentBuildingType = buildingType;
-            buildingDifficulty = difficulty;
-            currentRoom = 0;
-            currentRoomDifficulty = 0;
-            
-            // Clear any existing buildings
-            foreach (var building in spawnedBuildings)
-            {
-                if (building != null)
-                {
-                    Destroy(building);
-                }
-            }
-            spawnedBuildings.Clear();
-        }
-
         public void EnterRoom(RogueLiteDoor rogueLiteDoor)
         {
             currentRoomDifficulty = rogueLiteDoor.doorRoomDifficulty;
