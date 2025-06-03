@@ -73,7 +73,7 @@ namespace Managers
             // Store the current player spawn point before creating the new building
             if (currentBuildingParent != null)
             {
-                RoomSectionRandomizer oldRandomizer = currentBuildingParent.GetComponent<RoomSectionRandomizer>();
+                RogueLiteRoomParent oldRandomizer = currentBuildingParent.GetComponent<RogueLiteRoomParent>();
                 if (oldRandomizer != null)
                 {
                     lastPlayerSpawnPoint = oldRandomizer.GetPlayerSpawnPoint();
@@ -91,7 +91,7 @@ namespace Managers
                 Debug.Log($"New building parent position set to: {position}");
 
                 // Set up the new building
-                RoomSectionRandomizer randomizer = newBuildingParent.GetComponent<RoomSectionRandomizer>();
+                RogueLiteRoomParent randomizer = newBuildingParent.GetComponent<RogueLiteRoomParent>();
                 if (randomizer != null)
                 {
                     randomizer.GenerateRandomRooms(selectedBuilding);
@@ -144,7 +144,7 @@ namespace Managers
 
             if (currentBuildingParent != null)
             {
-                RoomSectionRandomizer randomizer = currentBuildingParent.GetComponent<RoomSectionRandomizer>();
+                RogueLiteRoomParent randomizer = currentBuildingParent.GetComponent<RogueLiteRoomParent>();
                 if (randomizer != null)
                 {
                     Vector3 spawnPoint = randomizer.GetPlayerSpawnPoint();

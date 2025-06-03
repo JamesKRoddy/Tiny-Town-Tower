@@ -5,7 +5,7 @@ using UnityEngine;
 using System.Linq;
 using Managers;
 
-public class RoomSectionRandomizer : MonoBehaviour
+public class RogueLiteRoomParent : MonoBehaviour
 {
     [Header("Central Piece")]
     public Transform centerPiece;
