@@ -37,14 +37,6 @@ namespace Managers
 
             Debug.Log($"Entering room: Current={currentPosition}, New={newPosition}, Door={rogueLiteDoor.transform.position}");
 
-            // Check if a room already exists at this position
-            if (RogueLiteManager.Instance.RoomManager.GetRoomAtPosition(newPosition) != null)
-            {
-                Debug.LogWarning($"Room already exists at position {newPosition}, using existing room");
-                RogueLiteManager.Instance.RoomManager.EnterRoom(newPosition, rogueLiteDoor);
-                return;
-            }
-
             SetupLevel(currentBuildingType, newPosition);
         }
 
@@ -86,13 +78,6 @@ namespace Managers
                 // Add to spawned buildings list and update current
                 spawnedBuildings.Add(newBuildingParent);
                 currentBuildingParent = newBuildingParent;
-
-                // Get the current room data after setup
-                var currentRoom = RogueLiteManager.Instance.RoomManager.GetCurrentRoom();
-                if (currentRoom != null)
-                {
-                    Debug.Log($"Current room setup complete at {position} with difficulty {currentRoom.difficulty}");
-                }
             }
             else
             {

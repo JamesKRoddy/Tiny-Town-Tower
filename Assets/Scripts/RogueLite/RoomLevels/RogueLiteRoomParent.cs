@@ -135,9 +135,6 @@ public class RogueLiteRoomParent : MonoBehaviour
         roomComponent.roomDifficulty = rogueLiteManager.GetCurrentWaveDifficulty();
         roomComponent.Setup();
 
-        // Register the room with RoomManager using world position
-        rogueLiteManager.RoomManager.RegisterRoom(room, worldPosition, roomComponent.roomDifficulty);
-
         RandomizePropsInSection(room.transform);
     }
 
