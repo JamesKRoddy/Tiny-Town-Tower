@@ -37,6 +37,10 @@ Player feels sticky when running into walls at an angle
 Player moving through walls while attack animation is running
 Enemy still doing attack flash while dead
 
+Layout of where rooms are spawned is weird, just make it go in a line
+Seems to spawn the same room parent each time
+
+
 
 
 
