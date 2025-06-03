@@ -179,8 +179,8 @@ namespace Enemies
                 // Calculate the new position
                 Vector3 newPosition = transform.position + rootMotion;
 
-                // Sample the NavMesh to ensure the new position is valid
-                if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 0.1f, NavMesh.AllAreas))
+                // Sample the NavMesh with a larger radius to ensure we stay on it
+                if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
                 {
                     // Move the enemy using root motion
                     transform.position = hit.position;
@@ -190,8 +190,20 @@ namespace Enemies
                 }
                 else
                 {
-                    // If we can't find a valid position on the NavMesh, warp the agent to the current position
-                    agent.Warp(transform.position);
+                    // If we can't find a valid position, try to find the nearest valid position
+                    if (NavMesh.FindClosestEdge(transform.position, out NavMeshHit edgeHit, NavMesh.AllAreas))
+                    {
+                        // Move to the nearest valid position
+                        transform.position = edgeHit.position;
+                        agent.Warp(edgeHit.position);
+                    }
+                    else
+                    {
+                        // If we can't find any valid position, disable root motion temporarily
+                        useRootMotion = false;
+                        agent.updatePosition = true;
+                        agent.updateRotation = true;
+                    }
                 }
             }
         }

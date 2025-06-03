@@ -28,7 +28,7 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
     {
         if(state == EnemySetupState.ALL_WAVES_CLEARED)
         {
-            if(doorType == DoorStatus.EXIT)
+            if(doorType == DoorStatus.ENTRANCE)
             {
                 unlockedDoorEffect.SetActive(true);
             } else {

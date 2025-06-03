@@ -5,10 +5,9 @@ Roguelike Complete Level
 
 Process:
 
-
+Have to move new rooms to different coordinates
+Door exit vfx so the player can go back
 UI to display wave start and end
-Block interactions with doors/weapons etc. while wave is active
-Visual queues on open doors when waves finished
 Game loop of entering a building, completing waves, moving onto the next room, reaching the end of the building, transporting back to the overworld to the entrance of the building entered, either returning to camp or progressing onto another building.
 Player death loop, loosing the npc and loot, loading back to the camp
 
@@ -32,12 +31,15 @@ Setup some new enemies: Boomer that runs towards you and explodes.
 
 
 
-Bug!
-RuntimeNavMeshBuilder: Source mesh SM_Wep_Bat_01 does not allow read access. This will work in playmode in the editor but not in player
-UnityEngine.AI.NavMeshBuilder:BuildNavMeshData (UnityEngine.AI.NavMeshBuildSettings,System.Collections.Generic.List`1<UnityEngine.AI.NavMeshBuildSource>,UnityEngine.Bounds,UnityEngine.Vector3,UnityEngine.Quaternion)
-Unity.AI.Navigation.NavMeshSurface:BuildNavMesh () (at ./Library/PackageCache/com.unity.ai.navigation@9f76b145f0a8/Runtime/NavMeshSurface.cs:272)
-RoomSectionRandomizer/<DelayedBakeNavMesh>d__13:MoveNext () (at Assets/Scripts/RogueLite/RoomLevels/RoomSectionRandomizer.cs:135)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+Bugs
+
+Open doors are maked with locked vfx?? Can open then so not sure what happening there
+Pressing the utility menu button quickly then resets it and doesnt allow the first selected button
+Player feels sticky when running into walls at an angle
+Player moving through walls while attack animation is running
+Enemy still doing attack flash while dead
+
+
 
 
 

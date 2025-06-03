@@ -78,8 +78,8 @@ namespace Enemies
         {
             base.BeginAttackSequence();
             
-            // Stop movement during attack
-            if (agent != null)
+            // Stop movement during attack only if we're on a valid NavMesh
+            if (agent != null && agent.isOnNavMesh)
             {
                 agent.isStopped = true;
                 agent.velocity = Vector3.zero;
@@ -90,13 +90,12 @@ namespace Enemies
         {
             base.EndAttack();
             
-            // Resume movement after attack
-            if (agent != null)
+            // Resume movement after attack only if we're on a valid NavMesh
+            if (agent != null && agent.isOnNavMesh)
             {
                 agent.isStopped = false;
                 agent.speed = originalSpeed; // Reset to original speed
             }
-
         }
 
         protected virtual void MoveTowardsPlayer()

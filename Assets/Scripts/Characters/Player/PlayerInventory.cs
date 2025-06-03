@@ -157,6 +157,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         // If the game is in rogue lite mode and the wave is active, don't allow the player to interact
         if (GameManager.Instance.CurrentGameMode == GameMode.ROGUE_LITE && RogueLiteManager.Instance.IsWaveActive)
         {
+            ClearInteractive();
             return;
         }
 

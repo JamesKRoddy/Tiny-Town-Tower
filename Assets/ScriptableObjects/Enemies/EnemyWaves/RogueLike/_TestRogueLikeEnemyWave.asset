@@ -17,6 +17,6 @@ MonoBehaviour:
   minWaves: 1
   maxWaves: 1
   minEnemiesPerWave: 1
-  maxEnemiesPerWave: 10
+  maxEnemiesPerWave: 3
   enemyWaveDifficulty: 0
   buildingType: 0
