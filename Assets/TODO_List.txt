@@ -7,7 +7,7 @@ Process:
 
 Have to move new rooms to different coordinates
 Door exit vfx so the player can go back
-UI to display wave start and end
+Setup non hostile rooms
 Game loop of entering a building, completing waves, moving onto the next room, reaching the end of the building, transporting back to the overworld to the entrance of the building entered, either returning to camp or progressing onto another building.
 Player death loop, loosing the npc and loot, loading back to the camp
 

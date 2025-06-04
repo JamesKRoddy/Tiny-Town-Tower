@@ -14,18 +14,27 @@ public class BuildingDataScriptableObj : ScriptableObject
 
     public GameObject GetBuildingParent(int difficulty)
     {
-        // Selects the most appropriate parent based on difficulty
-        BuildingParents selectedParent = buildingParents[0];
-
+        // Find all suitable parents based on difficulty
+        List<BuildingParents> suitableParents = new List<BuildingParents>();
+        
         foreach (var parent in buildingParents)
         {
             if (parent.difficulty <= difficulty)
             {
-                selectedParent = parent;
+                suitableParents.Add(parent);
             }
         }
 
-        return selectedParent.buildingParent;
+        // If no suitable parents found, return the first parent
+        if (suitableParents.Count == 0)
+        {
+            Debug.LogError("No suitable parents found for difficulty: " + difficulty + " for building: " + buildingType + " in " + name);
+            return buildingParents[0].buildingParent;
+        }
+
+        // Randomly select from suitable parents
+        int randomIndex = Random.Range(0, suitableParents.Count);
+        return suitableParents[randomIndex].buildingParent;
     }
 
     public GameObject GetBuildingRoom(int difficulty)
@@ -58,3 +67,4 @@ public struct BuildingRooms
     public GameObject buildingRoom;
     public int difficulty;
 }
+
