@@ -25,7 +25,7 @@ namespace Managers
         public int CurrentRoom => currentRoom;
         public int CurrentRoomDifficulty => currentRoomDifficulty;
 
-        public bool EnterRoom(RogueLiteDoor rogueLiteDoor)
+        public bool EnterRoomCheck(RogueLiteDoor rogueLiteDoor)
         {
             currentRoomDifficulty = rogueLiteDoor.doorRoomDifficulty;
             currentRoom++;
@@ -53,6 +53,7 @@ namespace Managers
 
             //Reached the end of the building check
             if(currentRoom >= currentMaxRooms){
+                LeaveBuilding();
                 return false;
             }
 
@@ -106,25 +107,6 @@ namespace Managers
             );
 
             return newPosition;
-        }
-
-        private Vector3 CalculatePreviousRoomPosition(Vector3 currentPosition, RogueLiteDoor exitDoor)
-        {
-            // Get the door's forward direction in world space
-            Vector3 doorDirection = exitDoor.transform.forward;
-            
-            // Calculate the previous position based on the door's direction (opposite of forward)
-            Vector3 previousPosition = currentPosition - (doorDirection * roomSpacing);
-            
-            // Round the position to avoid floating point issues
-            previousPosition = new Vector3(
-                Mathf.Round(previousPosition.x / roomSpacing) * roomSpacing,
-                Mathf.Round(previousPosition.y / roomSpacing) * roomSpacing,
-                Mathf.Round(previousPosition.z / roomSpacing) * roomSpacing
-            );
-            
-            Debug.Log($"Calculating previous room position: Current={currentPosition}, Door Direction={doorDirection}, Previous={previousPosition}");
-            return previousPosition;
         }
 
         private void SpawnRoom(BuildingType buildingType, Vector3 position)
@@ -211,6 +193,15 @@ namespace Managers
             {
                 playerTransform.position = lastPlayerSpawnPoint;
             }
+        }
+
+        private void LeaveBuilding()
+        {
+            currentBuilding = null;
+            currentRoomParent = null;
+            currentRoom = 0;
+            currentRoomDifficulty = 0;
+            lastPlayerSpawnPoint = Vector3.zero;
         }
     }
 } 

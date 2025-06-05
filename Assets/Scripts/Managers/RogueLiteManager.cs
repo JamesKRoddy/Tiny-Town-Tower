@@ -150,7 +150,7 @@ namespace Managers
             
             // 2. Setup room
             SetEnemySetupState(EnemySetupState.WAVE_START);
-            bool roomEntered = buildingManager.EnterRoom(door);
+            bool roomEntered = buildingManager.EnterRoomCheck(door);
 
             //Reached the end of the building
             if(!roomEntered){
