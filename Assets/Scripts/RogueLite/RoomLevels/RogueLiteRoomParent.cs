@@ -186,6 +186,8 @@ public class RogueLiteRoomParent : MonoBehaviour
         doors[entranceIndex].doorType = DoorStatus.EXIT;
         Debug.Log($"Set door {entranceIndex} as EXIT");
 
+        // Store the exit door for connecting to the previous room
+        RogueLiteDoor exitDoor = doors[entranceIndex];
         doors.RemoveAt(entranceIndex);
 
         int exitCount = Mathf.Clamp(Random.Range(1, 4), 1, doors.Count);
@@ -195,6 +197,19 @@ public class RogueLiteRoomParent : MonoBehaviour
         {
             int randomIndex = Random.Range(0, doors.Count);
             doors[randomIndex].doorType = DoorStatus.ENTRANCE;
+            
+            // Connect this entrance door to the previous room's exit door
+            if (exitDoor != null)
+            {
+                // Forward connection: entrance door -> previous room
+                doors[randomIndex].targetRoom = exitDoor.GetComponentInParent<RogueLiteRoomParent>();
+                doors[randomIndex].targetSpawnPoint = exitDoor.playerSpawn;
+
+                // Backward connection: exit door -> this room
+                exitDoor.targetRoom = this;
+                exitDoor.targetSpawnPoint = doors[randomIndex].playerSpawn;
+            }
+            
             Debug.Log($"Set door {randomIndex} as ENTRANCE");
             doors.RemoveAt(randomIndex);
         }

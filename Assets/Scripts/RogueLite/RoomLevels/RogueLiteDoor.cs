@@ -12,7 +12,12 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
     public int doorRoomDifficulty;
     public Transform playerSpawn;
     [SerializeField] private GameObject lockedDoorEffect;
-    [SerializeField] private GameObject unlockedDoorEffect;
+    [SerializeField] private GameObject nextRoomDoorEffect;
+    [SerializeField] private GameObject previousRoomDoorEffect;
+
+    [Header("Target Room")]
+    public RogueLiteRoomParent targetRoom;
+    public Transform targetSpawnPoint;
 
     private RogueLiteRoom parentRoom;
     private bool isLocked;
@@ -30,13 +35,16 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
         {
             if(doorType == DoorStatus.ENTRANCE)
             {
-                unlockedDoorEffect.SetActive(true);
+                nextRoomDoorEffect.SetActive(true);
+            } else if (doorType == DoorStatus.EXIT) {
+                previousRoomDoorEffect.SetActive(true);
             } else {
                 lockedDoorEffect.SetActive(true);
             }
         } else{
             lockedDoorEffect.SetActive(false);
-            unlockedDoorEffect.SetActive(false);
+            nextRoomDoorEffect.SetActive(false);
+            previousRoomDoorEffect.SetActive(false);
         }
     }
 
@@ -50,7 +58,7 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
         }
         else if (doorType == DoorStatus.EXIT)
         {
-            Debug.LogError("Exit Door not setup, move back to last room");
+            RogueLiteManager.Instance.ReturnToPreviousRoom(this);
         }
     }
 
@@ -103,7 +111,7 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
             case DoorStatus.ENTRANCE:
                 return true;
             case DoorStatus.EXIT:
-                return false;
+                return true;
             default:
                 return false;
         }

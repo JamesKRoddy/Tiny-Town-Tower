@@ -109,6 +109,38 @@ namespace Managers
             transitionCoroutine = StartCoroutine(EnterRoomSequence(door));
         }
 
+        public void ReturnToPreviousRoom(RogueLiteDoor door)
+        {
+            if (transitionCoroutine != null)
+            {
+                StopCoroutine(transitionCoroutine);
+            }
+            transitionCoroutine = StartCoroutine(ReturnToPreviousRoomSequence(door));
+        }
+
+        private IEnumerator ReturnToPreviousRoomSequence(RogueLiteDoor door)
+        {
+            // 1. Fade in
+            yield return PlayerUIManager.Instance.transitionMenu.FadeIn();
+            
+            // 2. Setup room
+            buildingManager.ReturnToPreviousRoom(door);
+
+            // 3. Move Player
+            SetEnemySetupState(EnemySetupState.PRE_ENEMY_SPAWNING);
+                    
+            // 4. Short pause for camera transition
+            yield return new WaitForSeconds(0.5f);
+
+            // 5. Fade out
+            yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
+
+            //6. Dont spawn enemies
+            SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+
+            transitionCoroutine = null;
+        }
+
         private Coroutine transitionCoroutine;
 
         private IEnumerator EnterRoomSequence(RogueLiteDoor door)

@@ -183,7 +183,7 @@ public enum DoorStatus
 {
     LOCKED, //Door is locked unable to pass through
     ENTRANCE, //Door opens, the player can paass through when the level is cleared
-    EXIT //Door the player spawns infront of, unable to pass through
+    EXIT //Door the player spawns infront of, moves back to previous room
 }
 
 // =========================

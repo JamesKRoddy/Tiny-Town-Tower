@@ -15,6 +15,7 @@ namespace Managers
         private int currentRoomDifficulty;
         private Vector3 lastPlayerSpawnPoint;
         private float roomSpacing = 100f;
+        private Dictionary<Vector3, GameObject> spawnedRooms = new Dictionary<Vector3, GameObject>();
 
         public GameObject CurrentRoomParent => currentRoomParent;
 
@@ -42,6 +43,31 @@ namespace Managers
             SpawnRoom(currentBuildingType, newPosition);
         }
 
+        public void ReturnToPreviousRoom(RogueLiteDoor rogueLiteDoor)
+        {
+            if (rogueLiteDoor.targetRoom == null)
+            {
+                Debug.LogError("Door has no target room set!");
+                return;
+            }
+
+            // Set the target room as the current room
+            currentRoomParent = rogueLiteDoor.targetRoom.gameObject;
+            
+            // Setup the player at the target spawn point
+            if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null)
+            {
+                if (rogueLiteDoor.targetSpawnPoint != null)
+                {
+                    PlayerController.Instance._possessedNPC.GetTransform().position = rogueLiteDoor.targetSpawnPoint.position;
+                }
+                else
+                {
+                    SetupPlayer(PlayerController.Instance._possessedNPC.GetTransform());
+                }
+            }
+        }
+
         private Vector3 CalculateNewRoomPosition(Vector3 currentPosition, RogueLiteDoor entranceDoor)
         {
             // Get the door's forward direction in world space
@@ -59,6 +85,25 @@ namespace Managers
             
             Debug.Log($"Calculating new room position: Current={currentPosition}, Door Direction={doorDirection}, New={newPosition}");
             return newPosition;
+        }
+
+        private Vector3 CalculatePreviousRoomPosition(Vector3 currentPosition, RogueLiteDoor exitDoor)
+        {
+            // Get the door's forward direction in world space
+            Vector3 doorDirection = exitDoor.transform.forward;
+            
+            // Calculate the previous position based on the door's direction (opposite of forward)
+            Vector3 previousPosition = currentPosition - (doorDirection * roomSpacing);
+            
+            // Round the position to avoid floating point issues
+            previousPosition = new Vector3(
+                Mathf.Round(previousPosition.x / roomSpacing) * roomSpacing,
+                Mathf.Round(previousPosition.y / roomSpacing) * roomSpacing,
+                Mathf.Round(previousPosition.z / roomSpacing) * roomSpacing
+            );
+            
+            Debug.Log($"Calculating previous room position: Current={currentPosition}, Door Direction={doorDirection}, Previous={previousPosition}");
+            return previousPosition;
         }
 
         private void SpawnRoom(BuildingType buildingType, Vector3 position)
@@ -97,6 +142,7 @@ namespace Managers
                 }
 
                 currentRoomParent = newBuildingParent;
+                spawnedRooms[position] = newBuildingParent;
             }
             else
             {
