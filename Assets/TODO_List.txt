@@ -5,8 +5,12 @@ Roguelike Complete Level
 
 Process:
 
-Have to move new rooms to different coordinates
-Door exit vfx so the player can go back
+Loading back to the overworld:
+In rogue manager store the point the player should spawn in when returning to the overworld
+On completing the building then return to this point
+Create functions for the different types of returning to camp (dead so no inventory, alive add to player inventory)
+Clear the point the player should spawn into the overworld. If its null then use a default value
+
 Setup non hostile rooms
 Game loop of entering a building, completing waves, moving onto the next room, reaching the end of the building, transporting back to the overworld to the entrance of the building entered, either returning to camp or progressing onto another building.
 Player death loop, loosing the npc and loot, loading back to the camp
@@ -36,9 +40,6 @@ Bugs
 Player feels sticky when running into walls at an angle
 Player moving through walls while attack animation is running
 Enemy still doing attack flash while dead
-
-Layout of where rooms are spawned is weird, just make it go in a line
-Seems to spawn the same room parent each time
 
 
 
