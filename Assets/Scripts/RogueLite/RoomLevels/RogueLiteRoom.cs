@@ -16,13 +16,10 @@ public class RogueLiteRoom : MonoBehaviour
         // Cache all doors and chests in the room
         doors.AddRange(GetComponentsInChildren<RogueLiteDoor>());
         chests.AddRange(GetComponentsInChildren<ChestParent>());
-        Debug.Log($"RogueLiteRoom {gameObject.name} initialized with {doors.Count} doors and {chests.Count} chests");
     }
 
     public void Setup()
-    {        
-        Debug.Log($"Setting up room {gameObject.name} at position {transform.position}");
-        
+    {                
         // Initialize all doors
         foreach (var door in doors)
         {

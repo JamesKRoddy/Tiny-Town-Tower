@@ -150,7 +150,14 @@ namespace Managers
             
             // 2. Setup room
             SetEnemySetupState(EnemySetupState.WAVE_START);
-            buildingManager.EnterRoom(door);
+            bool roomEntered = buildingManager.EnterRoom(door);
+
+            //Reached the end of the building
+            if(!roomEntered){
+                Debug.LogError("!!!!!TODO reached the end of the run");
+                SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                yield break;
+            }
 
             // 3. Move Player
             SetEnemySetupState(EnemySetupState.PRE_ENEMY_SPAWNING);

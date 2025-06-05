@@ -82,6 +82,7 @@ namespace Managers
             if (spawnPoints.Count == 0)
             {
                 Debug.LogError("No spawn points found!");
+                RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                 return;
             }
 
@@ -92,8 +93,6 @@ namespace Managers
         {
             if (currentWave >= currentWaveConfig.maxWaves)
             {
-                Debug.Log("All waves completed!");
-
                 switch (GameManager.Instance.CurrentGameMode)
                 {
                     case GameMode.ROGUE_LITE:
@@ -181,7 +180,6 @@ namespace Managers
             // Check if all enemies have been spawned and all active enemies are killed
             if (enemiesSpawned >= totalEnemiesInWave && activeEnemies.Count == 0)
             {
-                Debug.Log("Wave Complete!");
                 StartNextWave();
             }
         }

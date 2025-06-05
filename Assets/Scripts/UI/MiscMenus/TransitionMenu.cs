@@ -22,7 +22,6 @@ public class TransitionMenu : MonoBehaviour
 
     public IEnumerator FadeIn()
     {
-        Debug.Log("FadeIn");
         PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.TRANSITION);
         blackOverlay.gameObject.SetActive(true);
         yield return FadeImage(blackOverlay, 0f, 1f, transitionDuration);
@@ -30,7 +29,6 @@ public class TransitionMenu : MonoBehaviour
 
     public IEnumerator FadeOut()
     {
-        Debug.Log("FadeOut");
         yield return FadeImage(blackOverlay, 1f, 0f, transitionDuration);
         blackOverlay.gameObject.SetActive(false);
         PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());

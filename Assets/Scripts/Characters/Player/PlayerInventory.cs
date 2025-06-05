@@ -251,7 +251,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 }
                 break;
             default:
-                Debug.Log($"Unhandled interaction result type: {result.GetType().Name}");
+                Debug.Log($"<color=red> Unhandled interaction</color> result type: {result.GetType().Name}");
                 break;
         }
     }

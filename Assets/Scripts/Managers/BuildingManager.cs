@@ -8,8 +8,9 @@ namespace Managers
         [Header("Building Settings")]
         [SerializeField] private List<BuildingDataScriptableObj> buildingDataScriptableObjs;
         
-        private BuildingType currentBuildingType = BuildingType.NONE;
+        private BuildingDataScriptableObj currentBuilding;
         private GameObject currentRoomParent;        
+        private int currentMaxRooms;
         private int buildingDifficulty;
         private int currentRoom;
         private int currentRoomDifficulty;
@@ -19,28 +20,49 @@ namespace Managers
 
         public GameObject CurrentRoomParent => currentRoomParent;
 
-        public BuildingType CurrentBuilding => currentBuildingType;
+        public BuildingDataScriptableObj CurrentBuilding => currentBuilding;
         public int BuildingDifficulty => buildingDifficulty;
         public int CurrentRoom => currentRoom;
         public int CurrentRoomDifficulty => currentRoomDifficulty;
 
-        public void EnterRoom(RogueLiteDoor rogueLiteDoor)
+        public bool EnterRoom(RogueLiteDoor rogueLiteDoor)
         {
             currentRoomDifficulty = rogueLiteDoor.doorRoomDifficulty;
             currentRoom++;
 
-            if (currentBuildingType == BuildingType.NONE)
+            if (currentBuilding == null)
             {
-                currentBuildingType = rogueLiteDoor.buildingType;
+                // Find all buildings matching the door's building type
+                List<BuildingDataScriptableObj> matchingBuildings = buildingDataScriptableObjs.FindAll(
+                    building => building.buildingType == rogueLiteDoor.buildingType
+                );
+
+                if (matchingBuildings.Count == 0)
+                {
+                    Debug.LogError($"No buildings found matching type: {rogueLiteDoor.buildingType}");
+                    return false;
+                }
+
+                // Select a random building from the matching ones
+                int randomIndex = Random.Range(0, matchingBuildings.Count);
+
+                currentBuilding = buildingDataScriptableObjs[randomIndex];
+
+                currentMaxRooms = currentBuilding.GetMaxRoomsForDifficulty(currentRoomDifficulty);
+            }
+
+            //Reached the end of the building check
+            if(currentRoom >= currentMaxRooms){
+                return false;
             }
 
             // Calculate the new room position
             Vector3 currentPosition = currentRoomParent != null ? currentRoomParent.transform.position : Vector3.zero;
             Vector3 newPosition = CalculateNewRoomPosition(currentPosition, rogueLiteDoor);
 
-            Debug.Log($"Entering room: Current={currentPosition}, New={newPosition}, Door={rogueLiteDoor.transform.position}");
-
-            SpawnRoom(currentBuildingType, newPosition);
+            SpawnRoom(currentBuilding.buildingType, newPosition);
+            
+            return true;
         }
 
         public void ReturnToPreviousRoom(RogueLiteDoor rogueLiteDoor)
@@ -82,8 +104,7 @@ namespace Managers
                 Mathf.Round(newPosition.y / roomSpacing) * roomSpacing,
                 Mathf.Round(newPosition.z / roomSpacing) * roomSpacing
             );
-            
-            Debug.Log($"Calculating new room position: Current={currentPosition}, Door Direction={doorDirection}, New={newPosition}");
+
             return newPosition;
         }
 
@@ -108,8 +129,6 @@ namespace Managers
 
         private void SpawnRoom(BuildingType buildingType, Vector3 position)
         {
-            Debug.Log($"Setting up level at position: {position}");
-
             // Store the current player spawn point before creating the new building
             if (currentRoomParent != null)
             {
@@ -128,7 +147,6 @@ namespace Managers
             {
                 // Set the position of the new building
                 newBuildingParent.transform.position = position;
-                Debug.Log($"New building parent position set to: {position}");
 
                 // Set up the new building
                 RogueLiteRoomParent randomizer = newBuildingParent.GetComponent<RogueLiteRoomParent>();
@@ -183,7 +201,6 @@ namespace Managers
                     if (spawnPoint != Vector3.zero)
                     {
                         playerTransform.position = spawnPoint;
-                        Debug.Log($"Player spawned at {spawnPoint}");
                         return;
                     }
                 }

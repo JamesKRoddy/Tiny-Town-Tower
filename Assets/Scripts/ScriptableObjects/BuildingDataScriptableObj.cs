@@ -12,6 +12,17 @@ public class BuildingDataScriptableObj : ScriptableObject
     public List<BuildingParents> buildingParents;
     public List<BuildingRooms> buildingRooms;
 
+    [Header("Room Settings")]
+    public int minRoomCount = 3;
+    public int maxRoomCount = 5;
+
+    public int GetMaxRoomsForDifficulty(int difficulty)
+    {
+        // Scale the max rooms based on difficulty, but keep it within min and max bounds
+        int scaledMax = Mathf.RoundToInt(maxRoomCount * (1 + (difficulty * 0.1f))); // 10% increase per difficulty level
+        return Mathf.Clamp(scaledMax, minRoomCount, maxRoomCount);
+    }
+
     public GameObject GetBuildingParent(int difficulty)
     {
         // Find all suitable parents based on difficulty

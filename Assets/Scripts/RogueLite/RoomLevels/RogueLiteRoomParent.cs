@@ -120,8 +120,6 @@ public class RogueLiteRoomParent : MonoBehaviour
             return;
         }
 
-        Debug.Log($"Instantiating room from prefab: {roomPrefab.name} at position: {roomPosition}");
-
         if (!roomPrefab.GetComponent<RogueLiteRoom>())
         {
             Debug.LogError($"{roomPrefab.name} has no RogueLiteRoom Component");
@@ -130,7 +128,6 @@ public class RogueLiteRoomParent : MonoBehaviour
 
         // Calculate the world position for the room
         Vector3 worldPosition = targetTransform.position;
-        Debug.Log($"Instantiating room at world position: {worldPosition}");
 
         GameObject room = Instantiate(roomPrefab, worldPosition, targetTransform.rotation, targetTransform);
         spawnedRooms[worldPosition] = room;
@@ -178,20 +175,16 @@ public class RogueLiteRoomParent : MonoBehaviour
             return;
         }
 
-        Debug.Log($"Setting up {doors.Count} doors");
-
         // Assign a random door as the entrance
         int entranceIndex = Random.Range(0, doors.Count);
         playerSpawnPoint = doors[entranceIndex].playerSpawn;
         doors[entranceIndex].doorType = DoorStatus.EXIT;
-        Debug.Log($"Set door {entranceIndex} as EXIT");
 
         // Store the exit door for connecting to the previous room
         RogueLiteDoor exitDoor = doors[entranceIndex];
         doors.RemoveAt(entranceIndex);
 
         int exitCount = Mathf.Clamp(Random.Range(1, 4), 1, doors.Count);
-        Debug.Log($"Setting up {exitCount} entrance doors");
 
         for (int i = 0; i < exitCount; i++)
         {
@@ -209,8 +202,7 @@ public class RogueLiteRoomParent : MonoBehaviour
                 exitDoor.targetRoom = this;
                 exitDoor.targetSpawnPoint = doors[randomIndex].playerSpawn;
             }
-            
-            Debug.Log($"Set door {randomIndex} as ENTRANCE");
+
             doors.RemoveAt(randomIndex);
         }
 
