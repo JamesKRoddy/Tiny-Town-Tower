@@ -39,18 +39,27 @@ public class BuildingDataScriptableObj : ScriptableObject
 
     public GameObject GetBuildingRoom(int difficulty)
     {
-        // Selects the most appropriate room based on difficulty
-        BuildingRooms selectedRoom = buildingRooms[0];
-
+        // Find all suitable rooms based on difficulty
+        List<BuildingRooms> suitableRooms = new List<BuildingRooms>();
+        
         foreach (var room in buildingRooms)
         {
             if (room.difficulty <= difficulty)
             {
-                selectedRoom = room;
+                suitableRooms.Add(room);
             }
         }
 
-        return selectedRoom.buildingRoom;
+        // If no suitable rooms found, return the first room
+        if (suitableRooms.Count == 0)
+        {
+            Debug.LogError("No suitable rooms found for difficulty: " + difficulty + " for building: " + buildingType + " in " + name);
+            return buildingRooms[0].buildingRoom;
+        }
+
+        // Randomly select from suitable rooms
+        int randomIndex = Random.Range(0, suitableRooms.Count);
+        return suitableRooms[randomIndex].buildingRoom;
     }
 }
 

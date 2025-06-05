@@ -35,15 +35,11 @@ public class RogueLiteRoomParent : MonoBehaviour
 
     public void GenerateRandomRooms(BuildingDataScriptableObj buildingScriptableObj)
     {
-        List<GameObject> roomsScriptObj = buildingScriptableObj.buildingRooms.Select(room => room.buildingRoom).ToList();
-
-        if (roomsScriptObj == null || roomsScriptObj.Count == 0)
+        if (buildingScriptableObj == null)
         {
-            Debug.LogError("No room prefabs assigned!");
+            Debug.LogError("Building Scriptable Object is null!");
             return;
         }
-
-        roomPrefabs = roomsScriptObj;
 
         // Clear existing rooms
         ClearExistingRooms();
@@ -51,11 +47,13 @@ public class RogueLiteRoomParent : MonoBehaviour
         // Clear props on the center piece
         ClearPropsOnCenterPiece();
 
-        // Instantiate a random room for each direction
-        InstantiateRoom(frontTransform, RoomPosition.FRONT);
-        InstantiateRoom(backTransform, RoomPosition.BACK);
-        InstantiateRoom(leftTransform, RoomPosition.LEFT);
-        InstantiateRoom(rightTransform, RoomPosition.RIGHT);
+        int currentDifficulty = rogueLiteManager.GetCurrentWaveDifficulty();
+
+        // Instantiate a room for each direction using the scriptable object's selection
+        InstantiateRoom(frontTransform, RoomPosition.FRONT, buildingScriptableObj.GetBuildingRoom(currentDifficulty));
+        InstantiateRoom(backTransform, RoomPosition.BACK, buildingScriptableObj.GetBuildingRoom(currentDifficulty));
+        InstantiateRoom(leftTransform, RoomPosition.LEFT, buildingScriptableObj.GetBuildingRoom(currentDifficulty));
+        InstantiateRoom(rightTransform, RoomPosition.RIGHT, buildingScriptableObj.GetBuildingRoom(currentDifficulty));
 
         RandomizePropsInSection(centerPiece);
 
@@ -114,14 +112,19 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
     }
 
-    private void InstantiateRoom(Transform targetTransform, RoomPosition roomPosition)
+    private void InstantiateRoom(Transform targetTransform, RoomPosition roomPosition, GameObject roomPrefab)
     {
-        GameObject randomPrefab = roomPrefabs[Random.Range(0, roomPrefabs.Count)];
-        Debug.Log($"Instantiating room from prefab: {randomPrefab.name} at position: {roomPosition}");
-
-        if (!randomPrefab.GetComponent<RogueLiteRoom>())
+        if (roomPrefab == null)
         {
-            Debug.LogError($"{randomPrefab.name} has no RogueLiteRoom Component");
+            Debug.LogError($"Room prefab is null for position: {roomPosition}");
+            return;
+        }
+
+        Debug.Log($"Instantiating room from prefab: {roomPrefab.name} at position: {roomPosition}");
+
+        if (!roomPrefab.GetComponent<RogueLiteRoom>())
+        {
+            Debug.LogError($"{roomPrefab.name} has no RogueLiteRoom Component");
             return;
         }
 
@@ -129,7 +132,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         Vector3 worldPosition = targetTransform.position;
         Debug.Log($"Instantiating room at world position: {worldPosition}");
 
-        GameObject room = Instantiate(randomPrefab, worldPosition, targetTransform.rotation, targetTransform);
+        GameObject room = Instantiate(roomPrefab, worldPosition, targetTransform.rotation, targetTransform);
         spawnedRooms[worldPosition] = room;
 
         RogueLiteRoom roomComponent = room.GetComponent<RogueLiteRoom>();
