@@ -12,8 +12,8 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
     public int doorRoomDifficulty;
     public Transform playerSpawn;
     [SerializeField] private GameObject lockedDoorEffect;
-    [SerializeField] private GameObject nextRoomDoorEffect;
-    [SerializeField] private GameObject previousRoomDoorEffect;
+    [SerializeField] private GameObject nextRoomDoorEffect; //Marks rooms that can be entered
+    [SerializeField] private GameObject previousRoomDoorEffect; //Marks the door the player just came from
 
     [Header("Target Room")]
     public RogueLiteRoomParent targetRoom;
