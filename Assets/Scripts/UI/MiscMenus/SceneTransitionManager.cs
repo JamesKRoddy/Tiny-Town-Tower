@@ -131,15 +131,17 @@ public class SceneTransitionManager : MonoBehaviour
 
     private IEnumerator LoadNextSceneAsync(Action<float> progressCallback)
     {
-        // Fade in and wait for it to complete
+        //1. Fade in and wait for it to complete
         if (PlayerUIManager.Instance.transitionMenu != null)
         {
             yield return PlayerUIManager.Instance.transitionMenu.FadeIn();
         }
 
+        //2. Load the next scene
         AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(NextScene);
         asyncOperation.allowSceneActivation = false;
 
+        //3. Wait for the scene to load
         while (!asyncOperation.isDone)
         {
             float progress = Mathf.Clamp01(asyncOperation.progress / 0.9f);
@@ -152,16 +154,19 @@ public class SceneTransitionManager : MonoBehaviour
             yield return null;
         }
 
-        // Invoke actions passed in from the previous scene
+        //4. Invoke actions passed in from the previous scene
         OnActionsFromPreviousScene?.Invoke();
 
-        // Fade out
+        //5. Short pause for camera transition
+        yield return new WaitForSeconds(0.5f);
+
+        //6. Fade out
         if (PlayerUIManager.Instance.transitionMenu != null)
         {
             yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
         }
 
-        // Update scene tracking after the new scene is active
+        //7. Update scene tracking after the new scene is active
         CurrentScene = NextScene;
         NextScene = string.Empty;
         GameManager.Instance.CurrentGameMode = NextGameMode;
