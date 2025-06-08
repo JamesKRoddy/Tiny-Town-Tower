@@ -32,7 +32,7 @@ public class BuildingEntranceTrigger : SceneTransitionTrigger
         }
     }
 
-    private void OnSceneLoaded()
+    protected override void OnSceneLoaded()
     {
         if (buildingData != null)
         {
@@ -42,11 +42,8 @@ public class BuildingEntranceTrigger : SceneTransitionTrigger
                 Debug.LogError($"No buildingEntranceSpawnPoint found on gameobject: {buildingData.buildingEntrance.name}");
                 return;
             }
-        }
-
-        if (PlayerController.Instance._possessedNPC != null)
-        {
-            PlayerController.Instance.UpdateNPCPosition(buildingData.buildingEntrance.GetComponent<BuildingEntrance>().PlayerSpawnPoint.position);
+            
+            PlayerController.Instance.UpdateNPCPosition(buildingEntrance);
         }
 
         Instantiate(buildingData.buildingEntrance, Vector3.zero, Quaternion.identity);

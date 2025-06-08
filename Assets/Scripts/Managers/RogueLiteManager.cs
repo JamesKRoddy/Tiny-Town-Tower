@@ -77,8 +77,9 @@ namespace Managers
             SceneTransitionManager.Instance.LoadScene("OverworldScene", GameMode.ROGUE_LITE, true, OnSceneLoaded);
         }
 
-        void OnSceneLoaded(){
-            if (currentBuildingSpawnPoint != null)
+        void OnSceneLoaded()
+        {
+            if (currentBuildingSpawnPoint != Vector3.zero)
             {
                 PlayerController.Instance.UpdateNPCPosition(currentBuildingSpawnPoint);
                 currentBuildingSpawnPoint = Vector3.zero;

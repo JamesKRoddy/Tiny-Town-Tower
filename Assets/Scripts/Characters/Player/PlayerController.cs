@@ -95,12 +95,40 @@ public class PlayerController : MonoBehaviour, IControllerInput
         OnNPCPossessed?.Invoke(_possessedNPC);
     }
 
-    public void UpdateNPCPosition(Vector3 position)
+    /// <summary>
+    /// Updates the NPC's position after a scene transition.
+    /// If no position is provided, it will default to the PlayerSpawnPoint.
+    /// If a Transform is provided, it will use the position of the Transform.
+    /// If a Vector3 is provided, it will use the Vector3 as the position.
+    /// </summary>
+    /// <param name="position"></param>
+    public void UpdateNPCPosition(object position = null)
     {   
-        MonoBehaviour npc = PlayerController.Instance._possessedNPC as MonoBehaviour;
+        MonoBehaviour npc = _possessedNPC as MonoBehaviour;
         if (npc != null)
         {
-            npc.transform.position = position;
+            if (position == null)
+            {
+                // Default to finding PlayerSpawnPoint if no position provided
+                Transform spawnPoint = GameObject.Find("PlayerSpawnPoint")?.transform;
+                if (spawnPoint == null)
+                {
+                    Debug.LogError("No player spawn point found");
+                    npc.transform.position = Vector3.zero;
+                }
+                else
+                {
+                    npc.transform.position = spawnPoint.position;
+                }
+            }
+            else if (position is Transform transform)
+            {
+                npc.transform.position = transform.position;
+            }
+            else if (position is Vector3 vector)
+            {
+                npc.transform.position = vector;
+            }
         }
     }
 

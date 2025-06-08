@@ -6,8 +6,6 @@ Roguelike Complete Level
 Process:
 
 Loading back to the overworld:
-In rogue manager store the point the player should spawn in when returning to the overworld
-On completing the building then return to this point
 Create functions for the different types of returning to camp (dead so no inventory, alive add to player inventory)
 Clear the point the player should spawn into the overworld. If its null then use a default value
 
@@ -31,7 +29,7 @@ Enviromental hazzards, electrical/acid etc.
 Visual effects from elemental weapons eg. zombies get shocked by electrical wepon, they freeze and particles are emitted.
 Expanding the overworld, having more options of buildings to select.
 Creating more rooms and buildings.
-Setup some new enemies: Boomer that runs towards you and explodes.
+Setup some new enemies: Boomer that runs towards you and explodes (elemental  variety too so the explosion leaves damage areas). Zombie that when its killed splits into smaller enemies.
 
 
 
