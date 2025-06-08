@@ -13,6 +13,8 @@ namespace Managers
 
         public BuildingManager BuildingManager => buildingManager;
 
+        private Vector3 currentBuildingSpawnPoint;
+
         private EnemySetupState currentEnemySetupState;
         public bool IsWaveActive => currentEnemySetupState != EnemySetupState.ALL_WAVES_CLEARED;
 
@@ -65,6 +67,24 @@ namespace Managers
             SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
         }
 
+        //Call when entering a building
+        public void EnteredBuilding(Vector3 spawnPoint){
+            currentBuildingSpawnPoint = spawnPoint;
+        }
+
+        //Call when exiting a building
+        public void ExitedBuilding(){
+            SceneTransitionManager.Instance.LoadScene("OverworldScene", GameMode.ROGUE_LITE, true, OnSceneLoaded);
+        }
+
+        void OnSceneLoaded(){
+            if (currentBuildingSpawnPoint != null)
+            {
+                PlayerController.Instance.UpdateNPCPosition(currentBuildingSpawnPoint);
+                currentBuildingSpawnPoint = Vector3.zero;
+            }
+        }
+
         protected override void EnemySetupStateChanged(EnemySetupState newState)
         {
             Debug.Log($"<color=magenta>EnemySetupStateChanged: {newState}</color>");
@@ -86,6 +106,10 @@ namespace Managers
                 case EnemySetupState.ENEMIES_SPAWNED:
                     break;
                 case EnemySetupState.ALL_WAVES_CLEARED:
+                    if(transitionCoroutine != null){
+                        StopCoroutine(transitionCoroutine);
+                        transitionCoroutine = null;
+                    }
                     break;
                 default:
                     break;
@@ -154,7 +178,7 @@ namespace Managers
 
             //Reached the end of the building
             if(!roomEntered){
-                Debug.LogError("!!!!!TODO reached the end of the run");
+                ExitedBuilding();
                 SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                 yield break;
             }

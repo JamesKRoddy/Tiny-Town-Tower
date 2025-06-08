@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: _TestBuildingDataScriptableObj
   m_EditorClassIdentifier: 
   buildingType: 0
+  buildingEntrance: {fileID: 7293222387086168936, guid: f1d3ae6fc99eddb44b9ff190f65bed41, type: 3}
   buildingParents:
   - buildingParent: {fileID: 6580146161225253427, guid: d39e3a580096e404a9efd86f03d7c2d7, type: 3}
     difficulty: 0

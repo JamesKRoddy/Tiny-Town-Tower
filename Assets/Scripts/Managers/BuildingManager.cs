@@ -25,31 +25,39 @@ namespace Managers
         public int CurrentRoom => currentRoom;
         public int CurrentRoomDifficulty => currentRoomDifficulty;
 
+        public BuildingDataScriptableObj SetBuildingData(BuildingType buildingType){
+            // Find all buildings matching the door's building type
+            List<BuildingDataScriptableObj> matchingBuildings = buildingDataScriptableObjs.FindAll(
+                building => building.buildingType == buildingType
+            );
+
+            if (matchingBuildings.Count == 0)
+            {
+                Debug.LogError($"No buildings found matching type: {buildingType}");
+                return null;
+            }            
+
+            // Select a random building from the matching ones
+            int randomIndex = Random.Range(0, matchingBuildings.Count);
+
+            currentBuilding = buildingDataScriptableObjs[randomIndex];
+
+            currentMaxRooms = currentBuilding.GetMaxRoomsForDifficulty(currentRoomDifficulty);
+
+            Transform buildingEntrance = matchingBuildings[randomIndex].buildingEntrance.GetComponent<BuildingEntrance>().PlayerSpawnPoint;
+            if (buildingEntrance == null)
+            {
+                Debug.LogError($"No buildingEntranceSpawnPoint found on gameobject: {matchingBuildings[0].buildingEntrance.name}");
+                return null;
+            }
+
+            return currentBuilding;
+        }
+
         public bool EnterRoomCheck(RogueLiteDoor rogueLiteDoor)
         {
             currentRoomDifficulty = rogueLiteDoor.doorRoomDifficulty;
-            currentRoom++;
-
-            if (currentBuilding == null)
-            {
-                // Find all buildings matching the door's building type
-                List<BuildingDataScriptableObj> matchingBuildings = buildingDataScriptableObjs.FindAll(
-                    building => building.buildingType == rogueLiteDoor.buildingType
-                );
-
-                if (matchingBuildings.Count == 0)
-                {
-                    Debug.LogError($"No buildings found matching type: {rogueLiteDoor.buildingType}");
-                    return false;
-                }
-
-                // Select a random building from the matching ones
-                int randomIndex = Random.Range(0, matchingBuildings.Count);
-
-                currentBuilding = buildingDataScriptableObjs[randomIndex];
-
-                currentMaxRooms = currentBuilding.GetMaxRoomsForDifficulty(currentRoomDifficulty);
-            }
+            currentRoom++;            
 
             //Reached the end of the building check
             if(currentRoom >= currentMaxRooms){

@@ -41,6 +41,9 @@ public class SceneTransitionManager : MonoBehaviour
     // Event that fires when a scene transition begins, passing the next game mode
     public event System.Action<GameMode> OnSceneTransitionBegin;
 
+    // Actions passed in from the previous scene that are invoked before fade out
+    public Action OnActionsFromPreviousScene;
+
     // The name of your dedicated loading scene.
     [SerializeField]
     private string loadingSceneName = "LoadingScene";
@@ -58,9 +61,15 @@ public class SceneTransitionManager : MonoBehaviour
         }
     }
 
-    public void LoadScene(string sceneName, GameMode nextGameMode, bool keepPossessedNPC)
+    public void LoadScene(string sceneName, GameMode nextGameMode, bool keepPossessedNPC, Action OnSceneLoaded = null)
     {
-        StartCoroutine(LoadSceneNextFrame(sceneName, nextGameMode, keepPossessedNPC));
+        Debug.Log("Loading scene " + sceneName);
+        OnActionsFromPreviousScene = OnSceneLoaded;
+        PreviousScene = SceneManager.GetActiveScene().name;
+        NextScene = sceneName;
+        NextGameMode = nextGameMode;
+
+        StartCoroutine(LoadSceneNextFrame(nextGameMode, keepPossessedNPC));
     }
 
     /// <summary>
@@ -82,11 +91,12 @@ public class SceneTransitionManager : MonoBehaviour
     /// <param name="keepPlayerControls"></param>
     /// <param name="keepPossessedNPC"></param>
     /// <returns></returns>
-    private IEnumerator LoadSceneNextFrame(string sceneName, GameMode nextGameMode, bool keepPossessedNPC)
+    private IEnumerator LoadSceneNextFrame(GameMode nextGameMode, bool keepPossessedNPC)
     {
         if (PlayerController.Instance != null)
         {
-            if (PlayerController.Instance._possessedNPC is MonoBehaviour npc && (!keepPossessedNPC))
+            MonoBehaviour npc = PlayerController.Instance._possessedNPC as MonoBehaviour;
+            if (npc != null && !keepPossessedNPC)
             {
                 PlayerController.Instance.PossessNPC(null);
                 Destroy(npc.gameObject);
@@ -95,7 +105,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         yield return null; // Wait one frame
 
-        LoadScene(sceneName, nextGameMode);
+        LoadScene(nextGameMode);
     }
 
     /// <summary>
@@ -103,11 +113,8 @@ public class SceneTransitionManager : MonoBehaviour
     /// Call this (for example, from your main menu) when you want to load a new scene.
     /// </summary>
     /// <param name="sceneName">Name of the target scene to load.</param>
-    private void LoadScene(string sceneName, GameMode nextGameMode = GameMode.NONE)
-    {
-        PreviousScene = SceneManager.GetActiveScene().name;
-        NextScene = sceneName;
-        NextGameMode = nextGameMode;
+    private void LoadScene(GameMode nextGameMode = GameMode.NONE)
+    {        
         OnSceneTransitionBegin?.Invoke(nextGameMode); // Pass the next game mode to subscribers
         SceneManager.LoadScene(loadingSceneName);
     }
@@ -144,6 +151,9 @@ public class SceneTransitionManager : MonoBehaviour
             }
             yield return null;
         }
+
+        // Invoke actions passed in from the previous scene
+        OnActionsFromPreviousScene?.Invoke();
 
         // Fade out
         if (PlayerUIManager.Instance.transitionMenu != null)

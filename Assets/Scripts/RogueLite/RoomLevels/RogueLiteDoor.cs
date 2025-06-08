@@ -8,7 +8,6 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
 
     [Header("Door Settings")]
     public DoorStatus doorType;
-    public BuildingType buildingType;
     public int doorRoomDifficulty;
     public Transform playerSpawn;
     [SerializeField] private GameObject lockedDoorEffect;
@@ -130,5 +129,10 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
             default:
                 return "INVALID";
         }
+    }
+
+    void OnDestroy()
+    {
+        RogueLiteManager.Instance.OnEnemySetupStateChanged -= OnEnemySetupStateChanged;
     }
 }

@@ -14,11 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   objectName: Baseball Bat
   description: Baseball Bat Desc
+  sprite: {fileID: 0}
   category: 0
   rarity: 0
-  sprite: {fileID: 0}
   prefab: {fileID: 6242529188225862484, guid: 4be9664411af89841a88d59a92bc8d84, type: 3}
   animationType: 1
-  damage: 10
+  damage: 1000
   weaponElement: 0
   attackSpeed: 0.8

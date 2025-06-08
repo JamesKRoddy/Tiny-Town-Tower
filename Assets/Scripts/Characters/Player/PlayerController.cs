@@ -95,12 +95,33 @@ public class PlayerController : MonoBehaviour, IControllerInput
         OnNPCPossessed?.Invoke(_possessedNPC);
     }
 
+    public void UpdateNPCPosition(Vector3 position)
+    {   
+        MonoBehaviour npc = PlayerController.Instance._possessedNPC as MonoBehaviour;
+        if (npc != null)
+        {
+            npc.transform.position = position;
+        }
+    }
+
     /// <summary>
     /// Updates player controls based on the given PlayerControlType.
     /// </summary>
     /// <param name="controlType">The desired control type.</param>
     public void SetPlayerControlType(PlayerControlType controlType)
     {
+        //Disabling the collider so the npc doesnt hit any colliders during transitions
+        var npcBehaviour = _possessedNPC as MonoBehaviour;
+        Collider collider = null;
+        if (npcBehaviour != null)
+        {
+            collider = npcBehaviour.GetComponent<Collider>();
+            if (collider != null)
+            {
+                collider.enabled = true;
+            }
+        }
+
         // Subscribe to events based on the new control type
         switch (controlType)
         {
@@ -155,7 +176,12 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 PlayerInput.Instance.OnSelectPressed += () => OpenUtilityMenu();
                 PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu();
                 break;
-
+            case PlayerControlType.TRANSITION:
+                if(collider != null)
+                {
+                    collider.enabled = false;
+                }
+                break;
             default:
                 break;
         }

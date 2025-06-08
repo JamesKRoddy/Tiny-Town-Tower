@@ -9,6 +9,7 @@ using UnityEngine;
 public class BuildingDataScriptableObj : ScriptableObject
 {
     public BuildingType buildingType;
+    public GameObject buildingEntrance;
     public List<BuildingParents> buildingParents;
     public List<BuildingRooms> buildingRooms;
 
