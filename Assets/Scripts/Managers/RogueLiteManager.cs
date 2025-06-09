@@ -58,7 +58,9 @@ namespace Managers
             if (buildingManager == null) buildingManager = gameObject.GetComponentInChildren<BuildingManager>();
             // Log warnings for any missing managers
             if (buildingManager == null) Debug.LogWarning("BuildingManager not found in scene!");
-            // Initialize managers
+
+            // Subscribe to the NPC possessed event
+            PlayerController.Instance.OnNPCPossessed += OnNPCPossessed;
         }
 
         protected override void Start()
@@ -205,9 +207,39 @@ namespace Managers
             transitionCoroutine = null;
         }
 
+        private void OnNPCPossessed(IPossessable npc)
+        {
+            // Unsubscribe from previous NPC's health events if it was damageable
+            if (PlayerController.Instance._possessedNPC is IDamageable previousDamageable)
+            {
+                previousDamageable.OnDeath -= PlayerDied;
+            }
+
+            // Subscribe to new NPC's health events
+            if (npc is IDamageable damageable)
+            {
+                damageable.OnDeath += PlayerDied;
+            }
+        }
+
+        private void PlayerDied()
+        {
+            SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+
+            //TODO: Add a death screen            
+        }
+
         public override int GetCurrentWaveDifficulty()
         {
             return buildingManager.GetCurrentWaveDifficulty();
+        }
+    
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            // Unsubscribe from the NPC possessed event
+            if (PlayerController.Instance != null) PlayerController.Instance.OnNPCPossessed -= OnNPCPossessed;
         }
     }
 }

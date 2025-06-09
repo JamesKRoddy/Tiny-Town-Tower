@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -62,6 +63,11 @@ public class CharacterInventory : MonoBehaviour
                 inventoryList.Remove(existingItem);
             }
         }
+    }
+
+    public void ClearInventory()
+    {
+        inventoryList.Clear();
     }
 
     public bool HasItemByName(string itemName)

@@ -57,6 +57,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public event Action<float, float> OnHeal;
     public event Action OnDeath;
     public CharacterType CharacterType => characterType;
+    
+    public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
 
     protected virtual void Awake()
     {
@@ -426,8 +428,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         }
     }
 
-    public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
-
 #region IDamageable Interface
 
     public void TakeDamage(float amount, Transform damageSource = null)
@@ -456,6 +456,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     {
         Debug.Log($"{gameObject.name} has died!");
         OnDeath?.Invoke();
+
+        characterInventory.ClearInventory();
 
         // Play death VFX
         Vector3 deathPoint = transform.position + Vector3.up * 1.5f;
