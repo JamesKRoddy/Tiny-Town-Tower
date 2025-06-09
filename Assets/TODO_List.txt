@@ -5,9 +5,14 @@ Roguelike Complete Level
 
 Process:
 
+Tomorrow!!!
+Death procedure
+Death Menu
+Loading back to camp
+
 Loading back to the overworld:
 Create functions for the different types of returning to camp (dead so no inventory, alive add to player inventory)
-Have to review the room spawning grid system, I think just to get rid of it and have the rooms spawn in a line
+Have to review the room spawning grid system, I think just to get rid of it and have the rooms spawn in a linr
 
 Setup non hostile rooms
 Game loop of entering a building, completing waves, moving onto the next room, reaching the end of the building, transporting back to the overworld to the entrance of the building entered, either returning to camp or progressing onto another building.
