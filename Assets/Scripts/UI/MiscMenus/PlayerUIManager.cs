@@ -54,6 +54,7 @@ public class PlayerUIManager : MonoBehaviour
     [Header("Overlay Menu References")]
     [SerializeField] public TransitionMenu transitionMenu;
     [SerializeField] TMP_Text errorMessage;
+    public DeathMenu deathMenu;
     [SerializeField] UIPanelController interactionPromptUI; // UI text for interactionPromptUI
     [SerializeField] TextPopup textPopup;
     public NarrativeSystem narrativeSystem;

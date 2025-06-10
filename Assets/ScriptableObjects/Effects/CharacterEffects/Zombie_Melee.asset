@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30b97a306db20054c9836880f1ae9f49, type: 3}
   m_Name: Zombie_Melee
   m_EditorClassIdentifier: Assembly-CSharp:Managers:CharacterEffects
-  characterType: 5
+  characterType: 201
   bloodEffects:
   - {fileID: 11400000, guid: eae0766bee71efd4393734407dda6009, type: 2}
   impactEffects: []

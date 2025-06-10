@@ -226,7 +226,7 @@ namespace Managers
         {
             SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
 
-            //TODO: Add a death screen            
+            PlayerUIManager.Instance.deathMenu.SetScreenActive(true, 0.1f);       
         }
 
         public override int GetCurrentWaveDifficulty()
