@@ -6,12 +6,8 @@ Roguelike Complete Level
 Process:
 
 Loading back to the overworld:
-Create functions for the different types of returning to camp (dead so no inventory, alive add to player inventory)
-Have to review the room spawning grid system, I think just to get rid of it and have the rooms spawn in a linr
 
 Setup non hostile rooms
-Game loop of entering a building, completing waves, moving onto the next room, reaching the end of the building, transporting back to the overworld to the entrance of the building entered, either returning to camp or progressing onto another building.
-Player death loop, loosing the npc and loot, loading back to the camp
 
 Picking up genetic mutations and assigning them to the player, opening the screen placing them, showing mutation details when highlighted, exit popup to let player know unequipped ones will be dropped, discarding unequipped ones.
 
@@ -38,7 +34,8 @@ Bugs
 Player feels sticky when running into walls at an angle
 Player moving through walls while attack animation is running
 Enemy still doing attack flash while dead
-
+Have to review the room spawning grid system, I think just to get rid of it and have the rooms spawn in a line, currently the grid can cause rooms to spawn over the entrance
+If there are no spawn points when entering a room the game soft locks
 
 
 

@@ -109,7 +109,9 @@ namespace Managers
                 case EnemySetupState.ENEMIES_SPAWNED:
                     break;
                 case EnemySetupState.ALL_WAVES_CLEARED:
+                    Debug.Log("ALL_WAVES_CLEARED");
                     if(transitionCoroutine != null){
+                        Debug.Log("Stopping transition coroutine");
                         StopCoroutine(transitionCoroutine);
                         transitionCoroutine = null;
                     }
@@ -205,10 +207,17 @@ namespace Managers
             yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
 
             // Wait before enemies are spawned
-            yield return new WaitForSeconds(1.0f);
-            
+            yield return new WaitForSeconds(1.0f);            
+
             // 6. Spawn enemies
             SetEnemySetupState(EnemySetupState.ENEMY_SPAWN_START);
+                        
+            // If we're in ALL_WAVES_CLEARED state, theres no spawn points
+            if (currentEnemySetupState == EnemySetupState.ALL_WAVES_CLEARED)
+            {
+                transitionCoroutine = null;
+                yield break;
+            }
 
             // 7. Finish spawning enemies
             SetEnemySetupState(EnemySetupState.ENEMIES_SPAWNED);
