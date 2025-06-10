@@ -7,13 +7,10 @@ Process:
 
 Loading back to the overworld:
 
-Setup non hostile rooms
-
 Picking up genetic mutations and assigning them to the player, opening the screen placing them, showing mutation details when highlighted, exit popup to let player know unequipped ones will be dropped, discarding unequipped ones.
 
 Instead of spawning enemies from the same points, add in code to select randow points on the nave mesh to spawn, spawn points!!!
 
-After returning to camp adding picked up inventory items back to the inventory, unpossess npc, remove their genetic mutations.
 Displaying npc mutations (charicteristics)
 
 Implement a day/night cycle for the entire game.
@@ -35,7 +32,6 @@ Player feels sticky when running into walls at an angle
 Player moving through walls while attack animation is running
 Enemy still doing attack flash while dead
 Have to review the room spawning grid system, I think just to get rid of it and have the rooms spawn in a line, currently the grid can cause rooms to spawn over the entrance
-If there are no spawn points when entering a room the game soft locks
 
 
 
