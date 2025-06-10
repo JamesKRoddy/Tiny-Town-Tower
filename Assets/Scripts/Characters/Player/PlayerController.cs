@@ -34,6 +34,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
     [Header("NPC Possesion")]
     public IPossessable _possessedNPC;
     public event Action<IPossessable> OnNPCPossessed;
+    private CharacterInventory _cachedInventory;
 
     [Header("Camera")]
     public PlayerCamera playerCamera;
@@ -91,8 +92,20 @@ public class PlayerController : MonoBehaviour, IControllerInput
         _possessedNPC = npc;
         _possessedNPC?.OnPossess();
         
+        // Update cached inventory
+        _cachedInventory = _possessedNPC?.GetTransform().GetComponent<CharacterInventory>();
+        
         // Invoke the event when an NPC is possessed
         OnNPCPossessed?.Invoke(_possessedNPC);
+    }
+
+    /// <summary>
+    /// Gets the character inventory from the currently possessed NPC.
+    /// </summary>
+    /// <returns>The CharacterInventory component if an NPC is possessed, null otherwise.</returns>
+    public CharacterInventory GetCharacterInventory()
+    {
+        return _cachedInventory;
     }
 
     /// <summary>

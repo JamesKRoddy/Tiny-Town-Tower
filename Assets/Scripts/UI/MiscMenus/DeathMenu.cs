@@ -1,3 +1,4 @@
+using Managers;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,7 +13,7 @@ public class DeathMenu : MenuBase
 
     void ReturnToCamp()
     {
-        SceneTransitionManager.Instance.LoadScene("CampScene", GameMode.CAMP, false);
+        RogueLiteManager.Instance.ReturnToCamp(false);
 
         SetScreenActive(false);
     }

@@ -136,6 +136,15 @@ namespace Managers
             transitionCoroutine = StartCoroutine(EnterRoomSequence(door));
         }
 
+        public void ReturnToCamp(bool keepInventory)
+        {
+            if(keepInventory)
+            {
+                PlayerInventory.Instance.AddItem(PlayerController.Instance.GetCharacterInventory().GetFullInventory());
+            }
+            SceneTransitionManager.Instance.LoadScene("CampScene", GameMode.CAMP, false);
+        }
+
         public void ReturnToPreviousRoom(RogueLiteDoor door)
         {
             if (transitionCoroutine != null)

@@ -1,4 +1,5 @@
 using System;
+using Managers;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -21,8 +22,8 @@ public class ReturnToCampMenu : MenuBase
     }
 
     void ReturnToCamp()
-    {
+    {        
         PlayerUIManager.Instance.HidePauseMenus();
-        LoadScene("CampScene", GameMode.CAMP);
+        RogueLiteManager.Instance.ReturnToCamp(true);
     }
 }

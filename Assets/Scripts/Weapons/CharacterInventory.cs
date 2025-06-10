@@ -52,6 +52,14 @@ public class CharacterInventory : MonoBehaviour
         }
     }
 
+    public void AddItem(List<ResourceItemCount> items)
+    {
+        foreach (var item in items)
+        {
+            AddItem(item.resourceScriptableObj, item.count);
+        }
+    }
+
     public void RemoveItem(ResourceScriptableObj item, int count = 1)
     {
         var existingItem = inventoryList.Find(i => i.resourceScriptableObj == item);

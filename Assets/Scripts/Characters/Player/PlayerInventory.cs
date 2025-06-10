@@ -119,7 +119,8 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 AddAvalibleMutation(geneticMutation);
                 break;
             case ResourceScriptableObj resource:
-                AddItem(resource, resourcePickup.count);
+                //Adding resources to the possessed NPC's inventory
+                PlayerController.Instance.GetCharacterInventory().AddItem(resource, resourcePickup.count);
                 break;
 
             // Add additional cases here for other item types if necessary.
