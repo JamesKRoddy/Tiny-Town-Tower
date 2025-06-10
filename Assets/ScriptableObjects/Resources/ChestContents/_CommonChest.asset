@@ -13,7 +13,5 @@ MonoBehaviour:
   m_Name: _CommonChest
   m_EditorClassIdentifier: 
   lootItems:
-  - resourceScriptableObj: {fileID: 11400000, guid: e6fde83523c7216478e945d81aedf237, type: 2}
-    count: 1
-  - resourceScriptableObj: {fileID: 11400000, guid: 803ccc51f5b041e4a98af60cea5903d7, type: 2}
-    count: 1
+  - resourceScriptableObj: {fileID: 11400000, guid: 74701f8e255f24a4980777d43c0b6edf, type: 2}
+    count: 5

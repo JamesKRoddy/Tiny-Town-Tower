@@ -1,16 +1,22 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Collections;
 
 namespace Managers
 {
     public class RogueLiteManager : GameModeManager<RogueLikeEnemyWaveConfig>
     {
-        [SerializeField] protected List<BuildingDataScriptableObj> buildingDataScriptableObjs;
-        public BuildingType currentBuilding = BuildingType.NONE;
-        private GameObject currentBuildingParent;
-        public int buildingDifficulty;
-        public int currentRoom;
-        private int currentRoomDifficulty;
+        [Header("RogueLite Manager References")]
+        private BuildingManager buildingManager;
+        
+        private int currentEnemyCount;
+
+        public BuildingManager BuildingManager => buildingManager;
+
+        private Vector3 currentBuildingSpawnPoint;
+
+        private EnemySetupState currentEnemySetupState;
+        public bool IsWaveActive => currentEnemySetupState != EnemySetupState.ALL_WAVES_CLEARED;
 
         // Singleton instance
         private static RogueLiteManager _instance;
@@ -42,7 +48,19 @@ namespace Managers
             else
             {
                 _instance = this; // Set the instance
+                InitializeManagers();
             }
+        }
+
+        private void InitializeManagers()
+        {
+            // Find and cache references to other managers
+            if (buildingManager == null) buildingManager = gameObject.GetComponentInChildren<BuildingManager>();
+            // Log warnings for any missing managers
+            if (buildingManager == null) Debug.LogWarning("BuildingManager not found in scene!");
+
+            // Subscribe to the NPC possessed event
+            PlayerController.Instance.OnNPCPossessed += OnNPCPossessed;
         }
 
         protected override void Start()
@@ -51,8 +69,30 @@ namespace Managers
             SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
         }
 
+        //Call when entering a building
+        public void EnteredBuilding(Vector3 spawnPoint){
+            currentBuildingSpawnPoint = spawnPoint;
+        }
+
+        //Call when exiting a building
+        public void ExitedBuilding(){
+            SceneTransitionManager.Instance.LoadScene("OverworldScene", GameMode.ROGUE_LITE, true, OnSceneLoaded);
+        }
+
+        void OnSceneLoaded()
+        {
+            if (currentBuildingSpawnPoint != Vector3.zero)
+            {
+                PlayerController.Instance.UpdateNPCPosition(currentBuildingSpawnPoint);
+                currentBuildingSpawnPoint = Vector3.zero;
+            }
+        }
+
         protected override void EnemySetupStateChanged(EnemySetupState newState)
         {
+            Debug.Log($"<color=magenta>EnemySetupStateChanged: {newState}</color>");
+            currentEnemySetupState = newState;
+
             switch (newState)
             {
                 case EnemySetupState.NONE:
@@ -61,89 +101,163 @@ namespace Managers
                     EnemySpawnManager.Instance.ResetWaveCount();
                     break;
                 case EnemySetupState.PRE_ENEMY_SPAWNING:
-                    SetupPlayer();
-                    SetEnemySetupState(EnemySetupState.ENEMIES_SPAWNED);
+                    SetupPlayer();                    
+                    break;
+                case EnemySetupState.ENEMY_SPAWN_START:
                     EnemySpawnManager.Instance.StartSpawningEnemies(GetWaveConfig(GetCurrentWaveDifficulty()));
                     break;
                 case EnemySetupState.ENEMIES_SPAWNED:
                     break;
                 case EnemySetupState.ALL_WAVES_CLEARED:
+                    Debug.Log("ALL_WAVES_CLEARED");
+                    if(transitionCoroutine != null){
+                        Debug.Log("Stopping transition coroutine");
+                        StopCoroutine(transitionCoroutine);
+                        transitionCoroutine = null;
+                    }
                     break;
                 default:
                     break;
-            }   
-            
-            
-        }
-
-        private void SetupLevel(BuildingType buildingType)
-        {
-            if (currentBuildingParent != null)
-            {
-                Destroy(currentBuildingParent);
-            }
-
-            int difficulty = GetCurrentWaveDifficulty();
-            currentBuildingParent = Instantiate(GetBuildingParent(buildingType, difficulty, out BuildingDataScriptableObj selectedBuilding));
-
-            if (currentBuildingParent != null && selectedBuilding != null)
-            {
-                RoomSectionRandomizer randomizer = currentBuildingParent.GetComponent<RoomSectionRandomizer>();
-                if (randomizer != null)
-                {
-                    randomizer.GenerateRandomRooms(selectedBuilding);
-                }
-            }
-            else
-            {
-                Debug.LogError($"No building parent found for {buildingType} at difficulty {difficulty}.");
             }
         }
 
         private void SetupPlayer()
         {
-            if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null && currentBuildingParent != null)
+            if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null)
             {
-                RoomSectionRandomizer randomizer = currentBuildingParent.GetComponent<RoomSectionRandomizer>();
-                if (randomizer != null)
-                {
-                    PlayerController.Instance._possessedNPC.GetTransform().position = randomizer.GetPlayerSpawnPoint();
-                }
+                buildingManager.SetupPlayer(PlayerController.Instance._possessedNPC.GetTransform());
             }
         }
 
-        public void EnterRoom(RogueLiteDoor rogueLiteDoor)
+        public void EnterRoomWithTransition(RogueLiteDoor door)
         {
+            if (transitionCoroutine != null)
+            {
+                StopCoroutine(transitionCoroutine);
+            }
+            transitionCoroutine = StartCoroutine(EnterRoomSequence(door));
+        }
+
+        public void ReturnToCamp(bool keepInventory)
+        {
+            if(keepInventory)
+            {
+                PlayerInventory.Instance.AddItem(PlayerController.Instance.GetCharacterInventory().GetFullInventory());
+            }
+            SceneTransitionManager.Instance.LoadScene("CampScene", GameMode.CAMP, false);
+        }
+
+        public void ReturnToPreviousRoom(RogueLiteDoor door)
+        {
+            if (transitionCoroutine != null)
+            {
+                StopCoroutine(transitionCoroutine);
+            }
+            transitionCoroutine = StartCoroutine(ReturnToPreviousRoomSequence(door));
+        }
+
+        private IEnumerator ReturnToPreviousRoomSequence(RogueLiteDoor door)
+        {
+            // 1. Fade in
+            yield return PlayerUIManager.Instance.transitionMenu.FadeIn();
+            
+            // 2. Setup room
+            buildingManager.ReturnToPreviousRoom(door);
+
+            // 3. Move Player
+            SetEnemySetupState(EnemySetupState.PRE_ENEMY_SPAWNING);
+                    
+            // 4. Short pause for camera transition
+            yield return new WaitForSeconds(0.5f);
+
+            // 5. Fade out
+            yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
+
+            //6. Dont spawn enemies
+            SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+
+            transitionCoroutine = null;
+        }
+
+        private Coroutine transitionCoroutine;
+
+        private IEnumerator EnterRoomSequence(RogueLiteDoor door)
+        {
+            // 1. Fade in
+            yield return PlayerUIManager.Instance.transitionMenu.FadeIn();
+            
+            // 2. Setup room
             SetEnemySetupState(EnemySetupState.WAVE_START);
-            currentRoomDifficulty = rogueLiteDoor.doorRoomDifficulty;
-            currentRoom++;
+            bool roomEntered = buildingManager.EnterRoomCheck(door);
 
-            if (currentBuilding == BuildingType.NONE)
-            {
-                currentBuilding = rogueLiteDoor.buildingType;
+            //Reached the end of the building
+            if(!roomEntered){
+                ExitedBuilding();
+                SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                yield break;
             }
 
-            SetupLevel(currentBuilding);
+            // 3. Move Player
+            SetEnemySetupState(EnemySetupState.PRE_ENEMY_SPAWNING);
+                        
+            // 4. Short pause for camera transition
+            yield return new WaitForSeconds(0.5f);
+
+            // 5. Fade out
+            yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
+
+            // Wait before enemies are spawned
+            yield return new WaitForSeconds(1.0f);            
+
+            // 6. Spawn enemies
+            SetEnemySetupState(EnemySetupState.ENEMY_SPAWN_START);
+                        
+            // If we're in ALL_WAVES_CLEARED state, theres no spawn points
+            if (currentEnemySetupState == EnemySetupState.ALL_WAVES_CLEARED)
+            {
+                transitionCoroutine = null;
+                yield break;
+            }
+
+            // 7. Finish spawning enemies
+            SetEnemySetupState(EnemySetupState.ENEMIES_SPAWNED);
+
+            transitionCoroutine = null;
         }
 
-        public GameObject GetBuildingParent(BuildingType buildingType, int difficulty, out BuildingDataScriptableObj selectedBuilding)
+        private void OnNPCPossessed(IPossessable npc)
         {
-            foreach (var buildingData in buildingDataScriptableObjs)
+            // Unsubscribe from previous NPC's health events if it was damageable
+            if (PlayerController.Instance._possessedNPC is IDamageable previousDamageable)
             {
-                if (buildingData is BuildingDataScriptableObj building && building.buildingType == buildingType)
-                {
-                    selectedBuilding = building;
-                    return building.GetBuildingParent(difficulty);
-                }
+                previousDamageable.OnDeath -= PlayerDied;
             }
-            Debug.LogWarning($"No building parent found for type {buildingType} with difficulty {difficulty}.");
-            selectedBuilding = null;
-            return null;
+
+            // Subscribe to new NPC's health events
+            if (npc is IDamageable damageable)
+            {
+                damageable.OnDeath += PlayerDied;
+            }
+        }
+
+        private void PlayerDied()
+        {
+            SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+
+            PlayerUIManager.Instance.deathMenu.SetScreenActive(true, 0.1f);       
         }
 
         public override int GetCurrentWaveDifficulty()
         {
-            return (currentRoom * buildingDifficulty) + currentRoomDifficulty;
+            return buildingManager.GetCurrentWaveDifficulty();
+        }
+    
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            // Unsubscribe from the NPC possessed event
+            if (PlayerController.Instance != null) PlayerController.Instance.OnNPCPossessed -= OnNPCPossessed;
         }
     }
 }

@@ -15,6 +15,11 @@ namespace Enemies
 
         [Header("Movement Settings")]
         [SerializeField] protected bool useRootMotion = false;
+        [SerializeField] protected float stoppingDistance = 1.5f;
+        [SerializeField] protected float rotationSpeed = 10f;
+        [SerializeField] protected float movementSpeed = 3.5f;
+        [SerializeField] protected float acceleration = 8f;
+        [SerializeField] protected float angularSpeed = 120f;
 
         protected NavMeshAgent agent;
         protected Animator animator;
@@ -56,6 +61,14 @@ namespace Enemies
             agent = GetComponent<NavMeshAgent>();
             animator = GetComponent<Animator>();
             
+            // Configure NavMeshAgent
+            agent.stoppingDistance = stoppingDistance;
+            agent.speed = movementSpeed;
+            agent.acceleration = acceleration;
+            agent.angularSpeed = angularSpeed;
+            agent.updateRotation = true;
+            agent.updateUpAxis = false;
+            
             // Get the SkinnedMeshRenderer and store original material
             skinnedMeshRenderer = GetComponentInChildren<SkinnedMeshRenderer>();
             if (skinnedMeshRenderer != null)
@@ -70,6 +83,21 @@ namespace Enemies
             {
                 SetupRootMotion();
             }
+        }
+
+        IEnumerator Start(){
+
+            if(MaxHealth == 0)
+                MaxHealth = 10f;
+
+            Health = MaxHealth;
+
+            yield return new WaitForSeconds(0.5f);
+
+            if(navMeshTarget == null){
+                Debug.LogWarning($"Enemy {gameObject.name} has no target set");
+                navMeshTarget = PlayerController.Instance._possessedNPC.GetTransform();
+            }           
         }
 
         protected virtual void SetupRootMotion()
@@ -99,6 +127,18 @@ namespace Enemies
             {
                 // Update the destination continuously
                 agent.SetDestination(navMeshTarget.position);
+                
+                // Handle rotation towards target
+                if (agent.velocity.magnitude > 0.1f)
+                {
+                    Vector3 direction = (navMeshTarget.position - transform.position).normalized;
+                    direction.y = 0;
+                    if (direction != Vector3.zero)
+                    {
+                        Quaternion targetRotation = Quaternion.LookRotation(direction);
+                        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+                    }
+                }
             }
         }
 
@@ -112,6 +152,18 @@ namespace Enemies
             {
                 // Update the destination continuously
                 agent.SetDestination(navMeshTarget.position);
+                
+                // Handle rotation towards target
+                if (agent.velocity.magnitude > 0.1f)
+                {
+                    Vector3 direction = (navMeshTarget.position - transform.position).normalized;
+                    direction.y = 0;
+                    if (direction != Vector3.zero)
+                    {
+                        Quaternion targetRotation = Quaternion.LookRotation(direction);
+                        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+                    }
+                }
             }
         }
 
@@ -127,8 +179,8 @@ namespace Enemies
                 // Calculate the new position
                 Vector3 newPosition = transform.position + rootMotion;
 
-                // Sample the NavMesh to ensure the new position is valid
-                if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 0.1f, NavMesh.AllAreas))
+                // Sample the NavMesh with a larger radius to ensure we stay on it
+                if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
                 {
                     // Move the enemy using root motion
                     transform.position = hit.position;
@@ -138,18 +190,22 @@ namespace Enemies
                 }
                 else
                 {
-                    // If we can't find a valid position on the NavMesh, warp the agent to the current position
-                    agent.Warp(transform.position);
+                    // If we can't find a valid position, try to find the nearest valid position
+                    if (NavMesh.FindClosestEdge(transform.position, out NavMeshHit edgeHit, NavMesh.AllAreas))
+                    {
+                        // Move to the nearest valid position
+                        transform.position = edgeHit.position;
+                        agent.Warp(edgeHit.position);
+                    }
+                    else
+                    {
+                        // If we can't find any valid position, disable root motion temporarily
+                        useRootMotion = false;
+                        agent.updatePosition = true;
+                        agent.updateRotation = true;
+                    }
                 }
             }
-        }
-
-        private void Start()
-        {
-            if(MaxHealth == 0)
-                MaxHealth = 10f;
-
-            Health = MaxHealth;
         }
 
         internal void Setup(Transform navAgentTarget)
@@ -170,7 +226,7 @@ namespace Enemies
         /// <summary>
         /// Called by the child classes to start the attack animation and disable the nav mesh agent rotation
         /// </summary>
-        protected void BeginAttackSequence()
+        protected virtual void BeginAttackSequence()
         {
             // Trigger attack animation, this should transition to attack animations via root motion
             animator.SetBool("Attack", true);
@@ -185,7 +241,7 @@ namespace Enemies
         /// <summary>
         /// Called by the child classes to end the attack animation and re-enable the nav mesh agent rotation
         /// </summary>
-        protected void EndAttack()
+        protected virtual void EndAttack()
         {
             // Reset isAttacking flag after the attack animation finishes
             animator.SetBool("Attack", false);
@@ -201,7 +257,6 @@ namespace Enemies
 
         public void TakeDamage(float amount, Transform damageSource = null)
         {
-            Debug.Log("Enemy took damage: " + amount);
             float previousHealth = Health;
             Health -= amount;
 
@@ -236,14 +291,14 @@ namespace Enemies
 
         protected virtual void HandleDamageReaction(Transform damageSource)
         {
-            if (!isAttacking)
-            {
+            //if (!isAttacking)
+            //{
                 Vector3 direction = (damageSource.position - transform.position).normalized;
                 direction.y = 0;
                 if (direction != Vector3.zero)
                 {
                     Quaternion targetRotation = Quaternion.LookRotation(direction);
-                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 0.5f);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 10f);
 
                     // Add knockback effect
                     Vector3 knockbackDirection = -direction;
@@ -257,7 +312,7 @@ namespace Enemies
                         StartCoroutine(KnockbackRoutine(hit.position));
                     }
                 }
-            }
+            //}
         }
 
         private IEnumerator KnockbackRoutine(Vector3 targetPosition)
@@ -288,6 +343,7 @@ namespace Enemies
             {
                 animator.SetTrigger("Dead");
             }
+            isAttacking = false;
             agent.enabled = false;
             GetComponent<Collider>().enabled = false;
 

@@ -1,59 +1,125 @@
 using UnityEngine;
+using Managers;
 
 namespace Enemies
 {
     public class ZombieVomitProjectile : MonoBehaviour
     {
+        private Vector3 initialPosition;
         private Vector3 targetPosition;
-        private Vector3 launchDirection;
         private float damage;
-        public float speed = 10f;
-        public float gravity = -9.81f;  // Simple gravity to simulate arc motion
+        [SerializeField] private float speed = 10f;
+        [SerializeField] private float maxHeight = 5f;
+        [SerializeField] private float maxLifetime = 10f;
+        [SerializeField] private EffectDefinition vomitPoolEffect;
+
         private float timeAlive = 0f;
+        private bool hasHit = false;
+        private float jumpDuration;
 
-        public GameObject vomitPoolPrefab; // Prefab for the vomit pool
-        public float poolDuration = 5f; // Duration for which the vomit pool will stay
-
-        public void Initialize(Vector3 target, float dmg)
+        public void Initialize(Vector3 targetPos, float dmg, EffectDefinition poolEffect)
         {
-            targetPosition = target;
+            initialPosition = transform.position;
+            targetPosition = targetPos;
             damage = dmg;
-            // Calculate the launch direction towards the target
-            launchDirection = (targetPosition - transform.position).normalized;
+            vomitPoolEffect = poolEffect;
+            timeAlive = 0f;
+            hasHit = false;
+
+            // Calculate the duration based on distance and speed
+            float distance = Vector3.Distance(
+                new Vector3(initialPosition.x, 0, initialPosition.z),
+                new Vector3(targetPosition.x, 0, targetPosition.z)
+            );
+            jumpDuration = distance / speed;
         }
 
         void Update()
         {
+            if (hasHit) return;
+
             timeAlive += Time.deltaTime;
-            float timeInAir = timeAlive;
 
-            // Calculate the position of the projectile based on an arc trajectory
-            float x = launchDirection.x * speed * timeInAir;
-            float y = launchDirection.y * speed * timeInAir + (0.5f * gravity * Mathf.Pow(timeInAir, 2));
-            float z = launchDirection.z * speed * timeInAir;
-
-            // Update the projectile position
-            transform.position = new Vector3(x, y, z);
-
-            // Check if the projectile has hit the ground
-            if (transform.position.y <= 0f)  // Assuming the ground is at y = 0
+            // Destroy if exceeded max lifetime
+            if (timeAlive >= maxLifetime)
             {
                 CreateVomitPool();
-                Destroy(gameObject);  // Destroy the projectile after it hits the ground
+                Destroy(gameObject);
+                return;
+            }
+
+            float progress = timeAlive / jumpDuration;
+
+            // Calculate the current position in the jump arc
+            Vector3 currentPosition = Vector3.Lerp(initialPosition, targetPosition, progress);
+            
+            // Add vertical movement using a sine wave
+            currentPosition.y += Mathf.Sin(progress * Mathf.PI) * maxHeight;
+
+            // Update position
+            transform.position = currentPosition;
+
+            // Check if the projectile has hit the ground
+            if (transform.position.y <= 0.1f)
+            {
+                CreateVomitPool();
+                Destroy(gameObject);
             }
         }
 
         void CreateVomitPool()
         {
-            // Instantiate the vomit pool at the projectile's position
-            GameObject vomitPool = Instantiate(vomitPoolPrefab, transform.position, Quaternion.identity);
-            Destroy(vomitPool, poolDuration); // Destroy the pool after a set duration
+            if (hasHit) return;
+            hasHit = true;
 
-            // Optionally, you can add a script to handle damage to the player when they enter the pool
-            VomitPool poolScript = vomitPool.GetComponent<VomitPool>();
-            if (poolScript != null)
+            Debug.Log("Creating vomit pool");
+            if (vomitPoolEffect == null)
             {
-                poolScript.SetDamage(damage);  // Set the damage for the vomit pool
+                Debug.LogError("Vomit pool effect is not assigned to ZombieVomitProjectile on " + gameObject.name);
+                return;
+            }
+
+            // Play the vomit pool effect and get the spawned GameObject
+            GameObject poolObj = EffectManager.Instance.PlayEffect(
+                transform.position,
+                Vector3.up,
+                Quaternion.identity,
+                null,
+                vomitPoolEffect,
+                5.0f
+            );
+
+            // Initialize the vomit pool
+            if (poolObj != null)
+            {
+                ZombieVomitPool pool = poolObj.GetComponent<ZombieVomitPool>();
+                if (pool == null)
+                {
+                    pool = poolObj.AddComponent<ZombieVomitPool>();
+                }
+                pool.Setup(damage, 0.5f, new Vector3(0.7f, 0.4f, 0.7f));
+            }
+        }
+
+        // Optional: Visualize the projectile path in editor
+        private void OnDrawGizmos()
+        {
+            if (Application.isPlaying && !hasHit)
+            {
+                // Draw projectile path
+                Gizmos.color = Color.yellow;
+                int segments = 20;
+                for (int i = 0; i < segments; i++)
+                {
+                    float progress = i / (float)segments;
+                    Vector3 point = Vector3.Lerp(initialPosition, targetPosition, progress);
+                    point.y += Mathf.Sin(progress * Mathf.PI) * maxHeight;
+                    Gizmos.DrawSphere(point, 0.2f);
+                }
+
+                // Draw target position
+                Gizmos.color = Color.red;
+                Gizmos.DrawWireSphere(targetPosition, 0.5f);
             }
         }
     }

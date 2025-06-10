@@ -1,12 +1,62 @@
 using UnityEngine;
 using Managers;
-public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>
+using System.Collections;
+using System;
+
+public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IInteractiveBase
 {
-    public GameObject doorModel; // TODO: Door models will change based on room difficulty and loot. GetCurrentRoomDifficulty
-    public Transform playerSpawn;
+
+    [Header("Door Settings")]
     public DoorStatus doorType;
     public int doorRoomDifficulty;
-    internal BuildingType buildingType; //The type of room this door leads to
+    public Transform playerSpawn;
+    [SerializeField] private GameObject lockedDoorEffect;
+    [SerializeField] private GameObject nextRoomDoorEffect; //Marks rooms that can be entered
+    [SerializeField] private GameObject previousRoomDoorEffect; //Marks the door the player just came from
+
+    [Header("Target Room")]
+    public RogueLiteRoomParent targetRoom;
+    public Transform targetSpawnPoint;
+
+    private RogueLiteRoom parentRoom;
+    private bool isLocked;
+
+    public void Initialize(RogueLiteRoom room)
+    {
+        parentRoom = room;
+        isLocked = doorType == DoorStatus.LOCKED;
+        RogueLiteManager.Instance.OnEnemySetupStateChanged += OnEnemySetupStateChanged;
+    }
+
+    private void OnEnemySetupStateChanged(EnemySetupState state)
+    {
+        Debug.Log("OnEnemySetupStateChanged: " + state);
+        if(state == EnemySetupState.ALL_WAVES_CLEARED)
+        {
+            if(doorType == DoorStatus.ENTRANCE)
+            {
+                nextRoomDoorEffect.SetActive(true);
+            } else if (doorType == DoorStatus.EXIT) {
+                previousRoomDoorEffect.SetActive(true);
+            } else {
+                lockedDoorEffect.SetActive(true);
+            }
+        }
+    }
+
+    public void OnDoorEntered()
+    {
+        if (isLocked) return;
+
+        if (doorType == DoorStatus.ENTRANCE)
+        {
+            RogueLiteManager.Instance.EnterRoomWithTransition(this);
+        }
+        else if (doorType == DoorStatus.EXIT)
+        {
+            RogueLiteManager.Instance.ReturnToPreviousRoom(this);
+        }
+    }
 
     // Draw a gizmo arrow to show the door's local forward direction
     private void OnDrawGizmos()
@@ -32,10 +82,16 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>
         Gizmos.DrawSphere(position + forward, 0.1f); // Draw a sphere at the arrowhead
     }
 
-    object IInteractiveBase.Interact() => Interact();
+    // IInteractiveBase implementation
+    object IInteractiveBase.Interact()
+    {
+        return Interact();
+    }
 
+    // IInteractive<RogueLiteDoor> implementation
     public RogueLiteDoor Interact()
     {
+        OnDoorEntered();
         return this;
     }
 
@@ -51,7 +107,7 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>
             case DoorStatus.ENTRANCE:
                 return true;
             case DoorStatus.EXIT:
-                return false;
+                return true;
             default:
                 return false;
         }
@@ -66,9 +122,14 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>
             case DoorStatus.ENTRANCE:
                 return "Enter Room";
             case DoorStatus.EXIT:
-                return "Cant Go Back";
+                return "Can't Go Back";
             default:
                 return "INVALID";
         }
+    }
+
+    void OnDestroy()
+    {
+        RogueLiteManager.Instance.OnEnemySetupStateChanged -= OnEnemySetupStateChanged;
     }
 }

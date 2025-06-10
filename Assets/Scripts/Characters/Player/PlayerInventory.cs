@@ -119,7 +119,8 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 AddAvalibleMutation(geneticMutation);
                 break;
             case ResourceScriptableObj resource:
-                AddItem(resource, resourcePickup.count);
+                //Adding resources to the possessed NPC's inventory
+                PlayerController.Instance.GetCharacterInventory().AddItem(resource, resourcePickup.count);
                 break;
 
             // Add additional cases here for other item types if necessary.
@@ -154,6 +155,13 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     private void DetectInteraction()
     {
+        // If the game is in rogue lite mode and the wave is active, don't allow the player to interact
+        if (GameManager.Instance.CurrentGameMode == GameMode.ROGUE_LITE && RogueLiteManager.Instance.IsWaveActive)
+        {
+            ClearInteractive();
+            return;
+        }
+
         RaycastHit hit;
         Vector3 startPos = PlayerController.Instance._possessedNPC.GetTransform().position + Vector3.up;
         Vector3 direction = PlayerController.Instance._possessedNPC.GetTransform().forward;
@@ -192,6 +200,12 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     private void OnBPressed()
     {
+        // If the game is in rogue lite mode and the wave is active, don't allow the player to interact
+        if (GameManager.Instance.CurrentGameMode == GameMode.ROGUE_LITE && RogueLiteManager.Instance.IsWaveActive)
+        {
+            return;
+        }
+
         if (currentInteractive != null && currentInteractive.CanInteract())
         {
             object interactReturnObj = currentInteractive.Interact();
@@ -210,9 +224,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 break;
             case NarrativeAsset narrative:
                 PlayerUIManager.Instance.narrativeSystem.StartConversation(narrative);
-                break;
-            case RogueLiteDoor rogueLiteDoor:
-                RogueLiteManager.Instance.EnterRoom(rogueLiteDoor);
                 break;
             case Building building:
                 // Show the work task selection popup
@@ -241,7 +252,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 }
                 break;
             default:
-                Debug.Log($"Unhandled interaction result type: {result.GetType().Name}");
+                Debug.Log($"<color=red> Unhandled interaction</color> result type: {result.GetType().Name}");
                 break;
         }
     }

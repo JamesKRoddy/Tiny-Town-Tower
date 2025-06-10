@@ -34,6 +34,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
     [Header("NPC Possesion")]
     public IPossessable _possessedNPC;
     public event Action<IPossessable> OnNPCPossessed;
+    private CharacterInventory _cachedInventory;
 
     [Header("Camera")]
     public PlayerCamera playerCamera;
@@ -91,8 +92,57 @@ public class PlayerController : MonoBehaviour, IControllerInput
         _possessedNPC = npc;
         _possessedNPC?.OnPossess();
         
+        // Update cached inventory
+        _cachedInventory = _possessedNPC?.GetTransform().GetComponent<CharacterInventory>();
+        
         // Invoke the event when an NPC is possessed
         OnNPCPossessed?.Invoke(_possessedNPC);
+    }
+
+    /// <summary>
+    /// Gets the character inventory from the currently possessed NPC.
+    /// </summary>
+    /// <returns>The CharacterInventory component if an NPC is possessed, null otherwise.</returns>
+    public CharacterInventory GetCharacterInventory()
+    {
+        return _cachedInventory;
+    }
+
+    /// <summary>
+    /// Updates the NPC's position after a scene transition.
+    /// If no position is provided, it will default to the PlayerSpawnPoint.
+    /// If a Transform is provided, it will use the position of the Transform.
+    /// If a Vector3 is provided, it will use the Vector3 as the position.
+    /// </summary>
+    /// <param name="position"></param>
+    public void UpdateNPCPosition(object position = null)
+    {   
+        MonoBehaviour npc = _possessedNPC as MonoBehaviour;
+        if (npc != null)
+        {
+            if (position == null)
+            {
+                // Default to finding PlayerSpawnPoint if no position provided
+                Transform spawnPoint = GameObject.Find("PlayerSpawnPoint")?.transform;
+                if (spawnPoint == null)
+                {
+                    Debug.LogError("No player spawn point found");
+                    npc.transform.position = Vector3.zero;
+                }
+                else
+                {
+                    npc.transform.position = spawnPoint.position;
+                }
+            }
+            else if (position is Transform transform)
+            {
+                npc.transform.position = transform.position;
+            }
+            else if (position is Vector3 vector)
+            {
+                npc.transform.position = vector;
+            }
+        }
     }
 
     /// <summary>
@@ -101,6 +151,18 @@ public class PlayerController : MonoBehaviour, IControllerInput
     /// <param name="controlType">The desired control type.</param>
     public void SetPlayerControlType(PlayerControlType controlType)
     {
+        //Disabling the collider so the npc doesnt hit any colliders during transitions
+        var npcBehaviour = _possessedNPC as MonoBehaviour;
+        Collider collider = null;
+        if (npcBehaviour != null)
+        {
+            collider = npcBehaviour.GetComponent<Collider>();
+            if (collider != null)
+            {
+                collider.enabled = true;
+            }
+        }
+
         // Subscribe to events based on the new control type
         switch (controlType)
         {
@@ -155,7 +217,12 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 PlayerInput.Instance.OnSelectPressed += () => OpenUtilityMenu();
                 PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu();
                 break;
-
+            case PlayerControlType.TRANSITION:
+                if(collider != null)
+                {
+                    collider.enabled = false;
+                }
+                break;
             default:
                 break;
         }

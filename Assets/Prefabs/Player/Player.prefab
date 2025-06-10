@@ -266,7 +266,9 @@ MonoBehaviour:
   equippedWeaponScriptObj: {fileID: 0}
   equippedWeaponBase: {fileID: 0}
   weaponHolder: {fileID: 0}
-  inventoryList: []
+  inventoryList:
+  - resourceScriptableObj: {fileID: 11400000, guid: 9a2ee96a3b540424babd72eb01b5ce73, type: 2}
+    count: 2
   interactionRange: 3
   boxCastSize: {x: 0.5, y: 0.5, z: 0.5}
   dashElement: 0
@@ -285,6 +287,10 @@ PrefabInstance:
     - target: {fileID: 3309250037972336758, guid: 5a36affc4dbf2844191d6cf757c3843b, type: 3}
       propertyPath: m_Name
       value: SimpleCircleCyber
+      objectReference: {fileID: 0}
+    - target: {fileID: 4910152814681624608, guid: 5a36affc4dbf2844191d6cf757c3843b, type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9157489371291590968, guid: 5a36affc4dbf2844191d6cf757c3843b, type: 3}
       propertyPath: m_LocalPosition.x

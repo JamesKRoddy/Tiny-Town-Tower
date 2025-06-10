@@ -1,43 +1,35 @@
 using UnityEngine;
+using System.Collections.Generic;
+using Managers;
 
 public class RogueLiteRoom : MonoBehaviour
 {
-    [Header("Walls")]
-    [SerializeField] RogueLiteWall frontWalls;
-    [SerializeField] RogueLiteWall backWalls;
-    [SerializeField] RogueLiteWall leftWalls;
-    [SerializeField] RogueLiteWall rightWalls;
-
-    public void Setup(RoomPosition roomPosition)
+    [Header("Room Settings")]
+    public int roomDifficulty;
+    
+    [Header("Room Components")]
+    public List<RogueLiteDoor> doors = new List<RogueLiteDoor>();
+    public List<ChestParent> chests = new List<ChestParent>();
+    
+    private void Awake()
     {
-        switch (roomPosition)
+        // Cache all doors and chests in the room
+        doors.AddRange(GetComponentsInChildren<RogueLiteDoor>());
+        chests.AddRange(GetComponentsInChildren<ChestParent>());
+    }
+
+    public void Setup()
+    {                
+        // Initialize all doors
+        foreach (var door in doors)
         {
-            case RoomPosition.FRONT:
-                frontWalls.Setup(WallType.DISABLED);
-                backWalls.Setup(WallType.ENABLED);
-                leftWalls.Setup(WallType.ENABLED);
-                rightWalls.Setup(WallType.ENABLED);
-                break;
-            case RoomPosition.BACK:
-                frontWalls.Setup(WallType.DISABLED);
-                backWalls.Setup(WallType.ENABLED);
-                leftWalls.Setup(WallType.ENABLED);
-                rightWalls.Setup(WallType.ENABLED);
-                break;
-            case RoomPosition.LEFT:
-                frontWalls.Setup(WallType.DISABLED);
-                backWalls.Setup(WallType.ENABLED);
-                leftWalls.Setup(WallType.ENABLED);
-                rightWalls.Setup(WallType.ENABLED);
-                break;
-            case RoomPosition.RIGHT:
-                frontWalls.Setup(WallType.DISABLED);
-                backWalls.Setup(WallType.ENABLED);
-                leftWalls.Setup(WallType.ENABLED);
-                rightWalls.Setup(WallType.ENABLED);
-                break;
-            default:
-                break;
+            door.Initialize(this);
+        }
+        
+        // Initialize all chests
+        foreach (var chest in chests)
+        {
+            chest.SetupChest(roomDifficulty);
         }
     }
 }

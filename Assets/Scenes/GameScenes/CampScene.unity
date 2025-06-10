@@ -624,23 +624,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54c2a897229fb6d4a8117c1e3843c816, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  characterType: 101
   moveMaxSpeed: 10
   rotationSpeed: 720
+  attackRotationSpeed: 360
   dashSpeed: 20
   dashDuration: 0.2
   dashCooldown: 1
   vaultSpeed: 5
   vaultDetectionRange: 1
-  obstacleLayer:
-    serializedVersion: 2
-    m_Bits: 0
+  obstacleLayers: []
   vaultLayer:
     serializedVersion: 2
     m_Bits: 0
   capsuleCastRadius: 0.5
   vaultHeight: 1
   vaultOffset: 1
+  health: 100
+  maxHealth: 100
   nPCDataObj: {fileID: 11400000, guid: 53176b9bdbcc0754eb1288d1758d866a, type: 2}
+  maxStamina: 100
+  currentStamina: 100
+  staminaRegenRate: 5
+  fatigueRate: 2
+  maxHunger: 100
+  currentHunger: 100
+  hungerDecreaseRate: 1
+  hungerThreshold: 30
+  starvationThreshold: 10
+  workSpeedMultiplier: 1
+  noFoodCooldown: 10
 --- !u!195 &412939991
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -675,6 +688,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4bec3cd022eca33488ae7211ad5dfb1a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  wanderIntervalMin: 5
+  wanderIntervalMax: 10
   wanderRadius: 10
 --- !u!114 &412939995
 MonoBehaviour:
@@ -700,6 +715,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d58c74adaeb650d4aac7a57e5850b240, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  assignedTask: {fileID: 0}
 --- !u!114 &412939998
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -712,6 +728,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8cdfbceb3c91a894d88c2ce9d8d2e34b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  taskEffects: []
 --- !u!1 &687816098
 GameObject:
   m_ObjectHideFlags: 0
@@ -1068,7 +1085,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1647695797651180896, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
       propertyPath: nextSceneGameMode
-      value: 4
+      value: 500
       objectReference: {fileID: 0}
     - target: {fileID: 1647695797651180896, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
       propertyPath: keepPlayerControls
@@ -1420,7 +1437,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1647695797651180896, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
       propertyPath: nextSceneGameMode
-      value: 2
+      value: 200
       objectReference: {fileID: 0}
     - target: {fileID: 1647695797651180896, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
       propertyPath: keepPlayerControls

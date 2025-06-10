@@ -68,11 +68,21 @@ namespace Managers
 
             currentWaveConfig = waveConfig;
 
-            // Get all spawn points in the scene
-            spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
+            if(GameManager.Instance.CurrentGameMode == GameMode.ROGUE_LITE)
+            {
+                spawnPoints = new List<EnemySpawnPoint>(RogueLiteManager.Instance.BuildingManager.CurrentRoomParent.GetComponent<RogueLiteRoomParent>().GetEnemySpawnPoints());
+
+            } else if(GameManager.Instance.CurrentGameMode == GameMode.TURRET)
+            {
+                // Get all spawn points in the scene
+                spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
+            }
+
+            
             if (spawnPoints.Count == 0)
             {
                 Debug.LogError("No spawn points found!");
+                RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                 return;
             }
 
@@ -83,8 +93,6 @@ namespace Managers
         {
             if (currentWave >= currentWaveConfig.maxWaves)
             {
-                Debug.Log("All waves completed!");
-
                 switch (GameManager.Instance.CurrentGameMode)
                 {
                     case GameMode.ROGUE_LITE:
@@ -172,7 +180,6 @@ namespace Managers
             // Check if all enemies have been spawned and all active enemies are killed
             if (enemiesSpawned >= totalEnemiesInWave && activeEnemies.Count == 0)
             {
-                Debug.Log("Wave Complete!");
                 StartNextWave();
             }
         }

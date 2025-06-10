@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Collections;
 
 namespace Managers
 {
@@ -16,6 +17,7 @@ namespace Managers
         [Header("Dirt Pile Settings")]
         [SerializeField] private GameObject dirtPilePrefab;
         [SerializeField] private float dirtPileCleanlinessDecrease = 10f;
+        private Coroutine dirtPileSpawnCheckCoroutine;
 
         private List<DirtPileTask> activeDirtPiles = new List<DirtPileTask>();
         private List<Toilet> toilets = new List<Toilet>();
@@ -34,14 +36,17 @@ namespace Managers
         }
 
         public void Initialize()
-        {
-            lastDirtPileSpawnTime = Time.time;
-            StartCoroutine(DirtPileSpawnCheckCoroutine());
-            
+        {        
             // Subscribe to NPC count changes
             if (NPCManager.Instance != null)
             {
                 NPCManager.Instance.OnNPCCountChanged += HandleNPCCountChanged;
+            }
+
+            // Subscribe to scene transition events
+            if (SceneTransitionManager.Instance != null)
+            {
+                SceneTransitionManager.Instance.OnSceneTransitionBegin += HandleSceneTransitionBegin;
             }
         }
 
@@ -52,6 +57,25 @@ namespace Managers
             {
                 NPCManager.Instance.OnNPCCountChanged -= HandleNPCCountChanged;
             }
+
+            // Unsubscribe from scene transition events
+            if (SceneTransitionManager.Instance != null)
+            {
+                SceneTransitionManager.Instance.OnSceneTransitionBegin -= HandleSceneTransitionBegin;
+            }
+        }
+
+        private void HandleSceneTransitionBegin(GameMode nextGameMode)
+        {
+            if(dirtPileSpawnCheckCoroutine != null){
+                StopCoroutine(dirtPileSpawnCheckCoroutine);
+                dirtPileSpawnCheckCoroutine = null;
+            }
+
+            if(nextGameMode == GameMode.CAMP){
+                lastDirtPileSpawnTime = Time.time;
+                dirtPileSpawnCheckCoroutine = StartCoroutine(DirtPileSpawnCheckCoroutine());
+            }
         }
 
         private void HandleNPCCountChanged(int newCount)
@@ -60,7 +84,7 @@ namespace Managers
             // No need to do anything here as the count is checked when spawning
         }
 
-        private System.Collections.IEnumerator DirtPileSpawnCheckCoroutine()
+        private IEnumerator DirtPileSpawnCheckCoroutine()
         {
             WaitForSeconds wait = new WaitForSeconds(0.1f);
 

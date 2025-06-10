@@ -71,7 +71,6 @@ public class MeleeWeapon : WeaponBase
                 var target = hit.collider.GetComponent<IDamageable>();
                 if (target != null && target.GetAllegiance() != Allegiance.FRIENDLY)
                 {
-                    Debug.Log($"Hit target: {hit.collider.name}");
                     target.TakeDamage(WeaponData.damage, characterTransform);
                 }
             }

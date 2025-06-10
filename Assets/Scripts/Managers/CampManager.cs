@@ -58,7 +58,7 @@ namespace Managers
 
         private void InitializeManagers()
         {
-            // Find and cache references to other managers if not set in inspector
+            // Find and cache references to other managers
             if (researchManager == null) researchManager = gameObject.GetComponentInChildren<ResearchManager>();
             if (cleanlinessManager == null) cleanlinessManager = gameObject.GetComponentInChildren<CleanlinessManager>();
             if (cookingManager == null) cookingManager = gameObject.GetComponentInChildren<CookingManager>();

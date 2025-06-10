@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -51,6 +52,14 @@ public class CharacterInventory : MonoBehaviour
         }
     }
 
+    public void AddItem(List<ResourceItemCount> items)
+    {
+        foreach (var item in items)
+        {
+            AddItem(item.resourceScriptableObj, item.count);
+        }
+    }
+
     public void RemoveItem(ResourceScriptableObj item, int count = 1)
     {
         var existingItem = inventoryList.Find(i => i.resourceScriptableObj == item);
@@ -62,6 +71,11 @@ public class CharacterInventory : MonoBehaviour
                 inventoryList.Remove(existingItem);
             }
         }
+    }
+
+    public void ClearInventory()
+    {
+        inventoryList.Clear();
     }
 
     public bool HasItemByName(string itemName)

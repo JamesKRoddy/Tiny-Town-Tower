@@ -92,6 +92,7 @@ public enum PlayerControlType
 {
     NONE = 0, // Default
     MAIN_MENU = 100,
+    TRANSITION = 101, // Used for transition between scenes, disables all player input
 
     /// <summary>
     /// RogueLike
@@ -154,6 +155,7 @@ public enum EnemySetupState
     NONE,
     WAVE_START, //Player choses to open a door
     PRE_ENEMY_SPAWNING, //Period when the new room is spawned in, props, chests etc. are spawned in and nav mesh is baked
+    ENEMY_SPAWN_START, //Enemies are spawned in
     ENEMIES_SPAWNED, //The room game play has started
     ALL_WAVES_CLEARED // enemies are all dea, player is free the move around and choose the next path
 }
@@ -181,7 +183,7 @@ public enum DoorStatus
 {
     LOCKED, //Door is locked unable to pass through
     ENTRANCE, //Door opens, the player can paass through when the level is cleared
-    EXIT //Door the player spawns infront of, unable to pass through
+    EXIT //Door the player spawns infront of, moves back to previous room
 }
 
 // =========================

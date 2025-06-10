@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30b97a306db20054c9836880f1ae9f49, type: 3}
   m_Name: Human_Male_NPC
   m_EditorClassIdentifier: Assembly-CSharp:Managers:CharacterEffects
-  characterType: 1
+  characterType: 101
   bloodEffects:
   - {fileID: 11400000, guid: 72ada4b74a4b1c04fa1401dee6cb2cc4, type: 2}
   impactEffects: []

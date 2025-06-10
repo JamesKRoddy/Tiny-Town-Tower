@@ -4,8 +4,9 @@ using Unity.AI.Navigation;
 using UnityEngine;
 using System.Linq;
 using Managers;
+using Enemies;
 
-public class RoomSectionRandomizer : MonoBehaviour
+public class RogueLiteRoomParent : MonoBehaviour
 {
     [Header("Central Piece")]
     public Transform centerPiece;
@@ -16,23 +17,29 @@ public class RoomSectionRandomizer : MonoBehaviour
     public Transform leftTransform;
     public Transform rightTransform;
 
-    Transform playerSpawnPoint; //The door the player will spawn infront of;
-
+    private Transform playerSpawnPoint;
     private List<GameObject> roomPrefabs;
-
     private NavMeshSurface navMeshSurface;
+    private Dictionary<Vector3, GameObject> spawnedRooms = new Dictionary<Vector3, GameObject>();
+
+    private RogueLiteManager rogueLiteManager;
+
+    private void Awake()
+    {
+        rogueLiteManager = FindFirstObjectByType<RogueLiteManager>();
+        if (rogueLiteManager == null)
+        {
+            Debug.LogError("RogueLiteManager not found in scene!");
+        }
+    }
 
     public void GenerateRandomRooms(BuildingDataScriptableObj buildingScriptableObj)
     {
-        List<GameObject> roomsScriptObj = buildingScriptableObj.buildingRooms.Select(room => room.buildingRoom).ToList();
-
-        if (roomsScriptObj == null || roomsScriptObj.Count == 0)
+        if (buildingScriptableObj == null)
         {
-            Debug.LogError("No room prefabs assigned!");
+            Debug.LogError("Building Scriptable Object is null!");
             return;
         }
-
-        roomPrefabs = roomsScriptObj;
 
         // Clear existing rooms
         ClearExistingRooms();
@@ -40,13 +47,15 @@ public class RoomSectionRandomizer : MonoBehaviour
         // Clear props on the center piece
         ClearPropsOnCenterPiece();
 
-        // Instantiate a random room for each direction
-        InstantiateRoom(frontTransform, RoomPosition.FRONT);
-        InstantiateRoom(backTransform, RoomPosition.BACK);
-        InstantiateRoom(leftTransform, RoomPosition.LEFT);
-        InstantiateRoom(rightTransform, RoomPosition.RIGHT);
+        int currentDifficulty = rogueLiteManager.GetCurrentWaveDifficulty();
 
-        RandomizePropsInSection(centerPiece); //Just to setup centre piece too
+        // Instantiate a room for each direction using the scriptable object's selection
+        InstantiateRoom(frontTransform, RoomPosition.FRONT, buildingScriptableObj.GetBuildingRoom(currentDifficulty));
+        InstantiateRoom(backTransform, RoomPosition.BACK, buildingScriptableObj.GetBuildingRoom(currentDifficulty));
+        InstantiateRoom(leftTransform, RoomPosition.LEFT, buildingScriptableObj.GetBuildingRoom(currentDifficulty));
+        InstantiateRoom(rightTransform, RoomPosition.RIGHT, buildingScriptableObj.GetBuildingRoom(currentDifficulty));
+
+        RandomizePropsInSection(centerPiece);
 
         SetupDoors();
         SetupChests();
@@ -61,6 +70,15 @@ public class RoomSectionRandomizer : MonoBehaviour
 
     private void ClearExistingRooms()
     {
+        foreach (var room in spawnedRooms.Values)
+        {
+            if (room != null)
+            {
+                Destroy(room);
+            }
+        }
+        spawnedRooms.Clear();
+
         foreach (Transform child in frontTransform)
         {
             Destroy(child.gameObject);
@@ -94,21 +112,29 @@ public class RoomSectionRandomizer : MonoBehaviour
         }
     }
 
-    private void InstantiateRoom(Transform targetTransform, RoomPosition roomPosition)
+    private void InstantiateRoom(Transform targetTransform, RoomPosition roomPosition, GameObject roomPrefab)
     {
-        // Select a random prefab from the list
-        GameObject randomPrefab = roomPrefabs[Random.Range(0, roomPrefabs.Count)];
-
-        if (!randomPrefab.GetComponent<RogueLiteRoom>())
+        if (roomPrefab == null)
         {
-            Debug.LogError($"{randomPrefab.name} has no RogueLiteRoom Component");
+            Debug.LogError($"Room prefab is null for position: {roomPosition}");
             return;
         }
 
-        // Instantiate the prefab at the position and rotation of the target transform
-        GameObject room = Instantiate(randomPrefab, targetTransform.position, targetTransform.rotation, targetTransform);
+        if (!roomPrefab.GetComponent<RogueLiteRoom>())
+        {
+            Debug.LogError($"{roomPrefab.name} has no RogueLiteRoom Component");
+            return;
+        }
 
-        room.GetComponent<RogueLiteRoom>().Setup(roomPosition);
+        // Calculate the world position for the room
+        Vector3 worldPosition = targetTransform.position;
+
+        GameObject room = Instantiate(roomPrefab, worldPosition, targetTransform.rotation, targetTransform);
+        spawnedRooms[worldPosition] = room;
+
+        RogueLiteRoom roomComponent = room.GetComponent<RogueLiteRoom>();
+        roomComponent.roomDifficulty = rogueLiteManager.GetCurrentWaveDifficulty();
+        roomComponent.Setup();
 
         RandomizePropsInSection(room.transform);
     }
@@ -117,7 +143,6 @@ public class RoomSectionRandomizer : MonoBehaviour
     {
         if (sectionTransform == null) return;
 
-        // Find all PropRandomizer components within the section
         PropRandomizer[] propRandomizers = sectionTransform.GetComponentsInChildren<PropRandomizer>();
 
         foreach (PropRandomizer propRandomizer in propRandomizers)
@@ -128,12 +153,11 @@ public class RoomSectionRandomizer : MonoBehaviour
 
     private IEnumerator DelayedBakeNavMesh()
     {
-        yield return null; // Wait for the next frame
+        yield return null;
 
         if (navMeshSurface != null)
         {
             navMeshSurface.BuildNavMesh();            
-            RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.PRE_ENEMY_SPAWNING);
         }
         else
         {
@@ -143,7 +167,7 @@ public class RoomSectionRandomizer : MonoBehaviour
 
     private void SetupDoors()
     {
-        List<RogueLiteDoor> doors = new List<RogueLiteDoor>(FindObjectsByType<RogueLiteDoor>(FindObjectsSortMode.None));
+        List<RogueLiteDoor> doors = new List<RogueLiteDoor>(transform.GetComponentsInChildren<RogueLiteDoor>());
 
         if (doors == null || doors.Count == 0)
         {
@@ -156,26 +180,35 @@ public class RoomSectionRandomizer : MonoBehaviour
         playerSpawnPoint = doors[entranceIndex].playerSpawn;
         doors[entranceIndex].doorType = DoorStatus.EXIT;
 
-        // Remove the entrance from the list
+        // Store the exit door for connecting to the previous room
+        RogueLiteDoor exitDoor = doors[entranceIndex];
         doors.RemoveAt(entranceIndex);
 
-        // Determine the number of exit doors (between 1 and 3, but not exceeding the remaining doors)
         int exitCount = Mathf.Clamp(Random.Range(1, 4), 1, doors.Count);
 
-        // Randomly assign exit doors
         for (int i = 0; i < exitCount; i++)
         {
             int randomIndex = Random.Range(0, doors.Count);
             doors[randomIndex].doorType = DoorStatus.ENTRANCE;
+            
+            // Connect this entrance door to the previous room's exit door
+            if (exitDoor != null)
+            {
+                // Forward connection: entrance door -> previous room
+                doors[randomIndex].targetRoom = exitDoor.GetComponentInParent<RogueLiteRoomParent>();
+                doors[randomIndex].targetSpawnPoint = exitDoor.playerSpawn;
+
+                // Backward connection: exit door -> this room
+                exitDoor.targetRoom = this;
+                exitDoor.targetSpawnPoint = doors[randomIndex].playerSpawn;
+            }
+
             doors.RemoveAt(randomIndex);
         }
 
-        // Set remaining doors as locked and apply a 75% chance to disable their GameObjects
         foreach (var door in doors)
         {
             door.doorType = DoorStatus.LOCKED;
-
-            // 75% chance to disable the GameObject
             if (Random.value < 0.75f)
             {
                 door.gameObject.SetActive(false);
@@ -185,13 +218,18 @@ public class RoomSectionRandomizer : MonoBehaviour
 
     internal Vector3 GetPlayerSpawnPoint()
     {
-        return playerSpawnPoint.position;
+        if (playerSpawnPoint != null)
+        {
+            return playerSpawnPoint.position;
+        }
+        
+        // Fallback to center piece if no spawn point is set
+        return centerPiece != null ? centerPiece.position : Vector3.zero;
     }
 
     public void SetupChests()
     {
-        // Find all chests in the scene
-        List<ChestParent> chests = new List<ChestParent>(FindObjectsByType<ChestParent>(FindObjectsSortMode.None));
+        List<ChestParent> chests = new List<ChestParent>(transform.GetComponentsInChildren<ChestParent>());
 
         if (chests == null || chests.Count == 0)
         {
@@ -201,14 +239,18 @@ public class RoomSectionRandomizer : MonoBehaviour
 
         foreach (var chest in chests)
         {
-            // 75% chance to disable the chest
             if (Random.value < 0.75f)
             {
                 chest.gameObject.SetActive(false);
-                continue; // Skip assigning loot to disabled chests
+                continue;
             }
 
-            chest.SetupChest(RogueLiteManager.Instance.GetCurrentWaveDifficulty());
+            chest.SetupChest(rogueLiteManager.GetCurrentWaveDifficulty());
         }
+    }
+
+    public List<EnemySpawnPoint> GetEnemySpawnPoints()
+    {
+        return new List<EnemySpawnPoint>(transform.GetComponentsInChildren<EnemySpawnPoint>());
     }
 }

@@ -38,11 +38,17 @@ public class SceneTransitionManager : MonoBehaviour
     public string NextScene { get; private set; }
     public GameMode NextGameMode { get; private set; }
 
+    // Event that fires when a scene transition begins, passing the next game mode
+    public event System.Action<GameMode> OnSceneTransitionBegin;
+
+    // Actions passed in from the previous scene that are invoked before fade out
+    public Action OnActionsFromPreviousScene;
+
     // The name of your dedicated loading scene.
     [SerializeField]
     private string loadingSceneName = "LoadingScene";
 
-    // Ensure that there is only one instance of PlayerCombat
+    // Ensure that there is only one instance
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -55,9 +61,15 @@ public class SceneTransitionManager : MonoBehaviour
         }
     }
 
-    public void LoadScene(string sceneName, GameMode nextGameMode, bool keepPossessedNPC)
+    public void LoadScene(string sceneName, GameMode nextGameMode, bool keepPossessedNPC, Action OnSceneLoaded = null)
     {
-        StartCoroutine(LoadSceneNextFrame(sceneName, nextGameMode, keepPossessedNPC));
+        Debug.Log("Loading scene " + sceneName);
+        OnActionsFromPreviousScene = OnSceneLoaded;
+        PreviousScene = SceneManager.GetActiveScene().name;
+        NextScene = sceneName;
+        NextGameMode = nextGameMode;
+
+        StartCoroutine(LoadSceneNextFrame(nextGameMode, keepPossessedNPC));
     }
 
     /// <summary>
@@ -79,11 +91,12 @@ public class SceneTransitionManager : MonoBehaviour
     /// <param name="keepPlayerControls"></param>
     /// <param name="keepPossessedNPC"></param>
     /// <returns></returns>
-    private IEnumerator LoadSceneNextFrame(string sceneName, GameMode nextGameMode, bool keepPossessedNPC)
+    private IEnumerator LoadSceneNextFrame(GameMode nextGameMode, bool keepPossessedNPC)
     {
         if (PlayerController.Instance != null)
         {
-            if (PlayerController.Instance._possessedNPC is MonoBehaviour npc && (!keepPossessedNPC))
+            MonoBehaviour npc = PlayerController.Instance._possessedNPC as MonoBehaviour;
+            if (npc != null && !keepPossessedNPC)
             {
                 PlayerController.Instance.PossessNPC(null);
                 Destroy(npc.gameObject);
@@ -92,7 +105,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         yield return null; // Wait one frame
 
-        LoadScene(sceneName, nextGameMode);
+        LoadScene(nextGameMode);
     }
 
     /// <summary>
@@ -100,11 +113,9 @@ public class SceneTransitionManager : MonoBehaviour
     /// Call this (for example, from your main menu) when you want to load a new scene.
     /// </summary>
     /// <param name="sceneName">Name of the target scene to load.</param>
-    private void LoadScene(string sceneName, GameMode nextGameMode = GameMode.NONE)
-    {
-        PreviousScene = SceneManager.GetActiveScene().name;
-        NextScene = sceneName;
-        NextGameMode = nextGameMode;
+    private void LoadScene(GameMode nextGameMode = GameMode.NONE)
+    {        
+        OnSceneTransitionBegin?.Invoke(nextGameMode); // Pass the next game mode to subscribers
         SceneManager.LoadScene(loadingSceneName);
     }
 
@@ -120,26 +131,42 @@ public class SceneTransitionManager : MonoBehaviour
 
     private IEnumerator LoadNextSceneAsync(Action<float> progressCallback)
     {
+        //1. Fade in and wait for it to complete
+        if (PlayerUIManager.Instance.transitionMenu != null)
+        {
+            yield return PlayerUIManager.Instance.transitionMenu.FadeIn();
+        }
+
+        //2. Load the next scene
         AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(NextScene);
-        // Prevent immediate activation until loading is complete (or until you choose to activate it).
         asyncOperation.allowSceneActivation = false;
 
+        //3. Wait for the scene to load
         while (!asyncOperation.isDone)
         {
-            // Unity's asyncOperation.progress value goes from 0 to 0.9 while loading.
             float progress = Mathf.Clamp01(asyncOperation.progress / 0.9f);
             progressCallback?.Invoke(progress);
 
-            // When progress reaches 0.9, the scene is fully loaded.
             if (asyncOperation.progress >= 0.9f)
             {
-                // Optionally, add a delay or wait for user input before activating the scene.
                 asyncOperation.allowSceneActivation = true;
             }
             yield return null;
         }
 
-        // Update scene tracking after the new scene is active.
+        //4. Invoke actions passed in from the previous scene
+        OnActionsFromPreviousScene?.Invoke();
+
+        //5. Short pause for camera transition
+        yield return new WaitForSeconds(0.5f);
+
+        //6. Fade out
+        if (PlayerUIManager.Instance.transitionMenu != null)
+        {
+            yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
+        }
+
+        //7. Update scene tracking after the new scene is active
         CurrentScene = NextScene;
         NextScene = string.Empty;
         GameManager.Instance.CurrentGameMode = NextGameMode;

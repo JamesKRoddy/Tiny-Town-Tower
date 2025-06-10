@@ -3022,12 +3022,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1aa8b8fb928dbf4892118fc7500f7a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  characterType: 5
+  characterType: 201
   useRootMotion: 1
+  stoppingDistance: 1.5
+  rotationSpeed: 10
+  movementSpeed: 3.5
+  acceleration: 8
+  angularSpeed: 120
   health: 100
   maxHealth: 100
   attackRange: 2
-  meleeDamage: 2
+  attackCooldown: 1.5
+  approachDistance: 3
+  meleeDamage: 50
+  meleeAttackRadius: 1.5
+  targetLayer:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!1 &6616253873932381118
 GameObject:
   m_ObjectHideFlags: 0

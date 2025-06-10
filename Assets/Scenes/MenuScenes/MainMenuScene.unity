@@ -626,7 +626,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: inventoryList.Array.size
-      value: 3
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: availableMutations.Array.size
@@ -884,6 +884,10 @@ PrefabInstance:
     - target: {fileID: 4686915863895893509, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6303821086052416740, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: _currentGameMode
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 7451046357896141963, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: characterEffects.Array.size
