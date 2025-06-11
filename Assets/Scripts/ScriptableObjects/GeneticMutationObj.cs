@@ -59,26 +59,7 @@ public class GeneticMutationObj : ResourceScriptableObj
     // Helper property to get the actual size of the shape
     public Vector2Int GetShapeSize()
     {
-        int minX = MAX_SHAPE_SIZE;
-        int minY = MAX_SHAPE_SIZE;
-        int maxX = 0;
-        int maxY = 0;
-
-        for (int y = 0; y < MAX_SHAPE_SIZE; y++)
-        {
-            for (int x = 0; x < MAX_SHAPE_SIZE; x++)
-            {
-                if (shapeRows[y].cells[x])
-                {
-                    minX = Mathf.Min(minX, x);
-                    minY = Mathf.Min(minY, y);
-                    maxX = Mathf.Max(maxX, x);
-                    maxY = Mathf.Max(maxY, y);
-                }
-            }
-        }
-
-        return new Vector2Int(maxX - minX + 1, maxY - minY + 1);
+        return new Vector2Int(MAX_SHAPE_SIZE, MAX_SHAPE_SIZE);
     }
 
     // Helper method to check if a position is filled in the shape

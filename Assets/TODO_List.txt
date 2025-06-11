@@ -1,11 +1,10 @@
 *****Current Work*****
 
-Roguelike Complete Level
+Genetic Mutation Fixes
 
+Tomorrow:
 
-Process:
-
-Loading back to the overworld:
+tthe large button is still showing, maybe just disable the image and extend the colour change to the child objs?
 
 Picking up genetic mutations and assigning them to the player, opening the screen placing them, showing mutation details when highlighted, exit popup to let player know unequipped ones will be dropped, discarding unequipped ones.
 
