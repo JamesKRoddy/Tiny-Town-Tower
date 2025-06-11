@@ -7,7 +7,6 @@ public class MutationUIElement : MonoBehaviour
     private RectTransform rectTransform;
     private Image iconImage; // UI icon
     private bool isRotated = false;
-    private Vector2Int mutationSize; // Store size instead of keeping a reference to mutation
     private GeneticMutationGrid grid;
     private Color originalColor;
     private Color selectedColor = new Color(0.5f, 1f, 0.5f, 1f); // Light green color for selection
@@ -17,13 +16,14 @@ public class MutationUIElement : MonoBehaviour
 
     public bool IsSelected => isSelected;
 
-    public Vector2Int Size => isRotated ? new Vector2Int(mutationSize.y, mutationSize.x) : mutationSize;
+    public Vector2Int Size => isRotated ? 
+        new Vector2Int(mutation.GetShapeSize().y, mutation.GetShapeSize().x) : 
+        mutation.GetShapeSize();
 
     public void Initialize(GeneticMutationObj mutation, GeneticMutationGrid grid)
     {
         this.mutation = mutation;
         this.grid = grid;
-        mutationSize = mutation.size; // Store the size instead of keeping the entire object reference
         rectTransform = GetComponent<RectTransform>();
         iconImage = GetComponent<Image>();
         button = GetComponent<Button>();
@@ -104,8 +104,8 @@ public class MutationUIElement : MonoBehaviour
             // Update size after rotation
             Vector2 cellSize = grid.GetCellSize();
             Vector2 newSize = new Vector2(
-                cellSize.x * mutationSize.y,
-                cellSize.y * mutationSize.x
+                cellSize.x * mutation.GetShapeSize().y,
+                cellSize.y * mutation.GetShapeSize().x
             );
             rectTransform.sizeDelta = newSize;
         }
@@ -117,13 +117,25 @@ public class MutationUIElement : MonoBehaviour
             // Reset size after rotation
             Vector2 cellSize = grid.GetCellSize();
             Vector2 newSize = new Vector2(
-                cellSize.x * mutationSize.x,
-                cellSize.y * mutationSize.y
+                cellSize.x * mutation.GetShapeSize().x,
+                cellSize.y * mutation.GetShapeSize().y
             );
             rectTransform.sizeDelta = newSize;
         }
 
         // Force layout update after rotation
         LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
+    }
+
+    public bool IsPositionFilled(int x, int y)
+    {
+        if (isRotated)
+        {
+            // When rotated, we need to transform the coordinates
+            int tempX = y;
+            int tempY = GeneticMutationObj.MAX_SHAPE_SIZE - 1 - x;
+            return mutation.IsPositionFilled(tempX, tempY);
+        }
+        return mutation.IsPositionFilled(x, y);
     }
 }

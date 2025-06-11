@@ -63,17 +63,23 @@ public class GeneticMutationGrid : MonoBehaviour
         }
     }
 
-    public bool CanPlaceMutation(Vector2Int position, Vector2Int size)
+    public bool CanPlaceMutation(Vector2Int position, MutationUIElement element)
     {
+        Vector2Int size = element.Size;
         if (position.x + size.x > gridWidth || position.y + size.y > gridHeight)
             return false;
 
+        // Check each cell in the shape
         for (int x = 0; x < size.x; x++)
         {
             for (int y = 0; y < size.y; y++)
             {
-                if (grid[position.x + x, position.y + y] != null)
-                    return false;
+                // Only check positions that are filled in the shape
+                if (element.IsPositionFilled(x, y))
+                {
+                    if (grid[position.x + x, position.y + y] != null)
+                        return false;
+                }
             }
         }
         return true;
@@ -88,11 +94,13 @@ public class GeneticMutationGrid : MonoBehaviour
         {
             for (int y = 0; y < size.y; y++)
             {
-                grid[position.x + x, position.y + y] = element;
+                // Only place in positions that are filled in the shape
+                if (element.IsPositionFilled(x, y))
+                {
+                    grid[position.x + x, position.y + y] = element;
+                }
             }
         }
-
-        // Note: Parenting is now handled by GeneticMutationUI using mutationGridPrefabContainer
 
         // Set the button click handler
         element.SetupButtonClick();
@@ -115,7 +123,8 @@ public class GeneticMutationGrid : MonoBehaviour
                     {
                         for (int oldY = 0; oldY < element.Size.y; oldY++)
                         {
-                            if (x + oldX < gridWidth && y + oldY < gridHeight)
+                            if (element.IsPositionFilled(oldX, oldY) &&
+                                x + oldX < gridWidth && y + oldY < gridHeight)
                             {
                                 grid[x + oldX, y + oldY] = null;
                             }
@@ -151,22 +160,25 @@ public class GeneticMutationGrid : MonoBehaviour
     /// </summary>
     public bool AddMutation(GeneticMutationObj mutation)
     {
-        Vector2Int mutationSize = mutation.size;
-
         // Find first available spot
-        for (int x = 0; x < gridWidth - mutationSize.x + 1; x++)
+        for (int x = 0; x < gridWidth; x++)
         {
-            for (int y = 0; y < gridHeight - mutationSize.y + 1; y++)
+            for (int y = 0; y < gridHeight; y++)
             {
                 Vector2Int position = new Vector2Int(x, y);
 
-                if (CanPlaceMutation(position, mutationSize))
+                GameObject newSlot = Instantiate(mutationSlotPrefab, transform);
+                MutationUIElement uiElement = newSlot.GetComponent<MutationUIElement>();
+                uiElement.Initialize(mutation, this);
+
+                if (CanPlaceMutation(position, uiElement))
                 {
-                    GameObject newSlot = Instantiate(mutationSlotPrefab, transform);
-                    MutationUIElement uiElement = newSlot.GetComponent<MutationUIElement>();
-                    uiElement.Initialize(mutation, this);
-                    PlaceMutation(uiElement, position, mutationSize);
+                    PlaceMutation(uiElement, position, uiElement.Size);
                     return true;
+                }
+                else
+                {
+                    Destroy(newSlot);
                 }
             }
         }

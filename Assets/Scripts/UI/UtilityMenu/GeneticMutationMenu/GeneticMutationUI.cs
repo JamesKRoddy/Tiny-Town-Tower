@@ -195,8 +195,9 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         RectTransform rectTransform = selectedMutationElement.GetComponent<RectTransform>();
         if (rectTransform != null)
         {
-            // Set the size based on the mutation size and cell size
-            rectTransform.sizeDelta = new Vector2(cellSize.x * mutation.size.x, cellSize.y * mutation.size.y);
+            // Set the size based on the mutation shape size and cell size
+            Vector2Int shapeSize = mutation.GetShapeSize();
+            rectTransform.sizeDelta = new Vector2(cellSize.x * shapeSize.x, cellSize.y * shapeSize.y);
 
             // Set anchors to stretch across the required number of cells
             rectTransform.anchorMin = new Vector2(0, 0);
@@ -207,7 +208,6 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
             LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
         }
     }
-
 
     private void MoveMutation(Vector2 direction)
     {
@@ -243,7 +243,7 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         }
 
         // Ensure new position is within the grid bounds
-        newPosition = mutationGrid.ClampToGrid(newPosition, selectedMutation.size);
+        newPosition = mutationGrid.ClampToGrid(newPosition, selectedMutationElement.Size);
 
         // Only move if the position is different
         if (newPosition != selectedPosition)
@@ -270,10 +270,10 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     {
         if (!isPlacingMutation || selectedMutationElement == null) return;
 
-        if (mutationGrid.CanPlaceMutation(selectedPosition, selectedMutation.size))
+        if (mutationGrid.CanPlaceMutation(selectedPosition, selectedMutationElement))
         {
             selectedMutationElement.SetSelected(false);
-            mutationGrid.PlaceMutation(selectedMutationElement, selectedPosition, selectedMutation.size);
+            mutationGrid.PlaceMutation(selectedMutationElement, selectedPosition, selectedMutationElement.Size);
             isPlacingMutation = false;
             selectedMutationElement = null;
 
