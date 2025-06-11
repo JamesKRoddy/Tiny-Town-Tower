@@ -356,7 +356,7 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     {
         if (selectionPopup != null)
         {
-            selectionPopup.Setup(mutation, this, uiElement.gameObject);
+            selectionPopup.DisplayPopup(mutation, this, uiElement.gameObject);
         }
     }
 }

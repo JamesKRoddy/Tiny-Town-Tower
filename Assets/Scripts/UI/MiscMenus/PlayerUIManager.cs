@@ -175,8 +175,13 @@ public class PlayerUIManager : MonoBehaviour
     }
 
     public void SetSelectedGameObject(GameObject gameObject)
+    {        
+        StartCoroutine(SetSelectedGameObjectCoroutine(gameObject));
+    }
+
+    private IEnumerator SetSelectedGameObjectCoroutine(GameObject gameObject)
     {
-        Debug.Log($"Setting selected object to {gameObject}");
+        yield return new WaitForSeconds(0.1f);
         EventSystem.current.SetSelectedGameObject(gameObject);
     }
 

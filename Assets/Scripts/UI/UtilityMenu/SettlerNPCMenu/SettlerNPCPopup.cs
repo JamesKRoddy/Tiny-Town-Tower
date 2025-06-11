@@ -23,9 +23,9 @@ public class SettlerNPCPopup : PreviewPopupBase<HumanCharacterController, string
             removeWorkButton.onClick.AddListener(OnRemoveWorkClicked);
     }
 
-    public override void Setup(HumanCharacterController npc, PreviewListMenuBase<string, HumanCharacterController> menu, GameObject element)
+    public override void DisplayPopup(HumanCharacterController npc, PreviewListMenuBase<string, HumanCharacterController> menu, GameObject element)
     {
-        base.Setup(npc, menu, element);
+        base.DisplayPopup(npc, menu, element);
     }
 
     protected override void SetupInitialSelection()

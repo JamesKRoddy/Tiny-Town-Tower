@@ -26,8 +26,9 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour, IContr
 /// <param name="item"></param> Item context in the popup
 /// <param name="menu"></param> Menu that opened the popup
 /// <param name="element"></param> Gameobject that will be selected when the popup is closed, usually the button that opened it
-    public virtual void Setup(TItem item, PreviewListMenuBase<TCategory, TItem> menu, GameObject element = null)
+    public virtual void DisplayPopup(TItem item, PreviewListMenuBase<TCategory, TItem> menu, GameObject element = null)
     {
+        Debug.Log($"Displaying popup for {item}");
         currentItem = item;
         parentMenu = menu;
         selectedElement = element ?? closeButton?.gameObject;

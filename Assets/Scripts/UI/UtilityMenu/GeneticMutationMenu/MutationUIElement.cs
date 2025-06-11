@@ -44,13 +44,14 @@ public class MutationUIElement : MonoBehaviour
     {
         if (button != null)
         {
+            button.onClick.RemoveAllListeners();
             button.onClick.AddListener(OnButtonClicked);
         }
     }
-    bool clickedOnce = false;
+
     private void OnButtonClicked()
     {
-        if (mutation != null && clickedOnce)
+        if (mutation != null)
         {
             var mutationUI = GetComponentInParent<GeneticMutationUI>();
             if (mutationUI != null)
@@ -58,7 +59,6 @@ public class MutationUIElement : MonoBehaviour
                 mutationUI.OnMutationClicked(mutation, this);
             }
         }
-        clickedOnce = true;
     }
 
     public void ShowWarning()

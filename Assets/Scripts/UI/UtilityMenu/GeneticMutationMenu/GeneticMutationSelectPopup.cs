@@ -21,9 +21,9 @@ public class GeneticMutationSelectPopup : PreviewPopupBase<GeneticMutationObj, G
             moveButton.onClick.AddListener(OnMoveClicked);
     }
 
-    public override void Setup(GeneticMutationObj mutation, PreviewListMenuBase<GeneticMutation, GeneticMutationObj> menu, GameObject element)
+    public override void DisplayPopup(GeneticMutationObj mutation, PreviewListMenuBase<GeneticMutation, GeneticMutationObj> menu, GameObject element)
     {
-        base.Setup(mutation, menu, element);
+        base.DisplayPopup(mutation, menu, element);
         uiElement = element.GetComponent<MutationUIElement>();
 
         // Set remove button as selected
