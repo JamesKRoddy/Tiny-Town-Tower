@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 using System;
+using UnityEngine.EventSystems;
 
 
 public class PlayerUIManager : MonoBehaviour
@@ -171,6 +172,12 @@ public class PlayerUIManager : MonoBehaviour
         settingsMenu.SetScreenActive(false);
         returnToCampMenu.SetScreenActive(false);
         quitMenu.SetScreenActive(false);
+    }
+
+    public void SetSelectedGameObject(GameObject gameObject)
+    {
+        Debug.Log($"Setting selected object to {gameObject}");
+        EventSystem.current.SetSelectedGameObject(gameObject);
     }
 
     internal void BackPressed()

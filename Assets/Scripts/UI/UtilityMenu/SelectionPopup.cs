@@ -167,7 +167,7 @@ public class SelectionPopup : PreviewPopupBase<object, string>
     private IEnumerator SetSelectedAfterDelay(GameObject button)
     {
         yield return new WaitForSeconds(0.5f); // Wait for 0.5 seconds before selecting the button
-        EventSystem.current.SetSelectedGameObject(button);
+        PlayerUIManager.Instance.SetSelectedGameObject(button);
     }
 
     void ReturnToGame()

@@ -32,7 +32,7 @@ public class SettlerNPCPopup : PreviewPopupBase<HumanCharacterController, string
     {
         if (possessButton != null)
         {
-            EventSystem.current.SetSelectedGameObject(possessButton.gameObject);
+            PlayerUIManager.Instance.SetSelectedGameObject(possessButton.gameObject);
         }
     }
 

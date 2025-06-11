@@ -57,7 +57,7 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour, IContr
     private IEnumerator SetSelectedAfterDelay(GameObject obj)
     {
         yield return new WaitForEndOfFrame();
-        EventSystem.current.SetSelectedGameObject(obj);
+        PlayerUIManager.Instance.SetSelectedGameObject(obj);
     }
 
     protected void SetParentUIButtonsInteractable(bool interactable)
@@ -83,7 +83,7 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour, IContr
 
         if (selectedElement != null)
         {
-            EventSystem.current.SetSelectedGameObject(selectedElement);
+            PlayerUIManager.Instance.SetSelectedGameObject(selectedElement);
         }
     }
 

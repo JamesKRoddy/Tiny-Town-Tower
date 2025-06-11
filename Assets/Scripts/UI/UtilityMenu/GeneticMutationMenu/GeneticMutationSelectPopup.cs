@@ -29,7 +29,7 @@ public class GeneticMutationSelectPopup : PreviewPopupBase<GeneticMutationObj, G
         // Set remove button as selected
         if (removeButton != null)
         {
-            EventSystem.current.SetSelectedGameObject(removeButton.gameObject);
+            PlayerUIManager.Instance.SetSelectedGameObject(removeButton.gameObject);
         }
     }
 

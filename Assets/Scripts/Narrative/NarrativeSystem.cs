@@ -130,7 +130,7 @@ public class NarrativeSystem : MenuBase
         yield return new WaitForEndOfFrame();
         if (button != null)
         {
-            EventSystem.current.SetSelectedGameObject(button);
+            PlayerUIManager.Instance.SetSelectedGameObject(button);
         }
     }
 

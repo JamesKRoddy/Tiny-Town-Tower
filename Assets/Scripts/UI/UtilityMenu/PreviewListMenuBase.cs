@@ -46,7 +46,7 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
             }
             else
             {
-                if (selectionPopup != null)
+                if (selectionPopup != null && selectionPopup.isActive)
                 {
                     selectionPopup.OnCloseClicked();
                 }
@@ -99,7 +99,7 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         }
         else if (leftScreenBtn != null)
         {
-            EventSystem.current.SetSelectedGameObject(leftScreenBtn.gameObject);
+            PlayerUIManager.Instance.SetSelectedGameObject(leftScreenBtn.gameObject);
         }
     }
 
@@ -237,7 +237,7 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
 
         if (selectedObject != null)
         {
-            EventSystem.current.SetSelectedGameObject(selectedObject);
+            PlayerUIManager.Instance.SetSelectedGameObject(selectedObject);
         }
     }
 

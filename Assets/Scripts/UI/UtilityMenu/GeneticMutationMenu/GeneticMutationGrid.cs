@@ -98,7 +98,7 @@ public class GeneticMutationGrid : MonoBehaviour
         element.SetupButtonClick();
 
         // Set as selected object
-        EventSystem.current.SetSelectedGameObject(element.gameObject);
+        PlayerUIManager.Instance.SetSelectedGameObject(element.gameObject);
     }
 
     public void ClearPosition(MutationUIElement element)
