@@ -9,8 +9,12 @@ public class MutationUIElement : MonoBehaviour
     private Image iconImage; // UI icon
     private bool isRotated = false;
     private GeneticMutationGrid grid;
-    private Color originalColor;
-    private Color selectedColor = new Color(0.5f, 1f, 0.5f, 1f); // Light green color for selection
+    
+    [Header("Cell Colors")]
+    [SerializeField] private Color normalColor = Color.white;
+    [SerializeField] private Color selectedColor = new Color(0.5f, 1f, 0.5f, 1f); // Light green color for selection
+    [SerializeField] private Color warningColor = Color.red;
+    
     private bool isSelected = false;
     public GeneticMutationObj mutation; // Made public to access from GeneticMutationGrid
     private Button button;
@@ -37,8 +41,14 @@ public class MutationUIElement : MonoBehaviour
             iconImage.color = new Color(1, 1, 1, 0);
         }
         
+        // Add button component to the main mutation object if it doesn't exist
         button = GetComponent<Button>();
-        originalColor = Color.white;
+        if (button == null)
+        {
+            button = gameObject.AddComponent<Button>();
+            button.targetGraphic = iconImage;
+            button.onClick.AddListener(OnButtonClicked);
+        }
 
         // Clear any existing cell objects
         ClearCellObjects();
@@ -75,7 +85,7 @@ public class MutationUIElement : MonoBehaviour
                     // Add Image component
                     Image cellImage = cell.AddComponent<Image>();
                     cellImage.sprite = mutation.sprite;
-                    cellImage.color = originalColor;
+                    cellImage.color = normalColor;
                     
                     // Add a Button component for interaction
                     Button cellButton = cell.AddComponent<Button>();
@@ -94,6 +104,19 @@ public class MutationUIElement : MonoBehaviour
 
                     cellObjects.Add(cell);
                 }
+            }
+        }
+    }
+
+    private void UpdateCellColors()
+    {
+        Color targetColor = isSelected ? selectedColor : normalColor;
+
+        foreach (var cell in cellObjects)
+        {
+            if (cell != null)
+            {
+                cell.GetComponent<Image>().color = targetColor;
             }
         }
     }
@@ -133,6 +156,15 @@ public class MutationUIElement : MonoBehaviour
 
     public void SetupButtonClick()
     {
+        // Ensure the main mutation object has a button
+        if (button == null)
+        {
+            button = gameObject.AddComponent<Button>();
+            button.targetGraphic = iconImage;
+        }
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(OnButtonClicked);
+
         // Add click events to all cells
         foreach (var cell in cellObjects)
         {
@@ -166,32 +198,20 @@ public class MutationUIElement : MonoBehaviour
         {
             if (cell != null)
             {
-                cell.GetComponent<Image>().color = Color.red;
+                cell.GetComponent<Image>().color = warningColor;
             }
         }
     }
 
     public void HideWarning()
     {
-        foreach (var cell in cellObjects)
-        {
-            if (cell != null)
-            {
-                cell.GetComponent<Image>().color = isSelected ? selectedColor : originalColor;
-            }
-        }
+        UpdateCellColors();
     }
 
     public void SetSelected(bool selected)
     {
         isSelected = selected;
-        foreach (var cell in cellObjects)
-        {
-            if (cell != null)
-            {
-                cell.GetComponent<Image>().color = selected ? selectedColor : originalColor;
-            }
-        }
+        UpdateCellColors();
     }
 
     public void SetGridPosition(Vector2Int position, Vector2 cellSize)
