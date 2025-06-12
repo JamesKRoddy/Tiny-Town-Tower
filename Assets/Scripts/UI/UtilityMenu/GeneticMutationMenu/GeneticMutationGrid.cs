@@ -7,6 +7,7 @@ public class GeneticMutationGrid : MonoBehaviour
 {
     [Header("Grid Settings")]
     [SerializeField] private Vector2Int cellSize = new Vector2Int(50, 50);
+    [SerializeField] public GameObject emptySlotPrefab;
     [SerializeField] public GameObject mutationSlotPrefab;
     [SerializeField] private Color emptySlotColor = new Color(1, 1, 1, 0.2f); // Light transparency for empty slots
 
@@ -71,7 +72,7 @@ public class GeneticMutationGrid : MonoBehaviour
         {
             for (int x = 0; x < gridWidth; x++)
             {
-                GameObject emptySlot = Instantiate(mutationSlotPrefab, transform);
+                GameObject emptySlot = Instantiate(emptySlotPrefab, transform);
                 emptySlot.name = $"Slot ({x},{y})";
                 
                 // Set up the visual grid cell

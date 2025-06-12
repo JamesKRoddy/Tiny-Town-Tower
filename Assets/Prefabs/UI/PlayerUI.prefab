@@ -5218,7 +5218,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cellSize: {x: 50, y: 50}
+  emptySlotPrefab: {fileID: 7003231519949422219, guid: a2e418971ece8b344abde947578db9d1, type: 3}
   mutationSlotPrefab: {fileID: 7003231519949422219, guid: 62bb2d9fa0321b04b9293c4097a299ac, type: 3}
+  emptySlotColor: {r: 1, g: 1, b: 1, a: 0.2}
 --- !u!1 &1930712998383369356
 GameObject:
   m_ObjectHideFlags: 0
@@ -28011,6 +28013,7 @@ MonoBehaviour:
   mutationGrid: {fileID: 8219817581952613195}
   mutationGridPrefabContainer: {fileID: 1037857587712313581}
   moveSpeed: 0.2
+  inputThreshold: 0.5
 --- !u!1 &9143141171944472929
 GameObject:
   m_ObjectHideFlags: 0

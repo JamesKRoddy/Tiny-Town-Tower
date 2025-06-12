@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.EventSystems;
 
 public class MutationUIElement : MonoBehaviour
 {
@@ -10,12 +11,8 @@ public class MutationUIElement : MonoBehaviour
     private bool isRotated = false;
     private GeneticMutationGrid grid;
     
-    [Header("Cell Colors")]
-    [SerializeField] private Color normalColor = Color.white;
-    [SerializeField] private Color selectedColor = new Color(0.5f, 1f, 0.5f, 1f); // Light green color for selection
-    [SerializeField] private Color warningColor = Color.red;
-    
     private bool isSelected = false;
+    private bool isHighlighted = false;
     public GeneticMutationObj mutation; // Made public to access from GeneticMutationGrid
     private Button button;
     private List<GameObject> cellObjects = new List<GameObject>();
@@ -30,6 +27,24 @@ public class MutationUIElement : MonoBehaviour
 
     public void Initialize(GeneticMutationObj mutation, GeneticMutationGrid grid)
     {
+        button = GetComponent<Button>();
+        if (button == null)
+        {
+            button = gameObject.AddComponent<Button>();
+        }
+
+        if (mutation == null)
+        {
+            Debug.LogError("MutationUIElement.Initialize: mutation is null!");
+            return;
+        }
+
+        if (grid == null)
+        {
+            Debug.LogError("MutationUIElement.Initialize: grid is null!");
+            return;
+        }
+
         this.mutation = mutation;
         this.grid = grid;
         rectTransform = GetComponent<RectTransform>();
@@ -41,14 +56,8 @@ public class MutationUIElement : MonoBehaviour
             iconImage.color = new Color(1, 1, 1, 0);
         }
         
-        // Add button component to the main mutation object if it doesn't exist
-        button = GetComponent<Button>();
-        if (button == null)
-        {
-            button = gameObject.AddComponent<Button>();
-            button.targetGraphic = iconImage;
-            button.onClick.AddListener(OnButtonClicked);
-        }
+        // Set up button events using EventTrigger
+        SetupButtonEvents();
 
         // Clear any existing cell objects
         ClearCellObjects();
@@ -69,8 +78,61 @@ public class MutationUIElement : MonoBehaviour
         rectTransform.pivot = new Vector2(0, 0); // Bottom-left pivot
     }
 
+    private void SetupButtonEvents()
+    {
+        EventTrigger trigger = GetComponent<EventTrigger>();
+        if (trigger == null)
+        {
+            trigger = gameObject.AddComponent<EventTrigger>();
+        }
+
+        // Handle OnSelect
+        EventTrigger.Entry selectEntry = new EventTrigger.Entry
+        {
+            eventID = EventTriggerType.Select
+        };
+        selectEntry.callback.AddListener((data) => OnSelect());
+        trigger.triggers.Add(selectEntry);
+
+        // Handle OnDeselect
+        EventTrigger.Entry deselectEntry = new EventTrigger.Entry
+        {
+            eventID = EventTriggerType.Deselect
+        };
+        deselectEntry.callback.AddListener((data) => OnDeselect());
+        trigger.triggers.Add(deselectEntry);
+
+        // Handle OnClick
+        if (button != null)
+        {
+            button.onClick.AddListener(OnButtonClicked);
+        }
+    }
+
+    private void OnSelect()
+    {
+        isHighlighted = true;
+        UpdateCellColors();
+    }
+
+    private void OnDeselect()
+    {
+        isHighlighted = false;
+        UpdateCellColors();
+    }
+
+    // Remove IPointerEnterHandler and IPointerExitHandler since we're using EventTrigger now
+    public void OnPointerEnter(PointerEventData eventData) { }
+    public void OnPointerExit(PointerEventData eventData) { }
+
     private void CreateCellObjects()
     {
+        if (mutation == null || grid == null)
+        {
+            Debug.LogError("MutationUIElement.CreateCellObjects: mutation or grid is null!");
+            return;
+        }
+
         Vector2 cellSize = grid.GetCellSize();
         
         for (int y = 0; y < GeneticMutationObj.MAX_SHAPE_SIZE; y++)
@@ -84,13 +146,15 @@ public class MutationUIElement : MonoBehaviour
                     
                     // Add Image component
                     Image cellImage = cell.AddComponent<Image>();
-                    cellImage.sprite = mutation.sprite;
-                    cellImage.color = normalColor;
-                    
-                    // Add a Button component for interaction
-                    Button cellButton = cell.AddComponent<Button>();
-                    cellButton.targetGraphic = cellImage;
-                    cellButton.onClick.AddListener(OnButtonClicked);
+                    if (mutation.sprite != null)
+                    {
+                        cellImage.sprite = mutation.sprite;
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"Mutation {mutation.objectName} has no sprite assigned!");
+                    }
+                    cellImage.color = button.colors.normalColor;
 
                     // Set up RectTransform
                     RectTransform cellRect = cell.GetComponent<RectTransform>();
@@ -110,7 +174,11 @@ public class MutationUIElement : MonoBehaviour
 
     private void UpdateCellColors()
     {
-        Color targetColor = isSelected ? selectedColor : normalColor;
+        Color targetColor = button.colors.normalColor;
+        if (isSelected)
+            targetColor = button.colors.selectedColor;
+        else if (isHighlighted)
+            targetColor = button.colors.highlightedColor;
 
         foreach (var cell in cellObjects)
         {
@@ -159,24 +227,12 @@ public class MutationUIElement : MonoBehaviour
         // Ensure the main mutation object has a button
         if (button == null)
         {
-            button = gameObject.AddComponent<Button>();
-            button.targetGraphic = iconImage;
+            button = GetComponent<Button>();
         }
-        button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(OnButtonClicked);
-
-        // Add click events to all cells
-        foreach (var cell in cellObjects)
+        if (button != null)
         {
-            if (cell != null)
-            {
-                Button cellButton = cell.GetComponent<Button>();
-                if (cellButton != null)
-                {
-                    cellButton.onClick.RemoveAllListeners();
-                    cellButton.onClick.AddListener(OnButtonClicked);
-                }
-            }
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(OnButtonClicked);
         }
     }
 
@@ -198,7 +254,7 @@ public class MutationUIElement : MonoBehaviour
         {
             if (cell != null)
             {
-                cell.GetComponent<Image>().color = warningColor;
+                cell.GetComponent<Image>().color = button.colors.disabledColor;
             }
         }
     }
