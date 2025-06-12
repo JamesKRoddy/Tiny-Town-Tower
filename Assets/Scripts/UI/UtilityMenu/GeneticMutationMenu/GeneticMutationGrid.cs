@@ -8,11 +8,13 @@ public class GeneticMutationGrid : MonoBehaviour
     [Header("Grid Settings")]
     [SerializeField] private Vector2Int cellSize = new Vector2Int(50, 50);
     [SerializeField] public GameObject mutationSlotPrefab;
+    [SerializeField] private Color emptySlotColor = new Color(1, 1, 1, 0.2f); // Light transparency for empty slots
 
     private MutationUIElement[,] grid;
     private GridLayoutGroup gridLayout;
     private int gridWidth;
     private int gridHeight;
+    private GameObject[,] visualGrid; // Visual representation of the grid
 
     private void Awake()
     {
@@ -31,6 +33,7 @@ public class GeneticMutationGrid : MonoBehaviour
 
         // Initialize grid array
         grid = new MutationUIElement[gridWidth, gridHeight];
+        visualGrid = new GameObject[gridWidth, gridHeight];
 
         if (gridLayout)
         {
@@ -47,6 +50,18 @@ public class GeneticMutationGrid : MonoBehaviour
         GenerateEmptySlots();
     }
 
+    // Get the grid width
+    public int GetGridWidth()
+    {
+        return gridWidth;
+    }
+
+    // Get the grid height
+    public int GetGridHeight()
+    {
+        return gridHeight;
+    }
+
     /// <summary>
     /// Creates empty slot visuals so the player can see the grid.
     /// </summary>
@@ -58,7 +73,20 @@ public class GeneticMutationGrid : MonoBehaviour
             {
                 GameObject emptySlot = Instantiate(mutationSlotPrefab, transform);
                 emptySlot.name = $"Slot ({x},{y})";
-                emptySlot.GetComponent<Image>().color = new Color(1, 1, 1, 0.2f); // Light transparency
+                
+                // Set up the visual grid cell
+                RectTransform rectTransform = emptySlot.GetComponent<RectTransform>();
+                rectTransform.anchorMin = new Vector2(0, 0);
+                rectTransform.anchorMax = new Vector2(0, 0);
+                rectTransform.pivot = new Vector2(0, 0);
+                rectTransform.sizeDelta = new Vector2(cellSize.x, cellSize.y);
+                rectTransform.anchoredPosition = new Vector2(x * cellSize.x, y * cellSize.y);
+                
+                // Set color
+                emptySlot.GetComponent<Image>().color = emptySlotColor;
+                
+                // Store reference
+                visualGrid[x, y] = emptySlot;
             }
         }
     }
@@ -66,46 +94,69 @@ public class GeneticMutationGrid : MonoBehaviour
     public bool CanPlaceMutation(Vector2Int position, MutationUIElement element)
     {
         Vector2Int size = element.Size;
-        if (position.x + size.x > gridWidth || position.y + size.y > gridHeight)
-            return false;
-
-        // Check each cell in the shape
-        for (int x = 0; x < size.x; x++)
+        int gridWidth = GetGridWidth();
+        int gridHeight = GetGridHeight();
+        Debug.Log($"[CanPlaceMutation] Checking position {position} with size {size} on grid {gridWidth}x{gridHeight}");
+        if (position.x + size.x > gridWidth || position.y + size.y > gridHeight ||
+            position.x < 0 || position.y < 0)
         {
-            for (int y = 0; y < size.y; y++)
+            Debug.LogWarning($"[CanPlaceMutation] Out of bounds: pos {position}, size {size}, grid {gridWidth}x{gridHeight}");
+            return false;
+        }
+        for (int y = 0; y < size.y; y++)
+        {
+            for (int x = 0; x < size.x; x++)
             {
-                // Only check positions that are filled in the shape
                 if (element.IsPositionFilled(x, y))
                 {
-                    if (grid[position.x + x, position.y + y] != null)
+                    int gridX = position.x + x;
+                    int gridY = position.y + y;
+                    if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight)
+                    {
+                        if (grid[gridX, gridY] != null && grid[gridX, gridY] != element)
+                        {
+                            Debug.LogWarning($"[CanPlaceMutation] Cell occupied at {gridX},{gridY}");
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[CanPlaceMutation] Cell out of bounds at {gridX},{gridY}");
                         return false;
+                    }
                 }
             }
         }
+        Debug.Log("[CanPlaceMutation] Placement is valid.");
         return true;
     }
 
     public void PlaceMutation(MutationUIElement element, Vector2Int position, Vector2Int size)
     {
+        Debug.Log($"[PlaceMutation] Placing at {position} with size {size}");
         ClearPosition(element);
-
-        // Place the mutation in the new position
-        for (int x = 0; x < size.x; x++)
+        for (int y = 0; y < size.y; y++)
         {
-            for (int y = 0; y < size.y; y++)
+            for (int x = 0; x < size.x; x++)
             {
-                // Only place in positions that are filled in the shape
                 if (element.IsPositionFilled(x, y))
                 {
-                    grid[position.x + x, position.y + y] = element;
+                    int gridX = position.x + x;
+                    int gridY = position.y + y;
+                    if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight)
+                    {
+                        grid[gridX, gridY] = element;
+                        if (visualGrid[gridX, gridY] != null)
+                        {
+                            visualGrid[gridX, gridY].GetComponent<Image>().color = new Color(1, 1, 1, 0);
+                        }
+                        Debug.Log($"[PlaceMutation] Placed cell at {gridX},{gridY}");
+                    }
                 }
             }
         }
-
-        // Set the button click handler
+        element.SetGridPosition(position, GetCellSize());
         element.SetupButtonClick();
-
-        // Set as selected object
         PlayerUIManager.Instance.SetSelectedGameObject(element.gameObject);
     }
 
@@ -118,19 +169,14 @@ public class GeneticMutationGrid : MonoBehaviour
             {
                 if (grid[x, y] == element)
                 {
-                    // Clear the old position
-                    for (int oldX = 0; oldX < element.Size.x; oldX++)
+                    // Clear the position
+                    grid[x, y] = null;
+                    
+                    // Restore visual grid cell visibility
+                    if (visualGrid[x, y] != null)
                     {
-                        for (int oldY = 0; oldY < element.Size.y; oldY++)
-                        {
-                            if (element.IsPositionFilled(oldX, oldY) &&
-                                x + oldX < gridWidth && y + oldY < gridHeight)
-                            {
-                                grid[x + oldX, y + oldY] = null;
-                            }
-                        }
+                        visualGrid[x, y].GetComponent<Image>().color = emptySlotColor;
                     }
-                    break;
                 }
             }
         }
@@ -147,12 +193,15 @@ public class GeneticMutationGrid : MonoBehaviour
 
     public void ClearGrid()
     {
+        // Destroy all child objects
         foreach (Transform child in transform)
         {
             Destroy(child.gameObject);
         }
 
+        // Reset grid arrays
         grid = new MutationUIElement[gridWidth, gridHeight];
+        visualGrid = new GameObject[gridWidth, gridHeight];
     }
 
     /// <summary>
@@ -161,14 +210,20 @@ public class GeneticMutationGrid : MonoBehaviour
     public bool AddMutation(GeneticMutationObj mutation)
     {
         // Find first available spot
-        for (int x = 0; x < gridWidth; x++)
+        for (int x = 0; x < gridWidth - GeneticMutationObj.MAX_SHAPE_SIZE + 1; x++)
         {
-            for (int y = 0; y < gridHeight; y++)
+            for (int y = 0; y < gridHeight - GeneticMutationObj.MAX_SHAPE_SIZE + 1; y++)
             {
                 Vector2Int position = new Vector2Int(x, y);
 
+                // Create a temporary UI element to check placement
                 GameObject newSlot = Instantiate(mutationSlotPrefab, transform);
                 MutationUIElement uiElement = newSlot.GetComponent<MutationUIElement>();
+                if (uiElement == null)
+                {
+                    uiElement = newSlot.AddComponent<MutationUIElement>();
+                }
+                
                 uiElement.Initialize(mutation, this);
 
                 if (CanPlaceMutation(position, uiElement))

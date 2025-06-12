@@ -18,5 +18,10 @@ MonoBehaviour:
   category: 0
   rarity: 0
   prefab: {fileID: 7003231519949422219, guid: 7356a91689017464eb39553d3d2479a9, type: 3}
+  shapeRows:
+  - cells: 01010100
+  - cells: 00000000
+  - cells: 00000000
+  - cells: 00000000
   mutationEffectPrefab: {fileID: 4430960853319998083, guid: 88ef16de87ea81b45b8a6fd699c5432a, type: 3}
   mutationIcon: {fileID: 0}

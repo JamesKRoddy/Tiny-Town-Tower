@@ -286,9 +286,9 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     public void EquipMutation(GeneticMutationObj mutation)
     {
         equippedMutations.Add(mutation);
-        if (mutation.mutationEffectPrefab != null && PlayerController.Instance._possessedNPC != null)
+        if (mutation.prefab != null && PlayerController.Instance._possessedNPC != null)
         {
-            GameObject effectObj = Instantiate(mutation.mutationEffectPrefab, PlayerController.Instance._possessedNPC.GetTransform());
+            GameObject effectObj = Instantiate(mutation.prefab, PlayerController.Instance._possessedNPC.GetTransform());
             BaseMutationEffect effect = effectObj.GetComponent<BaseMutationEffect>();
             if (effect != null)
             {
