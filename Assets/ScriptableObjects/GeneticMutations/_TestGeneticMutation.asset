@@ -19,8 +19,8 @@ MonoBehaviour:
   rarity: 0
   prefab: {fileID: 4430960853319998083, guid: 88ef16de87ea81b45b8a6fd699c5432a, type: 3}
   shapeRows:
-  - cells: 01000000
-  - cells: 01000000
+  - cells: 00010101
+  - cells: 00000000
   - cells: 00000000
   - cells: 00000000
   mutationIcon: {fileID: 0}
