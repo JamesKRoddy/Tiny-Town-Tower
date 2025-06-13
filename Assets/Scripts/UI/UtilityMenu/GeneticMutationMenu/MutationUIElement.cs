@@ -8,7 +8,6 @@ public class MutationUIElement : MonoBehaviour
 {
     private RectTransform rectTransform;
     private Image iconImage; // UI icon
-    private bool isRotated = false;
     private GeneticMutationGrid grid;
     
     private bool isSelected = false;
@@ -16,14 +15,12 @@ public class MutationUIElement : MonoBehaviour
     public GeneticMutationObj mutation; // Made public to access from GeneticMutationGrid
     private Button button;
     private List<GameObject> cellObjects = new List<GameObject>();
-    private (int minX, int minY, int width, int height) boundingBox;
+    private GeneticMutationObj.RotationState currentRotation = GeneticMutationObj.RotationState.ROT_0;
 
     public bool IsSelected => isSelected;
 
     // Use the actual bounding box size for movement/placement
-    public Vector2Int Size => isRotated
-        ? new Vector2Int(mutation.GetActualSize().y, mutation.GetActualSize().x)
-        : mutation.GetActualSize();
+    public Vector2Int Size => mutation.GetActualSizeForRotation(currentRotation);
 
     public void Initialize(GeneticMutationObj mutation, GeneticMutationGrid grid)
     {
@@ -62,7 +59,6 @@ public class MutationUIElement : MonoBehaviour
         // Clear any existing cell objects
         ClearCellObjects();
 
-        boundingBox = mutation.GetBoundingBox();
         Vector2 cellSize = grid.GetCellSize();
         rectTransform.sizeDelta = new Vector2(
             cellSize.x * GeneticMutationObj.MAX_SHAPE_SIZE,
@@ -121,7 +117,6 @@ public class MutationUIElement : MonoBehaviour
         UpdateCellColors();
     }
 
-    // Remove IPointerEnterHandler and IPointerExitHandler since we're using EventTrigger now
     public void OnPointerEnter(PointerEventData eventData) { }
     public void OnPointerExit(PointerEventData eventData) { }
 
@@ -134,16 +129,24 @@ public class MutationUIElement : MonoBehaviour
         }
 
         Vector2 cellSize = grid.GetCellSize();
-        
+        var boundingBox = GetCurrentBoundingBox();
+        bool[,] rotatedShape = mutation.GetRotatedShape(currentRotation);
+
+        // Set the container size to match the actual size of the mutation
+        rectTransform.sizeDelta = new Vector2(
+            cellSize.x * boundingBox.width,
+            cellSize.y * boundingBox.height
+        );
+
         for (int y = 0; y < GeneticMutationObj.MAX_SHAPE_SIZE; y++)
         {
             for (int x = 0; x < GeneticMutationObj.MAX_SHAPE_SIZE; x++)
             {
-                if (mutation.IsPositionFilled(x, y))
+                if (rotatedShape[x, y])
                 {
                     GameObject cell = new GameObject($"Cell_{x}_{y}");
                     cell.transform.SetParent(transform, false);
-                    
+
                     // Add Image component
                     Image cellImage = cell.AddComponent<Image>();
                     if (mutation.sprite != null)
@@ -162,9 +165,12 @@ public class MutationUIElement : MonoBehaviour
                     cellRect.anchorMax = new Vector2(0, 0);
                     cellRect.pivot = new Vector2(0, 0);
                     cellRect.sizeDelta = new Vector2(cellSize.x * 0.9f, cellSize.y * 0.9f); // Make it slightly smaller than the grid cell
-                    
-                    // Offset by bounding box minX/minY so the shape is tight
-                    cellRect.anchoredPosition = GetCellPosition(x, y, cellSize);
+
+                    // Position the cell relative to the bounding box
+                    cellRect.anchoredPosition = new Vector2(
+                        (x - boundingBox.minX) * cellSize.x,
+                        (y - boundingBox.minY) * cellSize.y
+                    );
 
                     cellObjects.Add(cell);
                 }
@@ -186,27 +192,6 @@ public class MutationUIElement : MonoBehaviour
             {
                 cell.GetComponent<Image>().color = targetColor;
             }
-        }
-    }
-
-    private Vector2 GetCellPosition(int x, int y, Vector2 cellSize)
-    {
-        int bx = boundingBox.minX, by = boundingBox.minY;
-        if (isRotated)
-        {
-            // Rotate around the bounding box
-            int relX = x - bx, relY = y - by;
-            return new Vector2(
-                (relY) * cellSize.x,
-                (Size.x - 1 - relX) * cellSize.y
-            );
-        }
-        else
-        {
-            return new Vector2(
-                (x - bx) * cellSize.x,
-                (y - by) * cellSize.y
-            );
         }
     }
 
@@ -273,79 +258,108 @@ public class MutationUIElement : MonoBehaviour
     public void SetGridPosition(Vector2Int position, Vector2 cellSize)
     {
         if (rectTransform == null) return;
-
-        // Calculate the position in pixels based on grid position and cell size
+        
+        // Position is already in grid coordinates, no need to adjust for bounding box
         Vector2 anchoredPosition = new Vector2(
             position.x * cellSize.x,
             position.y * cellSize.y
         );
-
-        // Set the position
+        
         rectTransform.anchoredPosition = anchoredPosition;
-
-        // Ensure it's visible in the hierarchy
         gameObject.SetActive(true);
     }
 
-    public void Rotate()
+    public Vector2Int GetClampedPosition(Vector2Int position, int gridWidth, int gridHeight)
     {
-        isRotated = !isRotated;
-        
-        // Update cell positions without rotating the container
-        UpdateCellPositions();
+        var boundingBox = GetCurrentBoundingBox();
+        Vector2Int size = Size;
+
+        // Calculate the maximum allowed position that keeps all cells within bounds
+        int maxX = gridWidth - size.x;
+        int maxY = gridHeight - size.y;
+
+        // Clamp the position
+        return new Vector2Int(
+            Mathf.Clamp(position.x, 0, maxX),
+            Mathf.Clamp(position.y, 0, maxY)
+        );
     }
 
-    private void UpdateCellPositions()
+    public bool IsPositionValid(Vector2Int position, int gridWidth, int gridHeight)
     {
-        if (cellObjects.Count == 0) return;
-        
-        Vector2 cellSize = grid.GetCellSize();
-        
-        // Update each cell position based on rotation
-        for (int i = 0; i < cellObjects.Count; i++)
+        var boundingBox = GetCurrentBoundingBox();
+        Vector2Int size = Size;
+
+        // Check if the position would place any cell outside the grid
+        if (position.x < 0 || position.y < 0 ||
+            position.x + size.x > gridWidth ||
+            position.y + size.y > gridHeight)
         {
-            GameObject cell = cellObjects[i];
-            if (cell == null) continue;
-            
-            // Extract coordinates from name (Cell_X_Y)
-            string[] parts = cell.name.Split('_');
-            if (parts.Length < 3) continue;
-            
-            if (int.TryParse(parts[1], out int x) && int.TryParse(parts[2], out int y))
-            {
-                RectTransform cellRect = cell.GetComponent<RectTransform>();
-                if (cellRect != null)
-                {
-                    cellRect.anchoredPosition = GetCellPosition(x, y, cellSize);
-                }
-            }
+            return false;
         }
+
+        return true;
+    }
+
+    public void RotateLeft()
+    {
+        currentRotation = (GeneticMutationObj.RotationState)(((int)currentRotation + 3) % 4);
+        UpdateRotation();
+    }
+
+    public void RotateRight()
+    {
+        currentRotation = (GeneticMutationObj.RotationState)(((int)currentRotation + 1) % 4);
+        UpdateRotation();
+    }
+
+    private void UpdateRotation()
+    {
+        ClearCellObjects();
+        CreateCellObjects();
+        UpdateCellColors();
+    }
+
+    // Returns the current shape grid
+    public bool[,] GetCurrentShapeGrid()
+    {
+        return mutation.GetRotatedShape(currentRotation);
     }
 
     public bool IsPositionFilled(int x, int y)
     {
-        if (x < 0 || y < 0 || x >= GeneticMutationObj.MAX_SHAPE_SIZE || y >= GeneticMutationObj.MAX_SHAPE_SIZE)
+        int N = GeneticMutationObj.MAX_SHAPE_SIZE;
+        if (x < 0 || y < 0 || x >= N || y >= N)
             return false;
-            
-        if (isRotated)
-        {
-            // When rotated, we need to transform the coordinates
-            int tempX = y;
-            int tempY = GeneticMutationObj.MAX_SHAPE_SIZE - 1 - x;
-            
-            if (tempX < 0 || tempY < 0 || 
-                tempX >= GeneticMutationObj.MAX_SHAPE_SIZE || 
-                tempY >= GeneticMutationObj.MAX_SHAPE_SIZE)
-                return false;
-                
-            return mutation.IsPositionFilled(tempX, tempY);
-        }
-        
-        return mutation.IsPositionFilled(x, y);
+        var grid = GetCurrentShapeGrid();
+        return grid[x, y];
     }
 
     private void OnDestroy()
     {
         ClearCellObjects();
+    }
+
+    // Enumerates all filled cell local positions for the current rotation state
+    public IEnumerable<Vector2Int> GetFilledCellLocalPositions()
+    {
+        int N = GeneticMutationObj.MAX_SHAPE_SIZE;
+        var grid = GetCurrentShapeGrid();
+        for (int y = 0; y < N; y++)
+        {
+            for (int x = 0; x < N; x++)
+            {
+                if (grid[x, y])
+                {
+                    yield return new Vector2Int(x, y);
+                }
+            }
+        }
+    }
+
+    // Returns the bounding box for the current rotation state
+    public (int minX, int minY, int width, int height) GetCurrentBoundingBox()
+    {
+        return mutation.GetBoundingBoxForRotation(currentRotation);
     }
 }

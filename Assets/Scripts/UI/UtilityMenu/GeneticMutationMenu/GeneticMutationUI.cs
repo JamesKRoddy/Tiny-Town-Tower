@@ -46,13 +46,6 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     {
         base.SetPlayerControls(controlType);
 
-        // First, remove all control bindings to prevent duplicates
-        PlayerInput.Instance.OnLeftJoystick -= MoveMutation;
-        PlayerInput.Instance.OnAPressed -= PlaceMutation;
-        PlayerInput.Instance.OnXPressed -= RotateMutation;
-        PlayerInput.Instance.OnBPressed -= selectionPopup.OnCloseClicked;
-        PlayerInput.Instance.OnBPressed -= CancelPlacement;
-
         switch (controlType)
         {
             case PlayerControlType.IN_MENU:
@@ -71,6 +64,8 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
                 PlayerInput.Instance.OnAPressed += PlaceMutation;
                 PlayerInput.Instance.OnXPressed += RotateMutation;
                 PlayerInput.Instance.OnBPressed += CancelPlacement;
+                PlayerInput.Instance.OnLBPressed += RotateSelectedMutationLeft;
+                PlayerInput.Instance.OnRBPressed += RotateSelectedMutationRight;
                 // Disable all buttons in the current screen
                 if (screens.ContainsKey(currentCategory) && screens[currentCategory] != null)
                 {
@@ -241,59 +236,43 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         selectedMutationElement.SetGridPosition(selectedPosition, mutationGrid.GetCellSize());
     }
 
+    private void ClampSelectedPositionToGrid()
+    {
+        if (selectedMutationElement == null) return;
+        int gridWidth = mutationGrid.GetGridWidth();
+        int gridHeight = mutationGrid.GetGridHeight();
+
+        // Use the new clamping method
+        selectedPosition = selectedMutationElement.GetClampedPosition(selectedPosition, gridWidth, gridHeight);
+    }
+
     private void MoveMutation(Vector2 direction)
     {
         if (!isPlacingMutation || selectedMutationElement == null) return;
-
-        // Check if we're in warning lock period
-        if (Time.time < warningLockEndTime)
-            return;
-
-        // Store the last input direction
+        if (Time.time < warningLockEndTime) return;
         lastInputDirection = direction;
+        if (Time.time - lastMoveTime < moveSpeed) return;
+        if (Mathf.Abs(direction.x) < inputThreshold && Mathf.Abs(direction.y) < inputThreshold) return;
 
-        // Check if enough time has passed since last movement
-        if (Time.time - lastMoveTime < moveSpeed)
-            return;
-
-        // Only move if there's significant input (to prevent drift)
-        if (Mathf.Abs(direction.x) < inputThreshold && Mathf.Abs(direction.y) < inputThreshold)
-            return;
-
-        // Calculate new position based on input
         Vector2Int newPosition = selectedPosition;
-        
-        // Determine primary movement direction (horizontal or vertical)
         if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
-        {
-            // Horizontal movement
             newPosition.x += direction.x > 0 ? 1 : -1;
-        }
         else
-        {
-            // Vertical movement
             newPosition.y += direction.y > 0 ? 1 : -1;
-        }
 
-        int gridWidth = mutationGrid.GetGridWidth();
-        int gridHeight = mutationGrid.GetGridHeight();
-        Vector2Int size = selectedMutationElement.Size;
-        Debug.Log($"[MoveMutation] Input: {direction}, OldPos: {selectedPosition}, NewPos: {newPosition}, Size: {size}, Grid: {gridWidth}x{gridHeight}");
-
-        // Clamp the position to the grid bounds
-        newPosition.x = Mathf.Clamp(newPosition.x, 0, gridWidth - size.x);
-        newPosition.y = Mathf.Clamp(newPosition.y, 0, gridHeight - size.y);
-        Debug.Log($"[MoveMutation] Clamped NewPos: {newPosition}");
-
-        // Only move if the position is different
-        if (newPosition != selectedPosition)
+        // Check if the new position is valid before applying it
+        if (selectedMutationElement.IsPositionValid(newPosition, mutationGrid.GetGridWidth(), mutationGrid.GetGridHeight()))
         {
             selectedPosition = newPosition;
             lastMoveTime = Time.time;
-
-            // Update the position of the mutation element
             selectedMutationElement.SetGridPosition(selectedPosition, mutationGrid.GetCellSize());
-            Debug.Log($"[MoveMutation] Moved to position: {selectedPosition}");
+        }
+        else
+        {
+            // Show warning if we can't move in that direction
+            selectedMutationElement.ShowWarning();
+            warningLockEndTime = Time.time + 0.5f;
+            StartCoroutine(HideWarningAfterDelay());
         }
     }
 
@@ -301,11 +280,11 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     {
         if (!isPlacingMutation || selectedMutationElement == null) return;
         
-        // Rotate the mutation element
-        selectedMutationElement.Rotate();
+        // Rotate the mutation element clockwise
+        selectedMutationElement.RotateRight();
         
         // Debug log to verify rotation
-        Debug.Log("Rotated mutation");
+        Debug.Log("Rotated mutation clockwise");
     }
 
     private void PlaceMutation()
@@ -402,6 +381,84 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         if (selectionPopup != null)
         {
             selectionPopup.DisplayPopup(mutation, this, uiElement.gameObject);
+        }
+    }
+
+    public void RotateSelectedMutationLeft()
+    {
+        if (isPlacingMutation && selectedMutationElement != null)
+        {
+            selectedMutationElement.RotateLeft();
+            
+            // Check if the current position is still valid after rotation
+            if (!selectedMutationElement.IsPositionValid(selectedPosition, mutationGrid.GetGridWidth(), mutationGrid.GetGridHeight()))
+            {
+                // If not valid, try to find a valid position
+                bool foundValidPosition = false;
+                for (int x = 0; x < mutationGrid.GetGridWidth(); x++)
+                {
+                    for (int y = 0; y < mutationGrid.GetGridHeight(); y++)
+                    {
+                        Vector2Int testPos = new Vector2Int(x, y);
+                        if (selectedMutationElement.IsPositionValid(testPos, mutationGrid.GetGridWidth(), mutationGrid.GetGridHeight()))
+                        {
+                            selectedPosition = testPos;
+                            foundValidPosition = true;
+                            break;
+                        }
+                    }
+                    if (foundValidPosition) break;
+                }
+
+                // If no valid position found, show warning
+                if (!foundValidPosition)
+                {
+                    selectedMutationElement.ShowWarning();
+                    warningLockEndTime = Time.time + 0.5f;
+                    StartCoroutine(HideWarningAfterDelay());
+                }
+            }
+
+            selectedMutationElement.SetGridPosition(selectedPosition, mutationGrid.GetCellSize());
+        }
+    }
+
+    public void RotateSelectedMutationRight()
+    {
+        if (isPlacingMutation && selectedMutationElement != null)
+        {
+            selectedMutationElement.RotateRight();
+            
+            // Check if the current position is still valid after rotation
+            if (!selectedMutationElement.IsPositionValid(selectedPosition, mutationGrid.GetGridWidth(), mutationGrid.GetGridHeight()))
+            {
+                // If not valid, try to find a valid position
+                bool foundValidPosition = false;
+                for (int x = 0; x < mutationGrid.GetGridWidth(); x++)
+                {
+                    for (int y = 0; y < mutationGrid.GetGridHeight(); y++)
+                    {
+                        Vector2Int testPos = new Vector2Int(x, y);
+                        if (selectedMutationElement.IsPositionValid(testPos, mutationGrid.GetGridWidth(), mutationGrid.GetGridHeight()))
+                        {
+                            selectedPosition = testPos;
+                            foundValidPosition = true;
+                            break;
+                        }
+                    }
+                    if (foundValidPosition) break;
+                }
+
+                // If no valid position found, show warning
+                if (!foundValidPosition)
+                {
+                    selectedMutationElement.ShowWarning();
+                    warningLockEndTime = Time.time + 0.5f;
+                    StartCoroutine(HideWarningAfterDelay());
+                }
+            }
+
+            selectedMutationElement.SetGridPosition(selectedPosition, mutationGrid.GetCellSize());
         }
     }
 }

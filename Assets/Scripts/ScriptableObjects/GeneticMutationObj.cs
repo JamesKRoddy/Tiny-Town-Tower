@@ -6,6 +6,14 @@ public class GeneticMutationObj : ResourceScriptableObj
 {
     public const int MAX_SHAPE_SIZE = 4; // Maximum size for the shape grid
 
+    public enum RotationState
+    {
+        ROT_0,    // 0 degrees
+        ROT_90,   // 90 degrees clockwise
+        ROT_180,  // 180 degrees
+        ROT_270   // 270 degrees clockwise
+    }
+
     [Serializable]
     public class ShapeRow
     {
@@ -95,6 +103,78 @@ public class GeneticMutationObj : ResourceScriptableObj
     public Vector2Int GetActualSize()
     {
         var box = GetBoundingBox();
+        return new Vector2Int(box.width, box.height);
+    }
+
+    // Get the rotated shape for a given rotation state
+    public bool[,] GetRotatedShape(RotationState rotation)
+    {
+        bool[,] original = shape;
+        bool[,] rotated = new bool[MAX_SHAPE_SIZE, MAX_SHAPE_SIZE];
+
+        switch (rotation)
+        {
+            case RotationState.ROT_0:
+                // No rotation needed
+                for (int y = 0; y < MAX_SHAPE_SIZE; y++)
+                    for (int x = 0; x < MAX_SHAPE_SIZE; x++)
+                        rotated[x, y] = original[x, y];
+                break;
+
+            case RotationState.ROT_90:
+                // 90 degrees clockwise
+                for (int y = 0; y < MAX_SHAPE_SIZE; y++)
+                    for (int x = 0; x < MAX_SHAPE_SIZE; x++)
+                        rotated[y, MAX_SHAPE_SIZE - 1 - x] = original[x, y];
+                break;
+
+            case RotationState.ROT_180:
+                // 180 degrees
+                for (int y = 0; y < MAX_SHAPE_SIZE; y++)
+                    for (int x = 0; x < MAX_SHAPE_SIZE; x++)
+                        rotated[MAX_SHAPE_SIZE - 1 - x, MAX_SHAPE_SIZE - 1 - y] = original[x, y];
+                break;
+
+            case RotationState.ROT_270:
+                // 270 degrees clockwise (or 90 degrees counter-clockwise)
+                for (int y = 0; y < MAX_SHAPE_SIZE; y++)
+                    for (int x = 0; x < MAX_SHAPE_SIZE; x++)
+                        rotated[MAX_SHAPE_SIZE - 1 - y, x] = original[x, y];
+                break;
+        }
+
+        return rotated;
+    }
+
+    // Get the bounding box for a given rotation state
+    public (int minX, int minY, int width, int height) GetBoundingBoxForRotation(RotationState rotation)
+    {
+        bool[,] rotatedShape = GetRotatedShape(rotation);
+        int minX = MAX_SHAPE_SIZE, minY = MAX_SHAPE_SIZE, maxX = -1, maxY = -1;
+
+        for (int y = 0; y < MAX_SHAPE_SIZE; y++)
+        {
+            for (int x = 0; x < MAX_SHAPE_SIZE; x++)
+            {
+                if (rotatedShape[x, y])
+                {
+                    if (x < minX) minX = x;
+                    if (y < minY) minY = y;
+                    if (x > maxX) maxX = x;
+                    if (y > maxY) maxY = y;
+                }
+            }
+        }
+
+        if (maxX < minX || maxY < minY)
+            return (0, 0, 1, 1);
+        return (minX, minY, maxX - minX + 1, maxY - minY + 1);
+    }
+
+    // Get the actual size for a given rotation state
+    public Vector2Int GetActualSizeForRotation(RotationState rotation)
+    {
+        var box = GetBoundingBoxForRotation(rotation);
         return new Vector2Int(box.width, box.height);
     }
 }

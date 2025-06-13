@@ -27,9 +27,13 @@ public class GeneticMutationObjEditor : Editor
         {
             ClearShape(mutation);
         }
-        if (GUILayout.Button("Rotate 90°"))
+        if (GUILayout.Button("Rotate 90° Clockwise"))
         {
-            RotateShape(mutation);
+            RotateShapeClockwise(mutation);
+        }
+        if (GUILayout.Button("Rotate 90° Counter-Clockwise"))
+        {
+            RotateShapeCounterClockwise(mutation);
         }
         EditorGUILayout.EndHorizontal();
 
@@ -97,7 +101,7 @@ public class GeneticMutationObjEditor : Editor
         GUI.changed = true;
     }
 
-    private void RotateShape(GeneticMutationObj mutation)
+    private void RotateShapeClockwise(GeneticMutationObj mutation)
     {
         bool[,] currentShape = mutation.shape;
         bool[,] newShape = new bool[GeneticMutationObj.MAX_SHAPE_SIZE, GeneticMutationObj.MAX_SHAPE_SIZE];
@@ -107,6 +111,23 @@ public class GeneticMutationObjEditor : Editor
             for (int x = 0; x < GeneticMutationObj.MAX_SHAPE_SIZE; x++)
             {
                 newShape[y, GeneticMutationObj.MAX_SHAPE_SIZE - 1 - x] = currentShape[x, y];
+            }
+        }
+
+        mutation.shape = newShape;
+        GUI.changed = true;
+    }
+
+    private void RotateShapeCounterClockwise(GeneticMutationObj mutation)
+    {
+        bool[,] currentShape = mutation.shape;
+        bool[,] newShape = new bool[GeneticMutationObj.MAX_SHAPE_SIZE, GeneticMutationObj.MAX_SHAPE_SIZE];
+        
+        for (int y = 0; y < GeneticMutationObj.MAX_SHAPE_SIZE; y++)
+        {
+            for (int x = 0; x < GeneticMutationObj.MAX_SHAPE_SIZE; x++)
+            {
+                newShape[GeneticMutationObj.MAX_SHAPE_SIZE - 1 - y, x] = currentShape[x, y];
             }
         }
 
