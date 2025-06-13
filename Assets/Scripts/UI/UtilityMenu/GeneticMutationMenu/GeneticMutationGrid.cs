@@ -94,35 +94,47 @@ public class GeneticMutationGrid : MonoBehaviour
 
     public bool CanPlaceMutation(Vector2Int position, MutationUIElement element)
     {
-        Vector2Int size = element.Size;
-        int gridWidth = GetGridWidth();
-        int gridHeight = GetGridHeight();
-        Debug.Log($"[CanPlaceMutation] Checking position {position} with size {size} on grid {gridWidth}x{gridHeight}");
-        if (position.x + size.x > gridWidth || position.y + size.y > gridHeight ||
-            position.x < 0 || position.y < 0)
+        Debug.Log($"[CanPlaceMutation] Checking position {position} with size {element.Size} on grid {gridWidth}x{gridHeight}");
+        // Log the mutation shape as a matrix
+        Debug.Log($"[CanPlaceMutation] Shape matrix for {element.mutation.objectName}:");
+        for (int y = element.Size.y - 1; y >= 0; y--)
         {
-            Debug.LogWarning($"[CanPlaceMutation] Out of bounds: pos {position}, size {size}, grid {gridWidth}x{gridHeight}");
-            return false;
+            string row = "";
+            for (int x = 0; x < element.Size.x; x++)
+            {
+                row += element.IsPositionFilled(x, y) ? "X " : ". ";
+            }
+            Debug.Log($"[CanPlaceMutation] {row}");
         }
-        for (int y = 0; y < size.y; y++)
+        // Log current grid state
+        Debug.Log("[CanPlaceMutation] Current grid state:");
+        for (int y = gridHeight - 1; y >= 0; y--)
         {
-            for (int x = 0; x < size.x; x++)
+            string row = "";
+            for (int x = 0; x < gridWidth; x++)
+            {
+                row += grid[x, y] != null ? "X " : ". ";
+            }
+            Debug.Log($"[CanPlaceMutation] {row}");
+        }
+        // Log each cell checked
+        for (int y = 0; y < element.Size.y; y++)
+        {
+            for (int x = 0; x < element.Size.x; x++)
             {
                 if (element.IsPositionFilled(x, y))
                 {
                     int gridX = position.x + x;
                     int gridY = position.y + y;
-                    if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight)
+                    Debug.Log($"[CanPlaceMutation] Checking cell ({gridX},{gridY})");
+                    if (gridX < 0 || gridX >= gridWidth || gridY < 0 || gridY >= gridHeight)
                     {
-                        if (grid[gridX, gridY] != null && grid[gridX, gridY] != element)
-                        {
-                            Debug.LogWarning($"[CanPlaceMutation] Cell occupied at {gridX},{gridY}");
-                            return false;
-                        }
+                        Debug.LogWarning($"[CanPlaceMutation] Position {gridX},{gridY} is out of bounds!");
+                        return false;
                     }
-                    else
+                    if (grid[gridX, gridY] != null && grid[gridX, gridY] != element)
                     {
-                        Debug.LogWarning($"[CanPlaceMutation] Cell out of bounds at {gridX},{gridY}");
+                        Debug.LogWarning($"[CanPlaceMutation] Cell at {gridX},{gridY} is occupied by {grid[gridX, gridY].mutation.objectName}!");
                         return false;
                     }
                 }
@@ -134,8 +146,32 @@ public class GeneticMutationGrid : MonoBehaviour
 
     public void PlaceMutation(MutationUIElement element, Vector2Int position, Vector2Int size)
     {
-        Debug.Log($"[PlaceMutation] Placing at {position} with size {size}");
+        Debug.Log($"[PlaceMutation] Placing mutation {element.mutation.objectName} at {position} with size {size}");
+        // Log the mutation shape as a matrix
+        Debug.Log($"[PlaceMutation] Shape matrix for {element.mutation.objectName}:");
+        for (int y = size.y - 1; y >= 0; y--)
+        {
+            string row = "";
+            for (int x = 0; x < size.x; x++)
+            {
+                row += element.IsPositionFilled(x, y) ? "X " : ". ";
+            }
+            Debug.Log($"[PlaceMutation] {row}");
+        }
+        // Log the current state of the grid before placement
+        Debug.Log("[PlaceMutation] Grid state before placement:");
+        for (int y = gridHeight - 1; y >= 0; y--)
+        {
+            string row = "";
+            for (int x = 0; x < gridWidth; x++)
+            {
+                row += grid[x, y] != null ? "X " : ". ";
+            }
+            Debug.Log($"[PlaceMutation] {row}");
+        }
+        // Clear the old position first
         ClearPosition(element);
+        // Place the mutation in the new position
         for (int y = 0; y < size.y; y++)
         {
             for (int x = 0; x < size.x; x++)
@@ -144,6 +180,7 @@ public class GeneticMutationGrid : MonoBehaviour
                 {
                     int gridX = position.x + x;
                     int gridY = position.y + y;
+                    Debug.Log($"[PlaceMutation] Setting cell ({gridX},{gridY})");
                     if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight)
                     {
                         grid[gridX, gridY] = element;
@@ -156,6 +193,17 @@ public class GeneticMutationGrid : MonoBehaviour
                 }
             }
         }
+        // Log the final state of the grid after placement
+        Debug.Log("[PlaceMutation] Grid state after placement:");
+        for (int y = gridHeight - 1; y >= 0; y--)
+        {
+            string row = "";
+            for (int x = 0; x < gridWidth; x++)
+            {
+                row += grid[x, y] != null ? "X " : ". ";
+            }
+            Debug.Log($"[PlaceMutation] {row}");
+        }
         element.SetGridPosition(position, GetCellSize());
         element.SetupButtonClick();
         PlayerUIManager.Instance.SetSelectedGameObject(element.gameObject);
@@ -163,23 +211,33 @@ public class GeneticMutationGrid : MonoBehaviour
 
     public void ClearPosition(MutationUIElement element)
     {
-        // Find and clear the old position of this mutation
+        Debug.Log($"[ClearPosition] Clearing position for mutation: {element.mutation.objectName}");
         for (int x = 0; x < gridWidth; x++)
         {
             for (int y = 0; y < gridHeight; y++)
             {
                 if (grid[x, y] == element)
                 {
-                    // Clear the position
+                    Debug.Log($"[ClearPosition] Clearing cell ({x},{y})");
                     grid[x, y] = null;
-                    
-                    // Restore visual grid cell visibility
                     if (visualGrid[x, y] != null)
                     {
                         visualGrid[x, y].GetComponent<Image>().color = emptySlotColor;
                     }
+                    Debug.Log($"[ClearPosition] Cleared cell at {x},{y}");
                 }
             }
+        }
+        // Log the grid state after clearing
+        Debug.Log("[ClearPosition] Grid state after clearing:");
+        for (int y = gridHeight - 1; y >= 0; y--)
+        {
+            string row = "";
+            for (int x = 0; x < gridWidth; x++)
+            {
+                row += grid[x, y] != null ? "X " : ". ";
+            }
+            Debug.Log($"[ClearPosition] {row}");
         }
     }
 
@@ -283,3 +341,4 @@ public class GeneticMutationGrid : MonoBehaviour
         return null;
     }
 }
+

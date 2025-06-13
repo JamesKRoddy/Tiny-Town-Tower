@@ -4,7 +4,7 @@ Genetic Mutation Fixes
 
 Tomorrow:
 
-After placing the mutation button they need to be highlighted
+Mutations can be placed ontop of eachother, need to check visual elements
 
 Picking up genetic mutations and assigning them to the player, opening the screen placing them, showing mutation details when highlighted, exit popup to let player know unequipped ones will be dropped, discarding unequipped ones.
 

@@ -195,8 +195,6 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         isPlacingMutation = true;
         isMovingExistingMutation = true;
         selectedPosition = new Vector2Int(0, 0);
-
-        // Find the existing UI element for this mutation
         selectedMutationElement = uiElement;
         mutationGrid.ClearPosition(selectedMutationElement);
         if (selectedMutationElement == null)
