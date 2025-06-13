@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using System.Linq;
 
 [RequireComponent(typeof (GridLayoutGroup))]
 public class GeneticMutationGrid : MonoBehaviour
@@ -92,42 +93,76 @@ public class GeneticMutationGrid : MonoBehaviour
         }
     }
 
-    public bool CanPlaceMutation(Vector2Int position, MutationUIElement element)
+    public bool CanPlaceMutation(Vector2Int position, MutationUIElement mutationElement)
     {
-        for (int y = 0; y < element.Size.y; y++)
+        Debug.Log($"[CanPlaceMutation] Checking position {position} for mutation {mutationElement.mutation.objectName}");
+        Debug.Log($"[CanPlaceMutation] Grid size: {gridWidth}x{gridHeight}, Mutation size: {mutationElement.Size}");
+
+        // First check if the position is valid for the mutation
+        if (!mutationElement.IsPositionValid(position, gridWidth, gridHeight))
         {
-            for (int x = 0; x < element.Size.x; x++)
+            Debug.Log($"[CanPlaceMutation] Position {position} is not valid for mutation");
+            return false;
+        }
+
+        // Get the filled cell positions relative to the mutation's origin
+        var filledPositions = mutationElement.GetFilledCellLocalPositions();
+        Debug.Log($"[CanPlaceMutation] Filled positions count: {filledPositions.Count()}");
+
+        // Check each filled position for collisions
+        foreach (var localPos in filledPositions)
+        {
+            Vector2Int gridPos = position + localPos;
+            
+            // Check if the cell is within grid bounds
+            if (gridPos.x < 0 || gridPos.x >= gridWidth || gridPos.y < 0 || gridPos.y >= gridHeight)
             {
-                if (!element.IsPositionFilled(x, y)) continue;
-                int gridX = position.x + x;
-                int gridY = position.y + y;
-                if (gridX < 0 || gridX >= gridWidth || gridY < 0 || gridY >= gridHeight)
-                    return false;
-                if (grid[gridX, gridY] != null && grid[gridX, gridY] != element)
-                    return false;
+                Debug.Log($"[CanPlaceMutation] Cell position {gridPos} is out of grid bounds");
+                return false;
+            }
+
+            // Check if there's already a mutation at this position
+            if (grid[gridPos.x, gridPos.y] != null)
+            {
+                Debug.Log($"[CanPlaceMutation] Cell position {gridPos} is already filled by mutation {grid[gridPos.x, gridPos.y].mutation.objectName}");
+                return false;
             }
         }
+
+        Debug.Log($"[CanPlaceMutation] Position {position} is valid for placement");
         return true;
     }
 
     public void PlaceMutation(MutationUIElement element, Vector2Int position, Vector2Int size)
     {
+        Debug.Log($"[PlaceMutation] Placing mutation {element.mutation.objectName} at {position}");
+        Debug.Log($"[PlaceMutation] Grid size: {gridWidth}x{gridHeight}, Mutation size: {size}");
+
+        // Clear any existing positions for this element
         ClearPosition(element);
-        for (int y = 0; y < size.y; y++)
+
+        // Place the element in all its filled positions
+        var filledPositions = element.GetFilledCellLocalPositions();
+        Debug.Log($"[PlaceMutation] Filled positions count: {filledPositions.Count()}");
+
+        foreach (var localPos in filledPositions)
         {
-            for (int x = 0; x < size.x; x++)
+            int gridX = position.x + localPos.x;
+            int gridY = position.y + localPos.y;
+
+            if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight)
             {
-                if (!element.IsPositionFilled(x, y)) continue;
-                int gridX = position.x + x;
-                int gridY = position.y + y;
-                if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight)
-                {
-                    grid[gridX, gridY] = element;
-                    if (visualGrid[gridX, gridY] != null)
-                        visualGrid[gridX, gridY].GetComponent<Image>().color = new Color(1, 1, 1, 0);
-                }
+                grid[gridX, gridY] = element;
+                if (visualGrid[gridX, gridY] != null)
+                    visualGrid[gridX, gridY].GetComponent<Image>().color = new Color(1, 1, 1, 0);
+                Debug.Log($"[PlaceMutation] Placed cell at grid position {new Vector2Int(gridX, gridY)}");
+            }
+            else
+            {
+                Debug.LogWarning($"[PlaceMutation] Attempted to place cell outside grid at {new Vector2Int(gridX, gridY)}");
             }
         }
+
         element.SetGridPosition(position, GetCellSize());
         element.SetupButtonClick();
         PlayerUIManager.Instance.SetSelectedGameObject(element.gameObject);

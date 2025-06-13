@@ -269,36 +269,48 @@ public class MutationUIElement : MonoBehaviour
         gameObject.SetActive(true);
     }
 
-    public Vector2Int GetClampedPosition(Vector2Int position, int gridWidth, int gridHeight)
-    {
-        var boundingBox = GetCurrentBoundingBox();
-        Vector2Int size = Size;
-
-        // Calculate the maximum allowed position that keeps all cells within bounds
-        int maxX = gridWidth - size.x;
-        int maxY = gridHeight - size.y;
-
-        // Clamp the position
-        return new Vector2Int(
-            Mathf.Clamp(position.x, 0, maxX),
-            Mathf.Clamp(position.y, 0, maxY)
-        );
-    }
-
     public bool IsPositionValid(Vector2Int position, int gridWidth, int gridHeight)
     {
         var boundingBox = GetCurrentBoundingBox();
         Vector2Int size = Size;
+
+        Debug.Log($"[IsPositionValid] Checking position {position} for mutation {mutation.objectName}");
+        Debug.Log($"[IsPositionValid] Grid size: {gridWidth}x{gridHeight}, Mutation size: {size}");
+        Debug.Log($"[IsPositionValid] Bounding box: {boundingBox}");
 
         // Check if the position would place any cell outside the grid
         if (position.x < 0 || position.y < 0 ||
             position.x + size.x > gridWidth ||
             position.y + size.y > gridHeight)
         {
+            Debug.Log($"[IsPositionValid] Position {position} is out of bounds. Grid: {gridWidth}x{gridHeight}, Size: {size}");
             return false;
         }
 
+        Debug.Log($"[IsPositionValid] Position {position} is valid");
         return true;
+    }
+
+    public Vector2Int GetClampedPosition(Vector2Int position, int gridWidth, int gridHeight)
+    {
+        var boundingBox = GetCurrentBoundingBox();
+        Vector2Int size = Size;
+
+        Debug.Log($"[GetClampedPosition] Input position: {position}");
+        Debug.Log($"[GetClampedPosition] Grid size: {gridWidth}x{gridHeight}, Mutation size: {size}");
+        Debug.Log($"[GetClampedPosition] Bounding box: {boundingBox}");
+
+        // Calculate the maximum allowed position that keeps all cells within bounds
+        int maxX = gridWidth - size.x;
+        int maxY = gridHeight - size.y;
+
+        Vector2Int clamped = new Vector2Int(
+            Mathf.Clamp(position.x, 0, maxX),
+            Mathf.Clamp(position.y, 0, maxY)
+        );
+
+        Debug.Log($"[GetClampedPosition] Clamped position: {clamped}");
+        return clamped;
     }
 
     public void RotateLeft()
@@ -345,13 +357,15 @@ public class MutationUIElement : MonoBehaviour
     {
         int N = GeneticMutationObj.MAX_SHAPE_SIZE;
         var grid = GetCurrentShapeGrid();
+        var box = GetCurrentBoundingBox();
         for (int y = 0; y < N; y++)
         {
             for (int x = 0; x < N; x++)
             {
                 if (grid[x, y])
                 {
-                    yield return new Vector2Int(x, y);
+                    // Normalize to bounding box
+                    yield return new Vector2Int(x - box.minX, y - box.minY);
                 }
             }
         }
