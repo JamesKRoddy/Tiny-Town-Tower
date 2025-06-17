@@ -88,7 +88,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         //TODO Display this on the UI so that the player can seee the inventory items being added
 
         var resourceItem = resourcePickup.GetResourceObj();
-
         switch (resourceItem)
         {
             case WeaponScriptableObj weapon:
@@ -116,13 +115,14 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 }
                 break;
             case GeneticMutationObj geneticMutation:
+                Debug.Log("Adding genetic mutation to player inventory: " + geneticMutation.objectName);
                 AddAvalibleMutation(geneticMutation);
+                PlayerUIManager.Instance.utilityMenu.EnableGeneticMutationMenu();
                 break;
             case ResourceScriptableObj resource:
                 //Adding resources to the possessed NPC's inventory
                 PlayerController.Instance.GetCharacterInventory().AddItem(resource, resourcePickup.count);
                 break;
-
             // Add additional cases here for other item types if necessary.
             default:
                 Debug.LogWarning("Unhandled chest item type.");
@@ -217,6 +217,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     {
         if (result == null) return;
 
+        Debug.Log("Handling interaction result: " + result.GetType().Name);
         switch (result)
         {
             case ResourceItemCount resourcePickup:

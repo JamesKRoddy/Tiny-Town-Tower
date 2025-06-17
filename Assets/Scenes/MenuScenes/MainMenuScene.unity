@@ -825,6 +825,10 @@ PrefabInstance:
       propertyPath: showGridBounds
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2792607112023517297, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: characterLootTables.Array.data[0].lootTable
+      value: 
+      objectReference: {fileID: 11400000, guid: 4c7b7fd53df04c844a465fd5fafaaeca, type: 2}
     - target: {fileID: 4439842862291004188, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: xBounds.x
       value: -10

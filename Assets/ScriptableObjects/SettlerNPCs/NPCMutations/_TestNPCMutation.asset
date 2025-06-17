@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c8c93d07c7ba3c0409f8d4ef4922fcbe, type: 3}
   m_Name: _TestNPCMutation
   m_EditorClassIdentifier: 
-  objectName: 
-  description: 
+  objectName: Test Mutation
+  description: Test Mutation
   sprite: {fileID: 0}
   category: 0
   rarity: 0
