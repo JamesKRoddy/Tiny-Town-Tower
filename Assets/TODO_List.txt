@@ -8,23 +8,40 @@ While a mutation is selected pressing b sets selected game object back to mutati
 Test with differnt shapes
 
 
+Things to do for a demo:
 
-Picking up genetic mutations and assigning them to the player, opening the screen placing them, showing mutation details when highlighted, exit popup to let player know unequipped ones will be dropped, discarding unequipped ones.
+Showing mutation details when highlighted, selecting mutations after placing it, exit popup to let player know unequipped ones will be dropped, discarding unequipped ones.
 
-Instead of spawning enemies from the same points, add in code to select randow points on the nave mesh to spawn, spawn points!!!
+Display picked up items for a second.
+
+Level and loot difficulty system.
 
 Displaying npc mutations (charicteristics)
 
+Turret refactor so they are used in the camp to kill zombies
+
+Enviromental hazzards in the roguelike section enviromental hazzards, electrical/acid etc.
+
+Filling out the overworld, having more options of buildings to select.
+
+Create more room/building prefabs
+
+Filling out sound and VFX
+
+Visual effects from elemental weapons eg. zombies get shocked by electrical wepon, they freeze and particles are emitted.
+
+Setup some new enemies: Boomer that runs towards you and explodes (elemental  variety too so the explosion leaves damage areas). Zombie that when its killed splits into smaller enemies.
+
+
+
+Longer elements:
+Instead of spawning enemies from the same points, add in code to select randow points on the nave mesh to spawn, spawn points!!!
 Implement a day/night cycle for the entire game.
 Figure out what happens in the camp while youre gone, does progress on stuff freeze? Does it keep going or does it progress but slower?
 
 
-Zombie sound effects
-Enviromental hazzards, electrical/acid etc.
-Visual effects from elemental weapons eg. zombies get shocked by electrical wepon, they freeze and particles are emitted.
-Expanding the overworld, having more options of buildings to select.
-Creating more rooms and buildings.
-Setup some new enemies: Boomer that runs towards you and explodes (elemental  variety too so the explosion leaves damage areas). Zombie that when its killed splits into smaller enemies.
+
+
 
 
 
@@ -43,8 +60,6 @@ Have to review the room spawning grid system, I think just to get rid of it and 
 ******Stuff for later******
 
 Have to do some refactoring on the npc animator and what has access to it
-
-Turret selection with default controls will have to do the same/tie in with TURRET_CAMERA_MOVEMENT	
 
 NPCs have to use toilets, need to figure out timers for when they need it
 
