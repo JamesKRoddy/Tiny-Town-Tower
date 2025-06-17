@@ -30,7 +30,6 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
 
     private void OnEnemySetupStateChanged(EnemySetupState state)
     {
-        Debug.Log("OnEnemySetupStateChanged: " + state);
         if(state == EnemySetupState.ALL_WAVES_CLEARED)
         {
             if(doorType == DoorStatus.ENTRANCE)

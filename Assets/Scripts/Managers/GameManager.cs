@@ -26,6 +26,9 @@ namespace Managers
             }
         }
 
+        [SerializeField] private ResourceManager _resourceManager;
+        public ResourceManager ResourceManager => _resourceManager;
+
         // Public event to notify when the game mode changes
         public event Action<GameMode> OnGameModeChanged;
 

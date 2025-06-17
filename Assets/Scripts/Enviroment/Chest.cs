@@ -32,16 +32,9 @@ public class Chest : MonoBehaviour, IInteractive<ResourceItemCount>
         openRotation = door.localRotation * Quaternion.Euler(rotationAxis * openAngle);
     }
 
-    public void AssignChestLoot(int roomDifficulty, LootTableScriptableObj lootTableScriptableObj)
+    public void AssignChestLoot(ResourceItemCount resourceItemCount)
     {
-        if (lootTableScriptableObj == null)
-        {
-            Debug.LogError("LootTableScriptableObj is not assigned! Please assign a LootTableScriptableObj.");
-            return;
-        }
-
-        ResourceRarity rarity = DifficultyRarityMapper.GetResourceRarity(roomDifficulty);
-        chestContents = lootTableScriptableObj.GetLootByRarity(rarity);
+        chestContents = resourceItemCount;
     }
 
     public void CloseChest()
