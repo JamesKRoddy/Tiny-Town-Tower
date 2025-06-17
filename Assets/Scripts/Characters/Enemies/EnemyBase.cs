@@ -347,6 +347,12 @@ namespace Enemies
             agent.enabled = false;
             GetComponent<Collider>().enabled = false;
 
+            int shouldDropLoot = UnityEngine.Random.Range(0, 100);
+            if (shouldDropLoot < 50)
+            {
+                GameManager.Instance.ResourceManager.SpawnCharacterLoot(characterType, RogueLiteManager.Instance.GetCurrentWaveDifficulty(), transform.position + Vector3.up * 1.0f);
+            }
+
             // Play death VFX
             Vector3 deathPoint = transform.position + Vector3.up * 1.5f;
             Vector3 deathNormal = Vector3.up;

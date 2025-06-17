@@ -7,7 +7,7 @@ public abstract class WeaponBase : MonoBehaviour, IPickupableItem
 
     public WeaponScriptableObj WeaponData => weaponData;
 
-    public virtual void Initialize(ResourceScriptableObj data)
+    public virtual void Initialize(ResourceScriptableObj data, int count = 1)
     {
         if (data is WeaponScriptableObj weaponScriptableObj)
         {

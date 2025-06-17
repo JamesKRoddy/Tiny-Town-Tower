@@ -7,7 +7,7 @@ public interface IControllerInput
 
 public interface IPickupableItem
 {
-    void Initialize(ResourceScriptableObj data);
+    void Initialize(ResourceScriptableObj data, int count = 1);
     string GetItemName();
     string GetItemDescription();
     Sprite GetItemImage();

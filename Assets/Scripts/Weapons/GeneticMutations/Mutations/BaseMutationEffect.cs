@@ -16,7 +16,7 @@ public abstract class BaseMutationEffect : MonoBehaviour, IPickupableItem
     // Abstract property that derived classes must implement
     protected abstract int ActiveInstances { get; set; }
 
-    public void Initialize(ResourceScriptableObj data)
+    public void Initialize(ResourceScriptableObj data, int count = 1)
     {
         if (data is GeneticMutationObj mutationScriptableObj)
         {

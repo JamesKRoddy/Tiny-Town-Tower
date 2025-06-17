@@ -970,6 +970,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5de351c341c32948a0f35ad662abdb9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  resourcePickupPrefab: {fileID: 2216260560105909579, guid: 99aa04a97cae35b4c9da654d4af50cc5, type: 3}
   characterLootTables:
   - characterType: 201
     lootTable: {fileID: 11400000, guid: 681b939ea02b0fb408e38b6647a144b0, type: 2}
