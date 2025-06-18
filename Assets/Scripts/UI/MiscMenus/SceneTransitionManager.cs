@@ -63,7 +63,6 @@ public class SceneTransitionManager : MonoBehaviour
 
     public void LoadScene(string sceneName, GameMode nextGameMode, bool keepPossessedNPC, Action OnSceneLoaded = null)
     {
-        Debug.Log("Loading scene " + sceneName);
         OnActionsFromPreviousScene = OnSceneLoaded;
         PreviousScene = SceneManager.GetActiveScene().name;
         NextScene = sceneName;

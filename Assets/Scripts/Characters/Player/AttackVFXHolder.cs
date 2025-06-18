@@ -21,16 +21,16 @@ public class AttackVFXHolder : MonoBehaviour
         switch (attackDirection)
         {
             case MeleeAttackDirection.HORIZONTAL_LEFT:
-                horizontalLeftVfx.Play(meleeWeapon.WeaponData.weaponElement, meleeWeapon.WeaponData.attackSpeed);
+                horizontalLeftVfx.Play(meleeWeapon.WeaponData.weaponElement, meleeWeapon.GetCurrentAttackSpeed());
                 break;
             case MeleeAttackDirection.HORIZONTAL_RIGHT:
-                horizontalRightVfx.Play(meleeWeapon.WeaponData.weaponElement, meleeWeapon.WeaponData.attackSpeed);
+                horizontalRightVfx.Play(meleeWeapon.WeaponData.weaponElement, meleeWeapon.GetCurrentAttackSpeed());
                 break;
             case MeleeAttackDirection.VERTICAL_DOWN:
-                verticalDownVfx.Play(meleeWeapon.WeaponData.weaponElement, meleeWeapon.WeaponData.attackSpeed);
+                verticalDownVfx.Play(meleeWeapon.WeaponData.weaponElement, meleeWeapon.GetCurrentAttackSpeed());
                 break;
             case MeleeAttackDirection.VERTICAL_UP:
-                verticalUpVfx.Play(meleeWeapon.WeaponData.weaponElement, meleeWeapon.WeaponData.attackSpeed);
+                verticalUpVfx.Play(meleeWeapon.WeaponData.weaponElement, meleeWeapon.GetCurrentAttackSpeed());
                 break;
             default:
                 Debug.LogWarning("Invalid attack direction.");

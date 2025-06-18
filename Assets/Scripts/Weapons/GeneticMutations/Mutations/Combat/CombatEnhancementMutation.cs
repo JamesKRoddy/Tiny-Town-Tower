@@ -16,24 +16,12 @@ public class CombatEnhancementMutation : BaseMutationEffect
         if (!isActive) return;
 
         ActiveInstances++;
-        if (characterInventory == null)
-        {
-            Debug.LogError("No CharacterInventory component found on possessed NPC!");
-            return;
-        }
-
-        // Store original weapon if not already stored
-        if (OriginalWeapon == null)
-        {
-            OriginalWeapon = characterInventory.equippedWeaponScriptObj;
-        }
-
-        UpdateEquippedWeapon(damageMultiplier);
+        ApplyWeaponModifiers(damageMultiplier);
     }
 
     protected override void RemoveEffect()
     {
         ActiveInstances--;
-        UpdateEquippedWeapon(damageMultiplier);
+        ApplyWeaponModifiers(damageMultiplier);
     }
 } 

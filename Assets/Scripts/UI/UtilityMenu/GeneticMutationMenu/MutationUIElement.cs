@@ -274,20 +274,14 @@ public class MutationUIElement : MonoBehaviour
         var boundingBox = GetCurrentBoundingBox();
         Vector2Int size = Size;
 
-        Debug.Log($"[IsPositionValid] Checking position {position} for mutation {mutation.objectName}");
-        Debug.Log($"[IsPositionValid] Grid size: {gridWidth}x{gridHeight}, Mutation size: {size}");
-        Debug.Log($"[IsPositionValid] Bounding box: {boundingBox}");
-
         // Check if the position would place any cell outside the grid
         if (position.x < 0 || position.y < 0 ||
             position.x + size.x > gridWidth ||
             position.y + size.y > gridHeight)
         {
-            Debug.Log($"[IsPositionValid] Position {position} is out of bounds. Grid: {gridWidth}x{gridHeight}, Size: {size}");
             return false;
         }
 
-        Debug.Log($"[IsPositionValid] Position {position} is valid");
         return true;
     }
 
@@ -295,10 +289,6 @@ public class MutationUIElement : MonoBehaviour
     {
         var boundingBox = GetCurrentBoundingBox();
         Vector2Int size = Size;
-
-        Debug.Log($"[GetClampedPosition] Input position: {position}");
-        Debug.Log($"[GetClampedPosition] Grid size: {gridWidth}x{gridHeight}, Mutation size: {size}");
-        Debug.Log($"[GetClampedPosition] Bounding box: {boundingBox}");
 
         // Calculate the maximum allowed position that keeps all cells within bounds
         int maxX = gridWidth - size.x;
@@ -309,7 +299,6 @@ public class MutationUIElement : MonoBehaviour
             Mathf.Clamp(position.y, 0, maxY)
         );
 
-        Debug.Log($"[GetClampedPosition] Clamped position: {clamped}");
         return clamped;
     }
 

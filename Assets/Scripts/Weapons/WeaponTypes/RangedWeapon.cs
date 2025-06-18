@@ -62,7 +62,7 @@ public class RangedWeapon : WeaponBase
             var target = hit.collider.GetComponent<IDamageable>();
             if (target != null)
             {
-                target.TakeDamage(WeaponData.damage);
+                target.TakeDamage(GetCurrentDamage());
             }
 
             if (impactEffect != null)

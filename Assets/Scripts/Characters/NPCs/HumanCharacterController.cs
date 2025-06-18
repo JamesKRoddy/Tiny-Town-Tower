@@ -187,10 +187,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     private void UpdateAnimationSpeed()
     {
-        if (characterInventory.equippedWeaponScriptObj != null)
+        if (characterInventory.equippedWeaponBase != null)
         {
             // Update the speed of all attack animations in the Attacking Layer
-            animator.SetFloat("AttackSpeed", characterInventory.equippedWeaponScriptObj.attackSpeed);
+            animator.SetFloat("AttackSpeed", characterInventory.equippedWeaponBase.GetCurrentAttackSpeed());
         }
     }
 

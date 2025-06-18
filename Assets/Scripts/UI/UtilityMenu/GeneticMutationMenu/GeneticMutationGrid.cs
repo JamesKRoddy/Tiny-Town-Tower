@@ -95,19 +95,14 @@ public class GeneticMutationGrid : MonoBehaviour
 
     public bool CanPlaceMutation(Vector2Int position, MutationUIElement mutationElement)
     {
-        Debug.Log($"[CanPlaceMutation] Checking position {position} for mutation {mutationElement.mutation.objectName}");
-        Debug.Log($"[CanPlaceMutation] Grid size: {gridWidth}x{gridHeight}, Mutation size: {mutationElement.Size}");
-
         // First check if the position is valid for the mutation
         if (!mutationElement.IsPositionValid(position, gridWidth, gridHeight))
         {
-            Debug.Log($"[CanPlaceMutation] Position {position} is not valid for mutation");
             return false;
         }
 
         // Get the filled cell positions relative to the mutation's origin
         var filledPositions = mutationElement.GetFilledCellLocalPositions();
-        Debug.Log($"[CanPlaceMutation] Filled positions count: {filledPositions.Count()}");
 
         // Check each filled position for collisions
         foreach (var localPos in filledPositions)
@@ -117,33 +112,26 @@ public class GeneticMutationGrid : MonoBehaviour
             // Check if the cell is within grid bounds
             if (gridPos.x < 0 || gridPos.x >= gridWidth || gridPos.y < 0 || gridPos.y >= gridHeight)
             {
-                Debug.Log($"[CanPlaceMutation] Cell position {gridPos} is out of grid bounds");
                 return false;
             }
 
             // Check if there's already a mutation at this position
             if (grid[gridPos.x, gridPos.y] != null)
             {
-                Debug.Log($"[CanPlaceMutation] Cell position {gridPos} is already filled by mutation {grid[gridPos.x, gridPos.y].mutation.objectName}");
                 return false;
             }
         }
 
-        Debug.Log($"[CanPlaceMutation] Position {position} is valid for placement");
         return true;
     }
 
     public void PlaceMutation(MutationUIElement element, Vector2Int position, Vector2Int size)
     {
-        Debug.Log($"[PlaceMutation] Placing mutation {element.mutation.objectName} at {position}");
-        Debug.Log($"[PlaceMutation] Grid size: {gridWidth}x{gridHeight}, Mutation size: {size}");
-
         // Clear any existing positions for this element
         ClearPosition(element);
 
         // Place the element in all its filled positions
         var filledPositions = element.GetFilledCellLocalPositions();
-        Debug.Log($"[PlaceMutation] Filled positions count: {filledPositions.Count()}");
 
         foreach (var localPos in filledPositions)
         {
@@ -155,7 +143,6 @@ public class GeneticMutationGrid : MonoBehaviour
                 grid[gridX, gridY] = element;
                 if (visualGrid[gridX, gridY] != null)
                     visualGrid[gridX, gridY].GetComponent<Image>().color = new Color(1, 1, 1, 0);
-                Debug.Log($"[PlaceMutation] Placed cell at grid position {new Vector2Int(gridX, gridY)}");
             }
             else
             {

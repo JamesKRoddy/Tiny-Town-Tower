@@ -109,9 +109,7 @@ namespace Managers
                 case EnemySetupState.ENEMIES_SPAWNED:
                     break;
                 case EnemySetupState.ALL_WAVES_CLEARED:
-                    Debug.Log("ALL_WAVES_CLEARED");
                     if(transitionCoroutine != null){
-                        Debug.Log("Stopping transition coroutine");
                         StopCoroutine(transitionCoroutine);
                         transitionCoroutine = null;
                     }

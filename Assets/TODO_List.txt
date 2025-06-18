@@ -10,7 +10,7 @@ Test with differnt shapes
 
 Things to do for a demo:
 
-Showing mutation details when highlighted, selecting mutations after placing it, exit popup to let player know unequipped ones will be dropped, discarding unequipped ones.
+Showing mutation details when highlighted, exit popup to let player know unequipped ones will be dropped, discarding unequipped ones.
 
 Display picked up items for a second.
 
