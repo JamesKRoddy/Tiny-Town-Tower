@@ -24,4 +24,9 @@ public class CombatEnhancementMutation : BaseMutationEffect
         ActiveInstances--;
         ApplyWeaponModifiers(damageMultiplier);
     }
+
+    public override string GetStatsDescription()
+    {
+        return $"Damage: +{((damageMultiplier - 1) * 100):F0}%";
+    }
 } 

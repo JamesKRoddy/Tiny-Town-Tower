@@ -162,7 +162,37 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
 
     public override string GetPreviewDescription(GeneticMutationObj mutation)
     {
-        return mutation.description;
+        string baseDescription = mutation.description;
+        
+        // Get stats description from the mutation effect
+        string statsDescription = GetMutationStatsDescription(mutation);
+        
+        // Combine base description with stats
+        if (!string.IsNullOrEmpty(statsDescription))
+        {
+            return $"{baseDescription}\n\n{statsDescription}";
+        }
+        
+        return baseDescription;
+    }
+
+    private string GetMutationStatsDescription(GeneticMutationObj mutation)
+    {
+        if (mutation.prefab == null)
+        {
+            Debug.LogWarning($"Mutation {mutation.name} has no prefab assigned!");
+            return string.Empty;
+        }
+
+        // Get the BaseMutationEffect component from the prefab
+        BaseMutationEffect mutationEffect = mutation.prefab.GetComponent<BaseMutationEffect>();
+        if (mutationEffect == null)
+        {
+            Debug.LogWarning($"Mutation prefab {mutation.prefab.name} has no BaseMutationEffect component!");
+            return string.Empty;
+        }
+
+        return mutationEffect.GetStatsDescription();
     }
 
     public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(GeneticMutationObj item)

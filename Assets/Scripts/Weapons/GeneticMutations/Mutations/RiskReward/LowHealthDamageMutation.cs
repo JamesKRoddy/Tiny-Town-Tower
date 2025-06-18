@@ -91,4 +91,9 @@ public class LowHealthDamageMutation : BaseMutationEffect
             base.HandleWeaponChange(newWeapon);
         }
     }
+
+    public override string GetStatsDescription()
+    {
+        return $"Damage Boost: +{((damageMultiplier - 1) * 100):F0}% when below {healthThreshold * 100:F0}% health";
+    }
 } 

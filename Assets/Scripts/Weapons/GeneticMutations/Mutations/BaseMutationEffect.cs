@@ -86,4 +86,7 @@ public abstract class BaseMutationEffect : MonoBehaviour, IPickupableItem
 
     // Public property to access mutation data
     public GeneticMutationObj MutationData => mutationData;
+
+    // Abstract method that derived classes must implement to return their stats description
+    public abstract string GetStatsDescription();
 } 

@@ -25,4 +25,9 @@ public class AttackSpeedMutation : BaseMutationEffect
         ActiveInstances--;
         ApplyWeaponModifiers(damageReductionMultiplier, attackSpeedMultiplier);
     }
+
+    public override string GetStatsDescription()
+    {
+        return $"Attack Speed: +{((attackSpeedMultiplier - 1) * 100):F0}%\nDamage: {((damageReductionMultiplier - 1) * 100):F0}%";
+    }
 } 
