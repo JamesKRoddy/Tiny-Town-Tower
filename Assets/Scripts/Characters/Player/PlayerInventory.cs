@@ -96,6 +96,8 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                     if (PlayerController.Instance._possessedNPC.GetEquipped() == null)
                     {
                         PlayerController.Instance._possessedNPC.EquipWeapon(weapon);
+                        // Show popup for weapon equipped to NPC
+                        PlayerUIManager.Instance.inventoryPopup.ShowWeaponPopup(weapon, false);
                     }
                     else
                     {
@@ -108,6 +110,8 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                                 if (equipNew)
                                 {
                                     PlayerController.Instance._possessedNPC.EquipWeapon(weapon);
+                                    // Show popup for weapon equipped to NPC
+                                    PlayerUIManager.Instance.inventoryPopup.ShowWeaponPopup(weapon, false);
                                 }
                             }
                         );
@@ -118,10 +122,14 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 Debug.Log("Adding genetic mutation to player inventory: " + geneticMutation.objectName);
                 AddAvalibleMutation(geneticMutation);
                 PlayerUIManager.Instance.utilityMenu.EnableGeneticMutationMenu();
+                // Show popup for genetic mutation added to player inventory
+                PlayerUIManager.Instance.inventoryPopup.ShowMutationPopup(geneticMutation, true);
                 break;
             case ResourceScriptableObj resource:
                 //Adding resources to the possessed NPC's inventory
                 PlayerController.Instance.GetCharacterInventory().AddItem(resource, resourcePickup.count);
+                // Show popup for resource added to NPC inventory
+                PlayerUIManager.Instance.inventoryPopup.ShowInventoryPopup(resource, resourcePickup.count, false);
                 break;
             // Add additional cases here for other item types if necessary.
             default:
@@ -336,5 +344,22 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     public void ClearAvailableMutations(){
         availableMutations.Clear();
+    }
+
+    public override void AddItem(ResourceScriptableObj item, int count = 1)
+    {
+        // Call the base class method to add the item
+        base.AddItem(item, count);
+        
+        // Show popup for item added to player inventory
+        PlayerUIManager.Instance.inventoryPopup?.ShowInventoryPopup(item, count, true);
+    }
+
+    public override void AddItem(List<ResourceItemCount> items)
+    {
+        foreach (var item in items)
+        {
+            AddItem(item.resourceScriptableObj, item.count);
+        }
     }
 }

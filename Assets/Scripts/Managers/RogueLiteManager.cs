@@ -140,7 +140,21 @@ namespace Managers
         {
             if(keepInventory)
             {
-                PlayerInventory.Instance.AddItem(PlayerController.Instance.GetCharacterInventory().GetFullInventory());
+                var npcInventory = PlayerController.Instance.GetCharacterInventory().GetFullInventory();
+                PlayerInventory.Instance.AddItem(npcInventory);
+                
+                // Show popups for items transferred from NPC to player inventory
+                if (PlayerUIManager.Instance?.inventoryPopup != null)
+                {
+                    foreach (var item in npcInventory)
+                    {
+                        PlayerUIManager.Instance.inventoryPopup.ShowInventoryPopup(
+                            item.resourceScriptableObj, 
+                            item.count, 
+                            true // This is now going to player inventory
+                        );
+                    }
+                }
             }
             SceneTransitionManager.Instance.LoadScene("CampScene", GameMode.CAMP, false);
         }

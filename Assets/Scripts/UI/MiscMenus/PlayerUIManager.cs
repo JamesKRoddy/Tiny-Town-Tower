@@ -60,6 +60,7 @@ public class PlayerUIManager : MonoBehaviour
     [SerializeField] TextPopup textPopup;
     public NarrativeSystem narrativeSystem;
     public WeaponComparisonMenu weaponComparisonMenu;
+    [SerializeField] public AddedToInventoryPopup inventoryPopup; // Reference to inventory popup system
 
     [Header("Game UI References")]
     public RogueLikeGameUI rogueLikeGameUI;

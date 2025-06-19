@@ -39,7 +39,7 @@ public class CharacterInventory : MonoBehaviour
 
     #region Inventory_Items
 
-    public void AddItem(ResourceScriptableObj item, int count = 1)
+    public virtual void AddItem(ResourceScriptableObj item, int count = 1)
     {
         var existingItem = inventoryList.Find(i => i.resourceScriptableObj == item);
         if (existingItem != null)
@@ -50,9 +50,14 @@ public class CharacterInventory : MonoBehaviour
         {
             inventoryList.Add(new ResourceItemCount(item, count));
         }
+
+        // Determine if this is player inventory or NPC inventory
+        bool isPlayerInventory = this is PlayerInventory;
+        PlayerUIManager.Instance.inventoryPopup.ShowInventoryPopup(item, count, isPlayerInventory);
+        
     }
 
-    public void AddItem(List<ResourceItemCount> items)
+    public virtual void AddItem(List<ResourceItemCount> items)
     {
         foreach (var item in items)
         {
@@ -124,6 +129,11 @@ public class CharacterInventory : MonoBehaviour
         // Handle weapon-specific setup
         HandleWeaponType(weapon, weaponScriptableObj.animationType);
 
+
+        // Determine if this is player inventory or NPC inventory
+        bool isPlayerInventory = this is PlayerInventory;
+        PlayerUIManager.Instance.inventoryPopup.ShowWeaponPopup(weaponScriptableObj, isPlayerInventory);
+        
         // Notify listeners that a weapon was equipped
         OnWeaponEquipped?.Invoke(weaponScriptableObj);
     }
