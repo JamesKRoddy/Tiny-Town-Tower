@@ -25,14 +25,9 @@ public class SelectionPopup : PreviewPopupBase<object, string>
     private Action onClose;
     private int currentSelectedIndex = -1;
 
-    [Header("Tootlip Options")]
-    [SerializeField] private GameObject tooltip;
-    [SerializeField] private TMP_Text tooltipText;
-
     protected override void Start()
     {
         base.Start();
-        tooltip.SetActive(false);
         closeButton.onClick.AddListener(ReturnToGame);
     }
 
@@ -122,7 +117,7 @@ public class SelectionPopup : PreviewPopupBase<object, string>
         }
     }
 
-    private void ShowTooltip(int optionIndex)
+    protected override void ShowTooltip(int optionIndex)
     {
         if (optionIndex >= 0 && optionIndex < currentOptions.Count)
         {
@@ -136,9 +131,9 @@ public class SelectionPopup : PreviewPopupBase<object, string>
         }
     }
 
-    private void HideTooltip()
+    protected override void HideTooltip()
     {
-        tooltip.SetActive(false);
+        base.HideTooltip();
         currentSelectedIndex = -1;
     }
 

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Collections;
+using TMPro;
 
 
 public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour, IControllerInput
@@ -14,8 +15,13 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour, IContr
     protected GameObject selectedElement;
     public bool isActive { get; private set; } = false;
 
+        [Header("Tootlip Options")]
+    [SerializeField] protected GameObject tooltip;
+    [SerializeField] protected TMP_Text tooltipText;
+
     protected virtual void Start()
     {
+        tooltip.SetActive(false);
         if (closeButton != null)
             closeButton.onClick.AddListener(OnCloseClicked);
     }
@@ -93,7 +99,15 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour, IContr
         throw new System.NotImplementedException();
     }
 
-    
+    protected virtual void ShowTooltip(int optionIndex)
+    {
+        tooltip.SetActive(true);
+    }
+
+    protected virtual void HideTooltip()
+    {
+        tooltip.SetActive(false);
+    }
 }
 
 
