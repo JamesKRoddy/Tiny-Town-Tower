@@ -24,6 +24,7 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
     protected Dictionary<TCategory, GameObject> screens = new Dictionary<TCategory, GameObject>();
     protected TCategory currentCategory;
     protected TItem currentSelectedItem;
+    public GameObject FirstSelectedElement => leftScreenBtn.gameObject; //Used for when opening the screen, the first element is selected
 
     public abstract IEnumerable<TItem> GetItems();
     public abstract TCategory GetItemCategory(TItem item);
@@ -99,7 +100,7 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         }
         else if (leftScreenBtn != null)
         {
-            PlayerUIManager.Instance.SetSelectedGameObject(leftScreenBtn.gameObject);
+            PlayerUIManager.Instance.SetSelectedGameObject(FirstSelectedElement);
         }
     }
 
@@ -232,7 +233,7 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         }
         else if (leftScreenBtn != null)
         {
-            selectedObject = leftScreenBtn.gameObject;
+            selectedObject = FirstSelectedElement;
         }
 
         if (selectedObject != null)

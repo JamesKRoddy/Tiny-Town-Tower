@@ -202,12 +202,14 @@ public class PlayerUIManager : MonoBehaviour
                 currentMenu = null;
                 break;
             case BuildMenu:
-            case GeneticMutationUI:
             case PlayerInventoryMenu:
             case SettlerNPCMenu:
             case TurretMenu:
             case TurretUpgradeMenu:
                 utilityMenu.EnableUtilityMenu();
+                break;
+            case GeneticMutationUI:
+                geneticMutationMenu.HandleBackButtonPress();
                 break;
             case SettingsMenu:
             case ReturnToCampMenu:

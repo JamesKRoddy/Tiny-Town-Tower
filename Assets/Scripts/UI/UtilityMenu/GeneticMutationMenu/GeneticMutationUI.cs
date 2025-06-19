@@ -18,6 +18,7 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     [Header("Mutation Inventory UI")]
     [SerializeField] public GeneticMutationGrid mutationGrid;
     [SerializeField] private Transform mutationGridPrefabContainer;
+    [SerializeField] private PreviewPopupBase<GeneticMutationObj, GeneticMutation> geneticMutationClosePopup;
 
     [Header("Selected Mutation")]
     private GeneticMutationObj selectedMutation;
@@ -489,6 +490,18 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
             }
 
             selectedMutationElement.SetGridPosition(selectedPosition, mutationGrid.GetCellSize());
+        }
+    }
+
+    internal void HandleBackButtonPress()
+    {
+        if(PlayerInventory.Instance.availableMutations.Count > 0)
+        {
+            geneticMutationClosePopup.DisplayPopup(null, this, leftScreenBtn.gameObject);
+        }
+        else
+        {
+            PlayerUIManager.Instance.utilityMenu.EnableUtilityMenu();
         }
     }
 }

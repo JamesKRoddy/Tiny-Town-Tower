@@ -42,7 +42,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     [SerializeField] private int maxMutationSlots = 9; // Default to a 3x3 grid
     private List<GeneticMutationObj> equippedMutations = new List<GeneticMutationObj>();
 
-    public List<MutationQuantityEntry> availableMutations = new List<MutationQuantityEntry>();
+    public List<MutationQuantityEntry> availableMutations = new List<MutationQuantityEntry>(); // List of available mutations, removed when mutation screen is closed
 
     public int MaxMutationSlots => maxMutationSlots;
     public List<GeneticMutationObj> EquippedMutations => equippedMutations;
@@ -332,5 +332,9 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     public void SetMaxMutationSlots(int slots)
     {
         maxMutationSlots = slots;
+    }
+
+    public void ClearAvailableMutations(){
+        availableMutations.Clear();
     }
 }

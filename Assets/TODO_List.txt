@@ -10,8 +10,6 @@ Test with differnt shapes
 
 Things to do for a demo:
 
-Exit popup to let player know unequipped ones will be dropped, discarding unequipped ones. Not gonna work with the generic popup, just create a new one!!!!!
-
 Display picked up items for a second.
 
 Level and loot difficulty system.

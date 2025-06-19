@@ -5,7 +5,7 @@ using System.Collections;
 using TMPro;
 
 
-public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour, IControllerInput
+public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour
 {
     [Header("UI Elements")]
     [SerializeField] protected Button closeButton;
@@ -13,15 +13,15 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour, IContr
     protected TItem currentItem;
     protected PreviewListMenuBase<TCategory, TItem> parentMenu;
     protected GameObject selectedElement;
-    public bool isActive { get; private set; } = false;
+    public bool isActive = false;
 
-        [Header("Tootlip Options")]
+    [Header("Tootlip Options")]
     [SerializeField] protected GameObject tooltip;
     [SerializeField] protected TMP_Text tooltipText;
 
     protected virtual void Start()
     {
-        tooltip.SetActive(false);
+        HideTooltip();
         if (closeButton != null)
             closeButton.onClick.AddListener(OnCloseClicked);
     }
@@ -37,7 +37,7 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour, IContr
         Debug.Log($"Displaying popup for {item}");
         currentItem = item;
         parentMenu = menu;
-        selectedElement = element ?? closeButton?.gameObject;
+        selectedElement = element ?? menu.FirstSelectedElement;
         
         // Disable all buttons in the parent UI except popup buttons
         SetParentUIButtonsInteractable(false);
@@ -94,19 +94,18 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour, IContr
         }
     }
 
-    public void SetPlayerControlType(PlayerControlType controlType)
-    {
-        throw new System.NotImplementedException();
-    }
-
     protected virtual void ShowTooltip(int optionIndex)
     {
-        tooltip.SetActive(true);
+        if(tooltip != null)
+            tooltip.SetActive(true);
+        else
+            Debug.LogWarning("Tooltip is not set");
     }
 
     protected virtual void HideTooltip()
     {
-        tooltip.SetActive(false);
+        if(tooltip != null)
+            tooltip.SetActive(false);
     }
 }
 

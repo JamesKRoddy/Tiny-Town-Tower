@@ -5337,7 +5337,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 140.699, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7640862584820351907
 CanvasRenderer:
@@ -5367,7 +5367,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Return
+  m_text: Exit_Menu
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -5470,10 +5470,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 8284035022889301987}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 480, y: -98.43}
+  m_SizeDelta: {x: 220, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1930468801183252963
 CanvasRenderer:
@@ -6436,14 +6436,14 @@ GameObject:
   - component: {fileID: 6410056760234193203}
   - component: {fileID: 8897471916712788230}
   - component: {fileID: 3633958128881764093}
-  - component: {fileID: 191551260128448953}
+  - component: {fileID: 8678420659483752856}
   m_Layer: 5
   m_Name: GeneticMutationExitPopup
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2409900544780425376
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6527,7 +6527,7 @@ MonoBehaviour:
   m_Spacing: {x: 0, y: 0}
   m_Constraint: 0
   m_ConstraintCount: 2
---- !u!114 &191551260128448953
+--- !u!114 &8678420659483752856
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -6536,12 +6536,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 2427521414072084741}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 305f8280776a1fe4cacc4d6b3bd866cd, type: 3}
+  m_Script: {fileID: 11500000, guid: 8e5c17f9ffbff7a41ab97e0476a8658d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   closeButton: {fileID: 5080213410160027218}
-  removeButton: {fileID: 0}
-  moveButton: {fileID: 6418654465331635521}
+  isActive: 0
+  tooltip: {fileID: 0}
+  tooltipText: {fileID: 0}
+  exitMenuButton: {fileID: 6418654465331635521}
 --- !u!1 &2450290502275740327
 GameObject:
   m_ObjectHideFlags: 0
@@ -9415,7 +9417,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Close_Menu
+  m_text: Close
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -13646,14 +13648,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   closeButton: {fileID: 7401997554563926716}
+  isActive: 0
+  tooltip: {fileID: 9015255189275550957}
+  tooltipText: {fileID: 3593895009609477689}
   optionButtons:
   - {fileID: 5088130360401310336}
   - {fileID: 7879858261767936144}
   - {fileID: 1981358577185549936}
   - {fileID: 3239482791812415904}
   - {fileID: 3106375695983334826}
-  tooltip: {fileID: 9015255189275550957}
-  tooltipText: {fileID: 3593895009609477689}
 --- !u!1 &4334577779896450936
 GameObject:
   m_ObjectHideFlags: 0
@@ -17363,6 +17366,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   closeButton: {fileID: 6990768919710137174}
+  isActive: 0
+  tooltip: {fileID: 0}
+  tooltipText: {fileID: 0}
   removeButton: {fileID: 5896687954390140026}
   moveButton: {fileID: 4385317549648456792}
 --- !u!1 &5522013726267804574
@@ -18709,6 +18715,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   closeButton: {fileID: 8499496747968666442}
+  isActive: 0
+  tooltip: {fileID: 0}
+  tooltipText: {fileID: 0}
   possessButton: {fileID: 5799950297029354876}
   assignWorkButton: {fileID: 8283796192178363296}
   removeWorkButton: {fileID: 4068190666624974441}
@@ -24442,10 +24451,10 @@ RectTransform:
   - {fileID: 7836098718978162886}
   m_Father: {fileID: 8284035022889301987}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 850, y: -98.43}
+  m_SizeDelta: {x: 220, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4452091920684202300
 CanvasRenderer:
@@ -25031,10 +25040,10 @@ RectTransform:
   - {fileID: 4410499204107314160}
   m_Father: {fileID: 8284035022889301987}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 110, y: -98.43}
+  m_SizeDelta: {x: 220, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4357126574814899588
 CanvasRenderer:
@@ -25523,7 +25532,7 @@ GameObject:
   - component: {fileID: 7993776958211825466}
   - component: {fileID: 6418654465331635521}
   m_Layer: 5
-  m_Name: Return_Button
+  m_Name: Exit_Menu_Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -25544,10 +25553,10 @@ RectTransform:
   - {fileID: 7456061984078121565}
   m_Father: {fileID: 2409900544780425376}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 147.44, y: -63.5685}
+  m_SizeDelta: {x: 236.86, y: 51.4}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7947183788607237894
 CanvasRenderer:
@@ -26118,10 +26127,10 @@ RectTransform:
   - {fileID: 370919061009601323}
   m_Father: {fileID: 2409900544780425376}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 147.44, y: -114.968506}
+  m_SizeDelta: {x: 236.86, y: 51.4}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &186628889401034547
 CanvasRenderer:
@@ -28595,7 +28604,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &7357337574326214413
 RectTransform:
   m_ObjectHideFlags: 0
@@ -28645,6 +28654,7 @@ MonoBehaviour:
   selectionPopup: {fileID: 7611820370166008948}
   mutationGrid: {fileID: 8219817581952613195}
   mutationGridPrefabContainer: {fileID: 1037857587712313581}
+  geneticMutationClosePopup: {fileID: 8678420659483752856}
   moveSpeed: 0.2
   inputThreshold: 0.5
 --- !u!1 &9143141171944472929
