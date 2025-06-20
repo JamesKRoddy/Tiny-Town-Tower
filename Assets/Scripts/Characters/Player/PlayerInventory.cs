@@ -128,8 +128,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             case ResourceScriptableObj resource:
                 //Adding resources to the possessed NPC's inventory
                 PlayerController.Instance.GetCharacterInventory().AddItem(resource, resourcePickup.count);
-                // Show popup for resource added to NPC inventory
-                PlayerUIManager.Instance.inventoryPopup.ShowInventoryPopup(resource, resourcePickup.count, false);
                 break;
             // Add additional cases here for other item types if necessary.
             default:

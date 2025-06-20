@@ -28,6 +28,8 @@ public class InventoryPopupItem : MonoBehaviour
     public ScriptableObject Item => item;
     public bool IsPlayerInventory => isPlayerInventory;
 
+    public int GetCurrentCount() => count;
+
     public void Initialize(ScriptableObject item, int count, bool isPlayerInventory, float duration, AddedToInventoryPopup popupManager)
     {
         this.item = item;
