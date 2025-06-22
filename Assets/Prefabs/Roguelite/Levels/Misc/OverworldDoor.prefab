@@ -40,7 +40,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7798805974534335624}
-  - component: {fileID: 2272501943966103175}
   - component: {fileID: 3426535445698160169}
   - component: {fileID: -9192294846424424733}
   m_Layer: 0
@@ -70,25 +69,6 @@ Transform:
   - {fileID: 62606090860466199}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2272501943966103175
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8175387165464890825}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e6658d73e0d69844c8a293256ffb2381, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  doorType: 1
-  playerSpawn: {fileID: 8096091897142577133}
-  lockedDoorEffect: {fileID: 2214464768097416770}
-  nextRoomDoorEffect: {fileID: 3601143706949006307}
-  previousRoomDoorEffect: {fileID: 60051046917542727}
-  targetRoom: {fileID: 0}
-  targetSpawnPoint: {fileID: 0}
 --- !u!65 &3426535445698160169
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -122,7 +102,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad933abcd9835c044b848d1521a1f1a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  doorType: 0
+  doorType: 1
   playerSpawn: {fileID: 8096091897142577133}
   lockedDoorEffect: {fileID: 2214464768097416770}
   nextRoomDoorEffect: {fileID: 3601143706949006307}
