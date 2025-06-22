@@ -1,10 +1,10 @@
 using UnityEngine;
 
-namespace Characters.NPC.Mutations
+namespace Characters.NPC.Characteristic
 {
-    public abstract class BaseNPCMutationEffect : MonoBehaviour
+    public abstract class BaseNPCCharacteristicEffect : MonoBehaviour
     {
-        protected NPCMutationScriptableObj mutation;
+        protected NPCCharacteristicScriptableObj characteristicScriptableObj;
         protected SettlerNPC settlerNPC;
         protected int activeInstances = 0;
 
@@ -14,9 +14,9 @@ namespace Characters.NPC.Mutations
             set => activeInstances = value;
         }
 
-        public void Initialize(NPCMutationScriptableObj mutation, SettlerNPC settlerNPC)
+        public void Initialize(NPCCharacteristicScriptableObj characteristic, SettlerNPC settlerNPC)
         {
-            this.mutation = mutation;
+            this.characteristicScriptableObj = characteristic;
             this.settlerNPC = settlerNPC;
         }
 
@@ -24,7 +24,7 @@ namespace Characters.NPC.Mutations
         {
             if (settlerNPC == null)
             {
-                Debug.LogError($"BaseNPCMutationEffect: settlerNPC is null for mutation {mutation?.name}");
+                Debug.LogError($"BaseNPCCharacteristicEffect: settlerNPC is null for characteristic {characteristicScriptableObj?.name}");
                 return;
             }
             ApplyEffect();
@@ -34,10 +34,14 @@ namespace Characters.NPC.Mutations
         {
             if (settlerNPC == null)
             {
-                Debug.LogError($"BaseNPCMutationEffect: settlerNPC is null for mutation {mutation?.name}");
+                Debug.LogError($"BaseNPCCharacteristicEffect: settlerNPC is null for characteristic {characteristicScriptableObj?.name}");
                 return;
             }
             RemoveEffect();
+        }
+
+        public virtual string GetStatsDescription(){
+            return "";
         }
 
         protected abstract void ApplyEffect();

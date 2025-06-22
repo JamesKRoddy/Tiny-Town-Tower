@@ -101,7 +101,6 @@ namespace Managers
 
         public Vector3 GetPlayerSpawnPoint()
         {
-            Debug.Log($"Getting player spawn point for scene: {SceneTransitionManager.Instance.NextScene}");
             SceneNames sceneName = SceneTransitionManager.Instance.NextScene;
 
             switch (sceneName)

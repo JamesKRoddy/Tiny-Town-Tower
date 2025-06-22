@@ -10,8 +10,6 @@ Test with differnt shapes
 
 Things to do for a demo:
 
-Level and loot difficulty system. Overworld door im guessing the player spawn on the door is cauusing issues cos of the name!
-
 Displaying npc mutations (charicteristics)
 
 Turret refactor so they are used in the camp to kill zombies
@@ -47,6 +45,7 @@ Player feels sticky when running into walls at an angle
 Player moving through walls while attack animation is running
 Enemy still doing attack flash while dead
 Have to review the room spawning grid system, I think just to get rid of it and have the rooms spawn in a line, currently the grid can cause rooms to spawn over the entrance
+Pressing B while moving an already place mutation breaks the menu, just dont allow B presses
 
 
 

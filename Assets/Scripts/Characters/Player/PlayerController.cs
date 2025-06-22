@@ -117,7 +117,6 @@ public class PlayerController : MonoBehaviour, IControllerInput
     /// <param name="position"></param>
     public void UpdateNPCPosition(object position)
     {   
-        Debug.Log($"Updating NPC position to: {position}");
         MonoBehaviour npc = _possessedNPC as MonoBehaviour;
         if (npc != null)
         {

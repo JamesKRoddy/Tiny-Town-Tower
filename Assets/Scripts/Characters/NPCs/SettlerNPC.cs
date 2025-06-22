@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System;
 using Characters.NPC;
-using Characters.NPC.Mutations;
+using Characters.NPC.Characteristic;
 using Managers;
 using UnityEngine;
 using UnityEngine.AI;
@@ -13,10 +13,13 @@ public class SettlerNPC : HumanCharacterController
 {
     [Header("NPC Data")]
     public SettlerNPCScriptableObj nPCDataObj;
-    [SerializeField, ReadOnly] internal NPCMutationSystem mutationSystem;
+    [SerializeField, ReadOnly] internal NPCCharacteristicSystem characteristicSystem;
     private _TaskState currentState;
     private WorkTask assignedWorkTask; // Track the assigned work task
     private bool isOnBreak = false; // Track if NPC is on break
+
+    [Header("NPC Stats")]
+    public int additionalMutationSlots = 3; //Additional mutation slots
 
     [Header("Stamina")]
     public float maxStamina = 100f;
@@ -47,8 +50,8 @@ public class SettlerNPC : HumanCharacterController
     {
         base.Awake();
 
-        // Initialize mutation system
-        mutationSystem = new NPCMutationSystem(this);
+        // Initialize characteristic system
+        characteristicSystem = new NPCCharacteristicSystem(this);
 
         // Get all TaskState components attached to the SettlerNPC GameObject
         _TaskState[] states = GetComponents<_TaskState>();
@@ -77,10 +80,10 @@ public class SettlerNPC : HumanCharacterController
             ChangeState(taskStates[TaskType.WANDER]);
         }
 
-        // Apply random mutations after everything is initialized
-        if (mutationSystem != null)
+        // Apply random characteristics after everything is initialized
+        if (characteristicSystem != null)
         {
-            mutationSystem.ApplyRandomMutations();
+            characteristicSystem.ApplyRandomCharacteristic();
         }
 
         // Register with NPCManager
@@ -355,182 +358,180 @@ public class SettlerNPC : HumanCharacterController
 
 namespace Characters.NPC
 {
-    public class NPCMutationSystem
+    public class NPCCharacteristicSystem
     {
-        [Header("Mutation Settings")]
-        private int maxMutations = 3;
-        private float mutationSpawnChance = 1f;
-        private float rareMutationChance = 0.1f;
-        private int minRandomMutations = 1;
-        private int maxRandomMutations = 3;
+        [Header("Characteristic Settings")]
+        private int maxNPCCharacteristic = 3; //Max NPC character characteristics
+        private float characteristicSpawnChance = 1f;
+        private float rareCharacteristicChance = 0.1f;
+        private int minRandomCharacteristic = 1;
+        private int maxRandomCharacteristic = 3;
 
-        [SerializeField, ReadOnly] private List<NPCMutationScriptableObj> equippedMutations = new List<NPCMutationScriptableObj>();
-        private Dictionary<NPCMutationScriptableObj, BaseNPCMutationEffect> activeEffects = new Dictionary<NPCMutationScriptableObj, BaseNPCMutationEffect>();
+        [SerializeField, ReadOnly] private List<NPCCharacteristicScriptableObj> equippedCcharacteristics = new List<NPCCharacteristicScriptableObj>();
+        private Dictionary<NPCCharacteristicScriptableObj, BaseNPCCharacteristicEffect> activeEffects = new Dictionary<NPCCharacteristicScriptableObj, BaseNPCCharacteristicEffect>();
         private SettlerNPC settlerNPC;
+        public List<NPCCharacteristicScriptableObj> EquippedCharacteristics => equippedCcharacteristics;
 
-        public int MaxMutations => maxMutations;
-        public List<NPCMutationScriptableObj> EquippedMutations => equippedMutations;
-
-        public NPCMutationSystem(SettlerNPC settlerNPC)
+        public NPCCharacteristicSystem(SettlerNPC settlerNPC)
         {
             if (settlerNPC == null)
             {
-                Debug.LogError("NPCMutationSystem: Cannot initialize with null SettlerNPC reference");
+                Debug.LogError("NPCCharacteristicSystem: Cannot initialize with null SettlerNPC reference");
                 return;
             }
             
             this.settlerNPC = settlerNPC;
         }
 
-        public void ApplyRandomMutations()
+        public void ApplyRandomCharacteristic()
         {
             if (settlerNPC == null)
             {
-                Debug.LogError("NPCMutationSystem: Cannot apply random mutations - settlerNPC is null");
+                Debug.LogError("NPCCharacteristicSystem: Cannot apply random characteristics - settlerNPC is null");
                 return;
             }
 
-            // Determine if this NPC should get mutations
-            if(UnityEngine.Random.value > mutationSpawnChance)
+            // Determine if this NPC should get characteristics
+            if(UnityEngine.Random.value > characteristicSpawnChance)
             {
                 return;
             }
 
-            // Get all available mutations from the manager
-            List<NPCMutationScriptableObj> allMutations = NPCManager.Instance.GetAllMutations();
-            if (allMutations.Count == 0)
+            // Get all available characteristic from the manager
+            List<NPCCharacteristicScriptableObj> allCharacteristic = NPCManager.Instance.GetAllCharacteristics();
+            if (allCharacteristic.Count == 0)
             {
-                Debug.LogWarning($"NPCMutationSystem: No mutations available in NPCManager for {settlerNPC.name}");
+                Debug.LogWarning($"NPCCharacteristicSystem: No characteristics available in NPCManager for {settlerNPC.name}");
                 return;
             }
 
-            // Determine number of mutations
-            int numMutations = UnityEngine.Random.Range(minRandomMutations, maxRandomMutations + 1);
+            // Determine number of characteristics
+            int numCharacteristic = UnityEngine.Random.Range(minRandomCharacteristic, maxRandomCharacteristic + 1);
 
-            if (allMutations.Count == 0) return;
-
-            for (int i = 0; i < numMutations; i++)
+            // Create a list of valid characteristic indices (excluding already equipped characteristics)
+            List<int> validIndices = new List<int>();
+            for (int i = 0; i < allCharacteristic.Count; i++)
             {
-                if (allMutations.Count == 0) break;
+                if (!equippedCcharacteristics.Contains(allCharacteristic[i]))
+                {
+                    validIndices.Add(i);
+                }
+            }
 
-                // Select a random mutation
-                int index = UnityEngine.Random.Range(0, allMutations.Count);
-                NPCMutationScriptableObj mutation = allMutations[index];
+            int characteristicApplied = 0;
+            int maxAttempts = validIndices.Count * 2; // Prevent infinite loops
+            int attempts = 0;
+
+            while (characteristicApplied < numCharacteristic && validIndices.Count > 0 && attempts < maxAttempts)
+            {
+                attempts++;
+
+                // Select a random valid characteristic index
+                int validIndex = UnityEngine.Random.Range(0, validIndices.Count);
+                int characteristicIndex = validIndices[validIndex];
+                NPCCharacteristicScriptableObj characteristic = allCharacteristic[characteristicIndex];
 
                 // Check rarity
-                if (mutation.rarity == ResourceRarity.RARE || mutation.rarity == ResourceRarity.LEGENDARY)
+                if (characteristic.rarity == ResourceRarity.RARE || characteristic.rarity == ResourceRarity.LEGENDARY)
                 {
-                    if (UnityEngine.Random.value > rareMutationChance)
+                    if (UnityEngine.Random.value > rareCharacteristicChance)
                     {
+                        // Remove this index from valid indices since we won't try it again
+                        validIndices.RemoveAt(validIndex);
                         continue;
                     }
                 }
 
-                // Add mutation to NPC
-                EquipMutation(mutation);
+                // Add characteristic to NPC
+                EquipCharacteristic(characteristic);
+                characteristicApplied++;
 
-                // Remove from valid mutations to prevent duplicates
-                allMutations.RemoveAt(index);
+                // Remove this index from valid indices to prevent duplicates
+                validIndices.RemoveAt(validIndex);
             }
         }
 
-        public void EquipMutation(NPCMutationScriptableObj mutation)
+        public void EquipCharacteristic(NPCCharacteristicScriptableObj characteristic)
         {
-            if (mutation == null)
+            if (characteristic == null)
             {
-                Debug.LogError($"NPCMutationSystem: Cannot equip null mutation to {settlerNPC.name}");
+                Debug.LogError($"NPCCharacteristicSystem: Cannot equip null characteristic to {settlerNPC.name}");
                 return;
             }
 
-            if (equippedMutations.Count >= maxMutations)
+            if (equippedCcharacteristics.Count >= maxNPCCharacteristic)
             {
-                Debug.LogWarning($"NPCMutationSystem: Cannot equip mutation {mutation.name} to {settlerNPC.name} - maximum mutations reached");
+                Debug.LogWarning($"NPCCharacteristicSystem: Cannot equip characteristic {characteristic.name} to {settlerNPC.name} - maximum characteristics reached");
                 return;
             }
 
-            if (equippedMutations.Contains(mutation))
+            if (equippedCcharacteristics.Contains(characteristic))
             {
-                Debug.LogWarning($"NPCMutationSystem: {settlerNPC.name} already has mutation {mutation.name}");
+                Debug.LogWarning($"NPCCharacteristicSystem: {settlerNPC.name} already has characteristic {characteristic.name}");
                 return;
             }
 
-            equippedMutations.Add(mutation);
+            equippedCcharacteristics.Add(characteristic);
             
-            // Instantiate and initialize the mutation effect
-            if (mutation.prefab != null)
+            // Instantiate and initialize the characteristic effect
+            if (characteristic.prefab != null)
             {
-                GameObject effectObj = GameObject.Instantiate(mutation.prefab, settlerNPC.transform);
-                BaseNPCMutationEffect effect = effectObj.GetComponent<BaseNPCMutationEffect>();
+                GameObject effectObj = GameObject.Instantiate(characteristic.prefab, settlerNPC.transform);
+                BaseNPCCharacteristicEffect effect = effectObj.GetComponent<BaseNPCCharacteristicEffect>();
                 if (effect != null)
                 {
-                    effect.Initialize(mutation, settlerNPC);
+                    effect.Initialize(characteristic, settlerNPC);
                     effect.OnEquip();
-                    activeEffects[mutation] = effect;
+                    activeEffects[characteristic] = effect;
                 }
                 else
                 {
-                    Debug.LogError($"NPCMutationSystem: Mutation prefab {mutation.name} does not have a BaseNPCMutationEffect component");
+                    Debug.LogError($"NPCCharacteristicSystem: characteristic prefab {characteristic.name} does not have a BaseNPCCharacteristicEffect component");
                     GameObject.Destroy(effectObj);
                 }
             }
             else
             {
-                Debug.LogWarning($"NPCMutationSystem: Mutation {mutation.name} has no prefab assigned");
+                Debug.LogWarning($"NPCCharacteristicSystem: characteristic {characteristic.name} has no prefab assigned");
             }
         }
 
-        public void RemoveMutation(NPCMutationScriptableObj mutation)
+        public void RemoveCharacteristic(NPCCharacteristicScriptableObj characteristic)
         {
-            if (mutation == null)
+            if (characteristic == null)
             {
-                Debug.LogError($"NPCMutationSystem: Cannot remove null mutation from {settlerNPC.name}");
+                Debug.LogError($"NPCCharacteristicSystem: Cannot remove null characteristic from {settlerNPC.name}");
                 return;
             }
 
-            if (equippedMutations.Remove(mutation))
+            if (equippedCcharacteristics.Remove(characteristic))
             {
-                // Remove and cleanup the mutation effect
-                if (activeEffects.TryGetValue(mutation, out BaseNPCMutationEffect effect))
+                // Remove and cleanup the characteristic effect
+                if (activeEffects.TryGetValue(characteristic, out BaseNPCCharacteristicEffect effect))
                 {
                     effect.OnUnequip();
                     GameObject.Destroy(effect.gameObject);
-                    activeEffects.Remove(mutation);
+                    activeEffects.Remove(characteristic);
                 }
                 else
                 {
-                    Debug.LogWarning($"NPCMutationSystem: No active effect found for mutation {mutation.name} on {settlerNPC.name}");
+                    Debug.LogWarning($"NPCCharacteristicSystem: No active effect found for characteristic {characteristic.name} on {settlerNPC.name}");
                 }
             }
             else
             {
-                Debug.LogWarning($"NPCMutationSystem: Mutation {mutation.name} not found in equipped mutations for {settlerNPC.name}");
+                Debug.LogWarning($"NPCCharacteristicSystem: Characteristic {characteristic.name} not found in equipped characteristic for {settlerNPC.name}");
             }
         }
 
-        public void SetMaxMutations(int count)
+        // Helper method to check if NPC has a specific characteristic
+        public bool HasCharacteristic(NPCCharacteristicScriptableObj characteristic)
         {
-            if (count < 0)
-            {
-                Debug.LogError($"NPCMutationSystem: Cannot set max mutations to negative value {count} for {settlerNPC.name}");
-                return;
-            }
-
-            if (count < equippedMutations.Count)
-            {
-                Debug.LogWarning($"NPCMutationSystem: Setting max mutations to {count} for {settlerNPC.name} which has {equippedMutations.Count} equipped mutations");
-            }
-
-            maxMutations = count;
-        }
-
-        // Helper method to check if NPC has a specific mutation
-        public bool HasMutation(NPCMutationScriptableObj mutation)
-        {
-            return equippedMutations.Contains(mutation);
+            return equippedCcharacteristics.Contains(characteristic);
         }
 
         // Helper method to get all active effects of a specific type
-        public List<T> GetActiveEffectsOfType<T>() where T : BaseNPCMutationEffect
+        public List<T> GetActiveEffectsOfType<T>() where T : BaseNPCCharacteristicEffect
         {
             List<T> effects = new List<T>();
             foreach (var effect in activeEffects.Values)

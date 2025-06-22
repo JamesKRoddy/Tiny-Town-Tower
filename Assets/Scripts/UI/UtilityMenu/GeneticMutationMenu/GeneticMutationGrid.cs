@@ -28,6 +28,19 @@ public class GeneticMutationGrid : MonoBehaviour
     {
         // Get the max slots from player inventory
         int maxSlots = PlayerInventory.Instance.MaxMutationSlots;
+        Debug.Log($"Max slots from player inventory: {maxSlots}");
+
+        int possessedNPCSlots = 0;
+
+        //Get mutation slots on possessed NPC
+        if(PlayerController.Instance._possessedNPC != null){
+            possessedNPCSlots = (PlayerController.Instance._possessedNPC as SettlerNPC).additionalMutationSlots;
+            Debug.Log($"Max slots from possessed NPC: {possessedNPCSlots}");
+        }
+
+        //Combine them
+        maxSlots = maxSlots + possessedNPCSlots;
+        Debug.Log($"Total max slots: {maxSlots}");
         
         // Calculate grid dimensions to be as square as possible
         gridWidth = Mathf.CeilToInt(Mathf.Sqrt(maxSlots));
