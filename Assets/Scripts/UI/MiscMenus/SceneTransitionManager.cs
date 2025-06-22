@@ -33,9 +33,9 @@ public class SceneTransitionManager : MonoBehaviour
     }
 
     // Tracks the scenes.
-    public string CurrentScene { get; private set; }
-    public string PreviousScene { get; private set; }
-    public string NextScene { get; private set; }
+    public SceneNames CurrentScene { get; private set; }
+    public SceneNames PreviousScene { get; private set; }
+    public SceneNames NextScene { get; private set; }
     public GameMode NextGameMode { get; private set; }
 
     // Event that fires when a scene transition begins, passing the next game mode
@@ -61,10 +61,14 @@ public class SceneTransitionManager : MonoBehaviour
         }
     }
 
-    public void LoadScene(string sceneName, GameMode nextGameMode, bool keepPossessedNPC, Action OnSceneLoaded = null)
+    public void LoadScene(SceneNames sceneName, GameMode nextGameMode, bool keepPossessedNPC, Action OnSceneLoaded = null)
     {
         OnActionsFromPreviousScene = OnSceneLoaded;
-        PreviousScene = SceneManager.GetActiveScene().name;
+        PreviousScene = CurrentScene;
+
+        if(sceneName == SceneNames.NONE){
+            Debug.LogError("Scene name is NONE");
+        }
         NextScene = sceneName;
         NextGameMode = nextGameMode;
 
@@ -137,7 +141,7 @@ public class SceneTransitionManager : MonoBehaviour
         }
 
         //2. Load the next scene
-        AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(NextScene);
+        AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(NextScene.ToString());
         asyncOperation.allowSceneActivation = false;
 
         //3. Wait for the scene to load
@@ -153,21 +157,24 @@ public class SceneTransitionManager : MonoBehaviour
             yield return null;
         }
 
-        //4. Invoke actions passed in from the previous scene
+        //4. Update Player NPC position
+        PlayerController.Instance.UpdateNPCPosition(GameManager.Instance.GetPlayerSpawnPoint());
+
+        //5. Invoke actions passed in from the previous scene
         OnActionsFromPreviousScene?.Invoke();
 
-        //5. Short pause for camera transition
+        //6. Short pause for camera transition
         yield return new WaitForSeconds(0.5f);
 
-        //6. Fade out
+        //7. Fade out
         if (PlayerUIManager.Instance.transitionMenu != null)
         {
             yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
         }
 
-        //7. Update scene tracking after the new scene is active
+        //8. Update scene tracking after the new scene is active
         CurrentScene = NextScene;
-        NextScene = string.Empty;
+        NextScene = SceneNames.NONE;
         GameManager.Instance.CurrentGameMode = NextGameMode;
     }
 

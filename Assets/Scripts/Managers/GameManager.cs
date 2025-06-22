@@ -98,5 +98,21 @@ namespace Managers
         {
             OnGameModeChanged?.Invoke(_currentGameMode);
         }
+
+        public Vector3 GetPlayerSpawnPoint()
+        {
+            Debug.Log($"Getting player spawn point for scene: {SceneTransitionManager.Instance.NextScene}");
+            SceneNames sceneName = SceneTransitionManager.Instance.NextScene;
+
+            switch (sceneName)
+            {
+                case SceneNames.OverworldScene:
+                    return RogueLiteManager.Instance.OverworldManager.GetOverWorldSpawnPoint();
+                case SceneNames.RogueLikeScene:
+                    return RogueLiteManager.Instance.BuildingManager.BuildingSpawn.position;
+                default:
+                    return Vector3.zero;
+            }
+        }
     }
 }

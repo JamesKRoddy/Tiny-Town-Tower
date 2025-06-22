@@ -110,7 +110,7 @@ MonoBehaviour:
   buildingDifficulty: 10
   buildingType: 0
   buildingName: Unknown Building
-  targetScene: RogueLikeScene
+  targetScene: 7
   nextSceneGameMode: 200
   keepPossessedNPC: 1
   playerSpawnPoint: {fileID: 8096091897142577133}

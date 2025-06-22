@@ -7,13 +7,13 @@ namespace Managers
     public class RogueLiteManager : GameModeManager<RogueLikeEnemyWaveConfig>
     {
         [Header("RogueLite Manager References")]
-        private BuildingManager buildingManager;
+        [SerializeField] private BuildingManager buildingManager;
+        [SerializeField] private OverworldManager overworldManager;
         
         private int currentEnemyCount;
 
         public BuildingManager BuildingManager => buildingManager;
-
-        private Vector3 currentBuildingSpawnPoint;
+        public OverworldManager OverworldManager => overworldManager;
 
         private EnemySetupState currentEnemySetupState;
         public bool IsWaveActive => currentEnemySetupState != EnemySetupState.ALL_WAVES_CLEARED;
@@ -54,8 +54,6 @@ namespace Managers
 
         private void InitializeManagers()
         {
-            // Find and cache references to other managers
-            if (buildingManager == null) buildingManager = gameObject.GetComponentInChildren<BuildingManager>();
             // Log warnings for any missing managers
             if (buildingManager == null) Debug.LogWarning("BuildingManager not found in scene!");
 
@@ -67,25 +65,6 @@ namespace Managers
         {
             base.Start();
             SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
-        }
-
-        //Call when entering a building
-        public void EnteredBuilding(Vector3 spawnPoint){
-            currentBuildingSpawnPoint = spawnPoint;
-        }
-
-        //Call when exiting a building
-        public void ExitedBuilding(){
-            SceneTransitionManager.Instance.LoadScene("OverworldScene", GameMode.ROGUE_LITE, true, OnSceneLoaded);
-        }
-
-        void OnSceneLoaded()
-        {
-            if (currentBuildingSpawnPoint != Vector3.zero)
-            {
-                PlayerController.Instance.UpdateNPCPosition(currentBuildingSpawnPoint);
-                currentBuildingSpawnPoint = Vector3.zero;
-            }
         }
 
         protected override void EnemySetupStateChanged(EnemySetupState newState)
@@ -156,7 +135,7 @@ namespace Managers
                     }
                 }
             }
-            SceneTransitionManager.Instance.LoadScene("CampScene", GameMode.CAMP, false);
+            SceneTransitionManager.Instance.LoadScene(SceneNames.CampScene, GameMode.CAMP, false);
         }
 
         public void ReturnToPreviousRoom(RogueLikeRoomDoor door)
@@ -204,7 +183,7 @@ namespace Managers
 
             //Reached the end of the building
             if(!roomEntered){
-                ExitedBuilding();
+                overworldManager.ExitedBuilding();
                 SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                 yield break;
             }

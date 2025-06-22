@@ -5,7 +5,7 @@ public class MainMenu : MenuBase
 {
     public void StartBtn()
     {
-        LoadScene("CampScene", GameMode.CAMP);
+        LoadScene(SceneNames.CampScene, GameMode.CAMP);
     }
 
     public void ContinueBtn()

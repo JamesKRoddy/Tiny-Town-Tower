@@ -9,6 +9,8 @@ namespace Managers
         [SerializeField] private List<BuildingDataScriptableObj> buildingDataScriptableObjs;
         
         private BuildingDataScriptableObj currentBuilding;
+        private Transform buildingSpawn;
+        public Transform BuildingSpawn => buildingSpawn;
         private GameObject currentRoomParent;        
         private int currentMaxRooms;
         private Vector3 lastPlayerSpawnPoint;
@@ -42,8 +44,8 @@ namespace Managers
             // Note: Difficulty is now initialized by the OverWorldDoor before this method is called
             currentMaxRooms = currentBuilding.GetMaxRoomsForDifficulty(DifficultyManager.Instance.GetCurrentWaveDifficulty());
 
-            Transform buildingEntrance = matchingBuildings[randomIndex].buildingEntrance.GetComponent<BuildingEntrance>().PlayerSpawnPoint;
-            if (buildingEntrance == null)
+            buildingSpawn = matchingBuildings[randomIndex].buildingEntrance.GetComponent<BuildingEntrance>().PlayerSpawnPoint;
+            if (buildingSpawn == null)
             {
                 Debug.LogError($"No buildingEntranceSpawnPoint found on gameobject: {matchingBuildings[0].buildingEntrance.name}");
                 return null;

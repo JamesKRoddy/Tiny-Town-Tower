@@ -1373,7 +1373,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1647695797651180896, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
       propertyPath: targetScene
-      value: TurretScene
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 1647695797651180896, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
       propertyPath: nextSceneGameMode
@@ -1721,7 +1721,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1647695797651180896, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
       propertyPath: targetScene
-      value: OverworldScene
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 1647695797651180896, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
       propertyPath: keepPossessedNPC

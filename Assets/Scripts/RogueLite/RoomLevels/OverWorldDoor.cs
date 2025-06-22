@@ -9,7 +9,7 @@ public class OverWorldDoor : RogueLiteDoor
     [SerializeField] private string buildingName = "Unknown Building";
     
     [Header("Scene Transition")]
-    [SerializeField] private string targetScene = "RogueLikeScene";
+    [SerializeField] private SceneNames targetScene = SceneNames.RogueLikeScene;
     [SerializeField] private GameMode nextSceneGameMode = GameMode.ROGUE_LITE;
     [SerializeField] private bool keepPossessedNPC = true;
     [SerializeField] private Transform playerSpawnPoint;
@@ -49,14 +49,14 @@ public class OverWorldDoor : RogueLiteDoor
             return;
         }
 
-        if (targetScene == string.Empty)
+        if (targetScene == SceneNames.NONE)
         {
             Debug.LogWarning($"{gameObject.name} has no next scene");
             return;
         }
 
         // Store player spawn point and set building data
-        RogueLiteManager.Instance.EnteredBuilding(playerSpawnPoint != null ? playerSpawnPoint.position : transform.position);
+        RogueLiteManager.Instance.OverworldManager.EnteredBuilding(playerSpawnPoint);
         buildingData = RogueLiteManager.Instance.BuildingManager.SetBuildingData(buildingType);
 
         // Load the scene with transition
@@ -73,8 +73,6 @@ public class OverWorldDoor : RogueLiteDoor
                 Debug.LogError($"No buildingEntranceSpawnPoint found on gameobject: {buildingData.buildingEntrance.name}");
                 return;
             }
-            
-            PlayerController.Instance.UpdateNPCPosition(buildingEntrance);
         }
 
         // Instantiate the building entrance
@@ -159,7 +157,7 @@ public class OverWorldDoor : RogueLiteDoor
             }
             
             // Add scene info if available
-            if (!string.IsNullOrEmpty(targetScene))
+            if (targetScene != SceneNames.NONE)
             {
                 displayText += $"\nScene: {targetScene}";
             }

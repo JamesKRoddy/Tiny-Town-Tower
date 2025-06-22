@@ -112,11 +112,12 @@ public class PlayerController : MonoBehaviour, IControllerInput
     /// Updates the NPC's position after a scene transition.
     /// If no position is provided, it will default to the PlayerSpawnPoint.
     /// If a Transform is provided, it will use the position of the Transform.
-    /// If a Vector3 is provided, it will use the Vector3 as the position.
+    /// If a Vector3 is provided, it will use the Vector3 as the position. Has to be a vector3 because the scene transition manager will clear the transform.
     /// </summary>
     /// <param name="position"></param>
-    public void UpdateNPCPosition(object position = null)
+    public void UpdateNPCPosition(object position)
     {   
+        Debug.Log($"Updating NPC position to: {position}");
         MonoBehaviour npc = _possessedNPC as MonoBehaviour;
         if (npc != null)
         {
