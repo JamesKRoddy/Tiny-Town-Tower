@@ -10,7 +10,7 @@ Test with differnt shapes
 
 Things to do for a demo:
 
-Level and loot difficulty system.
+Level and loot difficulty system. Overworld door needs to be re looked at, need a door base class that the roguelike and overworld doors can inherit from. Currently loading the wrong scene. also im guessing the player spawn on the door is cauusing issues cos of the name!
 
 Displaying npc mutations (charicteristics)
 
