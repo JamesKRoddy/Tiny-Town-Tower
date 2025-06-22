@@ -17,24 +17,17 @@ public class AttackSpeedMutation : BaseMutationEffect
         if (!isActive) return;
 
         ActiveInstances++;
-        if (characterInventory == null)
-        {
-            Debug.LogError("No CharacterInventory component found on possessed NPC!");
-            return;
-        }
-
-        // Store original weapon if not already stored
-        if (OriginalWeapon == null)
-        {
-            OriginalWeapon = characterInventory.equippedWeaponScriptObj;
-        }
-
-        UpdateEquippedWeapon(damageReductionMultiplier, attackSpeedMultiplier);
+        ApplyWeaponModifiers(damageReductionMultiplier, attackSpeedMultiplier);
     }
 
     protected override void RemoveEffect()
     {
         ActiveInstances--;
-        UpdateEquippedWeapon(damageReductionMultiplier, attackSpeedMultiplier);
+        ApplyWeaponModifiers(damageReductionMultiplier, attackSpeedMultiplier);
+    }
+
+    public override string GetStatsDescription()
+    {
+        return $"Attack Speed: +{((attackSpeedMultiplier - 1) * 100):F0}%\nDamage: {((damageReductionMultiplier - 1) * 100):F0}%";
     }
 } 

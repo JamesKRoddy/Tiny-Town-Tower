@@ -34,7 +34,7 @@ public class TextPopup : MonoBehaviour
     private IEnumerator SetSelectedAfterDelay(GameObject obj)
     {
         yield return new WaitForEndOfFrame();
-        EventSystem.current.SetSelectedGameObject(obj);
+        PlayerUIManager.Instance.SetSelectedGameObject(obj);
     }
 
     void ReturnToGame()

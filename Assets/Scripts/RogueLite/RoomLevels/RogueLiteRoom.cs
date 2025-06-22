@@ -4,17 +4,14 @@ using Managers;
 
 public class RogueLiteRoom : MonoBehaviour
 {
-    [Header("Room Settings")]
-    public int roomDifficulty;
-    
     [Header("Room Components")]
-    public List<RogueLiteDoor> doors = new List<RogueLiteDoor>();
+    public List<RogueLikeRoomDoor> doors = new List<RogueLikeRoomDoor>();
     public List<ChestParent> chests = new List<ChestParent>();
     
     private void Awake()
     {
         // Cache all doors and chests in the room
-        doors.AddRange(GetComponentsInChildren<RogueLiteDoor>());
+        doors.AddRange(GetComponentsInChildren<RogueLikeRoomDoor>());
         chests.AddRange(GetComponentsInChildren<ChestParent>());
     }
 
@@ -29,7 +26,7 @@ public class RogueLiteRoom : MonoBehaviour
         // Initialize all chests
         foreach (var chest in chests)
         {
-            chest.SetupChest(roomDifficulty);
+            chest.SetupChest(DifficultyManager.Instance.GetCurrentRoomDifficulty());
         }
     }
 }

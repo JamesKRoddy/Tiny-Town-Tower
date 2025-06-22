@@ -16,7 +16,7 @@ public abstract class MenuBase : MonoBehaviour, IControllerInput
             {
                 PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
                 PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
-                EventSystem.current.SetSelectedGameObject(_firstSelected.gameObject);
+                PlayerUIManager.Instance.SetSelectedGameObject(_firstSelected.gameObject);
             }
             else
             {
@@ -31,7 +31,7 @@ public abstract class MenuBase : MonoBehaviour, IControllerInput
         PlayerUIManager.Instance.DisplayUIErrorMessage(message);
     }
 
-    public virtual void LoadScene(string targetScene, GameMode nextSceneGameMode, bool keepPlayerControls = false, bool keepPossessedNPC = false)
+    public virtual void LoadScene(SceneNames targetScene, GameMode nextSceneGameMode, bool keepPlayerControls = false, bool keepPossessedNPC = false)
     {
         SceneTransitionManager.Instance.LoadScene(targetScene, nextSceneGameMode, keepPossessedNPC);
     }

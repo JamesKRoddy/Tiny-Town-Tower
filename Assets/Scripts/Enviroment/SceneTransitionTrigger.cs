@@ -1,3 +1,4 @@
+using Managers;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
@@ -5,7 +6,7 @@ using UnityEngine;
 public class SceneTransitionTrigger : MonoBehaviour
 {
     // Name of the scene to load when the possessed NPC enters this area.
-    [SerializeField] protected string targetScene; //TODO convert this to an enum?
+    [SerializeField] protected SceneNames targetScene;
     [SerializeField] protected GameMode nextSceneGameMode;
     [SerializeField] protected bool keepPossessedNPC;
 
@@ -20,7 +21,7 @@ public class SceneTransitionTrigger : MonoBehaviour
                 Debug.LogWarning($"{gameObject.name} has no next game mode");
             }
 
-            if(targetScene == string.Empty)
+            if(targetScene == SceneNames.NONE)
             {
                 Debug.LogWarning($"{gameObject.name} has no next scene");
             }
@@ -31,7 +32,7 @@ public class SceneTransitionTrigger : MonoBehaviour
 
     protected virtual void OnSceneLoaded()
     {
-        PlayerController.Instance.UpdateNPCPosition();
+        
     }
 }
 

@@ -5,19 +5,12 @@ public class Resource : MonoBehaviour, IPickupableItem, IInteractive<ResourceIte
     [SerializeField] private ResourceScriptableObj resourceData; // Reference to the ScriptableObject
     [SerializeField] private int resourceCount; // Amount of the resource
 
-    void Start()
-    {
-        Initialize(resourceData);
-
-        var pickup = resourceData.prefab.GetComponent<IPickupableItem>();
-        if(pickup != null) pickup.Initialize(resourceData); // Doing this because the prefab might not have a IPickupableItem component, in the case of a weapon
-    }
-
-    public void Initialize(ResourceScriptableObj data)
+    public void Initialize(ResourceScriptableObj data, int count = 1)
     {
         if (data is ResourceScriptableObj resourceScriptableObj)
         {
             this.resourceData = resourceScriptableObj;
+            this.resourceCount = count;
         }
         else
         {

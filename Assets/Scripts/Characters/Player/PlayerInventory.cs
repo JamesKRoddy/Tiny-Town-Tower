@@ -42,7 +42,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     [SerializeField] private int maxMutationSlots = 9; // Default to a 3x3 grid
     private List<GeneticMutationObj> equippedMutations = new List<GeneticMutationObj>();
 
-    public List<MutationQuantityEntry> availableMutations = new List<MutationQuantityEntry>();
+    public List<MutationQuantityEntry> availableMutations = new List<MutationQuantityEntry>(); // List of available mutations, removed when mutation screen is closed
 
     public int MaxMutationSlots => maxMutationSlots;
     public List<GeneticMutationObj> EquippedMutations => equippedMutations;
@@ -88,7 +88,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         //TODO Display this on the UI so that the player can seee the inventory items being added
 
         var resourceItem = resourcePickup.GetResourceObj();
-
         switch (resourceItem)
         {
             case WeaponScriptableObj weapon:
@@ -97,6 +96,8 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                     if (PlayerController.Instance._possessedNPC.GetEquipped() == null)
                     {
                         PlayerController.Instance._possessedNPC.EquipWeapon(weapon);
+                        // Show popup for weapon equipped to NPC
+                        PlayerUIManager.Instance.inventoryPopup.ShowWeaponPopup(weapon, false);
                     }
                     else
                     {
@@ -109,6 +110,8 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                                 if (equipNew)
                                 {
                                     PlayerController.Instance._possessedNPC.EquipWeapon(weapon);
+                                    // Show popup for weapon equipped to NPC
+                                    PlayerUIManager.Instance.inventoryPopup.ShowWeaponPopup(weapon, false);
                                 }
                             }
                         );
@@ -116,13 +119,16 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 }
                 break;
             case GeneticMutationObj geneticMutation:
+                Debug.Log("Adding genetic mutation to player inventory: " + geneticMutation.objectName);
                 AddAvalibleMutation(geneticMutation);
+                PlayerUIManager.Instance.utilityMenu.EnableGeneticMutationMenu();
+                // Show popup for genetic mutation added to player inventory
+                PlayerUIManager.Instance.inventoryPopup.ShowMutationPopup(geneticMutation, true);
                 break;
             case ResourceScriptableObj resource:
                 //Adding resources to the possessed NPC's inventory
                 PlayerController.Instance.GetCharacterInventory().AddItem(resource, resourcePickup.count);
                 break;
-
             // Add additional cases here for other item types if necessary.
             default:
                 Debug.LogWarning("Unhandled chest item type.");
@@ -217,6 +223,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     {
         if (result == null) return;
 
+        Debug.Log("Handling interaction result: " + result.GetType().Name);
         switch (result)
         {
             case ResourceItemCount resourcePickup:
@@ -286,9 +293,9 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     public void EquipMutation(GeneticMutationObj mutation)
     {
         equippedMutations.Add(mutation);
-        if (mutation.mutationEffectPrefab != null && PlayerController.Instance._possessedNPC != null)
+        if (mutation.prefab != null && PlayerController.Instance._possessedNPC != null)
         {
-            GameObject effectObj = Instantiate(mutation.mutationEffectPrefab, PlayerController.Instance._possessedNPC.GetTransform());
+            GameObject effectObj = Instantiate(mutation.prefab, PlayerController.Instance._possessedNPC.GetTransform());
             BaseMutationEffect effect = effectObj.GetComponent<BaseMutationEffect>();
             if (effect != null)
             {
@@ -331,5 +338,26 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     public void SetMaxMutationSlots(int slots)
     {
         maxMutationSlots = slots;
+    }
+
+    public void ClearAvailableMutations(){
+        availableMutations.Clear();
+    }
+
+    public override void AddItem(ResourceScriptableObj item, int count = 1)
+    {
+        // Call the base class method to add the item
+        base.AddItem(item, count);
+        
+        // Show popup for item added to player inventory
+        PlayerUIManager.Instance.inventoryPopup?.ShowInventoryPopup(item, count, true);
+    }
+
+    public override void AddItem(List<ResourceItemCount> items)
+    {
+        foreach (var item in items)
+        {
+            AddItem(item.resourceScriptableObj, item.count);
+        }
     }
 }

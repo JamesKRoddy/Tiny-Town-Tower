@@ -1,6 +1,9 @@
 using Managers;
 using UnityEngine;
 
+/// <summary>
+/// Replaced with overworld door, keeping it here for now
+/// </summary>
 public class BuildingEntranceTrigger : SceneTransitionTrigger
 {
     [SerializeField] private Transform playerSpawnPoint;
@@ -19,13 +22,13 @@ public class BuildingEntranceTrigger : SceneTransitionTrigger
                 return;
             }
 
-            if(targetScene == string.Empty)
+            if(targetScene == SceneNames.NONE)
             {
                 Debug.LogWarning($"{gameObject.name} has no next scene");
                 return;
             }
 
-            RogueLiteManager.Instance.EnteredBuilding(playerSpawnPoint.position);  
+            RogueLiteManager.Instance.OverworldManager.EnteredBuilding(playerSpawnPoint);  
             buildingData = RogueLiteManager.Instance.BuildingManager.SetBuildingData(buildingType);
 
             SceneTransitionManager.Instance.LoadScene(targetScene, nextSceneGameMode, keepPossessedNPC, OnSceneLoaded);
@@ -42,8 +45,6 @@ public class BuildingEntranceTrigger : SceneTransitionTrigger
                 Debug.LogError($"No buildingEntranceSpawnPoint found on gameobject: {buildingData.buildingEntrance.name}");
                 return;
             }
-            
-            PlayerController.Instance.UpdateNPCPosition(buildingEntrance);
         }
 
         Instantiate(buildingData.buildingEntrance, Vector3.zero, Quaternion.identity);

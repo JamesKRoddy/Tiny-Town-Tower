@@ -47,7 +47,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         // Clear props on the center piece
         ClearPropsOnCenterPiece();
 
-        int currentDifficulty = rogueLiteManager.GetCurrentWaveDifficulty();
+        int currentDifficulty = DifficultyManager.Instance.GetCurrentWaveDifficulty();
 
         // Instantiate a room for each direction using the scriptable object's selection
         InstantiateRoom(frontTransform, RoomPosition.FRONT, buildingScriptableObj.GetBuildingRoom(currentDifficulty));
@@ -133,7 +133,6 @@ public class RogueLiteRoomParent : MonoBehaviour
         spawnedRooms[worldPosition] = room;
 
         RogueLiteRoom roomComponent = room.GetComponent<RogueLiteRoom>();
-        roomComponent.roomDifficulty = rogueLiteManager.GetCurrentWaveDifficulty();
         roomComponent.Setup();
 
         RandomizePropsInSection(room.transform);
@@ -167,7 +166,7 @@ public class RogueLiteRoomParent : MonoBehaviour
 
     private void SetupDoors()
     {
-        List<RogueLiteDoor> doors = new List<RogueLiteDoor>(transform.GetComponentsInChildren<RogueLiteDoor>());
+        List<RogueLikeRoomDoor> doors = new List<RogueLikeRoomDoor>(transform.GetComponentsInChildren<RogueLikeRoomDoor>());
 
         if (doors == null || doors.Count == 0)
         {
@@ -181,7 +180,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         doors[entranceIndex].doorType = DoorStatus.EXIT;
 
         // Store the exit door for connecting to the previous room
-        RogueLiteDoor exitDoor = doors[entranceIndex];
+        RogueLikeRoomDoor exitDoor = doors[entranceIndex];
         doors.RemoveAt(entranceIndex);
 
         int exitCount = Mathf.Clamp(Random.Range(1, 4), 1, doors.Count);
@@ -245,7 +244,7 @@ public class RogueLiteRoomParent : MonoBehaviour
                 continue;
             }
 
-            chest.SetupChest(rogueLiteManager.GetCurrentWaveDifficulty());
+            chest.SetupChest(DifficultyManager.Instance.GetCurrentRoomDifficulty());
         }
     }
 

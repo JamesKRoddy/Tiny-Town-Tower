@@ -93,15 +93,14 @@ public class PlayerInput : MonoBehaviour
     {
         Debug.Log($"Update Controls playerControlType : <color=cyan> {playerControlType} </color>");
 
-        // Clear any lingering menu input
-        EventSystem.current.SetSelectedGameObject(null);
-
         if(playerControlType == PlayerControlType.IN_MENU)
         {
             UpdatePlayerControlsWithDelay(playerControlType, 1);
         }
         else
         {
+            // Clear any lingering menu input
+            PlayerUIManager.Instance.SetSelectedGameObject(null);
             UpdateControlType(playerControlType);
         }
     }

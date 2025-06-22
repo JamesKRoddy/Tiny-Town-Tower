@@ -2,9 +2,10 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Collections;
+using TMPro;
 
 
-public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour, IControllerInput
+public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour
 {
     [Header("UI Elements")]
     [SerializeField] protected Button closeButton;
@@ -12,10 +13,15 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour, IContr
     protected TItem currentItem;
     protected PreviewListMenuBase<TCategory, TItem> parentMenu;
     protected GameObject selectedElement;
-    public bool isActive { get; private set; } = false;
+    public bool isActive = false;
+
+    [Header("Tootlip Options")]
+    [SerializeField] protected GameObject tooltip;
+    [SerializeField] protected TMP_Text tooltipText;
 
     protected virtual void Start()
     {
+        HideTooltip();
         if (closeButton != null)
             closeButton.onClick.AddListener(OnCloseClicked);
     }
@@ -26,11 +32,12 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour, IContr
 /// <param name="item"></param> Item context in the popup
 /// <param name="menu"></param> Menu that opened the popup
 /// <param name="element"></param> Gameobject that will be selected when the popup is closed, usually the button that opened it
-    public virtual void Setup(TItem item, PreviewListMenuBase<TCategory, TItem> menu, GameObject element = null)
+    public virtual void DisplayPopup(TItem item, PreviewListMenuBase<TCategory, TItem> menu, GameObject element = null)
     {
+        Debug.Log($"Displaying popup for {item}");
         currentItem = item;
         parentMenu = menu;
-        selectedElement = element ?? closeButton?.gameObject;
+        selectedElement = element ?? menu.FirstSelectedElement;
         
         // Disable all buttons in the parent UI except popup buttons
         SetParentUIButtonsInteractable(false);
@@ -57,7 +64,7 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour, IContr
     private IEnumerator SetSelectedAfterDelay(GameObject obj)
     {
         yield return new WaitForEndOfFrame();
-        EventSystem.current.SetSelectedGameObject(obj);
+        PlayerUIManager.Instance.SetSelectedGameObject(obj);
     }
 
     protected void SetParentUIButtonsInteractable(bool interactable)
@@ -83,16 +90,23 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour, IContr
 
         if (selectedElement != null)
         {
-            EventSystem.current.SetSelectedGameObject(selectedElement);
+            PlayerUIManager.Instance.SetSelectedGameObject(selectedElement);
         }
     }
 
-    public void SetPlayerControlType(PlayerControlType controlType)
+    protected virtual void ShowTooltip(int optionIndex)
     {
-        throw new System.NotImplementedException();
+        if(tooltip != null)
+            tooltip.SetActive(true);
+        else
+            Debug.LogWarning("Tooltip is not set");
     }
 
-    
+    protected virtual void HideTooltip()
+    {
+        if(tooltip != null)
+            tooltip.SetActive(false);
+    }
 }
 
 

@@ -38,7 +38,7 @@ public class ThrowableWeapon : WeaponBase
 
         // Add collision handler to deal damage
         var damageHandler = throwableInstance.AddComponent<ThrowableCollisionHandler>();
-        damageHandler.SetDamage(WeaponData.damage);
+        damageHandler.SetDamage(GetCurrentDamage());
     }
 }
 

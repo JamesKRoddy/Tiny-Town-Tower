@@ -7,13 +7,13 @@ namespace Managers
     public class RogueLiteManager : GameModeManager<RogueLikeEnemyWaveConfig>
     {
         [Header("RogueLite Manager References")]
-        private BuildingManager buildingManager;
+        [SerializeField] private BuildingManager buildingManager;
+        [SerializeField] private OverworldManager overworldManager;
         
         private int currentEnemyCount;
 
         public BuildingManager BuildingManager => buildingManager;
-
-        private Vector3 currentBuildingSpawnPoint;
+        public OverworldManager OverworldManager => overworldManager;
 
         private EnemySetupState currentEnemySetupState;
         public bool IsWaveActive => currentEnemySetupState != EnemySetupState.ALL_WAVES_CLEARED;
@@ -54,8 +54,6 @@ namespace Managers
 
         private void InitializeManagers()
         {
-            // Find and cache references to other managers
-            if (buildingManager == null) buildingManager = gameObject.GetComponentInChildren<BuildingManager>();
             // Log warnings for any missing managers
             if (buildingManager == null) Debug.LogWarning("BuildingManager not found in scene!");
 
@@ -67,25 +65,6 @@ namespace Managers
         {
             base.Start();
             SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
-        }
-
-        //Call when entering a building
-        public void EnteredBuilding(Vector3 spawnPoint){
-            currentBuildingSpawnPoint = spawnPoint;
-        }
-
-        //Call when exiting a building
-        public void ExitedBuilding(){
-            SceneTransitionManager.Instance.LoadScene("OverworldScene", GameMode.ROGUE_LITE, true, OnSceneLoaded);
-        }
-
-        void OnSceneLoaded()
-        {
-            if (currentBuildingSpawnPoint != Vector3.zero)
-            {
-                PlayerController.Instance.UpdateNPCPosition(currentBuildingSpawnPoint);
-                currentBuildingSpawnPoint = Vector3.zero;
-            }
         }
 
         protected override void EnemySetupStateChanged(EnemySetupState newState)
@@ -109,9 +88,7 @@ namespace Managers
                 case EnemySetupState.ENEMIES_SPAWNED:
                     break;
                 case EnemySetupState.ALL_WAVES_CLEARED:
-                    Debug.Log("ALL_WAVES_CLEARED");
                     if(transitionCoroutine != null){
-                        Debug.Log("Stopping transition coroutine");
                         StopCoroutine(transitionCoroutine);
                         transitionCoroutine = null;
                     }
@@ -129,7 +106,7 @@ namespace Managers
             }
         }
 
-        public void EnterRoomWithTransition(RogueLiteDoor door)
+        public void EnterRoomWithTransition(RogueLikeRoomDoor door)
         {
             if (transitionCoroutine != null)
             {
@@ -142,12 +119,26 @@ namespace Managers
         {
             if(keepInventory)
             {
-                PlayerInventory.Instance.AddItem(PlayerController.Instance.GetCharacterInventory().GetFullInventory());
+                var npcInventory = PlayerController.Instance.GetCharacterInventory().GetFullInventory();
+                PlayerInventory.Instance.AddItem(npcInventory);
+                
+                // Show popups for items transferred from NPC to player inventory
+                if (PlayerUIManager.Instance?.inventoryPopup != null)
+                {
+                    foreach (var item in npcInventory)
+                    {
+                        PlayerUIManager.Instance.inventoryPopup.ShowInventoryPopup(
+                            item.resourceScriptableObj, 
+                            item.count, 
+                            true // This is now going to player inventory
+                        );
+                    }
+                }
             }
-            SceneTransitionManager.Instance.LoadScene("CampScene", GameMode.CAMP, false);
+            SceneTransitionManager.Instance.LoadScene(SceneNames.CampScene, GameMode.CAMP, false);
         }
 
-        public void ReturnToPreviousRoom(RogueLiteDoor door)
+        public void ReturnToPreviousRoom(RogueLikeRoomDoor door)
         {
             if (transitionCoroutine != null)
             {
@@ -156,7 +147,7 @@ namespace Managers
             transitionCoroutine = StartCoroutine(ReturnToPreviousRoomSequence(door));
         }
 
-        private IEnumerator ReturnToPreviousRoomSequence(RogueLiteDoor door)
+        private IEnumerator ReturnToPreviousRoomSequence(RogueLikeRoomDoor door)
         {
             // 1. Fade in
             yield return PlayerUIManager.Instance.transitionMenu.FadeIn();
@@ -181,7 +172,7 @@ namespace Managers
 
         private Coroutine transitionCoroutine;
 
-        private IEnumerator EnterRoomSequence(RogueLiteDoor door)
+        private IEnumerator EnterRoomSequence(RogueLikeRoomDoor door)
         {
             // 1. Fade in
             yield return PlayerUIManager.Instance.transitionMenu.FadeIn();
@@ -192,7 +183,7 @@ namespace Managers
 
             //Reached the end of the building
             if(!roomEntered){
-                ExitedBuilding();
+                overworldManager.ExitedBuilding();
                 SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                 yield break;
             }
@@ -249,7 +240,7 @@ namespace Managers
 
         public override int GetCurrentWaveDifficulty()
         {
-            return buildingManager.GetCurrentWaveDifficulty();
+            return DifficultyManager.Instance.GetCurrentWaveDifficulty();
         }
     
 

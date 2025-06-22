@@ -59,4 +59,9 @@ public class HealthRegenMutation : BaseMutationEffect
         // Just let the base class handle it
         base.HandleWeaponChange(newWeapon);
     }
+
+    public override string GetStatsDescription()
+    {
+        return $"Health Regen: +{healthRegenPerSecond:F1} HP/s";
+    }
 } 

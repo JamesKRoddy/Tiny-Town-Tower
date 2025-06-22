@@ -13,8 +13,6 @@ public class GeneticMutationBtn : PreviewButtonBase<GeneticMutationObj>
             return;
         }
 
-        Debug.Log($"Selected Mutation: {data.objectName}");
-
         // Activate mutation grid and allow player to move mutation
         if (PlayerUIManager.Instance.geneticMutationMenu != null)
         {

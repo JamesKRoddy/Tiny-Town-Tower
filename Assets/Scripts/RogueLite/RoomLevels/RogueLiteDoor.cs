@@ -5,57 +5,31 @@ using System;
 
 public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IInteractiveBase
 {
-
     [Header("Door Settings")]
     public DoorStatus doorType;
-    public int doorRoomDifficulty;
     public Transform playerSpawn;
-    [SerializeField] private GameObject lockedDoorEffect;
-    [SerializeField] private GameObject nextRoomDoorEffect; //Marks rooms that can be entered
-    [SerializeField] private GameObject previousRoomDoorEffect; //Marks the door the player just came from
+    [SerializeField] protected GameObject lockedDoorEffect;
+    [SerializeField] protected GameObject nextRoomDoorEffect;
+    [SerializeField] protected GameObject previousRoomDoorEffect;
 
-    [Header("Target Room")]
-    public RogueLiteRoomParent targetRoom;
-    public Transform targetSpawnPoint;
+    protected bool isLocked;
 
-    private RogueLiteRoom parentRoom;
-    private bool isLocked;
-
-    public void Initialize(RogueLiteRoom room)
+    protected virtual void Awake()
     {
-        parentRoom = room;
+        // Initialize any base door functionality here if needed
+    }
+
+    protected virtual void Start()
+    {
         isLocked = doorType == DoorStatus.LOCKED;
-        RogueLiteManager.Instance.OnEnemySetupStateChanged += OnEnemySetupStateChanged;
     }
 
-    private void OnEnemySetupStateChanged(EnemySetupState state)
-    {
-        Debug.Log("OnEnemySetupStateChanged: " + state);
-        if(state == EnemySetupState.ALL_WAVES_CLEARED)
-        {
-            if(doorType == DoorStatus.ENTRANCE)
-            {
-                nextRoomDoorEffect.SetActive(true);
-            } else if (doorType == DoorStatus.EXIT) {
-                previousRoomDoorEffect.SetActive(true);
-            } else {
-                lockedDoorEffect.SetActive(true);
-            }
-        }
-    }
-
-    public void OnDoorEntered()
+    public virtual void OnDoorEntered()
     {
         if (isLocked) return;
-
-        if (doorType == DoorStatus.ENTRANCE)
-        {
-            RogueLiteManager.Instance.EnterRoomWithTransition(this);
-        }
-        else if (doorType == DoorStatus.EXIT)
-        {
-            RogueLiteManager.Instance.ReturnToPreviousRoom(this);
-        }
+        
+        // Base implementation - override in derived classes
+        Debug.Log($"Door {gameObject.name} entered");
     }
 
     // Draw a gizmo arrow to show the door's local forward direction
@@ -95,11 +69,8 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
         return this;
     }
 
-    public bool CanInteract()
+    public virtual bool CanInteract()
     {
-        if (RogueLiteManager.Instance.GetEnemySetupState() != EnemySetupState.ALL_WAVES_CLEARED)
-            return false;
-
         switch (doorType)
         {
             case DoorStatus.LOCKED:
@@ -113,23 +84,32 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
         }
     }
 
-    public string GetInteractionText()
+    public virtual string GetInteractionText()
     {
         switch (doorType)
         {
             case DoorStatus.LOCKED:
                 return "Door Locked";
             case DoorStatus.ENTRANCE:
-                return "Enter Room";
+                return "Enter";
             case DoorStatus.EXIT:
-                return "Can't Go Back";
+                return "Exit";
             default:
                 return "INVALID";
         }
     }
 
-    void OnDestroy()
+    protected virtual void ShowDoorEffects()
     {
-        RogueLiteManager.Instance.OnEnemySetupStateChanged -= OnEnemySetupStateChanged;
+        if (lockedDoorEffect != null) lockedDoorEffect.SetActive(doorType == DoorStatus.LOCKED);
+        if (nextRoomDoorEffect != null) nextRoomDoorEffect.SetActive(doorType == DoorStatus.ENTRANCE);
+        if (previousRoomDoorEffect != null) previousRoomDoorEffect.SetActive(doorType == DoorStatus.EXIT);
+    }
+
+    protected virtual void HideDoorEffects()
+    {
+        if (lockedDoorEffect != null) lockedDoorEffect.SetActive(false);
+        if (nextRoomDoorEffect != null) nextRoomDoorEffect.SetActive(false);
+        if (previousRoomDoorEffect != null) previousRoomDoorEffect.SetActive(false);
     }
 }

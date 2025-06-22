@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 using System;
+using UnityEngine.EventSystems;
 
 
 public class PlayerUIManager : MonoBehaviour
@@ -59,6 +60,7 @@ public class PlayerUIManager : MonoBehaviour
     [SerializeField] TextPopup textPopup;
     public NarrativeSystem narrativeSystem;
     public WeaponComparisonMenu weaponComparisonMenu;
+    [SerializeField] public AddedToInventoryPopup inventoryPopup; // Reference to inventory popup system
 
     [Header("Game UI References")]
     public RogueLikeGameUI rogueLikeGameUI;
@@ -173,6 +175,17 @@ public class PlayerUIManager : MonoBehaviour
         quitMenu.SetScreenActive(false);
     }
 
+    public void SetSelectedGameObject(GameObject gameObject)
+    {        
+        StartCoroutine(SetSelectedGameObjectCoroutine(gameObject));
+    }
+
+    private IEnumerator SetSelectedGameObjectCoroutine(GameObject gameObject)
+    {
+        yield return new WaitForSeconds(0.1f);
+        EventSystem.current.SetSelectedGameObject(gameObject);
+    }
+
     internal void BackPressed()
     {
         switch (currentMenu)
@@ -190,12 +203,14 @@ public class PlayerUIManager : MonoBehaviour
                 currentMenu = null;
                 break;
             case BuildMenu:
-            case GeneticMutationUI:
             case PlayerInventoryMenu:
             case SettlerNPCMenu:
             case TurretMenu:
             case TurretUpgradeMenu:
                 utilityMenu.EnableUtilityMenu();
+                break;
+            case GeneticMutationUI:
+                geneticMutationMenu.HandleBackButtonPress();
                 break;
             case SettingsMenu:
             case ReturnToCampMenu:

@@ -18,6 +18,7 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     [Header("Mutation Inventory UI")]
     [SerializeField] public GeneticMutationGrid mutationGrid;
     [SerializeField] private Transform mutationGridPrefabContainer;
+    [SerializeField] private PreviewPopupBase<GeneticMutationObj, GeneticMutation> geneticMutationClosePopup;
 
     [Header("Selected Mutation")]
     private GeneticMutationObj selectedMutation;
@@ -28,9 +29,19 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
 
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 0.2f; // Time between movements in seconds
+    [SerializeField] private float inputThreshold = 0.5f; // Threshold for directional input
     private float lastMoveTime;
     private Vector2 lastInputDirection;
     private float warningLockEndTime = 0f;
+
+    private void OnEnable()
+    {
+        // Reset placement state when menu is opened
+        isPlacingMutation = false;
+        isMovingExistingMutation = false;
+        selectedMutation = null;
+        selectedMutationElement = null;
+    }
 
     public override void SetPlayerControls(PlayerControlType controlType)
     {
@@ -53,6 +64,9 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
                 PlayerInput.Instance.OnLeftJoystick += MoveMutation;
                 PlayerInput.Instance.OnAPressed += PlaceMutation;
                 PlayerInput.Instance.OnXPressed += RotateMutation;
+                PlayerInput.Instance.OnBPressed += CancelPlacement;
+                PlayerInput.Instance.OnLBPressed += RotateSelectedMutationLeft;
+                PlayerInput.Instance.OnRBPressed += RotateSelectedMutationRight;
                 // Disable all buttons in the current screen
                 if (screens.ContainsKey(currentCategory) && screens[currentCategory] != null)
                 {
@@ -64,6 +78,44 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
                 break;
             default:
                 break;
+        }
+    }
+
+    private void CancelPlacement()
+    {
+        if (isPlacingMutation && selectedMutationElement != null)
+        {
+            // If we're moving an existing mutation, put it back in the grid
+            if (isMovingExistingMutation)
+            {
+                // Find a suitable position
+                for (int x = 0; x < mutationGrid.GetGridWidth(); x++)
+                {
+                    for (int y = 0; y < mutationGrid.GetGridHeight(); y++)
+                    {
+                        Vector2Int pos = new Vector2Int(x, y);
+                        if (mutationGrid.CanPlaceMutation(pos, selectedMutationElement))
+                        {
+                            mutationGrid.PlaceMutation(selectedMutationElement, pos, selectedMutationElement.Size);
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // If we're placing a new mutation, destroy it
+                Destroy(selectedMutationElement.gameObject);
+            }
+
+            // Reset state
+            selectedMutation = null;
+            selectedMutationElement = null;
+            isPlacingMutation = false;
+            isMovingExistingMutation = false;
+
+            // Switch back to menu controls
+            PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
         }
     }
 
@@ -111,7 +163,37 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
 
     public override string GetPreviewDescription(GeneticMutationObj mutation)
     {
-        return mutation.description;
+        string baseDescription = mutation.description;
+        
+        // Get stats description from the mutation effect
+        string statsDescription = GetMutationStatsDescription(mutation);
+        
+        // Combine base description with stats
+        if (!string.IsNullOrEmpty(statsDescription))
+        {
+            return $"{baseDescription}\n\n{statsDescription}";
+        }
+        
+        return baseDescription;
+    }
+
+    private string GetMutationStatsDescription(GeneticMutationObj mutation)
+    {
+        if (mutation.prefab == null)
+        {
+            Debug.LogWarning($"Mutation {mutation.name} has no prefab assigned!");
+            return string.Empty;
+        }
+
+        // Get the BaseMutationEffect component from the prefab
+        BaseMutationEffect mutationEffect = mutation.prefab.GetComponent<BaseMutationEffect>();
+        if (mutationEffect == null)
+        {
+            Debug.LogWarning($"Mutation prefab {mutation.prefab.name} has no BaseMutationEffect component!");
+            return string.Empty;
+        }
+
+        return mutationEffect.GetStatsDescription();
     }
 
     public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(GeneticMutationObj item)
@@ -139,18 +221,19 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         isPlacingMutation = true;
         isMovingExistingMutation = true;
         selectedPosition = new Vector2Int(0, 0);
-
-        // Find the existing UI element for this mutation
-        selectedMutationElement = mutationGrid.GetMutationElement(uiElement.gameObject);
+        selectedMutationElement = uiElement;
         mutationGrid.ClearPosition(selectedMutationElement);
         if (selectedMutationElement == null)
         {
             Debug.LogError($"Could not find existing UI element for mutation: {uiElement.mutation.objectName}");
             return;
         }
+        
+        // Make sure it's in the correct container
+        selectedMutationElement.transform.SetParent(mutationGridPrefabContainer, false);
+        
         selectedMutationElement.SetSelected(true); // Highlight selected mutation
-
-        SetupMutationElementPosition(uiElement.mutation);
+        selectedMutationElement.SetGridPosition(selectedPosition, mutationGrid.GetCellSize());
     }
 
     /// <summary>
@@ -164,118 +247,89 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         isMovingExistingMutation = false;
         selectedPosition = new Vector2Int(0, 0);
 
-        if (mutation.prefab == null)
-        {
-            Debug.LogError($"Mutation {mutation.objectName} is missing a UI prefab!");
-            return;
-        }
-
         // Create new UI element for new mutation
-        GameObject newSlot = Instantiate(mutation.prefab, mutationGridPrefabContainer.transform);
+        GameObject newSlot = Instantiate(mutationGrid.mutationSlotPrefab, mutationGridPrefabContainer);
         selectedMutationElement = newSlot.GetComponent<MutationUIElement>();
+        if (selectedMutationElement == null)
+        {
+            selectedMutationElement = newSlot.AddComponent<MutationUIElement>();
+        }
 
         if (selectedMutationElement == null)
         {
-            Debug.LogError($"Mutation prefab {mutation.prefab.name} is missing a MutationUIElement component!");
+            Debug.LogError($"Failed to add MutationUIElement component to new mutation slot!");
+            Destroy(newSlot);
             return;
         }
 
         selectedMutationElement.Initialize(mutation, mutationGrid);
         selectedMutationElement.SetSelected(true); // Highlight selected mutation
-        SetupMutationElementPosition(mutation);
+        selectedMutationElement.SetGridPosition(selectedPosition, mutationGrid.GetCellSize());
     }
 
-    private void SetupMutationElementPosition(GeneticMutationObj mutation)
+    private void ClampSelectedPositionToGrid()
     {
-        // Get the cell size once and pass it in
-        Vector2 cellSize = mutationGrid.GetCellSize();
-        selectedMutationElement.SetGridPosition(selectedPosition, cellSize);
+        if (selectedMutationElement == null) return;
+        int gridWidth = mutationGrid.GetGridWidth();
+        int gridHeight = mutationGrid.GetGridHeight();
 
-        // Ensure the UI element matches the mutation's intended size and positioning
-        RectTransform rectTransform = selectedMutationElement.GetComponent<RectTransform>();
-        if (rectTransform != null)
-        {
-            // Set the size based on the mutation size and cell size
-            rectTransform.sizeDelta = new Vector2(cellSize.x * mutation.size.x, cellSize.y * mutation.size.y);
-
-            // Set anchors to stretch across the required number of cells
-            rectTransform.anchorMin = new Vector2(0, 0);
-            rectTransform.anchorMax = new Vector2(0, 0);
-            rectTransform.pivot = new Vector2(0, 0);
-
-            // Force layout update to ensure proper positioning
-            LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
-        }
+        // Use the new clamping method
+        selectedPosition = selectedMutationElement.GetClampedPosition(selectedPosition, gridWidth, gridHeight);
     }
-
 
     private void MoveMutation(Vector2 direction)
     {
         if (!isPlacingMutation || selectedMutationElement == null) return;
-
-        // Check if we're in warning lock period
-        if (Time.time < warningLockEndTime)
-            return;
-
-        // Store the last input direction
+        if (Time.time < warningLockEndTime) return;
         lastInputDirection = direction;
+        if (Time.time - lastMoveTime < moveSpeed) return;
+        if (Mathf.Abs(direction.x) < inputThreshold && Mathf.Abs(direction.y) < inputThreshold) return;
 
-        // Check if enough time has passed since last movement
-        if (Time.time - lastMoveTime < moveSpeed)
-            return;
-
-        // Only move if there's significant input (to prevent drift)
-        if (Mathf.Abs(direction.x) < 0.5f && Mathf.Abs(direction.y) < 0.5f)
-            return;
-
-        // Determine which axis has the stronger input
-        bool moveHorizontal = Mathf.Abs(direction.x) > Mathf.Abs(direction.y);
-        
-        // Calculate new position based on dominant axis
         Vector2Int newPosition = selectedPosition;
-        if (moveHorizontal)
-        {
+        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
             newPosition.x += direction.x > 0 ? 1 : -1;
-        }
         else
-        {
             newPosition.y += direction.y > 0 ? 1 : -1;
-        }
 
-        // Ensure new position is within the grid bounds
-        newPosition = mutationGrid.ClampToGrid(newPosition, selectedMutation.size);
-
-        // Only move if the position is different
-        if (newPosition != selectedPosition)
+        // Check if the new position is valid before applying it
+        if (selectedMutationElement.IsPositionValid(newPosition, mutationGrid.GetGridWidth(), mutationGrid.GetGridHeight()))
         {
             selectedPosition = newPosition;
             lastMoveTime = Time.time;
-
-            // Pass cellSize when updating position
-            Vector2 cellSize = mutationGrid.GetCellSize();
-            selectedMutationElement.SetGridPosition(selectedPosition, cellSize);
-
-            // Force layout update after position change
-            LayoutRebuilder.ForceRebuildLayoutImmediate(selectedMutationElement.GetComponent<RectTransform>());
+            selectedMutationElement.SetGridPosition(selectedPosition, mutationGrid.GetCellSize());
+        }
+        else
+        {
+            // Show warning if we can't move in that direction
+            selectedMutationElement.ShowWarning();
+            warningLockEndTime = Time.time + 0.5f;
+            StartCoroutine(HideWarningAfterDelay());
         }
     }
 
     private void RotateMutation()
     {
         if (!isPlacingMutation || selectedMutationElement == null) return;
-        selectedMutationElement.Rotate();
+        
+        // Rotate the mutation element clockwise
+        selectedMutationElement.RotateRight();
+        
+        // Debug log to verify rotation
+        Debug.Log("Rotated mutation clockwise");
     }
 
     private void PlaceMutation()
     {
         if (!isPlacingMutation || selectedMutationElement == null) return;
 
-        if (mutationGrid.CanPlaceMutation(selectedPosition, selectedMutation.size))
+        Debug.Log($"[PlaceMutation] Trying to place at {selectedPosition} with size {selectedMutationElement.Size} on grid {mutationGrid.GetGridWidth()}x{mutationGrid.GetGridHeight()}");
+        if (mutationGrid.CanPlaceMutation(selectedPosition, selectedMutationElement))
         {
             selectedMutationElement.SetSelected(false);
-            mutationGrid.PlaceMutation(selectedMutationElement, selectedPosition, selectedMutation.size);
+            mutationGrid.PlaceMutation(selectedMutationElement, selectedPosition, selectedMutationElement.Size);
             isPlacingMutation = false;
             selectedMutationElement = null;
+            Debug.Log("[PlaceMutation] Placed mutation successfully.");
 
             if (!isMovingExistingMutation)
             {
@@ -313,6 +367,7 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         }
         else
         {
+            Debug.LogWarning($"[PlaceMutation] Cannot place mutation at {selectedPosition} with size {selectedMutationElement.Size}");
             // Show warning and lock movement
             selectedMutationElement.ShowWarning();
             warningLockEndTime = Time.time + 0.5f;
@@ -356,7 +411,97 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
     {
         if (selectionPopup != null)
         {
-            selectionPopup.Setup(mutation, this, uiElement.gameObject);
+            selectionPopup.DisplayPopup(mutation, this, uiElement.gameObject);
+        }
+    }
+
+    public void RotateSelectedMutationLeft()
+    {
+        if (isPlacingMutation && selectedMutationElement != null)
+        {
+            selectedMutationElement.RotateLeft();
+            
+            // Check if the current position is still valid after rotation
+            if (!selectedMutationElement.IsPositionValid(selectedPosition, mutationGrid.GetGridWidth(), mutationGrid.GetGridHeight()))
+            {
+                // If not valid, try to find a valid position
+                bool foundValidPosition = false;
+                for (int x = 0; x < mutationGrid.GetGridWidth(); x++)
+                {
+                    for (int y = 0; y < mutationGrid.GetGridHeight(); y++)
+                    {
+                        Vector2Int testPos = new Vector2Int(x, y);
+                        if (selectedMutationElement.IsPositionValid(testPos, mutationGrid.GetGridWidth(), mutationGrid.GetGridHeight()))
+                        {
+                            selectedPosition = testPos;
+                            foundValidPosition = true;
+                            break;
+                        }
+                    }
+                    if (foundValidPosition) break;
+                }
+
+                // If no valid position found, show warning
+                if (!foundValidPosition)
+                {
+                    selectedMutationElement.ShowWarning();
+                    warningLockEndTime = Time.time + 0.5f;
+                    StartCoroutine(HideWarningAfterDelay());
+                }
+            }
+
+            selectedMutationElement.SetGridPosition(selectedPosition, mutationGrid.GetCellSize());
+        }
+    }
+
+    public void RotateSelectedMutationRight()
+    {
+        if (isPlacingMutation && selectedMutationElement != null)
+        {
+            selectedMutationElement.RotateRight();
+            
+            // Check if the current position is still valid after rotation
+            if (!selectedMutationElement.IsPositionValid(selectedPosition, mutationGrid.GetGridWidth(), mutationGrid.GetGridHeight()))
+            {
+                // If not valid, try to find a valid position
+                bool foundValidPosition = false;
+                for (int x = 0; x < mutationGrid.GetGridWidth(); x++)
+                {
+                    for (int y = 0; y < mutationGrid.GetGridHeight(); y++)
+                    {
+                        Vector2Int testPos = new Vector2Int(x, y);
+                        if (selectedMutationElement.IsPositionValid(testPos, mutationGrid.GetGridWidth(), mutationGrid.GetGridHeight()))
+                        {
+                            selectedPosition = testPos;
+                            foundValidPosition = true;
+                            break;
+                        }
+                    }
+                    if (foundValidPosition) break;
+                }
+
+                // If no valid position found, show warning
+                if (!foundValidPosition)
+                {
+                    selectedMutationElement.ShowWarning();
+                    warningLockEndTime = Time.time + 0.5f;
+                    StartCoroutine(HideWarningAfterDelay());
+                }
+            }
+
+            selectedMutationElement.SetGridPosition(selectedPosition, mutationGrid.GetCellSize());
+        }
+    }
+
+    internal void HandleBackButtonPress()
+    {
+        if(PlayerInventory.Instance.availableMutations.Count > 0)
+        {
+            geneticMutationClosePopup.DisplayPopup(null, this, leftScreenBtn.gameObject);
+        }
+        else
+        {
+            PlayerUIManager.Instance.utilityMenu.EnableUtilityMenu();
         }
     }
 }

@@ -24,6 +24,7 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
     protected Dictionary<TCategory, GameObject> screens = new Dictionary<TCategory, GameObject>();
     protected TCategory currentCategory;
     protected TItem currentSelectedItem;
+    public GameObject FirstSelectedElement => leftScreenBtn.gameObject; //Used for when opening the screen, the first element is selected
 
     public abstract IEnumerable<TItem> GetItems();
     public abstract TCategory GetItemCategory(TItem item);
@@ -46,7 +47,7 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
             }
             else
             {
-                if (selectionPopup != null)
+                if (selectionPopup != null && selectionPopup.isActive)
                 {
                     selectionPopup.OnCloseClicked();
                 }
@@ -99,7 +100,7 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         }
         else if (leftScreenBtn != null)
         {
-            EventSystem.current.SetSelectedGameObject(leftScreenBtn.gameObject);
+            PlayerUIManager.Instance.SetSelectedGameObject(FirstSelectedElement);
         }
     }
 
@@ -232,19 +233,19 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
         }
         else if (leftScreenBtn != null)
         {
-            selectedObject = leftScreenBtn.gameObject;
+            selectedObject = FirstSelectedElement;
         }
 
         if (selectedObject != null)
         {
-            EventSystem.current.SetSelectedGameObject(selectedObject);
+            PlayerUIManager.Instance.SetSelectedGameObject(selectedObject);
         }
     }
 
     public void DisplayPopup(TItem item, GameObject selectedObject = null){
         if (selectionPopup != null)
         {
-            selectionPopup.Setup(item, this, selectedObject);
+            selectionPopup.DisplayPopup(item, this, selectedObject);
         }
     }
 

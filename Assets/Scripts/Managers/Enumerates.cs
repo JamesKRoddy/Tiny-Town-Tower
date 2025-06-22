@@ -1,4 +1,21 @@
 // =========================
+// SCENE NAMES ENUMS
+// =========================
+
+public enum SceneNames
+{
+    NONE,
+    MainMenuScene,
+    CampScene,
+    LoadingScene,
+    TransitionScene,
+    TurretScene,
+    OverworldScene,
+    RogueLikeScene
+}
+
+
+// =========================
 // BUILDING ENUMS
 // =========================
 

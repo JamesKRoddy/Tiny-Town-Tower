@@ -30,12 +30,6 @@ public class LowHealthDamageMutation : BaseMutationEffect
             return;
         }
 
-        // Store original weapon if not already stored
-        if (OriginalWeapon == null)
-        {
-            OriginalWeapon = characterInventory.equippedWeaponScriptObj;
-        }
-
         // Subscribe to damage taken event
         if (damageable is HumanCharacterController humanController)
         {
@@ -49,11 +43,11 @@ public class LowHealthDamageMutation : BaseMutationEffect
         ActiveInstances--;
         if (isLowHealth)
         {
-            UpdateEquippedWeapon(damageMultiplier);
+            ApplyWeaponModifiers(damageMultiplier);
         }
         else
         {
-            UpdateEquippedWeapon(1f); // Restore original damage
+            ApplyWeaponModifiers(1f); // Restore original damage
         }
 
         // Unsubscribe from damage taken event
@@ -80,11 +74,11 @@ public class LowHealthDamageMutation : BaseMutationEffect
         {
             if (isLowHealth)
             {
-                UpdateEquippedWeapon(damageMultiplier);
+                ApplyWeaponModifiers(damageMultiplier);
             }
             else
             {
-                UpdateEquippedWeapon(1f); // Restore original damage
+                ApplyWeaponModifiers(1f); // Restore original damage
             }
         }
     }
@@ -93,13 +87,13 @@ public class LowHealthDamageMutation : BaseMutationEffect
     {
         if (isActive)
         {
-            // Store the new weapon as the original if we don't have one yet
-            if (OriginalWeapon == null)
-            {
-                OriginalWeapon = newWeapon;
-            }
             // Reapply the effect
             base.HandleWeaponChange(newWeapon);
         }
+    }
+
+    public override string GetStatsDescription()
+    {
+        return $"Damage Boost: +{((damageMultiplier - 1) * 100):F0}% when below {healthThreshold * 100:F0}% health";
     }
 } 

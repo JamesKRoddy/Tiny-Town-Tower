@@ -5,18 +5,12 @@ public abstract class BaseMutationEffect : MonoBehaviour, IPickupableItem
     protected bool isActive = false;
     protected GeneticMutationObj mutationData;
     protected CharacterInventory characterInventory;
-    private WeaponScriptableObj _originalWeapon;
-
-    protected WeaponScriptableObj OriginalWeapon
-    {
-        get => _originalWeapon;
-        set => _originalWeapon = value;
-    }
+    private WeaponBase currentWeapon;
 
     // Abstract property that derived classes must implement
     protected abstract int ActiveInstances { get; set; }
 
-    public void Initialize(ResourceScriptableObj data)
+    public void Initialize(ResourceScriptableObj data, int count = 1)
     {
         if (data is GeneticMutationObj mutationScriptableObj)
         {
@@ -41,8 +35,10 @@ public abstract class BaseMutationEffect : MonoBehaviour, IPickupableItem
         {
             // Subscribe to weapon changes
             characterInventory.OnWeaponEquipped += HandleWeaponChange;
+            // Apply effect to currently equipped weapon
+            currentWeapon = characterInventory.equippedWeaponBase;
+            ApplyEffect();
         }
-        ApplyEffect();
     }
 
     public virtual void OnUnequip()
@@ -55,61 +51,42 @@ public abstract class BaseMutationEffect : MonoBehaviour, IPickupableItem
         }
         RemoveEffect();
         characterInventory = null;
-        _originalWeapon = null;
+        currentWeapon = null;
     }
 
     protected abstract void ApplyEffect();
     protected abstract void RemoveEffect();
 
-    // Handle weapon changes
+    // Handle weapon changes - apply effects to new weapons
     protected virtual void HandleWeaponChange(WeaponScriptableObj newWeapon)
     {
-        if (isActive)
-        {
-            // Store the new weapon as the original if we don't have one yet
-            if (_originalWeapon == null)
-            {
-                _originalWeapon = newWeapon;
-            }
-            // Reapply the effect
-            RemoveEffect();
-            ApplyEffect();
-        }
+        if (!isActive) return;
+
+        // Get the new weapon instance
+        currentWeapon = characterInventory.equippedWeaponBase;
+        
+        // Apply effects to the new weapon
+        ApplyEffect();
     }
 
-    // Helper method to create a modified weapon with updated stats
-    protected WeaponScriptableObj CreateModifiedWeapon(float damageMultiplier = 1f, float attackSpeedMultiplier = 1f)
+    // Helper method to apply mutation multipliers to the current weapon
+    protected void ApplyWeaponModifiers(float damageMultiplier = 1f, float attackSpeedMultiplier = 1f)
     {
-        if (_originalWeapon == null) return null;
-
-        WeaponScriptableObj modifiedWeapon = ScriptableObject.CreateInstance<WeaponScriptableObj>();
-        modifiedWeapon.damage = Mathf.RoundToInt(_originalWeapon.damage * Mathf.Pow(damageMultiplier, ActiveInstances));
-        modifiedWeapon.attackSpeed = _originalWeapon.attackSpeed * Mathf.Pow(attackSpeedMultiplier, ActiveInstances);
-        modifiedWeapon.weaponElement = _originalWeapon.weaponElement;
-        modifiedWeapon.prefab = _originalWeapon.prefab;
-        modifiedWeapon.animationType = _originalWeapon.animationType;
-        return modifiedWeapon;
-    }
-
-    // Helper method to equip a modified weapon or restore the original
-    protected void UpdateEquippedWeapon(float damageMultiplier = 1f, float attackSpeedMultiplier = 1f)
-    {
-        if (characterInventory == null || _originalWeapon == null) return;
+        if (currentWeapon == null) return;
 
         if (ActiveInstances > 0)
         {
-            WeaponScriptableObj modifiedWeapon = CreateModifiedWeapon(damageMultiplier, attackSpeedMultiplier);
-            if (modifiedWeapon != null)
-            {
-                characterInventory.EquipWeapon(modifiedWeapon);
-            }
+            currentWeapon.ApplyMutationMultipliers(damageMultiplier, attackSpeedMultiplier, ActiveInstances);
         }
         else
         {
-            characterInventory.EquipWeapon(_originalWeapon);
+            currentWeapon.RestoreOriginalStats();
         }
     }
 
     // Public property to access mutation data
     public GeneticMutationObj MutationData => mutationData;
+
+    // Abstract method that derived classes must implement to return their stats description
+    public abstract string GetStatsDescription();
 } 
