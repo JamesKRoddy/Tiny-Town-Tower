@@ -69,8 +69,23 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
             return "A versatile robot that can perform various tasks.";
         }
         else if (item is SettlerNPC settler)
-    {
-            return settler.nPCDataObj.nPCDescription;
+        {
+            string baseDescription = settler.nPCDataObj.nPCDescription;
+            
+            // Add characteristics descriptions if any exist
+            if (settler.characteristicSystem != null && settler.characteristicSystem.EquippedCharacteristics.Count > 0)
+            {
+                baseDescription += "\n\nCharacteristics:";
+                foreach (var characteristic in settler.characteristicSystem.EquippedCharacteristics)
+                {
+                    if (characteristic != null && !string.IsNullOrEmpty(characteristic.CharicteristicDescription()))
+                    {
+                        baseDescription += $"\n• {characteristic.CharicteristicDescription()}";
+                    }
+                }
+            }
+            
+            return baseDescription;
         }
         return string.Empty;
     }

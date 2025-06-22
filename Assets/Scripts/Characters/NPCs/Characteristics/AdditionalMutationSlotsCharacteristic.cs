@@ -40,5 +40,10 @@ namespace Characters.NPC.Characteristic
             RemoveEffect();
             base.OnUnequip();
         }
+
+        public override string GetStatsDescription()
+        {
+            return $"Additional Mutation Slots: {additionalMutationSlots}";
+        }
     }
 } 

@@ -40,6 +40,10 @@ namespace Characters.NPC.Characteristic
             RemoveEffect();
         }
 
+        public virtual string GetStatsDescription(){
+            return "";
+        }
+
         protected abstract void ApplyEffect();
         protected abstract void RemoveEffect();
     }
