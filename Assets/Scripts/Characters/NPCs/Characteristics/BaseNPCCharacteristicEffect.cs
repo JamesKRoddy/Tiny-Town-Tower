@@ -4,7 +4,7 @@ namespace Characters.NPC.Characteristic
 {
     public abstract class BaseNPCCharacteristicEffect : MonoBehaviour
     {
-        protected NPCCharacteristicScriptableObj mutation;
+        protected NPCCharacteristicScriptableObj characteristicScriptableObj;
         protected SettlerNPC settlerNPC;
         protected int activeInstances = 0;
 
@@ -14,9 +14,9 @@ namespace Characters.NPC.Characteristic
             set => activeInstances = value;
         }
 
-        public void Initialize(NPCCharacteristicScriptableObj mutation, SettlerNPC settlerNPC)
+        public void Initialize(NPCCharacteristicScriptableObj characteristic, SettlerNPC settlerNPC)
         {
-            this.mutation = mutation;
+            this.characteristicScriptableObj = characteristic;
             this.settlerNPC = settlerNPC;
         }
 
@@ -24,7 +24,7 @@ namespace Characters.NPC.Characteristic
         {
             if (settlerNPC == null)
             {
-                Debug.LogError($"BaseNPCMutationEffect: settlerNPC is null for mutation {mutation?.name}");
+                Debug.LogError($"BaseNPCCharacteristicEffect: settlerNPC is null for characteristic {characteristicScriptableObj?.name}");
                 return;
             }
             ApplyEffect();
@@ -34,7 +34,7 @@ namespace Characters.NPC.Characteristic
         {
             if (settlerNPC == null)
             {
-                Debug.LogError($"BaseNPCMutationEffect: settlerNPC is null for mutation {mutation?.name}");
+                Debug.LogError($"BaseNPCCharacteristicEffect: settlerNPC is null for characteristic {characteristicScriptableObj?.name}");
                 return;
             }
             RemoveEffect();

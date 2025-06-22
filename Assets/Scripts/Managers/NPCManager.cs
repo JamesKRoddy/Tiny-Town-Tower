@@ -10,8 +10,8 @@ namespace Managers
     {
         public static NPCManager Instance { get; private set; }
 
-        [Header("Mutation Settings")]
-        [SerializeField] private List<NPCCharacteristicScriptableObj> allMutations = new List<NPCCharacteristicScriptableObj>();
+        [Header("Characteristic Settings")]
+        [SerializeField] private List<NPCCharacteristicScriptableObj> allCharacteristics = new List<NPCCharacteristicScriptableObj>();
 
         [Header("NPC Tracking")]
         private List<SettlerNPC> activeNPCs = new List<SettlerNPC>();
@@ -49,29 +49,29 @@ namespace Managers
             }
         }
 
-        public List<NPCCharacteristicScriptableObj> GetAllMutations()
+        public List<NPCCharacteristicScriptableObj> GetAllCharacteristics()
         {
-            return allMutations;
+            return allCharacteristics;
         }
 
-        public void AddMutationToNPC(SettlerNPC npc, NPCCharacteristicScriptableObj mutation)
+        public void AddCharacteristicToNPC(SettlerNPC npc, NPCCharacteristicScriptableObj characteristic)
         {
-            if (npc == null || mutation == null) return;
+            if (npc == null || characteristic == null) return;
 
-            NPCMutationSystem mutationSystem = npc.GetComponent<NPCMutationSystem>();
-            if (mutationSystem == null) return;
+            NPCCharacteristicSystem characteristicSystem = npc.GetComponent<NPCCharacteristicSystem>();
+            if (characteristicSystem == null) return;
 
-            mutationSystem.EquipMutation(mutation);
+            characteristicSystem.EquipCharacteristic(characteristic);
         }
 
-        public void RemoveMutationFromNPC(SettlerNPC npc, NPCCharacteristicScriptableObj mutation)
+        public void RemoveCharacteristicFromNPC(SettlerNPC npc, NPCCharacteristicScriptableObj characteristic)
         {
-            if (npc == null || mutation == null) return;
+            if (npc == null || characteristic == null) return;
 
-            NPCMutationSystem mutationSystem = npc.GetComponent<NPCMutationSystem>();
-            if (mutationSystem == null) return;
+            NPCCharacteristicSystem characteristicsSystem = npc.GetComponent<NPCCharacteristicSystem>();
+            if (characteristicsSystem == null) return;
 
-            mutationSystem.RemoveMutation(mutation);
+            characteristicsSystem.RemoveCharacteristic(characteristic);
         }
     }
 } 

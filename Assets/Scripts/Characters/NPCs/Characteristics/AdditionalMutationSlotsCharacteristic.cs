@@ -10,9 +10,9 @@ namespace Characters.NPC.Characteristic
 
         protected override void ApplyEffect()
         {
-            if (settlerNPC == null || settlerNPC.mutationSystem == null)
+            if (settlerNPC == null || settlerNPC.characteristicSystem == null)
             {
-                Debug.LogError($"AdditionalMutationSlotsMutation: settlerNPC or mutationSystem is null for mutation {mutation?.name}");
+                Debug.LogError($"AdditionalMutationSlotsCharacteristic: settlerNPC or characteristicSystem is null for characteristic {characteristicScriptableObj?.name}");
                 return;
             }
 
@@ -25,9 +25,9 @@ namespace Characters.NPC.Characteristic
 
         protected override void RemoveEffect()
         {
-            if (settlerNPC == null || settlerNPC.mutationSystem == null)
+            if (settlerNPC == null || settlerNPC.characteristicSystem == null)
             {
-                Debug.LogError($"AdditionalMutationSlotsMutation: settlerNPC or mutationSystem is null for mutation {mutation?.name}");
+                Debug.LogError($"AdditionalMutationSlotsCharacteristic: settlerNPC or characteristicSystem is null for characteristic {characteristicScriptableObj?.name}");
                 return;
             }
 
