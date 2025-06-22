@@ -40,10 +40,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7798805974534335624}
-  - component: {fileID: 2272501943966103175}
   - component: {fileID: 3426535445698160169}
+  - component: {fileID: -9144388622407744570}
   m_Layer: 0
-  m_Name: RogueLiteDoor
+  m_Name: RogueLiteRoomDoor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -69,25 +69,6 @@ Transform:
   - {fileID: 62606090860466199}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2272501943966103175
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8175387165464890825}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e6658d73e0d69844c8a293256ffb2381, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  doorType: 1
-  buildingType: 0
-  doorRoomDifficulty: 0
-  playerSpawn: {fileID: 8096091897142577133}
-  lockedDoorEffect: {fileID: 2214464768097416770}
-  nextRoomDoorEffect: {fileID: 3601143706949006307}
-  previousRoomDoorEffect: {fileID: 60051046917542727}
 --- !u!65 &3426535445698160169
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -109,6 +90,25 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.26, y: 2.39, z: 0.39}
   m_Center: {x: 0, y: 1.11, z: 0}
+--- !u!114 &-9144388622407744570
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8175387165464890825}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 280c2aae16403c246b0d61af7631ce97, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  doorType: 1
+  playerSpawn: {fileID: 8096091897142577133}
+  lockedDoorEffect: {fileID: 2214464768097416770}
+  nextRoomDoorEffect: {fileID: 3601143706949006307}
+  previousRoomDoorEffect: {fileID: 60051046917542727}
+  targetRoom: {fileID: 0}
+  targetSpawnPoint: {fileID: 0}
 --- !u!1001 &58752137570649091
 PrefabInstance:
   m_ObjectHideFlags: 0

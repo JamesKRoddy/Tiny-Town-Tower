@@ -52,7 +52,7 @@ namespace Managers
             return currentBuilding;
         }
 
-        public bool EnterRoomCheck(RogueLiteDoor rogueLiteDoor)
+        public bool EnterRoomCheck(RogueLikeRoomDoor rogueLiteDoor)
         {
             // Automatically calculate and set room difficulty based on building difficulty and room number
             DifficultyManager.Instance.SetNextRoomDifficulty();
@@ -72,7 +72,7 @@ namespace Managers
             return true;
         }
 
-        public void ReturnToPreviousRoom(RogueLiteDoor rogueLiteDoor)
+        public void ReturnToPreviousRoom(RogueLikeRoomDoor rogueLiteDoor)
         {
             if (rogueLiteDoor.targetRoom == null)
             {

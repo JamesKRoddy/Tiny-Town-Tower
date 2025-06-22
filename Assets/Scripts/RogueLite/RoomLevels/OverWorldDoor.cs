@@ -32,6 +32,8 @@ public class OverWorldDoor : RogueLiteDoor
 
     public override void OnDoorEntered()
     {
+        if (isLocked) return;
+
         // Initialize the difficulty manager with this building's difficulty
         DifficultyManager.Instance.InitializeBuildingDifficulty(buildingType, buildingDifficulty);
         

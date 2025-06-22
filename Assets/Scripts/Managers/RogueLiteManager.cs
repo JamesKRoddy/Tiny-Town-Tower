@@ -127,7 +127,7 @@ namespace Managers
             }
         }
 
-        public void EnterRoomWithTransition(RogueLiteDoor door)
+        public void EnterRoomWithTransition(RogueLikeRoomDoor door)
         {
             if (transitionCoroutine != null)
             {
@@ -159,7 +159,7 @@ namespace Managers
             SceneTransitionManager.Instance.LoadScene("CampScene", GameMode.CAMP, false);
         }
 
-        public void ReturnToPreviousRoom(RogueLiteDoor door)
+        public void ReturnToPreviousRoom(RogueLikeRoomDoor door)
         {
             if (transitionCoroutine != null)
             {
@@ -168,7 +168,7 @@ namespace Managers
             transitionCoroutine = StartCoroutine(ReturnToPreviousRoomSequence(door));
         }
 
-        private IEnumerator ReturnToPreviousRoomSequence(RogueLiteDoor door)
+        private IEnumerator ReturnToPreviousRoomSequence(RogueLikeRoomDoor door)
         {
             // 1. Fade in
             yield return PlayerUIManager.Instance.transitionMenu.FadeIn();
@@ -193,7 +193,7 @@ namespace Managers
 
         private Coroutine transitionCoroutine;
 
-        private IEnumerator EnterRoomSequence(RogueLiteDoor door)
+        private IEnumerator EnterRoomSequence(RogueLikeRoomDoor door)
         {
             // 1. Fade in
             yield return PlayerUIManager.Instance.transitionMenu.FadeIn();

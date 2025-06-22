@@ -5,13 +5,13 @@ using Managers;
 public class RogueLiteRoom : MonoBehaviour
 {
     [Header("Room Components")]
-    public List<RogueLiteDoor> doors = new List<RogueLiteDoor>();
+    public List<RogueLikeRoomDoor> doors = new List<RogueLikeRoomDoor>();
     public List<ChestParent> chests = new List<ChestParent>();
     
     private void Awake()
     {
         // Cache all doors and chests in the room
-        doors.AddRange(GetComponentsInChildren<RogueLiteDoor>());
+        doors.AddRange(GetComponentsInChildren<RogueLikeRoomDoor>());
         chests.AddRange(GetComponentsInChildren<ChestParent>());
     }
 

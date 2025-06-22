@@ -107,8 +107,6 @@ MonoBehaviour:
   lockedDoorEffect: {fileID: 2214464768097416770}
   nextRoomDoorEffect: {fileID: 3601143706949006307}
   previousRoomDoorEffect: {fileID: 60051046917542727}
-  targetRoom: {fileID: 0}
-  targetSpawnPoint: {fileID: 0}
   buildingDifficulty: 10
   buildingType: 0
   buildingName: Unknown Building
