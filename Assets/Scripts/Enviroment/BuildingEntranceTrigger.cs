@@ -1,6 +1,9 @@
 using Managers;
 using UnityEngine;
 
+/// <summary>
+/// Replaced with overworld door, keeping it here for now
+/// </summary>
 public class BuildingEntranceTrigger : SceneTransitionTrigger
 {
     [SerializeField] private Transform playerSpawnPoint;

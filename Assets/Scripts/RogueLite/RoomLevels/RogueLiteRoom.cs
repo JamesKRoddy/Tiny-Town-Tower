@@ -4,9 +4,6 @@ using Managers;
 
 public class RogueLiteRoom : MonoBehaviour
 {
-    [Header("Room Settings")]
-    public int roomDifficulty;
-    
     [Header("Room Components")]
     public List<RogueLiteDoor> doors = new List<RogueLiteDoor>();
     public List<ChestParent> chests = new List<ChestParent>();
@@ -29,7 +26,7 @@ public class RogueLiteRoom : MonoBehaviour
         // Initialize all chests
         foreach (var chest in chests)
         {
-            chest.SetupChest(roomDifficulty);
+            chest.SetupChest(DifficultyManager.Instance.GetCurrentRoomDifficulty());
         }
     }
 }

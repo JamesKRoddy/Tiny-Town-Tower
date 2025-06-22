@@ -47,7 +47,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         // Clear props on the center piece
         ClearPropsOnCenterPiece();
 
-        int currentDifficulty = rogueLiteManager.GetCurrentWaveDifficulty();
+        int currentDifficulty = DifficultyManager.Instance.GetCurrentWaveDifficulty();
 
         // Instantiate a room for each direction using the scriptable object's selection
         InstantiateRoom(frontTransform, RoomPosition.FRONT, buildingScriptableObj.GetBuildingRoom(currentDifficulty));
@@ -133,7 +133,6 @@ public class RogueLiteRoomParent : MonoBehaviour
         spawnedRooms[worldPosition] = room;
 
         RogueLiteRoom roomComponent = room.GetComponent<RogueLiteRoom>();
-        roomComponent.roomDifficulty = rogueLiteManager.GetCurrentWaveDifficulty();
         roomComponent.Setup();
 
         RandomizePropsInSection(room.transform);
@@ -245,7 +244,7 @@ public class RogueLiteRoomParent : MonoBehaviour
                 continue;
             }
 
-            chest.SetupChest(rogueLiteManager.GetCurrentWaveDifficulty());
+            chest.SetupChest(DifficultyManager.Instance.GetCurrentRoomDifficulty());
         }
     }
 

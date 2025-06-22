@@ -10,8 +10,6 @@ Test with differnt shapes
 
 Things to do for a demo:
 
-Display picked up items for a second.
-
 Level and loot difficulty system.
 
 Displaying npc mutations (charicteristics)

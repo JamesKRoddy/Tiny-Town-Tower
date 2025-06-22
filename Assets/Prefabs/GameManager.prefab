@@ -179,6 +179,55 @@ MonoBehaviour:
   maxDirtPiles: 10
   dirtPilePrefab: {fileID: 3294733483711447885, guid: d66f9c826f9fb9c42a38fe7508bfde35, type: 3}
   dirtPileCleanlinessDecrease: 10
+--- !u!1 &980143686898837090
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6739254822893265709}
+  - component: {fileID: 8500866176951590164}
+  m_Layer: 0
+  m_Name: DifficultyManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6739254822893265709
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 980143686898837090}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4686915863895893509}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8500866176951590164
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 980143686898837090}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c259fd9299fc774196604f9c4cc8a2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  difficultyScalingPerRoom: 1.5
+  maxDifficulty: 100
+  commonRarityThreshold: 20
+  rareRarityThreshold: 40
+  epicRarityThreshold: 60
 --- !u!1 &1370869420154002683
 GameObject:
   m_ObjectHideFlags: 0
@@ -264,6 +313,7 @@ Transform:
   - {fileID: 3458277318788093592}
   - {fileID: 3868888678722008520}
   - {fileID: 2211646702075191331}
+  - {fileID: 6739254822893265709}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6303821086052416740

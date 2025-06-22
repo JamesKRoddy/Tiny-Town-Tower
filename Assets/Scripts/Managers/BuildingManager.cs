@@ -11,9 +11,6 @@ namespace Managers
         private BuildingDataScriptableObj currentBuilding;
         private GameObject currentRoomParent;        
         private int currentMaxRooms;
-        private int buildingDifficulty;
-        private int currentRoom;
-        private int currentRoomDifficulty;
         private Vector3 lastPlayerSpawnPoint;
         private float roomSpacing = 100f;
         private Dictionary<Vector3, GameObject> spawnedRooms = new Dictionary<Vector3, GameObject>();
@@ -21,9 +18,9 @@ namespace Managers
         public GameObject CurrentRoomParent => currentRoomParent;
 
         public BuildingDataScriptableObj CurrentBuilding => currentBuilding;
-        public int BuildingDifficulty => buildingDifficulty;
-        public int CurrentRoom => currentRoom;
-        public int CurrentRoomDifficulty => currentRoomDifficulty;
+        public int BuildingDifficulty => DifficultyManager.Instance.GetCurrentBuildingDifficulty();
+        public int CurrentRoom => DifficultyManager.Instance.GetCurrentRoomNumber();
+        public int CurrentRoomDifficulty => DifficultyManager.Instance.GetCurrentRoomDifficulty();
 
         public BuildingDataScriptableObj SetBuildingData(BuildingType buildingType){
             // Find all buildings matching the door's building type
@@ -42,7 +39,8 @@ namespace Managers
 
             currentBuilding = buildingDataScriptableObjs[randomIndex];
 
-            currentMaxRooms = currentBuilding.GetMaxRoomsForDifficulty(currentRoomDifficulty);
+            // Note: Difficulty is now initialized by the OverWorldDoor before this method is called
+            currentMaxRooms = currentBuilding.GetMaxRoomsForDifficulty(DifficultyManager.Instance.GetCurrentWaveDifficulty());
 
             Transform buildingEntrance = matchingBuildings[randomIndex].buildingEntrance.GetComponent<BuildingEntrance>().PlayerSpawnPoint;
             if (buildingEntrance == null)
@@ -56,11 +54,11 @@ namespace Managers
 
         public bool EnterRoomCheck(RogueLiteDoor rogueLiteDoor)
         {
-            currentRoomDifficulty = rogueLiteDoor.doorRoomDifficulty;
-            currentRoom++;            
-
+            // Automatically calculate and set room difficulty based on building difficulty and room number
+            DifficultyManager.Instance.SetNextRoomDifficulty();
+            
             //Reached the end of the building check
-            if(currentRoom >= currentMaxRooms){
+            if(DifficultyManager.Instance.GetCurrentRoomNumber() >= currentMaxRooms){
                 LeaveBuilding();
                 return false;
             }
@@ -130,7 +128,7 @@ namespace Managers
             }
 
             // Create the new building
-            int difficulty = GetCurrentWaveDifficulty();
+            int difficulty = DifficultyManager.Instance.GetCurrentWaveDifficulty();
             GameObject newBuildingParent = Instantiate(GetBuildingParent(buildingType, difficulty, out BuildingDataScriptableObj selectedBuilding));
 
             if (newBuildingParent != null && selectedBuilding != null)
@@ -175,7 +173,7 @@ namespace Managers
 
         public int GetCurrentWaveDifficulty()
         {
-            return (currentRoom * buildingDifficulty) + currentRoomDifficulty;
+            return DifficultyManager.Instance.GetCurrentWaveDifficulty();
         }
 
         public void SetupPlayer(Transform playerTransform)
@@ -207,9 +205,8 @@ namespace Managers
         {
             currentBuilding = null;
             currentRoomParent = null;
-            currentRoom = 0;
-            currentRoomDifficulty = 0;
             lastPlayerSpawnPoint = Vector3.zero;
+            DifficultyManager.Instance.ResetDifficulty();
         }
     }
 } 

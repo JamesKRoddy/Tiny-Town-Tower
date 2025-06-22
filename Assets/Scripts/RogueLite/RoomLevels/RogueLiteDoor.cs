@@ -8,7 +8,6 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
 
     [Header("Door Settings")]
     public DoorStatus doorType;
-    public int doorRoomDifficulty;
     public Transform playerSpawn;
     [SerializeField] private GameObject lockedDoorEffect;
     [SerializeField] private GameObject nextRoomDoorEffect; //Marks rooms that can be entered
@@ -20,6 +19,11 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
 
     private RogueLiteRoom parentRoom;
     private bool isLocked;
+
+    protected virtual void Awake()
+    {
+        // Initialize any base door functionality here if needed
+    }
 
     public void Initialize(RogueLiteRoom room)
     {
@@ -43,7 +47,7 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
         }
     }
 
-    public void OnDoorEntered()
+    public virtual void OnDoorEntered()
     {
         if (isLocked) return;
 
@@ -112,7 +116,7 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
         }
     }
 
-    public string GetInteractionText()
+    public virtual string GetInteractionText()
     {
         switch (doorType)
         {
