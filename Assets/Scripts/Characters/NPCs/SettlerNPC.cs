@@ -407,30 +407,46 @@ namespace Characters.NPC
             // Determine number of mutations
             int numMutations = UnityEngine.Random.Range(minRandomMutations, maxRandomMutations + 1);
 
-            if (allMutations.Count == 0) return;
-
-            for (int i = 0; i < numMutations; i++)
+            // Create a list of valid mutation indices (excluding already equipped mutations)
+            List<int> validIndices = new List<int>();
+            for (int i = 0; i < allMutations.Count; i++)
             {
-                if (allMutations.Count == 0) break;
+                if (!equippedMutations.Contains(allMutations[i]))
+                {
+                    validIndices.Add(i);
+                }
+            }
 
-                // Select a random mutation
-                int index = UnityEngine.Random.Range(0, allMutations.Count);
-                NPCMutationScriptableObj mutation = allMutations[index];
+            int mutationsApplied = 0;
+            int maxAttempts = validIndices.Count * 2; // Prevent infinite loops
+            int attempts = 0;
+
+            while (mutationsApplied < numMutations && validIndices.Count > 0 && attempts < maxAttempts)
+            {
+                attempts++;
+
+                // Select a random valid mutation index
+                int validIndex = UnityEngine.Random.Range(0, validIndices.Count);
+                int mutationIndex = validIndices[validIndex];
+                NPCMutationScriptableObj mutation = allMutations[mutationIndex];
 
                 // Check rarity
                 if (mutation.rarity == ResourceRarity.RARE || mutation.rarity == ResourceRarity.LEGENDARY)
                 {
                     if (UnityEngine.Random.value > rareMutationChance)
                     {
+                        // Remove this index from valid indices since we won't try it again
+                        validIndices.RemoveAt(validIndex);
                         continue;
                     }
                 }
 
                 // Add mutation to NPC
                 EquipMutation(mutation);
+                mutationsApplied++;
 
-                // Remove from valid mutations to prevent duplicates
-                allMutations.RemoveAt(index);
+                // Remove this index from valid indices to prevent duplicates
+                validIndices.RemoveAt(validIndex);
             }
         }
 
