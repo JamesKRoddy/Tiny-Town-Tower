@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using Characters.NPC.Mutations;
+using Characters.NPC.Characteristic;
 using Characters.NPC;
 using System;
 
@@ -11,7 +11,7 @@ namespace Managers
         public static NPCManager Instance { get; private set; }
 
         [Header("Mutation Settings")]
-        [SerializeField] private List<NPCMutationScriptableObj> allMutations = new List<NPCMutationScriptableObj>();
+        [SerializeField] private List<NPCCharacteristicScriptableObj> allMutations = new List<NPCCharacteristicScriptableObj>();
 
         [Header("NPC Tracking")]
         private List<SettlerNPC> activeNPCs = new List<SettlerNPC>();
@@ -49,12 +49,12 @@ namespace Managers
             }
         }
 
-        public List<NPCMutationScriptableObj> GetAllMutations()
+        public List<NPCCharacteristicScriptableObj> GetAllMutations()
         {
             return allMutations;
         }
 
-        public void AddMutationToNPC(SettlerNPC npc, NPCMutationScriptableObj mutation)
+        public void AddMutationToNPC(SettlerNPC npc, NPCCharacteristicScriptableObj mutation)
         {
             if (npc == null || mutation == null) return;
 
@@ -64,7 +64,7 @@ namespace Managers
             mutationSystem.EquipMutation(mutation);
         }
 
-        public void RemoveMutationFromNPC(SettlerNPC npc, NPCMutationScriptableObj mutation)
+        public void RemoveMutationFromNPC(SettlerNPC npc, NPCCharacteristicScriptableObj mutation)
         {
             if (npc == null || mutation == null) return;
 

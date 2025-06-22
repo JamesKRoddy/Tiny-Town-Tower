@@ -1,10 +1,10 @@
 using UnityEngine;
 
-namespace Characters.NPC.Mutations
+namespace Characters.NPC.Characteristic
 {
-    public abstract class BaseNPCMutationEffect : MonoBehaviour
+    public abstract class BaseNPCCharacteristicEffect : MonoBehaviour
     {
-        protected NPCMutationScriptableObj mutation;
+        protected NPCCharacteristicScriptableObj mutation;
         protected SettlerNPC settlerNPC;
         protected int activeInstances = 0;
 
@@ -14,7 +14,7 @@ namespace Characters.NPC.Mutations
             set => activeInstances = value;
         }
 
-        public void Initialize(NPCMutationScriptableObj mutation, SettlerNPC settlerNPC)
+        public void Initialize(NPCCharacteristicScriptableObj mutation, SettlerNPC settlerNPC)
         {
             this.mutation = mutation;
             this.settlerNPC = settlerNPC;

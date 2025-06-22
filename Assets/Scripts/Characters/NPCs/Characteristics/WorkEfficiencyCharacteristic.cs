@@ -1,8 +1,8 @@
 using UnityEngine;
 
-namespace Characters.NPC.Mutations
+namespace Characters.NPC.Characteristic
 {
-    public class WorkEfficiencyMutation : BaseNPCMutationEffect
+    public class WorkEfficiencyCharacteristic : BaseNPCCharacteristicEffect
     {
         [Header("Efficiency Multipliers")]
         [SerializeField] private float fatigueReductionMultiplier = 0.5f;

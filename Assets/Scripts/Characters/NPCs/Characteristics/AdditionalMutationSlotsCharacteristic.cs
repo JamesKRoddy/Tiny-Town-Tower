@@ -1,8 +1,8 @@
 using UnityEngine;
 
-namespace Characters.NPC.Mutations
+namespace Characters.NPC.Characteristic
 {
-    public class AdditionalMutationSlotsMutation : BaseNPCMutationEffect
+    public class AdditionalMutationSlotsCharacteristic : BaseNPCCharacteristicEffect
     {
         [Header("Additional Mutation Slots Settings")]
         [SerializeField] private int additionalMutationSlots = 3;
@@ -17,10 +17,10 @@ namespace Characters.NPC.Mutations
             }
 
             // Store original max slots
-            originalMaxSlots = settlerNPC.mutationSystem.MaxMutations;
+            originalMaxSlots = settlerNPC.additionalMutationSlots;
             
             // Increase max slots
-            settlerNPC.mutationSystem.SetMaxMutations(originalMaxSlots + additionalMutationSlots);
+            settlerNPC.additionalMutationSlots = originalMaxSlots + additionalMutationSlots;
         }
 
         protected override void RemoveEffect()
@@ -32,7 +32,7 @@ namespace Characters.NPC.Mutations
             }
 
             // Revert to original max slots
-            settlerNPC.mutationSystem.SetMaxMutations(originalMaxSlots);
+            settlerNPC.additionalMutationSlots = originalMaxSlots;
         }
 
         public override void OnUnequip()

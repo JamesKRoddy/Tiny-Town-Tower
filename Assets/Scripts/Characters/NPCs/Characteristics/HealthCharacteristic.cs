@@ -1,8 +1,8 @@
 using UnityEngine;
 
-namespace Characters.NPC.Mutations
+namespace Characters.NPC.Characteristic
 {
-    public class HealthMutation : BaseNPCMutationEffect
+    public class HealthMutation : BaseNPCCharacteristicEffect
     {
         [Header("Health Multipliers")]
         [SerializeField] private float healthMultiplier = 1.5f;

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System;
 using Characters.NPC;
-using Characters.NPC.Mutations;
+using Characters.NPC.Characteristic;
 using Managers;
 using UnityEngine;
 using UnityEngine.AI;
@@ -17,6 +17,9 @@ public class SettlerNPC : HumanCharacterController
     private _TaskState currentState;
     private WorkTask assignedWorkTask; // Track the assigned work task
     private bool isOnBreak = false; // Track if NPC is on break
+
+    [Header("NPC Stats")]
+    public int additionalMutationSlots = 3; //Additional mutation slots
 
     [Header("Stamina")]
     public float maxStamina = 100f;
@@ -358,18 +361,16 @@ namespace Characters.NPC
     public class NPCMutationSystem
     {
         [Header("Mutation Settings")]
-        private int maxMutations = 3;
+        private int maxNPCMutations = 3; //Max NPC character mutations
         private float mutationSpawnChance = 1f;
         private float rareMutationChance = 0.1f;
         private int minRandomMutations = 1;
         private int maxRandomMutations = 3;
 
-        [SerializeField, ReadOnly] private List<NPCMutationScriptableObj> equippedMutations = new List<NPCMutationScriptableObj>();
-        private Dictionary<NPCMutationScriptableObj, BaseNPCMutationEffect> activeEffects = new Dictionary<NPCMutationScriptableObj, BaseNPCMutationEffect>();
+        [SerializeField, ReadOnly] private List<NPCCharacteristicScriptableObj> equippedMutations = new List<NPCCharacteristicScriptableObj>();
+        private Dictionary<NPCCharacteristicScriptableObj, BaseNPCCharacteristicEffect> activeEffects = new Dictionary<NPCCharacteristicScriptableObj, BaseNPCCharacteristicEffect>();
         private SettlerNPC settlerNPC;
-
-        public int MaxMutations => maxMutations;
-        public List<NPCMutationScriptableObj> EquippedMutations => equippedMutations;
+        public List<NPCCharacteristicScriptableObj> EquippedMutations => equippedMutations;
 
         public NPCMutationSystem(SettlerNPC settlerNPC)
         {
@@ -397,7 +398,7 @@ namespace Characters.NPC
             }
 
             // Get all available mutations from the manager
-            List<NPCMutationScriptableObj> allMutations = NPCManager.Instance.GetAllMutations();
+            List<NPCCharacteristicScriptableObj> allMutations = NPCManager.Instance.GetAllMutations();
             if (allMutations.Count == 0)
             {
                 Debug.LogWarning($"NPCMutationSystem: No mutations available in NPCManager for {settlerNPC.name}");
@@ -428,7 +429,7 @@ namespace Characters.NPC
                 // Select a random valid mutation index
                 int validIndex = UnityEngine.Random.Range(0, validIndices.Count);
                 int mutationIndex = validIndices[validIndex];
-                NPCMutationScriptableObj mutation = allMutations[mutationIndex];
+                NPCCharacteristicScriptableObj mutation = allMutations[mutationIndex];
 
                 // Check rarity
                 if (mutation.rarity == ResourceRarity.RARE || mutation.rarity == ResourceRarity.LEGENDARY)
@@ -450,7 +451,7 @@ namespace Characters.NPC
             }
         }
 
-        public void EquipMutation(NPCMutationScriptableObj mutation)
+        public void EquipMutation(NPCCharacteristicScriptableObj mutation)
         {
             if (mutation == null)
             {
@@ -458,7 +459,7 @@ namespace Characters.NPC
                 return;
             }
 
-            if (equippedMutations.Count >= maxMutations)
+            if (equippedMutations.Count >= maxNPCMutations)
             {
                 Debug.LogWarning($"NPCMutationSystem: Cannot equip mutation {mutation.name} to {settlerNPC.name} - maximum mutations reached");
                 return;
@@ -476,7 +477,7 @@ namespace Characters.NPC
             if (mutation.prefab != null)
             {
                 GameObject effectObj = GameObject.Instantiate(mutation.prefab, settlerNPC.transform);
-                BaseNPCMutationEffect effect = effectObj.GetComponent<BaseNPCMutationEffect>();
+                BaseNPCCharacteristicEffect effect = effectObj.GetComponent<BaseNPCCharacteristicEffect>();
                 if (effect != null)
                 {
                     effect.Initialize(mutation, settlerNPC);
@@ -495,7 +496,7 @@ namespace Characters.NPC
             }
         }
 
-        public void RemoveMutation(NPCMutationScriptableObj mutation)
+        public void RemoveMutation(NPCCharacteristicScriptableObj mutation)
         {
             if (mutation == null)
             {
@@ -506,7 +507,7 @@ namespace Characters.NPC
             if (equippedMutations.Remove(mutation))
             {
                 // Remove and cleanup the mutation effect
-                if (activeEffects.TryGetValue(mutation, out BaseNPCMutationEffect effect))
+                if (activeEffects.TryGetValue(mutation, out BaseNPCCharacteristicEffect effect))
                 {
                     effect.OnUnequip();
                     GameObject.Destroy(effect.gameObject);
@@ -523,30 +524,14 @@ namespace Characters.NPC
             }
         }
 
-        public void SetMaxMutations(int count)
-        {
-            if (count < 0)
-            {
-                Debug.LogError($"NPCMutationSystem: Cannot set max mutations to negative value {count} for {settlerNPC.name}");
-                return;
-            }
-
-            if (count < equippedMutations.Count)
-            {
-                Debug.LogWarning($"NPCMutationSystem: Setting max mutations to {count} for {settlerNPC.name} which has {equippedMutations.Count} equipped mutations");
-            }
-
-            maxMutations = count;
-        }
-
         // Helper method to check if NPC has a specific mutation
-        public bool HasMutation(NPCMutationScriptableObj mutation)
+        public bool HasMutation(NPCCharacteristicScriptableObj mutation)
         {
             return equippedMutations.Contains(mutation);
         }
 
         // Helper method to get all active effects of a specific type
-        public List<T> GetActiveEffectsOfType<T>() where T : BaseNPCMutationEffect
+        public List<T> GetActiveEffectsOfType<T>() where T : BaseNPCCharacteristicEffect
         {
             List<T> effects = new List<T>();
             foreach (var effect in activeEffects.Values)
