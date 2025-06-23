@@ -109,6 +109,7 @@ public class UtilityMenu : MenuBase, IControllerInput
                 playerInventoryBtn.gameObject.SetActive(true);
                 buildMenuBtn.gameObject.SetActive(true);
                 settlerNPCBtn.gameObject.SetActive(true);
+                turretBuildBtn.gameObject.SetActive(true);
                 geneticMutationBtn.gameObject.SetActive(true);
                 break;
             case GameMode.TURRET:

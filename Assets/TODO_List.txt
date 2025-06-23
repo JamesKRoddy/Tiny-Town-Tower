@@ -11,7 +11,8 @@ Test with differnt shapes
 Things to do for a demo:
 
 Turret refactor so they are used in the camp to kill zombies
-Remove navigation stuff just let them be place wherever
+Move list of turret objs from turret ui to turret manager
+Remove navigation blocking stuff just let them be place wherever
 Spawn in a building site first for npcs to build them
 Spawning enemies in the camp make them attack buildings or turrets
 Have to figure out what to do with the npcs? Maybe a bunker or something they can hide in is a new building! Upgrading increases durability and number of npcs that can fit in it.

@@ -46,7 +46,7 @@ namespace Managers
             //SetEnemySetupState(EnemySetupState.PRE_ENEMY_SPAWNING);
         }
 
-        public void StartWave() //************************************************** TODO!!!!!!! HAVE TO CALL THIS
+        public void StartWave()
         {   
             SetEnemySetupState(EnemySetupState.WAVE_START);
             baseTarget.gameObject.SetActive(true);

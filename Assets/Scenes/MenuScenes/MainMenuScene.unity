@@ -626,7 +626,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: inventoryList.Array.size
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: availableMutations.Array.size
@@ -634,7 +634,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: inventoryList.Array.data[1].count
-      value: 10
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: inventoryList.Array.data[2].count
@@ -656,6 +656,10 @@ PrefabInstance:
       propertyPath: availableMutations.Array.data[0].quantity
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 5445671924862257595, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
+      propertyPath: inventoryList.Array.data[1].resourceScriptableObj
+      value: 
+      objectReference: {fileID: 11400000, guid: 12f818ac54e7fb1438a80c5e50b6a79a, type: 2}
     - target: {fileID: 9124372233556808277, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: m_Name
       value: Player
