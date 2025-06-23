@@ -76,13 +76,32 @@ namespace Managers
             {
                 // Get all spawn points in the scene
                 spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
+            } else if(GameManager.Instance.CurrentGameMode == GameMode.CAMP)
+            {
+                // Get all spawn points in the scene for camp
+                spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
             }
 
             
             if (spawnPoints.Count == 0)
             {
                 Debug.LogError("No spawn points found!");
-                RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                switch (GameManager.Instance.CurrentGameMode)
+                {
+                    case GameMode.ROGUE_LITE:
+                        RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                        break;
+                    case GameMode.TURRET:
+                        TurretManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                        break;
+                    case GameMode.CAMP:
+                        // For camp, we might want to handle this differently
+                        Debug.LogWarning("No spawn points found for camp enemies!");
+                        break;
+                    default:
+                        Debug.LogError("Shouldnt be spawning enemies here!!!");
+                        break;
+                }
                 return;
             }
 
@@ -100,6 +119,10 @@ namespace Managers
                         break;
                     case GameMode.TURRET:
                         TurretManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                        break;
+                    case GameMode.CAMP:
+                        // For camp, we might want to handle wave completion differently
+                        Debug.Log("Camp wave completed!");
                         break;
                     default:
                         Debug.LogError("Shouldnt be spawning enemies here!!!");

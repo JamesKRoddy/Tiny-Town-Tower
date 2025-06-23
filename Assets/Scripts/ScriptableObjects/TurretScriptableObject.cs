@@ -9,7 +9,7 @@ public class TurretScriptableObject : PlaceableObjectParent
 
     [Header("Upgrade Parameters")]
     public TurretScriptableObject upgradeTarget;
-    public float upgradeTime = 30f;
+    public float constructionTime = 3f;
     public ResourceScriptableObj[] upgradeResources;
     public int[] upgradeResourceCosts;
 }

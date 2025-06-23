@@ -615,6 +615,8 @@ MonoBehaviour:
   waveConfigs:
   - {fileID: 11400000, guid: 1bff15a3b967a6543a2d0aaba3e05a4b, type: 2}
   baseTarget: {fileID: 6346286704177275359}
+  turretScriptableObjs:
+  - {fileID: 11400000, guid: 391b823efa03ef347a229805acbb73fe, type: 2}
 --- !u!1 &4877649756777795953
 GameObject:
   m_ObjectHideFlags: 0

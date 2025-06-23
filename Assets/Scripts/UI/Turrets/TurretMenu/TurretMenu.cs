@@ -11,12 +11,32 @@ public class TurretMenu : PreviewListMenuBase<TurretCategory, TurretScriptableOb
     [SerializeField] GameObject previewResourceCostPrefab;
     [SerializeField] RectTransform previewResourceCostParent;
 
-    [Header("Full list of Turret Scriptable Objects")]
-    public TurretScriptableObject[] turretScriptableObjs;
+    [Header("Camp Turret Wave UI")]
+    [SerializeField] Button startCampWaveButton;
+    [SerializeField] TMP_Text startCampWaveButtonText;
+
+    protected void Start()
+    {        
+        // Setup camp wave button
+        if (startCampWaveButton != null)
+        {
+            startCampWaveButton.onClick.AddListener(StartCampTurretWave);
+            UpdateCampWaveButtonVisibility();
+        }
+    }
+
+    public override void OnDestroy()
+    {
+        base.OnDestroy();
+        if (startCampWaveButton != null)
+        {
+            startCampWaveButton.onClick.RemoveAllListeners();
+        }
+    }
 
     public override IEnumerable<TurretScriptableObject> GetItems()
     {
-        return turretScriptableObjs; // Array of turrets from inspector
+        return TurretManager.Instance.GetTurretScriptableObjs(); // Get turrets from TurretManager
     }
 
     public override TurretCategory GetItemCategory(TurretScriptableObject item)
@@ -82,5 +102,39 @@ public class TurretMenu : PreviewListMenuBase<TurretCategory, TurretScriptableOb
     public void StartTurretWave()
     {
         TurretManager.Instance.StartWave();
+    }
+
+    public void StartCampTurretWave()
+    {
+        TurretManager.Instance.StartCampTurretWave();
+        if (startCampWaveButtonText != null)
+        {
+            startCampWaveButtonText.text = "Wave In Progress...";
+            startCampWaveButton.interactable = false;
+        }
+    }
+
+    private void UpdateCampWaveButtonVisibility()
+    {
+        if (startCampWaveButton != null)
+        {
+            bool isInCamp = GameManager.Instance.CurrentGameMode == GameMode.CAMP;
+            startCampWaveButton.gameObject.SetActive(isInCamp);
+            
+            if (isInCamp && startCampWaveButtonText != null)
+            {
+                startCampWaveButtonText.text = "Start Zombie Wave";
+            }
+        }
+    }
+
+    public override void SetScreenActive(bool active, float delay = 0f, Action onComplete = null)
+    {
+        base.SetScreenActive(active, delay, onComplete);
+        
+        if (active)
+        {
+            UpdateCampWaveButtonVisibility();
+        }
     }
 }

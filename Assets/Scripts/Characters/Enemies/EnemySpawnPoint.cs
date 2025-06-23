@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Managers;
 
@@ -62,10 +63,62 @@ namespace Enemies
                     return null;
             }
 
+            // For camp enemies, find a target building or turret instead of just using the default target
+            if (GameManager.Instance.CurrentGameMode == GameMode.CAMP)
+            {
+                Transform campTarget = FindCampTarget();
+                if (campTarget != null)
+                {
+                    enemyTarget = campTarget;
+                }
+            }
+
             if (enemyTarget != null)
                 enemyBase.SetEnemyDestination(enemyTarget.position);
 
             return enemy;
+        }
+
+        private Transform FindCampTarget()
+        {
+            // Find the closest building or turret to attack
+            List<Transform> potentialTargets = new List<Transform>();
+            
+            // Find all buildings
+            Building[] buildings = FindObjectsByType<Building>(FindObjectsSortMode.None);
+            foreach (var building in buildings)
+            {
+                if (building != null && building.IsOperational())
+                {
+                    potentialTargets.Add(building.transform);
+                }
+            }
+            
+            // Find all turrets
+            var turrets = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+            foreach (var turret in turrets)
+            {
+                if (turret != null && turret.GetType().Name.Contains("Turret"))
+                {
+                    potentialTargets.Add(turret.transform);
+                }
+            }
+            
+            // Find the closest target
+            Transform closestTarget = null;
+            float closestDistance = Mathf.Infinity;
+            
+            foreach (var target in potentialTargets)
+            {
+                float distance = Vector3.Distance(transform.position, target.position);
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closestTarget = target;
+                }
+            }
+            
+            return closestTarget;
         }
 
         private IEnumerator StartCooldown()

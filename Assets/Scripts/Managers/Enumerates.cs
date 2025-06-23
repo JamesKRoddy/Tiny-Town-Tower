@@ -36,7 +36,8 @@ public enum BuildingCategory
     DECORATION,
     WEAPONS,
     CLEANING,
-    RESOURCES
+    RESOURCES,
+    BUNKER
 }
 
 // =========================

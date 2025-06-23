@@ -10,6 +10,9 @@ namespace Managers
         [Header("Turret Level Vars")]
         public TurretBaseTarget baseTarget;
 
+        [Header("Full list of Turret Scriptable Objects")]
+        public TurretScriptableObject[] turretScriptableObjs;
+
         // Singleton property to get the instance
         public static TurretManager Instance
         {
@@ -88,6 +91,42 @@ namespace Managers
         private EnemyWaveConfig GetTurretWaveConfig(int difficulty)
         {
             return GetWaveConfig(difficulty);
+        }
+
+        // New methods for camp turret management
+        public TurretScriptableObject[] GetTurretScriptableObjs()
+        {
+            return turretScriptableObjs;
+        }
+
+        public void StartCampTurretWave()
+        {
+            // Start a wave of enemies in the camp
+            if (GameManager.Instance.CurrentGameMode == GameMode.CAMP)
+            {
+                // Create a simple wave config for camp
+                var campWaveConfig = ScriptableObject.CreateInstance<EnemyWaveConfig>();
+                campWaveConfig.maxWaves = 1;
+                campWaveConfig.minEnemiesPerWave = 3;
+                campWaveConfig.maxEnemiesPerWave = 8;
+                
+                // Use basic zombie prefabs - you'll need to assign these in the inspector
+                // For now, we'll create an empty array that should be populated
+                campWaveConfig.enemyPrefabs = new GameObject[] 
+                {
+                    // Add your zombie prefabs here - these should be assigned in the inspector
+                    // Example: Resources.Load<GameObject>("Prefabs/Enemies/Melee_Zombie")
+                };
+                
+                // If no enemy prefabs are set, try to find some in the scene
+                if (campWaveConfig.enemyPrefabs.Length == 0)
+                {
+                    Debug.LogWarning("No enemy prefabs assigned for camp turret wave. Please assign zombie prefabs in TurretManager.");
+                    return;
+                }
+                
+                EnemySpawnManager.Instance.StartSpawningEnemies(campWaveConfig);
+            }
         }
     }
 }

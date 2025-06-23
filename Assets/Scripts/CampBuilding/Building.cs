@@ -231,7 +231,7 @@ public class Building : MonoBehaviour, IInteractive<Building>
         return !isUnderConstruction && isOperational;
     }
 
-    public string GetInteractionText()
+    public virtual string GetInteractionText()
     {
         if (isUnderConstruction) return "Building under construction";
         if (!isOperational) return "Building not operational";
