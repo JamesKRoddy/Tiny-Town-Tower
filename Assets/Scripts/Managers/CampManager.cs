@@ -31,6 +31,8 @@ namespace Managers
 
         // Shared grid system
         private Dictionary<Vector3, GridSlot> sharedGridSlots = new Dictionary<Vector3, GridSlot>();
+        private bool gridObjectsInitialized = false;
+        private Transform sharedGridParent;
 
         // References to other managers
         private ResearchManager researchManager;
@@ -77,6 +79,11 @@ namespace Managers
 
         private void InitializeManagers()
         {
+            // Create shared grid parent
+            GameObject gridParentObj = new GameObject("SharedGridParent");
+            gridParentObj.transform.SetParent(transform);
+            sharedGridParent = gridParentObj.transform;
+
             // Find and cache references to other managers
             if (researchManager == null) researchManager = gameObject.GetComponentInChildren<ResearchManager>();
             if (cleanlinessManager == null) cleanlinessManager = gameObject.GetComponentInChildren<CleanlinessManager>();
@@ -152,6 +159,9 @@ namespace Managers
 
                     sharedGridSlots[slot].IsOccupied = true;
                     sharedGridSlots[slot].OccupyingObject = placedObject;
+                    
+                    // Update the visual representation
+                    UpdateGridSlotVisual(slot, true);
                 }
                 else
                 {
@@ -170,7 +180,31 @@ namespace Managers
                 {
                     sharedGridSlots[slot].IsOccupied = false;
                     sharedGridSlots[slot].OccupyingObject = null;
+                    
+                    // Update the visual representation
+                    UpdateGridSlotVisual(slot, false);
                 }
+            }
+        }
+
+        private void UpdateGridSlotVisual(Vector3 slotPosition, bool isOccupied)
+        {
+            if (!sharedGridSlots.ContainsKey(slotPosition)) return;
+            
+            GridSlot slot = sharedGridSlots[slotPosition];
+            Vector3 displayPosition = new Vector3(slotPosition.x + sharedGridSize / 2, 0, slotPosition.z + sharedGridSize / 2);
+            
+            // This method will be called by placers to update visuals
+            // The actual visual update will be handled by the current active placer
+            if (isOccupied)
+            {
+                // Mark for visual update when grid is next shown
+                slot.NeedsVisualUpdate = true;
+            }
+            else
+            {
+                // Mark for visual update when grid is next shown
+                slot.NeedsVisualUpdate = true;
             }
         }
 
@@ -208,6 +242,107 @@ namespace Managers
                 0,
                 Mathf.Round(position.z / sharedGridSize) * sharedGridSize
             );
+        }
+
+        public void ResetSharedGridObjects()
+        {
+            // Clear all grid objects from the shared grid
+            foreach (var slot in sharedGridSlots.Values)
+            {
+                if (slot.GridObject != null)
+                {
+                    DestroyImmediate(slot.GridObject);
+                    slot.GridObject = null;
+                }
+            }
+            gridObjectsInitialized = false;
+        }
+
+        public void InitializeGridObjects(GameObject gridPrefab, GameObject takenGridPrefab)
+        {
+            if (gridObjectsInitialized) return;
+
+            var sharedGridSlots = CampManager.Instance?.SharedGridSlots;
+            if (sharedGridSlots == null) return;
+
+            foreach (var kvp in sharedGridSlots)
+            {
+                Vector3 gridPosition = kvp.Key;
+                GridSlot slot = kvp.Value;
+                
+                Vector3 displayPosition = new Vector3(gridPosition.x + sharedGridSize / 2, 0, gridPosition.z + sharedGridSize / 2);
+                
+                // Create or update grid object based on occupation status
+                if (slot.IsOccupied && takenGridPrefab != null)
+                {
+                    // Destroy existing grid object if it's not the correct type
+                    if (slot.GridObject != null && slot.GridObject.name != takenGridPrefab.name + "(Clone)")
+                    {
+                        DestroyImmediate(slot.GridObject);
+                        slot.GridObject = null;
+                    }
+                    
+                    // Create taken grid object if it doesn't exist
+                    if (slot.GridObject == null)
+                    {
+                        slot.GridObject = Instantiate(takenGridPrefab, displayPosition, Quaternion.identity, sharedGridParent);
+                    }
+                }
+                else
+                {
+                    // Destroy existing grid object if it's not the correct type
+                    if (slot.GridObject != null && slot.GridObject.name != gridPrefab.name + "(Clone)")
+                    {
+                        DestroyImmediate(slot.GridObject);
+                        slot.GridObject = null;
+                    }
+                    
+                    // Create regular grid object if it doesn't exist
+                    if (slot.GridObject == null)
+                    {
+                        slot.GridObject = Instantiate(gridPrefab, displayPosition, Quaternion.identity, sharedGridParent);
+                    }
+                }
+                
+                // Ensure the grid object is active
+                if (slot.GridObject != null)
+                {
+                    slot.GridObject.SetActive(true);
+                }
+                
+                // Reset visual update flag
+                slot.NeedsVisualUpdate = false;
+            }
+            
+            gridObjectsInitialized = true;
+        }
+
+        public void ShowGridObjects()
+        {
+            var sharedGridSlots = CampManager.Instance?.SharedGridSlots;
+            if (sharedGridSlots == null) return;
+
+            foreach (var slot in sharedGridSlots.Values)
+            {
+                if (slot.GridObject != null)
+                {
+                    slot.GridObject.SetActive(true);
+                }
+            }
+        }
+
+        public void HideGridObjects()
+        {
+            var sharedGridSlots = CampManager.Instance?.SharedGridSlots;
+            if (sharedGridSlots == null) return;
+
+            foreach (var slot in sharedGridSlots.Values)
+            {
+                if (slot.GridObject != null)
+                {
+                    slot.GridObject.SetActive(false);
+                }
+            }
         }
 
         private void OnDrawGizmos()

@@ -49,6 +49,7 @@ Player moving through walls while attack animation is running
 Enemy still doing attack flash while dead
 Have to review the room spawning grid system, I think just to get rid of it and have the rooms spawn in a line, currently the grid can cause rooms to spawn over the entrance
 Pressing B while moving an already place mutation breaks the menu, just dont allow B presses
+Construction sites can have npcs manually assigned to them
 
 
 

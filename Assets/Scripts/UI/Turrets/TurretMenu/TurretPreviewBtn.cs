@@ -20,7 +20,7 @@ public class TurretPreviewBtn : PreviewButtonBase<TurretScriptableObject>
 
         if (canPlace)
         {
-            PlayerUIManager.Instance.turretMenu.SetScreenActive(false, 0.1f, () => TurretPlacer.Instance.StartPlacement(data));
+            PlayerUIManager.Instance.turretMenu.SetScreenActive(false, 0.1f, () => Managers.PlacementManager.Instance.StartTurretPlacement(data));
         }
         else
         {
@@ -31,6 +31,11 @@ public class TurretPreviewBtn : PreviewButtonBase<TurretScriptableObject>
     public void SetupButton(TurretScriptableObject turretObjRef)
     {
         base.SetupButton(turretObjRef, turretObjRef.sprite, turretObjRef.objectName);
+    }
+
+    public void OnButtonClick()
+    {
+        PlayerUIManager.Instance.turretMenu.SetScreenActive(false, 0.1f, () => Managers.PlacementManager.Instance.StartTurretPlacement(data));
     }
 }
 

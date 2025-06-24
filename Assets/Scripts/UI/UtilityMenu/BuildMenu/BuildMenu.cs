@@ -24,7 +24,7 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
                 if (selectedButton != null)
                 {
                     PlayerInput.Instance.OnBPressed += () => {
-                        BuildingPlacer.Instance.StartPlacement(null);
+                        EnableBuildMenu();
                         PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
                     };
                 }
@@ -110,8 +110,19 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
             if (buttonComponent != null)
             {
                 selectedButton = buttonComponent;
-                PlayerUIManager.Instance.buildMenu.SetScreenActive(false, 0.1f, () => BuildingPlacer.Instance.StartPlacement(item));
+                PlayerUIManager.Instance.buildMenu.SetScreenActive(false, 0.1f, () => EnableBuildMenu());
             }
         }
     }
+
+    public void EnableBuildMenu()
+    {
+        SetScreenActive(true, 0.1f);
+    }
+
+    public void StartBuildingPlacement(BuildingScriptableObj buildingToPlace)
+    {
+        SetScreenActive(false, 0.1f, () => Managers.PlacementManager.Instance.StartBuildingPlacement(buildingToPlace));
+    }
 }
+

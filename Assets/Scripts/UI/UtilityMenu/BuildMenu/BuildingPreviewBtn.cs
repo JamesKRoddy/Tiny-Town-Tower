@@ -21,7 +21,7 @@ public class BuildingPreviewBtn : PreviewButtonBase<BuildingScriptableObj>
 
         if (canBuild)
         {
-            PlayerUIManager.Instance.buildMenu.SetScreenActive(false, 0.1f, () => BuildingPlacer.Instance.StartPlacement(data));
+            PlayerUIManager.Instance.buildMenu.StartBuildingPlacement(data);
         }
         else
         {
@@ -32,6 +32,11 @@ public class BuildingPreviewBtn : PreviewButtonBase<BuildingScriptableObj>
     public void SetupButton(BuildingScriptableObj buildingObjRef)
     {
         base.SetupButton(buildingObjRef, buildingObjRef.sprite, buildingObjRef.objectName);
+    }
+
+    public void OnButtonClick()
+    {
+        PlayerUIManager.Instance.buildMenu.StartBuildingPlacement(data);
     }
 }
 
