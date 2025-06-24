@@ -651,7 +651,6 @@ MonoBehaviour:
   health: 100
   maxHealth: 100
   nPCDataObj: {fileID: 11400000, guid: 53176b9bdbcc0754eb1288d1758d866a, type: 2}
-  additionalMutationSlots: 3
   maxStamina: 100
   currentStamina: 100
   staminaRegenRate: 5
@@ -1395,10 +1394,6 @@ PrefabInstance:
     - target: {fileID: 5734485923781513847, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
       propertyPath: m_Name
       value: SceneTransitionTriggger (turrets)
-      objectReference: {fileID: 0}
-    - target: {fileID: 5734485923781513847, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
-      propertyPath: m_IsActive
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5882907281086281573, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
       propertyPath: m_LocalPosition.x

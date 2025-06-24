@@ -909,8 +909,7 @@ PrefabInstance:
       propertyPath: 'characterEffects.Array.data[1]'
       value: 
       objectReference: {fileID: 11400000, guid: e917dc6f66606014dbfa9cec973cd6f3, type: 2}
-    m_RemovedComponents:
-    - {fileID: 2683458163222554810, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+    m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
