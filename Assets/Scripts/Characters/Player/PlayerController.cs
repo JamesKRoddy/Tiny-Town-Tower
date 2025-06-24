@@ -213,7 +213,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 PlayerInput.Instance.OnBPressed += () => CloseSelectionPopup();
                 break;
 
-            case PlayerControlType.TURRET_CAMERA_MOVEMENT:
+            case PlayerControlType.CAMP_ATTACK_CAMERA_MOVEMENT:
                 PlayerInput.Instance.OnSelectPressed += () => OpenUtilityMenu();
                 PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu();
                 break;

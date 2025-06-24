@@ -72,7 +72,7 @@ namespace Managers
             {
                 spawnPoints = new List<EnemySpawnPoint>(RogueLiteManager.Instance.BuildingManager.CurrentRoomParent.GetComponent<RogueLiteRoomParent>().GetEnemySpawnPoints());
 
-            } else if(GameManager.Instance.CurrentGameMode == GameMode.TURRET)
+            } else if(GameManager.Instance.CurrentGameMode == GameMode.CAMP_ATTACK)
             {
                 // Get all spawn points in the scene
                 spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
@@ -91,7 +91,7 @@ namespace Managers
                     case GameMode.ROGUE_LITE:
                         RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                         break;
-                    case GameMode.TURRET:
+                    case GameMode.CAMP_ATTACK:
                         TurretManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                         break;
                     case GameMode.CAMP:
@@ -117,7 +117,7 @@ namespace Managers
                     case GameMode.ROGUE_LITE:
                         RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                         break;
-                    case GameMode.TURRET:
+                    case GameMode.CAMP_ATTACK:
                         TurretManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                         break;
                     case GameMode.CAMP:

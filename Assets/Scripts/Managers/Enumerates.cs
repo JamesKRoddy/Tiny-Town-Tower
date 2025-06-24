@@ -125,7 +125,9 @@ public enum PlayerControlType
     CAMP_NPC_MOVEMENT = 300, // Player's movement in the camp
     CAMP_CAMERA_MOVEMENT = 301, //Default
     CAMP_WORK_ASSIGNMENT = 302, // Assigning work to a settler
-    BUILDING_PLACEMENT = 303, // Placing a building from the build menu
+    BUILDING_PLACEMENT = 303, // Placing a building from the build menu    
+    CAMP_ATTACK_CAMERA_MOVEMENT = 304, //Default when attacked by enemies
+    TURRET_PLACEMENT = 305, // Placing a turret from the turret menu
 
     /// <summary>
     /// Menus
@@ -133,13 +135,6 @@ public enum PlayerControlType
 
     IN_CONVERSATION = 400, // Talking to an NPC
     IN_MENU = 401, // In any menu
-
-    /// <summary>
-    /// Turret
-    /// </summary>
-
-    TURRET_CAMERA_MOVEMENT = 500, //Default
-    TURRET_PLACEMENT = 501, // Placing a turret from the turret menu
 
     /// <summary>
     /// Genetic Mutation UI
@@ -165,7 +160,7 @@ public enum GameMode
     MAIN_MENU = 100,
     ROGUE_LITE = 200,
     CAMP = 300,
-    TURRET = 500
+    CAMP_ATTACK = 500
 }
 
 public enum EnemySetupState
