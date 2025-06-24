@@ -138,7 +138,6 @@ public enum PlayerControlType
     /// Turret
     /// </summary>
 
-    TURRET_CAMERA_MOVEMENT = 500, //Default
     TURRET_PLACEMENT = 501, // Placing a turret from the turret menu
 
     /// <summary>

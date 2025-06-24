@@ -229,7 +229,6 @@ public class PlayerInput : MonoBehaviour
             GameMode.MAIN_MENU => PlayerControlType.MAIN_MENU,
             GameMode.ROGUE_LITE => PlayerControlType.COMBAT_NPC_MOVEMENT,
             GameMode.CAMP => PlayerControlType.CAMP_CAMERA_MOVEMENT,
-            GameMode.TURRET => PlayerControlType.TURRET_CAMERA_MOVEMENT,
             _ => PlayerControlType.NONE
         };
     }

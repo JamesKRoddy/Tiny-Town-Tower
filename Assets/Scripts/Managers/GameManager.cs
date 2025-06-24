@@ -72,8 +72,6 @@ namespace Managers
                         };
                     }
                     return PlayerControlType.CAMP_CAMERA_MOVEMENT;
-                case GameMode.TURRET:
-                    return PlayerControlType.TURRET_CAMERA_MOVEMENT;
                 default:
                     return PlayerControlType.NONE;
             }        
