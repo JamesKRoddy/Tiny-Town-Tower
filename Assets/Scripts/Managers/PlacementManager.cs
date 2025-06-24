@@ -24,9 +24,7 @@ namespace Managers
         protected GameObject currentPreview;
         protected T selectedObject;
         protected Vector3 currentGridPosition;
-        protected float gridSize = 2f;
-
-        private Dictionary<Vector3, GridSlot> gridSlots = new Dictionary<Vector3, GridSlot>();
+        protected float gridSize => CampManager.Instance != null ? CampManager.Instance.SharedGridSize : 2f;
 
         protected abstract void PlaceObject();
         protected abstract bool IsValidPlacement(Vector3 position, out string errorMessage);
@@ -128,109 +126,66 @@ namespace Managers
 
         protected void EnableGrid(Vector2 xBounds, Vector2 zBounds)
         {
-            if (gridSlots.Count == 0)
+            // Use shared grid slots from CampManager
+            var sharedGridSlots = CampManager.Instance?.SharedGridSlots;
+            if (sharedGridSlots == null) return;
+
+            // Create visual grid objects for occupied slots
+            foreach (var kvp in sharedGridSlots)
             {
-                for (float x = xBounds.x; x < xBounds.y; x += gridSize)
+                Vector3 gridPosition = kvp.Key;
+                GridSlot slot = kvp.Value;
+                
+                Vector3 displayPosition = new Vector3(gridPosition.x + gridSize / 2, 0, gridPosition.z + gridSize / 2);
+                
+                if (slot.GridObject == null)
                 {
-                    for (float z = zBounds.x; z < zBounds.y; z += gridSize)
-                    {
-                        // Create grid position without offset
-                        Vector3 gridPosition = new Vector3(x, 0, z);
-                        Vector3 displayPosition = new Vector3(x + gridSize / 2, 0, z + gridSize / 2);
-
-                        GameObject gridSection = Instantiate(gridPrefab, displayPosition, Quaternion.identity, gridParent);
-                        gridSection.SetActive(false);
-
-                        gridSlots[gridPosition] = new GridSlot { IsOccupied = false, GridObject = gridSection };
-                    }
+                    GameObject gridSection = Instantiate(gridPrefab, displayPosition, Quaternion.identity, gridParent);
+                    gridSection.SetActive(false);
+                    slot.GridObject = gridSection;
                 }
-            }
-
-            foreach (var slot in gridSlots.Values)
-            {
+                
+                // Update visual representation based on occupation
                 if (slot.IsOccupied && takenGridPrefab != null)
                 {
                     if (slot.GridObject != null)
                     {
                         Destroy(slot.GridObject);
                     }
-                    slot.GridObject = Instantiate(takenGridPrefab, slot.GridObject.transform.position, Quaternion.identity, gridParent);
+                    slot.GridObject = Instantiate(takenGridPrefab, displayPosition, Quaternion.identity, gridParent);
                 }
+                
                 slot.GridObject.SetActive(true);
             }
         }
 
         protected void DisableGrid()
         {
-            foreach (var slot in gridSlots.Values)
+            var sharedGridSlots = CampManager.Instance?.SharedGridSlots;
+            if (sharedGridSlots == null) return;
+
+            foreach (var slot in sharedGridSlots.Values)
             {
-                slot.GridObject.SetActive(false);
+                if (slot.GridObject != null)
+                {
+                    slot.GridObject.SetActive(false);
+                }
             }
         }
 
         protected bool AreGridSlotsAvailable(Vector3 position, Vector2Int size)
         {
-            List<Vector3> requiredSlots = GetRequiredGridSlots(position, size);
-
-            foreach (var slot in requiredSlots)
-            {
-                if (gridSlots.ContainsKey(slot) && gridSlots[slot].IsOccupied)
-                {
-                    return false;
-                }
-            }
-            return true;
+            return CampManager.Instance?.AreSharedGridSlotsAvailable(position, size) ?? false;
         }
 
         protected void MarkGridSlotsOccupied(Vector3 position, Vector2Int size, GameObject placedObject)
         {
-            List<Vector3> requiredSlots = GetRequiredGridSlots(position, size);
-
-            foreach (var slot in requiredSlots)
-            {
-                if (gridSlots.ContainsKey(slot))
-                {
-                    if (gridSlots[slot].IsOccupied)
-                    {
-                        Debug.LogWarning($"Grid slot at {slot} is already occupied by {gridSlots[slot].OccupyingObject.name}!");
-                        continue; // Skip marking if already occupied
-                    }
-
-                    gridSlots[slot].IsOccupied = true;
-                    gridSlots[slot].OccupyingObject = placedObject;
-                }
-                else
-                {
-                    Debug.LogError($"Grid slot at {slot} does not exist in the dictionary!");
-                }
-            }
+            CampManager.Instance?.MarkSharedGridSlotsOccupied(position, size, placedObject);
         }
 
-        private List<Vector3> GetRequiredGridSlots(Vector3 position, Vector2Int size)
+        protected void MarkGridSlotsUnoccupied(Vector3 position, Vector2Int size)
         {
-            List<Vector3> requiredSlots = new List<Vector3>();
-
-            Vector3 basePosition = SnapToGrid(position);
-
-            // Calculate the starting position (bottom-left corner)
-            float startX = basePosition.x - ((size.x * gridSize) / 2f);
-            float startZ = basePosition.z - ((size.y * gridSize) / 2f);
-
-            for (int x = 0; x < size.x; x++)
-            {
-                for (int z = 0; z < size.y; z++)
-                {
-                    Vector3 slotPosition = new Vector3(
-                        startX + (x * gridSize),
-                        0,
-                        startZ + (z * gridSize)
-                    );
-
-                    requiredSlots.Add(slotPosition);
-                }
-            }
-
-            return requiredSlots;
+            CampManager.Instance?.MarkSharedGridSlotsUnoccupied(position, size);
         }
     }
 }

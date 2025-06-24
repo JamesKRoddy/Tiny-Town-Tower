@@ -116,6 +116,17 @@ public class ConstructionTask : WorkTask, IInteractive<object>
     {
         return this;
     }
+
+    protected override void OnDestroy()
+    {
+        // Free up grid slots when construction site is destroyed
+        if (buildingScriptableObj != null && CampManager.Instance != null)
+        {
+            CampManager.Instance.MarkSharedGridSlotsUnoccupied(transform.position, buildingScriptableObj.size);
+        }
+        
+        base.OnDestroy();
+    }
 }
 
 

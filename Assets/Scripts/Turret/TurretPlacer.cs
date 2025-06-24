@@ -6,8 +6,6 @@ using Managers;
 public class TurretPlacer : PlacementManager<TurretScriptableObject>
 {
     [Header("Turret Grid")]
-    [SerializeField] private Vector2 xBounds = new Vector2(-25f, 25f);
-    [SerializeField] private Vector2 zBounds = new Vector2(-25f, 25f);
     [SerializeField] private bool showGridBounds;
 
     private static TurretPlacer _instance;
@@ -27,6 +25,9 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
             return _instance;
         }
     }
+
+    public override Vector2 GetXBounds() => CampManager.Instance != null ? CampManager.Instance.SharedXBounds : new Vector2(-25f, 25f);
+    public override Vector2 GetZBounds() => CampManager.Instance != null ? CampManager.Instance.SharedZBounds : new Vector2(-25f, 25f);
 
     protected override void PlaceObject()
     {
@@ -84,7 +85,7 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
     {
         if (controlType == PlayerControlType.TURRET_PLACEMENT)
         {
-            EnableGrid(xBounds, zBounds);
+            EnableGrid(GetXBounds(), GetZBounds());
             PlayerInput.Instance.OnLeftJoystick += HandleJoystickMovement;
             PlayerInput.Instance.OnAPressed += PlaceObject;
             PlayerInput.Instance.OnBPressed += CancelPlacement;
@@ -103,14 +104,13 @@ public class TurretPlacer : PlacementManager<TurretScriptableObject>
         PlayerUIManager.Instance.turretMenu.SetScreenActive(true, 0.1f);
     }
 
-    public override Vector2 GetXBounds() => xBounds;
-    public override Vector2 GetZBounds() => zBounds;
-
     private void OnDrawGizmos()
     {
         if (showGridBounds)
         {
             Gizmos.color = Color.green;
+            Vector2 xBounds = GetXBounds();
+            Vector2 zBounds = GetZBounds();
             Vector3 bottomLeft = new Vector3(xBounds.x, 0, zBounds.x);
             Vector3 bottomRight = new Vector3(xBounds.y, 0, zBounds.x);
             Vector3 topLeft = new Vector3(xBounds.x, 0, zBounds.y);

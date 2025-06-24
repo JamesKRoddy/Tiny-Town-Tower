@@ -80,14 +80,11 @@ public class TurretConstructionTask : WorkTask, IInteractive<object>
     {
         GameObject turretObj = Instantiate(finalTurretPrefab, transform.position, Quaternion.identity);
         
-        // Try to setup the turret if it has a BaseTurret component
-        var turretComponent = turretObj.GetComponent<MonoBehaviour>();
-        if (turretComponent != null && turretComponent.GetType().Name == "BaseTurret")
+        // Set the turret scriptable object reference on the turret
+        var baseTurret = turretObj.GetComponent<BaseTurret>();
+        if (baseTurret != null)
         {
-            // Use reflection to call SetupTurret if it exists
-            var setupMethod = turretComponent.GetType().GetMethod("SetupTurret", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            setupMethod?.Invoke(turretComponent, null);
+            baseTurret.SetTurretScriptableObject(turretScriptableObj);
         }
 
         Destroy(gameObject);
@@ -117,5 +114,16 @@ public class TurretConstructionTask : WorkTask, IInteractive<object>
     public object Interact()
     {
         return this;
+    }
+
+    protected override void OnDestroy()
+    {
+        // Free up grid slots when construction site is destroyed
+        if (turretScriptableObj != null && CampManager.Instance != null)
+        {
+            CampManager.Instance.MarkSharedGridSlotsUnoccupied(transform.position, turretScriptableObj.size);
+        }
+        
+        base.OnDestroy();
     }
 } 

@@ -5,8 +5,6 @@ using Managers;
 public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
 {
     [Header("Building Grid")]
-    [SerializeField] private Vector2 xBounds = new Vector2(-25f, 25f);
-    [SerializeField] private Vector2 zBounds = new Vector2(-25f, 25f);
     [SerializeField] private bool showGridBounds;
 
     private static BuildingPlacer _instance;
@@ -27,14 +25,14 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
         }
     }
 
-    public override Vector2 GetXBounds() => xBounds;
-    public override Vector2 GetZBounds() => zBounds;
+    public override Vector2 GetXBounds() => CampManager.Instance != null ? CampManager.Instance.SharedXBounds : new Vector2(-25f, 25f);
+    public override Vector2 GetZBounds() => CampManager.Instance != null ? CampManager.Instance.SharedZBounds : new Vector2(-25f, 25f);
 
     protected override void PlaceObject()
     {
         if (!IsValidPlacement(currentGridPosition, out string errorMessage))
         {
-            PlayerUIManager.Instance.DisplayUIErrorMessage("Cannot place turret");
+            PlayerUIManager.Instance.DisplayUIErrorMessage("Cannot place building");
             return;        
         }
 
@@ -78,7 +76,7 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
     {
         if (controlType == PlayerControlType.BUILDING_PLACEMENT)
         {
-            EnableGrid(xBounds, zBounds);
+            EnableGrid(GetXBounds(), GetZBounds());
             PlayerInput.Instance.OnLeftJoystick += HandleJoystickMovement;
             PlayerInput.Instance.OnAPressed += PlaceObject;
             PlayerInput.Instance.OnBPressed += CancelPlacement;
@@ -102,6 +100,8 @@ public class BuildingPlacer : PlacementManager<BuildingScriptableObj>
         if (showGridBounds)
         {
             Gizmos.color = Color.blue; // Using blue to distinguish from turret grid
+            Vector2 xBounds = GetXBounds();
+            Vector2 zBounds = GetZBounds();
             Vector3 bottomLeft = new Vector3(xBounds.x, 0, zBounds.x);
             Vector3 bottomRight = new Vector3(xBounds.y, 0, zBounds.x);
             Vector3 topLeft = new Vector3(xBounds.x, 0, zBounds.y);

@@ -256,6 +256,11 @@ public class Building : MonoBehaviour, IInteractive<Building>
 
     protected virtual void OnDestroy()
     {
+        // Free up grid slots when building is destroyed
+        if (buildingScriptableObj != null && CampManager.Instance != null)
+        {
+            CampManager.Instance.MarkSharedGridSlotsUnoccupied(transform.position, buildingScriptableObj.size);
+        }
     }
 
     internal string GetBuildingStatsText()

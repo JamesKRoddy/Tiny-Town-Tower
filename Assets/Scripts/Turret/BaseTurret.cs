@@ -31,6 +31,9 @@ public abstract class BaseTurret : MonoBehaviour
     public Transform firePoint;
     public UpgradeData upgradeData;
 
+    [Header("Turret Configuration")]
+    [SerializeField] protected TurretScriptableObject turretScriptableObj;
+
     private float fireCooldown = 0f;
     private EnemyBase target;
     private List<EnemyBase> enemiesInRange = new List<EnemyBase>();
@@ -157,5 +160,19 @@ public abstract class BaseTurret : MonoBehaviour
     internal void SetupTurret()
     {
         //TODO setup turret
+    }
+
+    public void SetTurretScriptableObject(TurretScriptableObject turretSO)
+    {
+        turretScriptableObj = turretSO;
+    }
+
+    protected virtual void OnDestroy()
+    {
+        // Free up grid slots when turret is destroyed
+        if (turretScriptableObj != null && Managers.CampManager.Instance != null)
+        {
+            Managers.CampManager.Instance.MarkSharedGridSlotsUnoccupied(transform.position, turretScriptableObj.size);
+        }
     }
 }
