@@ -15,11 +15,10 @@ Turret refactor so they are used in the camp to kill zombies:
 Setup scene w/ enemy spawn points outside of the camp
 
 Current Testing:
-Spawning enemies in the camps scene (make this an event or there may already be an event setup to trigger when the wave starts)
-Unpossessing npcs when the waves start
+Unpossessing npcs when the waves start (have to stoip the camera following the npc, possible event to call)
 Setup a wall building to help keep zombies out
 Setting zombie target to be a random building/npc. Should attack walls if unable to reach the rest of the camp. This is set in the enemy spawn point class
-npcs running to bunkers if avalible or just away from zombies
+npcs running to bunkers if avalible
 Zombies damaging the buildings
 
 Make sure bunkers work
