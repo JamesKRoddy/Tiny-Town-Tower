@@ -29,7 +29,7 @@ namespace Enemies
                     if (target != null)
                     {
                         target.TakeDamage(meleeDamage, transform);
-                        Debug.Log($"Player hit by melee attack for {meleeDamage} damage");
+                        Debug.Log($"Target hit by melee attack for {meleeDamage} damage");
                     }
                     else
                     {

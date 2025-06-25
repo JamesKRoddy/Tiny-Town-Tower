@@ -88,6 +88,12 @@ public class SettlerNPC : HumanCharacterController
 
         // Register with NPCManager
         NPCManager.Instance.RegisterNPC(this);
+        
+        // Register with CampManager for wave management
+        if (CampManager.Instance != null)
+        {
+            CampManager.Instance.AddNPC(this);
+        }
     }
 
     private void OnDestroy()
@@ -96,6 +102,12 @@ public class SettlerNPC : HumanCharacterController
         if (NPCManager.Instance != null)
         {
             NPCManager.Instance.UnregisterNPC(this);
+        }
+        
+        // Unregister from CampManager
+        if (CampManager.Instance != null)
+        {
+            CampManager.Instance.RemoveNPC(this);
         }
     }
 

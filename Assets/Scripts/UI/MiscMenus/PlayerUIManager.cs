@@ -31,6 +31,9 @@ public class PlayerUIManager : MonoBehaviour
         }
     }
 
+    [Header("Debug Menu References")]
+    public DebugMenu debugMenu;
+
     [Header("UI References")]
     [SerializeField, ReadOnly] public MenuBase currentMenu;
     [SerializeField, ReadOnly] public MenuBase previousMenu;
@@ -87,6 +90,24 @@ public class PlayerUIManager : MonoBehaviour
     {
         rogueLikeGameUI.Setup();
         campUI.Setup();
+    }
+
+    private void Update()
+    {
+        #if UNITY_EDITOR
+        // Keyboard shortcut to open debug menu (F1)
+        if (Input.GetKeyDown(KeyCode.F1))
+        {
+            if (debugMenu != null && !debugMenu.gameObject.activeInHierarchy)
+            {
+                debugMenu.gameObject.SetActive(true);
+            }
+            else if (debugMenu != null && debugMenu.gameObject.activeInHierarchy)
+            {
+                debugMenu.gameObject.SetActive(false);
+            }
+        }
+        #endif
     }
 
     /// <summary>
@@ -165,6 +186,7 @@ public class PlayerUIManager : MonoBehaviour
         turretUpgradeMenu.SetScreenActive(false);
         geneticMutationMenu.SetScreenActive(false);
         utilityMenu.SetScreenActive(false);
+        debugMenu.gameObject.SetActive(false);
     }
 
     public void HidePauseMenus()

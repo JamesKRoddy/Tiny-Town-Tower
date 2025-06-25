@@ -1,10 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
+using System;
+using Enemies;
 
 namespace Managers
 {
-    public class CampManager : MonoBehaviour
+    public class CampManager : GameModeManager<CampEnemyWaveConfig>
     {
         private static CampManager _instance;
         public static CampManager Instance
@@ -29,10 +31,21 @@ namespace Managers
         [SerializeField] private float sharedGridSize = 2f;
         [SerializeField] private bool showSharedGridBounds = true;
 
+        [Header("Camp Wave Settings")]
+        [SerializeField] private float waveEndCheckInterval = 2f;
+
+        // Events
+        public event Action OnCampWaveStarted;
+        public event Action OnCampWaveEnded;
+
         // Shared grid system
         private Dictionary<Vector3, GridSlot> sharedGridSlots = new Dictionary<Vector3, GridSlot>();
         private bool gridObjectsInitialized = false;
         private Transform sharedGridParent;
+
+        // Camp wave management
+        private List<HumanCharacterController> campNPCs = new List<HumanCharacterController>();
+        private float lastWaveEndCheck = 0f;
 
         // References to other managers
         private ResearchManager researchManager;
@@ -63,6 +76,9 @@ namespace Managers
         // Public access to shared grid
         public Dictionary<Vector3, GridSlot> SharedGridSlots => sharedGridSlots;
 
+        // Public access to camp wave state
+        public bool IsWaveActive => GetEnemySetupState() != EnemySetupState.ALL_WAVES_CLEARED;
+
         private void Awake()
         {
             if (_instance != null && _instance != this)
@@ -74,6 +90,102 @@ namespace Managers
                 _instance = this;
                 InitializeManagers();
                 InitializeSharedGrid();
+            }
+        }
+
+        protected override void Start()
+        {
+            base.Start();
+            SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+            
+            // Find all NPCs in the camp
+            FindCampNPCs();
+        }
+
+        protected override void EnemySetupStateChanged(EnemySetupState newState)
+        {
+            Debug.Log($"<color=green>Camp EnemySetupStateChanged: {newState}</color>");
+
+            switch (newState)
+            {
+                case EnemySetupState.NONE:
+                    break;
+                case EnemySetupState.WAVE_START:
+                    EnemySpawnManager.Instance.ResetWaveCount();
+                    // Move to next state after a short delay
+                    StartCoroutine(TransitionToNextState(EnemySetupState.PRE_ENEMY_SPAWNING, 0.5f));
+                    break;
+                case EnemySetupState.PRE_ENEMY_SPAWNING:
+                    SetupCampForWave();
+                    // Move to spawn state after setup
+                    StartCoroutine(TransitionToNextState(EnemySetupState.ENEMY_SPAWN_START, 1.0f));
+                    break;
+                case EnemySetupState.ENEMY_SPAWN_START:
+                    StartCampEnemyWave();
+                    // Move to spawned state after spawning
+                    StartCoroutine(TransitionToNextState(EnemySetupState.ENEMIES_SPAWNED, 2.0f));
+                    break;
+                case EnemySetupState.ENEMIES_SPAWNED:
+                    // Now we can start checking for wave end
+                    break;
+                case EnemySetupState.ALL_WAVES_CLEARED:
+                    EndCampWave();
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private IEnumerator TransitionToNextState(EnemySetupState nextState, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            SetEnemySetupState(nextState);
+        }
+
+        public override int GetCurrentWaveDifficulty()
+        {
+            // For camp waves, we can use a simple difficulty system
+            // Could be based on camp level, number of buildings, etc.
+            return 1; // Base difficulty for now
+        }
+
+        private void SetupCampForWave()
+        {
+            // Unpossess any currently possessed NPC
+            if (PlayerController.Instance._possessedNPC != null)
+            {
+                PlayerController.Instance.PossessNPC(null);
+            }
+            
+            // Make all NPCs flee
+            MakeNPCsFlee();
+        }
+
+        private void StartCampEnemyWave()
+        {
+            // Get the wave config for current difficulty
+            var waveConfig = GetWaveConfig(GetCurrentWaveDifficulty());
+            if (waveConfig != null)
+            {
+                Debug.Log($"Starting camp wave with config: {waveConfig.name}, Difficulty: {GetCurrentWaveDifficulty()}");
+                EnemySpawnManager.Instance.StartSpawningEnemies(waveConfig);
+            }
+            else
+            {
+                Debug.LogWarning($"No wave config found for camp wave difficulty {GetCurrentWaveDifficulty()}! Make sure to assign CampEnemyWaveConfig in the inspector.");
+                // Don't immediately end the wave - let it continue with no enemies for testing
+                Debug.Log("Continuing wave without enemies for testing purposes");
+            }
+        }
+
+        private void Update()
+        {
+            // Only check for wave end when we're in the ENEMIES_SPAWNED state
+            if (GetEnemySetupState() == EnemySetupState.ENEMIES_SPAWNED && 
+                Time.time - lastWaveEndCheck >= waveEndCheckInterval)
+            {
+                lastWaveEndCheck = Time.time;
+                CheckForWaveEnd();
             }
         }
 
@@ -361,5 +473,205 @@ namespace Managers
                 Gizmos.DrawLine(topLeft, bottomLeft);
             }
         }
-    } 
+
+        #region Camp Wave Management
+
+        /// <summary>
+        /// Starts a camp wave of enemies
+        /// </summary>
+        public void StartCampWave()
+        {
+            if (GameManager.Instance.CurrentGameMode != GameMode.CAMP)
+            {
+                Debug.LogWarning("Camp wave can only be started in CAMP game mode!");
+                return;
+            }
+
+            // Trigger camp wave started event
+            OnCampWaveStarted?.Invoke();
+            
+            // Start the wave using the GameModeManager system
+            SetEnemySetupState(EnemySetupState.WAVE_START);
+            
+            Debug.Log("Camp wave started!");
+        }
+
+        /// <summary>
+        /// Makes all NPCs in the camp flee from enemies
+        /// </summary>
+        private void MakeNPCsFlee()
+        {
+            Debug.Log("Making NPCs flee from enemies!");
+            
+            foreach (var npc in campNPCs)
+            {
+                if (npc != null && npc is SettlerNPC settler)
+                {
+                    settler.ChangeTask(TaskType.FLEE);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns NPCs to normal behavior when wave ends
+        /// </summary>
+        private void ReturnNPCsToNormal()
+        {
+            Debug.Log("Returning NPCs to normal behavior");
+            
+            foreach (var npc in campNPCs)
+            {
+                if (npc != null && npc is SettlerNPC settler)
+                {
+                    settler.ChangeTask(TaskType.WANDER);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Checks if the wave should end (no enemies remaining)
+        /// </summary>
+        private void CheckForWaveEnd()
+        {
+            // Check if there are any active enemies
+            var enemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
+            
+            if (enemies.Length == 0 && IsWaveActive)
+            {
+                // No enemies left, wave is over
+                SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+            }
+        }
+
+        /// <summary>
+        /// Ends the current camp wave
+        /// </summary>
+        public void EndCampWave()
+        {
+            Debug.Log("Camp wave ended!");
+            
+            // Return NPCs to normal behavior
+            ReturnNPCsToNormal();
+            
+            // Trigger camp wave ended event
+            OnCampWaveEnded?.Invoke();
+        }
+
+        /// <summary>
+        /// Manually end the camp wave (for debugging)
+        /// </summary>
+        public void ForceEndCampWave()
+        {
+            Debug.Log("Force ending camp wave!");
+            SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+        }
+
+        /// <summary>
+        /// Finds all NPCs in the camp for wave management
+        /// </summary>
+        private void FindCampNPCs()
+        {
+            campNPCs.Clear();
+            HumanCharacterController[] npcs = FindObjectsByType<HumanCharacterController>(FindObjectsSortMode.None);
+            
+            foreach (var npc in npcs)
+            {
+                // Exclude the player if they're possessed
+                if (npc != PlayerController.Instance._possessedNPC)
+                {
+                    campNPCs.Add(npc);
+                }
+            }
+            
+            Debug.Log($"Found {campNPCs.Count} NPCs in camp for wave management");
+        }
+
+        /// <summary>
+        /// Add an NPC to the camp wave manager
+        /// </summary>
+        public void AddNPC(HumanCharacterController npc)
+        {
+            if (npc != null && !campNPCs.Contains(npc))
+            {
+                campNPCs.Add(npc);
+            }
+        }
+
+        /// <summary>
+        /// Remove an NPC from the camp wave manager
+        /// </summary>
+        public void RemoveNPC(HumanCharacterController npc)
+        {
+            if (campNPCs.Contains(npc))
+                campNPCs.Remove(npc);
+        }
+
+        #endregion
+
+        #region Debug Methods
+
+        /// <summary>
+        /// Spawn a single enemy for debugging purposes
+        /// </summary>
+        public void SpawnSingleEnemy()
+        {
+            // Get the wave config for current difficulty
+            var waveConfig = GetWaveConfig(GetCurrentWaveDifficulty());
+            if (waveConfig == null || waveConfig.enemyPrefabs == null || waveConfig.enemyPrefabs.Length == 0)
+            {
+                Debug.LogWarning("No enemy prefabs found in wave config!");
+                return;
+            }
+
+            // Get a random spawn position within bounds
+            Vector3 spawnPosition = GetRandomSpawnPosition();
+            
+            // Spawn a random enemy prefab from the wave config
+            GameObject enemyPrefab = waveConfig.enemyPrefabs[UnityEngine.Random.Range(0, waveConfig.enemyPrefabs.Length)];
+            GameObject enemy = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
+            
+            Debug.Log($"Spawned single enemy at {spawnPosition}");
+        }
+
+        /// <summary>
+        /// Clear all enemies from the scene
+        /// </summary>
+        public void ClearAllEnemies()
+        {
+            // Find all enemies in the scene
+            EnemyBase[] enemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
+            
+            foreach (var enemy in enemies)
+            {
+                if (enemy != null)
+                {
+                    Destroy(enemy.gameObject);
+                }
+            }
+            
+            Debug.Log($"Cleared {enemies.Length} enemies from the scene");
+        }
+
+        /// <summary>
+        /// Get a random spawn position within the camp bounds
+        /// </summary>
+        private Vector3 GetRandomSpawnPosition()
+        {
+            float x = UnityEngine.Random.Range(sharedXBounds.x, sharedXBounds.y);
+            float z = UnityEngine.Random.Range(sharedZBounds.x, sharedZBounds.y);
+            
+            // Find a position on the ground
+            Vector3 spawnPos = new Vector3(x, 100f, z); // Start high up
+            RaycastHit hit;
+            
+            if (Physics.Raycast(spawnPos, Vector3.down, out hit, 200f, LayerMask.GetMask("Default")))
+            {
+                return hit.point;
+            }
+            
+            return new Vector3(x, 0f, z);
+        }
+
+        #endregion
+    }
 }

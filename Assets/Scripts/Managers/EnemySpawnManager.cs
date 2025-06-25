@@ -74,8 +74,8 @@ namespace Managers
 
             } else if(GameManager.Instance.CurrentGameMode == GameMode.CAMP_ATTACK)
             {
-                // Get all spawn points in the scene
-                spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
+                // For camp attack mode, we can handle this directly or delegate to CampManager
+                Debug.LogWarning("No spawn points found for camp attack mode!");
             } else if(GameManager.Instance.CurrentGameMode == GameMode.CAMP)
             {
                 // Get all spawn points in the scene for camp
@@ -92,7 +92,8 @@ namespace Managers
                         RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                         break;
                     case GameMode.CAMP_ATTACK:
-                        TurretManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                        // For camp attack mode, we can handle this directly or delegate to CampManager
+                        Debug.LogWarning("No spawn points found for camp attack mode!");
                         break;
                     case GameMode.CAMP:
                         // For camp, we might want to handle this differently
@@ -118,7 +119,8 @@ namespace Managers
                         RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                         break;
                     case GameMode.CAMP_ATTACK:
-                        TurretManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                        // For camp attack mode, we can handle this directly or delegate to CampManager
+                        Debug.LogWarning("No spawn points found for camp attack mode!");
                         break;
                     case GameMode.CAMP:
                         // For camp, we might want to handle wave completion differently

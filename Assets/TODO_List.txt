@@ -10,12 +10,26 @@ Test with differnt shapes
 
 Things to do for a demo:
 
-Turret refactor so they are used in the camp to kill zombies
+Turret refactor so they are used in the camp to kill zombies:
+
+Setup scene w/ enemy spawn points outside of the camp
+
+Current Testing:
+Spawning enemies in the camps scene (make this an event or there may already be an event setup to trigger when the wave starts)
+Unpossessing npcs when the waves start
+Setup a wall building to help keep zombies out
+Setting zombie target to be a random building/npc. Should attack walls if unable to reach the rest of the camp. This is set in the enemy spawn point class
+npcs running to bunkers if avalible or just away from zombies
+Zombies damaging the buildings
+
+Make sure bunkers work
+NPCs entering bunkers
+
+
+
 To Test:
 Spawning enemies in the camp make them attack buildings or turrets
-Have to figure out what to do with the npcs? Maybe a bunker or something they can hide in is a new building! Upgrading increases durability and number of npcs that can fit in it.
-TODO:
-Swap across to using the building placement grid and placer
+Have to figure out what to do with the npcs? Maybe a bunker or something they can hide in is a new building! Upgrading increases durability and number of npcs that can fit in it. BunkerBuilding class already setup.+
 
 Enviromental hazzards in the roguelike section enviromental hazzards, electrical/acid etc.
 
@@ -50,6 +64,7 @@ Enemy still doing attack flash while dead
 Have to review the room spawning grid system, I think just to get rid of it and have the rooms spawn in a line, currently the grid can cause rooms to spawn over the entrance
 Pressing B while moving an already place mutation breaks the menu, just dont allow B presses
 Construction sites can have npcs manually assigned to them
+When moving the camera around the camp the selection icon can move off into the distance, should also be bound by the building grid
 
 
 

@@ -114,7 +114,6 @@ public class UtilityMenu : MenuBase, IControllerInput
                 break;
             case GameMode.CAMP_ATTACK:
                 playerInventoryBtn.gameObject.SetActive(true);
-                turretBuildBtn.gameObject.SetActive(true);
                 break;
             default:
                 Debug.LogError("UtilityMenu: OpenMenu: Invalid game mode");

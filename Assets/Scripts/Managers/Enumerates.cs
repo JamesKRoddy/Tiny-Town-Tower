@@ -37,7 +37,8 @@ public enum BuildingCategory
     WEAPONS,
     CLEANING,
     RESOURCES,
-    BUNKER
+    BUNKER,
+    WALL
 }
 
 // =========================
@@ -50,7 +51,8 @@ public enum TaskType
     WORK,
     WANDER,
     ATTACK,
-    EAT
+    EAT,
+    FLEE
 }
 
 [System.Serializable]
@@ -202,14 +204,6 @@ public enum DoorStatus
 // =========================
 // ENEMY AND TARGET ENUMS
 // =========================
-
-public enum EnemyTargetType
-{
-    NONE,
-    PLAYER,
-    CLOSEST_NPC,
-    TURRET_END
-}
 
 // =========================
 // RESOURCE ENUMS

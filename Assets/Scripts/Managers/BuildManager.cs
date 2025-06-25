@@ -22,6 +22,9 @@ namespace Managers
         [Header("Full list of Building Scriptable Objs")]
         public BuildingScriptableObj[] buildingScriptableObjs;
 
+        [Header("Full list of Turret Scriptable Objs")]
+        public TurretScriptableObject[] turretScriptableObjs;
+
         [Header("Construction Sites")]
         [SerializeField] private List<ConstructionSiteMapping> constructionSiteMappings = new List<ConstructionSiteMapping>();
 
@@ -54,6 +57,14 @@ namespace Managers
             
             Debug.LogError($"No destruction prefab found for size {size.x}x{size.y}");
             return destructionPrefabMappings.Count > 0 ? destructionPrefabMappings[0].destructionPrefab : null;
+        }
+
+        /// <summary>
+        /// Get the turret scriptable objects for the turret menu
+        /// </summary>
+        public TurretScriptableObject[] GetTurretScriptableObjs()
+        {
+            return turretScriptableObjs;
         }
 
         public void BuildingSelectionOptions(Building building){
