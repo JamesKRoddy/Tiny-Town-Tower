@@ -17,11 +17,10 @@ Setup scene w/ enemy spawn points outside of the camp
 Current Testing:
 Setup a wall building to help keep zombies out
 Setting zombie target to be a random building/npc. Should attack walls if unable to reach the rest of the camp. This is set in the enemy spawn point class
-npcs running to bunkers if avalible
+npcs running to bunkers if avalible, NPCs entering/exiting bunkers
 Zombies damaging the buildings
 
-Make sure bunkers work
-NPCs entering bunkers
+
 
 
 
