@@ -492,6 +492,8 @@ namespace Managers
             
             // Start the wave using the GameModeManager system
             SetEnemySetupState(EnemySetupState.WAVE_START);
+
+            PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_ATTACK_CAMERA_MOVEMENT);
             
             Debug.Log("Camp wave started!");
         }
@@ -555,6 +557,9 @@ namespace Managers
             
             // Trigger camp wave ended event
             OnCampWaveEnded?.Invoke();
+
+            // Return to camp camera movement
+            PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_CAMERA_MOVEMENT);
         }
 
         /// <summary>
@@ -564,6 +569,7 @@ namespace Managers
         {
             Debug.Log("Force ending camp wave!");
             SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+            PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_CAMERA_MOVEMENT);
         }
 
         /// <summary>

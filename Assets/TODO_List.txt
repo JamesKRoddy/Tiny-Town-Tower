@@ -15,7 +15,6 @@ Turret refactor so they are used in the camp to kill zombies:
 Setup scene w/ enemy spawn points outside of the camp
 
 Current Testing:
-Unpossessing npcs when the waves start (have to stoip the camera following the npc, possible event to call)
 Setup a wall building to help keep zombies out
 Setting zombie target to be a random building/npc. Should attack walls if unable to reach the rest of the camp. This is set in the enemy spawn point class
 npcs running to bunkers if avalible
@@ -64,6 +63,7 @@ Have to review the room spawning grid system, I think just to get rid of it and 
 Pressing B while moving an already place mutation breaks the menu, just dont allow B presses
 Construction sites can have npcs manually assigned to them
 When moving the camera around the camp the selection icon can move off into the distance, should also be bound by the building grid
+Return to camp selection from roguelike is showing up when npcs die in camp  (might be only happening when the npc was possessed before it died)
 
 
 
