@@ -261,7 +261,7 @@ namespace Managers
             bool isTurretPlacement = controlType == PlayerControlType.TURRET_PLACEMENT;
 
             if (isBuildingPlacement || isTurretPlacement)
-            {
+                {
                 EnableGrid(GetXBounds(), GetZBounds());
                 PlayerInput.Instance.OnLeftJoystick += HandleJoystickMovement;
                 PlayerInput.Instance.OnAPressed += PlaceObject;
@@ -273,14 +273,14 @@ namespace Managers
                 PlayerInput.Instance.OnLeftJoystick -= HandleJoystickMovement;
                 PlayerInput.Instance.OnAPressed -= PlaceObject;
                 PlayerInput.Instance.OnBPressed -= CancelPlacement;
-            }
-        }
+                    }
+                }
 
         private void EnableGrid(Vector2 xBounds, Vector2 zBounds)
-        {
+            {
             // Use the efficient grid object management from CampManager
             if (CampManager.Instance != null)
-            {
+                    {
                 CampManager.Instance.InitializeGridObjects(gridPrefab, takenGridPrefab);
                 CampManager.Instance.ShowGridObjects();
             }

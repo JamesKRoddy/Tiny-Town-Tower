@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Windows;
 using Managers;
+using Enemies;
 
 public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 {
@@ -456,6 +457,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     {
         Debug.Log($"{gameObject.name} has died!");
         OnDeath?.Invoke();
+
+        // Notify all enemies that this NPC was destroyed
+        EnemyBase.NotifyTargetDestroyed(transform);
 
         characterInventory.ClearInventory();
 

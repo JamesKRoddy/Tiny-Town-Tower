@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using Enemies;
 
 /// <summary>
 /// A wall building that provides defensive barriers against zombie attacks.
@@ -29,6 +30,10 @@ public class WallBuilding : Building
     public bool IsDestroyed => !IsOperational(); // Use base class operational state
     public bool BlocksEnemyMovement => blocksEnemyMovement && IsOperational(); // Use base class operational state
     
+    // Flag to prevent targeting during destruction
+    private bool isBeingDestroyed = false;
+    public bool IsBeingDestroyed => isBeingDestroyed;
+    
     protected override void Start()
     {
         base.Start();
@@ -49,23 +54,23 @@ public class WallBuilding : Building
         }
     }
     
-    public override void TakeDamage(float damage)
+    public override void TakeDamage(float amount, Transform damageSource = null)
     {
         // Apply damage reduction
-        float reducedDamage = damage * (1f - damageReduction);
+        float reducedDamage = amount * (1f - damageReduction);
         
         // Call base TakeDamage with reduced damage
-        base.TakeDamage(reducedDamage);
+        base.TakeDamage(reducedDamage, damageSource);
         
         // Update visuals based on health state
         UpdateWallVisuals();
     }
     
-    public override void Repair(float repairAmount)
+    public override void Heal(float healAmount)
     {
         bool wasDestroyed = !IsOperational();
         
-        base.Repair(repairAmount);
+        base.Heal(healAmount);
         
         // If wall was destroyed and now has health, restore it
         if (wasDestroyed && IsOperational())
@@ -78,11 +83,17 @@ public class WallBuilding : Building
     
     protected override void DestroyBuilding()
     {
+        // Mark as being destroyed to prevent targeting
+        isBeingDestroyed = true;
+        
         // Call base destruction
         base.DestroyBuilding();
         
         // Wall-specific destruction logic
         OnWallDestroyed?.Invoke(this);
+        
+        // Notify all enemies that this wall was destroyed
+        EnemyBase.NotifyTargetDestroyed(transform);
         
         // Disable NavMeshObstacle when destroyed
         var obstacle = GetComponent<UnityEngine.AI.NavMeshObstacle>();

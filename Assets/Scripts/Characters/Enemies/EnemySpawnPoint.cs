@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Managers;
+using UnityEngine.AI;
 
 namespace Enemies
 {
@@ -44,7 +45,7 @@ namespace Enemies
             Transform enemyTarget = null;
             EnemyBase enemyBase = enemy.GetComponent<EnemyBase>();
 
-            // Determine target based on game mode
+            // Determine initial target based on game mode
             switch (GameManager.Instance.CurrentGameMode)
             {
                 case GameMode.ROGUE_LITE:
@@ -56,13 +57,9 @@ namespace Enemies
                     break;
                     
                 case GameMode.CAMP:
-                    // In camp, find appropriate camp targets
-                    enemyTarget = FindCampTarget();
-                    break;
-                    
                 case GameMode.CAMP_ATTACK:
-                    // In camp attack, also use camp targeting
-                    enemyTarget = FindCampTarget();
+                    // In camp, find any available target (enemy will validate reachability)
+                    enemyTarget = FindInitialCampTarget();
                     break;
                     
                 default:
@@ -78,23 +75,17 @@ namespace Enemies
             }
             else
             {
-                Debug.LogWarning("No target found for enemy, using default behavior");
-                // Fallback to possessed NPC if available
-                if (PlayerController.Instance._possessedNPC != null)
-                {
-                    enemyTarget = PlayerController.Instance._possessedNPC.GetTransform();
-                    enemyBase.Setup(enemyTarget);
-                }
+                Debug.LogWarning("No initial target found for enemy, enemy will find its own target");
+                // Enemy will find its own target in its Update method
             }
 
             return enemy;
         }
 
-        private Transform FindCampTarget()
+        private Transform FindInitialCampTarget()
         {
-            // Find the closest building, wall, turret, or NPC to attack
+            // Simple initial target finding - let the enemy handle reachability validation
             List<Transform> potentialTargets = new List<Transform>();
-            List<Transform> wallTargets = new List<Transform>();
             
             // Find all buildings
             Building[] buildings = FindObjectsByType<Building>(FindObjectsSortMode.None);
@@ -102,24 +93,7 @@ namespace Enemies
             {
                 if (building != null && building.IsOperational())
                 {
-                    // Check if it's a wall building
-                    if (building.GetType() == typeof(WallBuilding))
-                    {
-                        // Use reflection to check if the wall is destroyed
-                        var isDestroyedProperty = building.GetType().GetProperty("IsDestroyed");
-                        if (isDestroyedProperty != null)
-                        {
-                            bool isDestroyed = (bool)isDestroyedProperty.GetValue(building);
-                            if (!isDestroyed)
-                            {
-                                wallTargets.Add(building.transform);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        potentialTargets.Add(building.transform);
-                    }
+                    potentialTargets.Add(building.transform);
                 }
             }
             
@@ -143,32 +117,14 @@ namespace Enemies
                 }
             }
             
-            // First try to find a non-wall target
-            Transform closestTarget = FindClosestTarget(potentialTargets);
-            
-            // If no non-wall targets found, use walls as fallback
-            if (closestTarget == null && wallTargets.Count > 0)
-            {
-                closestTarget = FindClosestTarget(wallTargets);
-                Debug.Log($"No other targets found, targeting wall at {closestTarget?.position}");
-            }
-            
-            // If still no targets, log a warning
-            if (closestTarget == null)
-            {
-                Debug.LogWarning("No camp targets found! No buildings, turrets, walls, or NPCs available for enemies to attack.");
-            }
-            
-            return closestTarget;
-        }
-        
-        private Transform FindClosestTarget(List<Transform> targets)
-        {
+            // Find the closest target (enemy will validate reachability)
             Transform closestTarget = null;
             float closestDistance = Mathf.Infinity;
             
-            foreach (var target in targets)
+            foreach (var target in potentialTargets)
             {
+                if (target == null) continue;
+                
                 float distance = Vector3.Distance(transform.position, target.position);
                 if (distance < closestDistance)
                 {

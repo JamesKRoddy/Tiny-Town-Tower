@@ -33,7 +33,7 @@ namespace Enemies
                     }
                     else
                     {
-                        Debug.LogWarning("Target does not implement IDamageable");
+                        Debug.LogWarning($"Target {navMeshTarget.name} does not implement IDamageable");
                     }
                 }
             }

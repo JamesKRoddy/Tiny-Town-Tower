@@ -1,7 +1,8 @@
-using System;
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
+using System.Collections.Generic;
+using System;
 using Managers;
 
 namespace Enemies
@@ -36,6 +37,9 @@ namespace Enemies
         protected Material flashMaterial;
         protected float flashDuration = 0.5f;
         protected Color flashColor = new Color(1f, 0.1f, 0.1f); // Bright red color for flash
+
+        // Static event for target destruction notifications
+        public static event System.Action<Transform> OnTargetDestroyedEvent;
 
         public float Health
         {
@@ -85,19 +89,31 @@ namespace Enemies
             }
         }
 
-        IEnumerator Start(){
-
-            if(MaxHealth == 0)
-                MaxHealth = 10f;
-
-            Health = MaxHealth;
-
-            yield return new WaitForSeconds(0.5f);
-
-            if(navMeshTarget == null){
-                Debug.LogWarning($"Enemy {gameObject.name} has no target set");
-                navMeshTarget = PlayerController.Instance._possessedNPC.GetTransform();
-            }           
+        protected virtual void Start()
+        {
+            // Subscribe to target destruction events
+            OnTargetDestroyedEvent += OnTargetDestroyed;
+            
+            // Initialize health
+            Health = maxHealth;
+            
+            // Setup NavMeshAgent
+            agent = GetComponent<NavMeshAgent>();
+            if (agent != null)
+            {
+                agent.speed = movementSpeed;
+                agent.angularSpeed = rotationSpeed;
+                agent.stoppingDistance = stoppingDistance;
+            }
+            
+            // Find initial target
+            FindNewTarget();
+        }
+        
+        protected virtual void OnDestroy()
+        {
+            // Unsubscribe from target destruction events
+            OnTargetDestroyedEvent -= OnTargetDestroyed;
         }
 
         protected virtual void SetupRootMotion()
@@ -122,6 +138,14 @@ namespace Enemies
             // Don't do anything if dead or no target
             if (Health <= 0 || navMeshTarget == null)
                 return;
+
+            // Check if current target is still valid
+            if (!IsTargetStillValid(navMeshTarget))
+            {
+                Debug.Log($"{gameObject.name}: Target {navMeshTarget?.name} is no longer valid, finding new target");
+                FindNewTarget();
+                return;
+            }
 
             if (!isAttacking)
             {
@@ -366,6 +390,232 @@ namespace Enemies
             return damage;
         }
 
+        /// <summary>
+        /// Check if the target is still a valid, attackable target
+        /// </summary>
+        private bool IsTargetStillValid(Transform target)
+        {
+            if (target == null) return false;
+            
+            // Check if the GameObject still exists
+            if (target.gameObject == null) return false;
+            
+            // Check if it's still a valid damageable target
+            var damageable = target.GetComponent<IDamageable>();
+            if (damageable == null) return false;
+            
+            // Check if it's still alive/operational
+            if (damageable.Health <= 0) return false;
+            
+            // Special check for walls - they might be destroyed but still have health > 0
+            if (target.GetComponent<WallBuilding>() is WallBuilding wallBuilding)
+            {
+                if (wallBuilding.IsDestroyed || wallBuilding.IsBeingDestroyed) return false;
+            }
+            
+            // Check if it's still friendly (shouldn't change, but just in case)
+            if (damageable.GetAllegiance() != Allegiance.FRIENDLY) return false;
+            
+            return true;
+        }
+
+        /// <summary>
+        /// Find a new target based on game mode
+        /// </summary>
+        private void FindNewTarget()
+        {
+            Transform newTarget = null;
+
+            // Check if GameManager exists
+            if (GameManager.Instance == null)
+            {
+                Debug.LogWarning($"{gameObject.name}: GameManager.Instance is null, cannot determine game mode");
+                return;
+            }
+
+            switch (GameManager.Instance.CurrentGameMode)
+            {
+                case GameMode.ROGUE_LITE:
+                    // In rogue lite, target the possessed NPC
+                    if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null)
+                    {
+                        newTarget = PlayerController.Instance._possessedNPC.GetTransform();
+                    }
+                    break;
+                    
+                case GameMode.CAMP:
+                case GameMode.CAMP_ATTACK:
+                    // In camp, find appropriate camp targets
+                    newTarget = FindCampTarget();
+                    break;
+                    
+                default:
+                    Debug.LogWarning($"No targeting logic for game mode: {GameManager.Instance.CurrentGameMode}");
+                    break;
+            }
+
+            if (newTarget != null)
+            {
+                navMeshTarget = newTarget;
+                Debug.Log($"{gameObject.name}: Found new target {newTarget.name}");
+            }
+            else
+            {
+                // No new target found, clear current target and stop moving
+                navMeshTarget = null;
+                if (agent != null)
+                {
+                    agent.ResetPath();
+                    agent.isStopped = true;
+                }
+                Debug.LogWarning($"{gameObject.name}: No new target found! Staying in place.");
+            }
+        }
+
+        /// <summary>
+        /// Find a camp target with simple prioritization
+        /// </summary>
+        private Transform FindCampTarget()
+        {
+            List<Transform> npcTargets = new List<Transform>();
+            List<Transform> buildingTargets = new List<Transform>();
+            List<Transform> wallTargets = new List<Transform>();
+            
+            // Find all potential targets
+            var allDamageables = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+            foreach (var obj in allDamageables)
+            {
+                if (obj is IDamageable damageable)
+                {
+                    // Only target FRIENDLY entities (NPCs and buildings)
+                    if (damageable.GetAllegiance() == Allegiance.FRIENDLY)
+                    {
+                        Transform targetTransform = obj.transform;
+                        
+                        // Categorize targets
+                        if (obj is HumanCharacterController)
+                        {
+                            // Check if NPC is still alive
+                            if (damageable.Health > 0)
+                            {
+                                npcTargets.Add(targetTransform);
+                            }
+                        }
+                        else if (obj is Building building)
+                        {
+                            if (building.IsOperational())
+                            {
+                                if (building is WallBuilding wallBuilding)
+                                {
+                                    // Double-check that the wall is not destroyed and still exists
+                                    if (!wallBuilding.IsDestroyed && !wallBuilding.IsBeingDestroyed && wallBuilding.gameObject != null)
+                                    {
+                                        wallTargets.Add(targetTransform);
+                                    }
+                                }
+                                else
+                                {
+                                    buildingTargets.Add(targetTransform);
+                                }
+                            }
+                        }
+                        else if (obj.GetType().Name.Contains("Turret"))
+                        {
+                            // Check if turret is still operational
+                            if (damageable.Health > 0)
+                            {
+                                buildingTargets.Add(targetTransform);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Simple priority: NPCs > Buildings > Walls
+            Transform target = FindClosestReachableTarget(npcTargets);
+            if (target != null) 
+            {
+                Debug.Log($"{gameObject.name}: Found NPC target {target.name}");
+                return target;
+            }
+            
+            target = FindClosestReachableTarget(buildingTargets);
+            if (target != null) 
+            {
+                Debug.Log($"{gameObject.name}: Found building target {target.name}");
+                return target;
+            }
+            
+            target = FindClosestReachableTarget(wallTargets);
+            if (target != null) 
+            {
+                Debug.Log($"{gameObject.name}: Found wall target {target.name}");
+                return target;
+            }
+            
+            Debug.LogWarning($"{gameObject.name}: No targets found! NPCs: {npcTargets.Count}, Buildings: {buildingTargets.Count}, Walls: {wallTargets.Count}");
+            return null;
+        }
+
+        private Transform FindClosestReachableTarget(List<Transform> targets)
+        {
+            Transform closestTarget = null;
+            float closestDistance = Mathf.Infinity;
+            
+            foreach (var target in targets)
+            {
+                if (target == null) continue;
+                
+                float distance = Vector3.Distance(transform.position, target.position);
+                if (distance < closestDistance)
+                {
+                    bool isReachable = IsTargetReachable(target.position);
+                    
+                    if (isReachable)
+                    {
+                        closestDistance = distance;
+                        closestTarget = target;
+                    }
+                }
+            }
+            
+            return closestTarget;
+        }
+
+        private bool IsTargetReachable(Vector3 targetPosition)
+        {
+            // First try to pathfind directly to the target
+            NavMeshPath path = new NavMeshPath();
+            bool pathFound = NavMesh.CalculatePath(transform.position, targetPosition, NavMesh.AllAreas, path);
+            
+            if (pathFound && path.status == NavMeshPathStatus.PathComplete)
+            {
+                return true;
+            }
+            
+            // If direct pathfinding fails, try to find a path to a point near the target
+            // This handles cases where the target is on a NavMeshObstacle (like walls)
+            Vector3 directionToTarget = (targetPosition - transform.position).normalized;
+            
+            // Try multiple points at different distances from the target
+            float[] testDistances = { 2f, 3f, 4f, 5f };
+            
+            foreach (float distance in testDistances)
+            {
+                Vector3 nearTargetPosition = targetPosition - directionToTarget * distance;
+                
+                NavMeshPath nearPath = new NavMeshPath();
+                bool nearPathFound = NavMesh.CalculatePath(transform.position, nearTargetPosition, NavMesh.AllAreas, nearPath);
+                
+                if (nearPathFound && nearPath.status == NavMeshPathStatus.PathComplete)
+                {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
         // Animation event function that can be called from the animator
         public void AttackWarning()
         {
@@ -385,6 +635,26 @@ namespace Enemies
             
             // Restore original material
             skinnedMeshRenderer.material = originalMaterial;
+        }
+
+        /// <summary>
+        /// Called when a target is destroyed - immediately find a new target
+        /// </summary>
+        public void OnTargetDestroyed(Transform destroyedTarget)
+        {
+            if (navMeshTarget == destroyedTarget)
+            {
+                Debug.Log($"{gameObject.name}: Target {destroyedTarget?.name} was destroyed, finding new target immediately");
+                FindNewTarget();
+            }
+        }
+        
+        /// <summary>
+        /// Static method to notify all enemies that a target was destroyed
+        /// </summary>
+        public static void NotifyTargetDestroyed(Transform destroyedTarget)
+        {
+            OnTargetDestroyedEvent?.Invoke(destroyedTarget);
         }
     }
 }

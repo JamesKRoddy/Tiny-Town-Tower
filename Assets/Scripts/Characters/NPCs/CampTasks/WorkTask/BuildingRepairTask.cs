@@ -44,7 +44,7 @@ public class BuildingRepairTask : WorkTask
     {
         if (targetBuilding != null)
         {
-            targetBuilding.Repair(healthRestored);
+            targetBuilding.Heal(healthRestored);
             Debug.Log($"Building repair completed! Restored {healthRestored} health");
         }
         

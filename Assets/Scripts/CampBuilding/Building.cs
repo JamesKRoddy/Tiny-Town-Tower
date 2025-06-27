@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using UnityEngine.AI;
 using Managers;
 using System;
+using Enemies;
 
 /// <summary>
 /// A building is a structure that can be built in the camp.
@@ -11,7 +12,7 @@ using System;
 /// 
 [RequireComponent(typeof(BuildingRepairTask))]
 [RequireComponent(typeof(BuildingUpgradeTask))]
-public class Building : MonoBehaviour, IInteractive<Building>
+public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
 {
     [Header("Building Configuration")]
     [SerializeField] BuildingScriptableObj buildingScriptableObj;
@@ -33,6 +34,31 @@ public class Building : MonoBehaviour, IInteractive<Building>
     public event System.Action OnBuildingRepaired;
     public event System.Action OnBuildingUpgraded;
     public event System.Action<float> OnHealthChanged;
+
+    // IDamageable interface implementation
+    public float Health 
+    { 
+        get => currentHealth; 
+        set => currentHealth = Mathf.Clamp(value, 0, MaxHealth); 
+    }
+    
+    private float _maxHealth = 100f;
+    public float MaxHealth
+    {
+        get => buildingScriptableObj != null ? buildingScriptableObj.maxHealth : _maxHealth;
+        set
+        {
+            _maxHealth = value;
+            if (buildingScriptableObj != null)
+                buildingScriptableObj.maxHealth = value;
+        }
+    }
+    
+    public CharacterType CharacterType => CharacterType.NONE; // Buildings don't have a character type
+    
+    public event Action<float, float> OnDamageTaken;
+    public event Action<float, float> OnHeal;
+    public event Action OnDeath;
 
     protected virtual void Start()
     {
@@ -105,22 +131,18 @@ public class Building : MonoBehaviour, IInteractive<Building>
         isOperational = true;
     }
 
-    public virtual void TakeDamage(float damage)
+    public virtual void TakeDamage(float amount, Transform damageSource = null)
     {
-        currentHealth = Mathf.Max(0, currentHealth - damage);
-        OnHealthChanged?.Invoke(currentHealth / buildingScriptableObj.maxHealth);
+        float previousHealth = currentHealth;
+        currentHealth = Mathf.Max(0, currentHealth - amount);
+        
+        OnDamageTaken?.Invoke(amount, currentHealth);
+        OnHealthChanged?.Invoke(currentHealth / MaxHealth);
         
         if (currentHealth <= 0)
         {
-            DestroyBuilding();
+            Die();
         }
-    }
-
-    public virtual void Repair(float repairAmount)
-    {
-        currentHealth = Mathf.Min(buildingScriptableObj.maxHealth, currentHealth + repairAmount);
-        OnHealthChanged?.Invoke(currentHealth / buildingScriptableObj.maxHealth);
-        OnBuildingRepaired?.Invoke();
     }
 
     public virtual void Upgrade(BuildingScriptableObj newBuildingData)
@@ -190,15 +212,20 @@ public class Building : MonoBehaviour, IInteractive<Building>
     protected virtual void DestroyBuilding()
     {
         OnBuildingDestroyed?.Invoke();
-        // The actual destruction is handled by the BuildingDestructionTask
+        
+        // Notify all enemies that this building was destroyed
+        EnemyBase.NotifyTargetDestroyed(transform);
+        
+        // The actual destruction is handled by the BuildingDestructionTask when an NPC is assigned to destroy the building, here is when a zombie destroys the building. Difference is that when an npc destroys the building, the player receives the resources.
+        Destroy(gameObject);
     }
 
     // Getters
     public bool IsOperational() => isOperational;
     public bool IsUnderConstruction() => isUnderConstruction;
-    public float GetHealthPercentage() => currentHealth / buildingScriptableObj.maxHealth;
+    public float GetHealthPercentage() => currentHealth / MaxHealth;
     public float GetCurrentHealth() => currentHealth;
-    public float GetMaxHealth() => buildingScriptableObj.maxHealth;
+    public float GetMaxHealth() => MaxHealth;
     public float GetTaskRadius() => buildingScriptableObj.taskRadius;
 
     /// <summary>
@@ -266,13 +293,32 @@ public class Building : MonoBehaviour, IInteractive<Building>
     internal string GetBuildingStatsText()
     {
         return $"Building Stats:\n" +
-               $"Health: {currentHealth}/{buildingScriptableObj.maxHealth}\n" +
+               $"Health: {currentHealth}/{MaxHealth}\n" +
                $"Repair Time: {buildingScriptableObj.repairTime} seconds\n" +
                $"Upgrade Time: {buildingScriptableObj.upgradeTime} seconds\n" +
                $"Task Radius: {buildingScriptableObj.taskRadius} meters\n" +
-               $"Max Health: {buildingScriptableObj.maxHealth}\n" +
+               $"Max Health: {MaxHealth}\n" +
                $"Health Restored Per Repair: {buildingScriptableObj.healthRestoredPerRepair}\n" +
                $"Upgrade Target: {buildingScriptableObj.upgradeTarget}\n";
     }
+
+    // IDamageable interface methods
+    public virtual void Heal(float amount)
+    {
+        float previousHealth = currentHealth;
+        currentHealth = Mathf.Min(MaxHealth, currentHealth + amount);
+        
+        OnHeal?.Invoke(amount, currentHealth);
+        OnHealthChanged?.Invoke(currentHealth / MaxHealth);
+        OnBuildingRepaired?.Invoke();
+    }
+
+    public void Die()
+    {
+        OnDeath?.Invoke();
+        DestroyBuilding();
+    }
+
+    public Allegiance GetAllegiance() => Allegiance.FRIENDLY; // Buildings are friendly to the player
 }
 
