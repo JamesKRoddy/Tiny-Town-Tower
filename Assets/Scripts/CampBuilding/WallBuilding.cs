@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using Enemies;
+using System.Collections;
 
 /// <summary>
 /// A wall building that provides defensive barriers against zombie attacks.
@@ -100,9 +101,19 @@ public class WallBuilding : Building
         if (obstacle != null)
         {
             obstacle.enabled = false;
+            // Force NavMesh update after a short delay
+            StartCoroutine(UpdateNavMeshAfterDestruction());
         }
         
         Debug.Log($"Wall at {transform.position} has been destroyed!");
+    }
+    
+    private System.Collections.IEnumerator UpdateNavMeshAfterDestruction()
+    {
+        // Wait a few frames to ensure the obstacle is disabled and NavMesh can update
+        yield return new WaitForSeconds(0.1f);
+        
+        Debug.Log($"NavMesh should be updated after wall destruction at {transform.position}");
     }
     
     private void RestoreWall()

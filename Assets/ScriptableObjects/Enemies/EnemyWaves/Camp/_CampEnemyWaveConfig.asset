@@ -17,5 +17,8 @@ MonoBehaviour:
   minWaves: 1
   maxWaves: 5
   minEnemiesPerWave: 1
-  maxEnemiesPerWave: 10
+  maxEnemiesPerWave: 1
   enemyWaveDifficulty: 0
+  campWaveDifficulty: 1
+  waveDuration: 60
+  allowMultipleWaves: 0
