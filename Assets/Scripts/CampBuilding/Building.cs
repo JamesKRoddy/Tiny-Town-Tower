@@ -7,35 +7,43 @@ using System;
 using Enemies;
 
 /// <summary>
-/// A building is a structure that can be built in the camp.
+/// Base class for all buildings in the camp. Handles construction, damage, repair, and upgrade functionality.
 /// </summary>
-/// 
 [RequireComponent(typeof(BuildingRepairTask))]
 [RequireComponent(typeof(BuildingUpgradeTask))]
 public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
 {
+    #region Serialized Fields
+    
     [Header("Building Configuration")]
     [SerializeField] BuildingScriptableObj buildingScriptableObj;
 
-    [Header("Current Work Task")]
-    [SerializeField, ReadOnly] protected WorkTask currentWorkTask;
-    
     [Header("Building State")]
     [SerializeField, ReadOnly] protected bool isOperational = false;
     [SerializeField, ReadOnly] protected bool isUnderConstruction = true;
     [SerializeField, ReadOnly] protected float currentHealth;
 
-    [Header("Repair and Upgrade")]
+    [Header("Work Tasks")]
     [SerializeField, ReadOnly] protected BuildingRepairTask repairTask;
     [SerializeField, ReadOnly] protected BuildingUpgradeTask upgradeTask;
+    [SerializeField, ReadOnly] protected WorkTask currentWorkTask;
 
-    // Events
+    #endregion
+
+    #region Events
+    
     public event System.Action OnBuildingDestroyed;
     public event System.Action OnBuildingRepaired;
     public event System.Action OnBuildingUpgraded;
     public event System.Action<float> OnHealthChanged;
+    public event Action<float, float> OnDamageTaken;
+    public event Action<float, float> OnHeal;
+    public event Action OnDeath;
 
-    // IDamageable interface implementation
+    #endregion
+
+    #region Properties
+    
     public float Health 
     { 
         get => currentHealth; 
@@ -54,28 +62,45 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
         }
     }
     
-    public CharacterType CharacterType => CharacterType.NONE; // Buildings don't have a character type
-    
-    public event Action<float, float> OnDamageTaken;
-    public event Action<float, float> OnHeal;
-    public event Action OnDeath;
+    public CharacterType CharacterType => CharacterType.NONE;
+    public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
+
+    #endregion
+
+    #region Unity Lifecycle
 
     protected virtual void Start()
     {
-
+        // Override in derived classes if needed
     }
+
+    protected virtual void OnDestroy()
+    {
+        // Free up grid slots when building is destroyed
+        if (buildingScriptableObj != null && CampManager.Instance != null)
+        {
+            CampManager.Instance.MarkSharedGridSlotsUnoccupied(transform.position, buildingScriptableObj.size);
+        }
+    }
+
+    #endregion
+
+    #region Building Setup
 
     public virtual void SetupBuilding(BuildingScriptableObj buildingScriptableObj)
     {
         this.buildingScriptableObj = buildingScriptableObj;
         currentHealth = buildingScriptableObj.maxHealth;
 
-        // Setup repair and upgrade tasks
         SetupRepairTask();
         SetupUpgradeTask();
         SetupNavmeshObstacle();
+        SetupCollider();
+    }
 
-        if(GetComponent<Collider>() == null)
+    private void SetupCollider()
+    {
+        if (GetComponent<Collider>() == null)
         {
             gameObject.AddComponent<BoxCollider>();        
         }
@@ -83,7 +108,6 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
 
     private void SetupNavmeshObstacle()
     {
-        // Ensure NavMeshObstacle exists and is configured
         NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
         if (obstacle == null)
         {
@@ -102,7 +126,6 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
         }
         repairTask.transform.position = transform.position;
         
-        // Configure repair task with scriptable object parameters
         repairTask.SetupRepairTask(
             buildingScriptableObj.repairTime,
             buildingScriptableObj.healthRestoredPerRepair
@@ -118,18 +141,37 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
         }
         upgradeTask.transform.position = transform.position;
         
-        // Configure upgrade task with scriptable object parameters
         upgradeTask.SetupUpgradeTask(
             buildingScriptableObj.upgradeTarget,
             buildingScriptableObj.upgradeTime
         );
     }
 
+    #endregion
+
+    #region Building State Management
+
     public virtual void CompleteConstruction()
     {
         isUnderConstruction = false;
         isOperational = true;
     }
+
+    public bool IsOperational() => isOperational;
+    public bool IsUnderConstruction() => isUnderConstruction;
+    public float GetHealthPercentage() => currentHealth / MaxHealth;
+    public float GetCurrentHealth() => currentHealth;
+    public float GetMaxHealth() => MaxHealth;
+    public float GetTaskRadius() => buildingScriptableObj.taskRadius;
+
+    public bool CanInteract()
+    {
+        return !isUnderConstruction && isOperational;
+    }
+
+    #endregion
+
+    #region Damage & Health
 
     public virtual void TakeDamage(float amount, Transform damageSource = null)
     {
@@ -145,16 +187,40 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
         }
     }
 
+    public virtual void Heal(float amount)
+    {
+        float previousHealth = currentHealth;
+        currentHealth = Mathf.Min(MaxHealth, currentHealth + amount);
+        
+        OnHeal?.Invoke(amount, currentHealth);
+        OnHealthChanged?.Invoke(currentHealth / MaxHealth);
+        OnBuildingRepaired?.Invoke();
+    }
+
+    public void Die()
+    {
+        OnDeath?.Invoke();
+        DestroyBuilding();
+    }
+
+    protected virtual void DestroyBuilding()
+    {
+        OnBuildingDestroyed?.Invoke();
+        EnemyBase.NotifyTargetDestroyed(transform);
+        Destroy(gameObject);
+    }
+
+    #endregion
+
+    #region Building Operations
+
     public virtual void Upgrade(BuildingScriptableObj newBuildingData)
     {
-        // Store position and rotation
         Vector3 position = transform.position;
         Quaternion rotation = transform.rotation;
 
-        // Destroy current building
         Destroy(gameObject);
 
-        // Create new building
         GameObject newBuilding = Instantiate(newBuildingData.prefab, position, rotation);
         Building buildingComponent = newBuilding.GetComponent<Building>();
         if (buildingComponent != null)
@@ -168,7 +234,17 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
 
     public virtual void StartDestruction()
     {
-        // Unassign any NPCs working on repair or upgrade tasks
+        UnassignWorkers();
+
+        GameObject destructionPrefab = CampManager.Instance.BuildManager.GetDestructionPrefab(buildingScriptableObj.size);
+        if (destructionPrefab != null)
+        {
+            CreateDestructionTask(destructionPrefab);
+        }
+    }
+
+    private void UnassignWorkers()
+    {
         if (repairTask.IsOccupied)
         {
             repairTask.UnassignNPC();
@@ -177,75 +253,33 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
         {
             upgradeTask.UnassignNPC();
         }
+    }
 
-        // Get the destruction prefab
-        GameObject destructionPrefab = CampManager.Instance.BuildManager.GetDestructionPrefab(buildingScriptableObj.size);
-        if (destructionPrefab != null)
+    private void CreateDestructionTask(GameObject destructionPrefab)
+    {
+        GameObject destructionTaskObj = Instantiate(destructionPrefab, transform.position, transform.rotation);
+        
+        BuildingDestructionTask destructionTask = destructionTaskObj.AddComponent<BuildingDestructionTask>();
+        destructionTask.SetupDestructionTask(this);
+
+        if (CampManager.Instance != null)
         {
-            // Create the destruction task object
-            GameObject destructionTaskObj = Instantiate(destructionPrefab, transform.position, transform.rotation);
-            
-            // Add the destruction task component
-            BuildingDestructionTask destructionTask = destructionTaskObj.AddComponent<BuildingDestructionTask>();
-            destructionTask.SetupDestructionTask(this);
-
-            // Add the destruction task to the work manager
-            if (CampManager.Instance != null)
-            {
-                CampManager.Instance.WorkManager.AddWorkTask(destructionTask);
-            }
-            else
-            {
-                Debug.LogError("CampManager.Instance is null. Cannot add destruction task.");
-            }
-
-            // Destroy the building
-            Destroy(gameObject);
+            CampManager.Instance.WorkManager.AddWorkTask(destructionTask);
         }
-    }
+        else
+        {
+            Debug.LogError("CampManager.Instance is null. Cannot add destruction task.");
+        }
 
-    public BuildingScriptableObj GetBuildingScriptableObj()
-    {
-        return buildingScriptableObj;
-    }
-
-    protected virtual void DestroyBuilding()
-    {
-        OnBuildingDestroyed?.Invoke();
-        
-        // Notify all enemies that this building was destroyed
-        EnemyBase.NotifyTargetDestroyed(transform);
-        
-        // The actual destruction is handled by the BuildingDestructionTask when an NPC is assigned to destroy the building, here is when a zombie destroys the building. Difference is that when an npc destroys the building, the player receives the resources.
         Destroy(gameObject);
     }
 
-    // Getters
-    public bool IsOperational() => isOperational;
-    public bool IsUnderConstruction() => isUnderConstruction;
-    public float GetHealthPercentage() => currentHealth / MaxHealth;
-    public float GetCurrentHealth() => currentHealth;
-    public float GetMaxHealth() => MaxHealth;
-    public float GetTaskRadius() => buildingScriptableObj.taskRadius;
+    #endregion
 
-    /// <summary>
-    /// Checks if a position is within the work area of this building
-    /// </summary>
-    public bool IsInWorkArea(Vector3 position)
-    {
-        return Vector3.Distance(position, transform.position) <= buildingScriptableObj.taskRadius;
-    }
+    #region Work Task Management
 
-    /// <summary>
-    /// Gets the repair task for this building
-    /// </summary>
     public BuildingRepairTask GetRepairTask() => repairTask;
-
-    /// <summary>
-    /// Gets the upgrade task for this building
-    /// </summary>
     public BuildingUpgradeTask GetUpgradeTask() => upgradeTask;
-
     public WorkTask GetCurrentWorkTask() => currentWorkTask;
 
     public void SetCurrentWorkTask(WorkTask workTask)
@@ -253,10 +287,14 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
         currentWorkTask = workTask;
     }
 
-    public bool CanInteract()
+    public bool IsInWorkArea(Vector3 position)
     {
-        return !isUnderConstruction && isOperational;
+        return Vector3.Distance(position, transform.position) <= buildingScriptableObj.taskRadius;
     }
+
+    #endregion
+
+    #region Interaction
 
     public virtual string GetInteractionText()
     {
@@ -281,13 +319,13 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
         return this;
     }
 
-    protected virtual void OnDestroy()
+    #endregion
+
+    #region Utility Methods
+
+    public BuildingScriptableObj GetBuildingScriptableObj()
     {
-        // Free up grid slots when building is destroyed
-        if (buildingScriptableObj != null && CampManager.Instance != null)
-        {
-            CampManager.Instance.MarkSharedGridSlotsUnoccupied(transform.position, buildingScriptableObj.size);
-        }
+        return buildingScriptableObj;
     }
 
     internal string GetBuildingStatsText()
@@ -302,23 +340,6 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
                $"Upgrade Target: {buildingScriptableObj.upgradeTarget}\n";
     }
 
-    // IDamageable interface methods
-    public virtual void Heal(float amount)
-    {
-        float previousHealth = currentHealth;
-        currentHealth = Mathf.Min(MaxHealth, currentHealth + amount);
-        
-        OnHeal?.Invoke(amount, currentHealth);
-        OnHealthChanged?.Invoke(currentHealth / MaxHealth);
-        OnBuildingRepaired?.Invoke();
-    }
-
-    public void Die()
-    {
-        OnDeath?.Invoke();
-        DestroyBuilding();
-    }
-
-    public Allegiance GetAllegiance() => Allegiance.FRIENDLY; // Buildings are friendly to the player
+    #endregion
 }
 
