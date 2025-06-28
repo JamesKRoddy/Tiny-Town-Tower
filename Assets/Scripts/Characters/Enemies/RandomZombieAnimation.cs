@@ -10,12 +10,13 @@ public class RandomZombieAnimation : StateMachineBehaviour
 {
     public AnimatorParamType paramType = AnimatorParamType.INT;
     public string paramName;
-    public int numberOfAnimations;
+    public int minNumber = 0;
+    public int maxNumber = 1;
 
     // OnStateEnter is called when a transition starts and the state machine starts to evaluate this state
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        int randomNumber = Random.Range(0, numberOfAnimations);
+        int randomNumber = Random.Range(minNumber, maxNumber + 1);
 
         switch (paramType)
         {

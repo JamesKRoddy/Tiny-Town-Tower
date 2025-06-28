@@ -80,6 +80,9 @@ namespace Enemies
         private float lastReachabilityCheckTime = 0f;
         private float reachabilityCheckInterval = 1f;
 
+        private float lastTargetSearchTime = 0f;
+        private float targetSearchInterval = 3f; // Check for new targets every 3 seconds
+
         #endregion
 
         #region Unity Lifecycle
@@ -113,6 +116,9 @@ namespace Enemies
             
             // Initialize reachability check
             lastReachabilityCheckTime = Time.time;
+            
+            // Initialize target search timer
+            lastTargetSearchTime = Time.time;
         }
         
         protected virtual void OnDestroy()
@@ -122,9 +128,15 @@ namespace Enemies
 
         protected virtual void Update()
         {
-            // Don't do anything if dead or no target
-            if (Health <= 0 || navMeshTarget == null)
+            // Don't do anything if dead
+            if (Health <= 0) return;
+
+            // If no target, periodically check for new targets
+            if (navMeshTarget == null)
+            {
+                CheckForNewTargetsPeriodically();
                 return;
+            }
 
             // Check if current target is still valid
             if (!IsTargetStillValid(navMeshTarget))
@@ -239,6 +251,9 @@ namespace Enemies
 
         private void UpdateMovement()
         {
+            // Don't update movement if no target
+            if (navMeshTarget == null) return;
+            
             // Update the destination continuously
             agent.SetDestination(navMeshTarget.position);
             
@@ -251,6 +266,8 @@ namespace Enemies
 
         private void UpdateRotation()
         {
+            if (navMeshTarget == null) return;
+            
             if (agent.velocity.magnitude > 0.1f)
             {
                 Vector3 direction = (navMeshTarget.position - transform.position).normalized;
@@ -360,17 +377,26 @@ namespace Enemies
             if (newTarget != null)
             {
                 navMeshTarget = newTarget;
+                animator.SetFloat("WalkType", 1);
                 Debug.Log($"{gameObject.name}: Found new target {newTarget.name}");
             }
             else
             {
+                // No new target found, clear current target and stop moving
                 navMeshTarget = null;
-                if (agent != null)
-                {
-                    agent.ResetPath();
-                    agent.isStopped = true;
-                }
-                Debug.LogWarning($"{gameObject.name}: No new target found! Staying in place.");
+                StopMoving();
+                Debug.LogWarning($"{gameObject.name}: No new target found! Stopping movement.");
+            }
+        }
+
+        private void StopMoving()
+        {
+            if (agent != null)
+            {
+                animator.SetFloat("WalkType", 0);
+                agent.ResetPath();
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
             }
         }
 
@@ -436,6 +462,13 @@ namespace Enemies
             if (damageable.Health <= 0)
             {
                 Debug.Log($"{gameObject.name}: {obj.name} has no health ({damageable.Health}), skipping");
+                return;
+            }
+
+            // Check if the object is still active in the scene
+            if (!obj.gameObject.activeInHierarchy)
+            {
+                Debug.Log($"{gameObject.name}: {obj.name} is not active in hierarchy, skipping");
                 return;
             }
 
@@ -567,6 +600,9 @@ namespace Enemies
             {
                 if (wallBuilding.IsDestroyed || wallBuilding.IsBeingDestroyed) return false;
             }
+            
+            // Check if the target is still active in the scene
+            if (!target.gameObject.activeInHierarchy) return false;
             
             return damageable.GetAllegiance() == Allegiance.FRIENDLY;
         }
@@ -762,6 +798,16 @@ namespace Enemies
         public void SetEnemyDestination(Vector3 navMeshTarget)
         {
             agent.SetDestination(navMeshTarget);
+        }
+
+        private void CheckForNewTargetsPeriodically()
+        {
+            if (Time.time - lastTargetSearchTime > targetSearchInterval)
+            {
+                Debug.Log($"{gameObject.name}: No target, searching for new targets...");
+                FindNewTarget();
+                lastTargetSearchTime = Time.time;
+            }
         }
 
         #endregion
