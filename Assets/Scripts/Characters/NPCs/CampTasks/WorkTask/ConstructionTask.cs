@@ -88,6 +88,12 @@ public class ConstructionTask : WorkTask, IInteractive<object>
         buildingComponent.SetupBuilding(buildingScriptableObj); //Enable all the tasks here
         buildingComponent.CompleteConstruction();
 
+        // Transfer grid slot occupation from construction site to the new building
+        if (CampManager.Instance != null)
+        {
+            CampManager.Instance.MarkSharedGridSlotsOccupied(transform.position, buildingScriptableObj.size, buildingObj);
+        }
+
         Destroy(gameObject);
         isConstructionComplete = true;
         
@@ -119,12 +125,7 @@ public class ConstructionTask : WorkTask, IInteractive<object>
 
     protected override void OnDestroy()
     {
-        // Free up grid slots when construction site is destroyed
-        if (buildingScriptableObj != null && CampManager.Instance != null)
-        {
-            CampManager.Instance.MarkSharedGridSlotsUnoccupied(transform.position, buildingScriptableObj.size);
-        }
-        
+        // Grid slots are now properly transferred in CompleteWork, so we don't need to free them here
         base.OnDestroy();
     }
 }

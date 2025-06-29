@@ -87,6 +87,12 @@ public class TurretConstructionTask : WorkTask, IInteractive<object>
             baseTurret.SetTurretScriptableObject(turretScriptableObj);
         }
 
+        // Transfer grid slot occupation from construction site to the new turret
+        if (CampManager.Instance != null)
+        {
+            CampManager.Instance.MarkSharedGridSlotsOccupied(transform.position, turretScriptableObj.size, turretObj);
+        }
+
         Destroy(gameObject);
         isConstructionComplete = true;
         
@@ -118,12 +124,7 @@ public class TurretConstructionTask : WorkTask, IInteractive<object>
 
     protected override void OnDestroy()
     {
-        // Free up grid slots when construction site is destroyed
-        if (turretScriptableObj != null && CampManager.Instance != null)
-        {
-            CampManager.Instance.MarkSharedGridSlotsUnoccupied(transform.position, turretScriptableObj.size);
-        }
-        
+        // Grid slots are now properly transferred in CompleteWork, so we don't need to free them here
         base.OnDestroy();
     }
 } 
