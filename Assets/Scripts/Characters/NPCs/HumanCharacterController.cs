@@ -463,6 +463,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
         characterInventory.ClearInventory();
 
+        animator.SetBool("Dead", true);
+
         // Play death VFX
         Vector3 deathPoint = transform.position + Vector3.up * 1.5f;
         Vector3 deathNormal = Vector3.up; // Default upward direction for death effects
