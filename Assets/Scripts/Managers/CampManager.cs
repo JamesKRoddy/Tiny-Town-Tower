@@ -233,7 +233,7 @@ namespace Managers
                 for (float z = sharedZBounds.x; z < sharedZBounds.y; z += sharedGridSize)
                 {
                     Vector3 gridPosition = new Vector3(x, 0, z);
-                    sharedGridSlots[gridPosition] = new GridSlot { IsOccupied = false, GridObject = null };
+                    sharedGridSlots[gridPosition] = new GridSlot { IsOccupied = false, FreeGridObject = null, TakenGridObject = null };
                 }
             }
             
@@ -306,17 +306,39 @@ namespace Managers
             GridSlot slot = sharedGridSlots[slotPosition];
             Vector3 displayPosition = new Vector3(slotPosition.x + sharedGridSize / 2, 0, slotPosition.z + sharedGridSize / 2);
             
-            // This method will be called by placers to update visuals
-            // The actual visual update will be handled by the current active placer
-            if (isOccupied)
+            // Actually update the visual grid object
+            UpdateGridSlotVisualObject(slot, displayPosition, isOccupied);
+        }
+
+        private void UpdateGridSlotVisualObject(GridSlot slot, Vector3 displayPosition, bool isOccupied)
+        {
+            // Get the appropriate prefabs
+            GameObject freePrefab = PlacementManager.Instance?.gridPrefab;
+            GameObject takenPrefab = PlacementManager.Instance?.takenGridPrefab;
+            
+            if (freePrefab == null || takenPrefab == null) return;
+
+            // Create free grid object if it doesn't exist
+            if (slot.FreeGridObject == null)
             {
-                // Mark for visual update when grid is next shown
-                slot.NeedsVisualUpdate = true;
+                slot.FreeGridObject = Instantiate(freePrefab, displayPosition, Quaternion.identity, sharedGridParent);
             }
-            else
+            
+            // Create taken grid object if it doesn't exist
+            if (slot.TakenGridObject == null)
             {
-                // Mark for visual update when grid is next shown
-                slot.NeedsVisualUpdate = true;
+                slot.TakenGridObject = Instantiate(takenPrefab, displayPosition, Quaternion.identity, sharedGridParent);
+            }
+            
+            // Enable/disable the correct grid object based on occupation status
+            if (slot.FreeGridObject != null)
+            {
+                slot.FreeGridObject.SetActive(!isOccupied && gridObjectsInitialized);
+            }
+            
+            if (slot.TakenGridObject != null)
+            {
+                slot.TakenGridObject.SetActive(isOccupied && gridObjectsInitialized);
             }
         }
 
@@ -361,10 +383,15 @@ namespace Managers
             // Clear all grid objects from the shared grid
             foreach (var slot in sharedGridSlots.Values)
             {
-                if (slot.GridObject != null)
+                if (slot.FreeGridObject != null)
                 {
-                    DestroyImmediate(slot.GridObject);
-                    slot.GridObject = null;
+                    DestroyImmediate(slot.FreeGridObject);
+                    slot.FreeGridObject = null;
+                }
+                if (slot.TakenGridObject != null)
+                {
+                    DestroyImmediate(slot.TakenGridObject);
+                    slot.TakenGridObject = null;
                 }
             }
             gridObjectsInitialized = false;
@@ -384,46 +411,8 @@ namespace Managers
                 
                 Vector3 displayPosition = new Vector3(gridPosition.x + sharedGridSize / 2, 0, gridPosition.z + sharedGridSize / 2);
                 
-                // Create or update grid object based on occupation status
-                if (slot.IsOccupied && takenGridPrefab != null)
-                {
-                    // Destroy existing grid object if it's not the correct type
-                    if (slot.GridObject != null && slot.GridObject.name != takenGridPrefab.name + "(Clone)")
-                    {
-                        DestroyImmediate(slot.GridObject);
-                        slot.GridObject = null;
-                    }
-                    
-                    // Create taken grid object if it doesn't exist
-                    if (slot.GridObject == null)
-                    {
-                        slot.GridObject = Instantiate(takenGridPrefab, displayPosition, Quaternion.identity, sharedGridParent);
-                    }
-                }
-                else
-                {
-                    // Destroy existing grid object if it's not the correct type
-                    if (slot.GridObject != null && slot.GridObject.name != gridPrefab.name + "(Clone)")
-                    {
-                        DestroyImmediate(slot.GridObject);
-                        slot.GridObject = null;
-                    }
-                    
-                    // Create regular grid object if it doesn't exist
-                    if (slot.GridObject == null)
-                    {
-                        slot.GridObject = Instantiate(gridPrefab, displayPosition, Quaternion.identity, sharedGridParent);
-                    }
-                }
-                
-                // Ensure the grid object is active
-                if (slot.GridObject != null)
-                {
-                    slot.GridObject.SetActive(true);
-                }
-                
-                // Reset visual update flag
-                slot.NeedsVisualUpdate = false;
+                // Use the new visual update method
+                UpdateGridSlotVisualObject(slot, displayPosition, slot.IsOccupied);
             }
             
             gridObjectsInitialized = true;
@@ -436,9 +425,13 @@ namespace Managers
 
             foreach (var slot in sharedGridSlots.Values)
             {
-                if (slot.GridObject != null)
+                if (slot.FreeGridObject != null)
                 {
-                    slot.GridObject.SetActive(true);
+                    slot.FreeGridObject.SetActive(!slot.IsOccupied);
+                }
+                if (slot.TakenGridObject != null)
+                {
+                    slot.TakenGridObject.SetActive(slot.IsOccupied);
                 }
             }
         }
@@ -450,9 +443,13 @@ namespace Managers
 
             foreach (var slot in sharedGridSlots.Values)
             {
-                if (slot.GridObject != null)
+                if (slot.FreeGridObject != null)
                 {
-                    slot.GridObject.SetActive(false);
+                    slot.FreeGridObject.SetActive(false);
+                }
+                if (slot.TakenGridObject != null)
+                {
+                    slot.TakenGridObject.SetActive(false);
                 }
             }
         }

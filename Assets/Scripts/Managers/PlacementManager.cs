@@ -8,8 +8,11 @@ namespace Managers
     {
         public bool IsOccupied { get; set; }
         public GameObject OccupyingObject { get; set; }
-        public GameObject GridObject { get; set; }
-        public bool NeedsVisualUpdate { get; set; } = false;
+        public GameObject FreeGridObject { get; set; }
+        public GameObject TakenGridObject { get; set; }
+        
+        // Helper property to get the currently active grid object
+        public GameObject ActiveGridObject => IsOccupied ? TakenGridObject : FreeGridObject;
     }
 
     public class PlacementManager : MonoBehaviour
