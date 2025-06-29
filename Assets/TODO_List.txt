@@ -44,6 +44,7 @@ Figure out what happens in the camp while youre gone, does progress on stuff fre
 Swap out basic enemy animations for better ones.
 Have to review the enemy nav agent and root motion animation link because it is not good.
 Enemy animator walk types and idle is super janky, specifically around not having targets then finding a new target, need a better way of organizing that.
+Main menu start button is being unselected.
 
 
 

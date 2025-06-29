@@ -956,6 +956,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 7bbd785e8bc86ee428ebb8c9a7126145, type: 2}
   - {fileID: 11400000, guid: e4d284cd3c502834ba8775cf60430499, type: 2}
   - {fileID: 11400000, guid: c840ac2f3395a094ea4caf317d1c34a3, type: 2}
+  - {fileID: 11400000, guid: b07b1e4cd868230488fd0ac28d951247, type: 2}
   turretScriptableObjs:
   - {fileID: 11400000, guid: 391b823efa03ef347a229805acbb73fe, type: 2}
   constructionSiteMappings:

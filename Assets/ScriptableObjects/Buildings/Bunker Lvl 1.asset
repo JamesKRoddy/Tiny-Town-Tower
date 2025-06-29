@@ -17,8 +17,8 @@ MonoBehaviour:
   sprite: {fileID: 0}
   _resourceCost: []
   prefab: {fileID: 4292274262661000938, guid: a18b0e7334201a146b2d7b76cd521052, type: 3}
-  size: {x: 2, y: 3}
-  buildingCategory: 4
+  size: {x: 3, y: 3}
+  buildingCategory: 0
   constructionTime: 1
   maxHealth: 100
   repairTime: 20
