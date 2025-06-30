@@ -1,19 +1,5 @@
 *****Current Work*****
 
-Genetic Mutation Fixes
-
-Tomorrow:
-
-While a mutation is selected pressing b sets selected game object back to mutation button
-Test with differnt shapes
-
-
-Things to do for a demo:
-
-Turret refactor so they are used in the camp to kill zombies:
-
-Setup scene w/ enemy spawn points outside of the camp
-
 Current Testing:
 npcs running to bunkers if avalible, NPCs entering/exiting bunkers
 
@@ -72,6 +58,8 @@ Return to camp selection from roguelike is showing up when npcs die in camp  (mi
 ******Stuff for later******
 
 Have to do some refactoring on the npc animator and what has access to it
+
+Refactoring of managers, specifically the camp manager that yoke is doing a lot of stupid shit around the grid
 
 NPCs have to use toilets, need to figure out timers for when they need it
 
