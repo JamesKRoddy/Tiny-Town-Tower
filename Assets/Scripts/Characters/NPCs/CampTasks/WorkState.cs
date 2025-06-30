@@ -49,7 +49,9 @@ public class WorkState : _TaskState
     private void SetupNavMeshPath()
     {
         Vector3 taskPosition = assignedTask.GetNavMeshDestination().position;
-        agent.stoppingDistance = movementSettings.minDistanceToTask;
+        
+        // Use base class helper for stopping distance
+        agent.stoppingDistance = GetEffectiveStoppingDistance(assignedTask.GetNavMeshDestination(), 0.5f);
         agent.SetDestination(taskPosition);
         agent.speed = MaxSpeed();
         agent.angularSpeed = npc.rotationSpeed;
@@ -100,9 +102,12 @@ public class WorkState : _TaskState
     {
         if (assignedTask == null) return;
 
-        float distanceToTask = Vector3.Distance(transform.position, assignedTask.GetNavMeshDestination().position);
+        Transform taskDestination = assignedTask.GetNavMeshDestination();
+        
+        // Use base class helper for destination reached checking
+        bool hasReachedDestination = HasReachedDestination(taskDestination, 0.5f);
 
-        if (!agent.pathPending && agent.remainingDistance <= movementSettings.minDistanceToTask)
+        if (hasReachedDestination)
         {
             HandleReachedTask();
         }

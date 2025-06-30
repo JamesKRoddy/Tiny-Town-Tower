@@ -58,7 +58,10 @@ public class WanderState : _TaskState
             isWaiting = false;
             agent.speed = MaxSpeed();
             agent.angularSpeed = npc.rotationSpeed / 2f;
-            agent.stoppingDistance = destinationReachedThreshold;
+            
+            // Use base class helper for stopping distance
+            agent.stoppingDistance = GetEffectiveStoppingDistance(null, 0.5f);
+            
             wanderCoroutine = npc.StartCoroutine(WanderCoroutine());
             CampManager.Instance.WorkManager.OnTaskAvailable += WorkAvalible;
             lastPosition = npc.transform.position;
@@ -115,8 +118,10 @@ public class WanderState : _TaskState
                 lastPositionCheckTime = currentTime;
             }
 
-            // Check if we've reached our destination
-            if (!agent.pathPending && agent.remainingDistance <= destinationReachedThreshold)
+            // Check if we've reached our destination using base class helper
+            bool hasReachedDestination = HasReachedDestination(null, 0.5f);
+            
+            if (hasReachedDestination)
             {
                 if (!isWaiting)
                 {

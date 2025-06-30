@@ -44,6 +44,12 @@ public class FleeState : _TaskState
     
     public override void OnExitState()
     {
+        // Unsubscribe from bunker events if we were sheltered
+        if (targetBunker != null)
+        {
+            targetBunker.OnBunkerVacated -= OnBunkerVacated;
+        }
+        
         isFleeing = false;
         isSeekingBunker = false;
         targetBunker = null;
@@ -151,8 +157,10 @@ public class FleeState : _TaskState
     
     private void UpdateFleeBehavior()
     {
-        // Check if we've reached the flee target
-        if (!agent.pathPending && agent.remainingDistance <= 2f)
+        // Use base class helper for destination reached checking
+        bool hasReachedFleeTarget = HasReachedDestination(null, 0.5f);
+        
+        if (hasReachedFleeTarget)
         {
             // We've reached a safe distance, but check if there are still threats nearby
             EnemyBase[] nearbyEnemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
@@ -193,9 +201,8 @@ public class FleeState : _TaskState
                 }
                 else
                 {
-                    // No bunker available, stay at current location but remain in flee state
-                    isFleeing = false;
-                    Debug.Log($"{npc.name} reached safe location, staying alert");
+                    // No bunker available, stay at current safe location
+                    Debug.Log($"{npc.name} reached safe location, staying put");
                 }
             }
         }
@@ -209,18 +216,48 @@ public class FleeState : _TaskState
             return;
         }
         
-        // Check if we've reached the bunker
-        if (!agent.pathPending && agent.remainingDistance <= 2f)
+        // Use base class helper for destination reached checking
+        bool hasReachedBunker = HasReachedDestination(targetBunker.transform, 0.5f);
+        
+        if (hasReachedBunker)
         {
             // Try to enter the bunker
             if (targetBunker.HasSpace)
             {
-                targetBunker.ShelterNPC(npc);
-                Debug.Log($"{npc.name} entered bunker for shelter");
-                
-                // Stay in flee state but don't move
-                isSeekingBunker = false;
-                agent.isStopped = true;
+                bool sheltered = targetBunker.ShelterNPC(npc);
+                if (sheltered)
+                {
+                    Debug.Log($"{npc.name} entered bunker for shelter");
+                    
+                    // Subscribe to bunker events to know when we're evacuated
+                    targetBunker.OnBunkerVacated += OnBunkerVacated;
+                    
+                    // Stay in flee state but don't move - the NPC is now hidden
+                    isSeekingBunker = false;
+                    agent.isStopped = true;
+                    
+                    // The NPC GameObject is now disabled, so they're safe from enemies
+                    // They will remain in this state until the bunker is evacuated or they're manually removed
+                }
+                else
+                {
+                    // Failed to shelter, find another bunker or flee
+                    BunkerBuilding alternativeBunker = FindNearestBunker();
+                    if (alternativeBunker != null && alternativeBunker.HasSpace)
+                    {
+                        targetBunker = alternativeBunker;
+                        agent.SetDestination(alternativeBunker.transform.position);
+                    }
+                    else
+                    {
+                        // No bunkers available, flee to safe location
+                        isSeekingBunker = false;
+                        isFleeing = true;
+                        Vector3 fleeDirection = (npc.transform.position - targetBunker.transform.position).normalized;
+                        fleeTarget = npc.transform.position + fleeDirection * fleeDistance;
+                        agent.SetDestination(fleeTarget);
+                    }
+                }
             }
             else
             {
@@ -274,5 +311,54 @@ public class FleeState : _TaskState
     public override TaskType GetTaskType()
     {
         return TaskType.FLEE;
+    }
+    
+    /// <summary>
+    /// Called when the bunker is evacuated (either manually or when destroyed)
+    /// </summary>
+    /// <param name="bunker">The bunker that was evacuated</param>
+    private void OnBunkerVacated(BunkerBuilding bunker)
+    {
+        if (bunker == targetBunker)
+        {
+            Debug.Log($"{npc.name} was evacuated from bunker, returning to normal behavior");
+            
+            // Unsubscribe from the event
+            targetBunker.OnBunkerVacated -= OnBunkerVacated;
+            
+            // Reset state and return to normal behavior
+            isSeekingBunker = false;
+            isFleeing = false;
+            targetBunker = null;
+            
+            // Check if there are still threats nearby
+            EnemyBase[] nearbyEnemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
+            bool stillThreatened = false;
+            
+            foreach (var enemy in nearbyEnemies)
+            {
+                if (enemy != null)
+                {
+                    float distance = Vector3.Distance(npc.transform.position, enemy.transform.position);
+                    if (distance <= detectionRange)
+                    {
+                        stillThreatened = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (stillThreatened)
+            {
+                // Still threatened, stay in flee state
+                Debug.Log($"{npc.name} still threatened after evacuation, staying in flee state");
+                lastThreatTime = Time.time; // Reset threat timer
+            }
+            else
+            {
+                // No threats, return to normal behavior
+                npc.ChangeTask(TaskType.WANDER);
+            }
+        }
     }
 } 

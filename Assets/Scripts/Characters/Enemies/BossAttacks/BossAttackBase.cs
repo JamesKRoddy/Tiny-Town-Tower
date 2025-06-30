@@ -73,8 +73,22 @@ namespace Enemies.BossAttacks
         public virtual bool CanAttack()
         {
             if (target == null) return false;
+            
+            // Use shared navigation utility for sophisticated distance checking
+            float effectiveDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, target, range, 1f);
             float distance = Vector3.Distance(transform.position, target.position);
-            return distance <= range && Time.time >= lastAttackTime + cooldown;
+            
+            return distance <= effectiveDistance && Time.time >= lastAttackTime + cooldown;
+        }
+
+        /// <summary>
+        /// Calculate the effective attack distance considering NavMesh obstacles and their bounds
+        /// </summary>
+        /// <param name="target">The target transform</param>
+        /// <returns>The effective distance required to attack this target</returns>
+        protected virtual float CalculateEffectiveAttackDistance(Transform target)
+        {
+            return NavigationUtils.CalculateEffectiveReachDistance(transform.position, target, range, 1f);
         }
 
         public virtual void StartAttack()

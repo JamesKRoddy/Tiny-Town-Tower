@@ -23,6 +23,7 @@ namespace Enemies
         [SerializeField] protected float movementSpeed = 3.5f;
         [SerializeField] protected float acceleration = 8f;
         [SerializeField] protected float angularSpeed = 120f;
+        [SerializeField] protected float obstacleBoundsOffset = 1f; // Additional distance to add to obstacle bounds
 
         [Header("Health Settings")]
         [SerializeField] private float health = 100f;
@@ -141,7 +142,6 @@ namespace Enemies
             // Check if current target is still valid
             if (!IsTargetStillValid(navMeshTarget))
             {
-                Debug.Log($"{gameObject.name}: Target {navMeshTarget?.name} is no longer valid, finding new target");
                 FindNewTarget();
                 return;
             }
@@ -254,6 +254,9 @@ namespace Enemies
             // Don't update movement if no target
             if (navMeshTarget == null) return;
             
+            // Calculate effective attack distance considering obstacles using shared utility
+            float effectiveAttackDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, stoppingDistance, obstacleBoundsOffset);
+            
             // Update the destination continuously
             agent.SetDestination(navMeshTarget.position);
             
@@ -288,7 +291,6 @@ namespace Enemies
                 
                 if (distanceMoved < stuckThreshold && agent.velocity.magnitude < 0.1f)
                 {
-                    Debug.Log($"{gameObject.name}: Detected as stuck, attempting to get unstuck");
                     AttemptToGetUnstuck();
                 }
                 
@@ -312,14 +314,12 @@ namespace Enemies
                 {
                     if (testPath.status == NavMeshPathStatus.PathComplete || testPath.status == NavMeshPathStatus.PathPartial)
                     {
-                        Debug.Log($"{gameObject.name}: Found unstuck path to {testPosition}");
                         agent.SetDestination(testPosition);
                         return;
                     }
                 }
             }
             
-            Debug.Log($"{gameObject.name}: No unstuck path found, trying direct movement");
             Vector3 directTarget = navMeshTarget.position + directionToTarget * 2f;
             agent.SetDestination(directTarget);
         }
@@ -333,12 +333,31 @@ namespace Enemies
                     bool isStillReachable = IsTargetReachable(navMeshTarget.position);
                     if (!isStillReachable)
                     {
-                        Debug.Log($"{gameObject.name}: Current target {navMeshTarget.name} is no longer reachable, finding new target");
                         FindNewTarget();
                     }
                 }
                 lastReachabilityCheckTime = Time.time;
             }
+        }
+
+        /// <summary>
+        /// Calculate the effective attack distance considering NavMesh obstacles and their bounds
+        /// </summary>
+        /// <param name="target">The target transform</param>
+        /// <returns>The effective distance required to attack this target</returns>
+        protected virtual float CalculateEffectiveAttackDistance(Transform target)
+        {
+            return NavigationUtils.CalculateEffectiveReachDistance(transform.position, target, stoppingDistance, obstacleBoundsOffset);
+        }
+
+        /// <summary>
+        /// Check if the enemy is close enough to attack the target
+        /// </summary>
+        /// <param name="target">The target to check distance to</param>
+        /// <returns>True if close enough to attack</returns>
+        protected virtual bool IsCloseEnoughToAttack(Transform target)
+        {
+            return NavigationUtils.IsCloseEnoughToReach(transform.position, target, stoppingDistance, obstacleBoundsOffset);
         }
 
         #endregion
@@ -378,7 +397,6 @@ namespace Enemies
             {
                 navMeshTarget = newTarget;
                 animator.SetFloat("WalkType", 1);
-                Debug.Log($"{gameObject.name}: Found new target {newTarget.name}");
             }
             else
             {
@@ -409,11 +427,8 @@ namespace Enemies
             List<Transform> buildingTargets = new List<Transform>();
             List<Transform> wallTargets = new List<Transform>();
             
-            Debug.Log($"{gameObject.name}: Starting FindCampTarget...");
-            
             // Cache the FindObjectsByType result to avoid multiple calls
             var allDamageables = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
-            Debug.Log($"{gameObject.name}: Found {allDamageables.Length} total objects to check");
             
             // Process all damageable objects in a single pass
             foreach (var obj in allDamageables)
@@ -421,33 +436,27 @@ namespace Enemies
                 if (obj is IDamageable damageable && damageable.GetAllegiance() == Allegiance.FRIENDLY)
                 {
                     Transform targetTransform = obj.transform;
-                    Debug.Log($"{gameObject.name}: Found friendly target {obj.name} of type {obj.GetType().Name}");
                     
                     CategorizeTarget(obj, damageable, targetTransform, npcTargets, buildingTargets, wallTargets);
                 }
             }
             
-            Debug.Log($"{gameObject.name}: Categorized targets - NPCs: {npcTargets.Count}, Buildings: {buildingTargets.Count}, Walls: {wallTargets.Count}");
-            
             // Simple priority: NPCs > Buildings > Walls
             Transform target = FindClosestReachableTarget(npcTargets);
             if (target != null) 
             {
-                Debug.Log($"{gameObject.name}: Found NPC target {target.name}");
                 return target;
             }
             
             target = FindClosestReachableTarget(buildingTargets);
             if (target != null) 
             {
-                Debug.Log($"{gameObject.name}: Found building target {target.name}");
                 return target;
             }
             
             target = FindClosestReachableTarget(wallTargets);
             if (target != null) 
             {
-                Debug.Log($"{gameObject.name}: Found wall target {target.name}");
                 return target;
             }
             
@@ -461,21 +470,18 @@ namespace Enemies
             // Check health once at the start - if no health, don't categorize
             if (damageable.Health <= 0)
             {
-                Debug.Log($"{gameObject.name}: {obj.name} has no health ({damageable.Health}), skipping");
                 return;
             }
 
             // Check if the object is still active in the scene
             if (!obj.gameObject.activeInHierarchy)
             {
-                Debug.Log($"{gameObject.name}: {obj.name} is not active in hierarchy, skipping");
                 return;
             }
 
             if (obj is HumanCharacterController)
             {
                 npcTargets.Add(targetTransform);
-                Debug.Log($"{gameObject.name}: Added NPC target {obj.name} with health {damageable.Health}");
             }
             else if (obj is Building building)
             {
@@ -487,102 +493,28 @@ namespace Enemies
                         if (!wallBuilding.IsDestroyed && !wallBuilding.IsBeingDestroyed && wallBuilding.gameObject != null)
                         {
                             wallTargets.Add(targetTransform);
-                            Debug.Log($"{gameObject.name}: Added wall target {obj.name}");
-                        }
-                        else
-                        {
-                            Debug.Log($"{gameObject.name}: Wall {obj.name} is destroyed or being destroyed");
                         }
                     }
                     else
                     {
                         buildingTargets.Add(targetTransform);
-                        Debug.Log($"{gameObject.name}: Added building target {obj.name}");
                     }
-                }
-                else
-                {
-                    Debug.Log($"{gameObject.name}: Building {obj.name} is not operational");
                 }
             }
             else if (obj.GetType().Name.Contains("Turret"))
             {
                 buildingTargets.Add(targetTransform);
-                Debug.Log($"{gameObject.name}: Added turret target {obj.name}");
             }
         }
 
         private Transform FindClosestReachableTarget(List<Transform> targets)
         {
-            Debug.Log($"{gameObject.name}: Checking {targets.Count} potential targets for reachability");
-            
-            foreach (var target in targets)
-            {
-                if (target == null) continue;
-                
-                float distance = Vector3.Distance(transform.position, target.position);
-                Debug.Log($"{gameObject.name}: Checking target {target.name} at distance {distance:F1}");
-                
-                bool isReachable = IsTargetReachable(target.position);
-                Debug.Log($"{gameObject.name}: Target {target.name} reachable: {isReachable}");
-                
-                if (isReachable)
-                {
-                    Debug.Log($"{gameObject.name}: Selected {target.name} as reachable target at distance {distance:F1}");
-                    return target;
-                }
-            }
-            
-            Debug.LogWarning($"{gameObject.name}: No reachable targets found from {targets.Count} potential targets!");
-            return null;
+            return NavigationUtils.FindClosestReachableTarget(transform.position, targets, 5f);
         }
 
         private bool IsTargetReachable(Vector3 targetPosition)
         {
-            Debug.Log($"{gameObject.name}: Checking reachability to position {targetPosition}");
-            
-            // Try direct pathfinding first
-            NavMeshPath path = new NavMeshPath();
-            bool pathFound = NavMesh.CalculatePath(transform.position, targetPosition, NavMesh.AllAreas, path);
-            
-            Debug.Log($"{gameObject.name}: Direct path to target - Found: {pathFound}, Status: {path.status}");
-            
-            if (pathFound && path.status == NavMeshPathStatus.PathComplete)
-            {
-                Debug.Log($"{gameObject.name}: Direct path successful!");
-                return true;
-            }
-            
-            // Try nearby positions if direct path fails
-            Vector3 directionToTarget = (targetPosition - transform.position).normalized;
-            float[] testDistances = { 2f, 3f, 4f, 5f };
-            
-            foreach (float distance in testDistances)
-            {
-                Vector3 nearTargetPosition = targetPosition - directionToTarget * distance;
-                
-                NavMeshPath nearPath = new NavMeshPath();
-                bool nearPathFound = NavMesh.CalculatePath(transform.position, nearTargetPosition, NavMesh.AllAreas, nearPath);
-                
-                Debug.Log($"{gameObject.name}: Near path at {distance}m - Found: {nearPathFound}, Status: {nearPath.status}");
-                
-                if (nearPathFound && nearPath.status == NavMeshPathStatus.PathComplete)
-                {
-                    Debug.Log($"{gameObject.name}: Near path successful at {distance}m!");
-                    return true;
-                }
-            }
-            
-            // Fallback for very close targets
-            float distanceToTarget = Vector3.Distance(transform.position, targetPosition);
-            if (distanceToTarget < 10f)
-            {
-                Debug.Log($"{gameObject.name}: Pathfinding failed, but target is very close ({distanceToTarget:F1}m). Using fallback movement.");
-                return true;
-            }
-            
-            Debug.LogWarning($"{gameObject.name}: No path found to target or nearby positions!");
-            return false;
+            return NavigationUtils.IsTargetReachable(transform.position, targetPosition, 5f);
         }
 
         /// <summary>
@@ -615,7 +547,6 @@ namespace Enemies
         {
             if (navMeshTarget == destroyedTarget)
             {
-                Debug.Log($"{gameObject.name}: Target {destroyedTarget?.name} was destroyed, finding new target after delay");
                 StartCoroutine(FindNewTargetAfterDelay());
             }
         }
@@ -804,9 +735,50 @@ namespace Enemies
         {
             if (Time.time - lastTargetSearchTime > targetSearchInterval)
             {
-                Debug.Log($"{gameObject.name}: No target, searching for new targets...");
                 FindNewTarget();
                 lastTargetSearchTime = Time.time;
+            }
+        }
+
+        #endregion
+
+        #region Debug Visualization
+
+        /// <summary>
+        /// Draw debug gizmos to visualize attack ranges and obstacle bounds
+        /// </summary>
+        protected virtual void OnDrawGizmosSelected()
+        {
+            if (navMeshTarget == null) return;
+
+            // Draw the base stopping distance
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(transform.position, stoppingDistance);
+
+            // Draw the effective attack distance
+            float effectiveDistance = CalculateEffectiveAttackDistance(navMeshTarget);
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(transform.position, effectiveDistance);
+
+            // Draw a line to the target
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(transform.position, navMeshTarget.position);
+
+            // Draw the target's bounds if it has a collider
+            Collider targetCollider = navMeshTarget.GetComponent<Collider>();
+            if (targetCollider != null)
+            {
+                Gizmos.color = Color.green;
+                Gizmos.DrawWireCube(targetCollider.bounds.center, targetCollider.bounds.size);
+            }
+
+            // Draw NavMeshObstacle bounds if present
+            NavMeshObstacle obstacle = navMeshTarget.GetComponent<NavMeshObstacle>();
+            if (obstacle != null)
+            {
+                Gizmos.color = Color.magenta;
+                Vector3 obstacleSize = obstacle.size;
+                Gizmos.DrawWireCube(navMeshTarget.position, obstacleSize);
             }
         }
 

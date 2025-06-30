@@ -2,6 +2,13 @@
 
 Current Testing:
 npcs running to bunkers if avalible, NPCs entering/exiting bunkers
+Try a full wave with turrets killing zombies
+
+First start wave ui
+Wave counter to display time until its over
+Either killing all zombies or time out to end wave
+Have to clear out zombies so almost like a reload but id say just fade out, remove zombies, then fade back in
+Make sure this loops works!
 
 
 
@@ -49,6 +56,7 @@ Pressing B while moving an already place mutation breaks the menu, just dont all
 Construction sites can have npcs manually assigned to them
 When moving the camera around the camp the selection icon can move off into the distance, should also be bound by the building grid
 Return to camp selection from roguelike is showing up when npcs die in camp  (might be only happening when the npc was possessed before it died)
+After a building is constructed the taken grid prefabs are being enabled
 
 
 

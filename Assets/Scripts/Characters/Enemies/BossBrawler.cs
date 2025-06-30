@@ -25,7 +25,11 @@ namespace Enemies
                     if (attack != null && attack.CanAttack())
                     {
                         SetCurrentAttack(attack);
-                        agent.stoppingDistance = attack.range;
+                        
+                        // Use sophisticated distance checking that considers obstacles
+                        float effectiveAttackDistance = CalculateEffectiveAttackDistance(navMeshTarget);
+                        agent.stoppingDistance = Mathf.Max(attack.range, effectiveAttackDistance);
+                        
                         BeginAttackSequence();
                         animator.SetFloat("WalkType", 0);
                         attack.StartAttack();

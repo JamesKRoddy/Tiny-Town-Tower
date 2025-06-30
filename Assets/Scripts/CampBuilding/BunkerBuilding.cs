@@ -13,7 +13,6 @@ public class BunkerBuilding : Building
     [SerializeField] private int maxCapacity = 5;
     [SerializeField] private float durability = 100f;
     [SerializeField] private float maxDurability = 100f;
-    [SerializeField] private Transform[] shelterPoints; // Points where NPCs can shelter inside
     [SerializeField] private bool isOccupied = false;
     [SerializeField] private List<HumanCharacterController> shelteredNPCs = new List<HumanCharacterController>();
 
@@ -36,12 +35,6 @@ public class BunkerBuilding : Building
     protected override void Start()
     {
         base.Start();
-        
-        // Setup shelter points if not assigned
-        if (shelterPoints == null || shelterPoints.Length == 0)
-        {
-            SetupDefaultShelterPoints();
-        }
     }
 
     public override void SetupBuilding(BuildingScriptableObj buildingScriptableObj)
@@ -52,33 +45,6 @@ public class BunkerBuilding : Building
         durability = maxDurability;
     }
 
-    private void SetupDefaultShelterPoints()
-    {
-        // Create default shelter points inside the bunker
-        int defaultPoints = Mathf.Min(maxCapacity, 8); // Max 8 default points
-        shelterPoints = new Transform[defaultPoints];
-        
-        for (int i = 0; i < defaultPoints; i++)
-        {
-            GameObject shelterPoint = new GameObject($"ShelterPoint_{i}");
-            shelterPoint.transform.SetParent(transform);
-            
-            // Arrange points in a grid pattern inside the bunker
-            float spacing = 1.5f;
-            int row = i / 4;
-            int col = i % 4;
-            
-            Vector3 localPosition = new Vector3(
-                (col - 1.5f) * spacing,
-                0,
-                (row - 0.5f) * spacing
-            );
-            
-            shelterPoint.transform.localPosition = localPosition;
-            shelterPoints[i] = shelterPoint.transform;
-        }
-    }
-
     /// <summary>
     /// Attempts to shelter an NPC in the bunker
     /// </summary>
@@ -86,14 +52,8 @@ public class BunkerBuilding : Building
     /// <returns>True if successfully sheltered, false if no space</returns>
     public bool ShelterNPC(HumanCharacterController npc)
     {
+        Debug.Log($"Sheltering NPC {npc.name} in bunker. HasSpace: {HasSpace}, npc: {npc}");
         if (!HasSpace || npc == null)
-        {
-            return false;
-        }
-
-        // Find an available shelter point
-        Transform shelterPoint = GetAvailableShelterPoint();
-        if (shelterPoint == null)
         {
             return false;
         }
@@ -101,8 +61,8 @@ public class BunkerBuilding : Building
         // Add NPC to sheltered list
         shelteredNPCs.Add(npc);
         
-        // Move NPC to shelter point
-        npc.transform.position = shelterPoint.position;
+        // Disable the NPC GameObject to make them invisible and untargetable
+        npc.gameObject.SetActive(false);
         
         // Notify that bunker is occupied
         if (!isOccupied)
@@ -123,6 +83,9 @@ public class BunkerBuilding : Building
     {
         if (shelteredNPCs.Remove(npc))
         {
+            // Re-enable the NPC GameObject when they leave the bunker
+            npc.gameObject.SetActive(true);
+            
             Debug.Log($"NPC {npc.name} removed from bunker. Occupancy: {shelteredNPCs.Count}/{maxCapacity}");
             
             // Check if bunker is now empty
@@ -139,6 +102,15 @@ public class BunkerBuilding : Building
     /// </summary>
     public void EvacuateAll()
     {
+        // Re-enable all NPC GameObjects before clearing the list
+        foreach (var npc in shelteredNPCs)
+        {
+            if (npc != null)
+            {
+                npc.gameObject.SetActive(true);
+            }
+        }
+        
         shelteredNPCs.Clear();
         isOccupied = false;
         OnBunkerVacated?.Invoke(this);
@@ -187,75 +159,7 @@ public class BunkerBuilding : Building
         maxDurability += durabilityIncreasePerUpgrade;
         durability = maxDurability; // Restore full durability on upgrade
         
-        // Add new shelter points if needed
-        if (shelterPoints.Length < maxCapacity)
-        {
-            AddNewShelterPoints();
-        }
-        
         Debug.Log($"Bunker upgraded! New capacity: {maxCapacity}, New durability: {maxDurability}");
-    }
-
-    private void AddNewShelterPoints()
-    {
-        int newPointsNeeded = maxCapacity - shelterPoints.Length;
-        Transform[] newShelterPoints = new Transform[shelterPoints.Length + newPointsNeeded];
-        
-        // Copy existing points
-        for (int i = 0; i < shelterPoints.Length; i++)
-        {
-            newShelterPoints[i] = shelterPoints[i];
-        }
-        
-        // Add new points
-        for (int i = shelterPoints.Length; i < newShelterPoints.Length; i++)
-        {
-            GameObject shelterPoint = new GameObject($"ShelterPoint_{i}");
-            shelterPoint.transform.SetParent(transform);
-            
-            // Arrange new points in a grid pattern
-            float spacing = 1.5f;
-            int row = i / 4;
-            int col = i % 4;
-            
-            Vector3 localPosition = new Vector3(
-                (col - 1.5f) * spacing,
-                0,
-                (row - 0.5f) * spacing
-            );
-            
-            shelterPoint.transform.localPosition = localPosition;
-            newShelterPoints[i] = shelterPoint.transform;
-        }
-        
-        shelterPoints = newShelterPoints;
-    }
-
-    private Transform GetAvailableShelterPoint()
-    {
-        for (int i = 0; i < shelterPoints.Length && i < maxCapacity; i++)
-        {
-            if (shelterPoints[i] != null)
-            {
-                // Check if this point is already occupied
-                bool isOccupied = false;
-                foreach (var npc in shelteredNPCs)
-                {
-                    if (npc != null && Vector3.Distance(npc.transform.position, shelterPoints[i].position) < 0.5f)
-                    {
-                        isOccupied = true;
-                        break;
-                    }
-                }
-                
-                if (!isOccupied)
-                {
-                    return shelterPoints[i];
-                }
-            }
-        }
-        
-        return null;
     }
 
     public override string GetInteractionText()
@@ -271,9 +175,44 @@ public class BunkerBuilding : Building
         if (shelteredNPCs.Count > 0)
         {
             bunkerText += "\n- Evacuate All";
+            
+            // Check if it's safe to evacuate
+            if (IsSafeToEvacuate())
+            {
+                bunkerText += " (Safe)";
+            }
+            else
+            {
+                bunkerText += " (Dangerous)";
+            }
         }
         
         return baseText + bunkerText;
+    }
+
+    /// <summary>
+    /// Checks if it's safe to evacuate NPCs (no enemies nearby)
+    /// </summary>
+    /// <returns>True if safe to evacuate, false if enemies are nearby</returns>
+    public bool IsSafeToEvacuate()
+    {
+        // Check for nearby enemies
+        var enemies = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+        float safeDistance = 15f; // Distance within which enemies are considered a threat
+        
+        foreach (var obj in enemies)
+        {
+            if (obj is Enemies.EnemyBase enemy && enemy != null)
+            {
+                float distance = Vector3.Distance(transform.position, enemy.transform.position);
+                if (distance <= safeDistance)
+                {
+                    return false; // Enemy nearby, not safe to evacuate
+                }
+            }
+        }
+        
+        return true; // No enemies nearby, safe to evacuate
     }
 
     protected override void OnDestroy()

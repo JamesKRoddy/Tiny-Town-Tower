@@ -111,10 +111,11 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
         NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
         if (obstacle == null)
         {
+            Debug.LogWarning($"{gameObject.name}: Adding NavMeshObstacle");
             obstacle = gameObject.AddComponent<NavMeshObstacle>();
-        }
-        obstacle.carving = true;
-        obstacle.size = new Vector3(buildingScriptableObj.size.x, 1.0f, buildingScriptableObj.size.y);
+            obstacle.carving = true;
+            obstacle.size = new Vector3(buildingScriptableObj.size.x, 1.0f, buildingScriptableObj.size.y);
+        }        
     }
 
     private void SetupRepairTask()

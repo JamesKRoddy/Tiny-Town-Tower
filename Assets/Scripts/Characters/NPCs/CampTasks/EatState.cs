@@ -35,7 +35,8 @@ public class EatState : _TaskState
         targetCanteen = FindNearestCanteen();
         if (targetCanteen != null)
         {
-            agent.stoppingDistance = minDistanceToCanteen;
+            // Use base class helper for stopping distance
+            agent.stoppingDistance = GetEffectiveStoppingDistance(targetCanteen.GetFoodStoragePoint(), 0.5f);
             agent.SetDestination(targetCanteen.GetFoodStoragePoint().position);
             agent.speed = MaxSpeed();
             agent.angularSpeed = npc.rotationSpeed;
@@ -83,7 +84,9 @@ public class EatState : _TaskState
             Vector3.Distance(transform.position, targetCanteen.transform.position))
         {
             targetCanteen = canteen;
-            agent.stoppingDistance = minDistanceToCanteen;
+            
+            // Use base class helper for stopping distance
+            agent.stoppingDistance = GetEffectiveStoppingDistance(targetCanteen.GetFoodStoragePoint(), 0.5f);
             agent.SetDestination(targetCanteen.GetFoodStoragePoint().position);
             agent.speed = MaxSpeed();
             agent.angularSpeed = npc.rotationSpeed;
@@ -95,8 +98,10 @@ public class EatState : _TaskState
     {
         if (targetCanteen == null) return;
 
-        // Check if we've reached the canteen
-        if (!agent.pathPending && agent.remainingDistance <= minDistanceToCanteen)
+        // Use base class helper for destination reached checking
+        bool hasReachedCanteen = HasReachedDestination(targetCanteen.GetFoodStoragePoint(), 0.5f);
+        
+        if (hasReachedCanteen)
         {
             if (!isEating && targetCanteen.HasAvailableMeals())
             {
