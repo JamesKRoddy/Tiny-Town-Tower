@@ -216,18 +216,13 @@ public class FleeState : _TaskState
             return;
         }
         
-        // Debug logging to help diagnose the issue
-        float distanceToBunker = Vector3.Distance(npc.transform.position, targetBunker.transform.position);
-        Debug.Log($"{npc.name} seeking bunker - Distance: {distanceToBunker:F2}, HasSpace: {targetBunker.HasSpace}, AgentRemainingDistance: {agent.remainingDistance:F2}");
-        
         // Use a more generous stopping distance for bunkers since they have large NavMeshObstacles
         float bunkerStoppingDistance = 1.0f; // Reduced from 0.5f for bunkers specifically
         bool hasReachedBunker = HasReachedDestination(targetBunker.transform, bunkerStoppingDistance);
         
         // Also check with a simple distance check as fallback
+        float distanceToBunker = Vector3.Distance(npc.transform.position, targetBunker.transform.position);
         bool simpleDistanceCheck = distanceToBunker <= 2f;
-        
-        Debug.Log($"{npc.name} bunker check - HasReachedBunker: {hasReachedBunker}, SimpleDistanceCheck: {simpleDistanceCheck}, Distance: {distanceToBunker:F2}");
         
         if (hasReachedBunker || simpleDistanceCheck)
         {
@@ -253,7 +248,6 @@ public class FleeState : _TaskState
                 }
                 else
                 {
-                    Debug.Log($"{npc.name} failed to shelter in bunker, finding alternative");
                     // Failed to shelter, find another bunker or flee
                     BunkerBuilding alternativeBunker = FindNearestBunker();
                     if (alternativeBunker != null && alternativeBunker.HasSpace)
@@ -274,7 +268,6 @@ public class FleeState : _TaskState
             }
             else
             {
-                Debug.Log($"{npc.name} bunker is full, finding alternative");
                 // Bunker is full, find another one or flee
                 BunkerBuilding alternativeBunker = FindNearestBunker();
                 if (alternativeBunker != null && alternativeBunker.HasSpace)
