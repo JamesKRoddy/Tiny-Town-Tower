@@ -57,6 +57,7 @@ Construction sites can have npcs manually assigned to them
 When moving the camera around the camp the selection icon can move off into the distance, should also be bound by the building grid
 Return to camp selection from roguelike is showing up when npcs die in camp  (might be only happening when the npc was possessed before it died)
 After a building is constructed the taken grid prefabs are being enabled
+NPCs still moving artound when they are dead
 
 
 

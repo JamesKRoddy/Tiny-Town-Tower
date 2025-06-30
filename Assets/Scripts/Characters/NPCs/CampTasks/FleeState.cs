@@ -216,15 +216,27 @@ public class FleeState : _TaskState
             return;
         }
         
-        // Use base class helper for destination reached checking
-        bool hasReachedBunker = HasReachedDestination(targetBunker.transform, 0.5f);
+        // Debug logging to help diagnose the issue
+        float distanceToBunker = Vector3.Distance(npc.transform.position, targetBunker.transform.position);
+        Debug.Log($"{npc.name} seeking bunker - Distance: {distanceToBunker:F2}, HasSpace: {targetBunker.HasSpace}, AgentRemainingDistance: {agent.remainingDistance:F2}");
         
-        if (hasReachedBunker)
+        // Use a more generous stopping distance for bunkers since they have large NavMeshObstacles
+        float bunkerStoppingDistance = 1.0f; // Reduced from 0.5f for bunkers specifically
+        bool hasReachedBunker = HasReachedDestination(targetBunker.transform, bunkerStoppingDistance);
+        
+        // Also check with a simple distance check as fallback
+        bool simpleDistanceCheck = distanceToBunker <= 2f;
+        
+        Debug.Log($"{npc.name} bunker check - HasReachedBunker: {hasReachedBunker}, SimpleDistanceCheck: {simpleDistanceCheck}, Distance: {distanceToBunker:F2}");
+        
+        if (hasReachedBunker || simpleDistanceCheck)
         {
             // Try to enter the bunker
             if (targetBunker.HasSpace)
             {
-                bool sheltered = targetBunker.ShelterNPC(npc);
+                // Cast to HumanCharacterController since SettlerNPC inherits from it
+                HumanCharacterController humanNPC = npc as HumanCharacterController;
+                bool sheltered = targetBunker.ShelterNPC(humanNPC);
                 if (sheltered)
                 {
                     Debug.Log($"{npc.name} entered bunker for shelter");
@@ -241,6 +253,7 @@ public class FleeState : _TaskState
                 }
                 else
                 {
+                    Debug.Log($"{npc.name} failed to shelter in bunker, finding alternative");
                     // Failed to shelter, find another bunker or flee
                     BunkerBuilding alternativeBunker = FindNearestBunker();
                     if (alternativeBunker != null && alternativeBunker.HasSpace)
@@ -261,6 +274,7 @@ public class FleeState : _TaskState
             }
             else
             {
+                Debug.Log($"{npc.name} bunker is full, finding alternative");
                 // Bunker is full, find another one or flee
                 BunkerBuilding alternativeBunker = FindNearestBunker();
                 if (alternativeBunker != null && alternativeBunker.HasSpace)
