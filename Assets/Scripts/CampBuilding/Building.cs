@@ -102,6 +102,7 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
     {
         if (GetComponent<Collider>() == null)
         {
+            Debug.LogWarning($"{gameObject.name}: Adding BoxCollider");
             gameObject.AddComponent<BoxCollider>();        
         }
     }

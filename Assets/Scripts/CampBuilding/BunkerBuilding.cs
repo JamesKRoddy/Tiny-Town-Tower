@@ -5,30 +5,24 @@ using System;
 
 /// <summary>
 /// A bunker building that allows NPCs to shelter inside during zombie attacks.
-/// Provides protection and can be upgraded for increased durability and capacity.
+/// Provides protection and can be upgraded for increased capacity.
 /// </summary>
 public class BunkerBuilding : Building
 {
     [Header("Bunker Settings")]
     [SerializeField] private int maxCapacity = 5;
-    [SerializeField] private float durability = 100f;
-    [SerializeField] private float maxDurability = 100f;
     [SerializeField] private bool isOccupied = false;
     [SerializeField] private List<HumanCharacterController> shelteredNPCs = new List<HumanCharacterController>();
 
     [Header("Upgrade Parameters")]
     [SerializeField] private int capacityIncreasePerUpgrade = 2;
-    [SerializeField] private float durabilityIncreasePerUpgrade = 50f;
 
     // Events
     public event Action<BunkerBuilding> OnBunkerOccupied;
     public event Action<BunkerBuilding> OnBunkerVacated;
-    public event Action<float> OnDurabilityChanged;
 
     public int MaxCapacity => maxCapacity;
     public int CurrentOccupancy => shelteredNPCs.Count;
-    public float Durability => durability;
-    public float MaxDurability => maxDurability;
     public bool IsOccupied => isOccupied;
     public bool HasSpace => shelteredNPCs.Count < maxCapacity;
 
@@ -40,9 +34,6 @@ public class BunkerBuilding : Building
     public override void SetupBuilding(BuildingScriptableObj buildingScriptableObj)
     {
         base.SetupBuilding(buildingScriptableObj);
-        
-        // Initialize bunker-specific properties
-        durability = maxDurability;
     }
 
     /// <summary>
@@ -118,54 +109,32 @@ public class BunkerBuilding : Building
     }
 
     /// <summary>
-    /// Takes damage to the bunker's durability
+    /// Override DestroyBuilding to evacuate NPCs when bunker is destroyed
     /// </summary>
-    /// <param name="damage">Amount of damage to take</param>
-    public void TakeDurabilityDamage(float damage)
+    protected override void DestroyBuilding()
     {
-        float previousDurability = durability;
-        durability = Mathf.Max(0, durability - damage);
+        // Evacuate all NPCs before destroying the bunker
+        EvacuateAll();
+        Debug.LogWarning("Bunker destroyed! All NPCs evacuated.");
         
-        OnDurabilityChanged?.Invoke(durability / maxDurability);
-        
-        if (durability <= 0)
-        {
-            // Bunker is destroyed, evacuate all NPCs
-            EvacuateAll();
-            Debug.LogWarning("Bunker destroyed! All NPCs evacuated.");
-        }
+        // Call base DestroyBuilding method to handle building destruction
+        base.DestroyBuilding();
     }
 
     /// <summary>
-    /// Repairs the bunker's durability
-    /// </summary>
-    /// <param name="repairAmount">Amount of durability to restore</param>
-    public void RepairDurability(float repairAmount)
-    {
-        float previousDurability = durability;
-        durability = Mathf.Min(maxDurability, durability + repairAmount);
-        
-        OnDurabilityChanged?.Invoke(durability / maxDurability);
-        
-        Debug.Log($"Bunker durability repaired: {previousDurability} -> {durability}");
-    }
-
-    /// <summary>
-    /// Upgrades the bunker's capacity and durability
+    /// Upgrades the bunker's capacity
     /// </summary>
     public void UpgradeBunker()
     {
         maxCapacity += capacityIncreasePerUpgrade;
-        maxDurability += durabilityIncreasePerUpgrade;
-        durability = maxDurability; // Restore full durability on upgrade
         
-        Debug.Log($"Bunker upgraded! New capacity: {maxCapacity}, New durability: {maxDurability}");
+        Debug.Log($"Bunker upgraded! New capacity: {maxCapacity}");
     }
 
     public override string GetInteractionText()
     {
         string baseText = base.GetInteractionText();
-        string bunkerText = $"\nBunker Status:\nCapacity: {shelteredNPCs.Count}/{maxCapacity}\nDurability: {durability:F0}/{maxDurability:F0}";
+        string bunkerText = $"\nBunker Status:\nCapacity: {shelteredNPCs.Count}/{maxCapacity}\nHealth: {Health:F0}/{MaxHealth:F0}";
         
         if (HasSpace)
         {
@@ -220,5 +189,16 @@ public class BunkerBuilding : Building
         // Evacuate all NPCs when bunker is destroyed
         EvacuateAll();
         base.OnDestroy();
+    }
+
+    /// <summary>
+    /// Override TakeDamage to add debug logging for bunkers
+    /// </summary>
+    /// <param name="amount">Amount of damage to take</param>
+    /// <param name="damageSource">Source of the damage</param>
+    public override void TakeDamage(float amount, Transform damageSource = null)
+    {
+        // Call base TakeDamage to handle the damage
+        base.TakeDamage(amount, damageSource);
     }
 } 

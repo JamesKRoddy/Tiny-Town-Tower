@@ -14,9 +14,11 @@ namespace Enemies
         {
             if (navMeshTarget == null) return;
 
+            // Use shared navigation utility to calculate effective attack distance
+            float effectiveAttackDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, attackRange, 0.5f);
             float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
 
-            if (distanceToTarget <= attackRange)
+            if (distanceToTarget <= effectiveAttackDistance)
             {
                 // Check if target is in front of us
                 Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
@@ -29,7 +31,6 @@ namespace Enemies
                     if (target != null)
                     {
                         target.TakeDamage(meleeDamage, transform);
-                        Debug.Log($"Target hit by melee attack for {meleeDamage} damage");
                     }
                     else
                     {
