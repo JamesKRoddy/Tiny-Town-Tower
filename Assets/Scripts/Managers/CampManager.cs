@@ -33,10 +33,14 @@ namespace Managers
 
         [Header("Camp Wave Settings")]
         [SerializeField] private float waveEndCheckInterval = 2f;
+        [SerializeField] private float waveLoopDelay = 5f; // Delay between waves
+        [SerializeField] private bool enableWaveLooping = true; // Whether waves should loop automatically
+        [SerializeField] private int maxWavesPerLoop = 3; // Maximum waves before a longer break
 
         // Events
         public event Action OnCampWaveStarted;
         public event Action OnCampWaveEnded;
+        public event Action OnWaveLoopComplete;
 
         // Shared grid system
         private Dictionary<Vector3, GridSlot> sharedGridSlots = new Dictionary<Vector3, GridSlot>();
@@ -46,6 +50,11 @@ namespace Managers
         // Camp wave management
         private List<HumanCharacterController> campNPCs = new List<HumanCharacterController>();
         private float lastWaveEndCheck = 0f;
+        private float waveStartTime = 0f;
+        private float currentWaveDuration = 60f;
+        private int currentWaveNumber = 0;
+        private int wavesCompletedInLoop = 0;
+        private Coroutine waveLoopCoroutine;
 
         // References to other managers
         private ResearchManager researchManager;
@@ -126,7 +135,8 @@ namespace Managers
                     StartCoroutine(TransitionToNextState(EnemySetupState.ENEMIES_SPAWNED, 2.0f));
                     break;
                 case EnemySetupState.ENEMIES_SPAWNED:
-                    // Now we can start checking for wave end
+                    // Start wave timing
+                    StartWaveTiming();
                     break;
                 case EnemySetupState.ALL_WAVES_CLEARED:
                     EndCampWave();
@@ -134,6 +144,24 @@ namespace Managers
                 default:
                     break;
             }
+        }
+        
+        /// <summary>
+        /// Start timing the current wave
+        /// </summary>
+        private void StartWaveTiming()
+        {
+            waveStartTime = Time.time;
+            currentWaveNumber++;
+            
+            // Get wave duration from current wave config
+            var waveConfig = GetWaveConfig(GetCurrentWaveDifficulty());
+            if (waveConfig != null && waveConfig is CampEnemyWaveConfig campConfig)
+            {
+                currentWaveDuration = campConfig.WaveDuration;
+            }
+            
+            Debug.Log($"Wave {currentWaveNumber} started. Duration: {currentWaveDuration}s");
         }
 
         private IEnumerator TransitionToNextState(EnemySetupState nextState, float delay)
@@ -484,6 +512,30 @@ namespace Managers
                 return;
             }
 
+            // Stop any existing wave loop
+            if (waveLoopCoroutine != null)
+            {
+                StopCoroutine(waveLoopCoroutine);
+                waveLoopCoroutine = null;
+            }
+
+            // Start the wave loop
+            if (enableWaveLooping)
+            {
+                waveLoopCoroutine = StartCoroutine(WaveLoop());
+            }
+            else
+            {
+                // Start a single wave
+                StartSingleWave();
+            }
+        }
+        
+        /// <summary>
+        /// Starts a single wave
+        /// </summary>
+        private void StartSingleWave()
+        {
             // Trigger camp wave started event
             OnCampWaveStarted?.Invoke();
             
@@ -535,9 +587,26 @@ namespace Managers
             // Check if there are any active enemies
             var enemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
             
+            // Check if wave should end due to time or enemies cleared
+            bool shouldEndWave = false;
+            string endReason = "";
+            
             if (enemies.Length == 0 && IsWaveActive)
             {
                 // No enemies left, wave is over
+                shouldEndWave = true;
+                endReason = "All enemies defeated";
+            }
+            else if (IsWaveActive && Time.time - waveStartTime >= currentWaveDuration)
+            {
+                // Time's up, wave is over
+                shouldEndWave = true;
+                endReason = "Time expired";
+            }
+            
+            if (shouldEndWave)
+            {
+                Debug.Log($"Wave ending: {endReason}");
                 SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
             }
         }
@@ -557,6 +626,49 @@ namespace Managers
 
             // Return to camp camera movement
             PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_CAMERA_MOVEMENT);
+        }
+        
+        /// <summary>
+        /// Wave loop coroutine that handles continuous waves
+        /// </summary>
+        private IEnumerator WaveLoop()
+        {
+            wavesCompletedInLoop = 0;
+            
+            while (enableWaveLooping && wavesCompletedInLoop < maxWavesPerLoop)
+            {
+                // Start a single wave
+                StartSingleWave();
+                
+                // Wait for wave to complete
+                while (IsWaveActive)
+                {
+                    yield return null;
+                }
+                
+                wavesCompletedInLoop++;
+                Debug.Log($"Wave {wavesCompletedInLoop} completed. Waves in loop: {wavesCompletedInLoop}/{maxWavesPerLoop}");
+                
+                // If we haven't reached max waves, wait before next wave
+                if (wavesCompletedInLoop < maxWavesPerLoop)
+                {
+                    Debug.Log($"Waiting {waveLoopDelay} seconds before next wave...");
+                    yield return new WaitForSeconds(waveLoopDelay);
+                }
+            }
+            
+            // Loop complete
+            Debug.Log("Wave loop completed!");
+            OnWaveLoopComplete?.Invoke();
+            
+            // Optional: Wait longer before starting a new loop
+            yield return new WaitForSeconds(waveLoopDelay * 2);
+            
+            // Start a new loop if still enabled
+            if (enableWaveLooping)
+            {
+                waveLoopCoroutine = StartCoroutine(WaveLoop());
+            }
         }
 
         /// <summary>
@@ -653,6 +765,104 @@ namespace Managers
             }
             
             Debug.Log($"Cleared {enemies.Length} enemies from the scene");
+        }
+        
+        /// <summary>
+        /// Clear all enemies with fade effect
+        /// </summary>
+        public void ClearAllEnemiesWithFade()
+        {
+            StartCoroutine(ClearEnemiesWithFadeCoroutine());
+        }
+        
+        /// <summary>
+        /// Coroutine to clear enemies with fade effect
+        /// </summary>
+        private IEnumerator ClearEnemiesWithFadeCoroutine()
+        {
+            // Find all enemies in the scene
+            EnemyBase[] enemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
+            
+            if (enemies.Length == 0)
+            {
+                yield break;
+            }
+            
+            Debug.Log($"Clearing {enemies.Length} enemies with fade effect");
+            
+            // Fade out enemies
+            float fadeDuration = 1f;
+            float elapsedTime = 0f;
+            
+            // Store original materials
+            Dictionary<EnemyBase, Material> originalMaterials = new Dictionary<EnemyBase, Material>();
+            Dictionary<EnemyBase, SkinnedMeshRenderer> renderers = new Dictionary<EnemyBase, SkinnedMeshRenderer>();
+            
+            // Setup fade materials
+            foreach (var enemy in enemies)
+            {
+                if (enemy != null)
+                {
+                    var renderer = enemy.GetComponent<SkinnedMeshRenderer>();
+                    if (renderer != null)
+                    {
+                        renderers[enemy] = renderer;
+                        originalMaterials[enemy] = renderer.material;
+                        
+                        // Create fade material
+                        Material fadeMaterial = new Material(renderer.material);
+                        fadeMaterial.SetFloat("_Mode", 3); // Transparent mode
+                        fadeMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                        fadeMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                        fadeMaterial.SetInt("_ZWrite", 0);
+                        fadeMaterial.DisableKeyword("_ALPHATEST_ON");
+                        fadeMaterial.EnableKeyword("_ALPHABLEND_ON");
+                        fadeMaterial.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                        fadeMaterial.renderQueue = 3000;
+                        
+                        renderer.material = fadeMaterial;
+                    }
+                }
+            }
+            
+            // Fade out
+            while (elapsedTime < fadeDuration)
+            {
+                elapsedTime += Time.deltaTime;
+                float alpha = Mathf.Lerp(1f, 0f, elapsedTime / fadeDuration);
+                
+                foreach (var kvp in renderers)
+                {
+                    if (kvp.Key != null && kvp.Value != null)
+                    {
+                        Color color = kvp.Value.material.color;
+                        color.a = alpha;
+                        kvp.Value.material.color = color;
+                    }
+                }
+                
+                yield return null;
+            }
+            
+            // Destroy enemies
+            foreach (var enemy in enemies)
+            {
+                if (enemy != null)
+                {
+                    Destroy(enemy.gameObject);
+                }
+            }
+            
+            // Clean up materials
+            foreach (var kvp in originalMaterials)
+            {
+                if (kvp.Value != null)
+                {
+                    DestroyImmediate(kvp.Value);
+                }
+            }
+            
+            Debug.Log("Enemies cleared with fade effect");
         }
 
         /// <summary>

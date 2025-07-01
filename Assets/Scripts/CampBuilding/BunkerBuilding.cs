@@ -14,9 +14,6 @@ public class BunkerBuilding : Building
     [SerializeField] private bool isOccupied = false;
     [SerializeField] private List<HumanCharacterController> shelteredNPCs = new List<HumanCharacterController>();
 
-    [Header("Upgrade Parameters")]
-    [SerializeField] private int capacityIncreasePerUpgrade = 2;
-
     // Events
     public event Action<BunkerBuilding> OnBunkerOccupied;
     public event Action<BunkerBuilding> OnBunkerVacated;
@@ -119,16 +116,6 @@ public class BunkerBuilding : Building
         
         // Call base DestroyBuilding method to handle building destruction
         base.DestroyBuilding();
-    }
-
-    /// <summary>
-    /// Upgrades the bunker's capacity
-    /// </summary>
-    public void UpgradeBunker()
-    {
-        maxCapacity += capacityIncreasePerUpgrade;
-        
-        Debug.Log($"Bunker upgraded! New capacity: {maxCapacity}");
     }
 
     public override string GetInteractionText()

@@ -205,7 +205,17 @@ namespace Managers
             // Check if all enemies have been spawned and all active enemies are killed
             if (enemiesSpawned >= totalEnemiesInWave && activeEnemies.Count == 0)
             {
-                StartNextWave();
+                // For camp mode, we don't automatically start the next wave
+                // The wave will end when all enemies are killed or time expires
+                if (GameManager.Instance.CurrentGameMode == GameMode.CAMP)
+                {
+                    Debug.Log("All enemies defeated in camp wave!");
+                    // The CampManager will handle wave completion through its timer
+                }
+                else
+                {
+                    StartNextWave();
+                }
             }
         }
 

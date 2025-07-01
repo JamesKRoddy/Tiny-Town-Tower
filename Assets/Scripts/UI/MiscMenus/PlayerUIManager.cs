@@ -68,6 +68,7 @@ public class PlayerUIManager : MonoBehaviour
     [Header("Game UI References")]
     public RogueLikeGameUI rogueLikeGameUI;
     public CampUI campUI;
+    public CampWaveUI waveUI;
 
 
     private Coroutine openingMenuCoroutine;
@@ -90,6 +91,7 @@ public class PlayerUIManager : MonoBehaviour
     {
         rogueLikeGameUI.Setup();
         campUI.Setup();
+        waveUI.Setup();
     }
 
     private void Update()
