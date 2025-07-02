@@ -87,6 +87,9 @@ namespace Managers
 
         // Public access to camp wave state
         public bool IsWaveActive => GetEnemySetupState() != EnemySetupState.ALL_WAVES_CLEARED;
+        
+        // Public access to current wave number
+        public int GetCurrentWaveNumber() => currentWaveNumber;
 
         private void Awake()
         {

@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 67240cab150dd3b4580c1e35a3021eeb, type: 3}
-  m_Name: _CampEnemyWaveConfig
+  m_Name: _TestCampEnemyWaveConfig
   m_EditorClassIdentifier: 
   enemyPrefabs:
   - {fileID: 6477775522615659138, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}

@@ -53,7 +53,9 @@ public class DebugMenu: MonoBehaviour
             if (statusText != null)
             {
                 var enemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
+                int currentWave = CampManager.Instance.GetCurrentWaveNumber();
                 string statusInfo = $"Wave Status: {(isWaveActive ? "Active" : "Inactive")}\n";
+                statusInfo += $"Current Wave: {currentWave}\n";
                 statusInfo += $"Enemies: {enemies.Length}\n";
                 
                 // Add wave timer info if available

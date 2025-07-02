@@ -28,6 +28,7 @@ public class CampWaveUI : MonoBehaviour
     [SerializeField] private GameObject waveStatusPanel;
     [SerializeField] private TMP_Text waveStatusText;
     [SerializeField] private TMP_Text enemyCountText;
+    [SerializeField] private TMP_Text waveNumberText;
     
     [Header("Animation Settings")]
     [SerializeField] private float warningDuration = 3f;
@@ -105,6 +106,9 @@ public class CampWaveUI : MonoBehaviour
         {
             maxWaveTime = campConfig.WaveDuration;
         }
+        
+        // Update wave number immediately
+        UpdateWaveNumber();
         
         // Start warning sequence
         StartWarningSequence();
@@ -218,6 +222,7 @@ public class CampWaveUI : MonoBehaviour
             // Update status text
             waveStatusText.text = "Wave Active";
             UpdateEnemyCount();
+            UpdateWaveNumber();
             
             yield return null;
         }
@@ -255,6 +260,16 @@ public class CampWaveUI : MonoBehaviour
         var enemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
         currentEnemyCount = enemies.Length;
         enemyCountText.text = $"Enemies: {currentEnemyCount}";
+    }
+    
+    private void UpdateWaveNumber()
+    {
+        if (waveNumberText != null && CampManager.Instance != null)
+        {
+            // Get current wave number from CampManager
+            int currentWave = CampManager.Instance.GetCurrentWaveNumber();
+            waveNumberText.text = $"Wave: {currentWave}";
+        }
     }
     
 
