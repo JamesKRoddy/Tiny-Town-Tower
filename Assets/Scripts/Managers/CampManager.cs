@@ -678,6 +678,9 @@ namespace Managers
             Debug.Log($"Single wave cycle completed! Total waves: {wavesCompletedInLoop}/{maxWaves}");
             OnWaveLoopComplete?.Invoke();
             
+            // Start the completion sequence: fade out, clear enemies, fade in
+            StartCoroutine(WaveCompletionSequence());
+            
             // Don't start another cycle - this is single cycle mode
             waveLoopCoroutine = null;
         }
@@ -734,6 +737,47 @@ namespace Managers
             waveLoopCoroutine = StartCoroutine(WaveLoop());
         }
 
+        /// <summary>
+        /// Wave completion sequence: fade out, clear enemies, fade in
+        /// </summary>
+        private IEnumerator WaveCompletionSequence()
+        {
+            Debug.Log("Starting wave completion sequence...");
+            
+            // Step 1: Fade out
+            Debug.Log("Fading out...");
+            if (PlayerUIManager.Instance?.transitionMenu != null)
+            {
+                yield return PlayerUIManager.Instance.transitionMenu.FadeIn();
+            }
+            else
+            {
+                // Fallback if no transition menu
+                yield return new WaitForSeconds(1f);
+            }
+            
+            // Step 2: Clear all enemies with fade effect
+            Debug.Log("Clearing enemies...");
+            ClearAllEnemiesWithFade();
+            
+            // Wait for enemy clearing to complete
+            yield return new WaitForSeconds(2f);
+            
+            // Step 3: Fade back in
+            Debug.Log("Fading back in...");
+            if (PlayerUIManager.Instance?.transitionMenu != null)
+            {
+                yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
+            }
+            else
+            {
+                // Fallback if no transition menu
+                yield return new WaitForSeconds(1f);
+            }
+            
+            Debug.Log("Wave completion sequence finished!");
+        }
+        
         /// <summary>
         /// Manually end the camp wave (for debugging)
         /// </summary>
