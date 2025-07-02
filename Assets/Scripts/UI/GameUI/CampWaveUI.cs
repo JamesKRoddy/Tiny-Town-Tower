@@ -266,9 +266,10 @@ public class CampWaveUI : MonoBehaviour
     {
         if (waveNumberText != null && CampManager.Instance != null)
         {
-            // Get current wave number from CampManager
+            // Get current wave number and max waves from CampManager
             int currentWave = CampManager.Instance.GetCurrentWaveNumber();
-            waveNumberText.text = $"Wave: {currentWave}";
+            int maxWaves = CampManager.Instance.GetCurrentMaxWaves();
+            waveNumberText.text = $"Wave: {currentWave}/{maxWaves}";
         }
     }
     

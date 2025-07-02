@@ -1136,6 +1136,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 295496882654345380, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 362492413140139470, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
       propertyPath: quitMenu
       value: 
@@ -1332,6 +1336,10 @@ PrefabInstance:
       propertyPath: _firstSelected
       value: 
       objectReference: {fileID: 329942620}
+    - target: {fileID: 6442438827538434816, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7861345669082175819, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0

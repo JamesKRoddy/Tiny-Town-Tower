@@ -5,15 +5,13 @@ npcs running to bunkers if avalible, NPCs entering/exiting bunkers
 Try a full wave with turrets killing zombies
 
 First start wave ui
-UI overlay to display that an attack is coming
-Wave counter to display time until its over
-Either killing all zombies or time out to end wave
+if there are no buildings or npcs avalible stop the waves
 Have to clear out zombies so almost like a reload but id say just fade out, remove zombies, then fade back in
 Make sure this loops works!
 
-
-Fade stuff move to original one
-Have to enable the camp wave menu when starting waves
+ISSUES:
+Can go past the max number of waves
+Dont hide the UI between waves
 
 
 
@@ -42,7 +40,7 @@ Figure out what happens in the camp while youre gone, does progress on stuff fre
 Swap out basic enemy animations for better ones.
 Have to review the enemy nav agent and root motion animation link because it is not good.
 Enemy animator walk types and idle is super janky, specifically around not having targets then finding a new target, need a better way of organizing that.
-Main menu start button is being unselected.
+
 
 
 
@@ -63,7 +61,8 @@ When moving the camera around the camp the selection icon can move off into the 
 Return to camp selection from roguelike is showing up when npcs die in camp  (might be only happening when the npc was possessed before it died)
 After a building is constructed the taken grid prefabs are being enabled
 NPCs still moving artound when they are dead
-
+Main menu start button is being unselected.
+Possible Issue with the flee state? the npc did just stop fleeing after one time of running away
 
 
 

@@ -54,8 +54,9 @@ public class DebugMenu: MonoBehaviour
             {
                 var enemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
                 int currentWave = CampManager.Instance.GetCurrentWaveNumber();
+                int maxWaves = CampManager.Instance.GetCurrentMaxWaves();
                 string statusInfo = $"Wave Status: {(isWaveActive ? "Active" : "Inactive")}\n";
-                statusInfo += $"Current Wave: {currentWave}\n";
+                statusInfo += $"Current Wave: {currentWave}/{maxWaves}\n";
                 statusInfo += $"Enemies: {enemies.Length}\n";
                 
                 // Add wave timer info if available
@@ -151,6 +152,8 @@ public class DebugMenu: MonoBehaviour
         // TODO: Expose this setting in CampManager
     }
     
+
+    
     private void OnWaveDelayChanged(float value)
     {
         waveDelay = value;
@@ -178,6 +181,8 @@ public class DebugMenu: MonoBehaviour
         
         if (waveLoopToggle != null)
             waveLoopToggle.onValueChanged.RemoveListener(OnWaveLoopToggled);
+        
+
         
         if (waveDelaySlider != null)
             waveDelaySlider.onValueChanged.RemoveListener(OnWaveDelayChanged);

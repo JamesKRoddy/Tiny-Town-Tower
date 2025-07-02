@@ -34,7 +34,6 @@ namespace Managers
         [Header("Camp Wave Settings")]
         [SerializeField] private float waveEndCheckInterval = 2f;
         [SerializeField] private float waveLoopDelay = 5f; // Delay between waves
-        [SerializeField] private bool enableWaveLooping = true; // Whether waves should loop automatically
         [SerializeField] private int maxWavesPerLoop = 3; // Maximum waves before a longer break
 
         // Events
@@ -90,6 +89,15 @@ namespace Managers
         
         // Public access to current wave number
         public int GetCurrentWaveNumber() => currentWaveNumber;
+        
+        // Public access to current wave config max waves
+        public int GetCurrentMaxWaves()
+        {
+            var waveConfig = GetWaveConfig(GetCurrentWaveDifficulty());
+            int maxWaves = waveConfig?.maxWaves ?? maxWavesPerLoop;
+            
+            return maxWaves;
+        }
 
         private void Awake()
         {
@@ -522,16 +530,7 @@ namespace Managers
                 waveLoopCoroutine = null;
             }
 
-            // Start the wave loop
-            if (enableWaveLooping)
-            {
-                waveLoopCoroutine = StartCoroutine(WaveLoop());
-            }
-            else
-            {
-                // Start a single wave
-                StartSingleWave();
-            }
+            waveLoopCoroutine = StartCoroutine(SingleWaveCycle());
         }
         
         /// <summary>
@@ -632,13 +631,28 @@ namespace Managers
         }
         
         /// <summary>
-        /// Wave loop coroutine that handles continuous waves
+        /// Single wave cycle coroutine that runs one complete cycle of waves
         /// </summary>
-        private IEnumerator WaveLoop()
+        private IEnumerator SingleWaveCycle()
         {
             wavesCompletedInLoop = 0;
             
-            while (enableWaveLooping && wavesCompletedInLoop < maxWavesPerLoop)
+            // Get the wave config to determine max waves and multiple waves setting
+            var waveConfig = GetWaveConfig(GetCurrentWaveDifficulty());
+            int maxWaves = maxWavesPerLoop; // Default fallback
+            
+            if (waveConfig != null)
+            {
+                maxWaves = waveConfig.maxWaves;
+            }
+            else
+            {
+                Debug.LogWarning($"No wave config found, using default maxWavesPerLoop: {maxWavesPerLoop}");
+            }
+            
+            Debug.Log($"Starting single wave cycle with {maxWaves} waves");
+            
+            while (wavesCompletedInLoop < maxWaves)
             {
                 // Start a single wave
                 StartSingleWave();
@@ -650,10 +664,61 @@ namespace Managers
                 }
                 
                 wavesCompletedInLoop++;
-                Debug.Log($"Wave {wavesCompletedInLoop} completed. Waves in loop: {wavesCompletedInLoop}/{maxWavesPerLoop}");
+                Debug.Log($"Wave {wavesCompletedInLoop} completed. Waves in cycle: {wavesCompletedInLoop}/{maxWaves}");
                 
                 // If we haven't reached max waves, wait before next wave
-                if (wavesCompletedInLoop < maxWavesPerLoop)
+                if (wavesCompletedInLoop < maxWaves)
+                {
+                    Debug.Log($"Waiting {waveLoopDelay} seconds before next wave...");
+                    yield return new WaitForSeconds(waveLoopDelay);
+                }
+            }
+            
+            // Cycle complete
+            Debug.Log($"Single wave cycle completed! Total waves: {wavesCompletedInLoop}/{maxWaves}");
+            OnWaveLoopComplete?.Invoke();
+            
+            // Don't start another cycle - this is single cycle mode
+            waveLoopCoroutine = null;
+        }
+        
+        /// <summary>
+        /// Wave loop coroutine that handles continuous waves
+        /// </summary>
+        private IEnumerator WaveLoop()
+        {
+            wavesCompletedInLoop = 0;
+            
+            // Get the wave config to determine max waves and multiple waves setting
+            var waveConfig = GetWaveConfig(GetCurrentWaveDifficulty());
+            int maxWaves = maxWavesPerLoop; // Default fallback
+            
+            if (waveConfig != null)
+            {
+                maxWaves = waveConfig.maxWaves;
+                        
+            }
+            else
+            {
+                Debug.LogWarning($"No wave config found, using default maxWavesPerLoop: {maxWavesPerLoop}");
+            }
+            
+            while (wavesCompletedInLoop < maxWaves)
+            {
+                // Start a single wave
+                StartSingleWave();
+                
+                // Wait for wave to complete
+                while (IsWaveActive)
+                {
+                    yield return null;
+                }
+                
+                wavesCompletedInLoop++;
+                Debug.Log($"Wave {wavesCompletedInLoop} completed. Waves in loop: {wavesCompletedInLoop}/{maxWaves}");
+                
+                // If we haven't reached max waves, wait before next wave
+                if (wavesCompletedInLoop < maxWaves)
                 {
                     Debug.Log($"Waiting {waveLoopDelay} seconds before next wave...");
                     yield return new WaitForSeconds(waveLoopDelay);
@@ -661,17 +726,12 @@ namespace Managers
             }
             
             // Loop complete
-            Debug.Log("Wave loop completed!");
+            Debug.Log($"Wave loop completed! Total waves: {wavesCompletedInLoop}/{maxWaves}");
             OnWaveLoopComplete?.Invoke();
             
             // Optional: Wait longer before starting a new loop
             yield return new WaitForSeconds(waveLoopDelay * 2);
-            
-            // Start a new loop if still enabled
-            if (enableWaveLooping)
-            {
-                waveLoopCoroutine = StartCoroutine(WaveLoop());
-            }
+            waveLoopCoroutine = StartCoroutine(WaveLoop());
         }
 
         /// <summary>
