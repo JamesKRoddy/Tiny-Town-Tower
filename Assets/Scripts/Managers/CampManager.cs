@@ -40,6 +40,7 @@ namespace Managers
         public event Action OnCampWaveStarted;
         public event Action OnCampWaveEnded;
         public event Action OnWaveLoopComplete;
+        public event Action OnWaveCycleComplete; // New event for when complete cycle is finished
 
         // Shared grid system
         private Dictionary<Vector3, GridSlot> sharedGridSlots = new Dictionary<Vector3, GridSlot>();
@@ -776,6 +777,9 @@ namespace Managers
             }
             
             Debug.Log("Wave completion sequence finished!");
+            
+            // Trigger wave cycle complete event
+            OnWaveCycleComplete?.Invoke();
         }
         
         /// <summary>

@@ -54,6 +54,7 @@ public class CampWaveUI : MonoBehaviour
         {
             CampManager.Instance.OnCampWaveStarted += OnWaveStarted;
             CampManager.Instance.OnCampWaveEnded += OnWaveEnded;
+            CampManager.Instance.OnWaveCycleComplete += OnWaveCycleComplete;
         }
         
         // Subscribe to game mode changes
@@ -76,6 +77,7 @@ public class CampWaveUI : MonoBehaviour
         {
             CampManager.Instance.OnCampWaveStarted -= OnWaveStarted;
             CampManager.Instance.OnCampWaveEnded -= OnWaveEnded;
+            CampManager.Instance.OnWaveCycleComplete -= OnWaveCycleComplete;
         }
         
         // Unsubscribe from game mode changes
@@ -128,8 +130,34 @@ public class CampWaveUI : MonoBehaviour
             StopCoroutine(timerCoroutine);
         }
         
-        // Hide all panels
+        // Don't hide panels here - they should stay visible between waves
+        // Only update the status to show wave is complete
+        if (waveStatusText != null)
+        {
+            waveStatusText.text = "Wave Complete";
+            waveStatusText.color = Color.green;
+        }
+    }
+    
+    private void OnWaveCycleComplete()
+    {
+        // This is called when the complete wave cycle is finished
+        isWaveActive = false;
+        
+        // Stop any running coroutines
+        if (warningCoroutine != null)
+        {
+            StopCoroutine(warningCoroutine);
+        }
+        if (timerCoroutine != null)
+        {
+            StopCoroutine(timerCoroutine);
+        }
+        
+        // Now hide all panels since the complete cycle is finished
         SetAllPanelsActive(false);
+        
+        Debug.Log("Wave UI hidden - complete cycle finished");
     }
     
     private void StartWarningSequence()
@@ -233,6 +261,13 @@ public class CampWaveUI : MonoBehaviour
             waveStatusText.text = "Time's Up!";
             timerText.text = "Time: 0.0s";
             timerFillImage.color = timerDangerColor;
+        }
+        
+        // Keep the timer panel visible but update status for between-wave period
+        if (waveStatusText != null)
+        {
+            waveStatusText.text = "Wave Complete - Next Wave Starting...";
+            waveStatusText.color = Color.yellow;
         }
     }
     

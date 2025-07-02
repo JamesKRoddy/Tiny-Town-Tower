@@ -6,11 +6,8 @@ Try a full wave with turrets killing zombies
 
 First start wave ui
 if there are no buildings or npcs avalible stop the waves
-Have to clear out zombies so almost like a reload but id say just fade out, remove zombies, then fade back in
-Make sure this loops works!
 
 ISSUES:
-Can go past the max number of waves
 Dont hide the UI between waves
 
 
