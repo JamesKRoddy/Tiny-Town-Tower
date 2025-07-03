@@ -7,7 +7,7 @@ namespace Enemies
     public class Zombie : EnemyBase
     {
         [Header("Attack Settings")]
-        [SerializeField] protected float attackRange = 2f;
+        [SerializeField] protected float attackRange = 2f; // Keep reasonable for NPC vs zombie combat
         [SerializeField] protected float attackCooldown = 1.5f;
         [SerializeField] protected float approachDistance = 3f; // Distance at which to start slowing down
         protected float lastAttackTime;

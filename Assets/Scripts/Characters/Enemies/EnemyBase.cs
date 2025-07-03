@@ -485,20 +485,18 @@ namespace Enemies
             }
             else if (obj is Building building)
             {
-                if (building.IsOperational())
+                // Any building with health is a valid target (regardless of operational status)
+                if (building is WallBuilding wallBuilding)
                 {
-                    if (building is WallBuilding wallBuilding)
+                    // Double-check that the wall is not destroyed and still exists
+                    if (!wallBuilding.IsDestroyed && !wallBuilding.IsBeingDestroyed && wallBuilding.gameObject != null)
                     {
-                        // Double-check that the wall is not destroyed and still exists
-                        if (!wallBuilding.IsDestroyed && !wallBuilding.IsBeingDestroyed && wallBuilding.gameObject != null)
-                        {
-                            wallTargets.Add(targetTransform);
-                        }
+                        wallTargets.Add(targetTransform);
                     }
-                    else
-                    {
-                        buildingTargets.Add(targetTransform);
-                    }
+                }
+                else
+                {
+                    buildingTargets.Add(targetTransform);
                 }
             }
             else if (obj.GetType().Name.Contains("Turret"))

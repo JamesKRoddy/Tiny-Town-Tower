@@ -91,7 +91,7 @@ namespace Enemies
             Building[] buildings = FindObjectsByType<Building>(FindObjectsSortMode.None);
             foreach (var building in buildings)
             {
-                if (building != null && building.IsOperational())
+                if (building != null && building.Health > 0)
                 {
                     potentialTargets.Add(building.transform);
                 }
