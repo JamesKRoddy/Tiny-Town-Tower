@@ -8,6 +8,8 @@ namespace Managers
 {
     public class CampManager : GameModeManager<CampEnemyWaveConfig>
     {
+        #region Singleton Pattern
+        
         private static CampManager _instance;
         public static CampManager Instance
         {
@@ -25,6 +27,10 @@ namespace Managers
             }
         }
 
+        #endregion
+
+        #region Inspector Fields
+
         [Header("Shared Placement Settings")]
         [SerializeField] private Vector2 sharedXBounds = new Vector2(-25f, 25f);
         [SerializeField] private Vector2 sharedZBounds = new Vector2(-25f, 25f);
@@ -33,14 +39,21 @@ namespace Managers
 
         [Header("Camp Wave Settings")]
         [SerializeField] private float waveEndCheckInterval = 2f;
-        [SerializeField] private float waveLoopDelay = 5f; // Delay between waves
-        [SerializeField] private int maxWavesPerLoop = 3; // Maximum waves before a longer break
+        [SerializeField] private float waveLoopDelay = 5f;
+        [SerializeField] private int maxWavesPerLoop = 3;
 
-        // Events
+        #endregion
+
+        #region Events
+
         public event Action OnCampWaveStarted;
         public event Action OnCampWaveEnded;
         public event Action OnWaveLoopComplete;
-        public event Action OnWaveCycleComplete; // New event for when complete cycle is finished
+        public event Action OnWaveCycleComplete;
+
+        #endregion
+
+        #region Private Fields
 
         // Shared grid system
         private Dictionary<Vector3, GridSlot> sharedGridSlots = new Dictionary<Vector3, GridSlot>();
@@ -69,7 +82,11 @@ namespace Managers
         private ElectricityManager electricityManager;
         private FarmingManager farmingManager;
 
-        // Public access to other managers
+        #endregion
+
+        #region Public Properties
+
+        // Manager references
         public ResearchManager ResearchManager => researchManager;
         public CleanlinessManager CleanlinessManager => cleanlinessManager;
         public WorkManager WorkManager => workManager;
@@ -79,96 +96,186 @@ namespace Managers
         public ElectricityManager ElectricityManager => electricityManager;
         public FarmingManager FarmingManager => farmingManager;
 
-        // Public access to shared placement settings
+        // Shared placement settings
         public Vector2 SharedXBounds => sharedXBounds;
         public Vector2 SharedZBounds => sharedZBounds;
         public float SharedGridSize => sharedGridSize;
         public bool ShowSharedGridBounds => showSharedGridBounds;
 
-        // Public access to shared grid
+        // Shared grid
         public Dictionary<Vector3, GridSlot> SharedGridSlots => sharedGridSlots;
 
-        // Public access to camp wave state
+        // Wave state
         public bool IsWaveActive => GetEnemySetupState() != EnemySetupState.ALL_WAVES_CLEARED;
-        
-        // Public access to current wave number
         public int GetCurrentWaveNumber() => currentWaveNumber;
         
-        // Public access to current wave config max waves
         public int GetCurrentMaxWaves()
         {
             var waveConfig = GetWaveConfig(GetCurrentWaveDifficulty());
-            int maxWaves = waveConfig?.maxWaves ?? maxWavesPerLoop;
-            
-            return maxWaves;
+            return waveConfig?.maxWaves ?? maxWavesPerLoop;
         }
+
+        #endregion
+
+        #region Unity Lifecycle
+
+        private void Awake()
+        {
+            if (_instance != null && _instance != this)
+            {
+                Destroy(gameObject);
+            }
+            else
+            {
+                _instance = this;
+                InitializeManagers();
+                InitializeSharedGrid();
+            }
+        }
+
+        protected override void Start()
+        {
+            base.Start();
+            SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+            
+            FindCampNPCs();
+            PopulateTargetCache();
+        }
+
+        private void Update()
+        {
+            if (GetEnemySetupState() == EnemySetupState.ENEMIES_SPAWNED && 
+                Time.time - lastWaveEndCheck >= waveEndCheckInterval)
+            {
+                lastWaveEndCheck = Time.time;
+                CheckForWaveEnd();
+            }
+            
+            // Periodic cleanup of target cache (every 10 seconds)
+            if (Time.frameCount % 600 == 0)
+            {
+                CleanupTargetCache();
+            }
+        }
+
+        private void OnDrawGizmos()
+        {
+            if (showSharedGridBounds)
+            {
+                Gizmos.color = Color.yellow;
+                Vector3 bottomLeft = new Vector3(sharedXBounds.x, 0, sharedZBounds.x);
+                Vector3 bottomRight = new Vector3(sharedXBounds.y, 0, sharedZBounds.x);
+                Vector3 topLeft = new Vector3(sharedXBounds.x, 0, sharedZBounds.y);
+                Vector3 topRight = new Vector3(sharedXBounds.y, 0, sharedZBounds.y);
+
+                Gizmos.DrawLine(bottomLeft, bottomRight);
+                Gizmos.DrawLine(bottomRight, topRight);
+                Gizmos.DrawLine(topRight, topLeft);
+                Gizmos.DrawLine(topLeft, bottomLeft);
+            }
+        }
+
+        #endregion
+
+        #region Initialization
+
+        private void InitializeManagers()
+        {
+            // Create shared grid parent
+            GameObject gridParentObj = new GameObject("SharedGridParent");
+            gridParentObj.transform.SetParent(transform);
+            sharedGridParent = gridParentObj.transform;
+
+            // Find and cache references to other managers
+            FindManagerReferences();
+            LogMissingManagers();
+            InitializeAllManagers();
+        }
+
+        private void FindManagerReferences()
+        {
+            researchManager = GetComponentInChildren<ResearchManager>();
+            cleanlinessManager = GetComponentInChildren<CleanlinessManager>();
+            cookingManager = GetComponentInChildren<CookingManager>();
+            resourceUpgradeManager = GetComponentInChildren<ResourceUpgradeManager>();
+            workManager = GetComponentInChildren<WorkManager>();
+            buildManager = GetComponentInChildren<BuildManager>();
+            electricityManager = GetComponentInChildren<ElectricityManager>();
+            farmingManager = GetComponentInChildren<FarmingManager>();
+        }
+
+        private void LogMissingManagers()
+        {
+            if (researchManager == null) Debug.LogWarning("ResearchManager not found in scene!");
+            if (cleanlinessManager == null) Debug.LogWarning("CleanlinessManager not found in scene!");
+            if (cookingManager == null) Debug.LogWarning("CookingManager not found in scene!");
+            if (resourceUpgradeManager == null) Debug.LogWarning("ResourceUpgradeManager not found in scene!");
+            if (workManager == null) Debug.LogWarning("WorkManager not found in scene!");
+            if (buildManager == null) Debug.LogWarning("BuildManager not found in scene!");
+            if (electricityManager == null) Debug.LogWarning("ElectricityManager not found in scene!");
+            if (farmingManager == null) Debug.LogWarning("FarmingManager not found in scene!");
+        }
+
+        private void InitializeAllManagers()
+        {
+            researchManager?.Initialize();
+            cookingManager?.Initialize();
+            resourceUpgradeManager?.Initialize();
+            electricityManager?.Initialize();
+            cleanlinessManager?.Initialize();
+            farmingManager?.Initialize();
+        }
+
+        private void InitializeSharedGrid()
+        {
+            sharedGridSlots.Clear();
+            
+            for (float x = sharedXBounds.x; x < sharedXBounds.y; x += sharedGridSize)
+            {
+                for (float z = sharedZBounds.x; z < sharedZBounds.y; z += sharedGridSize)
+                {
+                    Vector3 gridPosition = new Vector3(x, 0, z);
+                    sharedGridSlots[gridPosition] = new GridSlot { IsOccupied = false, FreeGridObject = null, TakenGridObject = null };
+                }
+            }
+            
+            Debug.Log($"Initialized shared grid with {sharedGridSlots.Count} slots");
+        }
+
+        #endregion
+
+        #region Target Management
 
         /// <summary>
         /// Check if there are any available buildings or NPCs for enemies to target
         /// </summary>
-        /// <returns>True if there are available targets, false if none</returns>
         public bool AreTargetsAvailable()
         {
             foreach (var target in cachedTargets)
             {
-                if (target == null) continue;
+                if (target == null || target.Health <= 0) continue;
                 
-                // Check if target is alive (has health > 0)
-                if (target.Health <= 0) continue;
-                
-                // Check for buildings - any building with health is a valid target
-                if (target is Building)
+                if (target is Building || target is BaseTurret)
                 {
-                    return true; // Found at least one building with health
+                    return true;
                 }
-                // Check for turrets - just need to be alive
-                else if (target is BaseTurret)
-                {
-                    return true; // Found at least one turret
-                }
-                // Check for NPCs - exclude the player if they're possessed
                 else if (target is HumanCharacterController npc)
                 {
                     if (npc != PlayerController.Instance._possessedNPC)
                     {
-                        return true; // Found at least one available NPC
+                        return true;
                     }
                 }
             }
             
-            // No targets available
             return false;
         }
-
-        /// <summary>
-        /// Force end all waves when no targets are available
-        /// </summary>
-        public void ForceEndWavesNoTargets()
-        {
-            Debug.Log("No buildings or NPCs available - forcing wave end!");
-            
-            // Stop any ongoing wave loop
-            if (waveLoopCoroutine != null)
-            {
-                StopCoroutine(waveLoopCoroutine);
-                waveLoopCoroutine = null;
-            }
-            
-            // Set wave state to cleared to stop current wave
-            SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
-            
-            // Start the completion sequence: fade out, clear enemies, fade in
-            StartCoroutine(WaveCompletionSequence());
-        }
-
-        #region Target Cache Management
 
         /// <summary>
         /// Populate the initial target cache with all existing objects
         /// </summary>
         private void PopulateTargetCache()
         {
-            // Clear existing cache
             cachedTargets.Clear();
 
             // Find all buildings
@@ -232,22 +339,16 @@ namespace Managers
         /// </summary>
         private void OnTargetDied()
         {
-            // Only check during active waves
-            if (GetEnemySetupState() == EnemySetupState.ENEMIES_SPAWNED)
+            if (GetEnemySetupState() == EnemySetupState.ENEMIES_SPAWNED && !AreTargetsAvailable())
             {
-                if (!AreTargetsAvailable())
-                {
-                    Debug.Log("No targets remaining - ending wave!");
-                    ForceEndWavesNoTargets();
-                }
+                Debug.Log("No targets remaining - ending wave!");
+                ForceEndWavesNoTargets();
             }
         }
 
         /// <summary>
         /// Public method for enemies to check if they can find targets
-        /// If no targets are available, this will end the wave
         /// </summary>
-        /// <returns>True if targets are available, false if wave should end</returns>
         public bool CheckTargetsForEnemies()
         {
             if (!AreTargetsAvailable())
@@ -261,441 +362,7 @@ namespace Managers
 
         #endregion
 
-        private void Awake()
-        {
-            if (_instance != null && _instance != this)
-            {
-                Destroy(gameObject);
-            }
-            else
-            {
-                _instance = this;
-                InitializeManagers();
-                InitializeSharedGrid();
-            }
-        }
-
-        protected override void Start()
-        {
-            base.Start();
-            SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
-            
-            // Find all NPCs in the camp
-            FindCampNPCs();
-            
-            // Populate initial target cache
-            PopulateTargetCache();
-        }
-
-        protected override void EnemySetupStateChanged(EnemySetupState newState)
-        {
-            Debug.Log($"<color=green>Camp EnemySetupStateChanged: {newState}</color>");
-
-            switch (newState)
-            {
-                case EnemySetupState.NONE:
-                    break;
-                case EnemySetupState.WAVE_START:
-                    EnemySpawnManager.Instance.ResetWaveCount();
-                    // Move to next state after a short delay
-                    StartCoroutine(TransitionToNextState(EnemySetupState.PRE_ENEMY_SPAWNING, 0.5f));
-                    break;
-                case EnemySetupState.PRE_ENEMY_SPAWNING:
-                    SetupCampForWave();
-                    // Move to spawn state after setup
-                    StartCoroutine(TransitionToNextState(EnemySetupState.ENEMY_SPAWN_START, 1.0f));
-                    break;
-                case EnemySetupState.ENEMY_SPAWN_START:
-                    // Check if there are any available targets before spawning enemies
-                    if (!AreTargetsAvailable())
-                    {
-                        Debug.Log("No buildings or NPCs available - skipping enemy spawning!");
-                        SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
-                        return;
-                    }
-                    StartCampEnemyWave();
-                    // Move to spawned state after spawning
-                    StartCoroutine(TransitionToNextState(EnemySetupState.ENEMIES_SPAWNED, 2.0f));
-                    break;
-                case EnemySetupState.ENEMIES_SPAWNED:
-                    // Check if there are any available targets before starting wave timing
-                    if (!AreTargetsAvailable())
-                    {
-                        Debug.Log("No buildings or NPCs available - ending wave immediately!");
-                        SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
-                        return;
-                    }
-                    // Start wave timing
-                    StartWaveTiming();
-                    break;
-                case EnemySetupState.ALL_WAVES_CLEARED:
-                    EndCampWave();
-                    break;
-                default:
-                    break;
-            }
-        }
-        
-        /// <summary>
-        /// Start timing the current wave
-        /// </summary>
-        private void StartWaveTiming()
-        {
-            waveStartTime = Time.time;
-            currentWaveNumber++;
-            
-            // Get wave duration from current wave config
-            var waveConfig = GetWaveConfig(GetCurrentWaveDifficulty());
-            if (waveConfig != null && waveConfig is CampEnemyWaveConfig campConfig)
-            {
-                currentWaveDuration = campConfig.WaveDuration;
-            }
-            
-            Debug.Log($"Wave {currentWaveNumber} started. Duration: {currentWaveDuration}s");
-        }
-
-        private IEnumerator TransitionToNextState(EnemySetupState nextState, float delay)
-        {
-            yield return new WaitForSeconds(delay);
-            SetEnemySetupState(nextState);
-        }
-
-        public override int GetCurrentWaveDifficulty()
-        {
-            // For camp waves, we can use a simple difficulty system
-            // Could be based on camp level, number of buildings, etc.
-            return 1; // Base difficulty for now
-        }
-
-        private void SetupCampForWave()
-        {
-            // Unpossess any currently possessed NPC
-            if (PlayerController.Instance._possessedNPC != null)
-            {
-                PlayerController.Instance.PossessNPC(null);
-            }
-            
-            // Make all NPCs flee
-            MakeNPCsFlee();
-        }
-
-        private void StartCampEnemyWave()
-        {
-            // Get the wave config for current difficulty
-            var waveConfig = GetWaveConfig(GetCurrentWaveDifficulty());
-            if (waveConfig != null)
-            {
-                Debug.Log($"Starting camp wave with config: {waveConfig.name}, Difficulty: {GetCurrentWaveDifficulty()}");
-                EnemySpawnManager.Instance.StartSpawningEnemies(waveConfig);
-            }
-            else
-            {
-                Debug.LogWarning($"No wave config found for camp wave difficulty {GetCurrentWaveDifficulty()}! Make sure to assign CampEnemyWaveConfig in the inspector.");
-                // Don't immediately end the wave - let it continue with no enemies for testing
-                Debug.Log("Continuing wave without enemies for testing purposes");
-            }
-        }
-
-        private void Update()
-        {
-            // Only check for wave end when we're in the ENEMIES_SPAWNED state
-            if (GetEnemySetupState() == EnemySetupState.ENEMIES_SPAWNED && 
-                Time.time - lastWaveEndCheck >= waveEndCheckInterval)
-            {
-                lastWaveEndCheck = Time.time;
-                CheckForWaveEnd();
-            }
-            
-            // Periodic cleanup of target cache (every 10 seconds)
-            if (Time.frameCount % 600 == 0) // Assuming 60 FPS, this runs every 10 seconds
-            {
-                CleanupTargetCache();
-            }
-        }
-
-        private void InitializeManagers()
-        {
-            // Create shared grid parent
-            GameObject gridParentObj = new GameObject("SharedGridParent");
-            gridParentObj.transform.SetParent(transform);
-            sharedGridParent = gridParentObj.transform;
-
-            // Find and cache references to other managers
-            if (researchManager == null) researchManager = gameObject.GetComponentInChildren<ResearchManager>();
-            if (cleanlinessManager == null) cleanlinessManager = gameObject.GetComponentInChildren<CleanlinessManager>();
-            if (cookingManager == null) cookingManager = gameObject.GetComponentInChildren<CookingManager>();
-            if (resourceUpgradeManager == null) resourceUpgradeManager = gameObject.GetComponentInChildren<ResourceUpgradeManager>();
-            if (workManager == null) workManager = gameObject.GetComponentInChildren<WorkManager>();
-            if (buildManager == null) buildManager = gameObject.GetComponentInChildren<BuildManager>();
-            if (electricityManager == null) electricityManager = gameObject.GetComponentInChildren<ElectricityManager>();
-            if (farmingManager == null) farmingManager = gameObject.GetComponentInChildren<FarmingManager>();
-            // Log warnings for any missing managers
-            if (researchManager == null) Debug.LogWarning("ResearchManager not found in scene!");
-            if (cleanlinessManager == null) Debug.LogWarning("CleanlinessManager not found in scene!");
-            if (cookingManager == null) Debug.LogWarning("CookingManager not found in scene!");
-            if (resourceUpgradeManager == null) Debug.LogWarning("ResourceUpgradeManager not found in scene!");
-            if (workManager == null) Debug.LogWarning("WorkManager not found in scene!");
-            if (buildManager == null) Debug.LogWarning("BuildManager not found in scene!");
-            if (electricityManager == null) Debug.LogWarning("ElectricityManager not found in scene!");
-            if (farmingManager == null) Debug.LogWarning("FarmingManager not found in scene!");
-            // Initialize managers
-            if (researchManager != null) researchManager.Initialize();
-            if (cookingManager != null) cookingManager.Initialize();
-            if (resourceUpgradeManager != null) resourceUpgradeManager.Initialize();
-            if (electricityManager != null) electricityManager.Initialize();
-            if (cleanlinessManager != null) cleanlinessManager.Initialize();
-            if (farmingManager != null) farmingManager.Initialize();
-        }
-
-        private void InitializeSharedGrid()
-        {
-            // Initialize the shared grid slots
-            sharedGridSlots.Clear();
-            
-            for (float x = sharedXBounds.x; x < sharedXBounds.y; x += sharedGridSize)
-            {
-                for (float z = sharedZBounds.x; z < sharedZBounds.y; z += sharedGridSize)
-                {
-                    Vector3 gridPosition = new Vector3(x, 0, z);
-                    sharedGridSlots[gridPosition] = new GridSlot { IsOccupied = false, FreeGridObject = null, TakenGridObject = null };
-                }
-            }
-            
-            Debug.Log($"Initialized shared grid with {sharedGridSlots.Count} slots");
-        }
-
-        // Shared grid methods that placers can use
-        public bool AreSharedGridSlotsAvailable(Vector3 position, Vector2Int size)
-        {
-            List<Vector3> requiredSlots = GetRequiredSharedGridSlots(position, size);
-
-            foreach (var slot in requiredSlots)
-            {
-                if (sharedGridSlots.ContainsKey(slot) && sharedGridSlots[slot].IsOccupied)
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        public void MarkSharedGridSlotsOccupied(Vector3 position, Vector2Int size, GameObject placedObject)
-        {
-            List<Vector3> requiredSlots = GetRequiredSharedGridSlots(position, size);
-
-            foreach (var slot in requiredSlots)
-            {
-                if (sharedGridSlots.ContainsKey(slot))
-                {
-                    if (sharedGridSlots[slot].IsOccupied)
-                    {
-                        Debug.LogWarning($"Shared grid slot at {slot} is already occupied by {sharedGridSlots[slot].OccupyingObject.name}!");
-                        continue; // Skip marking if already occupied
-                    }
-
-                    sharedGridSlots[slot].IsOccupied = true;
-                    sharedGridSlots[slot].OccupyingObject = placedObject;
-                    
-                    // Update the visual representation
-                    UpdateGridSlotVisual(slot, true);
-                }
-                else
-                {
-                    Debug.LogError($"Shared grid slot at {slot} does not exist in the dictionary!");
-                }
-            }
-        }
-
-        public void MarkSharedGridSlotsUnoccupied(Vector3 position, Vector2Int size)
-        {
-            List<Vector3> requiredSlots = GetRequiredSharedGridSlots(position, size);
-
-            foreach (var slot in requiredSlots)
-            {
-                if (sharedGridSlots.ContainsKey(slot))
-                {
-                    sharedGridSlots[slot].IsOccupied = false;
-                    sharedGridSlots[slot].OccupyingObject = null;
-                    
-                    // Update the visual representation
-                    UpdateGridSlotVisual(slot, false);
-                }
-            }
-        }
-
-        private void UpdateGridSlotVisual(Vector3 slotPosition, bool isOccupied)
-        {
-            if (!sharedGridSlots.ContainsKey(slotPosition)) return;
-            
-            GridSlot slot = sharedGridSlots[slotPosition];
-            Vector3 displayPosition = new Vector3(slotPosition.x + sharedGridSize / 2, 0, slotPosition.z + sharedGridSize / 2);
-            
-            // Actually update the visual grid object
-            UpdateGridSlotVisualObject(slot, displayPosition, isOccupied);
-        }
-
-        private void UpdateGridSlotVisualObject(GridSlot slot, Vector3 displayPosition, bool isOccupied)
-        {
-            // Get the appropriate prefabs
-            GameObject freePrefab = PlacementManager.Instance?.gridPrefab;
-            GameObject takenPrefab = PlacementManager.Instance?.takenGridPrefab;
-            
-            if (freePrefab == null || takenPrefab == null) return;
-
-            // Create free grid object if it doesn't exist
-            if (slot.FreeGridObject == null)
-            {
-                slot.FreeGridObject = Instantiate(freePrefab, displayPosition, Quaternion.identity, sharedGridParent);
-            }
-            
-            // Create taken grid object if it doesn't exist
-            if (slot.TakenGridObject == null)
-            {
-                slot.TakenGridObject = Instantiate(takenPrefab, displayPosition, Quaternion.identity, sharedGridParent);
-            }
-            
-            // Enable/disable the correct grid object based on occupation status
-            if (slot.FreeGridObject != null)
-            {
-                slot.FreeGridObject.SetActive(!isOccupied && gridObjectsInitialized);
-            }
-            
-            if (slot.TakenGridObject != null)
-            {
-                slot.TakenGridObject.SetActive(isOccupied && gridObjectsInitialized);
-            }
-        }
-
-        private List<Vector3> GetRequiredSharedGridSlots(Vector3 position, Vector2Int size)
-        {
-            List<Vector3> requiredSlots = new List<Vector3>();
-
-            Vector3 basePosition = SnapToSharedGrid(position);
-
-            // Calculate the starting position (bottom-left corner)
-            float startX = basePosition.x - ((size.x * sharedGridSize) / 2f);
-            float startZ = basePosition.z - ((size.y * sharedGridSize) / 2f);
-
-            for (int x = 0; x < size.x; x++)
-            {
-                for (int z = 0; z < size.y; z++)
-                {
-                    Vector3 slotPosition = new Vector3(
-                        startX + (x * sharedGridSize),
-                        0,
-                        startZ + (z * sharedGridSize)
-                    );
-
-                    requiredSlots.Add(slotPosition);
-                }
-            }
-
-            return requiredSlots;
-        }
-
-        private Vector3 SnapToSharedGrid(Vector3 position)
-        {
-            return new Vector3(
-                Mathf.Round(position.x / sharedGridSize) * sharedGridSize,
-                0,
-                Mathf.Round(position.z / sharedGridSize) * sharedGridSize
-            );
-        }
-
-        public void ResetSharedGridObjects()
-        {
-            // Clear all grid objects from the shared grid
-            foreach (var slot in sharedGridSlots.Values)
-            {
-                if (slot.FreeGridObject != null)
-                {
-                    DestroyImmediate(slot.FreeGridObject);
-                    slot.FreeGridObject = null;
-                }
-                if (slot.TakenGridObject != null)
-                {
-                    DestroyImmediate(slot.TakenGridObject);
-                    slot.TakenGridObject = null;
-                }
-            }
-            gridObjectsInitialized = false;
-        }
-
-        public void InitializeGridObjects(GameObject gridPrefab, GameObject takenGridPrefab)
-        {
-            if (gridObjectsInitialized) return;
-
-            var sharedGridSlots = CampManager.Instance?.SharedGridSlots;
-            if (sharedGridSlots == null) return;
-
-            foreach (var kvp in sharedGridSlots)
-            {
-                Vector3 gridPosition = kvp.Key;
-                GridSlot slot = kvp.Value;
-                
-                Vector3 displayPosition = new Vector3(gridPosition.x + sharedGridSize / 2, 0, gridPosition.z + sharedGridSize / 2);
-                
-                // Use the new visual update method
-                UpdateGridSlotVisualObject(slot, displayPosition, slot.IsOccupied);
-            }
-            
-            gridObjectsInitialized = true;
-        }
-
-        public void ShowGridObjects()
-        {
-            var sharedGridSlots = CampManager.Instance?.SharedGridSlots;
-            if (sharedGridSlots == null) return;
-
-            foreach (var slot in sharedGridSlots.Values)
-            {
-                if (slot.FreeGridObject != null)
-                {
-                    slot.FreeGridObject.SetActive(!slot.IsOccupied);
-                }
-                if (slot.TakenGridObject != null)
-                {
-                    slot.TakenGridObject.SetActive(slot.IsOccupied);
-                }
-            }
-        }
-
-        public void HideGridObjects()
-        {
-            var sharedGridSlots = CampManager.Instance?.SharedGridSlots;
-            if (sharedGridSlots == null) return;
-
-            foreach (var slot in sharedGridSlots.Values)
-            {
-                if (slot.FreeGridObject != null)
-                {
-                    slot.FreeGridObject.SetActive(false);
-                }
-                if (slot.TakenGridObject != null)
-                {
-                    slot.TakenGridObject.SetActive(false);
-                }
-            }
-        }
-
-        private void OnDrawGizmos()
-        {
-            if (showSharedGridBounds)
-            {
-                Gizmos.color = Color.yellow; // Using yellow to distinguish shared grid
-                Vector3 bottomLeft = new Vector3(sharedXBounds.x, 0, sharedZBounds.x);
-                Vector3 bottomRight = new Vector3(sharedXBounds.y, 0, sharedZBounds.x);
-                Vector3 topLeft = new Vector3(sharedXBounds.x, 0, sharedZBounds.y);
-                Vector3 topRight = new Vector3(sharedXBounds.y, 0, sharedZBounds.y);
-
-                Gizmos.DrawLine(bottomLeft, bottomRight);
-                Gizmos.DrawLine(bottomRight, topRight);
-                Gizmos.DrawLine(topRight, topLeft);
-                Gizmos.DrawLine(topLeft, bottomLeft);
-            }
-        }
-
-        #region Camp Wave Management
+        #region Wave Management
 
         /// <summary>
         /// Starts a camp wave of enemies
@@ -708,14 +375,12 @@ namespace Managers
                 return;
             }
 
-            // Check if there are any available targets before starting waves
             if (!AreTargetsAvailable())
             {
                 Debug.Log("No buildings or NPCs available - cannot start camp wave!");
                 return;
             }
 
-            // Stop any existing wave loop
             if (waveLoopCoroutine != null)
             {
                 StopCoroutine(waveLoopCoroutine);
@@ -724,13 +389,12 @@ namespace Managers
 
             waveLoopCoroutine = StartCoroutine(SingleWaveCycle());
         }
-        
+
         /// <summary>
         /// Starts a single wave
         /// </summary>
         private void StartSingleWave()
         {
-            // Check if there are any available targets before starting the wave
             if (!AreTargetsAvailable())
             {
                 Debug.Log("No buildings or NPCs available - cannot start wave!");
@@ -738,98 +402,13 @@ namespace Managers
                 return;
             }
             
-            // Trigger camp wave started event
             OnCampWaveStarted?.Invoke();
-            
-            // Start the wave using the GameModeManager system
             SetEnemySetupState(EnemySetupState.WAVE_START);
-
             PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_ATTACK_CAMERA_MOVEMENT);
             
             Debug.Log("Camp wave started!");
         }
 
-        /// <summary>
-        /// Makes all NPCs in the camp flee from enemies
-        /// </summary>
-        private void MakeNPCsFlee()
-        {
-            Debug.Log("Making NPCs flee from enemies!");
-            
-            foreach (var npc in campNPCs)
-            {
-                if (npc != null && npc is SettlerNPC settler)
-                {
-                    settler.ChangeTask(TaskType.FLEE);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Returns NPCs to normal behavior when wave ends
-        /// </summary>
-        private void ReturnNPCsToNormal()
-        {
-            Debug.Log("Returning NPCs to normal behavior");
-            
-            foreach (var npc in campNPCs)
-            {
-                if (npc != null && npc is SettlerNPC settler)
-                {
-                    settler.ChangeTask(TaskType.WANDER);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Checks if the wave should end (no enemies remaining)
-        /// </summary>
-        private void CheckForWaveEnd()
-        {
-            // Check if there are any active enemies
-            var enemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
-            
-            // Check if wave should end due to time or enemies cleared
-            bool shouldEndWave = false;
-            string endReason = "";
-            
-            if (enemies.Length == 0 && IsWaveActive)
-            {
-                // No enemies left, wave is over
-                shouldEndWave = true;
-                endReason = "All enemies defeated";
-            }
-            else if (IsWaveActive && Time.time - waveStartTime >= currentWaveDuration)
-            {
-                // Time's up, wave is over
-                shouldEndWave = true;
-                endReason = "Time expired";
-            }
-            
-            if (shouldEndWave)
-            {
-                Debug.Log($"Wave ending: {endReason}");
-                SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
-            }
-        }
-
-        /// <summary>
-        /// Ends the current camp wave
-        /// </summary>
-        public void EndCampWave()
-        {
-            Debug.Log("Camp wave ended!");
-            
-            // Return NPCs to normal behavior
-            ReturnNPCsToNormal();
-            
-            // Trigger camp wave ended event
-            OnCampWaveEnded?.Invoke();
-
-            // Return to camp camera movement
-            PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_CAMERA_MOVEMENT);
-        }
-        
         /// <summary>
         /// Single wave cycle coroutine that runs one complete cycle of waves
         /// </summary>
@@ -837,34 +416,21 @@ namespace Managers
         {
             wavesCompletedInLoop = 0;
             
-            // Get the wave config to determine max waves and multiple waves setting
             var waveConfig = GetWaveConfig(GetCurrentWaveDifficulty());
-            int maxWaves = maxWavesPerLoop; // Default fallback
-            
-            if (waveConfig != null)
-            {
-                maxWaves = waveConfig.maxWaves;
-            }
-            else
-            {
-                Debug.LogWarning($"No wave config found, using default maxWavesPerLoop: {maxWavesPerLoop}");
-            }
+            int maxWaves = waveConfig?.maxWaves ?? maxWavesPerLoop;
             
             Debug.Log($"Starting single wave cycle with {maxWaves} waves");
             
             while (wavesCompletedInLoop < maxWaves)
             {
-                // Check if there are any available targets before starting the wave
                 if (!AreTargetsAvailable())
                 {
                     Debug.Log("No buildings or NPCs available - ending wave cycle early!");
                     break;
                 }
                 
-                // Start a single wave
                 StartSingleWave();
                 
-                // Wait for wave to complete
                 while (IsWaveActive)
                 {
                     yield return null;
@@ -873,7 +439,6 @@ namespace Managers
                 wavesCompletedInLoop++;
                 Debug.Log($"Wave {wavesCompletedInLoop} completed. Waves in cycle: {wavesCompletedInLoop}/{maxWaves}");
                 
-                // If we haven't reached max waves, wait before next wave
                 if (wavesCompletedInLoop < maxWaves)
                 {
                     Debug.Log($"Waiting {waveLoopDelay} seconds before next wave...");
@@ -881,82 +446,11 @@ namespace Managers
                 }
             }
             
-            // Cycle complete
             Debug.Log($"Single wave cycle completed! Total waves: {wavesCompletedInLoop}/{maxWaves}");
             OnWaveLoopComplete?.Invoke();
             
-            // Start the completion sequence: fade out, clear enemies, fade in
             StartCoroutine(WaveCompletionSequence());
-            
-            // Don't start another cycle - this is single cycle mode
             waveLoopCoroutine = null;
-        }
-        
-        /// <summary>
-        /// Wave loop coroutine that handles continuous waves
-        /// </summary>
-        private IEnumerator WaveLoop()
-        {
-            wavesCompletedInLoop = 0;
-            
-            // Get the wave config to determine max waves and multiple waves setting
-            var waveConfig = GetWaveConfig(GetCurrentWaveDifficulty());
-            int maxWaves = maxWavesPerLoop; // Default fallback
-            
-            if (waveConfig != null)
-            {
-                maxWaves = waveConfig.maxWaves;
-                        
-            }
-            else
-            {
-                Debug.LogWarning($"No wave config found, using default maxWavesPerLoop: {maxWavesPerLoop}");
-            }
-            
-            while (wavesCompletedInLoop < maxWaves)
-            {
-                // Check if there are any available targets before starting the wave
-                if (!AreTargetsAvailable())
-                {
-                    Debug.Log("No buildings or NPCs available - ending wave loop early!");
-                    break;
-                }
-                
-                // Start a single wave
-                StartSingleWave();
-                
-                // Wait for wave to complete
-                while (IsWaveActive)
-                {
-                    yield return null;
-                }
-                
-                wavesCompletedInLoop++;
-                Debug.Log($"Wave {wavesCompletedInLoop} completed. Waves in loop: {wavesCompletedInLoop}/{maxWaves}");
-                
-                // If we haven't reached max waves, wait before next wave
-                if (wavesCompletedInLoop < maxWaves)
-                {
-                    Debug.Log($"Waiting {waveLoopDelay} seconds before next wave...");
-                    yield return new WaitForSeconds(waveLoopDelay);
-                }
-            }
-            
-            // Loop complete
-            Debug.Log($"Wave loop completed! Total waves: {wavesCompletedInLoop}/{maxWaves}");
-            OnWaveLoopComplete?.Invoke();
-            
-            // Check if there are any available targets before starting a new loop
-            if (!AreTargetsAvailable())
-            {
-                Debug.Log("No buildings or NPCs available - stopping continuous wave loop!");
-                waveLoopCoroutine = null;
-                yield break;
-            }
-            
-            // Optional: Wait longer before starting a new loop
-            yield return new WaitForSeconds(waveLoopDelay * 2);
-            waveLoopCoroutine = StartCoroutine(WaveLoop());
         }
 
         /// <summary>
@@ -966,41 +460,49 @@ namespace Managers
         {
             Debug.Log("Starting wave completion sequence...");
             
-            // Step 1: Fade out
-            Debug.Log("Fading out...");
+            // Fade out
             if (PlayerUIManager.Instance?.transitionMenu != null)
             {
                 yield return PlayerUIManager.Instance.transitionMenu.FadeIn();
             }
             else
             {
-                // Fallback if no transition menu
                 yield return new WaitForSeconds(1f);
             }
             
-            // Step 2: Clear all enemies with fade effect
-            Debug.Log("Clearing enemies...");
+            // Clear enemies
             ClearAllEnemiesWithFade();
-            
-            // Wait for enemy clearing to complete
             yield return new WaitForSeconds(2f);
             
-            // Step 3: Fade back in
-            Debug.Log("Fading back in...");
+            // Fade back in
             if (PlayerUIManager.Instance?.transitionMenu != null)
             {
                 yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
             }
             else
             {
-                // Fallback if no transition menu
                 yield return new WaitForSeconds(1f);
             }
             
             Debug.Log("Wave completion sequence finished!");
-            
-            // Trigger wave cycle complete event
             OnWaveCycleComplete?.Invoke();
+        }
+
+        /// <summary>
+        /// Force end all waves when no targets are available
+        /// </summary>
+        public void ForceEndWavesNoTargets()
+        {
+            Debug.Log("No buildings or NPCs available - forcing wave end!");
+            
+            if (waveLoopCoroutine != null)
+            {
+                StopCoroutine(waveLoopCoroutine);
+                waveLoopCoroutine = null;
+            }
+            
+            SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+            StartCoroutine(WaveCompletionSequence());
         }
 
         /// <summary>
@@ -1013,6 +515,98 @@ namespace Managers
             PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_CAMERA_MOVEMENT);
         }
 
+        #endregion
+
+        #region Wave State Management
+
+        protected override void EnemySetupStateChanged(EnemySetupState newState)
+        {
+            Debug.Log($"<color=green>Camp EnemySetupStateChanged: {newState}</color>");
+
+            switch (newState)
+            {
+                case EnemySetupState.WAVE_START:
+                    EnemySpawnManager.Instance.ResetWaveCount();
+                    StartCoroutine(TransitionToNextState(EnemySetupState.PRE_ENEMY_SPAWNING, 0.5f));
+                    break;
+                case EnemySetupState.PRE_ENEMY_SPAWNING:
+                    SetupCampForWave();
+                    StartCoroutine(TransitionToNextState(EnemySetupState.ENEMY_SPAWN_START, 1.0f));
+                    break;
+                case EnemySetupState.ENEMY_SPAWN_START:
+                    if (!AreTargetsAvailable())
+                    {
+                        Debug.Log("No buildings or NPCs available - skipping enemy spawning!");
+                        SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                        return;
+                    }
+                    StartCampEnemyWave();
+                    StartCoroutine(TransitionToNextState(EnemySetupState.ENEMIES_SPAWNED, 2.0f));
+                    break;
+                case EnemySetupState.ENEMIES_SPAWNED:
+                    if (!AreTargetsAvailable())
+                    {
+                        Debug.Log("No buildings or NPCs available - ending wave immediately!");
+                        SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                        return;
+                    }
+                    StartWaveTiming();
+                    break;
+                case EnemySetupState.ALL_WAVES_CLEARED:
+                    EndCampWave();
+                    break;
+            }
+        }
+
+        private IEnumerator TransitionToNextState(EnemySetupState nextState, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            SetEnemySetupState(nextState);
+        }
+
+        private void StartWaveTiming()
+        {
+            waveStartTime = Time.time;
+            currentWaveNumber++;
+            
+            var waveConfig = GetWaveConfig(GetCurrentWaveDifficulty());
+            if (waveConfig != null && waveConfig is CampEnemyWaveConfig campConfig)
+            {
+                currentWaveDuration = campConfig.WaveDuration;
+            }
+            
+            Debug.Log($"Wave {currentWaveNumber} started. Duration: {currentWaveDuration}s");
+        }
+
+        private void CheckForWaveEnd()
+        {
+            var enemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
+            
+            bool shouldEndWave = false;
+            string endReason = "";
+            
+            if (enemies.Length == 0 && IsWaveActive)
+            {
+                shouldEndWave = true;
+                endReason = "All enemies defeated";
+            }
+            else if (IsWaveActive && Time.time - waveStartTime >= currentWaveDuration)
+            {
+                shouldEndWave = true;
+                endReason = "Time expired";
+            }
+            
+            if (shouldEndWave)
+            {
+                Debug.Log($"Wave ending: {endReason}");
+                SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+            }
+        }
+
+        #endregion
+
+        #region NPC Management
+
         /// <summary>
         /// Finds all NPCs in the camp for wave management
         /// </summary>
@@ -1023,7 +617,6 @@ namespace Managers
             
             foreach (var npc in npcs)
             {
-                // Exclude the player if they're possessed
                 if (npc != PlayerController.Instance._possessedNPC)
                 {
                     campNPCs.Add(npc);
@@ -1058,16 +651,281 @@ namespace Managers
             }
         }
 
+        private void SetupCampForWave()
+        {
+            if (PlayerController.Instance._possessedNPC != null)
+            {
+                PlayerController.Instance.PossessNPC(null);
+            }
+            
+            MakeNPCsFlee();
+        }
+
+        private void StartCampEnemyWave()
+        {
+            var waveConfig = GetWaveConfig(GetCurrentWaveDifficulty());
+            if (waveConfig != null)
+            {
+                Debug.Log($"Starting camp wave with config: {waveConfig.name}, Difficulty: {GetCurrentWaveDifficulty()}");
+                EnemySpawnManager.Instance.StartSpawningEnemies(waveConfig);
+            }
+            else
+            {
+                Debug.LogWarning($"No wave config found for camp wave difficulty {GetCurrentWaveDifficulty()}!");
+                Debug.Log("Continuing wave without enemies for testing purposes");
+            }
+        }
+
+        private void EndCampWave()
+        {
+            Debug.Log("Camp wave ended!");
+            
+            ReturnNPCsToNormal();
+            OnCampWaveEnded?.Invoke();
+            PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_CAMERA_MOVEMENT);
+        }
+
+        private void MakeNPCsFlee()
+        {
+            Debug.Log("Making NPCs flee from enemies!");
+            
+            foreach (var npc in campNPCs)
+            {
+                if (npc != null && npc is SettlerNPC settler)
+                {
+                    settler.ChangeTask(TaskType.FLEE);
+                }
+            }
+        }
+
+        private void ReturnNPCsToNormal()
+        {
+            Debug.Log("Returning NPCs to normal behavior");
+            
+            foreach (var npc in campNPCs)
+            {
+                if (npc != null && npc is SettlerNPC settler)
+                {
+                    settler.ChangeTask(TaskType.WANDER);
+                }
+            }
+        }
+
+        #endregion
+
+        #region Shared Grid System
+
+        public bool AreSharedGridSlotsAvailable(Vector3 position, Vector2Int size)
+        {
+            List<Vector3> requiredSlots = GetRequiredSharedGridSlots(position, size);
+
+            foreach (var slot in requiredSlots)
+            {
+                if (sharedGridSlots.ContainsKey(slot) && sharedGridSlots[slot].IsOccupied)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public void MarkSharedGridSlotsOccupied(Vector3 position, Vector2Int size, GameObject placedObject)
+        {
+            List<Vector3> requiredSlots = GetRequiredSharedGridSlots(position, size);
+
+            foreach (var slot in requiredSlots)
+            {
+                if (sharedGridSlots.ContainsKey(slot))
+                {
+                    if (sharedGridSlots[slot].IsOccupied)
+                    {
+                        Debug.LogWarning($"Shared grid slot at {slot} is already occupied by {sharedGridSlots[slot].OccupyingObject.name}!");
+                        continue;
+                    }
+
+                    sharedGridSlots[slot].IsOccupied = true;
+                    sharedGridSlots[slot].OccupyingObject = placedObject;
+                    UpdateGridSlotVisual(slot, true);
+                }
+                else
+                {
+                    Debug.LogError($"Shared grid slot at {slot} does not exist in the dictionary!");
+                }
+            }
+        }
+
+        public void MarkSharedGridSlotsUnoccupied(Vector3 position, Vector2Int size)
+        {
+            List<Vector3> requiredSlots = GetRequiredSharedGridSlots(position, size);
+
+            foreach (var slot in requiredSlots)
+            {
+                if (sharedGridSlots.ContainsKey(slot))
+                {
+                    sharedGridSlots[slot].IsOccupied = false;
+                    sharedGridSlots[slot].OccupyingObject = null;
+                    UpdateGridSlotVisual(slot, false);
+                }
+            }
+        }
+
+        private void UpdateGridSlotVisual(Vector3 slotPosition, bool isOccupied)
+        {
+            if (!sharedGridSlots.ContainsKey(slotPosition)) return;
+            
+            GridSlot slot = sharedGridSlots[slotPosition];
+            Vector3 displayPosition = new Vector3(slotPosition.x + sharedGridSize / 2, 0, slotPosition.z + sharedGridSize / 2);
+            UpdateGridSlotVisualObject(slot, displayPosition, isOccupied);
+        }
+
+        private void UpdateGridSlotVisualObject(GridSlot slot, Vector3 displayPosition, bool isOccupied)
+        {
+            GameObject freePrefab = PlacementManager.Instance?.gridPrefab;
+            GameObject takenPrefab = PlacementManager.Instance?.takenGridPrefab;
+            
+            if (freePrefab == null || takenPrefab == null) return;
+
+            if (slot.FreeGridObject == null)
+            {
+                slot.FreeGridObject = Instantiate(freePrefab, displayPosition, Quaternion.identity, sharedGridParent);
+            }
+            
+            if (slot.TakenGridObject == null)
+            {
+                slot.TakenGridObject = Instantiate(takenPrefab, displayPosition, Quaternion.identity, sharedGridParent);
+            }
+            
+            if (slot.FreeGridObject != null)
+            {
+                slot.FreeGridObject.SetActive(!isOccupied && gridObjectsInitialized);
+            }
+            
+            if (slot.TakenGridObject != null)
+            {
+                slot.TakenGridObject.SetActive(isOccupied && gridObjectsInitialized);
+            }
+        }
+
+        private List<Vector3> GetRequiredSharedGridSlots(Vector3 position, Vector2Int size)
+        {
+            List<Vector3> requiredSlots = new List<Vector3>();
+            Vector3 basePosition = SnapToSharedGrid(position);
+
+            float startX = basePosition.x - ((size.x * sharedGridSize) / 2f);
+            float startZ = basePosition.z - ((size.y * sharedGridSize) / 2f);
+
+            for (int x = 0; x < size.x; x++)
+            {
+                for (int z = 0; z < size.y; z++)
+                {
+                    Vector3 slotPosition = new Vector3(
+                        startX + (x * sharedGridSize),
+                        0,
+                        startZ + (z * sharedGridSize)
+                    );
+                    requiredSlots.Add(slotPosition);
+                }
+            }
+
+            return requiredSlots;
+        }
+
+        private Vector3 SnapToSharedGrid(Vector3 position)
+        {
+            return new Vector3(
+                Mathf.Round(position.x / sharedGridSize) * sharedGridSize,
+                0,
+                Mathf.Round(position.z / sharedGridSize) * sharedGridSize
+            );
+        }
+
+        public void ResetSharedGridObjects()
+        {
+            foreach (var slot in sharedGridSlots.Values)
+            {
+                if (slot.FreeGridObject != null)
+                {
+                    DestroyImmediate(slot.FreeGridObject);
+                    slot.FreeGridObject = null;
+                }
+                if (slot.TakenGridObject != null)
+                {
+                    DestroyImmediate(slot.TakenGridObject);
+                    slot.TakenGridObject = null;
+                }
+            }
+            gridObjectsInitialized = false;
+        }
+
+        public void InitializeGridObjects(GameObject gridPrefab, GameObject takenGridPrefab)
+        {
+            if (gridObjectsInitialized) return;
+
+            if (sharedGridSlots == null) return;
+
+            foreach (var kvp in sharedGridSlots)
+            {
+                Vector3 gridPosition = kvp.Key;
+                GridSlot slot = kvp.Value;
+                
+                Vector3 displayPosition = new Vector3(gridPosition.x + sharedGridSize / 2, 0, gridPosition.z + sharedGridSize / 2);
+                UpdateGridSlotVisualObject(slot, displayPosition, slot.IsOccupied);
+            }
+            
+            gridObjectsInitialized = true;
+        }
+
+        public void ShowGridObjects()
+        {
+            if (sharedGridSlots == null) return;
+
+            foreach (var slot in sharedGridSlots.Values)
+            {
+                if (slot.FreeGridObject != null)
+                {
+                    slot.FreeGridObject.SetActive(!slot.IsOccupied);
+                }
+                if (slot.TakenGridObject != null)
+                {
+                    slot.TakenGridObject.SetActive(slot.IsOccupied);
+                }
+            }
+        }
+
+        public void HideGridObjects()
+        {
+            if (sharedGridSlots == null) return;
+
+            foreach (var slot in sharedGridSlots.Values)
+            {
+                if (slot.FreeGridObject != null)
+                {
+                    slot.FreeGridObject.SetActive(false);
+                }
+                if (slot.TakenGridObject != null)
+                {
+                    slot.TakenGridObject.SetActive(false);
+                }
+            }
+        }
+
         #endregion
 
         #region Debug Methods
+
+        /// <summary>
+        /// Get the current wave difficulty level
+        /// </summary>
+        public override int GetCurrentWaveDifficulty()
+        {
+            return 1; // Base difficulty for now
+        }
 
         /// <summary>
         /// Spawn a single enemy for debugging purposes
         /// </summary>
         public void SpawnSingleEnemy()
         {
-            // Get the wave config for current difficulty
             var waveConfig = GetWaveConfig(GetCurrentWaveDifficulty());
             if (waveConfig == null || waveConfig.enemyPrefabs == null || waveConfig.enemyPrefabs.Length == 0)
             {
@@ -1075,10 +933,7 @@ namespace Managers
                 return;
             }
 
-            // Get a random spawn position within bounds
             Vector3 spawnPosition = GetRandomSpawnPosition();
-            
-            // Spawn a random enemy prefab from the wave config
             GameObject enemyPrefab = waveConfig.enemyPrefabs[UnityEngine.Random.Range(0, waveConfig.enemyPrefabs.Length)];
             GameObject enemy = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
             
@@ -1086,11 +941,10 @@ namespace Managers
         }
 
         /// <summary>
-        /// Clear all enemies from the scene
+        /// Clear all enemies from the scene immediately
         /// </summary>
         public void ClearAllEnemies()
         {
-            // Find all enemies in the scene
             EnemyBase[] enemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
             
             foreach (var enemy in enemies)
@@ -1105,19 +959,15 @@ namespace Managers
         }
         
         /// <summary>
-        /// Clear all enemies with fade effect
+        /// Clear all enemies with a fade-out effect
         /// </summary>
         public void ClearAllEnemiesWithFade()
         {
             StartCoroutine(ClearEnemiesWithFadeCoroutine());
         }
         
-        /// <summary>
-        /// Coroutine to clear enemies with fade effect
-        /// </summary>
         private IEnumerator ClearEnemiesWithFadeCoroutine()
         {
-            // Find all enemies in the scene
             EnemyBase[] enemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
             
             if (enemies.Length == 0)
@@ -1127,15 +977,12 @@ namespace Managers
             
             Debug.Log($"Clearing {enemies.Length} enemies with fade effect");
             
-            // Fade out enemies
             float fadeDuration = 1f;
             float elapsedTime = 0f;
             
-            // Store original materials
             Dictionary<EnemyBase, Material> originalMaterials = new Dictionary<EnemyBase, Material>();
             Dictionary<EnemyBase, SkinnedMeshRenderer> renderers = new Dictionary<EnemyBase, SkinnedMeshRenderer>();
             
-            // Setup fade materials
             foreach (var enemy in enemies)
             {
                 if (enemy != null)
@@ -1146,9 +993,8 @@ namespace Managers
                         renderers[enemy] = renderer;
                         originalMaterials[enemy] = renderer.material;
                         
-                        // Create fade material
                         Material fadeMaterial = new Material(renderer.material);
-                        fadeMaterial.SetFloat("_Mode", 3); // Transparent mode
+                        fadeMaterial.SetFloat("_Mode", 3);
                         fadeMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
                         fadeMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
                         fadeMaterial.SetInt("_ZWrite", 0);
@@ -1162,7 +1008,6 @@ namespace Managers
                 }
             }
             
-            // Fade out
             while (elapsedTime < fadeDuration)
             {
                 elapsedTime += Time.deltaTime;
@@ -1181,7 +1026,6 @@ namespace Managers
                 yield return null;
             }
             
-            // Destroy enemies
             foreach (var enemy in enemies)
             {
                 if (enemy != null)
@@ -1190,7 +1034,6 @@ namespace Managers
                 }
             }
             
-            // Clean up materials
             foreach (var kvp in originalMaterials)
             {
                 if (kvp.Value != null)
@@ -1210,8 +1053,7 @@ namespace Managers
             float x = UnityEngine.Random.Range(sharedXBounds.x, sharedXBounds.y);
             float z = UnityEngine.Random.Range(sharedZBounds.x, sharedZBounds.y);
             
-            // Find a position on the ground
-            Vector3 spawnPos = new Vector3(x, 100f, z); // Start high up
+            Vector3 spawnPos = new Vector3(x, 100f, z);
             RaycastHit hit;
             
             if (Physics.Raycast(spawnPos, Vector3.down, out hit, 200f, LayerMask.GetMask("Default")))
