@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Enemies;
+using Managers;
 
 [System.Serializable]
 public class UpgradeData
@@ -20,7 +21,7 @@ public class UpgradeData
 
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(Rigidbody))]
-public abstract class BaseTurret : MonoBehaviour
+public abstract class BaseTurret : MonoBehaviour, IDamageable
 {
     [Header("Turret Settings")]
     public float damage = 10f;
@@ -34,6 +35,15 @@ public abstract class BaseTurret : MonoBehaviour
     [Header("Turret Configuration")]
     [SerializeField] protected TurretScriptableObject turretScriptableObj;
 
+    [Header("Health System")]
+    [SerializeField] private float health = 100f;
+    [SerializeField] private float maxHealth = 100f;
+
+    // Events for damage system
+    public event Action<float, float> OnDamageTaken;
+    public event Action<float, float> OnHeal;
+    public event Action OnDeath;
+
     private float fireCooldown = 0f;
     private EnemyBase target;
     private List<EnemyBase> enemiesInRange = new List<EnemyBase>();
@@ -42,6 +52,12 @@ public abstract class BaseTurret : MonoBehaviour
     private void Start()
     {
         //upgradeButton.onClick.AddListener(StartUpgrade);
+        
+        // Register with CampManager for target tracking
+        if (Managers.CampManager.Instance != null)
+        {
+            Managers.CampManager.Instance.RegisterTarget(this);
+        }
     }
 
     private void Update()
@@ -169,10 +185,76 @@ public abstract class BaseTurret : MonoBehaviour
 
     protected virtual void OnDestroy()
     {
+        // Unregister from CampManager target tracking
+        if (Managers.CampManager.Instance != null)
+        {
+            Managers.CampManager.Instance.UnregisterTarget(this);
+        }
+        
         // Free up grid slots when turret is destroyed
         if (turretScriptableObj != null && Managers.CampManager.Instance != null)
         {
             Managers.CampManager.Instance.MarkSharedGridSlotsUnoccupied(transform.position, turretScriptableObj.size);
         }
     }
+
+    #region IDamageable Interface Implementation
+
+    public float Health 
+    { 
+        get => health; 
+        set => health = Mathf.Clamp(value, 0, maxHealth); 
+    }
+    
+    public float MaxHealth 
+    { 
+        get => maxHealth; 
+        set => maxHealth = value; 
+    }
+    
+    public CharacterType CharacterType => CharacterType.NONE;
+    
+    public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
+
+    public virtual void TakeDamage(float amount, Transform damageSource = null)
+    {
+        float previousHealth = health;
+        health = Mathf.Max(0, health - amount);
+        
+        OnDamageTaken?.Invoke(amount, health);
+        
+        // Play hit VFX
+        Vector3 hitPoint = transform.position + Vector3.up * 1.5f;
+        Vector3 hitNormal = damageSource != null 
+            ? (transform.position - damageSource.position).normalized 
+            : Vector3.up;
+        EffectManager.Instance?.PlayHitEffect(hitPoint, hitNormal, this);
+        
+        if (health <= 0)
+        {
+            Die();
+        }
+    }
+
+    public virtual void Heal(float amount)
+    {
+        float previousHealth = health;
+        health = Mathf.Min(maxHealth, health + amount);
+        
+        OnHeal?.Invoke(amount, health);
+    }
+
+    public virtual void Die()
+    {
+        Debug.Log($"{gameObject.name} turret has been destroyed!");
+        OnDeath?.Invoke();
+        
+        // Notify all enemies that this turret was destroyed
+        EnemyBase.NotifyTargetDestroyed(transform);
+        
+        // Destroy the turret
+        Destroy(gameObject);
+    }
+
+    #endregion
 }

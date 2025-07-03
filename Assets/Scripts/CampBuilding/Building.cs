@@ -76,6 +76,12 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
 
     protected virtual void OnDestroy()
     {
+        // Unregister from CampManager target tracking
+        if (CampManager.Instance != null)
+        {
+            CampManager.Instance.UnregisterTarget(this);
+        }
+        
         // Free up grid slots when building is destroyed
         if (buildingScriptableObj != null && CampManager.Instance != null)
         {
@@ -157,6 +163,12 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
     {
         isUnderConstruction = false;
         isOperational = true;
+        
+        // Register with CampManager for target tracking
+        if (CampManager.Instance != null)
+        {
+            CampManager.Instance.RegisterTarget(this);
+        }
     }
 
     public bool IsOperational() => isOperational;

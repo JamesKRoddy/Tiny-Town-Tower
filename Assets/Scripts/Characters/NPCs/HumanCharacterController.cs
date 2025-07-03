@@ -74,6 +74,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     protected virtual void Start()
     {
         GetComponent<CharacterAnimationEvents>().Setup(characterCombat, this, characterInventory);
+        
+        // Register with CampManager for target tracking
+        if (Managers.CampManager.Instance != null)
+        {
+            Managers.CampManager.Instance.RegisterTarget(this);
+        }
     }
 
     public virtual void PossessedUpdate()
@@ -480,4 +486,13 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public float Health { get => health; set => health = value; }
     public float MaxHealth { get => maxHealth; set => maxHealth = value; }
+
+    protected virtual void OnDestroy()
+    {
+        // Unregister from CampManager target tracking
+        if (Managers.CampManager.Instance != null)
+        {
+            Managers.CampManager.Instance.UnregisterTarget(this);
+        }
+    }
 }

@@ -56,6 +56,9 @@ namespace Managers
         private int wavesCompletedInLoop = 0;
         private Coroutine waveLoopCoroutine;
 
+        // Cached target lists for efficient checking
+        private List<IDamageable> cachedTargets = new List<IDamageable>();
+
         // References to other managers
         private ResearchManager researchManager;
         private CleanlinessManager cleanlinessManager;
@@ -100,6 +103,164 @@ namespace Managers
             return maxWaves;
         }
 
+        /// <summary>
+        /// Check if there are any available buildings or NPCs for enemies to target
+        /// </summary>
+        /// <returns>True if there are available targets, false if none</returns>
+        public bool AreTargetsAvailable()
+        {
+            foreach (var target in cachedTargets)
+            {
+                if (target == null) continue;
+                
+                // Check if target is alive (has health > 0)
+                if (target.Health <= 0) continue;
+                
+                // Check for buildings - any building with health is a valid target
+                if (target is Building)
+                {
+                    return true; // Found at least one building with health
+                }
+                // Check for turrets - just need to be alive
+                else if (target is BaseTurret)
+                {
+                    return true; // Found at least one turret
+                }
+                // Check for NPCs - exclude the player if they're possessed
+                else if (target is HumanCharacterController npc)
+                {
+                    if (npc != PlayerController.Instance._possessedNPC)
+                    {
+                        return true; // Found at least one available NPC
+                    }
+                }
+            }
+            
+            // No targets available
+            return false;
+        }
+
+        /// <summary>
+        /// Force end all waves when no targets are available
+        /// </summary>
+        public void ForceEndWavesNoTargets()
+        {
+            Debug.Log("No buildings or NPCs available - forcing wave end!");
+            
+            // Stop any ongoing wave loop
+            if (waveLoopCoroutine != null)
+            {
+                StopCoroutine(waveLoopCoroutine);
+                waveLoopCoroutine = null;
+            }
+            
+            // Set wave state to cleared to stop current wave
+            SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+            
+            // Start the completion sequence: fade out, clear enemies, fade in
+            StartCoroutine(WaveCompletionSequence());
+        }
+
+        #region Target Cache Management
+
+        /// <summary>
+        /// Populate the initial target cache with all existing objects
+        /// </summary>
+        private void PopulateTargetCache()
+        {
+            // Clear existing cache
+            cachedTargets.Clear();
+
+            // Find all buildings
+            Building[] buildings = FindObjectsByType<Building>(FindObjectsSortMode.None);
+            cachedTargets.AddRange(buildings);
+
+            // Find all turrets
+            var turrets = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+            foreach (var turret in turrets)
+            {
+                if (turret != null && turret is IDamageable damageableTurret)
+                {
+                    cachedTargets.Add(damageableTurret);
+                }
+            }
+
+            // Find all NPCs
+            HumanCharacterController[] npcs = FindObjectsByType<HumanCharacterController>(FindObjectsSortMode.None);
+            cachedTargets.AddRange(npcs);
+
+            Debug.Log($"Populated target cache: {cachedTargets.Count} targets");
+        }
+
+        /// <summary>
+        /// Register any IDamageable target in the target cache
+        /// </summary>
+        public void RegisterTarget(IDamageable target)
+        {
+            if (target != null && !cachedTargets.Contains(target))
+            {
+                cachedTargets.Add(target);
+                target.OnDeath += OnTargetDied;
+                string targetName = (target as MonoBehaviour)?.name ?? target.GetType().Name;
+                Debug.Log($"Registered target: {target.GetType().Name} - {targetName}");
+            }
+        }
+
+        /// <summary>
+        /// Unregister any IDamageable target from the target cache
+        /// </summary>
+        public void UnregisterTarget(IDamageable target)
+        {
+            if (cachedTargets.Remove(target))
+            {
+                target.OnDeath -= OnTargetDied;
+                string targetName = (target as MonoBehaviour)?.name ?? target.GetType().Name;
+                Debug.Log($"Unregistered target: {target.GetType().Name} - {targetName}");
+            }
+        }
+
+        /// <summary>
+        /// Clean up null references from the target cache
+        /// </summary>
+        public void CleanupTargetCache()
+        {
+            cachedTargets.RemoveAll(target => target == null);
+        }
+
+        /// <summary>
+        /// Called when a target dies - check if any targets remain
+        /// </summary>
+        private void OnTargetDied()
+        {
+            // Only check during active waves
+            if (GetEnemySetupState() == EnemySetupState.ENEMIES_SPAWNED)
+            {
+                if (!AreTargetsAvailable())
+                {
+                    Debug.Log("No targets remaining - ending wave!");
+                    ForceEndWavesNoTargets();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Public method for enemies to check if they can find targets
+        /// If no targets are available, this will end the wave
+        /// </summary>
+        /// <returns>True if targets are available, false if wave should end</returns>
+        public bool CheckTargetsForEnemies()
+        {
+            if (!AreTargetsAvailable())
+            {
+                Debug.Log("No targets available for enemies - ending wave!");
+                ForceEndWavesNoTargets();
+                return false;
+            }
+            return true;
+        }
+
+        #endregion
+
         private void Awake()
         {
             if (_instance != null && _instance != this)
@@ -121,6 +282,9 @@ namespace Managers
             
             // Find all NPCs in the camp
             FindCampNPCs();
+            
+            // Populate initial target cache
+            PopulateTargetCache();
         }
 
         protected override void EnemySetupStateChanged(EnemySetupState newState)
@@ -142,11 +306,25 @@ namespace Managers
                     StartCoroutine(TransitionToNextState(EnemySetupState.ENEMY_SPAWN_START, 1.0f));
                     break;
                 case EnemySetupState.ENEMY_SPAWN_START:
+                    // Check if there are any available targets before spawning enemies
+                    if (!AreTargetsAvailable())
+                    {
+                        Debug.Log("No buildings or NPCs available - skipping enemy spawning!");
+                        SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                        return;
+                    }
                     StartCampEnemyWave();
                     // Move to spawned state after spawning
                     StartCoroutine(TransitionToNextState(EnemySetupState.ENEMIES_SPAWNED, 2.0f));
                     break;
                 case EnemySetupState.ENEMIES_SPAWNED:
+                    // Check if there are any available targets before starting wave timing
+                    if (!AreTargetsAvailable())
+                    {
+                        Debug.Log("No buildings or NPCs available - ending wave immediately!");
+                        SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                        return;
+                    }
                     // Start wave timing
                     StartWaveTiming();
                     break;
@@ -226,6 +404,12 @@ namespace Managers
             {
                 lastWaveEndCheck = Time.time;
                 CheckForWaveEnd();
+            }
+            
+            // Periodic cleanup of target cache (every 10 seconds)
+            if (Time.frameCount % 600 == 0) // Assuming 60 FPS, this runs every 10 seconds
+            {
+                CleanupTargetCache();
             }
         }
 
@@ -524,6 +708,13 @@ namespace Managers
                 return;
             }
 
+            // Check if there are any available targets before starting waves
+            if (!AreTargetsAvailable())
+            {
+                Debug.Log("No buildings or NPCs available - cannot start camp wave!");
+                return;
+            }
+
             // Stop any existing wave loop
             if (waveLoopCoroutine != null)
             {
@@ -539,6 +730,14 @@ namespace Managers
         /// </summary>
         private void StartSingleWave()
         {
+            // Check if there are any available targets before starting the wave
+            if (!AreTargetsAvailable())
+            {
+                Debug.Log("No buildings or NPCs available - cannot start wave!");
+                ForceEndWavesNoTargets();
+                return;
+            }
+            
             // Trigger camp wave started event
             OnCampWaveStarted?.Invoke();
             
@@ -655,6 +854,13 @@ namespace Managers
             
             while (wavesCompletedInLoop < maxWaves)
             {
+                // Check if there are any available targets before starting the wave
+                if (!AreTargetsAvailable())
+                {
+                    Debug.Log("No buildings or NPCs available - ending wave cycle early!");
+                    break;
+                }
+                
                 // Start a single wave
                 StartSingleWave();
                 
@@ -709,6 +915,13 @@ namespace Managers
             
             while (wavesCompletedInLoop < maxWaves)
             {
+                // Check if there are any available targets before starting the wave
+                if (!AreTargetsAvailable())
+                {
+                    Debug.Log("No buildings or NPCs available - ending wave loop early!");
+                    break;
+                }
+                
                 // Start a single wave
                 StartSingleWave();
                 
@@ -732,6 +945,14 @@ namespace Managers
             // Loop complete
             Debug.Log($"Wave loop completed! Total waves: {wavesCompletedInLoop}/{maxWaves}");
             OnWaveLoopComplete?.Invoke();
+            
+            // Check if there are any available targets before starting a new loop
+            if (!AreTargetsAvailable())
+            {
+                Debug.Log("No buildings or NPCs available - stopping continuous wave loop!");
+                waveLoopCoroutine = null;
+                yield break;
+            }
             
             // Optional: Wait longer before starting a new loop
             yield return new WaitForSeconds(waveLoopDelay * 2);
@@ -781,7 +1002,7 @@ namespace Managers
             // Trigger wave cycle complete event
             OnWaveCycleComplete?.Invoke();
         }
-        
+
         /// <summary>
         /// Manually end the camp wave (for debugging)
         /// </summary>
@@ -806,6 +1027,7 @@ namespace Managers
                 if (npc != PlayerController.Instance._possessedNPC)
                 {
                     campNPCs.Add(npc);
+                    RegisterTarget(npc);
                 }
             }
             
@@ -820,6 +1042,7 @@ namespace Managers
             if (npc != null && !campNPCs.Contains(npc))
             {
                 campNPCs.Add(npc);
+                RegisterTarget(npc);
             }
         }
 
@@ -829,7 +1052,10 @@ namespace Managers
         public void RemoveNPC(HumanCharacterController npc)
         {
             if (campNPCs.Contains(npc))
+            {
                 campNPCs.Remove(npc);
+                UnregisterTarget(npc);
+            }
         }
 
         #endregion
