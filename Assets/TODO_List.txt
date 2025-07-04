@@ -3,14 +3,13 @@
 Current Testing:
 Try a full wave with turrets killing zombies
 
-
+NEXT is to just double check the below, if all is good then merge and move on.
 Have to test for building and turret:
 Construction
 Upgrade
 Repair?? (maybe not, never looked at this yet)
 Destruction
 
-TODO NEXT: Continue with the refactor of the construction and upgrading components.
 
 Setup some basic effects for the turrets
 
@@ -40,6 +39,7 @@ Figure out what happens in the camp while youre gone, does progress on stuff fre
 Swap out basic enemy animations for better ones.
 Have to review the enemy nav agent and root motion animation link because it is not good.
 Enemy animator walk types and idle is super janky, specifically around not having targets then finding a new target, need a better way of organizing that.
+Trash spawning in camp should take up spaces on the grid
 
 
 
