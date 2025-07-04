@@ -4,7 +4,12 @@ Current Testing:
 Try a full wave with turrets killing zombies
 
 
-Turrent system should upograde the same way as a building i.e. the next upgrade if avalible should be an assigned scriptable object. Also see if theres some possible refactoring to get some of this shared ubgrade/build/repair etc between buildings and turrets in some sort of base class?
+Have to test for building and turret:
+Construction
+Upgrade
+Repair?? (maybe not, never looked at this yet)
+Destruction
+
 Setup some basic effects for the turrets
 
 

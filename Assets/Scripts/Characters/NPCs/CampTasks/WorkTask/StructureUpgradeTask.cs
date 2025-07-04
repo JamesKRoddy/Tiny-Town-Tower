@@ -12,60 +12,79 @@ public class StructureUpgradeTask : WorkTask
         base.Start();
         targetStructure = GetComponent<PlaceableStructure>();
         taskAnimation = TaskAnimation.HAMMER_STANDING;
-        if (targetStructure == null)
-        {
-            Debug.LogError("StructureUpgradeTask requires a PlaceableStructure component on the same GameObject!");
-            enabled = false;
-        }
     }
 
     public void SetupUpgradeTask(PlaceableObjectParent upgradeTarget, float upgradeTime)
     {
         this.upgradeTarget = upgradeTarget;
         baseWorkTime = upgradeTime;
-        
-        // Set up required resources from the upgrade target
-        if (upgradeTarget != null)
-        {
-            requiredResources = upgradeTarget.upgradeResources;
-        }
+        requiredResources = upgradeTarget?.upgradeResources;
     }
 
-    protected override IEnumerator WorkCoroutine()
+    public void ExecuteUpgrade()
     {
-        // Consume resources
+        // Consume resources and create construction site immediately
         ConsumeResources();
-
-        // Process the upgrade
-        while (workProgress < baseWorkTime)
-        {
-            workProgress += Time.deltaTime;
-            yield return null;
-        }
-
-        CompleteWork();
+        CreateConstructionSite();
     }
 
-    protected override void CompleteWork()
+
+
+    private void CreateConstructionSite()
     {
-        if (targetStructure != null && upgradeTarget != null)
+        Vector3 position = targetStructure.transform.position;
+        Quaternion rotation = targetStructure.transform.rotation;
+
+        // Get old structure info before destroying it
+        var oldSize = targetStructure.GetStructureScriptableObj()?.size ?? new Vector2Int(1, 1);
+
+        // Get construction site prefab
+        GameObject constructionSitePrefab = CampManager.Instance.BuildManager.GetConstructionSitePrefab(upgradeTarget.size);
+        if (constructionSitePrefab == null)
         {
-            targetStructure.StartUpgrade();
+            Debug.LogError($"No construction site prefab for size {upgradeTarget.size}");
+            return;
         }
-        else
-        {
-            Debug.LogError("Structure upgrade failed: targetStructure or upgradeTarget is null");
-        }
+
+        // Create construction site
+        GameObject constructionSite = Instantiate(constructionSitePrefab, position, rotation);
         
-        base.CompleteWork();
+        // Setup construction task
+        StructureConstructionTask constructionTask = constructionSite.GetComponent<StructureConstructionTask>();
+        if (constructionTask == null)
+        {
+            constructionTask = constructionSite.AddComponent<StructureConstructionTask>();
+        }
+        constructionTask.SetupConstruction(upgradeTarget, true);
+
+        // Handle grid slots
+        CampManager.Instance.MarkSharedGridSlotsUnoccupied(position, oldSize);
+        CampManager.Instance.MarkSharedGridSlotsOccupied(position, upgradeTarget.size, constructionSite);
+
+        // Add to work manager
+        CampManager.Instance.WorkManager.AddWorkTask(constructionTask);
+
+        // Destroy the original structure
+        Destroy(targetStructure.gameObject);
     }
 
     public override bool CanPerformTask()
     {
         if (targetStructure == null || upgradeTarget == null) return false;
         
-        // Check if the structure has an upgrade target (can be upgraded)
-        return upgradeTarget != null;
+        // Check if player has required resources
+        if (requiredResources != null)
+        {
+            foreach (var resource in requiredResources)
+            {
+                if (PlayerInventory.Instance.GetItemCount(resource.resourceScriptableObj) < resource.count)
+                {
+                    return false;
+                }
+            }
+        }
+        
+        return true;
     }
 
     public override string GetTooltipText()

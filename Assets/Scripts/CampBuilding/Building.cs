@@ -27,13 +27,7 @@ public class Building : PlaceableStructure, IInteractive<Building>
 
     #endregion
 
-    #region Events
-    
-    public event System.Action OnBuildingDestroyed;
-    public event System.Action OnBuildingRepaired;
-    public event System.Action OnBuildingUpgraded;
 
-    #endregion
 
     #region Properties
     
@@ -119,8 +113,6 @@ public class Building : PlaceableStructure, IInteractive<Building>
         // Additional building-specific construction logic can go here
     }
 
-    public float GetTaskRadius() => buildingScriptableObj.taskRadius;
-
     public override bool CanInteract()
     {
         return base.CanInteract();
@@ -128,29 +120,9 @@ public class Building : PlaceableStructure, IInteractive<Building>
 
     #endregion
 
-    #region Damage & Health
-
-    public override void TakeDamage(float amount, Transform damageSource = null)
-    {
-        base.TakeDamage(amount, damageSource);
-        // Additional building-specific damage logic can go here
-    }
-
-    public override void Heal(float amount)
-    {
-        base.Heal(amount);
-        OnBuildingRepaired?.Invoke();
-    }
-
-    public override void Die()
-    {
-        OnBuildingDestroyed?.Invoke();
-        base.Die();
-    }
-
-    #endregion
-
     #region Building Operations
+
+
 
     public override void StartDestruction()
     {
@@ -192,28 +164,6 @@ public class Building : PlaceableStructure, IInteractive<Building>
         }
 
         Destroy(gameObject);
-    }
-
-    #endregion
-
-    #region Upgrade System
-
-    protected override void CompleteUpgrade()
-    {
-        OnBuildingUpgraded?.Invoke();
-        base.CompleteUpgrade();
-    }
-
-    #endregion
-
-    #region Work Task Management
-
-    public StructureRepairTask GetRepairTask() => repairTask;
-    public StructureUpgradeTask GetUpgradeTask() => upgradeTask;
-
-    public bool IsInWorkArea(Vector3 position)
-    {
-        return Vector3.Distance(position, transform.position) <= buildingScriptableObj.taskRadius;
     }
 
     #endregion
@@ -266,7 +216,6 @@ public class Building : PlaceableStructure, IInteractive<Building>
                $"Health: {currentHealth}/{MaxHealth}\n" +
                $"Repair Time: {buildingScriptableObj.repairTime} seconds\n" +
                $"Upgrade Time: {upgradeTimeText}\n" +
-               $"Task Radius: {buildingScriptableObj.taskRadius} meters\n" +
                $"Max Health: {MaxHealth}\n" +
                $"Health Restored Per Repair: {buildingScriptableObj.healthRestoredPerRepair}\n" +
                $"Upgrade Target: {buildingScriptableObj.upgradeTarget}\n";

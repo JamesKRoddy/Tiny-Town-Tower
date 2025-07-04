@@ -102,7 +102,6 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
     {
         if (GetComponent<Collider>() == null)
         {
-            Debug.LogWarning($"{gameObject.name}: Adding BoxCollider");
             gameObject.AddComponent<BoxCollider>();        
         }
     }
@@ -112,8 +111,13 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
         NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
         if (obstacle == null)
         {
-            Debug.LogWarning($"{gameObject.name}: Adding NavMeshObstacle");
             obstacle = gameObject.AddComponent<NavMeshObstacle>();
+            obstacle.carving = true;
+            obstacle.size = new Vector3(structureScriptableObj.size.x, 1.0f, structureScriptableObj.size.y);
+        }
+        else
+        {
+            // Update existing obstacle size if needed
             obstacle.carving = true;
             obstacle.size = new Vector3(structureScriptableObj.size.x, 1.0f, structureScriptableObj.size.y);
         }        
@@ -213,49 +217,21 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
                structureScriptableObj.upgradeTarget != null;
     }
 
-    public virtual void StartUpgrade()
+
+
+    public void TriggerUpgradeEvent()
     {
-        if (!CanUpgrade()) return;
-
-        StartCoroutine(UpgradeRoutine());
-    }
-
-    private IEnumerator UpgradeRoutine()
-    {
-        float upgradeTime = structureScriptableObj.upgradeTarget.constructionTime;
-        float elapsedTime = 0f;
-
-        while (elapsedTime < upgradeTime)
-        {
-            elapsedTime += Time.deltaTime;
-            yield return null;
-        }
-
-        CompleteUpgrade();
-    }
-
-    protected virtual void CompleteUpgrade()
-    {
-        if (structureScriptableObj?.upgradeTarget == null) return;
-
-        Vector3 position = transform.position;
-        Quaternion rotation = transform.rotation;
-
-        // Create the upgraded structure
-        GameObject upgradedStructure = Instantiate(structureScriptableObj.upgradeTarget.prefab, position, rotation);
-        
-        // Setup the upgraded structure
-        var placeableStructure = upgradedStructure.GetComponent<PlaceableStructure>();
-        if (placeableStructure != null)
-        {
-            placeableStructure.SetupStructure(structureScriptableObj.upgradeTarget);
-            placeableStructure.CompleteConstruction();
-        }
-
         OnStructureUpgraded?.Invoke();
-        
-        // Destroy the old structure
-        Destroy(gameObject);
+    }
+
+    public void TriggerRepairEvent()
+    {
+        OnStructureRepaired?.Invoke();
+    }
+
+    public void TriggerDestroyEvent()
+    {
+        OnStructureDestroyed?.Invoke();
     }
 
 

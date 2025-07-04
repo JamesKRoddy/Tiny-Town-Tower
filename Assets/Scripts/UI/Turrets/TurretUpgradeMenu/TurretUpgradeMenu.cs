@@ -75,7 +75,7 @@ public class TurretUpgradeMenu : MenuBase, IControllerInput
     {
         if (currentTurret != null && currentTurret.CanUpgrade())
         {
-            currentTurret.StartUpgrade();
+            //currentTurret.StartUpgrade();
             SetScreenActive(false);
         }
     }

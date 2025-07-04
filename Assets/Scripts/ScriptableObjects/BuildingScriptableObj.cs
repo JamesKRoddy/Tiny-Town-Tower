@@ -11,8 +11,5 @@ public class BuildingScriptableObj : PlaceableObjectParent
     [Header("Building Category")]
     public BuildingCategory buildingCategory;
 
-    [Header("Work Area")]
-    public float taskRadius = 2f; // Radius around the building where NPCs can work
-
     //TODO put in unlock requirements in here to check if the player is able to build this at their current level or whatever
 }

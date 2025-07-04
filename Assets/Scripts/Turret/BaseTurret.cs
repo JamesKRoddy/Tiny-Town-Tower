@@ -198,13 +198,6 @@ public abstract class BaseTurret : PlaceableStructure
     public StructureRepairTask GetRepairTask() => repairTask;
     public StructureUpgradeTask GetUpgradeTask() => upgradeTask;
 
-    #region Upgrade System
 
-    protected override void CompleteUpgrade()
-    {
-        // Additional turret-specific upgrade logic can go here
-        base.CompleteUpgrade();
-    }
 
-    #endregion
 } 

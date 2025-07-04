@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using System;
 using UnityEngine.AI;
 using Managers;
 
@@ -14,12 +13,22 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
     private PlaceableObjectParent buildingScriptableObj;
     private List<HumanCharacterController> workers = new List<HumanCharacterController>();
     private bool isConstructionComplete = false;
+    private bool isUpgradeConstruction = false;
 
     protected override void Start()
     {
         base.Start();
         AddWorkTask();
         taskAnimation = TaskAnimation.HAMMER_STANDING;
+        
+        if (buildingScriptableObj != null)
+        {
+            SetupNavMeshObstacle();
+        }
+    }
+    
+    private void SetupNavMeshObstacle()
+    {
         NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
         if (obstacle == null)
         {
@@ -31,18 +40,15 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
 
     public override void PerformTask(HumanCharacterController npc)
     {
-        // Add worker to the task
         if (!workers.Contains(npc))
         {
             workers.Add(npc);
         }
 
-        // Start the construction process if not already started
         if (!isConstructionComplete && workCoroutine == null)
         {
             workCoroutine = StartCoroutine(WorkCoroutine());
 
-            // Register electricity consumption when the task starts
             if (electricityRequired > 0)
             {
                 CampManager.Instance.ElectricityManager.RegisterBuildingConsumption(this, electricityRequired);
@@ -54,8 +60,8 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
     {
         while (workProgress < baseWorkTime && workers.Count > 0)
         {
-            float effectiveTime = baseWorkTime / workers.Count;
-            workProgress += Time.deltaTime / effectiveTime;
+            float workSpeed = Mathf.Sqrt(workers.Count);
+            workProgress += Time.deltaTime * workSpeed;
 
             if (workProgress >= baseWorkTime)
             {
@@ -69,18 +75,28 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
         CompleteWork();
     }
 
-    public void SetupConstruction(PlaceableObjectParent scriptableObj)
+    public void SetupConstruction(PlaceableObjectParent scriptableObj, bool isUpgrade = false)
     {
         this.buildingScriptableObj = scriptableObj;
+        this.isUpgradeConstruction = isUpgrade;
         finalBuildingPrefab = scriptableObj.prefab;
         baseWorkTime = scriptableObj.constructionTime;
+        
+        SetupNavMeshObstacle();
     }
 
     protected override void CompleteWork()
     {
+        // Free grid slots from construction site
+        if (CampManager.Instance != null)
+        {
+            CampManager.Instance.MarkSharedGridSlotsUnoccupied(transform.position, buildingScriptableObj.size);
+        }
+
+        // Create the new structure
         GameObject structureObj = Instantiate(finalBuildingPrefab, transform.position, Quaternion.identity);
+        PlaceableStructure structureComponent = null;
         
-        // Handle both buildings and turrets
         if (buildingScriptableObj is BuildingScriptableObj buildingSO)
         {
             Building buildingComponent = structureObj.GetComponent<Building>();
@@ -91,6 +107,7 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
             
             buildingComponent.SetupBuilding(buildingSO);
             buildingComponent.CompleteConstruction();
+            structureComponent = buildingComponent;
         }
         else if (buildingScriptableObj is TurretScriptableObject turretSO)
         {
@@ -104,15 +121,23 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
             
             turretComponent.SetupTurret(turretSO);
             turretComponent.CompleteConstruction();
+            structureComponent = turretComponent;
         }
-        else
+        
+        if (structureComponent == null)
         {
             Debug.LogError($"Unknown scriptable object type: {buildingScriptableObj.GetType()}");
             Destroy(structureObj);
             return;
         }
+        
+        // Handle upgrade-specific logic
+        if (isUpgradeConstruction)
+        {
+            structureComponent.TriggerUpgradeEvent();
+        }
 
-        // Transfer grid slot occupation from construction site to the new structure
+        // Occupy grid slots with new structure
         if (CampManager.Instance != null)
         {
             CampManager.Instance.MarkSharedGridSlotsOccupied(transform.position, buildingScriptableObj.size, structureObj);
@@ -139,18 +164,13 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
 
     public string GetInteractionText()
     {
-        return "Build " + buildingScriptableObj.name;
+        string action = isUpgradeConstruction ? "Upgrade" : "Build";
+        return $"{action} {buildingScriptableObj.objectName}";
     }
 
     public object Interact()
     {
         return this;
-    }
-
-    protected override void OnDestroy()
-    {
-        // Grid slots are now properly transferred in CompleteWork, so we don't need to free them here
-        base.OnDestroy();
     }
 }
 

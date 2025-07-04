@@ -239,6 +239,11 @@ namespace Managers
                 ResearchTask => ("Research", previewListAction),
                 CookingTask => ("Cook", previewListAction),
                 ResourceUpgradeTask => ("Upgrade Resource", previewListAction),
+                StructureUpgradeTask => ("Upgrade", () => {
+                    // Execute upgrade immediately - consume resources, destroy building, create construction site
+                    (task as StructureUpgradeTask)?.ExecuteUpgrade();
+                    CloseSelectionPopup();
+                }),
                 FarmingTask => ("Farm", () => {
                     if ((task as FarmingTask)?.IsOccupiedWithCrop() ?? false)
                     {
