@@ -210,15 +210,13 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
     public virtual bool CanUpgrade()
     {
         return structureScriptableObj != null && 
-               structureScriptableObj.upgradeTarget != null && 
-               CanAffordUpgrade();
+               structureScriptableObj.upgradeTarget != null;
     }
 
     public virtual void StartUpgrade()
     {
         if (!CanUpgrade()) return;
 
-        DeductUpgradeResources();
         StartCoroutine(UpgradeRoutine());
     }
 
@@ -260,45 +258,7 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
         Destroy(gameObject);
     }
 
-    protected virtual bool CanAffordUpgrade()
-    {
-        if (structureScriptableObj?.upgradeResources == null) return true;
 
-        foreach (var resourceCost in structureScriptableObj.upgradeResources)
-        {
-            if (resourceCost.resourceScriptableObj != null)
-            {
-                // Check if PlayerInventory exists and has the required resources
-                if (PlayerInventory.Instance != null)
-                {
-                    int playerCount = PlayerInventory.Instance.GetItemCount(resourceCost.resourceScriptableObj);
-                    if (playerCount < resourceCost.count)
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    // If PlayerInventory doesn't exist, assume we can afford it for now
-                    return true;
-                }
-            }
-        }
-        return true;
-    }
-
-    protected virtual void DeductUpgradeResources()
-    {
-        if (structureScriptableObj?.upgradeResources == null) return;
-
-        foreach (var resourceCost in structureScriptableObj.upgradeResources)
-        {
-            if (resourceCost.resourceScriptableObj != null && PlayerInventory.Instance != null)
-            {
-                PlayerInventory.Instance.RemoveItem(resourceCost.resourceScriptableObj, resourceCost.count);
-            }
-        }
-    }
 
     #endregion
 
