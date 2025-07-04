@@ -1,15 +1,11 @@
 *****Current Work*****
 
 Current Testing:
-npcs running to bunkers if avalible, NPCs entering/exiting bunkers
 Try a full wave with turrets killing zombies
 
-First start wave ui
-if there are no buildings or npcs avalible stop the waves
 
-ISSUES:
-Dont hide the UI between waves
-
+Turrent system should upograde the same way as a building i.e. the next upgrade if avalible should be an assigned scriptable object. Also see if theres some possible refactoring to get some of this shared ubgrade/build/repair etc between buildings and turrets in some sort of base class?
+Setup some basic effects for the turrets
 
 
 

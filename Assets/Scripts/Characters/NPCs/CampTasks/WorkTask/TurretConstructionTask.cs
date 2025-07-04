@@ -84,7 +84,7 @@ public class TurretConstructionTask : WorkTask, IInteractive<object>
         var baseTurret = turretObj.GetComponent<BaseTurret>();
         if (baseTurret != null)
         {
-            baseTurret.SetTurretScriptableObject(turretScriptableObj);
+            baseTurret.SetupTurret(turretScriptableObj);
         }
 
         // Transfer grid slot occupation from construction site to the new turret

@@ -12,42 +12,71 @@ public class TurretUpgradeMenu : MenuBase, IControllerInput
     [SerializeField] private RectTransform previewResourceCostParent;
     [SerializeField] private GameObject previewResourceCostPrefab;
 
-    private TurretScriptableObject currentTurret;
+    private BaseTurret currentTurret;
 
-    public void ShowUpgradeOptions(TurretScriptableObject turret)
+    public void ShowUpgradeOptions(BaseTurret turret)
     {
         currentTurret = turret;
+        var turretSO = turret.GetTurretScriptableObject();
 
         foreach (Transform child in previewResourceCostParent)
         {
             Destroy(child.gameObject);
         }
 
-        foreach (var (resourceName, requiredCount, playerCount) in GetPreviewResourceCosts(turret))
+        if (turretSO?.upgradeTarget != null)
         {
-            var resourceUI = Instantiate(previewResourceCostPrefab, previewResourceCostParent);
-            resourceUI.GetComponentInChildren<TMP_Text>().text = $"{resourceName}: {requiredCount} ({playerCount})";
+            foreach (var (resourceName, requiredCount, playerCount) in GetPreviewResourceCosts(turretSO.upgradeTarget))
+            {
+                var resourceUI = Instantiate(previewResourceCostPrefab, previewResourceCostParent);
+                resourceUI.GetComponentInChildren<TMP_Text>().text = $"{resourceName}: {requiredCount} ({playerCount})";
+            }
+
+            upgradeButton.interactable = CanUpgrade(turret);
+            upgradeButtonText.text = GetUpgradeText(turret);
         }
-
-        upgradeButton.interactable = CanUpgrade(turret);
-        upgradeButtonText.text = GetUpgradeText(turret);
+        else
+        {
+            upgradeButton.interactable = false;
+            upgradeButtonText.text = "No Upgrade Available";
+        }
     }
 
-    private bool CanUpgrade(TurretScriptableObject turret)
+    private bool CanUpgrade(BaseTurret turret)
     {
-        // Add logic to determine if the turret can be upgraded
-        return true; // Placeholder
+        return turret.CanUpgrade();
     }
 
-    private string GetUpgradeText(TurretScriptableObject turret)
+    private string GetUpgradeText(BaseTurret turret)
     {
-        // Add logic to determine upgrade button text
-        return "Upgrade Available"; // Placeholder
+        var turretSO = turret.GetTurretScriptableObject();
+        if (turretSO?.upgradeTarget != null)
+        {
+            return $"Upgrade to {turretSO.upgradeTarget.objectName}";
+        }
+        return "No Upgrade Available";
     }
 
-    private IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(TurretScriptableObject turret)
+    private IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(PlaceableObjectParent upgradeTarget)
     {
-        // Replace with actual logic to fetch resource costs
-        yield break;
+        if (upgradeTarget?.upgradeResources == null) yield break;
+
+        foreach (var resourceCost in upgradeTarget.upgradeResources)
+        {
+            if (resourceCost.resourceScriptableObj != null)
+            {
+                int playerCount = PlayerInventory.Instance?.GetItemCount(resourceCost.resourceScriptableObj) ?? 0;
+                yield return (resourceCost.resourceScriptableObj.objectName, resourceCost.count, playerCount);
+            }
+        }
+    }
+
+    public void OnUpgradeButtonClicked()
+    {
+        if (currentTurret != null && currentTurret.CanUpgrade())
+        {
+            currentTurret.StartUpgrade();
+            SetScreenActive(false);
+        }
     }
 }

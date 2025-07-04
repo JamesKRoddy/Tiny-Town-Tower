@@ -21,9 +21,7 @@ public class BuildingScriptableObj : PlaceableObjectParent
     public ResourceItemCount[] repairResources;
 
     [Header("Upgrade Parameters")]
-    public BuildingScriptableObj upgradeTarget;
-    public float upgradeTime = 30f;
-    public ResourceItemCount[] upgradeResources;
+    // Note: upgradeTarget, upgradeTime, and upgradeResources are inherited from PlaceableObjectParent
 
     [Header("Destruction Parameters")]
     public float destructionTime = 15f;

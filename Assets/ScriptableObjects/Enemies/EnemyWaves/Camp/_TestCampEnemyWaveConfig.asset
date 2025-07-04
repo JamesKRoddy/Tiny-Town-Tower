@@ -16,9 +16,8 @@ MonoBehaviour:
   - {fileID: 6477775522615659138, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
   minWaves: 2
   maxWaves: 3
-  minEnemiesPerWave: 5
-  maxEnemiesPerWave: 10
+  minEnemiesPerWave: 1
+  maxEnemiesPerWave: 2
   enemyWaveDifficulty: 0
   campWaveDifficulty: 1
   waveDuration: 15
-  allowMultipleWaves: 0

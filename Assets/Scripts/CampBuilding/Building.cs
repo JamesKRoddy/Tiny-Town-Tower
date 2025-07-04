@@ -11,7 +11,7 @@ using Enemies;
 /// </summary>
 [RequireComponent(typeof(BuildingRepairTask))]
 [RequireComponent(typeof(BuildingUpgradeTask))]
-public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
+public class Building : PlaceableStructure, IInteractive<Building>
 {
     #region Serialized Fields
     
@@ -19,9 +19,7 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
     [SerializeField] BuildingScriptableObj buildingScriptableObj;
 
     [Header("Building State")]
-    [SerializeField, ReadOnly] protected bool isOperational = false;
-    [SerializeField, ReadOnly] protected bool isUnderConstruction = true;
-    [SerializeField, ReadOnly] protected float currentHealth;
+    // Note: isOperational, isUnderConstruction, and currentHealth are inherited from PlaceableStructure
 
     [Header("Work Tasks")]
     [SerializeField, ReadOnly] protected BuildingRepairTask repairTask;
@@ -35,58 +33,34 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
     public event System.Action OnBuildingDestroyed;
     public event System.Action OnBuildingRepaired;
     public event System.Action OnBuildingUpgraded;
-    public event System.Action<float> OnHealthChanged;
-    public event Action<float, float> OnDamageTaken;
-    public event Action<float, float> OnHeal;
-    public event Action OnDeath;
 
     #endregion
 
     #region Properties
     
-    public float Health 
-    { 
-        get => currentHealth; 
-        set => currentHealth = Mathf.Clamp(value, 0, MaxHealth); 
-    }
-    
-    private float _maxHealth = 100f;
-    public float MaxHealth
+    public override float MaxHealth
     {
-        get => buildingScriptableObj != null ? buildingScriptableObj.maxHealth : _maxHealth;
+        get => buildingScriptableObj != null ? buildingScriptableObj.maxHealth : 100f;
         set
         {
-            _maxHealth = value;
             if (buildingScriptableObj != null)
                 buildingScriptableObj.maxHealth = value;
         }
     }
-    
-    public CharacterType CharacterType => CharacterType.NONE;
-    public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
 
     #endregion
 
     #region Unity Lifecycle
 
-    protected virtual void Start()
+    protected override void OnDestroy()
     {
-        // Override in derived classes if needed
-    }
-
-    protected virtual void OnDestroy()
-    {
-        // Unregister from CampManager target tracking
-        if (CampManager.Instance != null)
-        {
-            CampManager.Instance.UnregisterTarget(this);
-        }
-        
         // Free up grid slots when building is destroyed
         if (buildingScriptableObj != null && CampManager.Instance != null)
         {
             CampManager.Instance.MarkSharedGridSlotsUnoccupied(transform.position, buildingScriptableObj.size);
         }
+        
+        base.OnDestroy();
     }
 
     #endregion
@@ -96,33 +70,13 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
     public virtual void SetupBuilding(BuildingScriptableObj buildingScriptableObj)
     {
         this.buildingScriptableObj = buildingScriptableObj;
-        currentHealth = buildingScriptableObj.maxHealth;
+        base.SetupStructure(buildingScriptableObj);
+    }
 
+    protected override void OnStructureSetup()
+    {
         SetupRepairTask();
         SetupUpgradeTask();
-        SetupNavmeshObstacle();
-        SetupCollider();
-    }
-
-    private void SetupCollider()
-    {
-        if (GetComponent<Collider>() == null)
-        {
-            Debug.LogWarning($"{gameObject.name}: Adding BoxCollider");
-            gameObject.AddComponent<BoxCollider>();        
-        }
-    }
-
-    private void SetupNavmeshObstacle()
-    {
-        NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
-        if (obstacle == null)
-        {
-            Debug.LogWarning($"{gameObject.name}: Adding NavMeshObstacle");
-            obstacle = gameObject.AddComponent<NavMeshObstacle>();
-            obstacle.carving = true;
-            obstacle.size = new Vector3(buildingScriptableObj.size.x, 1.0f, buildingScriptableObj.size.y);
-        }        
     }
 
     private void SetupRepairTask()
@@ -149,104 +103,70 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
         }
         upgradeTask.transform.position = transform.position;
         
-        upgradeTask.SetupUpgradeTask(
-            buildingScriptableObj.upgradeTarget,
-            buildingScriptableObj.upgradeTime
-        );
+        // Cast the upgrade target to BuildingScriptableObj since we know it's a building
+        if (buildingScriptableObj.upgradeTarget is BuildingScriptableObj upgradeTarget)
+        {
+            upgradeTask.SetupUpgradeTask(upgradeTarget, buildingScriptableObj.upgradeTime);
+        }
+        else if (buildingScriptableObj.upgradeTarget != null)
+        {
+            Debug.LogWarning($"Building upgrade target is not a BuildingScriptableObj: {buildingScriptableObj.upgradeTarget.GetType()}");
+        }
     }
 
     #endregion
 
     #region Building State Management
 
-    public virtual void CompleteConstruction()
+    public override void CompleteConstruction()
     {
-        isUnderConstruction = false;
-        isOperational = true;
-        
-        // Register with CampManager for target tracking
-        if (CampManager.Instance != null)
-        {
-            CampManager.Instance.RegisterTarget(this);
-        }
+        base.CompleteConstruction();
+        // Additional building-specific construction logic can go here
     }
 
-    public bool IsOperational() => isOperational;
-    public bool IsUnderConstruction() => isUnderConstruction;
-    public float GetHealthPercentage() => currentHealth / MaxHealth;
-    public float GetCurrentHealth() => currentHealth;
-    public float GetMaxHealth() => MaxHealth;
     public float GetTaskRadius() => buildingScriptableObj.taskRadius;
 
-    public bool CanInteract()
+    public override bool CanInteract()
     {
-        return !isUnderConstruction && isOperational;
+        return base.CanInteract();
     }
 
     #endregion
 
     #region Damage & Health
 
-    public virtual void TakeDamage(float amount, Transform damageSource = null)
+    public override void TakeDamage(float amount, Transform damageSource = null)
     {
-        float previousHealth = currentHealth;
-        currentHealth = Mathf.Max(0, currentHealth - amount);
-        
-        OnDamageTaken?.Invoke(amount, currentHealth);
-        OnHealthChanged?.Invoke(currentHealth / MaxHealth);
-        
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
+        base.TakeDamage(amount, damageSource);
+        // Additional building-specific damage logic can go here
     }
 
-    public virtual void Heal(float amount)
+    public override void Heal(float amount)
     {
-        float previousHealth = currentHealth;
-        currentHealth = Mathf.Min(MaxHealth, currentHealth + amount);
-        
-        OnHeal?.Invoke(amount, currentHealth);
-        OnHealthChanged?.Invoke(currentHealth / MaxHealth);
+        base.Heal(amount);
         OnBuildingRepaired?.Invoke();
     }
 
-    public void Die()
-    {
-        OnDeath?.Invoke();
-        DestroyBuilding();
-    }
-
-    protected virtual void DestroyBuilding()
+    public override void Die()
     {
         OnBuildingDestroyed?.Invoke();
-        EnemyBase.NotifyTargetDestroyed(transform);
-        Destroy(gameObject);
+        base.Die();
     }
 
     #endregion
 
     #region Building Operations
 
+    // Note: Upgrade functionality is now handled by the base PlaceableStructure class
+    // This method is kept for backward compatibility but delegates to the base class
     public virtual void Upgrade(BuildingScriptableObj newBuildingData)
     {
-        Vector3 position = transform.position;
-        Quaternion rotation = transform.rotation;
-
-        Destroy(gameObject);
-
-        GameObject newBuilding = Instantiate(newBuildingData.prefab, position, rotation);
-        Building buildingComponent = newBuilding.GetComponent<Building>();
-        if (buildingComponent != null)
-        {
-            buildingComponent.SetupBuilding(newBuildingData);
-            buildingComponent.CompleteConstruction();
-        }
-
+        // The base class handles upgrades through scriptable objects
+        // This method can be used for building-specific upgrade logic if needed
         OnBuildingUpgraded?.Invoke();
     }
 
-    public virtual void StartDestruction()
+    public override void StartDestruction()
     {
         UnassignWorkers();
 
@@ -310,8 +230,10 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
 
     #region Interaction
 
-    public virtual string GetInteractionText()
+    public override string GetInteractionText()
     {
+        string baseText = base.GetInteractionText();
+        
         if (isUnderConstruction) return "Building under construction";
         if (!isOperational) return "Building not operational";
         
@@ -320,6 +242,8 @@ public class Building : MonoBehaviour, IInteractive<Building>, IDamageable
             text += "- Repair\n";
         if (upgradeTask != null && upgradeTask.CanPerformTask())
             text += "- Upgrade\n";
+        if (CanUpgrade())
+            text += "- Upgrade to Next Level\n";
         return text;
     }
 

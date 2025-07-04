@@ -1,27 +1,11 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using Enemies;
 using Managers;
 
-[System.Serializable]
-public class UpgradeData
-{
-    public float damageIncrease = 5;
-    public float rangeIncrease = 2f;
-    public float fireRateIncrease = 0.5f;
-    public float turretTurnSpeedIncrease = 0.25f;
-    public int upgradeCost = 50;
-    public float upgradeTime = 5f;
-    public int costIncrease = 50;
-    public string description = "Upgrade the turret for increased stats.";
-}
-
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(Rigidbody))]
-public abstract class BaseTurret : MonoBehaviour, IDamageable
+public abstract class BaseTurret : PlaceableStructure
 {
     [Header("Turret Settings")]
     public float damage = 10f;
@@ -30,41 +14,28 @@ public abstract class BaseTurret : MonoBehaviour, IDamageable
     public float turretTurnSpeed = 5f;
     public Transform turretTop;
     public Transform firePoint;
-    public UpgradeData upgradeData;
 
     [Header("Turret Configuration")]
     [SerializeField] protected TurretScriptableObject turretScriptableObj;
 
-    [Header("Health System")]
-    [SerializeField] private float health = 100f;
-    [SerializeField] private float maxHealth = 100f;
-
-    // Events for damage system
-    public event Action<float, float> OnDamageTaken;
-    public event Action<float, float> OnHeal;
-    public event Action OnDeath;
-
     private float fireCooldown = 0f;
     private EnemyBase target;
     private List<EnemyBase> enemiesInRange = new List<EnemyBase>();
-    private bool isUpgrading = false;
 
-    private void Start()
+    protected override void Start()
     {
-        //upgradeButton.onClick.AddListener(StartUpgrade);
+        base.Start();
         
         // Register with CampManager for target tracking
-        if (Managers.CampManager.Instance != null)
+        if (CampManager.Instance != null)
         {
-            Managers.CampManager.Instance.RegisterTarget(this);
+            CampManager.Instance.RegisterTarget(this);
         }
     }
 
     private void Update()
     {
-        if (isUpgrading) return;
-
-        if(enemiesInRange.Count > 0 )
+        if (enemiesInRange.Count > 0)
             UpdateTarget();
 
         if (target != null)
@@ -131,51 +102,30 @@ public abstract class BaseTurret : MonoBehaviour, IDamageable
 
     protected abstract void Fire();
 
-    private void StartUpgrade()
+    public void SetupTurret(TurretScriptableObject turretSO)
     {
-        if (isUpgrading || !CanAffordUpgrade()) return;
-
-        DeductResource(upgradeData.upgradeCost);
-        StartCoroutine(UpgradeRoutine());
+        this.turretScriptableObj = turretSO;
+        
+        // Set turret stats from scriptable object
+        damage = turretSO.damage;
+        range = turretSO.range;
+        fireRate = turretSO.fireRate;
+        turretTurnSpeed = turretSO.turretTurnSpeed;
+        
+        base.SetupStructure(turretSO);
     }
 
-    private IEnumerator UpgradeRoutine()
+    protected override void OnStructureSetup()
     {
-        isUpgrading = true;
-        //upgradeButton.interactable = false;
-        //upgradeButtonText.text = "Upgrading...";
-
-        yield return new WaitForSeconds(upgradeData.upgradeTime);
-
-        UpgradeTurret();
-        isUpgrading = false;
-        //upgradeButton.interactable = true;
-        //upgradeButtonText.text = "Upgrade";
-    }
-
-    protected virtual void UpgradeTurret()
-    {
-        range += upgradeData.rangeIncrease;
-        fireRate += upgradeData.fireRateIncrease;
-        upgradeData.upgradeCost += upgradeData.costIncrease;
-    }
-
-    protected virtual bool CanAffordUpgrade()
-    {
-        //TODO figure out cost system, maybe use specific resources to upgrade specific turrets eg. electric components for tech turrets
-        return true;
-        //return GoldManager.Instance.HasEnoughGold(upgradeData.upgradeCost);
-    }
-
-    protected virtual void DeductResource(int amount) 
-    {
-        //TODO figure out cost system, maybe use specific resources to upgrade specific turrets eg. electric components for tech turrets
-        //GoldManager.Instance.DeductGold(amount);
-    }
-
-    internal void SetupTurret()
-    {
-        //TODO setup turret
+        // Additional turret-specific setup can be done here
+        if (turretScriptableObj != null)
+        {
+            // Set turret stats from scriptable object
+            damage = turretScriptableObj.damage;
+            range = turretScriptableObj.range;
+            fireRate = turretScriptableObj.fireRate;
+            turretTurnSpeed = turretScriptableObj.turretTurnSpeed;
+        }
     }
 
     public void SetTurretScriptableObject(TurretScriptableObject turretSO)
@@ -183,78 +133,22 @@ public abstract class BaseTurret : MonoBehaviour, IDamageable
         turretScriptableObj = turretSO;
     }
 
-    protected virtual void OnDestroy()
+    public override string GetInteractionText()
     {
-        // Unregister from CampManager target tracking
-        if (Managers.CampManager.Instance != null)
-        {
-            Managers.CampManager.Instance.UnregisterTarget(this);
-        }
+        if (IsUnderConstruction()) return "Turret under construction";
+        if (!IsOperational()) return "Turret not operational";
         
-        // Free up grid slots when turret is destroyed
-        if (turretScriptableObj != null && Managers.CampManager.Instance != null)
-        {
-            Managers.CampManager.Instance.MarkSharedGridSlotsUnoccupied(transform.position, turretScriptableObj.size);
-        }
+        string text = "Turret Options:\n";
+        if (CanUpgrade())
+            text += "- Upgrade to Next Level\n";
+        text += $"- Damage: {damage}\n";
+        text += $"- Range: {range}\n";
+        text += $"- Fire Rate: {fireRate}\n";
+        return text;
     }
 
-    #region IDamageable Interface Implementation
-
-    public float Health 
-    { 
-        get => health; 
-        set => health = Mathf.Clamp(value, 0, maxHealth); 
-    }
-    
-    public float MaxHealth 
-    { 
-        get => maxHealth; 
-        set => maxHealth = value; 
-    }
-    
-    public CharacterType CharacterType => CharacterType.NONE;
-    
-    public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
-
-    public virtual void TakeDamage(float amount, Transform damageSource = null)
+    public TurretScriptableObject GetTurretScriptableObject()
     {
-        float previousHealth = health;
-        health = Mathf.Max(0, health - amount);
-        
-        OnDamageTaken?.Invoke(amount, health);
-        
-        // Play hit VFX
-        Vector3 hitPoint = transform.position + Vector3.up * 1.5f;
-        Vector3 hitNormal = damageSource != null 
-            ? (transform.position - damageSource.position).normalized 
-            : Vector3.up;
-        EffectManager.Instance?.PlayHitEffect(hitPoint, hitNormal, this);
-        
-        if (health <= 0)
-        {
-            Die();
-        }
+        return turretScriptableObj;
     }
-
-    public virtual void Heal(float amount)
-    {
-        float previousHealth = health;
-        health = Mathf.Min(maxHealth, health + amount);
-        
-        OnHeal?.Invoke(amount, health);
-    }
-
-    public virtual void Die()
-    {
-        Debug.Log($"{gameObject.name} turret has been destroyed!");
-        OnDeath?.Invoke();
-        
-        // Notify all enemies that this turret was destroyed
-        EnemyBase.NotifyTargetDestroyed(transform);
-        
-        // Destroy the turret
-        Destroy(gameObject);
-    }
-
-    #endregion
-}
+} 

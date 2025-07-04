@@ -82,13 +82,10 @@ public class WallBuilding : Building
         UpdateWallVisuals();
     }
     
-    protected override void DestroyBuilding()
+    public override void Die()
     {
         // Mark as being destroyed to prevent targeting
         isBeingDestroyed = true;
-        
-        // Call base destruction
-        base.DestroyBuilding();
         
         // Wall-specific destruction logic
         OnWallDestroyed?.Invoke(this);
@@ -106,6 +103,9 @@ public class WallBuilding : Building
         }
         
         Debug.Log($"Wall at {transform.position} has been destroyed!");
+        
+        // Call base Die method to handle building destruction
+        base.Die();
     }
     
     private System.Collections.IEnumerator UpdateNavMeshAfterDestruction()

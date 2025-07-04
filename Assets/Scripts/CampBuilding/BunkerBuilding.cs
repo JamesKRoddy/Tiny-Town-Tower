@@ -106,16 +106,16 @@ public class BunkerBuilding : Building
     }
 
     /// <summary>
-    /// Override DestroyBuilding to evacuate NPCs when bunker is destroyed
+    /// Override Die to evacuate NPCs when bunker is destroyed
     /// </summary>
-    protected override void DestroyBuilding()
+    public override void Die()
     {
         // Evacuate all NPCs before destroying the bunker
         EvacuateAll();
         Debug.LogWarning("Bunker destroyed! All NPCs evacuated.");
         
-        // Call base DestroyBuilding method to handle building destruction
-        base.DestroyBuilding();
+        // Call base Die method to handle building destruction
+        base.Die();
     }
 
     public override string GetInteractionText()

@@ -3029,16 +3029,18 @@ MonoBehaviour:
   movementSpeed: 3.5
   acceleration: 8
   angularSpeed: 120
+  obstacleBoundsOffset: 1
   health: 100
   maxHealth: 100
   attackRange: 2
   attackCooldown: 1.5
   approachDistance: 3
-  meleeDamage: 50
+  meleeDamage: 5
   meleeAttackRadius: 1.5
   targetLayer:
     serializedVersion: 2
     m_Bits: 0
+  buildingAttackRange: 5
 --- !u!1 &6616253873932381118
 GameObject:
   m_ObjectHideFlags: 0
