@@ -18,7 +18,6 @@ public class PlaceableObjectParent : WorldItemBase
     
     [Header("Upgrade Parameters")]
     public PlaceableObjectParent upgradeTarget;
-    public float upgradeTime = 30f; // Time to perform the upgrade
     public ResourceItemCount[] upgradeResources;    
 
     [Header("Destruction Parameters")]

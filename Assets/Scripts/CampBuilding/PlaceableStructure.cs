@@ -224,7 +224,7 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
 
     private IEnumerator UpgradeRoutine()
     {
-        float upgradeTime = structureScriptableObj.upgradeTime;
+        float upgradeTime = structureScriptableObj.upgradeTarget.constructionTime;
         float elapsedTime = 0f;
 
         while (elapsedTime < upgradeTime)

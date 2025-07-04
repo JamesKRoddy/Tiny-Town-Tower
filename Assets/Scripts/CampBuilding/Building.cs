@@ -105,7 +105,7 @@ public class Building : PlaceableStructure, IInteractive<Building>
         // Set up the upgrade task with the upgrade target
         if (buildingScriptableObj.upgradeTarget != null)
         {
-            upgradeTask.SetupUpgradeTask(buildingScriptableObj.upgradeTarget, buildingScriptableObj.upgradeTime);
+            upgradeTask.SetupUpgradeTask(buildingScriptableObj.upgradeTarget, buildingScriptableObj.upgradeTarget.constructionTime);
         }
     }
 
@@ -258,10 +258,14 @@ public class Building : PlaceableStructure, IInteractive<Building>
 
     internal string GetBuildingStatsText()
     {
+        string upgradeTimeText = buildingScriptableObj.upgradeTarget != null 
+            ? $"{buildingScriptableObj.upgradeTarget.constructionTime} seconds" 
+            : "N/A";
+            
         return $"Building Stats:\n" +
                $"Health: {currentHealth}/{MaxHealth}\n" +
                $"Repair Time: {buildingScriptableObj.repairTime} seconds\n" +
-               $"Upgrade Time: {buildingScriptableObj.upgradeTime} seconds\n" +
+               $"Upgrade Time: {upgradeTimeText}\n" +
                $"Task Radius: {buildingScriptableObj.taskRadius} meters\n" +
                $"Max Health: {MaxHealth}\n" +
                $"Health Restored Per Repair: {buildingScriptableObj.healthRestoredPerRepair}\n" +
