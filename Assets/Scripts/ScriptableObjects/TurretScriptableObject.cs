@@ -12,9 +12,5 @@ public class TurretScriptableObject : PlaceableObjectParent
     public float range = 10f;
     public float fireRate = 1f;
     public float turretTurnSpeed = 5f;
-    public float maxHealth = 100f;
-
-    [Header("Turret Construction")]
-    public float constructionTime = 3f;
 }
 

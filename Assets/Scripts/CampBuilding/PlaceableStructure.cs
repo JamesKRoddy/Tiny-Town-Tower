@@ -21,6 +21,7 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
     [SerializeField, ReadOnly] protected bool isOperational = false;
     [SerializeField, ReadOnly] protected bool isUnderConstruction = true;
     [SerializeField, ReadOnly] protected float currentHealth;
+    [SerializeField, ReadOnly] protected WorkTask currentWorkTask;
 
     #endregion
 
@@ -52,6 +53,7 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
     
     public CharacterType CharacterType => CharacterType.NONE;
     public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
+    public WorkTask GetCurrentWorkTask() => currentWorkTask;
 
     #endregion
 
@@ -192,6 +194,15 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
         Destroy(gameObject);
     }
 
+    #endregion
+
+    #region Work Task Management
+    
+    public virtual void SetCurrentWorkTask(WorkTask workTask)
+    {
+        currentWorkTask = workTask;
+    }
+    
     #endregion
 
     #region Upgrade System

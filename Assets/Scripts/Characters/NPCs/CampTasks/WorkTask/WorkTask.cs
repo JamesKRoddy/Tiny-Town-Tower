@@ -31,11 +31,11 @@ public abstract class WorkTask : MonoBehaviour
     public virtual bool IsTaskCompleted => true; // Base WorkTask is always completed when done
     public virtual bool HasQueuedTasks => false; // Base WorkTask has no queue
 
-    private Building taskBuilding;
+    private PlaceableStructure taskStructure;
 
     protected virtual void Start()
     {
-        taskBuilding = GetComponent<Building>();
+        taskStructure = GetComponent<PlaceableStructure>();
     }
 
     // Virtual method for tooltip text
@@ -191,9 +191,9 @@ public abstract class WorkTask : MonoBehaviour
     public void AssignNPC(HumanCharacterController npc)
     {
         currentWorker = npc;
-        if(taskBuilding != null)
+        if(taskStructure != null)
         {
-            taskBuilding.SetCurrentWorkTask(this);
+            taskStructure.SetCurrentWorkTask(this);
         }
     }
 
@@ -201,9 +201,9 @@ public abstract class WorkTask : MonoBehaviour
     public void UnassignNPC()
     {
         currentWorker = null;
-        if(taskBuilding != null)
+        if(taskStructure != null)
         {
-            taskBuilding.SetCurrentWorkTask(null);
+            taskStructure.SetCurrentWorkTask(null);
         }
     }
 

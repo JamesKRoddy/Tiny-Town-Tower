@@ -2,27 +2,33 @@ using UnityEngine;
 using System.Collections;
 using Managers;
 
-public class BuildingUpgradeTask : WorkTask
+public class StructureUpgradeTask : WorkTask
 {
-    private BuildingScriptableObj upgradeTarget;
-    private Building targetBuilding;
+    private PlaceableObjectParent upgradeTarget;
+    private PlaceableStructure targetStructure;
 
     protected override void Start()
     {
         base.Start();
-        targetBuilding = GetComponent<Building>();
+        targetStructure = GetComponent<PlaceableStructure>();
         taskAnimation = TaskAnimation.HAMMER_STANDING;
-        if (targetBuilding == null)
+        if (targetStructure == null)
         {
-            Debug.LogError("BuildingUpgradeTask requires a Building component on the same GameObject!");
+            Debug.LogError("StructureUpgradeTask requires a PlaceableStructure component on the same GameObject!");
             enabled = false;
         }
     }
 
-    public void SetupUpgradeTask(BuildingScriptableObj upgradeTarget, float upgradeTime)
+    public void SetupUpgradeTask(PlaceableObjectParent upgradeTarget, float upgradeTime)
     {
         this.upgradeTarget = upgradeTarget;
         baseWorkTime = upgradeTime;
+        
+        // Set up required resources from the upgrade target
+        if (upgradeTarget != null)
+        {
+            requiredResources = upgradeTarget.upgradeResources;
+        }
     }
 
     protected override IEnumerator WorkCoroutine()
@@ -42,13 +48,13 @@ public class BuildingUpgradeTask : WorkTask
 
     protected override void CompleteWork()
     {
-        if (targetBuilding != null && upgradeTarget != null)
+        if (targetStructure != null && upgradeTarget != null)
         {
-            targetBuilding.Upgrade(upgradeTarget);
+            targetStructure.StartUpgrade();
         }
         else
         {
-            Debug.LogError("Building upgrade failed: targetBuilding or upgradeTarget is null");
+            Debug.LogError("Structure upgrade failed: targetStructure or upgradeTarget is null");
         }
         
         base.CompleteWork();
@@ -56,9 +62,9 @@ public class BuildingUpgradeTask : WorkTask
 
     public override bool CanPerformTask()
     {
-        if (targetBuilding == null || upgradeTarget == null) return false;
+        if (targetStructure == null || upgradeTarget == null) return false;
         
-        // Check if the building has an upgrade target (can be upgraded)
+        // Check if the structure has an upgrade target (can be upgraded)
         return upgradeTarget != null;
     }
 

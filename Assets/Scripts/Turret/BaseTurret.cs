@@ -5,6 +5,8 @@ using Managers;
 
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(StructureRepairTask))]
+[RequireComponent(typeof(StructureUpgradeTask))]
 public abstract class BaseTurret : PlaceableStructure
 {
     [Header("Turret Settings")]
@@ -17,6 +19,10 @@ public abstract class BaseTurret : PlaceableStructure
 
     [Header("Turret Configuration")]
     [SerializeField] protected TurretScriptableObject turretScriptableObj;
+
+    [Header("Work Tasks")]
+    [SerializeField, ReadOnly] protected StructureRepairTask repairTask;
+    [SerializeField, ReadOnly] protected StructureUpgradeTask upgradeTask;
 
     private float fireCooldown = 0f;
     private EnemyBase target;
@@ -117,14 +123,47 @@ public abstract class BaseTurret : PlaceableStructure
 
     protected override void OnStructureSetup()
     {
-        // Additional turret-specific setup can be done here
+        SetupRepairTask();
+        SetupUpgradeTask();
+        
+        // Set turret stats from scriptable object
         if (turretScriptableObj != null)
         {
-            // Set turret stats from scriptable object
             damage = turretScriptableObj.damage;
             range = turretScriptableObj.range;
             fireRate = turretScriptableObj.fireRate;
             turretTurnSpeed = turretScriptableObj.turretTurnSpeed;
+        }
+    }
+
+    private void SetupRepairTask()
+    {
+        repairTask = GetComponent<StructureRepairTask>();
+        if (repairTask == null)
+        {
+            repairTask = gameObject.AddComponent<StructureRepairTask>();
+        }
+        repairTask.transform.position = transform.position;
+        
+        repairTask.SetupRepairTask(
+            turretScriptableObj.repairTime,
+            turretScriptableObj.healthRestoredPerRepair
+        );
+    }
+
+    private void SetupUpgradeTask()
+    {
+        upgradeTask = GetComponent<StructureUpgradeTask>();
+        if (upgradeTask == null)
+        {
+            upgradeTask = gameObject.AddComponent<StructureUpgradeTask>();
+        }
+        upgradeTask.transform.position = transform.position;
+        
+        // Set up the upgrade task with the upgrade target
+        if (turretScriptableObj.upgradeTarget != null)
+        {
+            upgradeTask.SetupUpgradeTask(turretScriptableObj.upgradeTarget, turretScriptableObj.upgradeTime);
         }
     }
 
@@ -139,6 +178,10 @@ public abstract class BaseTurret : PlaceableStructure
         if (!IsOperational()) return "Turret not operational";
         
         string text = "Turret Options:\n";
+        if (repairTask != null && repairTask.CanPerformTask())
+            text += "- Repair\n";
+        if (upgradeTask != null && upgradeTask.CanPerformTask())
+            text += "- Upgrade\n";
         if (CanUpgrade())
             text += "- Upgrade to Next Level\n";
         text += $"- Damage: {damage}\n";
@@ -151,4 +194,17 @@ public abstract class BaseTurret : PlaceableStructure
     {
         return turretScriptableObj;
     }
+
+    public StructureRepairTask GetRepairTask() => repairTask;
+    public StructureUpgradeTask GetUpgradeTask() => upgradeTask;
+
+    #region Upgrade System
+
+    protected override void CompleteUpgrade()
+    {
+        // Additional turret-specific upgrade logic can go here
+        base.CompleteUpgrade();
+    }
+
+    #endregion
 } 

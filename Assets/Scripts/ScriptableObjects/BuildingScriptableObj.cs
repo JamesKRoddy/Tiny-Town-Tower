@@ -11,22 +11,6 @@ public class BuildingScriptableObj : PlaceableObjectParent
     [Header("Building Category")]
     public BuildingCategory buildingCategory;
 
-    [Header("Construction Parameters")]
-    public float constructionTime = 10.0f;
-
-    [Header("Health Parameters")]
-    public float maxHealth = 100f;
-    public float repairTime = 20f;
-    public float healthRestoredPerRepair = 50f;
-    public ResourceItemCount[] repairResources;
-
-    [Header("Upgrade Parameters")]
-    // Note: upgradeTarget, upgradeTime, and upgradeResources are inherited from PlaceableObjectParent
-
-    [Header("Destruction Parameters")]
-    public float destructionTime = 15f;
-    public ResourceItemCount[] reclaimedResources;
-
     [Header("Work Area")]
     public float taskRadius = 2f; // Radius around the building where NPCs can work
 

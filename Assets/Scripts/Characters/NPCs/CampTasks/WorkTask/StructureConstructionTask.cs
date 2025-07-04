@@ -8,10 +8,10 @@ using Managers;
 /// <summary>
 /// Used by construction sites to build buildings.
 /// </summary>
-public class ConstructionTask : WorkTask, IInteractive<object>
+public class StructureConstructionTask : WorkTask, IInteractive<object>
 {
     private GameObject finalBuildingPrefab;
-    private BuildingScriptableObj buildingScriptableObj;
+    private PlaceableObjectParent buildingScriptableObj;
     private List<HumanCharacterController> workers = new List<HumanCharacterController>();
     private bool isConstructionComplete = false;
 
@@ -69,29 +69,53 @@ public class ConstructionTask : WorkTask, IInteractive<object>
         CompleteWork();
     }
 
-    public void SetupConstruction(BuildingScriptableObj buildingScriptableObj)
+    public void SetupConstruction(PlaceableObjectParent scriptableObj)
     {
-        this.buildingScriptableObj = buildingScriptableObj;
-        finalBuildingPrefab = buildingScriptableObj.prefab;
-        baseWorkTime = buildingScriptableObj.constructionTime;
+        this.buildingScriptableObj = scriptableObj;
+        finalBuildingPrefab = scriptableObj.prefab;
+        baseWorkTime = scriptableObj.constructionTime;
     }
 
     protected override void CompleteWork()
     {
-        GameObject buildingObj = Instantiate(finalBuildingPrefab, transform.position, Quaternion.identity);
-        Building buildingComponent = buildingObj.GetComponent<Building>();
-        if (buildingComponent == null)
-        {
-            buildingComponent = buildingObj.AddComponent<Building>();
-        }
+        GameObject structureObj = Instantiate(finalBuildingPrefab, transform.position, Quaternion.identity);
         
-        buildingComponent.SetupBuilding(buildingScriptableObj); //Enable all the tasks here
-        buildingComponent.CompleteConstruction();
+        // Handle both buildings and turrets
+        if (buildingScriptableObj is BuildingScriptableObj buildingSO)
+        {
+            Building buildingComponent = structureObj.GetComponent<Building>();
+            if (buildingComponent == null)
+            {
+                buildingComponent = structureObj.AddComponent<Building>();
+            }
+            
+            buildingComponent.SetupBuilding(buildingSO);
+            buildingComponent.CompleteConstruction();
+        }
+        else if (buildingScriptableObj is TurretScriptableObject turretSO)
+        {
+            BaseTurret turretComponent = structureObj.GetComponent<BaseTurret>();
+            if (turretComponent == null)
+            {
+                Debug.LogError($"Turret prefab {finalBuildingPrefab.name} must have a BaseTurret component!");
+                Destroy(structureObj);
+                return;
+            }
+            
+            turretComponent.SetupTurret(turretSO);
+            turretComponent.CompleteConstruction();
+        }
+        else
+        {
+            Debug.LogError($"Unknown scriptable object type: {buildingScriptableObj.GetType()}");
+            Destroy(structureObj);
+            return;
+        }
 
-        // Transfer grid slot occupation from construction site to the new building
+        // Transfer grid slot occupation from construction site to the new structure
         if (CampManager.Instance != null)
         {
-            CampManager.Instance.MarkSharedGridSlotsOccupied(transform.position, buildingScriptableObj.size, buildingObj);
+            CampManager.Instance.MarkSharedGridSlotsOccupied(transform.position, buildingScriptableObj.size, structureObj);
         }
 
         Destroy(gameObject);

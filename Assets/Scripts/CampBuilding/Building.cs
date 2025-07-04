@@ -9,8 +9,8 @@ using Enemies;
 /// <summary>
 /// Base class for all buildings in the camp. Handles construction, damage, repair, and upgrade functionality.
 /// </summary>
-[RequireComponent(typeof(BuildingRepairTask))]
-[RequireComponent(typeof(BuildingUpgradeTask))]
+[RequireComponent(typeof(StructureRepairTask))]
+[RequireComponent(typeof(StructureUpgradeTask))]
 public class Building : PlaceableStructure, IInteractive<Building>
 {
     #region Serialized Fields
@@ -22,9 +22,8 @@ public class Building : PlaceableStructure, IInteractive<Building>
     // Note: isOperational, isUnderConstruction, and currentHealth are inherited from PlaceableStructure
 
     [Header("Work Tasks")]
-    [SerializeField, ReadOnly] protected BuildingRepairTask repairTask;
-    [SerializeField, ReadOnly] protected BuildingUpgradeTask upgradeTask;
-    [SerializeField, ReadOnly] protected WorkTask currentWorkTask;
+    [SerializeField, ReadOnly] protected StructureRepairTask repairTask;
+    [SerializeField, ReadOnly] protected StructureUpgradeTask upgradeTask;
 
     #endregion
 
@@ -81,10 +80,10 @@ public class Building : PlaceableStructure, IInteractive<Building>
 
     private void SetupRepairTask()
     {
-        repairTask = GetComponent<BuildingRepairTask>();
+        repairTask = GetComponent<StructureRepairTask>();
         if (repairTask == null)
         {
-            repairTask = gameObject.AddComponent<BuildingRepairTask>();
+            repairTask = gameObject.AddComponent<StructureRepairTask>();
         }
         repairTask.transform.position = transform.position;
         
@@ -96,21 +95,17 @@ public class Building : PlaceableStructure, IInteractive<Building>
 
     private void SetupUpgradeTask()
     {
-        upgradeTask = GetComponent<BuildingUpgradeTask>();
+        upgradeTask = GetComponent<StructureUpgradeTask>();
         if (upgradeTask == null)
         {
-            upgradeTask = gameObject.AddComponent<BuildingUpgradeTask>();
+            upgradeTask = gameObject.AddComponent<StructureUpgradeTask>();
         }
         upgradeTask.transform.position = transform.position;
         
-        // Cast the upgrade target to BuildingScriptableObj since we know it's a building
-        if (buildingScriptableObj.upgradeTarget is BuildingScriptableObj upgradeTarget)
+        // Set up the upgrade task with the upgrade target
+        if (buildingScriptableObj.upgradeTarget != null)
         {
-            upgradeTask.SetupUpgradeTask(upgradeTarget, buildingScriptableObj.upgradeTime);
-        }
-        else if (buildingScriptableObj.upgradeTarget != null)
-        {
-            Debug.LogWarning($"Building upgrade target is not a BuildingScriptableObj: {buildingScriptableObj.upgradeTarget.GetType()}");
+            upgradeTask.SetupUpgradeTask(buildingScriptableObj.upgradeTarget, buildingScriptableObj.upgradeTime);
         }
     }
 
@@ -157,15 +152,6 @@ public class Building : PlaceableStructure, IInteractive<Building>
 
     #region Building Operations
 
-    // Note: Upgrade functionality is now handled by the base PlaceableStructure class
-    // This method is kept for backward compatibility but delegates to the base class
-    public virtual void Upgrade(BuildingScriptableObj newBuildingData)
-    {
-        // The base class handles upgrades through scriptable objects
-        // This method can be used for building-specific upgrade logic if needed
-        OnBuildingUpgraded?.Invoke();
-    }
-
     public override void StartDestruction()
     {
         UnassignWorkers();
@@ -193,8 +179,8 @@ public class Building : PlaceableStructure, IInteractive<Building>
     {
         GameObject destructionTaskObj = Instantiate(destructionPrefab, transform.position, transform.rotation);
         
-        BuildingDestructionTask destructionTask = destructionTaskObj.AddComponent<BuildingDestructionTask>();
-        destructionTask.SetupDestructionTask(this);
+        StructureDestructionTask destructionTask = destructionTaskObj.AddComponent<StructureDestructionTask>();
+        destructionTask.SetupDestructionTask(this as PlaceableStructure);
 
         if (CampManager.Instance != null)
         {
@@ -210,16 +196,20 @@ public class Building : PlaceableStructure, IInteractive<Building>
 
     #endregion
 
+    #region Upgrade System
+
+    protected override void CompleteUpgrade()
+    {
+        OnBuildingUpgraded?.Invoke();
+        base.CompleteUpgrade();
+    }
+
+    #endregion
+
     #region Work Task Management
 
-    public BuildingRepairTask GetRepairTask() => repairTask;
-    public BuildingUpgradeTask GetUpgradeTask() => upgradeTask;
-    public WorkTask GetCurrentWorkTask() => currentWorkTask;
-
-    public void SetCurrentWorkTask(WorkTask workTask)
-    {
-        currentWorkTask = workTask;
-    }
+    public StructureRepairTask GetRepairTask() => repairTask;
+    public StructureUpgradeTask GetUpgradeTask() => upgradeTask;
 
     public bool IsInWorkArea(Vector3 position)
     {

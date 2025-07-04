@@ -48,7 +48,7 @@ namespace Managers
         }
 
         protected GameObject currentPreview;
-        protected ScriptableObject selectedObject;
+        protected PlaceableObjectParent selectedObject;
         protected Vector3 currentGridPosition;
         protected PlacementType currentPlacementType;
         protected float gridSize => CampManager.Instance != null ? CampManager.Instance.SharedGridSize : 2f;
@@ -184,27 +184,27 @@ namespace Managers
 
         private void SetupBuildingConstruction(GameObject constructionSite)
         {
-            if (constructionSite.TryGetComponent(out ConstructionTask constructionSiteScript))
+            if (constructionSite.TryGetComponent(out StructureConstructionTask constructionSiteScript))
             {
-                constructionSiteScript.SetupConstruction(selectedObject as BuildingScriptableObj);
+                constructionSiteScript.SetupConstruction(selectedObject as PlaceableObjectParent);
             }
             else
             {
-                constructionSite.AddComponent<ConstructionTask>();
-                constructionSite.GetComponent<ConstructionTask>().SetupConstruction(selectedObject as BuildingScriptableObj);
+                constructionSite.AddComponent<StructureConstructionTask>();
+                constructionSite.GetComponent<StructureConstructionTask>().SetupConstruction(selectedObject as PlaceableObjectParent);
             }
         }
 
         private void SetupTurretConstruction(GameObject constructionSite)
         {
-            if (constructionSite.TryGetComponent(out TurretConstructionTask constructionSiteScript))
+            if (constructionSite.TryGetComponent(out StructureConstructionTask constructionSiteScript))
             {
-                constructionSiteScript.SetupConstruction(selectedObject as TurretScriptableObject);
+                constructionSiteScript.SetupConstruction(selectedObject as PlaceableObjectParent);
             }
             else
             {
-                constructionSite.AddComponent<TurretConstructionTask>();
-                constructionSite.GetComponent<TurretConstructionTask>().SetupConstruction(selectedObject as TurretScriptableObject);
+                constructionSite.AddComponent<StructureConstructionTask>();
+                constructionSite.GetComponent<StructureConstructionTask>().SetupConstruction(selectedObject as PlaceableObjectParent);
             }
         }
 

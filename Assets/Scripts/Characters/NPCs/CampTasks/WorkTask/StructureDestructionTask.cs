@@ -1,32 +1,37 @@
 using UnityEngine;
+using Managers;
 using System.Collections;
 using System.Collections.Generic;
-using System;
 using UnityEngine.AI;
-using Managers;
 
-/// <summary>
-/// Used by construction sites to build turrets in the camp.
-/// </summary>
-public class TurretConstructionTask : WorkTask, IInteractive<object>
+public class StructureDestructionTask : WorkTask, IInteractive<object>
 {
-    private GameObject finalTurretPrefab;
-    private TurretScriptableObject turretScriptableObj;
+    private PlaceableObjectParent structureScriptableObj;
     private List<HumanCharacterController> workers = new List<HumanCharacterController>();
-    private bool isConstructionComplete = false;
+    private bool isDestructionComplete = false;
+    private GameObject destructionGameobj;
 
     protected override void Start()
     {
         base.Start();
-        AddWorkTask();
         taskAnimation = TaskAnimation.HAMMER_STANDING;
+    }
+
+    public void SetupDestructionTask(PlaceableStructure structure)
+    {
+        this.structureScriptableObj = structure.GetStructureScriptableObj();
+        baseWorkTime = structureScriptableObj.destructionTime;
+        requiredResources = new ResourceItemCount[0]; // No resources required for destruction
+        AddWorkTask();
+
+        // Setup NavMeshObstacle on this object
         NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
         if (obstacle == null)
         {
             obstacle = gameObject.AddComponent<NavMeshObstacle>();
         }
         obstacle.carving = true;
-        obstacle.size = new Vector3(turretScriptableObj.size.x, 1.0f, turretScriptableObj.size.y);
+        obstacle.size = new Vector3(structureScriptableObj.size.x, 1.0f, structureScriptableObj.size.y);
     }
 
     public override void PerformTask(HumanCharacterController npc)
@@ -37,8 +42,8 @@ public class TurretConstructionTask : WorkTask, IInteractive<object>
             workers.Add(npc);
         }
 
-        // Start the construction process if not already started
-        if (!isConstructionComplete && workCoroutine == null)
+        // Start the destruction process if not already started
+        if (!isDestructionComplete && workCoroutine == null)
         {
             workCoroutine = StartCoroutine(WorkCoroutine());
 
@@ -54,7 +59,7 @@ public class TurretConstructionTask : WorkTask, IInteractive<object>
     {
         while (workProgress < baseWorkTime && workers.Count > 0)
         {
-            float effectiveTime = baseWorkTime / workers.Count;
+            float effectiveTime = baseWorkTime / Mathf.Sqrt(workers.Count);
             workProgress += Time.deltaTime / effectiveTime;
 
             if (workProgress >= baseWorkTime)
@@ -69,34 +74,22 @@ public class TurretConstructionTask : WorkTask, IInteractive<object>
         CompleteWork();
     }
 
-    public void SetupConstruction(TurretScriptableObject turretScriptableObj)
-    {
-        this.turretScriptableObj = turretScriptableObj;
-        finalTurretPrefab = turretScriptableObj.prefab;
-        baseWorkTime = turretScriptableObj.constructionTime;
-    }
-
     protected override void CompleteWork()
     {
-        GameObject turretObj = Instantiate(finalTurretPrefab, transform.position, Quaternion.identity);
-        
-        // Set the turret scriptable object reference on the turret
-        var baseTurret = turretObj.GetComponent<BaseTurret>();
-        if (baseTurret != null)
+        if (structureScriptableObj?.reclaimedResources != null)
         {
-            baseTurret.SetupTurret(turretScriptableObj);
+            foreach (var resource in structureScriptableObj.reclaimedResources)
+            {
+                if (resource.resourceScriptableObj != null)
+                {
+                    PlayerInventory.Instance.AddItem(resource.resourceScriptableObj, resource.count);
+                }
+            }
         }
 
-        // Transfer grid slot occupation from construction site to the new turret
-        if (CampManager.Instance != null)
-        {
-            CampManager.Instance.MarkSharedGridSlotsOccupied(transform.position, turretScriptableObj.size, turretObj);
-        }
-
-        Destroy(gameObject);
-        isConstructionComplete = true;
-        
+        isDestructionComplete = true;
         base.CompleteWork();
+        Destroy(gameObject);
     }
 
     public void RemoveWorker(SettlerNPC npc)
@@ -114,7 +107,7 @@ public class TurretConstructionTask : WorkTask, IInteractive<object>
 
     public string GetInteractionText()
     {
-        return "Build " + turretScriptableObj.name;
+        return "Destroy " + (structureScriptableObj?.objectName ?? "Structure");
     }
 
     public object Interact()
@@ -122,9 +115,12 @@ public class TurretConstructionTask : WorkTask, IInteractive<object>
         return this;
     }
 
-    protected override void OnDestroy()
+    protected override void OnDisable()
     {
-        // Grid slots are now properly transferred in CompleteWork, so we don't need to free them here
-        base.OnDestroy();
+        base.OnDisable();
+        if (destructionGameobj != null)
+        {
+            Destroy(destructionGameobj);
+        }
     }
 } 

@@ -83,8 +83,8 @@ namespace Managers
             {
                 string errorMessage = workTask switch
                 {
-                    BuildingRepairTask => "Building is already at full health",
-                    BuildingUpgradeTask => "Building cannot be upgraded further",
+                    StructureRepairTask => "Structure is already at full health",
+                    StructureUpgradeTask => "Structure cannot be upgraded further",
                     CleaningTask => "Camp is already clean",
                     _ => "Task cannot be performed at this time"
                 };
