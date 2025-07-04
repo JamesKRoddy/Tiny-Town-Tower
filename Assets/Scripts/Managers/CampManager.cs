@@ -238,8 +238,6 @@ namespace Managers
                     sharedGridSlots[gridPosition] = new GridSlot { IsOccupied = false, FreeGridObject = null, TakenGridObject = null };
                 }
             }
-            
-            Debug.Log($"Initialized shared grid with {sharedGridSlots.Count} slots");
         }
 
         #endregion
@@ -259,12 +257,9 @@ namespace Managers
                 {
                     return true;
                 }
-                else if (target is HumanCharacterController npc)
+                else if (target is HumanCharacterController npc && npc != PlayerController.Instance._possessedNPC)
                 {
-                    if (npc != PlayerController.Instance._possessedNPC)
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
             
@@ -283,20 +278,12 @@ namespace Managers
             cachedTargets.AddRange(buildings);
 
             // Find all turrets
-            var turrets = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
-            foreach (var turret in turrets)
-            {
-                if (turret != null && turret is IDamageable damageableTurret)
-                {
-                    cachedTargets.Add(damageableTurret);
-                }
-            }
+            BaseTurret[] turrets = FindObjectsByType<BaseTurret>(FindObjectsSortMode.None);
+            cachedTargets.AddRange(turrets);
 
             // Find all NPCs
             HumanCharacterController[] npcs = FindObjectsByType<HumanCharacterController>(FindObjectsSortMode.None);
             cachedTargets.AddRange(npcs);
-
-            Debug.Log($"Populated target cache: {cachedTargets.Count} targets");
         }
 
         /// <summary>
@@ -308,8 +295,6 @@ namespace Managers
             {
                 cachedTargets.Add(target);
                 target.OnDeath += OnTargetDied;
-                string targetName = (target as MonoBehaviour)?.name ?? target.GetType().Name;
-                Debug.Log($"Registered target: {target.GetType().Name} - {targetName}");
             }
         }
 
@@ -321,8 +306,6 @@ namespace Managers
             if (cachedTargets.Remove(target))
             {
                 target.OnDeath -= OnTargetDied;
-                string targetName = (target as MonoBehaviour)?.name ?? target.GetType().Name;
-                Debug.Log($"Unregistered target: {target.GetType().Name} - {targetName}");
             }
         }
 
@@ -341,7 +324,6 @@ namespace Managers
         {
             if (GetEnemySetupState() == EnemySetupState.ENEMIES_SPAWNED && !AreTargetsAvailable())
             {
-                Debug.Log("No targets remaining - ending wave!");
                 ForceEndWavesNoTargets();
             }
         }
@@ -353,7 +335,6 @@ namespace Managers
         {
             if (!AreTargetsAvailable())
             {
-                Debug.Log("No targets available for enemies - ending wave!");
                 ForceEndWavesNoTargets();
                 return false;
             }
@@ -377,7 +358,6 @@ namespace Managers
 
             if (!AreTargetsAvailable())
             {
-                Debug.Log("No buildings or NPCs available - cannot start camp wave!");
                 return;
             }
 
@@ -397,7 +377,6 @@ namespace Managers
         {
             if (!AreTargetsAvailable())
             {
-                Debug.Log("No buildings or NPCs available - cannot start wave!");
                 ForceEndWavesNoTargets();
                 return;
             }
@@ -405,8 +384,6 @@ namespace Managers
             OnCampWaveStarted?.Invoke();
             SetEnemySetupState(EnemySetupState.WAVE_START);
             PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_ATTACK_CAMERA_MOVEMENT);
-            
-            Debug.Log("Camp wave started!");
         }
 
         /// <summary>
@@ -419,13 +396,10 @@ namespace Managers
             var waveConfig = GetWaveConfig(GetCurrentWaveDifficulty());
             int maxWaves = waveConfig?.maxWaves ?? maxWavesPerLoop;
             
-            Debug.Log($"Starting single wave cycle with {maxWaves} waves");
-            
             while (wavesCompletedInLoop < maxWaves)
             {
                 if (!AreTargetsAvailable())
                 {
-                    Debug.Log("No buildings or NPCs available - ending wave cycle early!");
                     break;
                 }
                 
@@ -437,16 +411,13 @@ namespace Managers
                 }
                 
                 wavesCompletedInLoop++;
-                Debug.Log($"Wave {wavesCompletedInLoop} completed. Waves in cycle: {wavesCompletedInLoop}/{maxWaves}");
                 
                 if (wavesCompletedInLoop < maxWaves)
                 {
-                    Debug.Log($"Waiting {waveLoopDelay} seconds before next wave...");
                     yield return new WaitForSeconds(waveLoopDelay);
                 }
             }
             
-            Debug.Log($"Single wave cycle completed! Total waves: {wavesCompletedInLoop}/{maxWaves}");
             OnWaveLoopComplete?.Invoke();
             
             StartCoroutine(WaveCompletionSequence());
@@ -458,8 +429,6 @@ namespace Managers
         /// </summary>
         private IEnumerator WaveCompletionSequence()
         {
-            Debug.Log("Starting wave completion sequence...");
-            
             // Fade out
             if (PlayerUIManager.Instance?.transitionMenu != null)
             {
@@ -484,7 +453,6 @@ namespace Managers
                 yield return new WaitForSeconds(1f);
             }
             
-            Debug.Log("Wave completion sequence finished!");
             OnWaveCycleComplete?.Invoke();
         }
 
@@ -493,8 +461,6 @@ namespace Managers
         /// </summary>
         public void ForceEndWavesNoTargets()
         {
-            Debug.Log("No buildings or NPCs available - forcing wave end!");
-            
             if (waveLoopCoroutine != null)
             {
                 StopCoroutine(waveLoopCoroutine);
@@ -510,7 +476,6 @@ namespace Managers
         /// </summary>
         public void ForceEndCampWave()
         {
-            Debug.Log("Force ending camp wave!");
             SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
             PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_CAMERA_MOVEMENT);
         }
@@ -521,8 +486,6 @@ namespace Managers
 
         protected override void EnemySetupStateChanged(EnemySetupState newState)
         {
-            Debug.Log($"<color=green>Camp EnemySetupStateChanged: {newState}</color>");
-
             switch (newState)
             {
                 case EnemySetupState.WAVE_START:
@@ -536,7 +499,6 @@ namespace Managers
                 case EnemySetupState.ENEMY_SPAWN_START:
                     if (!AreTargetsAvailable())
                     {
-                        Debug.Log("No buildings or NPCs available - skipping enemy spawning!");
                         SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                         return;
                     }
@@ -546,7 +508,6 @@ namespace Managers
                 case EnemySetupState.ENEMIES_SPAWNED:
                     if (!AreTargetsAvailable())
                     {
-                        Debug.Log("No buildings or NPCs available - ending wave immediately!");
                         SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                         return;
                     }
@@ -574,31 +535,18 @@ namespace Managers
             {
                 currentWaveDuration = campConfig.WaveDuration;
             }
-            
-            Debug.Log($"Wave {currentWaveNumber} started. Duration: {currentWaveDuration}s");
         }
 
         private void CheckForWaveEnd()
         {
             var enemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
             
-            bool shouldEndWave = false;
-            string endReason = "";
-            
             if (enemies.Length == 0 && IsWaveActive)
             {
-                shouldEndWave = true;
-                endReason = "All enemies defeated";
+                SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
             }
             else if (IsWaveActive && Time.time - waveStartTime >= currentWaveDuration)
             {
-                shouldEndWave = true;
-                endReason = "Time expired";
-            }
-            
-            if (shouldEndWave)
-            {
-                Debug.Log($"Wave ending: {endReason}");
                 SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
             }
         }
@@ -623,8 +571,6 @@ namespace Managers
                     RegisterTarget(npc);
                 }
             }
-            
-            Debug.Log($"Found {campNPCs.Count} NPCs in camp for wave management");
         }
 
         /// <summary>
@@ -639,9 +585,6 @@ namespace Managers
             }
         }
 
-        /// <summary>
-        /// Remove an NPC from the camp wave manager
-        /// </summary>
         public void RemoveNPC(HumanCharacterController npc)
         {
             if (campNPCs.Contains(npc))
@@ -666,20 +609,16 @@ namespace Managers
             var waveConfig = GetWaveConfig(GetCurrentWaveDifficulty());
             if (waveConfig != null)
             {
-                Debug.Log($"Starting camp wave with config: {waveConfig.name}, Difficulty: {GetCurrentWaveDifficulty()}");
                 EnemySpawnManager.Instance.StartSpawningEnemies(waveConfig);
             }
             else
             {
                 Debug.LogWarning($"No wave config found for camp wave difficulty {GetCurrentWaveDifficulty()}!");
-                Debug.Log("Continuing wave without enemies for testing purposes");
             }
         }
 
         private void EndCampWave()
         {
-            Debug.Log("Camp wave ended!");
-            
             ReturnNPCsToNormal();
             OnCampWaveEnded?.Invoke();
             PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_CAMERA_MOVEMENT);
@@ -687,11 +626,9 @@ namespace Managers
 
         private void MakeNPCsFlee()
         {
-            Debug.Log("Making NPCs flee from enemies!");
-            
             foreach (var npc in campNPCs)
             {
-                if (npc != null && npc is SettlerNPC settler)
+                if (npc is SettlerNPC settler)
                 {
                     settler.ChangeTask(TaskType.FLEE);
                 }
@@ -700,11 +637,9 @@ namespace Managers
 
         private void ReturnNPCsToNormal()
         {
-            Debug.Log("Returning NPCs to normal behavior");
-            
             foreach (var npc in campNPCs)
             {
-                if (npc != null && npc is SettlerNPC settler)
+                if (npc is SettlerNPC settler)
                 {
                     settler.ChangeTask(TaskType.WANDER);
                 }
@@ -795,15 +730,8 @@ namespace Managers
                 slot.TakenGridObject = Instantiate(takenPrefab, displayPosition, Quaternion.identity, sharedGridParent);
             }
             
-            if (slot.FreeGridObject != null)
-            {
-                slot.FreeGridObject.SetActive(!isOccupied && gridObjectsInitialized);
-            }
-            
-            if (slot.TakenGridObject != null)
-            {
-                slot.TakenGridObject.SetActive(isOccupied && gridObjectsInitialized);
-            }
+            slot.FreeGridObject?.SetActive(!isOccupied && gridObjectsInitialized);
+            slot.TakenGridObject?.SetActive(isOccupied && gridObjectsInitialized);
         }
 
         private List<Vector3> GetRequiredSharedGridSlots(Vector3 position, Vector2Int size)
@@ -881,14 +809,8 @@ namespace Managers
 
             foreach (var slot in sharedGridSlots.Values)
             {
-                if (slot.FreeGridObject != null)
-                {
-                    slot.FreeGridObject.SetActive(!slot.IsOccupied);
-                }
-                if (slot.TakenGridObject != null)
-                {
-                    slot.TakenGridObject.SetActive(slot.IsOccupied);
-                }
+                slot.FreeGridObject?.SetActive(!slot.IsOccupied);
+                slot.TakenGridObject?.SetActive(slot.IsOccupied);
             }
         }
 
@@ -898,14 +820,8 @@ namespace Managers
 
             foreach (var slot in sharedGridSlots.Values)
             {
-                if (slot.FreeGridObject != null)
-                {
-                    slot.FreeGridObject.SetActive(false);
-                }
-                if (slot.TakenGridObject != null)
-                {
-                    slot.TakenGridObject.SetActive(false);
-                }
+                slot.FreeGridObject?.SetActive(false);
+                slot.TakenGridObject?.SetActive(false);
             }
         }
 
@@ -935,9 +851,7 @@ namespace Managers
 
             Vector3 spawnPosition = GetRandomSpawnPosition();
             GameObject enemyPrefab = waveConfig.enemyPrefabs[UnityEngine.Random.Range(0, waveConfig.enemyPrefabs.Length)];
-            GameObject enemy = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
-            
-            Debug.Log($"Spawned single enemy at {spawnPosition}");
+            Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
         }
 
         /// <summary>
@@ -954,8 +868,6 @@ namespace Managers
                     Destroy(enemy.gameObject);
                 }
             }
-            
-            Debug.Log($"Cleared {enemies.Length} enemies from the scene");
         }
         
         /// <summary>
@@ -975,8 +887,6 @@ namespace Managers
                 yield break;
             }
             
-            Debug.Log($"Clearing {enemies.Length} enemies with fade effect");
-            
             float fadeDuration = 1f;
             float elapsedTime = 0f;
             
@@ -985,26 +895,23 @@ namespace Managers
             
             foreach (var enemy in enemies)
             {
-                if (enemy != null)
+                var renderer = enemy.GetComponent<SkinnedMeshRenderer>();
+                if (renderer != null)
                 {
-                    var renderer = enemy.GetComponent<SkinnedMeshRenderer>();
-                    if (renderer != null)
-                    {
-                        renderers[enemy] = renderer;
-                        originalMaterials[enemy] = renderer.material;
-                        
-                        Material fadeMaterial = new Material(renderer.material);
-                        fadeMaterial.SetFloat("_Mode", 3);
-                        fadeMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-                        fadeMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                        fadeMaterial.SetInt("_ZWrite", 0);
-                        fadeMaterial.DisableKeyword("_ALPHATEST_ON");
-                        fadeMaterial.EnableKeyword("_ALPHABLEND_ON");
-                        fadeMaterial.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-                        fadeMaterial.renderQueue = 3000;
-                        
-                        renderer.material = fadeMaterial;
-                    }
+                    renderers[enemy] = renderer;
+                    originalMaterials[enemy] = renderer.material;
+                    
+                    Material fadeMaterial = new Material(renderer.material);
+                    fadeMaterial.SetFloat("_Mode", 3);
+                    fadeMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                    fadeMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                    fadeMaterial.SetInt("_ZWrite", 0);
+                    fadeMaterial.DisableKeyword("_ALPHATEST_ON");
+                    fadeMaterial.EnableKeyword("_ALPHABLEND_ON");
+                    fadeMaterial.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                    fadeMaterial.renderQueue = 3000;
+                    
+                    renderer.material = fadeMaterial;
                 }
             }
             
@@ -1028,21 +935,13 @@ namespace Managers
             
             foreach (var enemy in enemies)
             {
-                if (enemy != null)
-                {
-                    Destroy(enemy.gameObject);
-                }
+                Destroy(enemy.gameObject);
             }
             
-            foreach (var kvp in originalMaterials)
+            foreach (var material in originalMaterials.Values)
             {
-                if (kvp.Value != null)
-                {
-                    DestroyImmediate(kvp.Value);
-                }
+                DestroyImmediate(material);
             }
-            
-            Debug.Log("Enemies cleared with fade effect");
         }
 
         /// <summary>
