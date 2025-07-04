@@ -9,8 +9,6 @@ public class StructureDestructionTask : WorkTask, IInteractive<object>
     private PlaceableObjectParent structureScriptableObj;
     private List<HumanCharacterController> workers = new List<HumanCharacterController>();
     private bool isDestructionComplete = false;
-    private GameObject destructionGameobj;
-
     protected override void Start()
     {
         base.Start();
@@ -59,8 +57,8 @@ public class StructureDestructionTask : WorkTask, IInteractive<object>
     {
         while (workProgress < baseWorkTime && workers.Count > 0)
         {
-            float effectiveTime = baseWorkTime / Mathf.Sqrt(workers.Count);
-            workProgress += Time.deltaTime / effectiveTime;
+            float workSpeed = Mathf.Sqrt(workers.Count);
+            workProgress += Time.deltaTime * workSpeed;
 
             if (workProgress >= baseWorkTime)
             {
@@ -115,12 +113,5 @@ public class StructureDestructionTask : WorkTask, IInteractive<object>
         return this;
     }
 
-    protected override void OnDisable()
-    {
-        base.OnDisable();
-        if (destructionGameobj != null)
-        {
-            Destroy(destructionGameobj);
-        }
-    }
+
 } 
