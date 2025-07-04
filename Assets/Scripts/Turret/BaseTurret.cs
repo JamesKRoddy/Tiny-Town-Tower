@@ -163,7 +163,7 @@ public abstract class BaseTurret : PlaceableStructure
         // Set up the upgrade task with the upgrade target
         if (turretScriptableObj.upgradeTarget != null)
         {
-            upgradeTask.SetupUpgradeTask(turretScriptableObj.upgradeTarget, turretScriptableObj.upgradeTarget.constructionTime);
+            upgradeTask.SetupUpgradeTask(turretScriptableObj.upgradeTarget);
         }
     }
 

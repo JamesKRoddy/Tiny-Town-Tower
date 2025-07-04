@@ -99,7 +99,7 @@ public class Building : PlaceableStructure, IInteractive<Building>
         // Set up the upgrade task with the upgrade target
         if (buildingScriptableObj.upgradeTarget != null)
         {
-            upgradeTask.SetupUpgradeTask(buildingScriptableObj.upgradeTarget, buildingScriptableObj.upgradeTarget.constructionTime);
+            upgradeTask.SetupUpgradeTask(buildingScriptableObj.upgradeTarget);
         }
     }
 
