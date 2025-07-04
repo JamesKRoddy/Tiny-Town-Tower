@@ -16,18 +16,15 @@ MonoBehaviour:
   description: Bed Lvl 1 desc
   sprite: {fileID: 0}
   _resourceCost: []
-  prefab: {fileID: 1305933842384340, guid: ccb79d2f691e98548a17e09e7c6f22c3, type: 3}
+  prefab: {fileID: 1044450024823128, guid: 16b73038770d3db40a53b4623be851f0, type: 3}
   size: {x: 1, y: 1}
-  buildingCategory: 0
-  constructionTime: 2
   maxHealth: 100
   repairTime: 5
   healthRestoredPerRepair: 50
   repairResources: []
+  constructionTime: 2
   upgradeTarget: {fileID: 0}
-  upgradeTime: 30
   upgradeResources: []
-  destructionPrefab: {fileID: 0}
   destructionTime: 5
   reclaimedResources: []
-  taskRadius: 2
+  buildingCategory: 0

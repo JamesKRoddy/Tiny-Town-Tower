@@ -13,7 +13,6 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
     private PlaceableObjectParent buildingScriptableObj;
     private List<HumanCharacterController> workers = new List<HumanCharacterController>();
     private bool isConstructionComplete = false;
-    private bool isUpgradeConstruction = false;
 
     protected override void Start()
     {
@@ -78,7 +77,6 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
     public void SetupConstruction(PlaceableObjectParent scriptableObj, bool isUpgrade = false)
     {
         this.buildingScriptableObj = scriptableObj;
-        this.isUpgradeConstruction = isUpgrade;
         finalBuildingPrefab = scriptableObj.prefab;
         baseWorkTime = scriptableObj.constructionTime;
         
@@ -131,11 +129,8 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
             return;
         }
         
-        // Handle upgrade-specific logic
-        if (isUpgradeConstruction)
-        {
-            structureComponent.TriggerUpgradeEvent();
-        }
+        // Trigger upgrade event for all constructions (since this is used for both new builds and upgrades)
+        structureComponent.TriggerUpgradeEvent();
 
         // Occupy grid slots with new structure
         if (CampManager.Instance != null)
@@ -164,8 +159,7 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
 
     public string GetInteractionText()
     {
-        string action = isUpgradeConstruction ? "Upgrade" : "Build";
-        return $"{action} {buildingScriptableObj.objectName}";
+        return $"Build {buildingScriptableObj.objectName}";
     }
 
     public object Interact()

@@ -38,11 +38,14 @@ public class StructureUpgradeTask : WorkTask
         // Get old structure info before destroying it
         var oldSize = targetStructure.GetStructureScriptableObj()?.size ?? new Vector2Int(1, 1);
 
+        // Validate and adjust upgrade target size to match original building
+        Vector2Int constructionSize = ValidateAndAdjustSize(upgradeTarget, oldSize);
+
         // Get construction site prefab
-        GameObject constructionSitePrefab = CampManager.Instance.BuildManager.GetConstructionSitePrefab(upgradeTarget.size);
+        GameObject constructionSitePrefab = CampManager.Instance.BuildManager.GetConstructionSitePrefab(constructionSize);
         if (constructionSitePrefab == null)
         {
-            Debug.LogError($"No construction site prefab for size {upgradeTarget.size}");
+            Debug.LogError($"No construction site prefab for size {constructionSize}");
             return;
         }
 
@@ -59,13 +62,27 @@ public class StructureUpgradeTask : WorkTask
 
         // Handle grid slots
         CampManager.Instance.MarkSharedGridSlotsUnoccupied(position, oldSize);
-        CampManager.Instance.MarkSharedGridSlotsOccupied(position, upgradeTarget.size, constructionSite);
+        CampManager.Instance.MarkSharedGridSlotsOccupied(position, constructionSize, constructionSite);
 
         // Add to work manager
         CampManager.Instance.WorkManager.AddWorkTask(constructionTask);
 
         // Destroy the original structure
         Destroy(targetStructure.gameObject);
+    }
+
+    private Vector2Int ValidateAndAdjustSize(PlaceableObjectParent upgradeTarget, Vector2Int originalSize)
+    {
+        if (upgradeTarget.size != originalSize)
+        {
+            Debug.LogWarning($"Upgrade target {upgradeTarget.objectName} has different size ({upgradeTarget.size}) than original building ({originalSize}). " +
+                           $"Adjusting to match original size. Please update the scriptable object to match the intended size.");
+            
+            // Return the original size to maintain building footprint
+            return originalSize;
+        }
+        
+        return upgradeTarget.size;
     }
 
     public override bool CanPerformTask()

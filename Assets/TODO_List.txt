@@ -10,6 +10,8 @@ Upgrade
 Repair?? (maybe not, never looked at this yet)
 Destruction
 
+TODO NEXT: Continue with the refactor of the construction and upgrading components.
+
 Setup some basic effects for the turrets
 
 
