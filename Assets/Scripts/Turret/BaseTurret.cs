@@ -5,7 +5,7 @@ using Managers;
 
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(Rigidbody))]
-public abstract class BaseTurret : PlaceableStructure
+public abstract class BaseTurret : PlaceableStructure<TurretScriptableObject>
 {
     [Header("Turret Settings")]
     public float damage = 10f;
@@ -14,10 +14,6 @@ public abstract class BaseTurret : PlaceableStructure
     public float turretTurnSpeed = 5f;
     public Transform turretTop;
     public Transform firePoint;
-
-    [Header("Work Tasks")]
-    [SerializeField, ReadOnly] protected StructureRepairTask repairTask;
-    [SerializeField, ReadOnly] protected StructureUpgradeTask upgradeTask;
 
     private float fireCooldown = 0f;
     private EnemyBase target;
@@ -103,79 +99,19 @@ public abstract class BaseTurret : PlaceableStructure
 
     protected abstract void Fire();
 
-    public void SetupTurret(TurretScriptableObject turretSO)
-    {
-        this.structureScriptableObj = turretSO;
-        
-        // Set turret stats from scriptable object
-        damage = turretSO.damage;
-        range = turretSO.range;
-        fireRate = turretSO.fireRate;
-        turretTurnSpeed = turretSO.turretTurnSpeed;
-        
-        base.SetupStructure(turretSO);
-    }
-
-    public TurretScriptableObject GetTurretScriptableObject()
-    {
-        if (structureScriptableObj is TurretScriptableObject turretSO)
-        {
-            return turretSO;
-        }
-        
-        Debug.LogError($"Invalid scriptable object type. Expected TurretScriptableObject but got {structureScriptableObj?.GetType().Name ?? "null"}");
-        return null;
-    }
-
     protected override void OnStructureSetup()
     {
-        SetupRepairTask();
-        SetupUpgradeTask();
+        // Base class handles repair and upgrade task setup
+        base.OnStructureSetup();
         
         // Set turret stats from scriptable object
-        if (structureScriptableObj != null)
+        if (StructureScriptableObj != null)
         {
-            damage = GetTurretScriptableObject().damage;
-            range = GetTurretScriptableObject().range;
-            fireRate = GetTurretScriptableObject().fireRate;
-            turretTurnSpeed = GetTurretScriptableObject().turretTurnSpeed;
+            damage = StructureScriptableObj.damage;
+            range = StructureScriptableObj.range;
+            fireRate = StructureScriptableObj.fireRate;
+            turretTurnSpeed = StructureScriptableObj.turretTurnSpeed;
         }
-    }
-
-    private void SetupRepairTask()
-    {
-        repairTask = GetComponent<StructureRepairTask>();
-        if (repairTask == null)
-        {
-            repairTask = gameObject.AddComponent<StructureRepairTask>();
-        }
-        repairTask.transform.position = transform.position;
-        
-        repairTask.SetupRepairTask(
-            structureScriptableObj.repairTime,
-            structureScriptableObj.healthRestoredPerRepair
-        );
-    }
-
-    private void SetupUpgradeTask()
-    {
-        upgradeTask = GetComponent<StructureUpgradeTask>();
-        if (upgradeTask == null)
-        {
-            upgradeTask = gameObject.AddComponent<StructureUpgradeTask>();
-        }
-        upgradeTask.transform.position = transform.position;
-        
-        // Set up the upgrade task with the upgrade target
-        if (structureScriptableObj.upgradeTarget != null)
-        {
-            upgradeTask.SetupUpgradeTask(structureScriptableObj.upgradeTarget);
-        }
-    }
-
-    public void SetTurretScriptableObject(TurretScriptableObject turretSO)
-    {
-        structureScriptableObj = turretSO;
     }
 
     public override string GetInteractionText()
@@ -195,10 +131,4 @@ public abstract class BaseTurret : PlaceableStructure
         text += $"- Fire Rate: {fireRate}\n";
         return text;
     }
-
-    public StructureRepairTask GetRepairTask() => repairTask;
-    public StructureUpgradeTask GetUpgradeTask() => upgradeTask;
-
-
-
 } 

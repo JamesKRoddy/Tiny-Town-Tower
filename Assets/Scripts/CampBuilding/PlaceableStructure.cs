@@ -12,12 +12,12 @@ using Enemies;
 /// </summary>
 [RequireComponent(typeof(StructureRepairTask))]
 [RequireComponent(typeof(StructureUpgradeTask))]
-public abstract class PlaceableStructure : MonoBehaviour, IDamageable
+public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable where T : PlaceableObjectParent
 {
     #region Serialized Fields
     
     [Header("Structure Configuration")]
-    [SerializeField] public PlaceableObjectParent structureScriptableObj;
+    [SerializeField] private T structureScriptableObj;
 
     [Header("Structure State")]
     [SerializeField, ReadOnly] protected bool isOperational = false;
@@ -25,21 +25,15 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
     [SerializeField, ReadOnly] protected float currentHealth;
     [SerializeField, ReadOnly] protected WorkTask currentWorkTask;
 
-    #endregion
-
-    #region Events
-    
-    public event Action OnStructureDestroyed;
-    public event Action OnStructureRepaired;
-    public event Action OnStructureUpgraded;
-    public event Action<float> OnHealthChanged;
-    public event Action<float, float> OnDamageTaken;
-    public event Action<float, float> OnHeal;
-    public event Action OnDeath;
+    [Header("Work Tasks")]
+    [SerializeField, ReadOnly] protected StructureRepairTask repairTask;
+    [SerializeField, ReadOnly] protected StructureUpgradeTask upgradeTask;
 
     #endregion
 
     #region Properties
+    
+    protected T StructureScriptableObj => structureScriptableObj;
     
     public float Health 
     { 
@@ -49,7 +43,7 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
     
     public virtual float MaxHealth
     {
-        get => structureScriptableObj != null ? GetMaxHealthFromScriptableObject() : 100f;
+        get => structureScriptableObj != null ? structureScriptableObj.maxHealth : 100f;
         set { /* Override in derived classes if needed */ }
     }
     
@@ -85,7 +79,7 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
 
     #region Structure Setup
 
-    public virtual void SetupStructure(PlaceableObjectParent scriptableObj)
+    public virtual void SetupStructure(T scriptableObj)
     {
         this.structureScriptableObj = scriptableObj;
         currentHealth = GetMaxHealthFromScriptableObject();
@@ -97,7 +91,8 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
 
     protected virtual void OnStructureSetup()
     {
-        // Override in derived classes for additional setup
+        SetupRepairTask();
+        SetupUpgradeTask();
     }
 
     private void SetupCollider()
@@ -123,6 +118,37 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
             obstacle.carving = true;
             obstacle.size = new Vector3(structureScriptableObj.size.x, 1.0f, structureScriptableObj.size.y);
         }        
+    }
+
+    private void SetupRepairTask()
+    {
+        repairTask = GetComponent<StructureRepairTask>();
+        if (repairTask == null)
+        {
+            repairTask = gameObject.AddComponent<StructureRepairTask>();
+        }
+        repairTask.transform.position = transform.position;
+        
+        repairTask.SetupRepairTask(
+            StructureScriptableObj.repairTime,
+            StructureScriptableObj.healthRestoredPerRepair
+        );
+    }
+
+    private void SetupUpgradeTask()
+    {
+        upgradeTask = GetComponent<StructureUpgradeTask>();
+        if (upgradeTask == null)
+        {
+            upgradeTask = gameObject.AddComponent<StructureUpgradeTask>();
+        }
+        upgradeTask.transform.position = transform.position;
+        
+        // Set up the upgrade task with the upgrade target
+        if (StructureScriptableObj.upgradeTarget != null)
+        {
+            upgradeTask.SetupUpgradeTask(StructureScriptableObj.upgradeTarget);
+        }
     }
 
     #endregion
@@ -202,6 +228,18 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
 
     #endregion
 
+    #region Events
+    
+    public event Action OnStructureDestroyed;
+    public event Action OnStructureRepaired;
+    public event Action OnStructureUpgraded;
+    public event Action<float> OnHealthChanged;
+    public event Action<float, float> OnDamageTaken;
+    public event Action<float, float> OnHeal;
+    public event Action OnDeath;
+
+    #endregion
+
     #region Work Task Management
     
     public virtual void SetCurrentWorkTask(WorkTask workTask)
@@ -219,8 +257,6 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
                structureScriptableObj.upgradeTarget != null;
     }
 
-
-
     public void TriggerUpgradeEvent()
     {
         OnStructureUpgraded?.Invoke();
@@ -236,17 +272,50 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
         OnStructureDestroyed?.Invoke();
     }
 
-
-
     #endregion
 
     #region Destruction
 
     public virtual void StartDestruction()
     {
-        // Base implementation - can be overridden by derived classes
-        // This method is called when a structure should be destroyed
-        Debug.Log($"{gameObject.name} starting destruction process");
+        UnassignWorkers();
+
+        GameObject destructionPrefab = CampManager.Instance.BuildManager.GetDestructionPrefab(StructureScriptableObj.size);
+        if (destructionPrefab != null)
+        {
+            CreateDestructionTask(destructionPrefab);
+        }
+    }
+
+    private void UnassignWorkers()
+    {
+        if (repairTask != null && repairTask.IsOccupied)
+        {
+            repairTask.UnassignNPC();
+        }
+        if (upgradeTask != null && upgradeTask.IsOccupied)
+        {
+            upgradeTask.UnassignNPC();
+        }
+    }
+
+    private void CreateDestructionTask(GameObject destructionPrefab)
+    {
+        GameObject destructionTaskObj = Instantiate(destructionPrefab, transform.position, transform.rotation);
+        
+        StructureDestructionTask destructionTask = destructionTaskObj.AddComponent<StructureDestructionTask>();
+        destructionTask.SetupDestructionTask(this);
+
+        if (CampManager.Instance != null)
+        {
+            CampManager.Instance.WorkManager.AddWorkTask(destructionTask);
+        }
+        else
+        {
+            Debug.LogError("CampManager.Instance is null. Cannot add destruction task.");
+        }
+
+        Destroy(gameObject);
     }
 
     #endregion
@@ -258,7 +327,7 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
         return structureScriptableObj != null ? structureScriptableObj.maxHealth : 100f;
     }
 
-    public PlaceableObjectParent GetStructureScriptableObj()
+    public T GetStructureScriptableObj()
     {
         return structureScriptableObj;
     }
@@ -269,10 +338,25 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
         if (!isOperational) return "Structure not operational";
         
         string text = "Structure Options:\n";
-        if (CanUpgrade())
+        if (repairTask != null && repairTask.CanPerformTask())
+            text += "- Repair\n";
+        if (upgradeTask != null && upgradeTask.CanPerformTask())
             text += "- Upgrade\n";
+        if (CanUpgrade())
+            text += "- Upgrade to Next Level\n";
         return text;
     }
 
+    public StructureRepairTask GetRepairTask() => repairTask;
+    public StructureUpgradeTask GetUpgradeTask() => upgradeTask;
+
     #endregion
+}
+
+/// <summary>
+/// Non-generic base class for backward compatibility and type erasure
+/// </summary>
+public abstract class PlaceableStructure : PlaceableStructure<PlaceableObjectParent>
+{
+    // This allows us to use PlaceableStructure as a base type when we don't need specific typing
 } 

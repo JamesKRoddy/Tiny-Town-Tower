@@ -7,34 +7,27 @@ using System;
 using Enemies;
 
 /// <summary>
-/// Base class for all buildings in the camp. Handles construction, damage, repair, and upgrade functionality.
+/// Represents a building in the camp that can be constructed, repaired, and upgraded.
+/// Inherits from PlaceableStructure to share common functionality with turrets.
 /// </summary>
-/// 
-public class Building : PlaceableStructure, IInteractive<Building>
+public class Building : PlaceableStructure<BuildingScriptableObj>, IInteractive<Building>
 {
     #region Serialized Fields
     
-
     [Header("Building State")]
     // Note: isOperational, isUnderConstruction, and currentHealth are inherited from PlaceableStructure
 
-    [Header("Work Tasks")]
-    [SerializeField, ReadOnly] protected StructureRepairTask repairTask;
-    [SerializeField, ReadOnly] protected StructureUpgradeTask upgradeTask;
-
     #endregion
-
-
 
     #region Properties
     
     public override float MaxHealth
     {
-        get => structureScriptableObj != null ? structureScriptableObj.maxHealth : 100f;
+        get => StructureScriptableObj != null ? StructureScriptableObj.maxHealth : 100f;
         set
         {
-            if (structureScriptableObj != null)
-                structureScriptableObj.maxHealth = value;
+            if (StructureScriptableObj != null)
+                StructureScriptableObj.maxHealth = value;
         }
     }
 
@@ -45,9 +38,9 @@ public class Building : PlaceableStructure, IInteractive<Building>
     protected override void OnDestroy()
     {
         // Free up grid slots when building is destroyed
-        if (structureScriptableObj != null && CampManager.Instance != null)
+        if (StructureScriptableObj != null && CampManager.Instance != null)
         {
-            CampManager.Instance.MarkSharedGridSlotsUnoccupied(transform.position, structureScriptableObj.size);
+            CampManager.Instance.MarkSharedGridSlotsUnoccupied(transform.position, StructureScriptableObj.size);
         }
         
         base.OnDestroy();
@@ -59,45 +52,13 @@ public class Building : PlaceableStructure, IInteractive<Building>
 
     public virtual void SetupBuilding(BuildingScriptableObj buildingScriptableObj)
     {
-        this.structureScriptableObj = buildingScriptableObj;
         base.SetupStructure(buildingScriptableObj);
     }
 
     protected override void OnStructureSetup()
     {
-        SetupRepairTask();
-        SetupUpgradeTask();
-    }
-
-    private void SetupRepairTask()
-    {
-        repairTask = GetComponent<StructureRepairTask>();
-        if (repairTask == null)
-        {
-            repairTask = gameObject.AddComponent<StructureRepairTask>();
-        }
-        repairTask.transform.position = transform.position;
-        
-        repairTask.SetupRepairTask(
-            structureScriptableObj.repairTime,
-            structureScriptableObj.healthRestoredPerRepair
-        );
-    }
-
-    private void SetupUpgradeTask()
-    {
-        upgradeTask = GetComponent<StructureUpgradeTask>();
-        if (upgradeTask == null)
-        {
-            upgradeTask = gameObject.AddComponent<StructureUpgradeTask>();
-        }
-        upgradeTask.transform.position = transform.position;
-        
-        // Set up the upgrade task with the upgrade target
-        if (structureScriptableObj.upgradeTarget != null)
-        {
-            upgradeTask.SetupUpgradeTask(structureScriptableObj.upgradeTarget);
-        }
+        // Base class handles repair and upgrade task setup
+        base.OnStructureSetup();
     }
 
     #endregion
@@ -119,49 +80,7 @@ public class Building : PlaceableStructure, IInteractive<Building>
 
     #region Building Operations
 
-
-
-    public override void StartDestruction()
-    {
-        UnassignWorkers();
-
-        GameObject destructionPrefab = CampManager.Instance.BuildManager.GetDestructionPrefab(structureScriptableObj.size);
-        if (destructionPrefab != null)
-        {
-            CreateDestructionTask(destructionPrefab);
-        }
-    }
-
-    private void UnassignWorkers()
-    {
-        if (repairTask.IsOccupied)
-        {
-            repairTask.UnassignNPC();
-        }
-        if (upgradeTask.IsOccupied)
-        {
-            upgradeTask.UnassignNPC();
-        }
-    }
-
-    private void CreateDestructionTask(GameObject destructionPrefab)
-    {
-        GameObject destructionTaskObj = Instantiate(destructionPrefab, transform.position, transform.rotation);
-        
-        StructureDestructionTask destructionTask = destructionTaskObj.AddComponent<StructureDestructionTask>();
-        destructionTask.SetupDestructionTask(this as PlaceableStructure);
-
-        if (CampManager.Instance != null)
-        {
-            CampManager.Instance.WorkManager.AddWorkTask(destructionTask);
-        }
-        else
-        {
-            Debug.LogError("CampManager.Instance is null. Cannot add destruction task.");
-        }
-
-        Destroy(gameObject);
-    }
+    // Destruction logic is now handled in the base PlaceableStructure class
 
     #endregion
 
@@ -169,8 +88,6 @@ public class Building : PlaceableStructure, IInteractive<Building>
 
     public override string GetInteractionText()
     {
-        string baseText = base.GetInteractionText();
-        
         if (isUnderConstruction) return "Building under construction";
         if (!isOperational) return "Building not operational";
         
@@ -200,17 +117,17 @@ public class Building : PlaceableStructure, IInteractive<Building>
 
     internal string GetBuildingStatsText()
     {
-        string upgradeTimeText = structureScriptableObj.upgradeTarget != null 
-            ? $"{structureScriptableObj.upgradeTarget.constructionTime} seconds" 
+        string upgradeTimeText = StructureScriptableObj.upgradeTarget != null 
+            ? $"{StructureScriptableObj.upgradeTarget.constructionTime} seconds" 
             : "N/A";
             
         return $"Building Stats:\n" +
                $"Health: {currentHealth}/{MaxHealth}\n" +
-               $"Repair Time: {structureScriptableObj.repairTime} seconds\n" +
+               $"Repair Time: {StructureScriptableObj.repairTime} seconds\n" +
                $"Upgrade Time: {upgradeTimeText}\n" +
                $"Max Health: {MaxHealth}\n" +
-               $"Health Restored Per Repair: {structureScriptableObj.healthRestoredPerRepair}\n" +
-               $"Upgrade Target: {structureScriptableObj.upgradeTarget}\n";
+               $"Health Restored Per Repair: {StructureScriptableObj.healthRestoredPerRepair}\n" +
+               $"Upgrade Target: {StructureScriptableObj.upgradeTarget}\n";
     }
 
     #endregion

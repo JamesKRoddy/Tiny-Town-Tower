@@ -93,21 +93,46 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
 
         // Create the new structure
         GameObject structureObj = Instantiate(finalBuildingPrefab, transform.position, Quaternion.identity);
-        PlaceableStructure structureComponent = structureObj.GetComponent<PlaceableStructure>();
         
-        if (structureComponent == null)
+        // Try to get the specific structure component based on the scriptable object type
+        if (buildingScriptableObj is BuildingScriptableObj buildingSO)
         {
-            Debug.LogError($"Structure prefab {finalBuildingPrefab.name} must have a PlaceableStructure component!");
+            Building buildingComponent = structureObj.GetComponent<Building>();
+            if (buildingComponent == null)
+            {
+                Debug.LogError($"Building prefab {finalBuildingPrefab.name} must have a Building component!");
+                Destroy(structureObj);
+                return;
+            }
+            buildingComponent.SetupStructure(buildingSO);
+            buildingComponent.CompleteConstruction();
+        }
+        else if (buildingScriptableObj is TurretScriptableObject turretSO)
+        {
+            BaseTurret turretComponent = structureObj.GetComponent<BaseTurret>();
+            if (turretComponent == null)
+            {
+                Debug.LogError($"Turret prefab {finalBuildingPrefab.name} must have a BaseTurret component!");
+                Destroy(structureObj);
+                return;
+            }
+            turretComponent.SetupStructure(turretSO);
+            turretComponent.CompleteConstruction();
+        }
+        else
+        {
+            Debug.LogError($"Unknown scriptable object type: {buildingScriptableObj.GetType()}");
             Destroy(structureObj);
             return;
         }
         
-        // Setup the structure with the scriptable object
-        structureComponent.SetupStructure(buildingScriptableObj);
-        structureComponent.CompleteConstruction();
-        
-        // Trigger upgrade event for all constructions (since this is used for both new builds and upgrades)
-        structureComponent.TriggerUpgradeEvent();
+        // Get the structure component for triggering events and grid management
+        PlaceableStructure structureComponent = structureObj.GetComponent<PlaceableStructure>();
+        if (structureComponent != null)
+        {
+            // Trigger upgrade event for all constructions (since this is used for both new builds and upgrades)
+            structureComponent.TriggerUpgradeEvent();
+        }
 
         // Occupy grid slots with new structure
         if (CampManager.Instance != null)

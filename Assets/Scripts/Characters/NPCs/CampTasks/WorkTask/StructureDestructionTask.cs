@@ -15,7 +15,7 @@ public class StructureDestructionTask : WorkTask, IInteractive<object>
         taskAnimation = TaskAnimation.HAMMER_STANDING;
     }
 
-    public void SetupDestructionTask(PlaceableStructure structure)
+    public void SetupDestructionTask<T>(PlaceableStructure<T> structure) where T : PlaceableObjectParent
     {
         this.structureScriptableObj = structure.GetStructureScriptableObj();
         baseWorkTime = structureScriptableObj.destructionTime;

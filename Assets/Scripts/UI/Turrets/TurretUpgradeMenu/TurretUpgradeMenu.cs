@@ -17,7 +17,7 @@ public class TurretUpgradeMenu : MenuBase, IControllerInput
     public void ShowUpgradeOptions(BaseTurret turret)
     {
         currentTurret = turret;
-        var turretSO = turret.GetTurretScriptableObject();
+        var turretSO = turret.GetStructureScriptableObj();
 
         foreach (Transform child in previewResourceCostParent)
         {
@@ -49,7 +49,7 @@ public class TurretUpgradeMenu : MenuBase, IControllerInput
 
     private string GetUpgradeText(BaseTurret turret)
     {
-        var turretSO = turret.GetTurretScriptableObject();
+        var turretSO = turret.GetStructureScriptableObj();
         if (turretSO?.upgradeTarget != null)
         {
             return $"Upgrade to {turretSO.upgradeTarget.objectName}";
