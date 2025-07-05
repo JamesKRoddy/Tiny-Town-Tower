@@ -189,6 +189,7 @@ namespace Managers
                 onSelected = () => {
                     building.StartDestruction();
                     CloseSelectionPopup();
+                    PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
                 },
                 canSelect = () => !building.IsUnderConstruction(),
                 workTask = null
@@ -243,6 +244,7 @@ namespace Managers
                     // Execute upgrade immediately - consume resources, destroy building, create construction site
                     (task as StructureUpgradeTask)?.ExecuteUpgrade();
                     CloseSelectionPopup();
+                    PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
                 }),
                 FarmingTask => ("Farm", () => {
                     if ((task as FarmingTask)?.IsOccupiedWithCrop() ?? false)

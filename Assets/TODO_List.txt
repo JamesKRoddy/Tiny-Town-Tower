@@ -3,7 +3,7 @@
 Current Testing:
 Try a full wave with turrets killing zombies
 
-NEXT is to just double check the below, if all is good then merge and move on.
+NEXT is to just double check the below, if all is good then Turret upgradfe stuff has to happen.
 Have to test for building and turret:
 Construction
 Upgrade
