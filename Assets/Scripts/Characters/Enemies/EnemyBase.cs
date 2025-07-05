@@ -485,6 +485,7 @@ namespace Enemies
             }
             else if (obj is PlaceableStructure structure)
             {
+                /*
                 // Any structure with health is a valid target (regardless of operational status)
                 if (structure is WallBuilding wallBuilding)
                 {
@@ -498,6 +499,7 @@ namespace Enemies
                 {
                     buildingTargets.Add(targetTransform);
                 }
+                */
             }
         }
 
