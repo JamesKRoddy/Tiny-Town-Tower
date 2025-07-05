@@ -87,23 +87,13 @@ namespace Enemies
             // Simple initial target finding - let the enemy handle reachability validation
             List<Transform> potentialTargets = new List<Transform>();
             
-            // Find all buildings
-            Building[] buildings = FindObjectsByType<Building>(FindObjectsSortMode.None);
-            foreach (var building in buildings)
+            // Find all placeable structures (buildings and turrets)
+            PlaceableStructure[] structures = FindObjectsByType<PlaceableStructure>(FindObjectsSortMode.None);
+            foreach (var structure in structures)
             {
-                if (building != null && building.Health > 0)
+                if (structure != null && structure.Health > 0)
                 {
-                    potentialTargets.Add(building.transform);
-                }
-            }
-            
-            // Find all turrets
-            var turrets = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
-            foreach (var turret in turrets)
-            {
-                if (turret != null && turret.GetType().Name.Contains("Turret"))
-                {
-                    potentialTargets.Add(turret.transform);
+                    potentialTargets.Add(structure.transform);
                 }
             }
             

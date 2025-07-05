@@ -49,7 +49,6 @@ public class PlayerUIManager : MonoBehaviour
     public BuildMenu buildMenu;
     public PlayerInventoryMenu playerInventoryMenu;
     public SettlerNPCMenu settlerNPCMenu;
-    public TurretMenu turretMenu;
     public TurretUpgradeMenu turretUpgradeMenu;
     public GeneticMutationUI geneticMutationMenu;
     public SelectionPopup selectionPopup;
@@ -184,7 +183,6 @@ public class PlayerUIManager : MonoBehaviour
         narrativeSystem.SetScreenActive(false);
         playerInventoryMenu.SetScreenActive(false);
         settlerNPCMenu.SetScreenActive(false);
-        turretMenu.SetScreenActive(false);
         turretUpgradeMenu.SetScreenActive(false);
         geneticMutationMenu.SetScreenActive(false);
         utilityMenu.SetScreenActive(false);
@@ -229,7 +227,6 @@ public class PlayerUIManager : MonoBehaviour
             case BuildMenu:
             case PlayerInventoryMenu:
             case SettlerNPCMenu:
-            case TurretMenu:
             case TurretUpgradeMenu:
                 utilityMenu.EnableUtilityMenu();
                 break;

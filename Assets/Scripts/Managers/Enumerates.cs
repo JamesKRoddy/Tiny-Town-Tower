@@ -28,7 +28,7 @@ public enum BuildingType
 }
 
 [System.Serializable]
-public enum BuildingCategory
+public enum PlaceableObjectCategory
 {
     GENERAL,
     FOOD,
@@ -38,7 +38,8 @@ public enum BuildingCategory
     CLEANING,
     RESOURCES,
     BUNKER,
-    WALL
+    WALL,
+    CAMP_DEFENSE
 }
 
 // =========================
@@ -127,9 +128,8 @@ public enum PlayerControlType
     CAMP_NPC_MOVEMENT = 300, // Player's movement in the camp
     CAMP_CAMERA_MOVEMENT = 301, //Default
     CAMP_WORK_ASSIGNMENT = 302, // Assigning work to a settler
-    BUILDING_PLACEMENT = 303, // Placing a building from the build menu    
+    BUILDING_PLACEMENT = 303, // Placing a building or turret from the build menu    
     CAMP_ATTACK_CAMERA_MOVEMENT = 304, //Default when attacked by enemies
-    TURRET_PLACEMENT = 305, // Placing a turret from the turret menu
 
     /// <summary>
     /// Menus
@@ -261,15 +261,6 @@ public enum WeaponAnimationType
 }
 
 public enum GeneticMutation
-{
-    NONE
-}
-
-// =========================
-// TURRET ENUMS
-// =========================
-
-public enum TurretCategory
 {
     NONE
 }

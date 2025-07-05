@@ -8,8 +8,5 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "BuildingScriptableObj", menuName = "Scriptable Objects/Camp/BuildingScriptableObj")]
 public class BuildingScriptableObj : PlaceableObjectParent
 {
-    [Header("Building Category")]
-    public BuildingCategory buildingCategory;
-
     //TODO put in unlock requirements in here to check if the player is able to build this at their current level or whatever
 }

@@ -483,10 +483,10 @@ namespace Enemies
             {
                 npcTargets.Add(targetTransform);
             }
-            else if (obj is Building building)
+            else if (obj is PlaceableStructure structure)
             {
-                // Any building with health is a valid target (regardless of operational status)
-                if (building is WallBuilding wallBuilding)
+                // Any structure with health is a valid target (regardless of operational status)
+                if (structure is WallBuilding wallBuilding)
                 {
                     // Double-check that the wall is not destroyed and still exists
                     if (!wallBuilding.IsDestroyed && !wallBuilding.IsBeingDestroyed && wallBuilding.gameObject != null)
@@ -498,10 +498,6 @@ namespace Enemies
                 {
                     buildingTargets.Add(targetTransform);
                 }
-            }
-            else if (obj.GetType().Name.Contains("Turret"))
-            {
-                buildingTargets.Add(targetTransform);
             }
         }
 

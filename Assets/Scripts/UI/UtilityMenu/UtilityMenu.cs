@@ -11,7 +11,7 @@ public class UtilityMenu : MenuBase, IControllerInput
         playerInventoryBtn.onClick.AddListener(EnablePlayerInventoryMenu);
         buildMenuBtn.onClick.AddListener(EnableBuildMenu);
         settlerNPCBtn.onClick.AddListener(EnableSettlerNPCMenu);
-        turretBuildBtn.onClick.AddListener(EnableTurretBuildMenu);
+        turretBuildBtn.onClick.AddListener(EnableBuildMenu); // Turrets are now in the build menu
         geneticMutationBtn.onClick.AddListener(EnableGeneticMutationMenu);
     }
 
@@ -78,11 +78,7 @@ public class UtilityMenu : MenuBase, IControllerInput
         PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(true, 0.1f);
     }
 
-    private void EnableTurretBuildMenu()
-    {
-        PlayerUIManager.Instance.HideUtilityMenus();
-        PlayerUIManager.Instance.turretMenu.SetScreenActive(true, 0.1f);
-    }
+
 
     public void EnableGeneticMutationMenu()
     {

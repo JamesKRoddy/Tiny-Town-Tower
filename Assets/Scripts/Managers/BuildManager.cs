@@ -59,13 +59,7 @@ namespace Managers
             return destructionPrefabMappings.Count > 0 ? destructionPrefabMappings[0].destructionPrefab : null;
         }
 
-        /// <summary>
-        /// Get the turret scriptable objects for the turret menu
-        /// </summary>
-        public TurretScriptableObject[] GetTurretScriptableObjs()
-        {
-            return turretScriptableObjs;
-        }
+
 
         public void BuildingSelectionOptions(Building building){
             var options = new List<SelectionPopup.SelectionOption>();

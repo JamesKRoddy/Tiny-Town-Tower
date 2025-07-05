@@ -10,12 +10,14 @@ using Enemies;
 /// Base class for all placeable structures (buildings and turrets) in the camp.
 /// Handles common functionality like construction, damage, repair, and upgrade.
 /// </summary>
+[RequireComponent(typeof(StructureRepairTask))]
+[RequireComponent(typeof(StructureUpgradeTask))]
 public abstract class PlaceableStructure : MonoBehaviour, IDamageable
 {
     #region Serialized Fields
     
     [Header("Structure Configuration")]
-    [SerializeField] protected PlaceableObjectParent structureScriptableObj;
+    [SerializeField] public PlaceableObjectParent structureScriptableObj;
 
     [Header("Structure State")]
     [SerializeField, ReadOnly] protected bool isOperational = false;
@@ -253,15 +255,7 @@ public abstract class PlaceableStructure : MonoBehaviour, IDamageable
 
     protected virtual float GetMaxHealthFromScriptableObject()
     {
-        if (structureScriptableObj is TurretScriptableObject turretSO)
-        {
-            return turretSO.maxHealth;
-        }
-        else if (structureScriptableObj is BuildingScriptableObj buildingSO)
-        {
-            return buildingSO.maxHealth;
-        }
-        return 100f; // Default fallback
+        return structureScriptableObj != null ? structureScriptableObj.maxHealth : 100f;
     }
 
     public PlaceableObjectParent GetStructureScriptableObj()

@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 1182282198083070175}
   - component: {fileID: -6388633896787859049}
   - component: {fileID: 8214602545162772007}
+  - component: {fileID: 4002913512486463049}
+  - component: {fileID: 7831694063957827764}
   m_Layer: 0
   m_Name: _TestTurret
   m_TagString: Untagged
@@ -112,21 +114,54 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e9790573e9494e4d8167335f0ad195c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  structureScriptableObj: {fileID: 11400000, guid: 391b823efa03ef347a229805acbb73fe, type: 2}
+  isOperational: 0
+  isUnderConstruction: 1
+  currentHealth: 0
+  currentWorkTask: {fileID: 0}
   damage: 10
   range: 10
   fireRate: 1
   turretTurnSpeed: 5
   turretTop: {fileID: 286434362102794343}
   firePoint: {fileID: 1251338008053795908}
-  upgradeData:
-    damageIncrease: 5
-    rangeIncrease: 2
-    fireRateIncrease: 0.5
-    turretTurnSpeedIncrease: 0.25
-    upgradeCost: 50
-    upgradeTime: 5
-    costIncrease: 50
-    description: Upgrade the turret for increased stats.
+  turretScriptableObj: {fileID: 0}
+  repairTask: {fileID: 0}
+  upgradeTask: {fileID: 0}
+--- !u!114 &4002913512486463049
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5704079499573655729}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a23b8e719dbaec4eb808d85c61f96be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  workLocationTransform: {fileID: 0}
+  requiredResources: []
+  showTooltip: 0
+  electricityRequired: 0
+  taskAnimation: 0
+--- !u!114 &7831694063957827764
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5704079499573655729}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 373ecb0abe322ff4aabb6fd998c82d4c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  workLocationTransform: {fileID: 0}
+  requiredResources: []
+  showTooltip: 0
+  electricityRequired: 0
+  taskAnimation: 0
 --- !u!1 &5852412919431130926
 GameObject:
   m_ObjectHideFlags: 0

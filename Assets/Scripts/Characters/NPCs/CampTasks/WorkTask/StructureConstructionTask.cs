@@ -93,41 +93,18 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
 
         // Create the new structure
         GameObject structureObj = Instantiate(finalBuildingPrefab, transform.position, Quaternion.identity);
-        PlaceableStructure structureComponent = null;
-        
-        if (buildingScriptableObj is BuildingScriptableObj buildingSO)
-        {
-            Building buildingComponent = structureObj.GetComponent<Building>();
-            if (buildingComponent == null)
-            {
-                buildingComponent = structureObj.AddComponent<Building>();
-            }
-            
-            buildingComponent.SetupBuilding(buildingSO);
-            buildingComponent.CompleteConstruction();
-            structureComponent = buildingComponent;
-        }
-        else if (buildingScriptableObj is TurretScriptableObject turretSO)
-        {
-            BaseTurret turretComponent = structureObj.GetComponent<BaseTurret>();
-            if (turretComponent == null)
-            {
-                Debug.LogError($"Turret prefab {finalBuildingPrefab.name} must have a BaseTurret component!");
-                Destroy(structureObj);
-                return;
-            }
-            
-            turretComponent.SetupTurret(turretSO);
-            turretComponent.CompleteConstruction();
-            structureComponent = turretComponent;
-        }
+        PlaceableStructure structureComponent = structureObj.GetComponent<PlaceableStructure>();
         
         if (structureComponent == null)
         {
-            Debug.LogError($"Unknown scriptable object type: {buildingScriptableObj.GetType()}");
+            Debug.LogError($"Structure prefab {finalBuildingPrefab.name} must have a PlaceableStructure component!");
             Destroy(structureObj);
             return;
         }
+        
+        // Setup the structure with the scriptable object
+        structureComponent.SetupStructure(buildingScriptableObj);
+        structureComponent.CompleteConstruction();
         
         // Trigger upgrade event for all constructions (since this is used for both new builds and upgrades)
         structureComponent.TriggerUpgradeEvent();

@@ -253,11 +253,8 @@ namespace Managers
             {
                 if (target == null || target.Health <= 0) continue;
                 
-                if (target is Building || target is BaseTurret)
-                {
-                    return true;
-                }
-                else if (target is HumanCharacterController npc && npc != PlayerController.Instance._possessedNPC)
+                if (target is PlaceableStructure || 
+                    (target is HumanCharacterController npc && npc != PlayerController.Instance._possessedNPC))
                 {
                     return true;
                 }
@@ -273,13 +270,9 @@ namespace Managers
         {
             cachedTargets.Clear();
 
-            // Find all buildings
-            Building[] buildings = FindObjectsByType<Building>(FindObjectsSortMode.None);
-            cachedTargets.AddRange(buildings);
-
-            // Find all turrets
-            BaseTurret[] turrets = FindObjectsByType<BaseTurret>(FindObjectsSortMode.None);
-            cachedTargets.AddRange(turrets);
+            // Find all placeable structures (buildings and turrets)
+            PlaceableStructure[] structures = FindObjectsByType<PlaceableStructure>(FindObjectsSortMode.None);
+            cachedTargets.AddRange(structures);
 
             // Find all NPCs
             HumanCharacterController[] npcs = FindObjectsByType<HumanCharacterController>(FindObjectsSortMode.None);

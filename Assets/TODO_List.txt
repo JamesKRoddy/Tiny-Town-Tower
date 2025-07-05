@@ -4,11 +4,21 @@ Current Testing:
 Try a full wave with turrets killing zombies
 
 NEXT is to just double check the below, if all is good then Turret upgradfe stuff has to happen.
-Have to test for building and turret:
+Have to test for turret:
 Construction
 Upgrade
 Repair?? (maybe not, never looked at this yet)
 Destruction
+
+TODO for turret refactor:
+turrets to work with WorkManager
+Remove turret menu, make the build menu basically the PlaceableStructure menu
+Remove TurretUpgradeMenu i think just intergrate w/ work manager and have the tool tip display the info
+
+Remove
+
+Turret menu gameobject, keeping incase we need stuff from it
+
 
 
 Setup some basic effects for the turrets

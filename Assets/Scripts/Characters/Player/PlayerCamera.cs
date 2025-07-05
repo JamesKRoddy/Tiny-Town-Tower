@@ -38,8 +38,6 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
         // Handle new control type
         switch (controlType)
         {
-            case PlayerControlType.TURRET_PLACEMENT:
-                break;
             case PlayerControlType.CAMP_ATTACK_CAMERA_MOVEMENT:
                 UpdateTarget(defaultTarget); // Detach from target to allow free camera movement
                 PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystickInput; // Subscribe to joystick input

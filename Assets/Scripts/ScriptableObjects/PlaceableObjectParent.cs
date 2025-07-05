@@ -3,9 +3,11 @@ using UnityEngine;
 
 public class PlaceableObjectParent : WorldItemBase
 {
+    [Header("Placeable Object Parameters")]
     public List<ResourceItemCount> _resourceCost;
     public GameObject prefab;
     public Vector2Int size = new Vector2Int(1, 1);
+    public PlaceableObjectCategory placeableObjectCategory;
 
     [Header("Health Parameters")]
     public float maxHealth = 100f;

@@ -24,12 +24,6 @@ namespace Managers
         public GameObject gridPrefab;
         public GameObject takenGridPrefab;
 
-        public enum PlacementType
-        {
-            Building,
-            Turret
-        }
-
         private static PlacementManager _instance;
         public static PlacementManager Instance
         {
@@ -50,7 +44,6 @@ namespace Managers
         protected GameObject currentPreview;
         protected PlaceableObjectParent selectedObject;
         protected Vector3 currentGridPosition;
-        protected PlacementType currentPlacementType;
         protected float gridSize => CampManager.Instance != null ? CampManager.Instance.SharedGridSize : 2f;
 
         private void OnEnable()
@@ -65,23 +58,15 @@ namespace Managers
                 PlayerInput.Instance.OnUpdatePlayerControls -= HandleControlTypeUpdate;
         }
 
-        public void StartBuildingPlacement(BuildingScriptableObj buildingToPlace)
+        public void StartPlacement(PlaceableObjectParent placeableObject)
         {
-            currentPlacementType = PlacementType.Building;
-            selectedObject = buildingToPlace;
-            StartPlacement();
-        }
-
-        public void StartTurretPlacement(TurretScriptableObject turretToPlace)
-        {
-            currentPlacementType = PlacementType.Turret;
-            selectedObject = turretToPlace;
+            selectedObject = placeableObject;
             StartPlacement();
         }
 
         private void StartPlacement()
         {
-            currentPreview = Instantiate(GetPrefabFromObject(selectedObject));
+            currentPreview = Instantiate(selectedObject.prefab);
             SetPreviewMaterial(validPlacementMaterial);
             currentGridPosition = SnapToGrid(transform.position);
             currentPreview.transform.position = currentGridPosition;
@@ -90,22 +75,9 @@ namespace Managers
             NotifyControlTypeChange();
         }
 
-        private GameObject GetPrefabFromObject(ScriptableObject obj)
-        {
-            if (obj is BuildingScriptableObj buildingObj)
-                return buildingObj.prefab;
-            else if (obj is TurretScriptableObject turretObj)
-                return turretObj.prefab;
-            
-            Debug.LogError($"Unknown scriptable object type: {obj.GetType()}");
-            return null;
-        }
-
         private void NotifyControlTypeChange()
         {
-            PlayerControlType controlType = currentPlacementType == PlacementType.Building ? 
-                PlayerControlType.BUILDING_PLACEMENT : PlayerControlType.TURRET_PLACEMENT;
-            PlayerInput.Instance.UpdatePlayerControls(controlType);
+            PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.BUILDING_PLACEMENT);
         }
 
         protected void HandleJoystickMovement(Vector2 input)
@@ -150,70 +122,42 @@ namespace Managers
         {
             if (!IsValidPlacement(currentGridPosition, out string errorMessage))
             {
-                string errorMsg = currentPlacementType == PlacementType.Building ? 
-                    "Cannot place building" : $"Cannot place turret - {errorMessage}";
-                PlayerUIManager.Instance.DisplayUIErrorMessage(errorMsg);
+                PlayerUIManager.Instance.DisplayUIErrorMessage($"Cannot place {selectedObject.objectName} - {errorMessage}");
                 return;        
             }
 
             // Deduct the required resources from the player's inventory
-            if (selectedObject is PlaceableObjectParent placeableObj)
+            foreach (var requiredItem in selectedObject._resourceCost)
             {
-                foreach (var requiredItem in placeableObj._resourceCost)
-                {
-                    PlayerInventory.Instance.RemoveItem(requiredItem.resourceScriptableObj, requiredItem.count);
-                }
+                PlayerInventory.Instance.RemoveItem(requiredItem.resourceScriptableObj, requiredItem.count);
             }
 
             // Create construction site
             GameObject constructionSitePrefab = CampManager.Instance.BuildManager.GetConstructionSitePrefab(GetObjectSize());
             GameObject constructionSite = Instantiate(constructionSitePrefab, currentPreview.transform.position, Quaternion.identity);
 
-            if (currentPlacementType == PlacementType.Building)
-            {
-                SetupBuildingConstruction(constructionSite);
-            }
-            else if (currentPlacementType == PlacementType.Turret)
-            {
-                SetupTurretConstruction(constructionSite);
-            }
+            SetupConstruction(constructionSite);
             
             MarkGridSlotsOccupied(currentPreview.transform.position, GetObjectSize(), constructionSite);
             CancelPlacement();
         }
 
-        private void SetupBuildingConstruction(GameObject constructionSite)
+        private void SetupConstruction(GameObject constructionSite)
         {
             if (constructionSite.TryGetComponent(out StructureConstructionTask constructionSiteScript))
             {
-                constructionSiteScript.SetupConstruction(selectedObject as PlaceableObjectParent);
+                constructionSiteScript.SetupConstruction(selectedObject);
             }
             else
             {
                 constructionSite.AddComponent<StructureConstructionTask>();
-                constructionSite.GetComponent<StructureConstructionTask>().SetupConstruction(selectedObject as PlaceableObjectParent);
-            }
-        }
-
-        private void SetupTurretConstruction(GameObject constructionSite)
-        {
-            if (constructionSite.TryGetComponent(out StructureConstructionTask constructionSiteScript))
-            {
-                constructionSiteScript.SetupConstruction(selectedObject as PlaceableObjectParent);
-            }
-            else
-            {
-                constructionSite.AddComponent<StructureConstructionTask>();
-                constructionSite.GetComponent<StructureConstructionTask>().SetupConstruction(selectedObject as PlaceableObjectParent);
+                constructionSite.GetComponent<StructureConstructionTask>().SetupConstruction(selectedObject);
             }
         }
 
         private Vector2Int GetObjectSize()
         {
-            if (selectedObject is PlaceableObjectParent placeableObj)
-                return placeableObj.size;
-            
-            return new Vector2Int(1, 1); // Default size
+            return selectedObject.size;
         }
 
         private bool IsValidPlacement(Vector3 position, out string errorMessage)
@@ -224,14 +168,8 @@ namespace Managers
 
         private void OnPlacementCancelled()
         {
-            if (currentPlacementType == PlacementType.Building)
-            {
-                PlayerUIManager.Instance.utilityMenu.EnableBuildMenu();
-            }
-            else if (currentPlacementType == PlacementType.Turret)
-            {
-                PlayerUIManager.Instance.turretMenu.SetScreenActive(true, 0.1f);
-            }
+            // Both buildings and turrets now use the build menu
+            PlayerUIManager.Instance.utilityMenu.EnableBuildMenu();
         }
 
         private Vector3 SnapToGrid(Vector3 position)
@@ -260,11 +198,10 @@ namespace Managers
 
         private void HandleControlTypeUpdate(PlayerControlType controlType)
         {
-            bool isBuildingPlacement = controlType == PlayerControlType.BUILDING_PLACEMENT;
-            bool isTurretPlacement = controlType == PlayerControlType.TURRET_PLACEMENT;
+            bool isPlacementMode = controlType == PlayerControlType.BUILDING_PLACEMENT;
 
-            if (isBuildingPlacement || isTurretPlacement)
-                {
+            if (isPlacementMode)
+            {
                 EnableGrid(GetXBounds(), GetZBounds());
                 PlayerInput.Instance.OnLeftJoystick += HandleJoystickMovement;
                 PlayerInput.Instance.OnAPressed += PlaceObject;
@@ -276,14 +213,14 @@ namespace Managers
                 PlayerInput.Instance.OnLeftJoystick -= HandleJoystickMovement;
                 PlayerInput.Instance.OnAPressed -= PlaceObject;
                 PlayerInput.Instance.OnBPressed -= CancelPlacement;
-                    }
-                }
+            }
+        }
 
         private void EnableGrid(Vector2 xBounds, Vector2 zBounds)
-            {
+        {
             // Use the efficient grid object management from CampManager
             if (CampManager.Instance != null)
-                    {
+            {
                 CampManager.Instance.InitializeGridObjects(gridPrefab, takenGridPrefab);
                 CampManager.Instance.ShowGridObjects();
             }

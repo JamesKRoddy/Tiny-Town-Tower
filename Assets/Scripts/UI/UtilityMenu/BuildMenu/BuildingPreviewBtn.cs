@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-public class BuildingPreviewBtn : PreviewButtonBase<BuildingScriptableObj>
+public class BuildingPreviewBtn : PreviewButtonBase<PlaceableObjectParent>
 {
     protected override void OnButtonClicked()
     {
@@ -25,13 +25,13 @@ public class BuildingPreviewBtn : PreviewButtonBase<BuildingScriptableObj>
         }
         else
         {
-            PlayerUIManager.Instance.buildMenu.DisplayErrorMessage("Not enough resources to build this structure!");
+            PlayerUIManager.Instance.buildMenu.DisplayErrorMessage($"Not enough resources to build this structure!");
         }
     }
 
-    public void SetupButton(BuildingScriptableObj buildingObjRef)
+    public void SetupButton(PlaceableObjectParent placeableObject)
     {
-        base.SetupButton(buildingObjRef, buildingObjRef.sprite, buildingObjRef.objectName);
+        base.SetupButton(placeableObject, placeableObject.sprite, placeableObject.objectName);
     }
 
     public void OnButtonClick()
