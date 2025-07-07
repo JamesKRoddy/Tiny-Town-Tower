@@ -31,11 +31,11 @@ public abstract class WorkTask : MonoBehaviour
     public virtual bool IsTaskCompleted => true; // Base WorkTask is always completed when done
     public virtual bool HasQueuedTasks => false; // Base WorkTask has no queue
 
-    private PlaceableStructure taskStructure;
+    private IPlaceableStructure taskStructure;
 
     protected virtual void Start()
     {
-        taskStructure = GetComponent<PlaceableStructure>();
+        taskStructure = GetComponent<IPlaceableStructure>();
     }
 
     // Virtual method for tooltip text

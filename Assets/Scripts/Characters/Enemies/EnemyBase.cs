@@ -426,21 +426,12 @@ namespace Enemies
             List<Transform> npcTargets = new List<Transform>();
             List<Transform> buildingTargets = new List<Transform>();
             
-            // Cache the FindObjectsByType result to avoid multiple calls
-            var allDamageables = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+            // Use CampManager's cached target system for efficiency
+            CampManager.Instance.GetCategorizedTargets(npcTargets, buildingTargets);
             
-            // Process all damageable objects in a single pass
-            foreach (var obj in allDamageables)
-            {
-                if (obj is IDamageable damageable && damageable.GetAllegiance() == Allegiance.FRIENDLY)
-                {
-                    Transform targetTransform = obj.transform;
-                    
-                    CategorizeTarget(obj, damageable, targetTransform, npcTargets, buildingTargets);
-                }
-            }
+
             
-            // Simple priority: NPCs > Buildings > Walls
+            // Simple priority: NPCs > Buildings (including turrets)
             Transform target = FindClosestReachableTarget(npcTargets);
             if (target != null) 
             {
@@ -457,32 +448,7 @@ namespace Enemies
             return null;
         }
 
-        private void CategorizeTarget(MonoBehaviour obj, IDamageable damageable, Transform targetTransform, 
-            List<Transform> npcTargets, List<Transform> buildingTargets)
-        {
-            // Check health once at the start - if no health, don't categorize
-            if (damageable.Health <= 0)
-            {
-                return;
-            }
 
-            // Check if the object is still active in the scene
-            if (!obj.gameObject.activeInHierarchy)
-            {
-                return;
-            }
-
-            if (obj is HumanCharacterController)
-            {
-                npcTargets.Add(targetTransform);
-            }
-            else if (obj is PlaceableStructure structure)
-            {
-                // Any structure with health is a valid target (regardless of operational status)
-                buildingTargets.Add(targetTransform);
-                
-            }
-        }
 
         private Transform FindClosestReachableTarget(List<Transform> targets)
         {

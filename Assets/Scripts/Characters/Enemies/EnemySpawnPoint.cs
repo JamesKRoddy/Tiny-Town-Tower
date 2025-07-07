@@ -84,46 +84,8 @@ namespace Enemies
 
         private Transform FindInitialCampTarget()
         {
-            // Simple initial target finding - let the enemy handle reachability validation
-            List<Transform> potentialTargets = new List<Transform>();
-            
-            // Find all placeable structures (buildings and turrets)
-            PlaceableStructure[] structures = FindObjectsByType<PlaceableStructure>(FindObjectsSortMode.None);
-            foreach (var structure in structures)
-            {
-                if (structure != null && structure.Health > 0)
-                {
-                    potentialTargets.Add(structure.transform);
-                }
-            }
-            
-            // Find all NPCs (excluding the player if they're possessed)
-            HumanCharacterController[] npcs = FindObjectsByType<HumanCharacterController>(FindObjectsSortMode.None);
-            foreach (var npc in npcs)
-            {
-                if (npc != null && npc != PlayerController.Instance._possessedNPC)
-                {
-                    potentialTargets.Add(npc.transform);
-                }
-            }
-            
-            // Find the closest target (enemy will validate reachability)
-            Transform closestTarget = null;
-            float closestDistance = Mathf.Infinity;
-            
-            foreach (var target in potentialTargets)
-            {
-                if (target == null) continue;
-                
-                float distance = Vector3.Distance(transform.position, target.position);
-                if (distance < closestDistance)
-                {
-                    closestDistance = distance;
-                    closestTarget = target;
-                }
-            }
-            
-            return closestTarget;
+            // Use CampManager's cached target system for efficiency
+            return CampManager.Instance.GetRandomTarget();
         }
 
         private IEnumerator StartCooldown()

@@ -127,7 +127,7 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
         }
         
         // Get the structure component for triggering events and grid management
-        PlaceableStructure structureComponent = structureObj.GetComponent<PlaceableStructure>();
+        IPlaceableStructure structureComponent = structureObj.GetComponent<IPlaceableStructure>();
         if (structureComponent != null)
         {
             // Trigger upgrade event for all constructions (since this is used for both new builds and upgrades)

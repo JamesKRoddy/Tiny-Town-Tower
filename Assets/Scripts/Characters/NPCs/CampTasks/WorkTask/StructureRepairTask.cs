@@ -5,13 +5,15 @@ using Managers;
 public class StructureRepairTask : WorkTask
 {
     private float healthRestored = 50f;
-    private PlaceableStructure targetStructure;
+    private IPlaceableStructure targetStructure;
 
     protected override void Start()
     {
         base.Start();
         taskAnimation = TaskAnimation.HAMMER_STANDING;
-        targetStructure = GetComponent<PlaceableStructure>();
+        
+        targetStructure = GetComponent<IPlaceableStructure>();
+        
         if (targetStructure == null)
         {
             Debug.LogError("StructureRepairTask requires a PlaceableStructure component on the same GameObject!");

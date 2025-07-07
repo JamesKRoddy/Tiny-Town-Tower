@@ -59,6 +59,23 @@ public interface IDamageable
     Allegiance GetAllegiance(); // Method to get the allegiance of the entity
 }
 
+/// <summary>
+/// Interface for placeable structures to provide common functionality
+/// </summary>
+public interface IPlaceableStructure
+{
+    float GetCurrentHealth();
+    float GetMaxHealth();
+    void Heal(float amount);
+    PlaceableObjectParent GetStructureScriptableObj();
+    bool IsOperational();
+    bool IsUnderConstruction();
+    void SetCurrentWorkTask(WorkTask workTask);
+    void TriggerUpgradeEvent();
+    void StartDestruction();
+}
+
+
 /*
  * Known bugs:
 

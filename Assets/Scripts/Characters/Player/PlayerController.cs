@@ -4,6 +4,7 @@ using Managers;
 using UnityEngine;
 using UnityEngine.Windows;
 using System.Collections.Generic;
+using CampBuilding;
 
 public class PlayerController : MonoBehaviour, IControllerInput
 {
@@ -274,8 +275,8 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
         if (workTask != null)
         {
+            // Check if it's a building first
             Building building = workTask.GetComponent<Building>();
-
             if (building != null)
             {
                 if(CampManager.Instance.WorkManager.IsNPCForAssignmentSet()){
@@ -285,6 +286,21 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 } else{
                     CampManager.Instance.BuildManager.BuildingSelectionOptions(building);
                 }
+                return;
+            }
+
+            // Check if it's a turret
+            BaseTurret turret = workTask.GetComponent<BaseTurret>();
+            if (turret != null)
+            {
+                if(CampManager.Instance.WorkManager.IsNPCForAssignmentSet()){
+                    CreateWorkTaskOptions(turret, (task) => {
+                        CampManager.Instance.WorkManager.AssignWorkToBuilding(task);
+                    });
+                } else{
+                    CampManager.Instance.BuildManager.TurretSelectionOptions(turret);
+                }
+                return;
             }
         }
     }
@@ -309,7 +325,17 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
     private void CreateWorkTaskOptions(Building building, Action<WorkTask> onTaskSelected)
     {
-        CampManager.Instance.WorkManager.ShowWorkTaskOptions(building, null, (task) => {
+        var workTasks = building.GetComponents<WorkTask>();
+        CampManager.Instance.WorkManager.ShowWorkTaskOptions(workTasks, null, (task) => {
+            onTaskSelected(task);
+            CampManager.Instance.WorkManager.CloseSelectionPopup();
+        });
+    }
+
+    private void CreateWorkTaskOptions(BaseTurret turret, Action<WorkTask> onTaskSelected)
+    {
+        var workTasks = turret.GetComponents<WorkTask>();
+        CampManager.Instance.WorkManager.ShowWorkTaskOptions(workTasks, null, (task) => {
             onTaskSelected(task);
             CampManager.Instance.WorkManager.CloseSelectionPopup();
         });

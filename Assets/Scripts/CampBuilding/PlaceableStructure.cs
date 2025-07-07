@@ -12,7 +12,7 @@ using Enemies;
 /// </summary>
 [RequireComponent(typeof(StructureRepairTask))]
 [RequireComponent(typeof(StructureUpgradeTask))]
-public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable where T : PlaceableObjectParent
+public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlaceableStructure where T : PlaceableObjectParent
 {
     #region Serialized Fields
     
@@ -332,6 +332,11 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable where T
         return structureScriptableObj;
     }
 
+    PlaceableObjectParent IPlaceableStructure.GetStructureScriptableObj()
+    {
+        return structureScriptableObj;
+    }
+
     public virtual string GetInteractionText()
     {
         if (isUnderConstruction) return "Structure under construction";
@@ -353,10 +358,4 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable where T
     #endregion
 }
 
-/// <summary>
-/// Non-generic base class for backward compatibility and type erasure
-/// </summary>
-public abstract class PlaceableStructure : PlaceableStructure<PlaceableObjectParent>
-{
-    // This allows us to use PlaceableStructure as a base type when we don't need specific typing
-} 
+ 

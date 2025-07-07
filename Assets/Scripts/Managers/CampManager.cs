@@ -253,7 +253,7 @@ namespace Managers
             {
                 if (target == null || target.Health <= 0) continue;
                 
-                if (target is PlaceableStructure || 
+                if (target is IPlaceableStructure || 
                     (target is HumanCharacterController npc && npc != PlayerController.Instance._possessedNPC))
                 {
                     return true;
@@ -270,9 +270,24 @@ namespace Managers
         {
             cachedTargets.Clear();
 
-            // Find all placeable structures (buildings and turrets)
-            PlaceableStructure[] structures = FindObjectsByType<PlaceableStructure>(FindObjectsSortMode.None);
-            cachedTargets.AddRange(structures);
+            // Find all placeable structures (buildings and turrets) - use the existing registry system
+            Building[] buildings = FindObjectsByType<Building>(FindObjectsSortMode.None);
+            foreach (var building in buildings)
+            {
+                if (building is IDamageable damageable)
+                {
+                    cachedTargets.Add(damageable);
+                }
+            }
+
+            BaseTurret[] turrets = FindObjectsByType<BaseTurret>(FindObjectsSortMode.None);
+            foreach (var turret in turrets)
+            {
+                if (turret is IDamageable damageable)
+                {
+                    cachedTargets.Add(damageable);
+                }
+            }
 
             // Find all NPCs
             HumanCharacterController[] npcs = FindObjectsByType<HumanCharacterController>(FindObjectsSortMode.None);
@@ -332,6 +347,65 @@ namespace Managers
                 return false;
             }
             return true;
+        }
+
+        /// <summary>
+        /// Get a random valid target from the cached targets
+        /// </summary>
+        /// <returns>A random target transform, or null if no valid targets</returns>
+        public Transform GetRandomTarget()
+        {
+            List<Transform> validTargets = new List<Transform>();
+            
+            foreach (var target in cachedTargets)
+            {
+                if (target == null || target.Health <= 0) continue;
+                
+                if (target is IPlaceableStructure || 
+                    (target is HumanCharacterController npc && npc != PlayerController.Instance._possessedNPC))
+                {
+                    if (target is MonoBehaviour mb)
+                    {
+                        validTargets.Add(mb.transform);
+                    }
+                }
+            }
+            
+            if (validTargets.Count == 0)
+                return null;
+                
+            return validTargets[UnityEngine.Random.Range(0, validTargets.Count)];
+        }
+
+        /// <summary>
+        /// Get categorized targets for more complex targeting logic
+        /// </summary>
+        /// <param name="npcTargets">List to populate with NPC targets</param>
+        /// <param name="buildingTargets">List to populate with building targets</param>
+        public void GetCategorizedTargets(List<Transform> npcTargets, List<Transform> buildingTargets)
+        {
+            npcTargets.Clear();
+            buildingTargets.Clear();
+            
+            foreach (var target in cachedTargets)
+            {
+                if (target == null || target.Health <= 0) continue;
+                
+                if (target is HumanCharacterController npc && npc != PlayerController.Instance._possessedNPC)
+                {
+                    if (target is MonoBehaviour mb)
+                    {
+                        npcTargets.Add(mb.transform);
+                    }
+                }
+                else if (target is IPlaceableStructure)
+                {
+                    if (target is MonoBehaviour mb)
+                    {
+                        buildingTargets.Add(mb.transform);
+                    }
+                }
+            }
         }
 
         #endregion

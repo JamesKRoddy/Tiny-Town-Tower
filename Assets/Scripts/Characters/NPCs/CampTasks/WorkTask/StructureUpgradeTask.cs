@@ -53,7 +53,7 @@ public class StructureUpgradeTask : WorkTask
         constructionTask.SetupConstruction(upgradeTarget, true);
 
         // Handle grid slots
-        CampManager.Instance.MarkSharedGridSlotsUnoccupied(position, GetComponent<PlaceableStructure>().GetStructureScriptableObj().size);
+        CampManager.Instance.MarkSharedGridSlotsUnoccupied(position, GetComponent<IPlaceableStructure>().GetStructureScriptableObj().size);
         CampManager.Instance.MarkSharedGridSlotsOccupied(position, upgradeTarget.size, constructionSite);
 
         // Add to work manager
@@ -67,7 +67,7 @@ public class StructureUpgradeTask : WorkTask
 
     public override bool CanPerformTask()
     {
-        if (GetComponent<PlaceableStructure>() == null || upgradeTarget == null) return false;
+        if (GetComponent<IPlaceableStructure>() == null || upgradeTarget == null) return false;
         
         // Check if player has required resources
         if (requiredResources != null)

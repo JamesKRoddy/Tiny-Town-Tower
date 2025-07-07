@@ -99,19 +99,24 @@ public abstract class BaseTurret : PlaceableStructure<TurretScriptableObject>
 
     protected abstract void Fire();
 
+    public virtual void SetupStructure(TurretScriptableObject scriptableObj)
+    {
+        base.SetupStructure(scriptableObj);
+        
+        // Set turret stats from scriptable object
+        if (scriptableObj != null)
+        {
+            damage = scriptableObj.damage;
+            range = scriptableObj.range;
+            fireRate = scriptableObj.fireRate;
+            turretTurnSpeed = scriptableObj.turretTurnSpeed;
+        }
+    }
+
     protected override void OnStructureSetup()
     {
         // Base class handles repair and upgrade task setup
         base.OnStructureSetup();
-        
-        // Set turret stats from scriptable object
-        if (StructureScriptableObj != null)
-        {
-            damage = StructureScriptableObj.damage;
-            range = StructureScriptableObj.range;
-            fireRate = StructureScriptableObj.fireRate;
-            turretTurnSpeed = StructureScriptableObj.turretTurnSpeed;
-        }
     }
 
     public override string GetInteractionText()
@@ -130,5 +135,37 @@ public abstract class BaseTurret : PlaceableStructure<TurretScriptableObject>
         text += $"- Range: {range}\n";
         text += $"- Fire Rate: {fireRate}\n";
         return text;
+    }
+
+    public string GetTurretStatsText()
+    {
+        string stats = $"Turret Stats:\n\n";
+        stats += $"Health: {GetCurrentHealth():F0}/{GetMaxHealth():F0} ({(GetHealthPercentage() * 100):F1}%)\n";
+        stats += $"Damage: {damage:F1}\n";
+        stats += $"Range: {range:F1}\n";
+        stats += $"Fire Rate: {fireRate:F1} shots/sec\n";
+        stats += $"Turn Speed: {turretTurnSpeed:F1}\n";
+        stats += $"Status: {(IsOperational() ? "Operational" : "Not Operational")}\n";
+        
+        if (IsUnderConstruction())
+        {
+            stats += $"Construction: Under Construction\n";
+        }
+        
+        if (StructureScriptableObj != null)
+        {
+            stats += $"\nTurret Type: {StructureScriptableObj.objectName}\n";
+            if (StructureScriptableObj.upgradeTarget != null)
+            {
+                stats += $"Can Upgrade To: {StructureScriptableObj.upgradeTarget.objectName}\n";
+            }
+        }
+        
+        return stats;
+    }
+
+    public override void StartDestruction()
+    {
+        base.StartDestruction();
     }
 } 

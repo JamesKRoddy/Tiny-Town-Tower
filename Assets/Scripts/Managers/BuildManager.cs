@@ -64,7 +64,7 @@ namespace Managers
         public void BuildingSelectionOptions(Building building){
             var options = new List<SelectionPopup.SelectionOption>();
 
-            // Add Destroy Building option first
+            // Add Building Stats option
             options.Add(new SelectionPopup.SelectionOption
             {
                 optionName = "Building Stats",
@@ -91,6 +91,47 @@ namespace Managers
                         optionName = $"Work Queue: {workTask.GetType().Name.Replace("Task", "")}",
                         onSelected = () => {
                             PlayerUIManager.Instance.selectionPreviewList.Setup(building.GetCurrentWorkTask(), null);
+                            PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+                        },
+                        workTask = workTask
+                    });
+                }
+            }
+
+            // Show the selection popup
+            PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
+        }
+
+        public void TurretSelectionOptions(BaseTurret turret){
+            var options = new List<SelectionPopup.SelectionOption>();
+
+            // Add Turret Stats option
+            options.Add(new SelectionPopup.SelectionOption
+            {
+                optionName = "Turret Stats",
+                onSelected = () => {
+                    PlayerUIManager.Instance.DisplayTextPopup(turret.GetTurretStatsText());
+                    PlayerUIManager.Instance.selectionPopup.OnCloseClicked();
+                },
+                workTask = null
+            });
+
+            options.Add(new SelectionPopup.SelectionOption
+            {
+                optionName = "Assign Worker",
+                onSelected = () => {
+                    CampManager.Instance.WorkManager.buildingForAssignment = turret;
+                    PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(true);
+                },
+            });
+
+            foreach(var workTask in turret.GetComponents<WorkTask>()){
+                if(workTask is QueuedWorkTask queuedTask && queuedTask.HasQueuedTasks){
+                    options.Add(new SelectionPopup.SelectionOption
+                    {
+                        optionName = $"Work Queue: {workTask.GetType().Name.Replace("Task", "")}",
+                        onSelected = () => {
+                            PlayerUIManager.Instance.selectionPreviewList.Setup(turret.GetCurrentWorkTask(), null);
                             PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
                         },
                         workTask = workTask

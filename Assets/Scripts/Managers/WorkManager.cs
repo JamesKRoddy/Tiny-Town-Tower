@@ -15,7 +15,7 @@ namespace Managers
         private HumanCharacterController npcForAssignment;
         private Dictionary<WorkTask, HumanCharacterController> previousWorkers = new Dictionary<WorkTask, HumanCharacterController>();
 
-        public Building buildingForAssignment;
+        public IPlaceableStructure buildingForAssignment;
 
         // Method to add a new work task to the queue
         public void AddWorkTask(WorkTask newTask)
@@ -176,22 +176,38 @@ namespace Managers
             return null;
         }
         
-        public void ShowWorkTaskOptions(Building building, HumanCharacterController characterToAssign, Action<WorkTask> onTaskSelected)
+        public void ShowWorkTaskOptions(IPlaceableStructure structure, HumanCharacterController characterToAssign, Action<WorkTask> onTaskSelected)
         {
-            var workTasks = building.GetComponents<WorkTask>();
+            var workTasks = (structure as MonoBehaviour)?.GetComponents<WorkTask>();
+            if (workTasks == null)
+            {
+                Debug.LogError("Structure is not a MonoBehaviour or has no WorkTask components");
+                return;
+            }
 
             var options = new List<SelectionPopup.SelectionOption>();
 
-            // Add Destroy Building option first
+            // Add Destroy Structure option first
             options.Add(new SelectionPopup.SelectionOption
             {
-                optionName = "Destroy Building",
+                optionName = "Destroy Structure",
                 onSelected = () => {
-                    building.StartDestruction();
+                    if (structure is MonoBehaviour mb)
+                    {
+                        // Call StartDestruction through the interface or cast to the appropriate type
+                        if (mb is Building building)
+                        {
+                            building.StartDestruction();
+                        }
+                        else if (mb is BaseTurret turret)
+                        {
+                            turret.StartDestruction();
+                        }
+                    }
                     CloseSelectionPopup();
                     PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
                 },
-                canSelect = () => !building.IsUnderConstruction(),
+                canSelect = () => !structure.IsUnderConstruction(),
                 workTask = null
             });
 
