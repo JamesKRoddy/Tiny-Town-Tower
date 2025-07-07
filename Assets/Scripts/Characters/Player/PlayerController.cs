@@ -293,11 +293,14 @@ public class PlayerController : MonoBehaviour, IControllerInput
             BaseTurret turret = workTask.GetComponent<BaseTurret>();
             if (turret != null)
             {
+                Debug.Log($"Found turret: {turret.name}");
                 if(CampManager.Instance.WorkManager.IsNPCForAssignmentSet()){
+                    Debug.Log("NPC for assignment is set, creating work task options");
                     CreateWorkTaskOptions(turret, (task) => {
                         CampManager.Instance.WorkManager.AssignWorkToBuilding(task);
                     });
                 } else{
+                    Debug.Log("No NPC for assignment, showing turret selection options");
                     CampManager.Instance.BuildManager.TurretSelectionOptions(turret);
                 }
                 return;

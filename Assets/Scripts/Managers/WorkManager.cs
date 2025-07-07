@@ -69,6 +69,12 @@ namespace Managers
             npcForAssignment = npc;
         }
 
+        public void ClearNPCForAssignment()
+        {
+            Debug.Log($"Clearing NPC for assignment. Was: {npcForAssignment?.name ?? "null"}");
+            npcForAssignment = null;
+        }
+
         public void AssignWorkToBuilding(WorkTask workTask)
         {            
             if (workTask == null)
@@ -248,6 +254,7 @@ namespace Managers
                 }
                 PlayerUIManager.Instance.selectionPreviewList.Setup(task, characterToAssign);
                 PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+                ClearNPCForAssignment(); // Clear assignment after work is started
             };
 
             // Get option name and action based on task type
@@ -261,18 +268,23 @@ namespace Managers
                     (task as StructureUpgradeTask)?.ExecuteUpgrade();
                     CloseSelectionPopup();
                     PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
+                    ClearNPCForAssignment(); // Clear assignment after work is started
                 }),
                 FarmingTask => ("Farm", () => {
                     if ((task as FarmingTask)?.IsOccupiedWithCrop() ?? false)
                     {
                         characterToAssign.StartWork(task);
+                        ClearNPCForAssignment(); // Clear assignment after work is started
                     }
                     else
                     {
                         previewListAction();
                     }
                 }),
-                _ => (task.GetType().Name.Replace("Task", ""), () => onTaskSelected(task))
+                _ => (task.GetType().Name.Replace("Task", ""), () => {
+                    onTaskSelected(task);
+                    ClearNPCForAssignment(); // Clear assignment after work is started
+                })
             };
 
             return new SelectionPopup.SelectionOption

@@ -103,6 +103,7 @@ namespace Managers
         }
 
         public void TurretSelectionOptions(BaseTurret turret){
+            Debug.Log($"TurretSelectionOptions called for turret: {turret.name}");
             var options = new List<SelectionPopup.SelectionOption>();
 
             // Add Turret Stats option
@@ -110,6 +111,7 @@ namespace Managers
             {
                 optionName = "Turret Stats",
                 onSelected = () => {
+                    Debug.Log("Turret Stats option selected");
                     PlayerUIManager.Instance.DisplayTextPopup(turret.GetTurretStatsText());
                     PlayerUIManager.Instance.selectionPopup.OnCloseClicked();
                 },
@@ -139,7 +141,9 @@ namespace Managers
                 }
             }
 
+            Debug.Log($"Created {options.Count} options for turret selection");
             // Show the selection popup
+            Debug.Log($"Setting up selection popup with {options.Count} options");
             PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
         }
     }

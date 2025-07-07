@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e5e83a346c0a944f9d9f31c8d9a74ae, type: 3}
-  m_Name: _TestTurret
+  m_Name: _TestTurret Lvl 1
   m_EditorClassIdentifier: 
   objectName: 
   description: 
@@ -20,8 +20,17 @@ MonoBehaviour:
     count: 1
   prefab: {fileID: 5704079499573655729, guid: 24e35ea0993320b42bc3b83f4a11a613, type: 3}
   size: {x: 1, y: 1}
-  turretCategory: 0
-  upgradeTarget: {fileID: 0}
-  upgradeTime: 30
+  placeableObjectCategory: 0
+  maxHealth: 100
+  repairTime: 20
+  healthRestoredPerRepair: 50
+  repairResources: []
+  constructionTime: 10
+  upgradeTarget: {fileID: 11400000, guid: b399a615e6ee3d547af96e95a337557e, type: 2}
   upgradeResources: []
-  upgradeResourceCosts: 
+  destructionTime: 15
+  reclaimedResources: []
+  damage: 10
+  range: 10
+  fireRate: 1
+  turretTurnSpeed: 5
