@@ -425,7 +425,6 @@ namespace Enemies
         {
             List<Transform> npcTargets = new List<Transform>();
             List<Transform> buildingTargets = new List<Transform>();
-            List<Transform> wallTargets = new List<Transform>();
             
             // Cache the FindObjectsByType result to avoid multiple calls
             var allDamageables = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
@@ -437,7 +436,7 @@ namespace Enemies
                 {
                     Transform targetTransform = obj.transform;
                     
-                    CategorizeTarget(obj, damageable, targetTransform, npcTargets, buildingTargets, wallTargets);
+                    CategorizeTarget(obj, damageable, targetTransform, npcTargets, buildingTargets);
                 }
             }
             
@@ -454,18 +453,12 @@ namespace Enemies
                 return target;
             }
             
-            target = FindClosestReachableTarget(wallTargets);
-            if (target != null) 
-            {
-                return target;
-            }
-            
-            Debug.LogWarning($"{gameObject.name}: No targets found! NPCs: {npcTargets.Count}, Buildings: {buildingTargets.Count}, Walls: {wallTargets.Count}");
+            Debug.LogWarning($"{gameObject.name}: No targets found! NPCs: {npcTargets.Count}, Buildings: {buildingTargets.Count}");
             return null;
         }
 
         private void CategorizeTarget(MonoBehaviour obj, IDamageable damageable, Transform targetTransform, 
-            List<Transform> npcTargets, List<Transform> buildingTargets, List<Transform> wallTargets)
+            List<Transform> npcTargets, List<Transform> buildingTargets)
         {
             // Check health once at the start - if no health, don't categorize
             if (damageable.Health <= 0)
@@ -485,21 +478,9 @@ namespace Enemies
             }
             else if (obj is PlaceableStructure structure)
             {
-                /*
                 // Any structure with health is a valid target (regardless of operational status)
-                if (structure is WallBuilding wallBuilding)
-                {
-                    // Double-check that the wall is not destroyed and still exists
-                    if (!wallBuilding.IsDestroyed && !wallBuilding.IsBeingDestroyed && wallBuilding.gameObject != null)
-                    {
-                        wallTargets.Add(targetTransform);
-                    }
-                }
-                else
-                {
-                    buildingTargets.Add(targetTransform);
-                }
-                */
+                buildingTargets.Add(targetTransform);
+                
             }
         }
 
