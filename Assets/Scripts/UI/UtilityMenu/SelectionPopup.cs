@@ -29,7 +29,6 @@ public class SelectionPopup : PreviewPopupBase<object, string>
     protected override void Start()
     {
         base.Start();
-        closeButton.onClick.AddListener(ReturnToGame);
     }
 
     public void Setup(List<SelectionOption> options, GameObject element, Action onClose = null)
@@ -187,5 +186,7 @@ public class SelectionPopup : PreviewPopupBase<object, string>
     {
         base.OnCloseClicked();
         onClose?.Invoke();
+        ReturnToGame();
+        CampManager.Instance.WorkManager.ClearNPCForAssignment();
     }
 } 

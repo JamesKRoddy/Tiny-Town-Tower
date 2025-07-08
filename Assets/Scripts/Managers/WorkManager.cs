@@ -212,6 +212,7 @@ namespace Managers
                     }
                     CloseSelectionPopup();
                     PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
+                    ClearNPCForAssignment(); // Clear assignment when destroying structure
                 },
                 canSelect = () => !structure.IsUnderConstruction(),
                 workTask = null
@@ -240,8 +241,11 @@ namespace Managers
                 }
             }
 
-            // Show the selection popup
-            PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
+            // Show the selection popup with cleanup callback to clear NPC assignment
+            PlayerUIManager.Instance.selectionPopup.Setup(options, null, () => {
+                // Clear NPC assignment when popup closes
+                ClearNPCForAssignment();
+            });
         }
 
         private SelectionPopup.SelectionOption CreateWorkTaskOption(WorkTask task, HumanCharacterController characterToAssign, Action<WorkTask> onTaskSelected)

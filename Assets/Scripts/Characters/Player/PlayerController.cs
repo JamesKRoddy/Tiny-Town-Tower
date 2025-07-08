@@ -218,6 +218,15 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 PlayerInput.Instance.OnSelectPressed += () => OpenUtilityMenu();
                 PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu();
                 break;
+            case PlayerControlType.IN_MENU:
+                PlayerInput.Instance.OnBPressed += () => {
+                    // Close selection popup if it's open
+                    if (PlayerUIManager.Instance?.selectionPopup?.gameObject.activeSelf == true)
+                    {
+                        PlayerUIManager.Instance.selectionPopup.OnCloseClicked();
+                    }
+                };
+                break;
             case PlayerControlType.TRANSITION:
                 if(collider != null)
                 {
