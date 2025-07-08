@@ -203,7 +203,7 @@ namespace Managers
                         // Call StartDestruction through the interface or cast to the appropriate type
                         if (mb is Building building)
                         {
-                            building.StartDestruction();
+                    building.StartDestruction();
                         }
                         else if (mb is BaseTurret turret)
                         {
