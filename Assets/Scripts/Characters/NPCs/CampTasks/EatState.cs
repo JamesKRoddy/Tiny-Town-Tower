@@ -144,14 +144,27 @@ public class EatState : _TaskState
             }
         }
 
-        // Return to work if we were on break, otherwise wander
+        // Return to work if we were on break, otherwise check for available tasks
         if (npc.HasAssignedWork())
         {
             npc.ReturnToWork();
         }
         else
         {
-            npc.ChangeTask(TaskType.WANDER);
+            // Check if there are available tasks before going to wander
+            if (CampManager.Instance?.WorkManager != null)
+            {
+                bool taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(npc);
+                if (!taskAssigned)
+                {
+                    // No tasks available, go to wander state
+                    npc.ChangeTask(TaskType.WANDER);
+                }
+            }
+            else
+            {
+                npc.ChangeTask(TaskType.WANDER);
+            }
         }
     }
 

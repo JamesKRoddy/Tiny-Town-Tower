@@ -708,7 +708,20 @@ namespace Managers
             {
                 if (npc is SettlerNPC settler)
                 {
-                    settler.ChangeTask(TaskType.WANDER);
+                    // Check for available work before going to wander
+                    if (WorkManager != null)
+                    {
+                        bool taskAssigned = WorkManager.AssignNextAvailableTask(settler);
+                        if (!taskAssigned)
+                        {
+                            // No tasks available, go to wander state
+                            settler.ChangeTask(TaskType.WANDER);
+                        }
+                    }
+                    else
+                    {
+                        settler.ChangeTask(TaskType.WANDER);
+                    }
                 }
             }
         }

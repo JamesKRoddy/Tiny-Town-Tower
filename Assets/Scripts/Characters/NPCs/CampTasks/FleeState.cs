@@ -146,7 +146,21 @@ public class FleeState : _TaskState
             if ((isFleeing || isSeekingBunker) && Time.time - lastThreatTime >= threatCooldown)
             {
                 Debug.Log($"{npc.name} no longer threatened after {threatCooldown}s cooldown, returning to normal behavior");
-                npc.ChangeTask(TaskType.WANDER);
+                
+                // Check for available work before returning to normal behavior
+                if (CampManager.Instance?.WorkManager != null)
+                {
+                    bool taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(npc);
+                    if (!taskAssigned)
+                    {
+                        // No tasks available, go to wander state
+                        npc.ChangeTask(TaskType.WANDER);
+                    }
+                }
+                else
+                {
+                    npc.ChangeTask(TaskType.WANDER);
+                }
             }
             else if (isFleeing || isSeekingBunker)
             {
@@ -363,8 +377,20 @@ public class FleeState : _TaskState
             }
             else
             {
-                // No threats, return to normal behavior
-                npc.ChangeTask(TaskType.WANDER);
+                // No threats, check for available work before returning to normal behavior
+                if (CampManager.Instance?.WorkManager != null)
+                {
+                    bool taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(npc);
+                    if (!taskAssigned)
+                    {
+                        // No tasks available, go to wander state
+                        npc.ChangeTask(TaskType.WANDER);
+                    }
+                }
+                else
+                {
+                    npc.ChangeTask(TaskType.WANDER);
+                }
             }
         }
     }

@@ -35,6 +35,71 @@ namespace Managers
             return null;
         }
 
+        // Method to automatically assign the next available task to an NPC
+        public bool AssignNextAvailableTask(HumanCharacterController npc)
+        {
+            if (npc == null) return false;
+
+            WorkTask nextTask = GetNextTask();
+            if (nextTask != null)
+            {
+                // Check if the task can be performed
+                if (!nextTask.CanPerformTask())
+                {
+                    // Put the task back in the queue if it can't be performed
+                    workQueue.Enqueue(nextTask);
+                    return false;
+                }
+
+                // Check if the player has required resources
+                if (!nextTask.HasRequiredResources())
+                {
+                    // Put the task back in the queue if resources are missing
+                    workQueue.Enqueue(nextTask);
+                    return false;
+                }
+
+                // Assign the task to the NPC
+                if (npc is RobotCharacterController robot)
+                {
+                    nextTask.AssignNPC(robot);
+                    robot.StartWork(nextTask);
+                }
+                else if (npc is SettlerNPC settler)
+                {
+                    nextTask.AssignNPC(settler);
+                    
+                    Debug.Log($"[WorkManager] Assigning task {nextTask.GetType().Name} to {settler.name}. Current task type: {settler.GetCurrentTaskType()}");
+                    
+                    // If the NPC is already in work state, we need to update the work state directly
+                    if (settler.GetCurrentTaskType() == TaskType.WORK)
+                    {
+                        var workState = settler.GetComponent<WorkState>();
+                        if (workState != null)
+                        {
+                            workState.AssignTask(nextTask);
+                            workState.UpdateTaskDestination(); // Force update the destination
+                            Debug.Log($"[WorkManager] Updated work state for {settler.name} to task {nextTask.GetType().Name}");
+                        }
+                    }
+                    else
+                    {
+                        settler.StartWork(nextTask);
+                        Debug.Log($"[WorkManager] Started work for {settler.name} on task {nextTask.GetType().Name}");
+                    }
+                }
+                else
+                {
+                    Debug.LogError($"[WorkManager] Invalid character type for assignment: {npc.GetType().Name}");
+                    workQueue.Enqueue(nextTask);
+                    return false;
+                }
+
+                return true;
+            }
+            return false;
+        }
+
         // Method to assign a task to a specific NPC
         public void AssignTask(SettlerNPC npc, WorkTask task)
         {
@@ -303,6 +368,28 @@ namespace Managers
         public void CloseSelectionPopup()
         {
             PlayerUIManager.Instance.selectionPopup.OnCloseClicked();
+        }
+
+        // Debug method to show work queue status
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        public void DebugWorkQueueStatus()
+        {
+            Debug.Log($"[WorkManager] Work queue status: {workQueue.Count} tasks in queue");
+            if (workQueue.Count > 0)
+            {
+                int index = 0;
+                foreach (var task in workQueue)
+                {
+                    Debug.Log($"[WorkManager] Task {index}: {task.GetType().Name} at {task.transform.position}");
+                    index++;
+                }
+            }
+        }
+
+        // Debug method to get work queue count
+        public int GetWorkQueueCount()
+        {
+            return workQueue.Count;
         }
     }
 }

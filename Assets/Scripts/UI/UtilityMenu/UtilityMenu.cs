@@ -11,7 +11,6 @@ public class UtilityMenu : MenuBase, IControllerInput
         playerInventoryBtn.onClick.AddListener(EnablePlayerInventoryMenu);
         buildMenuBtn.onClick.AddListener(EnableBuildMenu);
         settlerNPCBtn.onClick.AddListener(EnableSettlerNPCMenu);
-        turretBuildBtn.onClick.AddListener(EnableBuildMenu); // Turrets are now in the build menu
         geneticMutationBtn.onClick.AddListener(EnableGeneticMutationMenu);
     }
 
@@ -21,14 +20,12 @@ public class UtilityMenu : MenuBase, IControllerInput
         playerInventoryBtn.onClick.RemoveAllListeners();
         buildMenuBtn.onClick.RemoveAllListeners();
         settlerNPCBtn.onClick.RemoveAllListeners();
-        turretBuildBtn.onClick.RemoveAllListeners();
         geneticMutationBtn.onClick.RemoveAllListeners();
     }
 
     [SerializeField] Button playerInventoryBtn;
     [SerializeField] Button buildMenuBtn;
     [SerializeField] Button settlerNPCBtn;
-    [SerializeField] Button turretBuildBtn;
     [SerializeField] Button geneticMutationBtn;
 
     public void ReturnToGame(PlayerControlType playerControlType = PlayerControlType.NONE)
@@ -93,7 +90,6 @@ public class UtilityMenu : MenuBase, IControllerInput
         playerInventoryBtn.gameObject.SetActive(false);
         buildMenuBtn.gameObject.SetActive(false);
         settlerNPCBtn.gameObject.SetActive(false);
-        turretBuildBtn.gameObject.SetActive(false);
         geneticMutationBtn.gameObject.SetActive(false);
 
         switch(GameManager.Instance.CurrentGameMode){
@@ -105,7 +101,6 @@ public class UtilityMenu : MenuBase, IControllerInput
                 playerInventoryBtn.gameObject.SetActive(true);
                 buildMenuBtn.gameObject.SetActive(true);
                 settlerNPCBtn.gameObject.SetActive(true);
-                turretBuildBtn.gameObject.SetActive(true);
                 geneticMutationBtn.gameObject.SetActive(true);
                 break;
             case GameMode.CAMP_ATTACK:
