@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using CampBuilding;
 
 namespace Managers
 {
@@ -64,15 +65,14 @@ namespace Managers
         public void BuildingSelectionOptions(Building building){
             var options = new List<SelectionPopup.SelectionOption>();
 
-            // Add Building Stats option
+            // Add Building Stats option (now shows as tooltip)
             options.Add(new SelectionPopup.SelectionOption
             {
                 optionName = "Building Stats",
                 onSelected = () => {
-                    PlayerUIManager.Instance.DisplayTextPopup(building.GetBuildingStatsText());
-                    PlayerUIManager.Instance.selectionPopup.OnCloseClicked();
+                    // Do nothing - stats are shown as tooltip
                 },
-                workTask = null
+                customTooltip = building.GetBuildingStatsText()
             });
 
             options.Add(new SelectionPopup.SelectionOption
@@ -106,16 +106,14 @@ namespace Managers
             Debug.Log($"TurretSelectionOptions called for turret: {turret.name}");
             var options = new List<SelectionPopup.SelectionOption>();
 
-            // Add Turret Stats option
+            // Add Turret Stats option (now shows as tooltip)
             options.Add(new SelectionPopup.SelectionOption
             {
                 optionName = "Turret Stats",
                 onSelected = () => {
-                    Debug.Log("Turret Stats option selected");
-                    PlayerUIManager.Instance.DisplayTextPopup(turret.GetTurretStatsText());
-                    PlayerUIManager.Instance.selectionPopup.OnCloseClicked();
+                    // Do nothing - stats are shown as tooltip
                 },
-                workTask = null
+                customTooltip = turret.GetTurretStatsText()
             });
 
             options.Add(new SelectionPopup.SelectionOption
