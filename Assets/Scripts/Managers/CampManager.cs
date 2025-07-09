@@ -136,7 +136,6 @@ namespace Managers
         protected override void Start()
         {
             base.Start();
-            SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
             
             FindCampNPCs();
             PopulateTargetCache();
