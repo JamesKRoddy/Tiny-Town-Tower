@@ -715,7 +715,7 @@ namespace Managers
                         if (!taskAssigned)
                         {
                             // No tasks available, go to wander state
-                            settler.ChangeTask(TaskType.WANDER);
+                    settler.ChangeTask(TaskType.WANDER);
                         }
                     }
                     else

@@ -80,6 +80,7 @@ public class WorkState : _TaskState
         if (assignedTask != null)
         {
             Debug.Log($"[WorkState] Updating task destination for {npc.name} to {assignedTask.GetType().Name} at {assignedTask.GetNavMeshDestination().position}");
+            
             hasReachedTask = false;
             isTaskBeingPerformed = false;
             timeAtTaskLocation = 0f;
@@ -274,6 +275,12 @@ public class WorkState : _TaskState
             return;
         }
 
+        // Stop the work animation since the current task is complete
+        if (npc is SettlerNPC settler)
+        {
+            settler.StopWorkAnimation();
+        }
+
         // Try to assign the next available task from the work queue
         if (CampManager.Instance?.WorkManager != null)
         {
@@ -281,6 +288,7 @@ public class WorkState : _TaskState
             if (taskAssigned)
             {
                 // A new task was assigned, so we stay in work state
+                // The work animation will be started again when we reach the new task
                 return;
             }
         }

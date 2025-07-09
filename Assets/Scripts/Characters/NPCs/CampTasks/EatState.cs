@@ -160,10 +160,10 @@ public class EatState : _TaskState
                     // No tasks available, go to wander state
                     npc.ChangeTask(TaskType.WANDER);
                 }
-            }
-            else
-            {
-                npc.ChangeTask(TaskType.WANDER);
+        }
+        else
+        {
+            npc.ChangeTask(TaskType.WANDER);
             }
         }
     }

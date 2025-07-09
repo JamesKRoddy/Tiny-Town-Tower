@@ -159,7 +159,7 @@ public class FleeState : _TaskState
                 }
                 else
                 {
-                    npc.ChangeTask(TaskType.WANDER);
+                npc.ChangeTask(TaskType.WANDER);
                 }
             }
             else if (isFleeing || isSeekingBunker)
@@ -389,7 +389,7 @@ public class FleeState : _TaskState
                 }
                 else
                 {
-                    npc.ChangeTask(TaskType.WANDER);
+                npc.ChangeTask(TaskType.WANDER);
                 }
             }
         }

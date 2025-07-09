@@ -179,7 +179,7 @@ public class WanderState : _TaskState
             if (!taskAssigned)
             {
                 // If no task was assigned from the queue, try to assign the specific task that triggered the event
-                npc.StartWork(newTask);
+        npc.StartWork(newTask);
             }
         }
     }

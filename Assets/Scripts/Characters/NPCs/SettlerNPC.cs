@@ -179,7 +179,7 @@ public class SettlerNPC : HumanCharacterController
     public void ChangeState(_TaskState newState)
     {
         
-        animator.Play("Empty", workLayerIndex);
+        StopWorkAnimation();
 
         if(currentState == newState){
             return;
@@ -206,6 +206,11 @@ public class SettlerNPC : HumanCharacterController
         animator.Play(animationName, workLayerIndex);
     }
 
+    public void StopWorkAnimation()
+    {
+        animator.Play("Empty", workLayerIndex);
+    }
+
     public override void StartWork(WorkTask newTask)
     {
         var workState = taskStates[TaskType.WORK] as WorkState;
@@ -222,7 +227,7 @@ public class SettlerNPC : HumanCharacterController
         // If we're not already in work state, change to it
         if (GetCurrentTaskType() != TaskType.WORK)
         {
-            ChangeTask(TaskType.WORK);
+        ChangeTask(TaskType.WORK);
         }
         else
         {
@@ -303,7 +308,7 @@ public class SettlerNPC : HumanCharacterController
             }
             else
             {
-                ChangeTask(TaskType.WANDER);
+            ChangeTask(TaskType.WANDER);
             }
         }
     }
