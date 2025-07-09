@@ -1,21 +1,5 @@
 *****Current Work*****
 
-Current Testing:
-Try a full wave with turrets killing zombies
-
-TODO for turret refactor:
-NPCs moving onto next work task in the work manager queue, have to test the last piece and the work debugger
-
-Remove
-
-Turret menu gameobject, keeping incase we need stuff from it
-
-
-
-Setup some basic effects for the turrets
-
-
-
 
 To Test:
 
