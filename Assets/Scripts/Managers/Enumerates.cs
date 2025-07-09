@@ -175,18 +175,6 @@ public enum EnemySetupState
     ALL_WAVES_CLEARED // enemies are all dea, player is free the move around and choose the next path
 }
 
-// =========================
-// ROOM AND WALL ENUMS
-// =========================
-
-public enum RoomPosition
-{
-    FRONT,
-    BACK,
-    LEFT,
-    RIGHT
-}
-
 public enum WallType
 {
     ENABLED, // Model can be seen, collider enabled

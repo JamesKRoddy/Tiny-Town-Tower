@@ -43,7 +43,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3419556268444168053}
   m_Layer: 6
-  m_Name: Front
+  m_Name: Spawn Pt
   m_TagString: Untagged
   m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -74,7 +74,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2542803515789947336}
   m_Layer: 6
-  m_Name: Back
+  m_Name: Spawn Pt
   m_TagString: Untagged
   m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -105,7 +105,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4662829175617881025}
   m_Layer: 6
-  m_Name: Left
+  m_Name: Spawn Pt
   m_TagString: Untagged
   m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -171,6 +171,68 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enableChance: 0.5
+--- !u!1 &5352173449388452297
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2208073938407223971}
+  m_Layer: 6
+  m_Name: Spawn Pt (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2208073938407223971
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5352173449388452297}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 1, z: -0, w: 0.0000029504295}
+  m_LocalPosition: {x: -25, y: 0, z: -20}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3846975403741790461}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+--- !u!1 &5554867468682957213
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8955752481598468936}
+  m_Layer: 6
+  m_Name: Spawn Pt (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8955752481598468936
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5554867468682957213}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -25, y: 0, z: 20}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3846975403741790461}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6580146161225253427
 GameObject:
   m_ObjectHideFlags: 0
@@ -218,10 +280,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   centerPiece: {fileID: 6463753889405488631}
-  frontTransform: {fileID: 3419556268444168053}
-  backTransform: {fileID: 2542803515789947336}
-  leftTransform: {fileID: 4662829175617881025}
-  rightTransform: {fileID: 3459746477652338397}
+  roomSpawnPointsParent: {fileID: 3846975403741790461}
+  showDirectionArrows: 1
+  arrowLength: 5
+  arrowHeadLength: 1.5
+  arrowHeadAngle: 20
+  arrowColor: {r: 0, g: 1, b: 1, a: 1}
 --- !u!1 &7767438849479311874
 GameObject:
   m_ObjectHideFlags: 0
@@ -232,7 +296,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3459746477652338397}
   m_Layer: 6
-  m_Name: Right
+  m_Name: Spawn Pt
   m_TagString: Untagged
   m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -326,7 +390,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3846975403741790461}
   m_Layer: 6
-  m_Name: Sides
+  m_Name: RoomSpawnPoints
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -346,7 +410,9 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3419556268444168053}
+  - {fileID: 8955752481598468936}
   - {fileID: 2542803515789947336}
+  - {fileID: 2208073938407223971}
   - {fileID: 4662829175617881025}
   - {fileID: 3459746477652338397}
   m_Father: {fileID: 8993021149249716028}

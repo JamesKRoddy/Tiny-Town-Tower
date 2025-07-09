@@ -11,11 +11,16 @@ public class RogueLiteRoomParent : MonoBehaviour
     [Header("Central Piece")]
     public Transform centerPiece;
 
-    [Header("Surrounding Transforms")]
-    public Transform frontTransform;
-    public Transform backTransform;
-    public Transform leftTransform;
-    public Transform rightTransform;
+    [Header("Room Spawn Points")]
+    public Transform roomSpawnPointsParent;
+    private Transform[] roomTransforms;
+
+    [Header("Gizmo Settings")]
+    [SerializeField] private bool showDirectionArrows = true;
+    [SerializeField] private float arrowLength = 5f;
+    [SerializeField] private float arrowHeadLength = 1.5f;
+    [SerializeField] private float arrowHeadAngle = 20f;
+    [SerializeField] private Color arrowColor = Color.cyan;
 
     private Transform playerSpawnPoint;
     private List<GameObject> roomPrefabs;
@@ -30,6 +35,20 @@ public class RogueLiteRoomParent : MonoBehaviour
         if (rogueLiteManager == null)
         {
             Debug.LogError("RogueLiteManager not found in scene!");
+        }
+
+        // Get all child transforms from the parent
+        if (roomSpawnPointsParent != null)
+        {
+            roomTransforms = new Transform[roomSpawnPointsParent.childCount];
+            for (int i = 0; i < roomSpawnPointsParent.childCount; i++)
+            {
+                roomTransforms[i] = roomSpawnPointsParent.GetChild(i);
+            }
+        }
+        else
+        {
+            Debug.LogError("Room Spawn Points Parent is not assigned!");
         }
     }
 
@@ -50,10 +69,10 @@ public class RogueLiteRoomParent : MonoBehaviour
         int currentDifficulty = DifficultyManager.Instance.GetCurrentWaveDifficulty();
 
         // Instantiate a room for each direction using the scriptable object's selection
-        InstantiateRoom(frontTransform, RoomPosition.FRONT, buildingScriptableObj.GetBuildingRoom(currentDifficulty));
-        InstantiateRoom(backTransform, RoomPosition.BACK, buildingScriptableObj.GetBuildingRoom(currentDifficulty));
-        InstantiateRoom(leftTransform, RoomPosition.LEFT, buildingScriptableObj.GetBuildingRoom(currentDifficulty));
-        InstantiateRoom(rightTransform, RoomPosition.RIGHT, buildingScriptableObj.GetBuildingRoom(currentDifficulty));
+        for (int i = 0; i < roomTransforms.Length; i++)
+        {
+            InstantiateRoom(roomTransforms[i], buildingScriptableObj.GetBuildingRoom(currentDifficulty));
+        }
 
         RandomizePropsInSection(centerPiece);
 
@@ -79,21 +98,12 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
         spawnedRooms.Clear();
 
-        foreach (Transform child in frontTransform)
+        foreach (Transform roomTransform in roomTransforms)
         {
-            Destroy(child.gameObject);
-        }
-        foreach (Transform child in backTransform)
-        {
-            Destroy(child.gameObject);
-        }
-        foreach (Transform child in leftTransform)
-        {
-            Destroy(child.gameObject);
-        }
-        foreach (Transform child in rightTransform)
-        {
-            Destroy(child.gameObject);
+            foreach (Transform child in roomTransform)
+            {
+                Destroy(child.gameObject);
+            }
         }
     }
 
@@ -112,14 +122,8 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
     }
 
-    private void InstantiateRoom(Transform targetTransform, RoomPosition roomPosition, GameObject roomPrefab)
+    private void InstantiateRoom(Transform targetTransform, GameObject roomPrefab)
     {
-        if (roomPrefab == null)
-        {
-            Debug.LogError($"Room prefab is null for position: {roomPosition}");
-            return;
-        }
-
         if (!roomPrefab.GetComponent<RogueLiteRoom>())
         {
             Debug.LogError($"{roomPrefab.name} has no RogueLiteRoom Component");
@@ -251,5 +255,71 @@ public class RogueLiteRoomParent : MonoBehaviour
     public List<EnemySpawnPoint> GetEnemySpawnPoints()
     {
         return new List<EnemySpawnPoint>(transform.GetComponentsInChildren<EnemySpawnPoint>());
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (!showDirectionArrows) return;
+
+        // Get room transforms for gizmo drawing (works in editor)
+        Transform[] gizmoRoomTransforms = GetRoomTransforms();
+        if (gizmoRoomTransforms == null) return;
+
+        Gizmos.color = arrowColor;
+
+        for (int i = 0; i < gizmoRoomTransforms.Length; i++)
+        {
+            if (gizmoRoomTransforms[i] != null)
+            {
+                DrawDirectionArrow(gizmoRoomTransforms[i], $"Room {i}");
+            }
+        }
+    }
+
+    private Transform[] GetRoomTransforms()
+    {
+        // If we're in play mode and roomTransforms is already populated, use it
+        if (Application.isPlaying && roomTransforms != null)
+        {
+            return roomTransforms;
+        }
+
+        // Otherwise, get from parent (for editor gizmos)
+        if (roomSpawnPointsParent != null)
+        {
+            Transform[] transforms = new Transform[roomSpawnPointsParent.childCount];
+            for (int i = 0; i < roomSpawnPointsParent.childCount; i++)
+            {
+                transforms[i] = roomSpawnPointsParent.GetChild(i);
+            }
+            return transforms;
+        }
+
+        return null;
+    }
+
+    private void DrawDirectionArrow(Transform targetTransform, string label)
+    {
+        Vector3 position = targetTransform.position;
+        Vector3 forward = targetTransform.forward;
+        
+        // Draw the main arrow shaft
+        Vector3 arrowEnd = position + forward * arrowLength;
+        Gizmos.DrawLine(position, arrowEnd);
+        
+        // Draw arrow head
+        Vector3 right = Vector3.Cross(forward, Vector3.up).normalized;
+        Vector3 up = Vector3.Cross(right, forward).normalized;
+        
+        Vector3 arrowHeadRight = arrowEnd - forward * arrowHeadLength + right * arrowHeadLength * 0.5f;
+        Vector3 arrowHeadLeft = arrowEnd - forward * arrowHeadLength - right * arrowHeadLength * 0.5f;
+        
+        Gizmos.DrawLine(arrowEnd, arrowHeadRight);
+        Gizmos.DrawLine(arrowEnd, arrowHeadLeft);
+        
+        // Draw label
+        #if UNITY_EDITOR
+        UnityEditor.Handles.Label(position + Vector3.up * 0.5f, label);
+        #endif
     }
 }

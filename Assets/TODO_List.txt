@@ -50,6 +50,7 @@ Main menu start button is being unselected.
 Possible Issue with the flee state? the npc did just stop fleeing after one time of running away
 Coroutines starting error on npcs hiding in bunker
 Enemies targeting buildings ok but not prioritising npcs over them
+So there is some jackyness around the building placer, i think sometimes building parent objects can spawn on top of each other
 
 
 

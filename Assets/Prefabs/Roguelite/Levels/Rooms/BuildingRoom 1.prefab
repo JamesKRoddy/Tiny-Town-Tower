@@ -75,7 +75,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3232518347225369119}
-  - component: {fileID: 1056809665049105336}
   m_Layer: 6
   m_Name: Back
   m_TagString: Untagged
@@ -101,20 +100,6 @@ Transform:
   - {fileID: 4578220673959283991}
   m_Father: {fileID: 4344261572181903485}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1056809665049105336
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5079124371634111023}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f52ff7c3f2e5a0f40a2de00a8b760ccd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  wallWithModel: {fileID: 8111404095506494846}
-  wallWithNoModel: {fileID: 5473864411971774277}
 --- !u!1 &5318116250113263644
 GameObject:
   m_ObjectHideFlags: 0
@@ -161,7 +146,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 873657320dd72ff45819917f54dc23ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  roomDifficulty: 0
   doors: []
   chests: []
 --- !u!1 &5466462518210956541
