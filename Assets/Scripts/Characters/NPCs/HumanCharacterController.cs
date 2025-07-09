@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Windows;
 using Managers;
+using Enemies;
 
 public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 {
@@ -73,6 +74,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     protected virtual void Start()
     {
         GetComponent<CharacterAnimationEvents>().Setup(characterCombat, this, characterInventory);
+        
+        // Register with CampManager for target tracking
+        if (Managers.CampManager.Instance != null)
+        {
+            Managers.CampManager.Instance.RegisterTarget(this);
+        }
     }
 
     public virtual void PossessedUpdate()
@@ -457,7 +464,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         Debug.Log($"{gameObject.name} has died!");
         OnDeath?.Invoke();
 
+        // Notify all enemies that this NPC was destroyed
+        EnemyBase.NotifyTargetDestroyed(transform);
+
         characterInventory.ClearInventory();
+
+        animator.SetBool("Dead", true);
 
         // Play death VFX
         Vector3 deathPoint = transform.position + Vector3.up * 1.5f;
@@ -474,4 +486,13 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public float Health { get => health; set => health = value; }
     public float MaxHealth { get => maxHealth; set => maxHealth = value; }
+
+    protected virtual void OnDestroy()
+    {
+        // Unregister from CampManager target tracking
+        if (Managers.CampManager.Instance != null)
+        {
+            Managers.CampManager.Instance.UnregisterTarget(this);
+        }
+    }
 }

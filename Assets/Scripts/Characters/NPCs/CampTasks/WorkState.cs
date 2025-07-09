@@ -49,7 +49,11 @@ public class WorkState : _TaskState
     private void SetupNavMeshPath()
     {
         Vector3 taskPosition = assignedTask.GetNavMeshDestination().position;
-        agent.stoppingDistance = movementSettings.minDistanceToTask;
+        
+        Debug.Log($"[WorkState] Setting up NavMesh path for {npc.name} from {transform.position} to {taskPosition}");
+        
+        // Use base class helper for stopping distance
+        agent.stoppingDistance = GetEffectiveStoppingDistance(assignedTask.GetNavMeshDestination(), 0.5f);
         agent.SetDestination(taskPosition);
         agent.speed = MaxSpeed();
         agent.angularSpeed = npc.rotationSpeed;
@@ -57,16 +61,34 @@ public class WorkState : _TaskState
         agent.updatePosition = true;
         agent.updateRotation = true;
         needsPrecisePositioning = false;
+        
+        // Check if the path is valid
+        if (agent.pathStatus == UnityEngine.AI.NavMeshPathStatus.PathInvalid)
+        {
+            Debug.LogWarning($"[WorkState] NavMesh path is invalid for {npc.name} to {taskPosition}");
+        }
+        else if (agent.pathStatus == UnityEngine.AI.NavMeshPathStatus.PathPartial)
+        {
+            Debug.LogWarning($"[WorkState] NavMesh path is partial for {npc.name} to {taskPosition}");
+        }
+        
+        Debug.Log($"[WorkState] NavMesh setup complete for {npc.name}. Agent destination: {agent.destination}, isStopped: {agent.isStopped}, pathStatus: {agent.pathStatus}");
     }
 
     public void UpdateTaskDestination()
     {
         if (assignedTask != null)
         {
+            Debug.Log($"[WorkState] Updating task destination for {npc.name} to {assignedTask.GetType().Name} at {assignedTask.GetNavMeshDestination().position}");
+            
             hasReachedTask = false;
             isTaskBeingPerformed = false;
             timeAtTaskLocation = 0f;
             SetupNavMeshPath();
+        }
+        else
+        {
+            Debug.LogWarning($"[WorkState] UpdateTaskDestination called but assignedTask is null for {npc.name}");
         }
     }
 
@@ -100,9 +122,26 @@ public class WorkState : _TaskState
     {
         if (assignedTask == null) return;
 
-        float distanceToTask = Vector3.Distance(transform.position, assignedTask.GetNavMeshDestination().position);
+        Transform taskDestination = assignedTask.GetNavMeshDestination();
+        
+        // Use base class helper for destination reached checking
+        bool hasReachedDestination = HasReachedDestination(taskDestination, 0.5f);
 
-        if (!agent.pathPending && agent.remainingDistance <= movementSettings.minDistanceToTask)
+        // Debug logging for movement issues
+        if (Time.frameCount % 60 == 0) // Log every 60 frames to avoid spam
+        {
+            Debug.Log($"[WorkState] {npc.name} - Distance to task: {Vector3.Distance(transform.position, taskDestination.position):F2}, " +
+                     $"Agent destination: {agent.destination}, Agent isStopped: {agent.isStopped}, " +
+                     $"Agent velocity: {agent.velocity.magnitude:F2}, Path status: {agent.pathStatus}");
+            
+            // Check if agent is stuck
+            if (agent.velocity.magnitude < 0.1f && !agent.isStopped && !hasReachedDestination)
+            {
+                Debug.LogWarning($"[WorkState] {npc.name} appears to be stuck! Distance: {Vector3.Distance(transform.position, taskDestination.position):F2}");
+            }
+        }
+
+        if (hasReachedDestination)
         {
             HandleReachedTask();
         }
@@ -214,7 +253,19 @@ public class WorkState : _TaskState
 
     public void AssignTask(WorkTask task)
     {
+        // Unsubscribe from the previous task's StopWork event if there was one
+        if (assignedTask != null)
+        {
+            assignedTask.StopWork -= StopWork;
+        }
+        
         assignedTask = task;
+        
+        // Subscribe to the new task's StopWork event
+        if (assignedTask != null)
+        {
+            assignedTask.StopWork += StopWork;
+        }
     }
 
     public void StopWork()
@@ -224,6 +275,25 @@ public class WorkState : _TaskState
             return;
         }
 
+        // Stop the work animation since the current task is complete
+        if (npc is SettlerNPC settler)
+        {
+            settler.StopWorkAnimation();
+        }
+
+        // Try to assign the next available task from the work queue
+        if (CampManager.Instance?.WorkManager != null)
+        {
+            bool taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(npc);
+            if (taskAssigned)
+            {
+                // A new task was assigned, so we stay in work state
+                // The work animation will be started again when we reach the new task
+                return;
+            }
+        }
+
+        // No more tasks available, go to wander state
         npc.ChangeTask(TaskType.WANDER);
     }
 }

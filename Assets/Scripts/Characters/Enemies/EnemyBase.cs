@@ -1,7 +1,8 @@
-using System;
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
+using System.Collections.Generic;
+using System;
 using Managers;
 
 namespace Enemies
@@ -10,6 +11,8 @@ namespace Enemies
     [RequireComponent(typeof(Animator))]
     public class EnemyBase : MonoBehaviour, IDamageable
     {
+        #region Serialized Fields
+        
         [Header("Character Type")]
         [SerializeField] protected CharacterType characterType = CharacterType.ZOMBIE_MELEE;
 
@@ -20,92 +23,217 @@ namespace Enemies
         [SerializeField] protected float movementSpeed = 3.5f;
         [SerializeField] protected float acceleration = 8f;
         [SerializeField] protected float angularSpeed = 120f;
+        [SerializeField] protected float obstacleBoundsOffset = 1f; // Additional distance to add to obstacle bounds
 
+        [Header("Health Settings")]
+        [SerializeField] private float health = 100f;
+        [SerializeField] private float maxHealth = 100f;
+
+        #endregion
+
+        #region Protected Fields
+        
         protected NavMeshAgent agent;
         protected Animator animator;
         protected Transform navMeshTarget;        
-        public Transform NavMeshTarget => navMeshTarget;
         protected bool isAttacking = false;
-
-        [SerializeField] private float health = 100f;
-        [SerializeField] private float maxHealth = 100f;
+        protected float damage;
 
         // Material flash effect
         protected SkinnedMeshRenderer skinnedMeshRenderer;
         protected Material originalMaterial;
         protected Material flashMaterial;
         protected float flashDuration = 0.5f;
-        protected Color flashColor = new Color(1f, 0.1f, 0.1f); // Bright red color for flash
+        protected Color flashColor = new Color(1f, 0.1f, 0.1f);
 
+        #endregion
+
+        #region Public Properties & Events
+        
+        public Transform NavMeshTarget => navMeshTarget;
         public float Health
         {
             get => health;
             set => health = Mathf.Clamp(value, 0, maxHealth);
         }
-
         public float MaxHealth
         {
             get => maxHealth;
             set => maxHealth = value;
         }
+        public CharacterType CharacterType => characterType;
+        public Allegiance GetAllegiance() => Allegiance.HOSTILE;
 
-        protected float damage;
         public event Action<float, float> OnDamageTaken;
         public event Action<float, float> OnHeal;
         public event Action OnDeath;
+        public static event System.Action<Transform> OnTargetDestroyedEvent;
 
-        public CharacterType CharacterType => characterType;
+        #endregion
+
+        #region Private Fields - Targeting & Movement
+        
+        private float lastStuckCheckTime = 0f;
+        private Vector3 lastPosition = Vector3.zero;
+        private float stuckThreshold = 0.5f;
+        private float stuckCheckInterval = 2f;
+        
+        private float lastReachabilityCheckTime = 0f;
+        private float reachabilityCheckInterval = 1f;
+
+        private float lastTargetSearchTime = 0f;
+        private float targetSearchInterval = 3f; // Check for new targets every 3 seconds
+
+        #endregion
+
+        #region Unity Lifecycle
 
         protected virtual void Awake()
         {
-            agent = GetComponent<NavMeshAgent>();
-            animator = GetComponent<Animator>();
+            InitializeComponents();
+            SetupNavMeshAgent();
+            SetupMaterialFlash();
             
-            // Configure NavMeshAgent
-            agent.stoppingDistance = stoppingDistance;
-            agent.speed = movementSpeed;
-            agent.acceleration = acceleration;
-            agent.angularSpeed = angularSpeed;
-            agent.updateRotation = true;
-            agent.updateUpAxis = false;
-            
-            // Get the SkinnedMeshRenderer and store original material
-            skinnedMeshRenderer = GetComponentInChildren<SkinnedMeshRenderer>();
-            if (skinnedMeshRenderer != null)
-            {
-                originalMaterial = skinnedMeshRenderer.material;
-                // Create a new instance of the material for flashing
-                flashMaterial = new Material(originalMaterial);
-                flashMaterial.color = flashColor;
-            }
-
             if (useRootMotion)
             {
                 SetupRootMotion();
             }
         }
 
-        IEnumerator Start(){
+        protected virtual void Start()
+        {
+            // Subscribe to target destroyed events
+            OnTargetDestroyedEvent += OnTargetDestroyed;
+            
+            // Initialize health
+            Health = maxHealth;
+            
+            // Find initial target
+            FindNewTarget();
+            
+            // Initialize stuck detection
+            lastPosition = transform.position;
+            lastStuckCheckTime = Time.time;
+            
+            // Initialize reachability check
+            lastReachabilityCheckTime = Time.time;
+            
+            // Initialize target search timer
+            lastTargetSearchTime = Time.time;
+        }
+        
+        protected virtual void OnDestroy()
+        {
+            OnTargetDestroyedEvent -= OnTargetDestroyed;
+        }
 
-            if(MaxHealth == 0)
-                MaxHealth = 10f;
+        protected virtual void Update()
+        {
+            // Don't do anything if dead
+            if (Health <= 0) return;
 
-            Health = MaxHealth;
+            // If no target, periodically check for new targets
+            if (navMeshTarget == null)
+            {
+                CheckForNewTargetsPeriodically();
+                return;
+            }
 
-            yield return new WaitForSeconds(0.5f);
+            // Check if current target is still valid
+            if (!IsTargetStillValid(navMeshTarget))
+            {
+                FindNewTarget();
+                return;
+            }
 
-            if(navMeshTarget == null){
-                Debug.LogWarning($"Enemy {gameObject.name} has no target set");
-                navMeshTarget = PlayerController.Instance._possessedNPC.GetTransform();
-            }           
+            // Periodically check if current target is still reachable
+            CheckTargetReachability();
+
+            if (!isAttacking)
+            {
+                UpdateMovement();
+            }
+        }
+
+        // This method is called by the Animator when root motion is being applied
+        protected virtual void OnAnimatorMove()
+        {
+            if (!useRootMotion || Health <= 0 || !agent.isOnNavMesh) return;
+
+            // Get the root motion delta (movement from animation)
+            Vector3 rootMotion = animator.deltaPosition;
+            rootMotion.y = 0; // We don't want to apply any vertical movement (gravity, etc.)
+
+            // Calculate the new position
+            Vector3 newPosition = transform.position + rootMotion;
+
+            // Sample the NavMesh with a larger radius to ensure we stay on it
+            if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
+            {
+                // Move the enemy using root motion
+                transform.position = hit.position;
+                
+                // Update agent's position to match with root motion
+                agent.nextPosition = hit.position;
+            }
+            else if (NavMesh.FindClosestEdge(transform.position, out NavMeshHit edgeHit, NavMesh.AllAreas))
+            {
+                // Move to the nearest valid position
+                transform.position = edgeHit.position;
+                agent.Warp(edgeHit.position);
+            }
+            else
+            {
+                // If we can't find any valid position, disable root motion temporarily
+                useRootMotion = false;
+                agent.updatePosition = true;
+                agent.updateRotation = true;
+            }
+        }
+
+        #endregion
+
+        #region Initialization
+
+        private void InitializeComponents()
+        {
+            agent = GetComponent<NavMeshAgent>();
+            animator = GetComponent<Animator>();
+        }
+
+        private void SetupNavMeshAgent()
+        {
+            agent.stoppingDistance = stoppingDistance;
+            agent.speed = movementSpeed;
+            agent.acceleration = acceleration;
+            agent.angularSpeed = angularSpeed;
+            agent.updateRotation = true;
+            agent.updateUpAxis = false;
+        }
+
+        private void SetupMaterialFlash()
+        {
+            skinnedMeshRenderer = GetComponentInChildren<SkinnedMeshRenderer>();
+            if (skinnedMeshRenderer != null)
+            {
+                originalMaterial = skinnedMeshRenderer.material;
+                flashMaterial = new Material(originalMaterial);
+                flashMaterial.color = flashColor;
+            }
+        }
+
+        private void InitializeTimers()
+        {
+            lastPosition = transform.position;
+            lastStuckCheckTime = Time.time;
+            lastReachabilityCheckTime = Time.time;
         }
 
         protected virtual void SetupRootMotion()
         {
             agent.updatePosition = false;
-            agent.updateRotation = true; // Enable rotation by default
+            agent.updateRotation = true;
             
-            // Ensure the enemy is on the NavMesh when spawned
             if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 2.0f, NavMesh.AllAreas))
             {
                 transform.position = hit.position;
@@ -117,169 +245,312 @@ namespace Enemies
             }
         }
 
-        protected virtual void Update()
-        {
-            // Don't do anything if dead or no target
-            if (Health <= 0 || navMeshTarget == null)
-                return;
+        #endregion
 
-            if (!isAttacking)
+        #region Movement & Targeting
+
+        private void UpdateMovement()
+        {
+            // Don't update movement if no target
+            if (navMeshTarget == null) return;
+            
+            // Calculate effective attack distance considering obstacles using shared utility
+            float effectiveAttackDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, stoppingDistance, obstacleBoundsOffset);
+            
+            // Update the destination continuously
+            agent.SetDestination(navMeshTarget.position);
+            
+            // Check if we're stuck (not moving towards target)
+            CheckIfStuck();
+            
+            // Handle rotation towards target
+            UpdateRotation();
+        }
+
+        private void UpdateRotation()
+        {
+            if (navMeshTarget == null) return;
+            
+            if (agent.velocity.magnitude > 0.1f)
             {
-                // Update the destination continuously
-                agent.SetDestination(navMeshTarget.position);
+                Vector3 direction = (navMeshTarget.position - transform.position).normalized;
+                direction.y = 0;
+                if (direction != Vector3.zero)
+                {
+                    Quaternion targetRotation = Quaternion.LookRotation(direction);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+                }
+            }
+        }
+
+        private void CheckIfStuck()
+        {
+            if (Time.time - lastStuckCheckTime > stuckCheckInterval)
+            {
+                float distanceMoved = Vector3.Distance(transform.position, lastPosition);
                 
-                // Handle rotation towards target
-                if (agent.velocity.magnitude > 0.1f)
+                if (distanceMoved < stuckThreshold && agent.velocity.magnitude < 0.1f)
                 {
-                    Vector3 direction = (navMeshTarget.position - transform.position).normalized;
-                    direction.y = 0;
-                    if (direction != Vector3.zero)
-                    {
-                        Quaternion targetRotation = Quaternion.LookRotation(direction);
-                        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-                    }
+                    AttemptToGetUnstuck();
                 }
-            }
-        }
-
-        protected virtual void UpdateRootMotion()
-        {
-            // Don't do anything if dead or no target
-            if (Health <= 0 || navMeshTarget == null)
-                return;
-
-            if (!isAttacking)
-            {
-                // Update the destination continuously
-                agent.SetDestination(navMeshTarget.position);
                 
-                // Handle rotation towards target
-                if (agent.velocity.magnitude > 0.1f)
-                {
-                    Vector3 direction = (navMeshTarget.position - transform.position).normalized;
-                    direction.y = 0;
-                    if (direction != Vector3.zero)
-                    {
-                        Quaternion targetRotation = Quaternion.LookRotation(direction);
-                        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-                    }
-                }
+                lastPosition = transform.position;
+                lastStuckCheckTime = Time.time;
             }
         }
-
-        // This method is called by the Animator when root motion is being applied
-        protected virtual void OnAnimatorMove()
+        
+        private void AttemptToGetUnstuck()
         {
-            if (useRootMotion && Health > 0 && agent.isOnNavMesh)
+            Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
+            
+            for (int i = 0; i < 8; i++)
             {
-                // Get the root motion delta (movement from animation)
-                Vector3 rootMotion = animator.deltaPosition;
-                rootMotion.y = 0; // We don't want to apply any vertical movement (gravity, etc.)
-
-                // Calculate the new position
-                Vector3 newPosition = transform.position + rootMotion;
-
-                // Sample the NavMesh with a larger radius to ensure we stay on it
-                if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
+                float angle = i * 45f * Mathf.Deg2Rad;
+                Vector3 offset = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * 3f;
+                Vector3 testPosition = navMeshTarget.position + offset;
+                
+                NavMeshPath testPath = new NavMeshPath();
+                if (NavMesh.CalculatePath(transform.position, testPosition, NavMesh.AllAreas, testPath))
                 {
-                    // Move the enemy using root motion
-                    transform.position = hit.position;
-                    
-                    // Update agent's position to match with root motion
-                    agent.nextPosition = hit.position;
-                }
-                else
-                {
-                    // If we can't find a valid position, try to find the nearest valid position
-                    if (NavMesh.FindClosestEdge(transform.position, out NavMeshHit edgeHit, NavMesh.AllAreas))
+                    if (testPath.status == NavMeshPathStatus.PathComplete || testPath.status == NavMeshPathStatus.PathPartial)
                     {
-                        // Move to the nearest valid position
-                        transform.position = edgeHit.position;
-                        agent.Warp(edgeHit.position);
-                    }
-                    else
-                    {
-                        // If we can't find any valid position, disable root motion temporarily
-                        useRootMotion = false;
-                        agent.updatePosition = true;
-                        agent.updateRotation = true;
+                        agent.SetDestination(testPosition);
+                        return;
                     }
                 }
             }
+            
+            Vector3 directTarget = navMeshTarget.position + directionToTarget * 2f;
+            agent.SetDestination(directTarget);
         }
 
-        internal void Setup(Transform navAgentTarget)
+        private void CheckTargetReachability()
         {
-            navMeshTarget = navAgentTarget;
+            if (Time.time - lastReachabilityCheckTime > reachabilityCheckInterval)
+            {
+                if (navMeshTarget != null)
+                {
+                    bool isStillReachable = IsTargetReachable(navMeshTarget.position);
+                    if (!isStillReachable)
+                    {
+                        FindNewTarget();
+                    }
+                }
+                lastReachabilityCheckTime = Time.time;
+            }
         }
-
-        public void SetEnemyDestination(Vector3 navMeshTarget)
-        {
-            agent.SetDestination(navMeshTarget);
-        }
-
-        public void Heal(float amount)
-        {
-            Health = Mathf.Min(Health + amount, MaxHealth);
-        }    
 
         /// <summary>
-        /// Called by the child classes to start the attack animation and disable the nav mesh agent rotation
+        /// Calculate the effective attack distance considering NavMesh obstacles and their bounds
         /// </summary>
+        /// <param name="target">The target transform</param>
+        /// <returns>The effective distance required to attack this target</returns>
+        protected virtual float CalculateEffectiveAttackDistance(Transform target)
+        {
+            return NavigationUtils.CalculateEffectiveReachDistance(transform.position, target, stoppingDistance, obstacleBoundsOffset);
+        }
+
+        /// <summary>
+        /// Check if the enemy is close enough to attack the target
+        /// </summary>
+        /// <param name="target">The target to check distance to</param>
+        /// <returns>True if close enough to attack</returns>
+        protected virtual bool IsCloseEnoughToAttack(Transform target)
+        {
+            return NavigationUtils.IsCloseEnoughToReach(transform.position, target, stoppingDistance, obstacleBoundsOffset);
+        }
+
+        #endregion
+
+        #region Target Finding
+
+        private void FindNewTarget()
+        {
+            Transform newTarget = null;
+
+            if (GameManager.Instance == null)
+            {
+                Debug.LogWarning($"{gameObject.name}: GameManager.Instance is null, cannot determine game mode");
+                return;
+            }
+
+            switch (GameManager.Instance.CurrentGameMode)
+            {
+                case GameMode.ROGUE_LITE:
+                    if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null)
+                    {
+                        newTarget = PlayerController.Instance._possessedNPC.GetTransform();
+                    }
+                    break;
+                    
+                case GameMode.CAMP:
+                case GameMode.CAMP_ATTACK:
+                    newTarget = FindCampTarget();
+                    break;
+                    
+                default:
+                    Debug.LogWarning($"No targeting logic for game mode: {GameManager.Instance.CurrentGameMode}");
+                    break;
+            }
+
+            if (newTarget != null)
+            {
+                navMeshTarget = newTarget;
+                animator.SetFloat("WalkType", 1);
+            }
+            else
+            {
+                // No new target found, clear current target and stop moving
+                navMeshTarget = null;
+                StopMoving();
+                Debug.LogWarning($"{gameObject.name}: No new target found! Stopping movement.");
+            }
+        }
+
+        private void StopMoving()
+        {
+            if (agent != null)
+            {
+                animator.SetFloat("WalkType", 0);
+                agent.ResetPath();
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
+            }
+        }
+
+        /// <summary>
+        /// Find a camp target with simple prioritization
+        /// </summary>
+        private Transform FindCampTarget()
+        {
+            List<Transform> npcTargets = new List<Transform>();
+            List<Transform> buildingTargets = new List<Transform>();
+            
+            // Use CampManager's cached target system for efficiency
+            CampManager.Instance.GetCategorizedTargets(npcTargets, buildingTargets);
+            
+
+            
+            // Simple priority: NPCs > Buildings (including turrets)
+            Transform target = FindClosestReachableTarget(npcTargets);
+            if (target != null) 
+            {
+                return target;
+            }
+            
+            target = FindClosestReachableTarget(buildingTargets);
+            if (target != null) 
+            {
+                return target;
+            }
+            
+            Debug.LogWarning($"{gameObject.name}: No targets found! NPCs: {npcTargets.Count}, Buildings: {buildingTargets.Count}");
+            return null;
+        }
+
+
+
+        private Transform FindClosestReachableTarget(List<Transform> targets)
+        {
+            return NavigationUtils.FindClosestReachableTarget(transform.position, targets, 5f);
+        }
+
+        private bool IsTargetReachable(Vector3 targetPosition)
+        {
+            return NavigationUtils.IsTargetReachable(transform.position, targetPosition, 5f);
+        }
+
+        /// <summary>
+        /// Check if the target is still a valid, attackable target
+        /// </summary>
+        private bool IsTargetStillValid(Transform target)
+        {
+            if (target == null || target.gameObject == null) return false;
+            
+            var damageable = target.GetComponent<IDamageable>();
+            if (damageable == null || damageable.Health <= 0) return false;
+            
+            // Special check for walls - they might be destroyed but still have health > 0
+            if (target.GetComponent<WallBuilding>() is WallBuilding wallBuilding)
+            {
+                if (wallBuilding.IsDestroyed || wallBuilding.IsBeingDestroyed) return false;
+            }
+            
+            // Check if the target is still active in the scene
+            if (!target.gameObject.activeInHierarchy) return false;
+            
+            return damageable.GetAllegiance() == Allegiance.FRIENDLY;
+        }
+
+        #endregion
+
+        #region Target Destruction Handling
+
+        public void OnTargetDestroyed(Transform destroyedTarget)
+        {
+            if (navMeshTarget == destroyedTarget)
+            {
+                StartCoroutine(FindNewTargetAfterDelay());
+            }
+        }
+        
+        private IEnumerator FindNewTargetAfterDelay()
+        {
+            yield return new WaitForSeconds(0.2f);
+            FindNewTarget();
+        }
+        
+        public static void NotifyTargetDestroyed(Transform destroyedTarget)
+        {
+            OnTargetDestroyedEvent?.Invoke(destroyedTarget);
+        }
+
+        #endregion
+
+        #region Combat & Damage
+
         protected virtual void BeginAttackSequence()
         {
-            // Trigger attack animation, this should transition to attack animations via root motion
             animator.SetBool("Attack", true);
             isAttacking = true;
 
             if (useRootMotion)
             {
-                agent.updateRotation = false; // Disable NavMeshAgent rotation during attack
+                agent.updateRotation = false;
             }
         }
 
-        /// <summary>
-        /// Called by the child classes to end the attack animation and re-enable the nav mesh agent rotation
-        /// </summary>
         protected virtual void EndAttack()
         {
-            // Reset isAttacking flag after the attack animation finishes
             animator.SetBool("Attack", false);
             isAttacking = false;
 
             if (useRootMotion)
             {
-                agent.updateRotation = true; // Re-enable NavMeshAgent rotation after attack
+                agent.updateRotation = true;
             }
         }
-
-        public Allegiance GetAllegiance() => Allegiance.HOSTILE;
 
         public void TakeDamage(float amount, Transform damageSource = null)
         {
             float previousHealth = Health;
             Health -= amount;
 
-            // Interrupt attack animation and play damage animation
             if (animator != null)
             {
-                // Reset attack trigger and return to default state
                 animator.ResetTrigger("Attack");
-                animator.Play("Default", 1, 0); // Play the default animation on attack layer
-                // Play damage animation
+                animator.Play("Default", 1, 0);
                 animator.SetTrigger("Damaged");
             }
 
             OnDamageTaken?.Invoke(amount, Health);
 
-            // Play hit VFX
             if (damageSource != null)
             {
                 Vector3 hitPoint = transform.position + Vector3.up * 1.5f;
                 Vector3 hitNormal = (transform.position - damageSource.position).normalized;
                 EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
                 
-                // Handle knockback and rotation
                 HandleDamageReaction(damageSource);
             }
 
@@ -291,28 +562,25 @@ namespace Enemies
 
         protected virtual void HandleDamageReaction(Transform damageSource)
         {
-            //if (!isAttacking)
-            //{
-                Vector3 direction = (damageSource.position - transform.position).normalized;
-                direction.y = 0;
-                if (direction != Vector3.zero)
+            Vector3 direction = (damageSource.position - transform.position).normalized;
+            direction.y = 0;
+            if (direction != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(direction);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 10f);
+
+                // Add knockback effect
+                Vector3 knockbackDirection = -direction;
+                float maxKnockbackDistance = 1.0f;
+                float distanceFromSource = Vector3.Distance(transform.position, damageSource.position);
+                float knockbackDistance = Mathf.Lerp(maxKnockbackDistance, maxKnockbackDistance * 0.3f, distanceFromSource / 5f);
+                Vector3 newPosition = transform.position + knockbackDirection * knockbackDistance;
+
+                if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, knockbackDistance, NavMesh.AllAreas))
                 {
-                    Quaternion targetRotation = Quaternion.LookRotation(direction);
-                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 10f);
-
-                    // Add knockback effect
-                    Vector3 knockbackDirection = -direction;
-                    float maxKnockbackDistance = 1.0f;
-                    float distanceFromSource = Vector3.Distance(transform.position, damageSource.position);
-                    float knockbackDistance = Mathf.Lerp(maxKnockbackDistance, maxKnockbackDistance * 0.3f, distanceFromSource / 5f);
-                    Vector3 newPosition = transform.position + knockbackDirection * knockbackDistance;
-
-                    if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, knockbackDistance, NavMesh.AllAreas))
-                    {
-                        StartCoroutine(KnockbackRoutine(hit.position));
-                    }
+                    StartCoroutine(KnockbackRoutine(hit.position));
                 }
-            //}
+            }
         }
 
         private IEnumerator KnockbackRoutine(Vector3 targetPosition)
@@ -339,14 +607,19 @@ namespace Enemies
         public void Die()
         {
             OnDeath?.Invoke();
+            
+            // Play death animation
             if (animator != null)
             {
                 animator.SetTrigger("Dead");
             }
+            
+            // Disable components
             isAttacking = false;
             agent.enabled = false;
             GetComponent<Collider>().enabled = false;
 
+            // Drop loot with 50% chance
             int shouldDropLoot = UnityEngine.Random.Range(0, 100);
             if (shouldDropLoot < 50)
             {
@@ -358,7 +631,17 @@ namespace Enemies
             Vector3 deathNormal = Vector3.up;
             EffectManager.Instance.PlayDeathEffect(deathPoint, deathNormal, this);
 
+            // Destroy after delay
             Destroy(gameObject, 10f);
+        }
+
+        #endregion
+
+        #region Utility Methods
+
+        public void Heal(float amount)
+        {
+            Health = Mathf.Min(Health + amount, MaxHealth);
         }
 
         internal float GetDamageValue()
@@ -366,7 +649,6 @@ namespace Enemies
             return damage;
         }
 
-        // Animation event function that can be called from the animator
         public void AttackWarning()
         {
             if (skinnedMeshRenderer != null)
@@ -377,14 +659,72 @@ namespace Enemies
 
         private IEnumerator FlashMaterialCoroutine()
         {
-            // Apply flash material
             skinnedMeshRenderer.material = flashMaterial;
-            
-            // Wait for flash duration
             yield return new WaitForSeconds(flashDuration);
-            
-            // Restore original material
             skinnedMeshRenderer.material = originalMaterial;
         }
+
+        internal void Setup(Transform navAgentTarget)
+        {
+            navMeshTarget = navAgentTarget;
+        }
+
+        public void SetEnemyDestination(Vector3 navMeshTarget)
+        {
+            agent.SetDestination(navMeshTarget);
+        }
+
+        private void CheckForNewTargetsPeriodically()
+        {
+            if (Time.time - lastTargetSearchTime > targetSearchInterval)
+            {
+                FindNewTarget();
+                lastTargetSearchTime = Time.time;
+            }
+        }
+
+        #endregion
+
+        #region Debug Visualization
+
+        /// <summary>
+        /// Draw debug gizmos to visualize attack ranges and obstacle bounds
+        /// </summary>
+        protected virtual void OnDrawGizmosSelected()
+        {
+            if (navMeshTarget == null) return;
+
+            // Draw the base stopping distance
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(transform.position, stoppingDistance);
+
+            // Draw the effective attack distance
+            float effectiveDistance = CalculateEffectiveAttackDistance(navMeshTarget);
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(transform.position, effectiveDistance);
+
+            // Draw a line to the target
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(transform.position, navMeshTarget.position);
+
+            // Draw the target's bounds if it has a collider
+            Collider targetCollider = navMeshTarget.GetComponent<Collider>();
+            if (targetCollider != null)
+            {
+                Gizmos.color = Color.green;
+                Gizmos.DrawWireCube(targetCollider.bounds.center, targetCollider.bounds.size);
+            }
+
+            // Draw NavMeshObstacle bounds if present
+            NavMeshObstacle obstacle = navMeshTarget.GetComponent<NavMeshObstacle>();
+            if (obstacle != null)
+            {
+                Gizmos.color = Color.magenta;
+                Vector3 obstacleSize = obstacle.size;
+                Gizmos.DrawWireCube(navMeshTarget.position, obstacleSize);
+            }
+        }
+
+        #endregion
     }
 }

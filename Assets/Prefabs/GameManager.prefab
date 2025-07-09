@@ -1,133 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &379150908590785279
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4644746889367459830}
-  m_Layer: 0
-  m_Name: GridParent
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &4644746889367459830
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 379150908590785279}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 5805576268982109178}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &809835814259599459
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8422136028504639572}
-  - component: {fileID: 6346286704177275359}
-  - component: {fileID: 8009027879356615486}
-  - component: {fileID: 6560791795667530374}
-  m_Layer: 0
-  m_Name: TurretBaseTarget
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!4 &8422136028504639572
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 809835814259599459}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 18, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1885414351478926456}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6346286704177275359
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 809835814259599459}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9ff31387e73a924458243ab56dbb30de, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  health: 100
-  maxHealth: 100
-  characterType: 9
---- !u!54 &8009027879356615486
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 809835814259599459}
-  serializedVersion: 4
-  m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 0
-  m_IsKinematic: 1
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
---- !u!65 &6560791795667530374
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 809835814259599459}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 3, y: 2, z: 20}
-  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1 &925011781484387596
 GameObject:
   m_ObjectHideFlags: 0
@@ -306,8 +178,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8921448851626463710}
-  - {fileID: 1885414351478926456}
-  - {fileID: 5805576268982109178}
   - {fileID: 324688132105225691}
   - {fileID: 4773933793551168376}
   - {fileID: 3458277318788093592}
@@ -424,59 +294,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 83115b41ecc29d44284ef52b7551852a, type: 2}
   - {fileID: 11400000, guid: e917dc6f66606014dbfa9cec973cd6f3, type: 2}
   poolSize: 20
---- !u!1 &3066187907054321760
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5805576268982109178}
-  - component: {fileID: 4439842862291004188}
-  m_Layer: 0
-  m_Name: TurretPlacer
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5805576268982109178
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3066187907054321760}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 4644746889367459830}
-  m_Father: {fileID: 4686915863895893509}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4439842862291004188
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3066187907054321760}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: feb32a6f968378645adc61bfa11753de, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  validPlacementMaterial: {fileID: 2100000, guid: cccb5a487583e9a40b9136094d3a6233, type: 2}
-  invalidPlacementMaterial: {fileID: 2100000, guid: 1cccbe6acc16ba940ba1d34343573d32, type: 2}
-  gridPrefab: {fileID: 241196777734048875, guid: fb1ace5487d684b4a86192309c6fb1ec, type: 3}
-  takenGridPrefab: {fileID: 5465302576335970331, guid: 6a7a6dc26f340444a98ee22f3a09587f, type: 3}
-  gridParent: {fileID: 4644746889367459830}
-  xBounds: {x: -10, y: 10}
-  zBounds: {x: -10, y: 10}
-  showGridBounds: 1
 --- !u!1 &3286751178416191525
 GameObject:
   m_ObjectHideFlags: 0
@@ -567,54 +384,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   buildingDataScriptableObjs:
   - {fileID: 11400000, guid: cabb675861ade9446b9fd0936ab40689, type: 2}
---- !u!1 &3935579015954441274
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1885414351478926456}
-  - component: {fileID: 6590375483087002421}
-  m_Layer: 0
-  m_Name: Turret_Manager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1885414351478926456
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3935579015954441274}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 8422136028504639572}
-  m_Father: {fileID: 4686915863895893509}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6590375483087002421
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3935579015954441274}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 70687aa39e56fd04e92edc082fd6d4ac, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  waveConfigs:
-  - {fileID: 11400000, guid: 1bff15a3b967a6543a2d0aaba3e05a4b, type: 2}
-  baseTarget: {fileID: 6346286704177275359}
 --- !u!1 &4877649756777795953
 GameObject:
   m_ObjectHideFlags: 0
@@ -807,6 +576,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dee95a5e4918df243930ec1ff64111dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  waveConfigs:
+  - {fileID: 11400000, guid: 1bff15a3b967a6543a2d0aaba3e05a4b, type: 2}
+  sharedXBounds: {x: -25, y: 25}
+  sharedZBounds: {x: -25, y: 25}
+  sharedGridSize: 2
+  showSharedGridBounds: 1
+  waveEndCheckInterval: 2
 --- !u!1 &5361118978591634034
 GameObject:
   m_ObjectHideFlags: 0
@@ -1083,9 +859,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8385269320839992886}
-  - component: {fileID: 2683458163222554810}
+  - component: {fileID: 3875893901756991181}
   m_Layer: 0
-  m_Name: BuildingPlacer
+  m_Name: PlacementManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1107,7 +883,7 @@ Transform:
   - {fileID: 892765565880304067}
   m_Father: {fileID: 3868888678722008520}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2683458163222554810
+--- !u!114 &3875893901756991181
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1116,17 +892,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 7673057980940613264}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 541dab5c9aa07cc4aab1709ec8900a1a, type: 3}
+  m_Script: {fileID: 11500000, guid: 0ec215d018932ae429bcca149588ff03, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   validPlacementMaterial: {fileID: 2100000, guid: cccb5a487583e9a40b9136094d3a6233, type: 2}
   invalidPlacementMaterial: {fileID: 2100000, guid: 1cccbe6acc16ba940ba1d34343573d32, type: 2}
   gridPrefab: {fileID: 241196777734048875, guid: fb1ace5487d684b4a86192309c6fb1ec, type: 3}
   takenGridPrefab: {fileID: 5465302576335970331, guid: 6a7a6dc26f340444a98ee22f3a09587f, type: 3}
-  gridParent: {fileID: 892765565880304067}
-  xBounds: {x: -25, y: 25}
-  zBounds: {x: -25, y: 25}
-  showGridBounds: 1
 --- !u!1 &7892603899224520776
 GameObject:
   m_ObjectHideFlags: 0
@@ -1183,6 +955,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ca0521093fdd8a545acc6ba406f41798, type: 2}
   - {fileID: 11400000, guid: 7bbd785e8bc86ee428ebb8c9a7126145, type: 2}
   - {fileID: 11400000, guid: e4d284cd3c502834ba8775cf60430499, type: 2}
+  - {fileID: 11400000, guid: c840ac2f3395a094ea4caf317d1c34a3, type: 2}
+  - {fileID: 11400000, guid: b07b1e4cd868230488fd0ac28d951247, type: 2}
+  turretScriptableObjs:
+  - {fileID: 11400000, guid: 391b823efa03ef347a229805acbb73fe, type: 2}
   constructionSiteMappings:
   - gridSize: {x: 1, y: 1}
     constructionSitePrefab: {fileID: 6308355632358144236, guid: 1f8c0a42a7bfa844784127d7e55f4c88, type: 3}

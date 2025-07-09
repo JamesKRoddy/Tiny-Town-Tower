@@ -8,15 +8,25 @@ namespace Enemies
         [SerializeField] protected float meleeDamage = 2f;
         [SerializeField] protected float meleeAttackRadius = 1.5f; // Radius of the attack sphere
         [SerializeField] protected LayerMask targetLayer; // Layer mask for valid targets
+        [SerializeField] protected float buildingAttackRange = 5f; // Special attack range for buildings (separate from NPC combat)
 
         // Called by animation event or timing logic
         public void MeleeAttack()
         {
             if (navMeshTarget == null) return;
 
+            // Use building-specific attack range if attacking a building, otherwise use normal attack range
+            float currentAttackRange = attackRange;
+            if (navMeshTarget.GetComponent<Building>() != null)
+            {
+                currentAttackRange = buildingAttackRange;
+            }
+            
+            // Use shared navigation utility to calculate effective attack distance
+            float effectiveAttackDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, currentAttackRange, 1.0f);
             float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
-
-            if (distanceToTarget <= attackRange)
+            
+            if (distanceToTarget <= effectiveAttackDistance)
             {
                 // Check if target is in front of us
                 Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
@@ -29,11 +39,10 @@ namespace Enemies
                     if (target != null)
                     {
                         target.TakeDamage(meleeDamage, transform);
-                        Debug.Log($"Player hit by melee attack for {meleeDamage} damage");
                     }
                     else
                     {
-                        Debug.LogWarning("Target does not implement IDamageable");
+                        Debug.LogError($"[MeleeZombie] {gameObject.name}: Target {navMeshTarget.name} does not implement IDamageable! Target type: {navMeshTarget.GetType().Name}");
                     }
                 }
             }

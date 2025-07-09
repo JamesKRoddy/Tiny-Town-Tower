@@ -15,7 +15,7 @@ namespace Managers
         private HumanCharacterController npcForAssignment;
         private Dictionary<WorkTask, HumanCharacterController> previousWorkers = new Dictionary<WorkTask, HumanCharacterController>();
 
-        public Building buildingForAssignment;
+        public IPlaceableStructure buildingForAssignment;
 
         // Method to add a new work task to the queue
         public void AddWorkTask(WorkTask newTask)
@@ -33,6 +33,71 @@ namespace Managers
                 return workQueue.Dequeue();
             }
             return null;
+        }
+
+        // Method to automatically assign the next available task to an NPC
+        public bool AssignNextAvailableTask(HumanCharacterController npc)
+        {
+            if (npc == null) return false;
+
+            WorkTask nextTask = GetNextTask();
+            if (nextTask != null)
+            {
+                // Check if the task can be performed
+                if (!nextTask.CanPerformTask())
+                {
+                    // Put the task back in the queue if it can't be performed
+                    workQueue.Enqueue(nextTask);
+                    return false;
+                }
+
+                // Check if the player has required resources
+                if (!nextTask.HasRequiredResources())
+                {
+                    // Put the task back in the queue if resources are missing
+                    workQueue.Enqueue(nextTask);
+                    return false;
+                }
+
+                // Assign the task to the NPC
+                if (npc is RobotCharacterController robot)
+                {
+                    nextTask.AssignNPC(robot);
+                    robot.StartWork(nextTask);
+                }
+                else if (npc is SettlerNPC settler)
+                {
+                    nextTask.AssignNPC(settler);
+                    
+                    Debug.Log($"[WorkManager] Assigning task {nextTask.GetType().Name} to {settler.name}. Current task type: {settler.GetCurrentTaskType()}");
+                    
+                    // If the NPC is already in work state, we need to update the work state directly
+                    if (settler.GetCurrentTaskType() == TaskType.WORK)
+                    {
+                        var workState = settler.GetComponent<WorkState>();
+                        if (workState != null)
+                        {
+                            workState.AssignTask(nextTask);
+                            workState.UpdateTaskDestination(); // Force update the destination
+                            Debug.Log($"[WorkManager] Updated work state for {settler.name} to task {nextTask.GetType().Name}");
+                        }
+                    }
+                    else
+                    {
+                        settler.StartWork(nextTask);
+                        Debug.Log($"[WorkManager] Started work for {settler.name} on task {nextTask.GetType().Name}");
+                    }
+                }
+                else
+                {
+                    Debug.LogError($"[WorkManager] Invalid character type for assignment: {npc.GetType().Name}");
+                    workQueue.Enqueue(nextTask);
+                    return false;
+                }
+
+                return true;
+            }
+            return false;
         }
 
         // Method to assign a task to a specific NPC
@@ -69,6 +134,12 @@ namespace Managers
             npcForAssignment = npc;
         }
 
+        public void ClearNPCForAssignment()
+        {
+            Debug.Log($"Clearing NPC for assignment. Was: {npcForAssignment?.name ?? "null"}");
+            npcForAssignment = null;
+        }
+
         public void AssignWorkToBuilding(WorkTask workTask)
         {            
             if (workTask == null)
@@ -83,8 +154,8 @@ namespace Managers
             {
                 string errorMessage = workTask switch
                 {
-                    BuildingRepairTask => "Building is already at full health",
-                    BuildingUpgradeTask => "Building cannot be upgraded further",
+                    StructureRepairTask => "Structure is already at full health",
+                    StructureUpgradeTask => "Structure cannot be upgraded further",
                     CleaningTask => "Camp is already clean",
                     _ => "Task cannot be performed at this time"
                 };
@@ -176,21 +247,39 @@ namespace Managers
             return null;
         }
         
-        public void ShowWorkTaskOptions(Building building, HumanCharacterController characterToAssign, Action<WorkTask> onTaskSelected)
+        public void ShowWorkTaskOptions(IPlaceableStructure structure, HumanCharacterController characterToAssign, Action<WorkTask> onTaskSelected)
         {
-            var workTasks = building.GetComponents<WorkTask>();
+            var workTasks = (structure as MonoBehaviour)?.GetComponents<WorkTask>();
+            if (workTasks == null)
+            {
+                Debug.LogError("Structure is not a MonoBehaviour or has no WorkTask components");
+                return;
+            }
 
             var options = new List<SelectionPopup.SelectionOption>();
 
-            // Add Destroy Building option first
+            // Add Destroy Structure option first
             options.Add(new SelectionPopup.SelectionOption
             {
-                optionName = "Destroy Building",
+                optionName = "Destroy Structure",
                 onSelected = () => {
+                    if (structure is MonoBehaviour mb)
+                    {
+                        // Call StartDestruction through the interface or cast to the appropriate type
+                        if (mb is Building building)
+                        {
                     building.StartDestruction();
+                        }
+                        else if (mb is BaseTurret turret)
+                        {
+                            turret.StartDestruction();
+                        }
+                    }
                     CloseSelectionPopup();
+                    PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
+                    ClearNPCForAssignment(); // Clear assignment when destroying structure
                 },
-                canSelect = () => !building.IsUnderConstruction(),
+                canSelect = () => !structure.IsUnderConstruction(),
                 workTask = null
             });
 
@@ -217,8 +306,11 @@ namespace Managers
                 }
             }
 
-            // Show the selection popup
-            PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
+            // Show the selection popup with cleanup callback to clear NPC assignment
+            PlayerUIManager.Instance.selectionPopup.Setup(options, null, () => {
+                // Clear NPC assignment when popup closes
+                ClearNPCForAssignment();
+            });
         }
 
         private SelectionPopup.SelectionOption CreateWorkTaskOption(WorkTask task, HumanCharacterController characterToAssign, Action<WorkTask> onTaskSelected)
@@ -231,6 +323,7 @@ namespace Managers
                 }
                 PlayerUIManager.Instance.selectionPreviewList.Setup(task, characterToAssign);
                 PlayerUIManager.Instance.selectionPreviewList.SetScreenActive(true);
+                ClearNPCForAssignment(); // Clear assignment after work is started
             };
 
             // Get option name and action based on task type
@@ -239,17 +332,28 @@ namespace Managers
                 ResearchTask => ("Research", previewListAction),
                 CookingTask => ("Cook", previewListAction),
                 ResourceUpgradeTask => ("Upgrade Resource", previewListAction),
+                StructureUpgradeTask => ("Upgrade", () => {
+                    // Execute upgrade immediately - consume resources, destroy building, create construction site
+                    (task as StructureUpgradeTask)?.ExecuteUpgrade();
+                    CloseSelectionPopup();
+                    PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
+                    ClearNPCForAssignment(); // Clear assignment after work is started
+                }),
                 FarmingTask => ("Farm", () => {
                     if ((task as FarmingTask)?.IsOccupiedWithCrop() ?? false)
                     {
                         characterToAssign.StartWork(task);
+                        ClearNPCForAssignment(); // Clear assignment after work is started
                     }
                     else
                     {
                         previewListAction();
                     }
                 }),
-                _ => (task.GetType().Name.Replace("Task", ""), () => onTaskSelected(task))
+                _ => (task.GetType().Name.Replace("Task", ""), () => {
+                    onTaskSelected(task);
+                    ClearNPCForAssignment(); // Clear assignment after work is started
+                })
             };
 
             return new SelectionPopup.SelectionOption
@@ -264,6 +368,28 @@ namespace Managers
         public void CloseSelectionPopup()
         {
             PlayerUIManager.Instance.selectionPopup.OnCloseClicked();
+        }
+
+        // Debug method to show work queue status
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        public void DebugWorkQueueStatus()
+        {
+            Debug.Log($"[WorkManager] Work queue status: {workQueue.Count} tasks in queue");
+            if (workQueue.Count > 0)
+            {
+                int index = 0;
+                foreach (var task in workQueue)
+                {
+                    Debug.Log($"[WorkManager] Task {index}: {task.GetType().Name} at {task.transform.position}");
+                    index++;
+                }
+            }
+        }
+
+        // Debug method to get work queue count
+        public int GetWorkQueueCount()
+        {
+            return workQueue.Count;
         }
     }
 }

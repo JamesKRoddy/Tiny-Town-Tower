@@ -1,26 +1,11 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using Enemies;
-
-[System.Serializable]
-public class UpgradeData
-{
-    public float damageIncrease = 5;
-    public float rangeIncrease = 2f;
-    public float fireRateIncrease = 0.5f;
-    public float turretTurnSpeedIncrease = 0.25f;
-    public int upgradeCost = 50;
-    public float upgradeTime = 5f;
-    public int costIncrease = 50;
-    public string description = "Upgrade the turret for increased stats.";
-}
+using Managers;
 
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(Rigidbody))]
-public abstract class BaseTurret : MonoBehaviour
+public abstract class BaseTurret : PlaceableStructure<TurretScriptableObject>
 {
     [Header("Turret Settings")]
     public float damage = 10f;
@@ -29,23 +14,25 @@ public abstract class BaseTurret : MonoBehaviour
     public float turretTurnSpeed = 5f;
     public Transform turretTop;
     public Transform firePoint;
-    public UpgradeData upgradeData;
 
     private float fireCooldown = 0f;
     private EnemyBase target;
     private List<EnemyBase> enemiesInRange = new List<EnemyBase>();
-    private bool isUpgrading = false;
 
-    private void Start()
+    protected override void Start()
     {
-        //upgradeButton.onClick.AddListener(StartUpgrade);
+        base.Start();
+        
+        // Register with CampManager for target tracking
+        if (CampManager.Instance != null)
+        {
+            CampManager.Instance.RegisterTarget(this);
+        }
     }
 
     private void Update()
     {
-        if (isUpgrading) return;
-
-        if(enemiesInRange.Count > 0 )
+        if (enemiesInRange.Count > 0)
             UpdateTarget();
 
         if (target != null)
@@ -112,50 +99,73 @@ public abstract class BaseTurret : MonoBehaviour
 
     protected abstract void Fire();
 
-    private void StartUpgrade()
+    public virtual void SetupStructure(TurretScriptableObject scriptableObj)
     {
-        if (isUpgrading || !CanAffordUpgrade()) return;
-
-        DeductResource(upgradeData.upgradeCost);
-        StartCoroutine(UpgradeRoutine());
+        base.SetupStructure(scriptableObj);
+        
+        // Set turret stats from scriptable object
+        if (scriptableObj != null)
+        {
+            damage = scriptableObj.damage;
+            range = scriptableObj.range;
+            fireRate = scriptableObj.fireRate;
+            turretTurnSpeed = scriptableObj.turretTurnSpeed;
+        }
     }
 
-    private IEnumerator UpgradeRoutine()
+    protected override void OnStructureSetup()
     {
-        isUpgrading = true;
-        //upgradeButton.interactable = false;
-        //upgradeButtonText.text = "Upgrading...";
-
-        yield return new WaitForSeconds(upgradeData.upgradeTime);
-
-        UpgradeTurret();
-        isUpgrading = false;
-        //upgradeButton.interactable = true;
-        //upgradeButtonText.text = "Upgrade";
+        // Base class handles repair and upgrade task setup
+        base.OnStructureSetup();
     }
 
-    protected virtual void UpgradeTurret()
+    public override string GetInteractionText()
     {
-        range += upgradeData.rangeIncrease;
-        fireRate += upgradeData.fireRateIncrease;
-        upgradeData.upgradeCost += upgradeData.costIncrease;
+        if (IsUnderConstruction()) return "Turret under construction";
+        if (!IsOperational()) return "Turret not operational";
+        
+        string text = "Turret Options:\n";
+        if (repairTask != null && repairTask.CanPerformTask())
+            text += "- Repair\n";
+        if (upgradeTask != null && upgradeTask.CanPerformTask())
+            text += "- Upgrade\n";
+        if (CanUpgrade())
+            text += "- Upgrade to Next Level\n";
+        text += $"- Damage: {damage}\n";
+        text += $"- Range: {range}\n";
+        text += $"- Fire Rate: {fireRate}\n";
+        return text;
     }
 
-    protected virtual bool CanAffordUpgrade()
+    public string GetTurretStatsText()
     {
-        //TODO figure out cost system, maybe use specific resources to upgrade specific turrets eg. electric components for tech turrets
-        return true;
-        //return GoldManager.Instance.HasEnoughGold(upgradeData.upgradeCost);
+        string stats = $"Turret Stats:\n\n";
+        stats += $"Health: {GetCurrentHealth():F0}/{GetMaxHealth():F0} ({(GetHealthPercentage() * 100):F1}%)\n";
+        stats += $"Damage: {damage:F1}\n";
+        stats += $"Range: {range:F1}\n";
+        stats += $"Fire Rate: {fireRate:F1} shots/sec\n";
+        stats += $"Turn Speed: {turretTurnSpeed:F1}\n";
+        stats += $"Status: {(IsOperational() ? "Operational" : "Not Operational")}\n";
+        
+        if (IsUnderConstruction())
+        {
+            stats += $"Construction: Under Construction\n";
+        }
+        
+        if (StructureScriptableObj != null)
+        {
+            stats += $"\nTurret Type: {StructureScriptableObj.objectName}\n";
+            if (StructureScriptableObj.upgradeTarget != null)
+            {
+                stats += $"Can Upgrade To: {StructureScriptableObj.upgradeTarget.objectName}\n";
+            }
+        }
+        
+        return stats;
     }
 
-    protected virtual void DeductResource(int amount) 
+    public override void StartDestruction()
     {
-        //TODO figure out cost system, maybe use specific resources to upgrade specific turrets eg. electric components for tech turrets
-        //GoldManager.Instance.DeductGold(amount);
+        base.StartDestruction();
     }
-
-    internal void SetupTurret()
-    {
-        //TODO setup turret
-    }
-}
+} 

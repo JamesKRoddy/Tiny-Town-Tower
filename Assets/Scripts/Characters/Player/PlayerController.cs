@@ -4,6 +4,7 @@ using Managers;
 using UnityEngine;
 using UnityEngine.Windows;
 using System.Collections.Generic;
+using CampBuilding;
 
 public class PlayerController : MonoBehaviour, IControllerInput
 {
@@ -213,9 +214,18 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 PlayerInput.Instance.OnBPressed += () => CloseSelectionPopup();
                 break;
 
-            case PlayerControlType.TURRET_CAMERA_MOVEMENT:
+            case PlayerControlType.CAMP_ATTACK_CAMERA_MOVEMENT:
                 PlayerInput.Instance.OnSelectPressed += () => OpenUtilityMenu();
                 PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu();
+                break;
+            case PlayerControlType.IN_MENU:
+                PlayerInput.Instance.OnBPressed += () => {
+                    // Close selection popup if it's open
+                    if (PlayerUIManager.Instance?.selectionPopup?.gameObject.activeSelf == true)
+                    {
+                        PlayerUIManager.Instance.selectionPopup.OnCloseClicked();
+                    }
+                };
                 break;
             case PlayerControlType.TRANSITION:
                 if(collider != null)
@@ -274,8 +284,8 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
         if (workTask != null)
         {
+            // Check if it's a building first
             Building building = workTask.GetComponent<Building>();
-
             if (building != null)
             {
                 if(CampManager.Instance.WorkManager.IsNPCForAssignmentSet()){
@@ -285,6 +295,24 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 } else{
                     CampManager.Instance.BuildManager.BuildingSelectionOptions(building);
                 }
+                return;
+            }
+
+            // Check if it's a turret
+            BaseTurret turret = workTask.GetComponent<BaseTurret>();
+            if (turret != null)
+            {
+                Debug.Log($"Found turret: {turret.name}");
+                if(CampManager.Instance.WorkManager.IsNPCForAssignmentSet()){
+                    Debug.Log("NPC for assignment is set, creating work task options");
+                    CreateWorkTaskOptions(turret, (task) => {
+                        CampManager.Instance.WorkManager.AssignWorkToBuilding(task);
+                    });
+                } else{
+                    Debug.Log("No NPC for assignment, showing turret selection options");
+                    CampManager.Instance.BuildManager.TurretSelectionOptions(turret);
+                }
+                return;
             }
         }
     }
@@ -309,7 +337,17 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
     private void CreateWorkTaskOptions(Building building, Action<WorkTask> onTaskSelected)
     {
-        CampManager.Instance.WorkManager.ShowWorkTaskOptions(building, null, (task) => {
+        var workTasks = building.GetComponents<WorkTask>();
+        CampManager.Instance.WorkManager.ShowWorkTaskOptions(workTasks, null, (task) => {
+            onTaskSelected(task);
+            CampManager.Instance.WorkManager.CloseSelectionPopup();
+        });
+    }
+
+    private void CreateWorkTaskOptions(BaseTurret turret, Action<WorkTask> onTaskSelected)
+    {
+        var workTasks = turret.GetComponents<WorkTask>();
+        CampManager.Instance.WorkManager.ShowWorkTaskOptions(workTasks, null, (task) => {
             onTaskSelected(task);
             CampManager.Instance.WorkManager.CloseSelectionPopup();
         });

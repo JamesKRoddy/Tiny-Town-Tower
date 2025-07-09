@@ -58,7 +58,10 @@ public class WanderState : _TaskState
             isWaiting = false;
             agent.speed = MaxSpeed();
             agent.angularSpeed = npc.rotationSpeed / 2f;
-            agent.stoppingDistance = destinationReachedThreshold;
+            
+            // Use base class helper for stopping distance
+            agent.stoppingDistance = GetEffectiveStoppingDistance(null, 0.5f);
+            
             wanderCoroutine = npc.StartCoroutine(WanderCoroutine());
             CampManager.Instance.WorkManager.OnTaskAvailable += WorkAvalible;
             lastPosition = npc.transform.position;
@@ -115,8 +118,10 @@ public class WanderState : _TaskState
                 lastPositionCheckTime = currentTime;
             }
 
-            // Check if we've reached our destination
-            if (!agent.pathPending && agent.remainingDistance <= destinationReachedThreshold)
+            // Check if we've reached our destination using base class helper
+            bool hasReachedDestination = HasReachedDestination(null, 0.5f);
+            
+            if (hasReachedDestination)
             {
                 if (!isWaiting)
                 {
@@ -167,7 +172,16 @@ public class WanderState : _TaskState
 
     private void WorkAvalible(WorkTask newTask)
     {
+        // Try to assign the next available task from the work queue
+        if (CampManager.Instance?.WorkManager != null)
+        {
+            bool taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(npc);
+            if (!taskAssigned)
+            {
+                // If no task was assigned from the queue, try to assign the specific task that triggered the event
         npc.StartWork(newTask);
+            }
+        }
     }
 
     public override float MaxSpeed()

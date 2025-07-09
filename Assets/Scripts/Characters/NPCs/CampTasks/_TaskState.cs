@@ -38,6 +38,32 @@ public abstract class _TaskState : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Get the effective stopping distance for this task state using shared navigation utilities
+    /// </summary>
+    /// <param name="target">The target transform (can be null for general stopping distance)</param>
+    /// <param name="obstacleBoundsOffset">Additional distance to add to obstacle bounds</param>
+    /// <returns>The effective stopping distance</returns>
+    protected float GetEffectiveStoppingDistance(Transform target = null, float obstacleBoundsOffset = 0.5f)
+    {
+        if (agent == null) return stoppingDistance;
+        
+        return NavigationUtils.GetEffectiveStoppingDistance(agent, target, stoppingDistance, obstacleBoundsOffset);
+    }
+
+    /// <summary>
+    /// Check if the agent has reached its destination using shared navigation utilities
+    /// </summary>
+    /// <param name="target">The target transform (can be null for general destination checking)</param>
+    /// <param name="obstacleBoundsOffset">Additional distance to add to obstacle bounds</param>
+    /// <returns>True if the agent has reached the destination</returns>
+    protected bool HasReachedDestination(Transform target = null, float obstacleBoundsOffset = 0.5f)
+    {
+        if (agent == null) return false;
+        
+        return NavigationUtils.HasReachedDestination(agent, target, stoppingDistance, obstacleBoundsOffset);
+    }
+
     public abstract TaskType GetTaskType();
 
     // Called when the state is entered

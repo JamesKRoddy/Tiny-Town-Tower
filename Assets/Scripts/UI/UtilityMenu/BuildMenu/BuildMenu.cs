@@ -7,7 +7,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using Managers;
 
-public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptableObj>, IControllerInput
+public class BuildMenu : PreviewListMenuBase<PlaceableObjectCategory, PlaceableObjectParent>, IControllerInput
 {
     [Header("Build Menu Preview UI")]
     [SerializeField] GameObject previewResourceCostPrefab;
@@ -24,7 +24,7 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
                 if (selectedButton != null)
                 {
                     PlayerInput.Instance.OnBPressed += () => {
-                        BuildingPlacer.Instance.StartPlacement(null);
+                        EnableBuildMenu();
                         PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
                     };
                 }
@@ -34,17 +34,31 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
         }
     }
 
-    public override IEnumerable<BuildingScriptableObj> GetItems()
+    public override IEnumerable<PlaceableObjectParent> GetItems()
     {
-        return CampManager.Instance.BuildManager.buildingScriptableObjs;
+        // Return both buildings and turrets
+        if (CampManager.Instance?.BuildManager != null)
+        {
+            // Add buildings
+            foreach (var building in CampManager.Instance.BuildManager.buildingScriptableObjs)
+            {
+                yield return building;
+            }
+            
+            // Add turrets
+            foreach (var turret in CampManager.Instance.BuildManager.turretScriptableObjs)
+            {
+                yield return turret;
+            }
+        }
     }
 
-    public override BuildingCategory GetItemCategory(BuildingScriptableObj item)
-    {
-        return item.buildingCategory;
+    public override PlaceableObjectCategory GetItemCategory(PlaceableObjectParent item)
+    {        
+        return item.placeableObjectCategory;
     }
 
-    public override void SetupItemButton(BuildingScriptableObj item, GameObject button)
+    public override void SetupItemButton(PlaceableObjectParent item, GameObject button)
     {
         var buttonComponent = button.GetComponent<BuildingPreviewBtn>();
         if (buttonComponent != null)
@@ -53,22 +67,22 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
         }
     }
 
-    public override string GetPreviewName(BuildingScriptableObj item)
+    public override string GetPreviewName(PlaceableObjectParent item)
     {
         return item.objectName;
     }
 
-    public override Sprite GetPreviewSprite(BuildingScriptableObj item)
+    public override Sprite GetPreviewSprite(PlaceableObjectParent item)
     {
         return item.sprite;
     }
 
-    public override string GetPreviewDescription(BuildingScriptableObj item)
+    public override string GetPreviewDescription(PlaceableObjectParent item)
     {
         return item.description;
     }
 
-    public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(BuildingScriptableObj item)
+    public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(PlaceableObjectParent item)
     {
         foreach (var resourceCost in item._resourceCost)
         {
@@ -80,7 +94,7 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
         }
     }
 
-    public override void UpdatePreviewSpecifics(BuildingScriptableObj item)
+    public override void UpdatePreviewSpecifics(PlaceableObjectParent item)
     {
         foreach (Transform child in previewResourceCostParent)
         {
@@ -102,7 +116,7 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
         }
     }
 
-    protected override void OnItemClicked(BuildingScriptableObj item)
+    protected override void OnItemClicked(PlaceableObjectParent item)
     {
         if (item != null)
         {
@@ -110,8 +124,21 @@ public class BuildMenu : PreviewListMenuBase<BuildingCategory, BuildingScriptabl
             if (buttonComponent != null)
             {
                 selectedButton = buttonComponent;
-                PlayerUIManager.Instance.buildMenu.SetScreenActive(false, 0.1f, () => BuildingPlacer.Instance.StartPlacement(item));
+                PlayerUIManager.Instance.buildMenu.SetScreenActive(false, 0.1f, () => EnableBuildMenu());
             }
         }
     }
+
+    public void EnableBuildMenu()
+    {
+        SetScreenActive(true, 0.1f);
+    }
+
+    public void StartBuildingPlacement(PlaceableObjectParent placeableObject)
+    {
+        SetScreenActive(false, 0.1f, () => {
+            Managers.PlacementManager.Instance.StartPlacement(placeableObject);
+        });
+    }
 }
+

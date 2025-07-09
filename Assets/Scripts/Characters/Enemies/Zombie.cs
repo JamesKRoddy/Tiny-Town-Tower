@@ -7,7 +7,7 @@ namespace Enemies
     public class Zombie : EnemyBase
     {
         [Header("Attack Settings")]
-        [SerializeField] protected float attackRange = 2f;
+        [SerializeField] protected float attackRange = 2f; // Keep reasonable for NPC vs zombie combat
         [SerializeField] protected float attackCooldown = 1.5f;
         [SerializeField] protected float approachDistance = 3f; // Distance at which to start slowing down
         protected float lastAttackTime;
@@ -26,15 +26,17 @@ namespace Enemies
 
             if (navMeshTarget == null) return;
 
+            // Use the sophisticated distance checking that considers obstacles
+            float effectiveAttackDistance = CalculateEffectiveAttackDistance(navMeshTarget);
             float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
             
             // Debug distance and attack state
             Debug.DrawLine(transform.position, navMeshTarget.position, Color.yellow);
 
-            // Adjust speed based on distance to target
+            // Adjust speed based on distance to target using effective distance
             if (!isAttacking)
             {
-                if (distanceToTarget <= attackRange)
+                if (distanceToTarget <= effectiveAttackDistance)
                 {
                     // Stop completely when in attack range
                     agent.speed = 0f;
@@ -42,7 +44,7 @@ namespace Enemies
                 else if (distanceToTarget <= approachDistance)
                 {
                     // Slow down when approaching attack range
-                    float speedFactor = (distanceToTarget - attackRange) / (approachDistance - attackRange);
+                    float speedFactor = (distanceToTarget - effectiveAttackDistance) / (approachDistance - effectiveAttackDistance);
                     agent.speed = originalSpeed * speedFactor;
                 }
                 else
@@ -52,8 +54,8 @@ namespace Enemies
                 }
             }
 
-            // Check for attack range and cooldown
-            if (distanceToTarget <= attackRange && !isAttacking && Time.time >= lastAttackTime + attackCooldown)
+            // Check for attack range and cooldown using effective distance
+            if (distanceToTarget <= effectiveAttackDistance && !isAttacking && Time.time >= lastAttackTime + attackCooldown)
             {
                 // Face the target before attacking
                 Vector3 direction = (navMeshTarget.position - transform.position).normalized;

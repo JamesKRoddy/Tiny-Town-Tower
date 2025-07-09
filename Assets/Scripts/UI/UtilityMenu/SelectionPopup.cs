@@ -16,6 +16,7 @@ public class SelectionPopup : PreviewPopupBase<object, string>
         public Action onSelected;
         public Func<bool> canSelect;
         public WorkTask workTask; // Reference to the work task for tooltips
+        public string customTooltip; // Custom tooltip text (overrides workTask tooltip if set)
     }
 
     [Header("Selection Options")]
@@ -28,7 +29,6 @@ public class SelectionPopup : PreviewPopupBase<object, string>
     protected override void Start()
     {
         base.Start();
-        closeButton.onClick.AddListener(ReturnToGame);
     }
 
     public void Setup(List<SelectionOption> options, GameObject element, Action onClose = null)
@@ -122,9 +122,21 @@ public class SelectionPopup : PreviewPopupBase<object, string>
         if (optionIndex >= 0 && optionIndex < currentOptions.Count)
         {
             var option = currentOptions[optionIndex];
-            if (option.workTask != null)
+            string tooltipText = null;
+            
+            // Use custom tooltip if set, otherwise use workTask tooltip
+            if (!string.IsNullOrEmpty(option.customTooltip))
             {
-                tooltipText.text = option.workTask.GetTooltipText();
+                tooltipText = option.customTooltip;
+            }
+            else if (option.workTask != null)
+            {
+                tooltipText = option.workTask.GetTooltipText();
+            }
+            
+            if (!string.IsNullOrEmpty(tooltipText))
+            {
+                this.tooltipText.text = tooltipText;
                 tooltip.SetActive(true);
                 currentSelectedIndex = optionIndex;
             }
@@ -174,5 +186,7 @@ public class SelectionPopup : PreviewPopupBase<object, string>
     {
         base.OnCloseClicked();
         onClose?.Invoke();
+        ReturnToGame();
+        CampManager.Instance.WorkManager.ClearNPCForAssignment();
     }
 } 

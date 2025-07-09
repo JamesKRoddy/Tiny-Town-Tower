@@ -38,9 +38,7 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
         // Handle new control type
         switch (controlType)
         {
-            case PlayerControlType.TURRET_PLACEMENT:
-                break;
-            case PlayerControlType.TURRET_CAMERA_MOVEMENT:
+            case PlayerControlType.CAMP_ATTACK_CAMERA_MOVEMENT:
                 UpdateTarget(defaultTarget); // Detach from target to allow free camera movement
                 PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystickInput; // Subscribe to joystick input
                 break;
@@ -72,6 +70,7 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
 
     public void UpdateTarget(Transform newTarget)
     {
+        Debug.Log("Updating target to: " + newTarget.name);
         target = newTarget;
     }
 
@@ -95,21 +94,7 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
 
         // Clamp the camera's new position within the X and Z bounds
         Vector3 newPosition = defaultTarget.position + panMovement;
-        // Clamp the position to the grid bounds based on game mode
-        switch (GameManager.Instance.CurrentGameMode)
-        {
-            case GameMode.TURRET:
-                newPosition.x = Mathf.Clamp(newPosition.x, TurretPlacer.Instance.GetXBounds().x, TurretPlacer.Instance.GetXBounds().y);
-                newPosition.z = Mathf.Clamp(newPosition.z, TurretPlacer.Instance.GetZBounds().x, TurretPlacer.Instance.GetZBounds().y);
-                break;
-            case GameMode.CAMP:
-                newPosition.x = Mathf.Clamp(newPosition.x, BuildingPlacer.Instance.GetXBounds().x, BuildingPlacer.Instance.GetXBounds().y);
-                newPosition.z = Mathf.Clamp(newPosition.z, BuildingPlacer.Instance.GetZBounds().x, BuildingPlacer.Instance.GetZBounds().y);
-                break;
-            default:
-                Debug.LogWarning($"Camera bounds not set for game mode: {GameManager.Instance.CurrentGameMode}");
-                break;
-        }
+        ClampPositionToBounds();
 
         defaultTarget.position = newPosition;
     }
@@ -141,5 +126,25 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
             }
         }
         return null;
+    }
+
+    private void ClampPositionToBounds()
+    {
+        Vector3 newPosition = transform.position;
+
+        // Use PlacementManager bounds if available, otherwise use default bounds
+        Vector2 xBounds = new Vector2(-25f, 25f);
+        Vector2 zBounds = new Vector2(-25f, 25f);
+
+        if (Managers.PlacementManager.Instance != null)
+        {
+            xBounds = Managers.PlacementManager.Instance.GetXBounds();
+            zBounds = Managers.PlacementManager.Instance.GetZBounds();
+        }
+
+        newPosition.x = Mathf.Clamp(newPosition.x, xBounds.x, xBounds.y);
+        newPosition.z = Mathf.Clamp(newPosition.z, zBounds.x, zBounds.y);
+
+        transform.position = newPosition;
     }
 }

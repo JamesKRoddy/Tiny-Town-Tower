@@ -1,18 +1,7 @@
 *****Current Work*****
 
-Genetic Mutation Fixes
 
-Tomorrow:
-
-While a mutation is selected pressing b sets selected game object back to mutation button
-Test with differnt shapes
-
-
-Things to do for a demo:
-
-Displaying npc mutations (charicteristics)
-
-Turret refactor so they are used in the camp to kill zombies
+To Test:
 
 Enviromental hazzards in the roguelike section enviromental hazzards, electrical/acid etc.
 
@@ -28,10 +17,16 @@ Setup some new enemies: Boomer that runs towards you and explodes (elemental  va
 
 
 
-Longer elements:
+Extras:
 Instead of spawning enemies from the same points, add in code to select randow points on the nave mesh to spawn, spawn points!!!
 Implement a day/night cycle for the entire game.
 Figure out what happens in the camp while youre gone, does progress on stuff freeze? Does it keep going or does it progress but slower?
+Swap out basic enemy animations for better ones.
+Have to review the enemy nav agent and root motion animation link because it is not good.
+Enemy animator walk types and idle is super janky, specifically around not having targets then finding a new target, need a better way of organizing that.
+Trash spawning in camp should take up spaces on the grid
+
+
 
 
 
@@ -46,7 +41,13 @@ Player moving through walls while attack animation is running
 Enemy still doing attack flash while dead
 Have to review the room spawning grid system, I think just to get rid of it and have the rooms spawn in a line, currently the grid can cause rooms to spawn over the entrance
 Pressing B while moving an already place mutation breaks the menu, just dont allow B presses
-
+Construction sites can have npcs manually assigned to them
+When moving the camera around the camp the selection icon can move off into the distance, should also be bound by the building grid
+Return to camp selection from roguelike is showing up when npcs die in camp  (might be only happening when the npc was possessed before it died)
+After a building is constructed the taken grid prefabs are being enabled
+NPCs still moving artound when they are dead
+Main menu start button is being unselected.
+Possible Issue with the flee state? the npc did just stop fleeing after one time of running away
 
 
 
@@ -55,6 +56,8 @@ Pressing B while moving an already place mutation breaks the menu, just dont all
 ******Stuff for later******
 
 Have to do some refactoring on the npc animator and what has access to it
+
+Refactoring of managers, specifically the camp manager that yoke is doing a lot of stupid shit around the grid
 
 NPCs have to use toilets, need to figure out timers for when they need it
 

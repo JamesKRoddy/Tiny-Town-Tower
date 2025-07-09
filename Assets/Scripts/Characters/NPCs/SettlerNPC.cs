@@ -88,6 +88,12 @@ public class SettlerNPC : HumanCharacterController
 
         // Register with NPCManager
         NPCManager.Instance.RegisterNPC(this);
+        
+        // Register with CampManager for wave management
+        if (CampManager.Instance != null)
+        {
+            CampManager.Instance.AddNPC(this);
+        }
     }
 
     private void OnDestroy()
@@ -96,6 +102,12 @@ public class SettlerNPC : HumanCharacterController
         if (NPCManager.Instance != null)
         {
             NPCManager.Instance.UnregisterNPC(this);
+        }
+        
+        // Unregister from CampManager
+        if (CampManager.Instance != null)
+        {
+            CampManager.Instance.RemoveNPC(this);
         }
     }
 
@@ -167,7 +179,7 @@ public class SettlerNPC : HumanCharacterController
     public void ChangeState(_TaskState newState)
     {
         
-        animator.Play("Empty", workLayerIndex);
+        StopWorkAnimation();
 
         if(currentState == newState){
             return;
@@ -194,16 +206,34 @@ public class SettlerNPC : HumanCharacterController
         animator.Play(animationName, workLayerIndex);
     }
 
+    public void StopWorkAnimation()
+    {
+        animator.Play("Empty", workLayerIndex);
+    }
+
     public override void StartWork(WorkTask newTask)
     {
-        if((taskStates[TaskType.WORK] as WorkState).assignedTask == newTask){
+        var workState = taskStates[TaskType.WORK] as WorkState;
+        
+        // If we're already in work state and the task is the same, don't do anything
+        if (workState.assignedTask == newTask && GetCurrentTaskType() == TaskType.WORK)
+        {
             return;
         }
 
         assignedWorkTask = newTask; // Store the assigned task
-        var workState = taskStates[TaskType.WORK] as WorkState;
         workState.AssignTask(newTask);
+        
+        // If we're not already in work state, change to it
+        if (GetCurrentTaskType() != TaskType.WORK)
+        {
         ChangeTask(TaskType.WORK);
+        }
+        else
+        {
+            // We're already in work state, just update the destination
+            workState.UpdateTaskDestination();
+        }
     }
 
     public void TakeBreak()
@@ -266,7 +296,20 @@ public class SettlerNPC : HumanCharacterController
                 workState.AssignTask(null);
             }
             
+            // Check for available work before going to wander
+            if (CampManager.Instance?.WorkManager != null)
+            {
+                bool taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(this);
+                if (!taskAssigned)
+                {
+                    // No tasks available, go to wander state
+                    ChangeTask(TaskType.WANDER);
+                }
+            }
+            else
+            {
             ChangeTask(TaskType.WANDER);
+            }
         }
     }
 

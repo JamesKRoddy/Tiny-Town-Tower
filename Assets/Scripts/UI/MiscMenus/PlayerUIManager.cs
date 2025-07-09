@@ -31,6 +31,9 @@ public class PlayerUIManager : MonoBehaviour
         }
     }
 
+    [Header("Debug Menu References")]
+    public DebugMenu debugMenu;
+
     [Header("UI References")]
     [SerializeField, ReadOnly] public MenuBase currentMenu;
     [SerializeField, ReadOnly] public MenuBase previousMenu;
@@ -46,8 +49,6 @@ public class PlayerUIManager : MonoBehaviour
     public BuildMenu buildMenu;
     public PlayerInventoryMenu playerInventoryMenu;
     public SettlerNPCMenu settlerNPCMenu;
-    public TurretMenu turretMenu;
-    public TurretUpgradeMenu turretUpgradeMenu;
     public GeneticMutationUI geneticMutationMenu;
     public SelectionPopup selectionPopup;
     public SelectionPreviewList selectionPreviewList;
@@ -65,6 +66,7 @@ public class PlayerUIManager : MonoBehaviour
     [Header("Game UI References")]
     public RogueLikeGameUI rogueLikeGameUI;
     public CampUI campUI;
+    public CampWaveUI waveUI;
 
 
     private Coroutine openingMenuCoroutine;
@@ -87,6 +89,25 @@ public class PlayerUIManager : MonoBehaviour
     {
         rogueLikeGameUI.Setup();
         campUI.Setup();
+        waveUI.Setup();
+    }
+
+    private void Update()
+    {
+        #if UNITY_EDITOR
+        // Keyboard shortcut to open debug menu (F1)
+        if (Input.GetKeyDown(KeyCode.F1))
+        {
+            if (debugMenu != null && !debugMenu.gameObject.activeInHierarchy)
+            {
+                debugMenu.gameObject.SetActive(true);
+            }
+            else if (debugMenu != null && debugMenu.gameObject.activeInHierarchy)
+            {
+                debugMenu.gameObject.SetActive(false);
+            }
+        }
+        #endif
     }
 
     /// <summary>
@@ -161,10 +182,9 @@ public class PlayerUIManager : MonoBehaviour
         narrativeSystem.SetScreenActive(false);
         playerInventoryMenu.SetScreenActive(false);
         settlerNPCMenu.SetScreenActive(false);
-        turretMenu.SetScreenActive(false);
-        turretUpgradeMenu.SetScreenActive(false);
         geneticMutationMenu.SetScreenActive(false);
         utilityMenu.SetScreenActive(false);
+        debugMenu.gameObject.SetActive(false);
     }
 
     public void HidePauseMenus()
@@ -205,8 +225,6 @@ public class PlayerUIManager : MonoBehaviour
             case BuildMenu:
             case PlayerInventoryMenu:
             case SettlerNPCMenu:
-            case TurretMenu:
-            case TurretUpgradeMenu:
                 utilityMenu.EnableUtilityMenu();
                 break;
             case GeneticMutationUI:

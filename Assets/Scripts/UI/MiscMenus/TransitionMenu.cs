@@ -34,7 +34,7 @@ public class TransitionMenu : MonoBehaviour
         PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
     }
 
-    private IEnumerator FadeImage(Image image, float startAlpha, float targetAlpha, float duration)
+    public IEnumerator FadeImage(Image image, float startAlpha, float targetAlpha, float duration)
     {
         float elapsedTime = 0f;
         Color color = image.color;

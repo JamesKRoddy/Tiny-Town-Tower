@@ -8,10 +8,14 @@ namespace Managers
     {
         public bool IsOccupied { get; set; }
         public GameObject OccupyingObject { get; set; }
-        public GameObject GridObject { get; set; }
+        public GameObject FreeGridObject { get; set; }
+        public GameObject TakenGridObject { get; set; }
+        
+        // Helper property to get the currently active grid object
+        public GameObject ActiveGridObject => IsOccupied ? TakenGridObject : FreeGridObject;
     }
 
-    public abstract class PlacementManager<T> : MonoBehaviour where T : ScriptableObject
+    public class PlacementManager : MonoBehaviour
     {
         public Material validPlacementMaterial;
         public Material invalidPlacementMaterial;
@@ -19,19 +23,28 @@ namespace Managers
         [Header("Grid Settings")]
         public GameObject gridPrefab;
         public GameObject takenGridPrefab;
-        public Transform gridParent;
+
+        private static PlacementManager _instance;
+        public static PlacementManager Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = FindFirstObjectByType<PlacementManager>();
+                    if (_instance == null)
+                    {
+                        Debug.LogError("PlacementManager instance not found in the scene!");
+                    }
+                }
+                return _instance;
+            }
+        }
 
         protected GameObject currentPreview;
-        protected T selectedObject;
+        protected PlaceableObjectParent selectedObject;
         protected Vector3 currentGridPosition;
-        protected float gridSize = 2f;
-
-        private Dictionary<Vector3, GridSlot> gridSlots = new Dictionary<Vector3, GridSlot>();
-
-        protected abstract void PlaceObject();
-        protected abstract bool IsValidPlacement(Vector3 position, out string errorMessage);
-        public abstract Vector2 GetXBounds();
-        public abstract Vector2 GetZBounds();
+        protected float gridSize => CampManager.Instance != null ? CampManager.Instance.SharedGridSize : 2f;
 
         private void OnEnable()
         {
@@ -45,12 +58,15 @@ namespace Managers
                 PlayerInput.Instance.OnUpdatePlayerControls -= HandleControlTypeUpdate;
         }
 
-        protected abstract void HandleControlTypeUpdate(PlayerControlType controlType);
-
-        public void StartPlacement(T objectToPlace)
+        public void StartPlacement(PlaceableObjectParent placeableObject)
         {
-            selectedObject = objectToPlace;
-            currentPreview = Instantiate(GetPrefabFromObject(selectedObject));
+            selectedObject = placeableObject;
+            StartPlacement();
+        }
+
+        private void StartPlacement()
+        {
+            currentPreview = Instantiate(selectedObject.prefab);
             SetPreviewMaterial(validPlacementMaterial);
             currentGridPosition = SnapToGrid(transform.position);
             currentPreview.transform.position = currentGridPosition;
@@ -59,8 +75,10 @@ namespace Managers
             NotifyControlTypeChange();
         }
 
-        protected abstract GameObject GetPrefabFromObject(T obj);
-        protected abstract void NotifyControlTypeChange();
+        private void NotifyControlTypeChange()
+        {
+            PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.BUILDING_PLACEMENT);
+        }
 
         protected void HandleJoystickMovement(Vector2 input)
         {
@@ -100,7 +118,59 @@ namespace Managers
             OnPlacementCancelled();
         }
 
-        protected abstract void OnPlacementCancelled();
+        private void PlaceObject()
+        {
+            if (!IsValidPlacement(currentGridPosition, out string errorMessage))
+            {
+                PlayerUIManager.Instance.DisplayUIErrorMessage($"Cannot place {selectedObject.objectName} - {errorMessage}");
+                return;        
+            }
+
+            // Deduct the required resources from the player's inventory
+            foreach (var requiredItem in selectedObject._resourceCost)
+            {
+                PlayerInventory.Instance.RemoveItem(requiredItem.resourceScriptableObj, requiredItem.count);
+            }
+
+            // Create construction site
+            GameObject constructionSitePrefab = CampManager.Instance.BuildManager.GetConstructionSitePrefab(GetObjectSize());
+            GameObject constructionSite = Instantiate(constructionSitePrefab, currentPreview.transform.position, Quaternion.identity);
+
+            SetupConstruction(constructionSite);
+            
+            MarkGridSlotsOccupied(currentPreview.transform.position, GetObjectSize(), constructionSite);
+            CancelPlacement();
+        }
+
+        private void SetupConstruction(GameObject constructionSite)
+        {
+            if (constructionSite.TryGetComponent(out StructureConstructionTask constructionSiteScript))
+            {
+                constructionSiteScript.SetupConstruction(selectedObject);
+            }
+            else
+            {
+                constructionSite.AddComponent<StructureConstructionTask>();
+                constructionSite.GetComponent<StructureConstructionTask>().SetupConstruction(selectedObject);
+            }
+        }
+
+        private Vector2Int GetObjectSize()
+        {
+            return selectedObject.size;
+        }
+
+        private bool IsValidPlacement(Vector3 position, out string errorMessage)
+        {
+            errorMessage = null;
+            return AreGridSlotsAvailable(position, GetObjectSize());
+        }
+
+        private void OnPlacementCancelled()
+        {
+            // Both buildings and turrets now use the build menu
+            PlayerUIManager.Instance.utilityMenu.EnableBuildMenu();
+        }
 
         private Vector3 SnapToGrid(Vector3 position)
         {
@@ -126,111 +196,58 @@ namespace Managers
             }
         }
 
-        protected void EnableGrid(Vector2 xBounds, Vector2 zBounds)
+        private void HandleControlTypeUpdate(PlayerControlType controlType)
         {
-            if (gridSlots.Count == 0)
+            bool isPlacementMode = controlType == PlayerControlType.BUILDING_PLACEMENT;
+
+            if (isPlacementMode)
             {
-                for (float x = xBounds.x; x < xBounds.y; x += gridSize)
-                {
-                    for (float z = zBounds.x; z < zBounds.y; z += gridSize)
-                    {
-                        // Create grid position without offset
-                        Vector3 gridPosition = new Vector3(x, 0, z);
-                        Vector3 displayPosition = new Vector3(x + gridSize / 2, 0, z + gridSize / 2);
-
-                        GameObject gridSection = Instantiate(gridPrefab, displayPosition, Quaternion.identity, gridParent);
-                        gridSection.SetActive(false);
-
-                        gridSlots[gridPosition] = new GridSlot { IsOccupied = false, GridObject = gridSection };
-                    }
-                }
+                EnableGrid(GetXBounds(), GetZBounds());
+                PlayerInput.Instance.OnLeftJoystick += HandleJoystickMovement;
+                PlayerInput.Instance.OnAPressed += PlaceObject;
+                PlayerInput.Instance.OnBPressed += CancelPlacement;
             }
-
-            foreach (var slot in gridSlots.Values)
+            else
             {
-                if (slot.IsOccupied && takenGridPrefab != null)
-                {
-                    if (slot.GridObject != null)
-                    {
-                        Destroy(slot.GridObject);
-                    }
-                    slot.GridObject = Instantiate(takenGridPrefab, slot.GridObject.transform.position, Quaternion.identity, gridParent);
-                }
-                slot.GridObject.SetActive(true);
+                DisableGrid();
+                PlayerInput.Instance.OnLeftJoystick -= HandleJoystickMovement;
+                PlayerInput.Instance.OnAPressed -= PlaceObject;
+                PlayerInput.Instance.OnBPressed -= CancelPlacement;
             }
         }
 
-        protected void DisableGrid()
+        private void EnableGrid(Vector2 xBounds, Vector2 zBounds)
         {
-            foreach (var slot in gridSlots.Values)
+            // Use the efficient grid object management from CampManager
+            if (CampManager.Instance != null)
             {
-                slot.GridObject.SetActive(false);
+                CampManager.Instance.InitializeGridObjects(gridPrefab, takenGridPrefab);
+                CampManager.Instance.ShowGridObjects();
             }
         }
 
-        protected bool AreGridSlotsAvailable(Vector3 position, Vector2Int size)
+        private void DisableGrid()
         {
-            List<Vector3> requiredSlots = GetRequiredGridSlots(position, size);
-
-            foreach (var slot in requiredSlots)
-            {
-                if (gridSlots.ContainsKey(slot) && gridSlots[slot].IsOccupied)
-                {
-                    return false;
-                }
-            }
-            return true;
+            // Just hide grid objects, don't destroy them
+            CampManager.Instance?.HideGridObjects();
         }
 
-        protected void MarkGridSlotsOccupied(Vector3 position, Vector2Int size, GameObject placedObject)
+        public Vector2 GetXBounds() => CampManager.Instance != null ? CampManager.Instance.SharedXBounds : new Vector2(-25f, 25f);
+        public Vector2 GetZBounds() => CampManager.Instance != null ? CampManager.Instance.SharedZBounds : new Vector2(-25f, 25f);
+
+        private bool AreGridSlotsAvailable(Vector3 position, Vector2Int size)
         {
-            List<Vector3> requiredSlots = GetRequiredGridSlots(position, size);
-
-            foreach (var slot in requiredSlots)
-            {
-                if (gridSlots.ContainsKey(slot))
-                {
-                    if (gridSlots[slot].IsOccupied)
-                    {
-                        Debug.LogWarning($"Grid slot at {slot} is already occupied by {gridSlots[slot].OccupyingObject.name}!");
-                        continue; // Skip marking if already occupied
-                    }
-
-                    gridSlots[slot].IsOccupied = true;
-                    gridSlots[slot].OccupyingObject = placedObject;
-                }
-                else
-                {
-                    Debug.LogError($"Grid slot at {slot} does not exist in the dictionary!");
-                }
-            }
+            return CampManager.Instance?.AreSharedGridSlotsAvailable(position, size) ?? false;
         }
 
-        private List<Vector3> GetRequiredGridSlots(Vector3 position, Vector2Int size)
+        private void MarkGridSlotsOccupied(Vector3 position, Vector2Int size, GameObject placedObject)
         {
-            List<Vector3> requiredSlots = new List<Vector3>();
+            CampManager.Instance?.MarkSharedGridSlotsOccupied(position, size, placedObject);
+        }
 
-            Vector3 basePosition = SnapToGrid(position);
-
-            // Calculate the starting position (bottom-left corner)
-            float startX = basePosition.x - ((size.x * gridSize) / 2f);
-            float startZ = basePosition.z - ((size.y * gridSize) / 2f);
-
-            for (int x = 0; x < size.x; x++)
-            {
-                for (int z = 0; z < size.y; z++)
-                {
-                    Vector3 slotPosition = new Vector3(
-                        startX + (x * gridSize),
-                        0,
-                        startZ + (z * gridSize)
-                    );
-
-                    requiredSlots.Add(slotPosition);
-                }
-            }
-
-            return requiredSlots;
+        private void MarkGridSlotsUnoccupied(Vector3 position, Vector2Int size)
+        {
+            CampManager.Instance?.MarkSharedGridSlotsUnoccupied(position, size);
         }
     }
 }

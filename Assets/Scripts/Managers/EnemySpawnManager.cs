@@ -72,9 +72,13 @@ namespace Managers
             {
                 spawnPoints = new List<EnemySpawnPoint>(RogueLiteManager.Instance.BuildingManager.CurrentRoomParent.GetComponent<RogueLiteRoomParent>().GetEnemySpawnPoints());
 
-            } else if(GameManager.Instance.CurrentGameMode == GameMode.TURRET)
+            } else if(GameManager.Instance.CurrentGameMode == GameMode.CAMP_ATTACK)
             {
-                // Get all spawn points in the scene
+                // For camp attack mode, we can handle this directly or delegate to CampManager
+                Debug.LogWarning("No spawn points found for camp attack mode!");
+            } else if(GameManager.Instance.CurrentGameMode == GameMode.CAMP)
+            {
+                // Get all spawn points in the scene for camp
                 spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
             }
 
@@ -82,7 +86,23 @@ namespace Managers
             if (spawnPoints.Count == 0)
             {
                 Debug.LogError("No spawn points found!");
-                RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                switch (GameManager.Instance.CurrentGameMode)
+                {
+                    case GameMode.ROGUE_LITE:
+                        RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                        break;
+                    case GameMode.CAMP_ATTACK:
+                        // For camp attack mode, we can handle this directly or delegate to CampManager
+                        Debug.LogWarning("No spawn points found for camp attack mode!");
+                        break;
+                    case GameMode.CAMP:
+                        // For camp, we might want to handle this differently
+                        Debug.LogWarning("No spawn points found for camp enemies!");
+                        break;
+                    default:
+                        Debug.LogError("Shouldnt be spawning enemies here!!!");
+                        break;
+                }
                 return;
             }
 
@@ -98,8 +118,13 @@ namespace Managers
                     case GameMode.ROGUE_LITE:
                         RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                         break;
-                    case GameMode.TURRET:
-                        TurretManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                    case GameMode.CAMP_ATTACK:
+                        // For camp attack mode, we can handle this directly or delegate to CampManager
+                        Debug.LogWarning("No spawn points found for camp attack mode!");
+                        break;
+                    case GameMode.CAMP:
+                        // For camp, we might want to handle wave completion differently
+                        Debug.Log("Camp wave completed!");
                         break;
                     default:
                         Debug.LogError("Shouldnt be spawning enemies here!!!");
@@ -180,7 +205,17 @@ namespace Managers
             // Check if all enemies have been spawned and all active enemies are killed
             if (enemiesSpawned >= totalEnemiesInWave && activeEnemies.Count == 0)
             {
+                // For camp mode, we don't automatically start the next wave
+                // The wave will end when all enemies are killed or time expires
+                if (GameManager.Instance.CurrentGameMode == GameMode.CAMP)
+                {
+                    Debug.Log("All enemies defeated in camp wave!");
+                    // The CampManager will handle wave completion through its timer
+                }
+                else
+                {
                 StartNextWave();
+                }
             }
         }
 

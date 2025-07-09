@@ -38,7 +38,7 @@ namespace Managers
             return enemySetupState;
         }
 
-        protected EnemyWaveConfig GetWaveConfig(int difficulty)
+        public EnemyWaveConfig GetWaveConfig(int difficulty)
         {
             foreach (var config in waveConfigs)
             {

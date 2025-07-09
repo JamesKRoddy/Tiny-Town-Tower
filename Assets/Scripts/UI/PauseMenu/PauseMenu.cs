@@ -85,7 +85,7 @@ public class PauseMenu : MenuBase, IControllerInput
                 settingsBtn.gameObject.SetActive(true);
                 quitGameBtn.gameObject.SetActive(true);
                 break;
-            case GameMode.TURRET:
+            case GameMode.CAMP_ATTACK:
                 resumeGameBtn.gameObject.SetActive(true);
                 settingsBtn.gameObject.SetActive(true);
                 returnToCampBtn.gameObject.SetActive(true);

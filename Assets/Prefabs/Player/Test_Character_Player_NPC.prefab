@@ -1563,6 +1563,7 @@ GameObject:
   - component: {fileID: 3754499901241065424}
   - component: {fileID: 6110800992483955535}
   - component: {fileID: 5759801616001992186}
+  - component: {fileID: -6588995584392839030}
   m_Layer: 0
   m_Name: Test_Character_Player_NPC
   m_TagString: Untagged
@@ -1765,6 +1766,7 @@ MonoBehaviour:
   health: 100
   maxHealth: 100
   nPCDataObj: {fileID: 11400000, guid: ff84a74ffbac90849b0eb152033e7ac8, type: 2}
+  additionalMutationSlots: 3
   maxStamina: 100
   currentStamina: 100
   staminaRegenRate: 5
@@ -1828,6 +1830,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb3a4d561b7046549b52f7e3431f2e15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &-6588995584392839030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2985604360754162274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2b1dc13df870914ab9c4093beb39b84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fleeSpeed: 8
+  detectionRange: 10
+  bunkerSeekRange: 20
+  fleeDistance: 15
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 256
 --- !u!1 &3466425493041804734
 GameObject:
   m_ObjectHideFlags: 0
