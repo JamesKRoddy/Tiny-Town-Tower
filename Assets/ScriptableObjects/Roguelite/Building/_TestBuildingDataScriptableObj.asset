@@ -24,5 +24,9 @@ MonoBehaviour:
     difficulty: 0
   - buildingRoom: {fileID: 5318116250113263644, guid: 2ea7af89f449ae74ea89f7cc6b651bf5, type: 3}
     difficulty: 0
+  - buildingRoom: {fileID: 5318116250113263644, guid: e4a4bbe3f351d3747aee914af3a864d6, type: 3}
+    difficulty: 0
+  - buildingRoom: {fileID: 5318116250113263644, guid: 6f32b60ac1ce641458e713c00d62f331, type: 3}
+    difficulty: 0
   minRoomCount: 1
   maxRoomCount: 3

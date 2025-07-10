@@ -1763,6 +1763,13 @@ MonoBehaviour:
   capsuleCastRadius: 0.2
   vaultHeight: 1
   vaultOffset: 2
+  maxVaultHeight: 1.2
+  minVaultHeight: 0.3
+  rollUnderHeight: 0.8
+  obstacleAnalysisRange: 5
+  heightCheckRayCount: 5
+  autoNavigateObstacles: 1
+  enableObstacleDebugLogs: 1
   health: 100
   maxHealth: 100
   nPCDataObj: {fileID: 11400000, guid: ff84a74ffbac90849b0eb152033e7ac8, type: 2}
