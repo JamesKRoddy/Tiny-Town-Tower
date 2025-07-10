@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Windows;
@@ -17,6 +18,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public float dashSpeed = 20f; // Speed during a dash
     public float dashDuration = 0.2f; // How long a dash lasts
     public float dashCooldown = 1.0f; // Cooldown time between dashes
+    public float vaultCooldown = 0.3f; // Short cooldown between vaults to prevent rapid firing
 
     protected bool isAttacking; // Whether the player is currently attacking
 
@@ -65,6 +67,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     [Header("Dash State")]
     private float dashTime = 0f; // Timer for the current dash
     private float dashCooldownTime = 0f; // Timer for dash cooldown
+    private float vaultCooldownTime = 0f; // Timer for vault cooldown
     private Vector3 currentDirection; // Current direction the player is moving in
     private float dashTurnSpeed = 5f; // Speed at which the player can turn while dashing
 
@@ -102,24 +105,16 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             Managers.CampManager.Instance.RegisterTarget(this);
         }
         
-        // Debug vault layer information
+        // Debug vault layer information (only once at startup)
         if (enableObstacleDebugLogs)
         {
             LayerMask combinedLayers = GetCombinedObstacleLayers();
-            Debug.Log($"[VaultSetup] {gameObject.name} obstacle navigation system initialized. ObstacleLayers: {combinedLayers.value}");
-            Debug.Log($"[VaultSetup] All obstacles will be analyzed for height to determine vaultability automatically");
-            Debug.Log($"[VaultSetup] Height ranges: WalkOver(<{minVaultHeight}m), Vault({minVaultHeight}-{maxVaultHeight}m), TooHigh(>{maxVaultHeight}m)");
+            Debug.Log($"[VaultSetup] {gameObject.name} initialized. ObstacleLayers: {combinedLayers.value}, Height ranges: WalkOver(<{minVaultHeight}m), Vault({minVaultHeight}-{maxVaultHeight}m), TooHigh(>{maxVaultHeight}m)");
         }
     }
 
     public virtual void PossessedUpdate()
     {
-        // Debug log every 120 frames to avoid spam
-        if (enableObstacleDebugLogs && Time.frameCount % 120 == 0 && movementInput.magnitude > 0.1f)
-        {
-            Debug.Log($"[PossessedUpdate] Running for {gameObject.name}. Movement input: {movementInput}, AutoNav: {autoNavigateObstacles}");
-        }
-        
         HandleDash();
         MoveCharacter();
         UpdateAnimations();
@@ -188,7 +183,19 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void Dash()
     {
-        if (!isDashing && !isVaulting && Time.time > dashCooldownTime && movementInput.magnitude > 0.1f)
+        // Debug logging to see what's blocking the dash/vault
+        if (isDashing)
+            Debug.Log($"[Dash] Cannot dash/vault - already dashing for {gameObject.name}");
+        else if (isVaulting)
+            Debug.Log($"[Dash] Cannot dash/vault - already vaulting for {gameObject.name}");
+        else if (Time.time <= dashCooldownTime)
+            Debug.Log($"[Dash] Cannot dash/vault - dash cooldown active. Time: {Time.time}, Cooldown: {dashCooldownTime}, Remaining: {dashCooldownTime - Time.time:F2}s for {gameObject.name}");
+        else if (Time.time <= vaultCooldownTime)
+            Debug.Log($"[Dash] Cannot dash/vault - vault cooldown active. Time: {Time.time}, Cooldown: {vaultCooldownTime}, Remaining: {vaultCooldownTime - Time.time:F2}s for {gameObject.name}");
+        else if (movementInput.magnitude <= 0.1f)
+            Debug.Log($"[Dash] Cannot dash/vault - no movement input ({movementInput.magnitude}) for {gameObject.name}");
+        
+        if (!isDashing && !isVaulting && Time.time > dashCooldownTime && Time.time > vaultCooldownTime && movementInput.magnitude > 0.1f)
         {
             StopAttacking(); // Ensure player stops attacking when dashing
 
@@ -288,28 +295,52 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     private void CalculateVaultTarget(RaycastHit hitInfo)
     {
-        // Calculate the vault target position by moving past the hit point in the player's forward direction
-        vaultTargetPosition = hitInfo.point + transform.forward * vaultOffset;
-        vaultTargetPosition.y = transform.position.y; // Keep the target position at player's current y level
+        // Legacy method - now redirects to the enhanced version with automatic direction detection
+        Vector3 direction = (hitInfo.point - transform.position).normalized;
+        direction.y = 0; // Keep direction horizontal
+        CalculateVaultTargetEnhanced(hitInfo, direction);
     }
 
     private void StartVault()
     {
-        Debug.Log($"[Vault] Starting vault for {gameObject.name}. Target position: {vaultTargetPosition}");
+        Debug.Log($"[Vault] Starting vault for {gameObject.name}");
         isVaulting = true;
         isDashing = false; // Ensure dashing is stopped when starting a vault
         dashTime = 0f; // Reset dash timer
+        dashCooldownTime = 0f; // Reset dash cooldown to allow immediate subsequent vaults
         animator.SetTrigger("IsVaulting"); // Trigger vault animation
         humanCollider.enabled = false; // Disable the player's collider to avoid collision during vaulting
-        Debug.Log($"[Vault] Vault initiated - isVaulting: {isVaulting}, collider disabled for {gameObject.name}");
     }
 
     private void FinishVault()
     {
-        Debug.Log($"[Vault] Finishing vault for {gameObject.name}");
+        Debug.Log($"[Vault] Vault finished for {gameObject.name}");
         isVaulting = false;
+        vaultCooldownTime = Time.time + vaultCooldown; // Set vault cooldown
         humanCollider.enabled = true; // Re-enable the player's collider
-        Debug.Log($"[Vault] Vault finished - isVaulting: {isVaulting}, collider re-enabled for {gameObject.name}");
+        
+        // Final safety check: ensure player is on solid ground after vault
+        StartCoroutine(EnsureGroundedAfterVault());
+    }
+    
+    /// <summary>
+    /// Coroutine to ensure the player lands properly on the ground after vaulting
+    /// </summary>
+    private IEnumerator EnsureGroundedAfterVault()
+    {
+        yield return new WaitForFixedUpdate(); // Wait one physics frame for collider to settle
+        
+        Debug.Log($"[VaultGrounding] Simple post-vault check. Player position: {transform.position}");
+        
+        // No complex ground detection - just ensure player stays at a reasonable height
+        // This maintains consistency for obstacle detection
+        
+        // Debug: Check if the player can still detect obstacles after landing
+        if (movementInput.magnitude > 0.1f)
+        {
+            ObstacleType postVaultObstacle = AnalyzeObstacle(movementInput.normalized, out RaycastHit postVaultHit, enableLogs: false);
+            Debug.Log($"[VaultGrounding] Post-vault obstacle check: {postVaultObstacle} in direction {movementInput.normalized}");
+        }
     }
 
     #endregion
@@ -342,14 +373,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         
         if (!autoNavigateObstacles || direction.magnitude < 0.1f)
         {
-            // Only log these issues once every 120 frames to avoid spam
-            if (enableObstacleDebugLogs && enableLogs && Time.frameCount % 120 == 0)
-            {
-                if (!autoNavigateObstacles)
-                    Debug.Log($"[ObstacleNav] Auto navigation disabled for {gameObject.name}");
-                else if (direction.magnitude < 0.1f)
-                    Debug.Log($"[ObstacleNav] Direction magnitude too low: {direction.magnitude} for {gameObject.name}");
-            }
             return ObstacleType.None;
         }
 
@@ -359,61 +382,54 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         
         // First, check if there's any obstacle at all at chest height
         Vector3 chestRayOrigin = transform.position + Vector3.up * vaultHeight;
+        
+        // Debug: Log the obstacle detection attempt every few frames to avoid spam
+        bool shouldDebugDetection = enableObstacleDebugLogs && enableLogs && Time.frameCount % 120 == 0;
+        if (shouldDebugDetection)
+        {
+            Debug.Log($"[ObstacleDetection] Checking from {chestRayOrigin} toward {direction.normalized} range {obstacleAnalysisRange}, layers: {GetCombinedObstacleLayers().value}");
+        }
+        
         if (!Physics.Raycast(chestRayOrigin, direction.normalized, out obstacleInfo, obstacleAnalysisRange, GetCombinedObstacleLayers()))
         {
-            // Enhanced debugging - check if there's ANY object in that direction (regardless of layer)
-            if (enableObstacleDebugLogs && enableLogs && Physics.Raycast(chestRayOrigin, direction.normalized, out RaycastHit anyHit, obstacleAnalysisRange))
+            // Debug: Check if there are ANY objects in that direction (regardless of layer)
+            if (shouldDebugDetection)
             {
-                Debug.Log($"[ObstacleNav] FOUND object '{anyHit.collider.name}' on layer {anyHit.collider.gameObject.layer} ({LayerMask.LayerToName(anyHit.collider.gameObject.layer)}) at distance {anyHit.distance}, but it's not on obstacleLayer {GetCombinedObstacleLayers().value}");
-                Debug.Log($"[ObstacleNav] Ray from {chestRayOrigin} toward {direction.normalized} with range {obstacleAnalysisRange}");
+                if (Physics.Raycast(chestRayOrigin, direction.normalized, out RaycastHit anyHit, obstacleAnalysisRange))
+                {
+                    Debug.Log($"[ObstacleDetection] Found object '{anyHit.collider.name}' on layer {anyHit.collider.gameObject.layer} but not on obstacle layers");
+                }
+                else
+                {
+                    Debug.Log($"[ObstacleDetection] No objects found in any layer in that direction");
+                }
             }
-            else if (enableObstacleDebugLogs && enableLogs && Time.frameCount % 300 == 0) // Only log "no objects" every 300 frames (5 seconds at 60fps)
-            {
-                Debug.Log($"[ObstacleNav] NO objects found in any layer. Ray from {chestRayOrigin} toward {direction.normalized} with range {obstacleAnalysisRange}");
-            }
-            
-            // Only log no obstacle detected occasionally
-            if (enableObstacleDebugLogs && enableLogs && Time.frameCount % 60 == 0)
-                Debug.Log($"[ObstacleNav] No obstacle detected at chest height for {gameObject.name}. ObstacleLayers: {GetCombinedObstacleLayers().value}, Range: {obstacleAnalysisRange}");
             return ObstacleType.None;
         }
-
-        // Always log when we detect an obstacle (this is important) - but only once per detection
-        if (enableObstacleDebugLogs && enableLogs)
-            Debug.Log($"[ObstacleNav] Obstacle detected for {gameObject.name} at {obstacleInfo.point}, distance: {obstacleInfo.distance}");
+        
+        if (shouldDebugDetection)
+        {
+            Debug.Log($"[ObstacleDetection] Obstacle found: '{obstacleInfo.collider.name}' at distance {obstacleInfo.distance:F2}");
+        }
 
         // Analyze the height of the obstacle using multiple raycasts
         float obstacleHeight = AnalyzeObstacleHeight(direction, obstacleInfo.point, enableLogs);
         
-        // Always log classification results (important for debugging)
-        if (enableObstacleDebugLogs && enableLogs)
-            Debug.Log($"[ObstacleNav] Obstacle height analyzed: {obstacleHeight}m for {gameObject.name}");
-        
-        // Determine obstacle type based on height and always log the classification
+        // Determine obstacle type based on height
         if (obstacleHeight <= minVaultHeight)
         {
-            if (enableObstacleDebugLogs && enableLogs)
-                Debug.Log($"[ObstacleNav] Obstacle classified as WalkOver (height: {obstacleHeight} <= {minVaultHeight}) for {gameObject.name}");
             return ObstacleType.WalkOver;
         }
         else if (obstacleHeight <= rollUnderHeight)
         {
-            if (enableObstacleDebugLogs && enableLogs)
-                Debug.Log($"[ObstacleNav] Obstacle classified as RollUnder (height: {obstacleHeight} <= {rollUnderHeight}) for {gameObject.name}");
             return ObstacleType.RollUnder; // Future feature
         }
         else if (obstacleHeight <= maxVaultHeight)
         {
-            // ALWAYS log vault classification - this is critical (but only when enableLogs is true)
-            if (enableLogs)
-                Debug.Log($"[ObstacleNav] Obstacle classified as Vault (height: {obstacleHeight} <= {maxVaultHeight}) for {gameObject.name}");
             return ObstacleType.Vault;
         }
         else
         {
-            // ALWAYS log too high classification - this is important (but only when enableLogs is true)
-            if (enableLogs)
-                Debug.Log($"[ObstacleNav] Obstacle classified as TooHigh (height: {obstacleHeight} > {maxVaultHeight}) for {gameObject.name}");
             return ObstacleType.TooHigh;
         }
     }
@@ -430,12 +446,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         float playerGroundLevel = transform.position.y;
         float highestHitPoint = playerGroundLevel;
         
-        // Only log start of analysis when we actually detect an obstacle
-        if (enableObstacleDebugLogs && enableLogs)
-            Debug.Log($"[ObstacleHeight] Starting height analysis for {gameObject.name}. Player ground level: {playerGroundLevel}");
-        
-        int hitCount = 0;
-        
         // Cast rays at different heights to find the top of the obstacle
         for (int i = 0; i < heightCheckRayCount; i++)
         {
@@ -446,26 +456,15 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             {
                 // If we hit something at this height, the obstacle extends at least this high
                 highestHitPoint = Mathf.Max(highestHitPoint, checkHeight);
-                hitCount++;
-                // Only log first and last hits to reduce spam
-                if (enableObstacleDebugLogs && enableLogs && (i == 0 || i == heightCheckRayCount - 1))
-                    Debug.Log($"[ObstacleHeight] Hit at height {checkHeight}m (ray {i}/{heightCheckRayCount}) for {gameObject.name}");
             }
             else if (highestHitPoint > playerGroundLevel)
             {
                 // We didn't hit anything at this height, so we've found the top
-                if (enableObstacleDebugLogs && enableLogs)
-                    Debug.Log($"[ObstacleHeight] No hit at height {checkHeight}m, found top at {highestHitPoint}m for {gameObject.name}");
                 break;
             }
         }
         
-        float finalHeight = highestHitPoint - playerGroundLevel;
-        // ALWAYS log final result - this is critical for debugging
-        if (enableLogs)
-            Debug.Log($"[ObstacleHeight] Final calculated height: {finalHeight}m (hit {hitCount}/{heightCheckRayCount} rays) for {gameObject.name}");
-        
-        return finalHeight;
+        return highestHitPoint - playerGroundLevel;
     }
 
     /// <summary>
@@ -487,24 +486,23 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     /// <param name="direction">Movement direction</param>
     private void CalculateVaultTargetEnhanced(RaycastHit hitInfo, Vector3 direction)
     {
-        // Calculate the vault target position by moving past the hit point in the movement direction
-        vaultTargetPosition = hitInfo.point + direction.normalized * vaultOffset;
-        vaultTargetPosition.y = transform.position.y; // Keep the target position at player's current y level
+        // SIMPLE APPROACH: Just vault to the same height level as the player
+        // Calculate the horizontal vault target position by moving past the hit point
+        Vector3 horizontalTarget = hitInfo.point + direction.normalized * vaultOffset;
         
-        if (enableObstacleDebugLogs)
-            Debug.Log($"[VaultTarget] Initial target calculated for {gameObject.name}: {vaultTargetPosition} (hit point: {hitInfo.point}, direction: {direction.normalized}, offset: {vaultOffset})");
+        // Keep the player at the same Y level - no complex ground detection
+        float targetY = transform.position.y;
+        vaultTargetPosition = new Vector3(horizontalTarget.x, targetY, horizontalTarget.z);
         
-        // Ensure the target position is valid (not inside another obstacle)
+        Debug.Log($"[VaultTarget] Simple vault - Player Y: {transform.position.y}, Target: {vaultTargetPosition}");
+        
+        // If the target position is blocked, extend further horizontally at the same height
         if (Physics.CheckSphere(vaultTargetPosition, capsuleCastRadius, GetCombinedObstacleLayers()))
         {
-            // If the calculated position is blocked, try extending further
-            vaultTargetPosition = hitInfo.point + direction.normalized * (vaultOffset * 1.5f);
-            if (enableObstacleDebugLogs)
-                Debug.Log($"[VaultTarget] Target position was blocked, extended to: {vaultTargetPosition} for {gameObject.name}");
+            Vector3 extendedHorizontal = hitInfo.point + direction.normalized * (vaultOffset * 2f);
+            vaultTargetPosition = new Vector3(extendedHorizontal.x, targetY, extendedHorizontal.z);
+            Debug.Log($"[VaultTarget] Target blocked, extended to: {vaultTargetPosition}");
         }
-        
-        // ALWAYS log final target - this is critical
-        Debug.Log($"[VaultTarget] Final vault target for {gameObject.name}: {vaultTargetPosition}");
     }
 
     /// <summary>
@@ -601,6 +599,117 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         Debug.Log($"[ObstacleNav] Debug logging {(enableObstacleDebugLogs ? "ENABLED" : "DISABLED")} for {gameObject.name}");
     }
 
+    /// <summary>
+    /// Debug method to reset all cooldowns for testing
+    /// </summary>
+    [ContextMenu("Reset All Cooldowns")]
+    public void ResetAllCooldowns()
+    {
+        dashCooldownTime = 0f;
+        vaultCooldownTime = 0f;
+        Debug.Log($"[Debug] All cooldowns reset for {gameObject.name}");
+    }
+
+    /// <summary>
+    /// Debug method to show current vault/navigation state
+    /// </summary>
+    [ContextMenu("Debug Current State")]
+    public void DebugCurrentState()
+    {
+        float dashCooldownRemaining = Mathf.Max(0, dashCooldownTime - Time.time);
+        float vaultCooldownRemaining = Mathf.Max(0, vaultCooldownTime - Time.time);
+        
+        Debug.Log($"[Debug] === VAULT STATE for {gameObject.name} ===");
+        Debug.Log($"[Debug] Auto Navigate: {autoNavigateObstacles}");
+        Debug.Log($"[Debug] Is Vaulting: {isVaulting}");
+        Debug.Log($"[Debug] Is Dashing: {isDashing}");
+        Debug.Log($"[Debug] Movement Input: {movementInput} (magnitude: {movementInput.magnitude:F3})");
+        Debug.Log($"[Debug] Dash Cooldown: {dashCooldownRemaining:F2}s remaining");
+        Debug.Log($"[Debug] Vault Cooldown: {vaultCooldownRemaining:F2}s remaining");
+        Debug.Log($"[Debug] Obstacle Layers: {GetCombinedObstacleLayers().value}");
+        
+        // Check what obstacle is ahead right now
+        if (movementInput.magnitude > 0.1f)
+        {
+            ObstacleType currentObstacle = AnalyzeObstacle(movementInput.normalized, out RaycastHit hitInfo, enableLogs: false);
+            Debug.Log($"[Debug] Current Obstacle: {currentObstacle}");
+            if (currentObstacle != ObstacleType.None)
+            {
+                Debug.Log($"[Debug] Obstacle Distance: {hitInfo.distance:F2}m");
+                Debug.Log($"[Debug] Obstacle Object: {hitInfo.collider?.name ?? "Unknown"}");
+            }
+        }
+        else
+        {
+            Debug.Log($"[Debug] No movement input to analyze obstacles");
+        }
+    }
+
+    /// <summary>
+    /// Debug method to test obstacle detection in all directions
+    /// </summary>
+    [ContextMenu("Test Obstacle Detection")]
+    public void TestObstacleDetection()
+    {
+        Debug.Log($"[TestDetection] === TESTING OBSTACLE DETECTION for {gameObject.name} ===");
+        Debug.Log($"[TestDetection] Player position: {transform.position}");
+        Debug.Log($"[TestDetection] Obstacle layers: {GetCombinedObstacleLayers().value}");
+        
+        Vector3[] directions = {
+            Vector3.forward,
+            Vector3.right,
+            Vector3.back,
+            Vector3.left,
+            transform.forward // Current facing direction
+        };
+        
+        string[] directionNames = { "Forward", "Right", "Back", "Left", "Current Facing" };
+        
+        for (int i = 0; i < directions.Length; i++)
+        {
+            Vector3 rayOrigin = transform.position + Vector3.up * vaultHeight;
+            Debug.Log($"[TestDetection] Testing {directionNames[i]} direction {directions[i]}:");
+            Debug.Log($"[TestDetection]   Ray from {rayOrigin} range {obstacleAnalysisRange}");
+            
+            if (Physics.Raycast(rayOrigin, directions[i], out RaycastHit hit, obstacleAnalysisRange, GetCombinedObstacleLayers()))
+            {
+                ObstacleType obstacleType = AnalyzeObstacle(directions[i], out RaycastHit detailHit, enableLogs: false);
+                Debug.Log($"[TestDetection]   ✓ HIT: '{hit.collider.name}' at {hit.distance:F2}m, type: {obstacleType}");
+            }
+            else
+            {
+                Debug.Log($"[TestDetection]   ✗ NO HIT in this direction");
+                
+                // Check if there's anything in any layer
+                if (Physics.Raycast(rayOrigin, directions[i], out RaycastHit anyHit, obstacleAnalysisRange))
+                {
+                    Debug.Log($"[TestDetection]     But found '{anyHit.collider.name}' on layer {anyHit.collider.gameObject.layer} (not obstacle layer)");
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Debug method to test basic obstacle detection
+    /// </summary>
+    [ContextMenu("Test Ground Detection")]
+    public void TestGroundDetection()
+    {
+        Debug.Log($"[TestGround] === SIMPLIFIED SYSTEM - NO GROUND DETECTION ===");
+        Debug.Log($"[TestGround] Player position: {transform.position}");
+        Debug.Log($"[TestGround] Vault system now keeps player at same Y level for consistency");
+        
+        if (movementInput.magnitude > 0.1f)
+        {
+            ObstacleType currentObstacle = AnalyzeObstacle(movementInput.normalized, out RaycastHit hitInfo, enableLogs: false);
+            Debug.Log($"[TestGround] Current obstacle in movement direction: {currentObstacle}");
+        }
+        else
+        {
+            Debug.Log($"[TestGround] No movement input to test obstacle detection");
+        }
+    }
+
     #endregion
 
     #region Movement
@@ -609,14 +718,14 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     {
         if (isVaulting)
         {
-            // Move player towards the vault target position during vaulting
+            // Simple vault movement - just move toward target at constant Y level
             float step = vaultSpeed * Time.deltaTime;
-            transform.position = Vector3.Lerp(transform.position, vaultTargetPosition, step);
+            transform.position = Vector3.MoveTowards(transform.position, vaultTargetPosition, step);
 
-            // Snap player to the target vault position and end vault if close enough
+            // End vault when we reach the target
             if (Vector3.Distance(transform.position, vaultTargetPosition) < 0.1f)
             {
-                transform.position = vaultTargetPosition; // Snap to position
+                transform.position = vaultTargetPosition; // Snap to final position
                 FinishVault();
             }
         }
@@ -646,7 +755,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                     if (obstacleType == ObstacleType.Vault || obstacleType == ObstacleType.RollUnder)
                     {
                         // If it's vaultable, start vaulting
-                        CalculateVaultTarget(hitInfo);
+                        CalculateVaultTargetEnhanced(hitInfo, currentDirection);
                         StartVault();
                     }
                     else
@@ -670,69 +779,87 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 Vector3 targetMovement = movementInput.normalized * speed * inputMagnitude * Time.deltaTime;
 
                 // Enhanced obstacle detection for automatic navigation
+                // Debug: Check why automatic navigation might not be running
+                if (!autoNavigateObstacles && enableObstacleDebugLogs && Time.frameCount % 120 == 0)
+                {
+                    Debug.Log($"[Movement] Automatic navigation DISABLED for {gameObject.name}");
+                }
+                else if (inputMagnitude <= 0.1f && enableObstacleDebugLogs && Time.frameCount % 120 == 0)
+                {
+                    Debug.Log($"[Movement] Input magnitude too low: {inputMagnitude:F3} for {gameObject.name}");
+                }
+                
                 if (autoNavigateObstacles && inputMagnitude > 0.1f)
                 {
-                    // Only log every 30 frames to reduce spam
-                    bool shouldLog = enableObstacleDebugLogs && Time.frameCount % 30 == 0;
-                    if (shouldLog)
-                        Debug.Log($"[Movement] Enhanced obstacle detection active for {gameObject.name}. Input magnitude: {inputMagnitude}");
-                    
                     ObstacleType obstacleType = AnalyzeObstacle(movementInput.normalized, out RaycastHit obstacleInfo);
                     
-                    // Only log when obstacle type changes or when we detect something important
-                    if (enableObstacleDebugLogs && (obstacleType != ObstacleType.None || shouldLog))
-                        Debug.Log($"[Movement] Obstacle analysis result: {obstacleType} for {gameObject.name}");
+                    // Debug: Log obstacle detection results periodically
+                    if (enableObstacleDebugLogs && Time.frameCount % 60 == 0)
+                    {
+                        if (obstacleType == ObstacleType.None)
+                        {
+                            Debug.Log($"[Movement] No obstacle detected with input {inputMagnitude:F2} for {gameObject.name}");
+                        }
+                        else
+                        {
+                            float cooldownRemaining = Mathf.Max(0, vaultCooldownTime - Time.time);
+                            Debug.Log($"[Movement] Obstacle detected: {obstacleType}, Cooldown remaining: {cooldownRemaining:F2}s for {gameObject.name}");
+                        }
+                    }
                     
                     switch (obstacleType)
                     {
                         case ObstacleType.WalkOver:
                             // Low obstacle, just continue normal movement
-                            if (shouldLog)
-                                Debug.Log($"[Movement] WalkOver - continuing normal movement for {gameObject.name}");
                             break;
                             
                         case ObstacleType.Vault:
-                            // Perfect height for vaulting, automatically start vault - ALWAYS LOG THIS
-                            Debug.Log($"[Movement] Vault detected - starting automatic vault for {gameObject.name}");
-                            CalculateVaultTargetEnhanced(obstacleInfo, movementInput.normalized);
-                            StartVault();
-                            return; // Exit early since we're now vaulting
-                            
-                        case ObstacleType.RollUnder:
-                            // Future: implement rolling under - ALWAYS LOG THIS
-                            Debug.Log($"[Movement] RollUnder detected - checking if vaultable for {gameObject.name}");
-                            if (AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point, enableLogs: true) <= maxVaultHeight)
+                            // Perfect height for vaulting, automatically start vault - but check cooldown first
+                            if (Time.time > vaultCooldownTime)
                             {
-                                Debug.Log($"[Movement] RollUnder treated as vault for {gameObject.name}");
+                                Debug.Log($"[Movement] Vault detected - starting automatic vault for {gameObject.name}");
                                 CalculateVaultTargetEnhanced(obstacleInfo, movementInput.normalized);
                                 StartVault();
-                                return;
+                                return; // Exit early since we're now vaulting
+                            }
+                            else
+                            {
+                                Debug.Log($"[Movement] Vault detected but cooldown active (remaining: {vaultCooldownTime - Time.time:F2}s) for {gameObject.name}");
+                                // Stop movement to prevent collision while waiting for cooldown
+                                targetMovement = Vector3.zero;
+                            }
+                            break;
+                            
+                        case ObstacleType.RollUnder:
+                            // Future: implement rolling under - but for now treat as vault if possible
+                            if (Time.time > vaultCooldownTime)
+                            {
+                                Debug.Log($"[Movement] RollUnder detected - checking if vaultable for {gameObject.name}");
+                                if (AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point, enableLogs: true) <= maxVaultHeight)
+                                {
+                                    Debug.Log($"[Movement] RollUnder treated as vault for {gameObject.name}");
+                                    CalculateVaultTargetEnhanced(obstacleInfo, movementInput.normalized);
+                                    StartVault();
+                                    return;
+                                }
+                            }
+                            else
+                            {
+                                Debug.Log($"[Movement] RollUnder detected but cooldown active (remaining: {vaultCooldownTime - Time.time:F2}s) for {gameObject.name}");
+                                // Stop movement to prevent collision while waiting for cooldown
+                                targetMovement = Vector3.zero;
                             }
                             break;
                             
                         case ObstacleType.TooHigh:
-                            // Obstacle too high, stop movement in that direction - ALWAYS LOG THIS
-                            Debug.Log($"[Movement] TooHigh obstacle - stopping movement for {gameObject.name}");
+                            // Obstacle too high, stop movement in that direction
                             targetMovement = Vector3.zero;
                             break;
                             
                         case ObstacleType.None:
                         default:
                             // No obstacle, continue normal movement
-                            if (shouldLog)
-                                Debug.Log($"[Movement] No obstacle detected - continuing normal movement for {gameObject.name}");
                             break;
-                    }
-                }
-                else
-                {
-                    // Only log state changes, not every frame
-                    if (enableObstacleDebugLogs && Time.frameCount % 60 == 0)
-                    {
-                        if (!autoNavigateObstacles)
-                            Debug.Log($"[Movement] Auto navigate disabled for {gameObject.name}");
-                        else if (inputMagnitude <= 0.1f)
-                            Debug.Log($"[Movement] Input magnitude too low: {inputMagnitude} for {gameObject.name}");
                     }
                 }
 
@@ -875,6 +1002,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             Gizmos.color = Color.green;
             Gizmos.DrawWireSphere(vaultTargetPosition, 0.2f);
+            
+            // Show vault path
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawLine(transform.position, vaultTargetPosition);
         }
 
         // Capsule cast for collision detection visualization
@@ -888,6 +1019,23 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             Gizmos.DrawWireSphere(capsuleBottom, capsuleCastRadius);
             Gizmos.DrawWireSphere(capsuleTop, capsuleCastRadius);
             Gizmos.DrawLine(capsuleBottom, capsuleTop);
+        }
+        
+        // Show vault target calculation when analyzing obstacles
+        if (autoNavigateObstacles && movementInput.magnitude > 0.1f)
+        {
+            Vector3 direction = movementInput.normalized;
+            ObstacleType obstacleType = AnalyzeObstacle(direction, out RaycastHit obstacleInfo, enableLogs: false);
+            
+            if (obstacleType == ObstacleType.Vault || obstacleType == ObstacleType.RollUnder)
+            {
+                // Show the horizontal target calculation (simple version)
+                Vector3 horizontalTarget = obstacleInfo.point + direction * vaultOffset;
+                Vector3 simpleTarget = new Vector3(horizontalTarget.x, transform.position.y, horizontalTarget.z);
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawWireSphere(simpleTarget, 0.15f);
+                Gizmos.DrawLine(obstacleInfo.point, simpleTarget);
+            }
         }
         
         // Height threshold indicators

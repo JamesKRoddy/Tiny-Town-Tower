@@ -1750,6 +1750,7 @@ MonoBehaviour:
   dashSpeed: 30
   dashDuration: 0.4
   dashCooldown: 1
+  vaultCooldown: 0.3
   vaultSpeed: 5
   vaultDetectionRange: 1.5
   obstacleLayers:
@@ -1757,16 +1758,13 @@ MonoBehaviour:
     m_Bits: 64
   - serializedVersion: 2
     m_Bits: 256
-  vaultLayer:
-    serializedVersion: 2
-    m_Bits: 128
   capsuleCastRadius: 0.2
   vaultHeight: 1
   vaultOffset: 2
   maxVaultHeight: 1.2
   minVaultHeight: 0.3
   rollUnderHeight: 0.8
-  obstacleAnalysisRange: 5
+  obstacleAnalysisRange: 1.5
   heightCheckRayCount: 5
   autoNavigateObstacles: 1
   enableObstacleDebugLogs: 1

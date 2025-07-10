@@ -642,9 +642,6 @@ MonoBehaviour:
   vaultSpeed: 5
   vaultDetectionRange: 1
   obstacleLayers: []
-  vaultLayer:
-    serializedVersion: 2
-    m_Bits: 0
   capsuleCastRadius: 0.5
   vaultHeight: 1
   vaultOffset: 1
@@ -1851,7 +1848,7 @@ GameObject:
   - component: {fileID: 1570439097}
   - component: {fileID: 1570439096}
   - component: {fileID: 1570439095}
-  m_Layer: 7
+  m_Layer: 6
   m_Name: Cube
   m_TagString: Vaultable
   m_Icon: {fileID: 0}

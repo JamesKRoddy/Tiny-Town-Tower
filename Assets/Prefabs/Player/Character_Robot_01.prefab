@@ -2194,15 +2194,20 @@ MonoBehaviour:
   dashSpeed: 20
   dashDuration: 0.2
   dashCooldown: 1
+  vaultCooldown: 0.3
   vaultSpeed: 5
   vaultDetectionRange: 1
   obstacleLayers: []
-  vaultLayer:
-    serializedVersion: 2
-    m_Bits: 0
   capsuleCastRadius: 0.5
   vaultHeight: 1
   vaultOffset: 1
+  maxVaultHeight: 1.2
+  minVaultHeight: 0.3
+  rollUnderHeight: 0.8
+  obstacleAnalysisRange: 1.5
+  heightCheckRayCount: 5
+  autoNavigateObstacles: 1
+  enableObstacleDebugLogs: 1
   health: 100
   maxHealth: 100
   workSpeedMultiplier: 1
@@ -2219,6 +2224,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8cdfbceb3c91a894d88c2ce9d8d2e34b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  taskEffects: []
 --- !u!1 &4623032418933656117
 GameObject:
   m_ObjectHideFlags: 0
