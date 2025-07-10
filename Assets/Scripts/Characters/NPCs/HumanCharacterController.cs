@@ -17,6 +17,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public float dashSpeed = 20f; // Speed during a dash
     public float dashDuration = 0.2f; // How long a dash lasts
     public float dashCooldown = 1.0f; // Cooldown time between dashes
+    public float vaultDuration = 0.4f; // How long a vault lasts
     public float vaultCooldown = 0.3f; // Short cooldown between vaults to prevent rapid firing
 
     protected bool isAttacking; // Whether the player is currently attacking
@@ -28,7 +29,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     protected CharacterInventory characterInventory;
 
     [Header("Vault Parameters")]
-    public float vaultSpeed = 5f; // Slower speed for vaulting
     public LayerMask[] obstacleLayers; // Array of layers for obstacles
     public float capsuleCastRadius = 0.5f; // Radius of the capsule for collision detection
     public float vaultHeight = 1.0f; // Height of the raycast to detect obstacles
@@ -67,6 +67,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private float dashTurnSpeed = 5f; // Speed at which the player can turn while dashing
 
     [Header("Vault State")]
+    private float vaultTime = 0f; // Timer for the current vault
+    private Vector3 vaultStartPosition; // Starting position of the vault
     private Vector3 vaultTargetPosition; // Target position for vaulting
 
     [Header("Health")]
@@ -283,6 +285,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         isDashing = false; // Ensure dashing is stopped when starting a vault
         dashTime = 0f; // Reset dash timer
         dashCooldownTime = 0f; // Reset dash cooldown to allow immediate subsequent vaults
+        vaultTime = Time.time + vaultDuration; // Set vault duration timer
+        vaultStartPosition = transform.position; // Store starting position for lerp
         animator.SetTrigger("IsVaulting"); // Trigger vault animation
         humanCollider.enabled = false; // Disable the player's collider to avoid collision during vaulting
     }
@@ -427,12 +431,16 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     {
         if (isVaulting)
         {
-            // Simple vault movement - just move toward target at constant Y level
-            float step = vaultSpeed * Time.deltaTime;
-            transform.position = Vector3.MoveTowards(transform.position, vaultTargetPosition, step);
+            // Time-based vault movement - lerp between start and target over the vault duration
+            float timeElapsed = vaultDuration - (vaultTime - Time.time);
+            float vaultProgress = timeElapsed / vaultDuration;
+            vaultProgress = Mathf.Clamp01(vaultProgress); // Ensure progress stays between 0 and 1
+            
+            // Lerp position from start to target based on progress
+            transform.position = Vector3.Lerp(vaultStartPosition, vaultTargetPosition, vaultProgress);
 
-            // End vault when we reach the target
-            if (Vector3.Distance(transform.position, vaultTargetPosition) < 0.1f)
+            // End vault when duration is complete
+            if (Time.time >= vaultTime)
             {
                 transform.position = vaultTargetPosition; // Snap to final position
                 FinishVault();
