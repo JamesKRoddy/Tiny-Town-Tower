@@ -517,7 +517,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             vaultTargetPosition = primaryTarget;
             isVaultTargetSafe = true;
-            Debug.Log("Vault target: PRIMARY position is safe");
             return;
         }
         
@@ -529,7 +528,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             vaultTargetPosition = extendedPosition;
             isVaultTargetSafe = true;
-            Debug.Log("Vault target: EXTENDED position is safe");
             return;
         }
         
@@ -541,13 +539,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             vaultTargetPosition = shorterPosition;
             isVaultTargetSafe = true;
-            Debug.Log("Vault target: SHORTER position is safe");
             return;
         }
         
         // NO SAFE POSITION FOUND - vault should be aborted
         isVaultTargetSafe = false;
-        Debug.Log("Vault ABORTED: No safe target position found");
     }
 
     /// <summary>
@@ -567,7 +563,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         
         if (Physics.CheckSphere(checkPos, capsuleCastRadius * 0.8f, GetCombinedObstacleLayers())) // Use smaller radius for more lenient checking
         {
-            Debug.Log($"Target position blocked: {targetPos}");
             return false;
         }
         
@@ -581,50 +576,35 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         
         // Store reference to the collider we're vaulting over for comparison
         Collider originalObstacleCollider = currentObstacleCollider; // Use the stored collider reference
-        if (originalObstacleCollider != null)
-        {
-            Debug.Log($"Original obstacle: {originalObstacleCollider.name}");
-        }
-        else
-        {
-            Debug.Log("No original obstacle collider stored - this shouldn't happen");
-        }
         
         // Check against each obstacle layer
         foreach (LayerMask layer in obstacleLayers)
         {
             if (Physics.CapsuleCast(capsuleBottom, capsuleTop, capsuleCastRadius * 0.8f, pathDirection, out RaycastHit pathHit, pathDistance, layer))
             {
-                Debug.Log($"Path hit obstacle: {pathHit.collider.name} at distance {Vector3.Distance(pathHit.point, startPos)}");
-                
                 // Only allow passing through the exact obstacle we're vaulting over
                 if (originalObstacleCollider != null && pathHit.collider == originalObstacleCollider)
                 {
-                    Debug.Log($"Allowing pass through original obstacle: {pathHit.collider.name}");
                     continue; // This is the original obstacle, allow it
                 }
                 
                 // Also allow if hit point is very close to start (likely the original obstacle)
                 if (Vector3.Distance(pathHit.point, startPos) < vaultOffset * 0.3f)
                 {
-                    Debug.Log($"Allowing pass through nearby obstacle (likely original): {pathHit.collider.name}");
                     continue;
                 }
                 
                 // Ignore ground-level obstacles if they're below the vault height
                 if (pathHit.point.y < startPos.y + 0.2f)
                 {
-                    Debug.Log($"Ignoring ground-level obstacle: {pathHit.collider.name}");
                     continue;
                 }
                 
                 // Block all other obstacles (including walls)
-                Debug.Log($"BLOCKING due to obstacle: {pathHit.collider.name}");
                 return false;
             }
         }
         
-        Debug.Log("Vault path is SAFE");
         return true; // Path is clear
     }
     
@@ -710,7 +690,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                         else
                         {
                             // If no safe target, stop dashing to prevent wall clipping
-                            Debug.Log("Dash movement: Vault target unsafe, stopping dash");
                             isDashing = false;
                         }
                     }
@@ -759,7 +738,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                                 }
                                 else
                                 {
-                                    Debug.Log("Automatic vault: Target unsafe, blocking movement");
                                     targetMovement = Vector3.zero; // Block movement if vault would be unsafe
                                 }
                             }
@@ -786,7 +764,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                                     }
                                     else
                                     {
-                                        Debug.Log("Automatic roll: Target unsafe, blocking movement");
                                         targetMovement = Vector3.zero; // Block movement if vault would be unsafe
                                     }
                                 }
