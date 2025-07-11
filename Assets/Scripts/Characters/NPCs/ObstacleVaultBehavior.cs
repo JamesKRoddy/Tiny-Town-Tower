@@ -14,8 +14,7 @@ public class ObstacleVaultBehavior : MonoBehaviour
     [SerializeField] private bool blockVaultingWhenBlocked = false;
     
     [Header("Optional Overrides")]
-    [SerializeField] private bool overrideVaultDuration = false;
-    [SerializeField] private float customVaultDuration = 0.4f;
+    [SerializeField] private float customVaultDuration = -1f; // If positive, use this duration. If negative, use default.
     
     public enum VaultAnimationType
     {
@@ -28,7 +27,7 @@ public class ObstacleVaultBehavior : MonoBehaviour
     public VaultAnimationType VaultType => vaultType;
     public bool IsDynamic => isDynamic;
     public bool BlockVaultingWhenBlocked => blockVaultingWhenBlocked;
-    public bool HasCustomDuration => overrideVaultDuration;
+    public bool HasCustomDuration => customVaultDuration > 0;
     public float CustomVaultDuration => customVaultDuration;
     
     /// <summary>
@@ -67,7 +66,7 @@ public class ObstacleVaultBehavior : MonoBehaviour
     /// <returns>Duration to use for vaulting this obstacle</returns>
     public float GetVaultDuration(float defaultDuration)
     {
-        return overrideVaultDuration ? customVaultDuration : defaultDuration;
+        return customVaultDuration > 0 ? customVaultDuration : defaultDuration;
     }
     
     // Future expansion methods:

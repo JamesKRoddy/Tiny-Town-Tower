@@ -78,6 +78,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private float vaultTurnSpeed = 1f; // Speed at which the player can turn while vaulting
     private ObstacleType currentVaultType = ObstacleType.None; // Type of obstacle being vaulted
     private ObstacleVaultBehavior currentObstacleComponent = null; // Component on the obstacle being vaulted
+    private Collider currentObstacleCollider = null; // Reference to the collider being vaulted (for safety checks)
+    private bool isVaultTargetSafe = false; // Whether the calculated vault target is safe
 
     [Header("Health")]
     [SerializeField] private float health = 100f;
@@ -188,7 +190,17 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             {
                 currentVaultType = obstacleType; // Store the vault type for animation
                 CalculateVaultTarget(hitInfo);
-                StartVault();
+                
+                // Only start vault if a safe target was found
+                if (isVaultTargetSafe)
+                {
+                    StartVault();
+                }
+                else
+                {
+                    Debug.Log("Dash: Vault target unsafe, falling back to dash");
+                    StartDash();
+                }
             }
             else
             {
@@ -273,7 +285,20 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             // Use movement direction instead of transform.forward for more accurate detection
             Vector3 movementDirection = movementInput.normalized;
             obstacleType = AnalyzeObstacle(movementDirection, out hitInfo, enableLogs: false);
-            return obstacleType == ObstacleType.Vault || obstacleType == ObstacleType.RollUnder;
+            
+            if (obstacleType == ObstacleType.Vault || obstacleType == ObstacleType.RollUnder)
+            {
+                // Additional safety check: Ensure we can find a safe vault path
+                Vector3 proposedTarget = hitInfo.point + movementDirection.normalized * vaultOffset;
+                Vector3 targetPosition = new Vector3(proposedTarget.x, transform.position.y, proposedTarget.z);
+                
+                // Check if any safe vault position exists (original, extended, or shorter)
+                bool canVaultSafely = IsVaultPathSafe(transform.position, targetPosition) ||
+                                     IsVaultPathSafe(transform.position, new Vector3(proposedTarget.x + movementDirection.x * vaultOffset, transform.position.y, proposedTarget.z + movementDirection.z * vaultOffset)) ||
+                                     IsVaultPathSafe(transform.position, new Vector3(proposedTarget.x - movementDirection.x * vaultOffset * 0.5f, transform.position.y, proposedTarget.z - movementDirection.z * vaultOffset * 0.5f));
+                
+                return canVaultSafely;
+            }
         }
         
         hitInfo = default;
@@ -362,6 +387,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     {
         obstacleInfo = default;
         currentObstacleComponent = null;
+        currentObstacleCollider = null; // Clear previous obstacle reference
         
         if (!autoNavigateObstacles || direction.magnitude < 0.1f)
         {
@@ -392,6 +418,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 return ObstacleType.None;
             }
         }
+
+        // Store reference to the obstacle collider for safety checks
+        currentObstacleCollider = obstacleInfo.collider;
 
         // First priority: Check if the obstacle has a component that overrides behavior
         currentObstacleComponent = obstacleInfo.collider.GetComponent<ObstacleVaultBehavior>();
@@ -469,7 +498,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
 
     /// <summary>
-    /// Calculates vault target position for the enhanced system
+    /// Calculates vault target position for the enhanced system with collision safety checks
     /// </summary>
     /// <param name="hitInfo">Obstacle hit information</param>
     /// <param name="direction">Movement direction</param>
@@ -479,16 +508,124 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Calculate the horizontal vault target position by moving past the hit point
         Vector3 horizontalTarget = hitInfo.point + direction.normalized * vaultOffset;
         
-        // Keep the player at the same Y level - no complex ground detection
-        float targetY = transform.position.y;
-        vaultTargetPosition = new Vector3(horizontalTarget.x, targetY, horizontalTarget.z);
+        // Keep the player at the same Y level but add a small buffer to avoid ground detection issues
+        float targetY = Mathf.Max(transform.position.y, 0.3f); // Ensure minimum height of 0.3f above ground
+        Vector3 primaryTarget = new Vector3(horizontalTarget.x, targetY, horizontalTarget.z);
         
-        // If the target position is blocked, extend further horizontally at the same height
-        if (Physics.CheckSphere(vaultTargetPosition, capsuleCastRadius, GetCombinedObstacleLayers()))
+        // Safety check: Ensure target position and path are clear
+        if (IsVaultPathSafe(transform.position, primaryTarget))
         {
-            Vector3 extendedHorizontal = hitInfo.point + direction.normalized * (vaultOffset * 2f);
-            vaultTargetPosition = new Vector3(extendedHorizontal.x, targetY, extendedHorizontal.z);
+            vaultTargetPosition = primaryTarget;
+            isVaultTargetSafe = true;
+            Debug.Log("Vault target: PRIMARY position is safe");
+            return;
         }
+        
+        // Try extending further if initial target is unsafe
+        Vector3 extendedTarget = hitInfo.point + direction.normalized * (vaultOffset * 2f);
+        Vector3 extendedPosition = new Vector3(extendedTarget.x, targetY, extendedTarget.z);
+        
+        if (IsVaultPathSafe(transform.position, extendedPosition))
+        {
+            vaultTargetPosition = extendedPosition;
+            isVaultTargetSafe = true;
+            Debug.Log("Vault target: EXTENDED position is safe");
+            return;
+        }
+        
+        // If even extended position is unsafe, try shorter vault
+        Vector3 shorterTarget = hitInfo.point + direction.normalized * (vaultOffset * 0.5f);
+        Vector3 shorterPosition = new Vector3(shorterTarget.x, targetY, shorterTarget.z);
+        
+        if (IsVaultPathSafe(transform.position, shorterPosition))
+        {
+            vaultTargetPosition = shorterPosition;
+            isVaultTargetSafe = true;
+            Debug.Log("Vault target: SHORTER position is safe");
+            return;
+        }
+        
+        // NO SAFE POSITION FOUND - vault should be aborted
+        isVaultTargetSafe = false;
+        Debug.Log("Vault ABORTED: No safe target position found");
+    }
+
+    /// <summary>
+    /// Checks if a vault path from start to target is safe (won't pass through walls/obstacles)
+    /// </summary>
+    /// <param name="startPos">Starting position</param>
+    /// <param name="targetPos">Target landing position</param>
+    /// <returns>True if path is safe, false if it would pass through obstacles</returns>
+    private bool IsVaultPathSafe(Vector3 startPos, Vector3 targetPos)
+    {
+        // Check 1: Target position isn't inside an obstacle (but be more lenient with ground-level checks)
+        Vector3 checkPos = targetPos;
+        if (targetPos.y < 0.5f) // If target is close to ground, check slightly above
+        {
+            checkPos = new Vector3(targetPos.x, 0.5f, targetPos.z);
+        }
+        
+        if (Physics.CheckSphere(checkPos, capsuleCastRadius * 0.8f, GetCombinedObstacleLayers())) // Use smaller radius for more lenient checking
+        {
+            Debug.Log($"Target position blocked: {targetPos}");
+            return false;
+        }
+        
+        // Check 2: Path from start to target doesn't pass through obstacles
+        Vector3 pathDirection = (targetPos - startPos).normalized;
+        float pathDistance = Vector3.Distance(startPos, targetPos);
+        
+        // Use capsule cast to check the entire vault path
+        Vector3 capsuleBottom = startPos + Vector3.up * 0.5f; // Start check higher to avoid ground issues
+        Vector3 capsuleTop = startPos + Vector3.up * (humanCollider.bounds.size.y + 0.2f); // Add buffer
+        
+        // Store reference to the collider we're vaulting over for comparison
+        Collider originalObstacleCollider = currentObstacleCollider; // Use the stored collider reference
+        if (originalObstacleCollider != null)
+        {
+            Debug.Log($"Original obstacle: {originalObstacleCollider.name}");
+        }
+        else
+        {
+            Debug.Log("No original obstacle collider stored - this shouldn't happen");
+        }
+        
+        // Check against each obstacle layer
+        foreach (LayerMask layer in obstacleLayers)
+        {
+            if (Physics.CapsuleCast(capsuleBottom, capsuleTop, capsuleCastRadius * 0.8f, pathDirection, out RaycastHit pathHit, pathDistance, layer))
+            {
+                Debug.Log($"Path hit obstacle: {pathHit.collider.name} at distance {Vector3.Distance(pathHit.point, startPos)}");
+                
+                // Only allow passing through the exact obstacle we're vaulting over
+                if (originalObstacleCollider != null && pathHit.collider == originalObstacleCollider)
+                {
+                    Debug.Log($"Allowing pass through original obstacle: {pathHit.collider.name}");
+                    continue; // This is the original obstacle, allow it
+                }
+                
+                // Also allow if hit point is very close to start (likely the original obstacle)
+                if (Vector3.Distance(pathHit.point, startPos) < vaultOffset * 0.3f)
+                {
+                    Debug.Log($"Allowing pass through nearby obstacle (likely original): {pathHit.collider.name}");
+                    continue;
+                }
+                
+                // Ignore ground-level obstacles if they're below the vault height
+                if (pathHit.point.y < startPos.y + 0.2f)
+                {
+                    Debug.Log($"Ignoring ground-level obstacle: {pathHit.collider.name}");
+                    continue;
+                }
+                
+                // Block all other obstacles (including walls)
+                Debug.Log($"BLOCKING due to obstacle: {pathHit.collider.name}");
+                return false;
+            }
+        }
+        
+        Debug.Log("Vault path is SAFE");
+        return true; // Path is clear
     }
     
     #endregion
@@ -562,9 +699,20 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                         // Store the vault type and component for proper animation selection
                         currentVaultType = obstacleType;
                         
-                        // If it's vaultable, start vaulting
+                        // Calculate vault target and check if it's safe
                         CalculateVaultTargetEnhanced(hitInfo, currentDirection);
-                        StartVault();
+                        
+                        if (isVaultTargetSafe)
+                        {
+                            // If safe target found, start vaulting
+                            StartVault();
+                        }
+                        else
+                        {
+                            // If no safe target, stop dashing to prevent wall clipping
+                            Debug.Log("Dash movement: Vault target unsafe, stopping dash");
+                            isDashing = false;
+                        }
                     }
                     else
                     {
@@ -603,8 +751,17 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                             {
                                 currentVaultType = obstacleType; // Store vault type for animation
                                 CalculateVaultTargetEnhanced(obstacleInfo, movementInput.normalized);
-                                StartVault();
-                                return; // Exit early since we're now vaulting
+                                
+                                if (isVaultTargetSafe)
+                                {
+                                    StartVault();
+                                    return; // Exit early since we're now vaulting
+                                }
+                                else
+                                {
+                                    Debug.Log("Automatic vault: Target unsafe, blocking movement");
+                                    targetMovement = Vector3.zero; // Block movement if vault would be unsafe
+                                }
                             }
                             else
                             {
@@ -621,8 +778,17 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                                 {
                                     currentVaultType = obstacleType; // Store vault type for animation
                                     CalculateVaultTargetEnhanced(obstacleInfo, movementInput.normalized);
-                                    StartVault();
-                                    return;
+                                    
+                                    if (isVaultTargetSafe)
+                                    {
+                                        StartVault();
+                                        return;
+                                    }
+                                    else
+                                    {
+                                        Debug.Log("Automatic roll: Target unsafe, blocking movement");
+                                        targetMovement = Vector3.zero; // Block movement if vault would be unsafe
+                                    }
                                 }
                             }
                             else
@@ -834,9 +1000,16 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 // Show the horizontal target calculation (simple version)
                 Vector3 horizontalTarget = obstacleInfo.point + direction * vaultOffset;
                 Vector3 simpleTarget = new Vector3(horizontalTarget.x, transform.position.y, horizontalTarget.z);
-                Gizmos.color = Color.yellow;
+                
+                // Check if this path would be safe
+                bool pathSafe = IsVaultPathSafe(transform.position, simpleTarget);
+                Gizmos.color = pathSafe ? Color.yellow : Color.red;
                 Gizmos.DrawWireSphere(simpleTarget, 0.15f);
                 Gizmos.DrawLine(obstacleInfo.point, simpleTarget);
+                
+                // Show the vault path trajectory
+                Gizmos.color = pathSafe ? Color.green : Color.red;
+                Gizmos.DrawLine(transform.position, simpleTarget);
             }
         }
         
