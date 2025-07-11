@@ -70,6 +70,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private float vaultTime = 0f; // Timer for the current vault
     private Vector3 vaultStartPosition; // Starting position of the vault
     private Vector3 vaultTargetPosition; // Target position for vaulting
+    private Vector3 currentVaultDirection; // Current direction during vault (can be adjusted)
+    private float vaultTurnSpeed = 1f; // Speed at which the player can turn while vaulting
 
     [Header("Health")]
     [SerializeField] private float health = 100f;
@@ -158,10 +160,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void Movement(Vector3 movement)
     {
-        if (!isVaulting)
-        {
-            movementInput = new Vector3(movement.x, 0, movement.z);
-        }
+        movementInput = new Vector3(movement.x, 0, movement.z);
     }
 
     public void Attack()
@@ -287,6 +286,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         dashCooldownTime = 0f; // Reset dash cooldown to allow immediate subsequent vaults
         vaultTime = Time.time + vaultDuration; // Set vault duration timer
         vaultStartPosition = transform.position; // Store starting position for lerp
+        currentVaultDirection = (vaultTargetPosition - transform.position).normalized; // Initialize vault direction
         animator.SetTrigger("IsVaulting"); // Trigger vault animation
         humanCollider.enabled = false; // Disable the player's collider to avoid collision during vaulting
     }
@@ -431,18 +431,38 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     {
         if (isVaulting)
         {
-            // Time-based vault movement - lerp between start and target over the vault duration
+            // Allow slight directional control during vault, similar to dash
+            if (movementInput.magnitude > 0.1f)
+            {
+                currentVaultDirection = Vector3.Lerp(currentVaultDirection, movementInput.normalized, vaultTurnSpeed * Time.deltaTime);
+                currentVaultDirection.y = 0; // Keep vault direction horizontal
+                currentVaultDirection = currentVaultDirection.normalized;
+            }
+
+            // Time-based vault movement with directional control
             float timeElapsed = vaultDuration - (vaultTime - Time.time);
             float vaultProgress = timeElapsed / vaultDuration;
             vaultProgress = Mathf.Clamp01(vaultProgress); // Ensure progress stays between 0 and 1
             
-            // Lerp position from start to target based on progress
-            transform.position = Vector3.Lerp(vaultStartPosition, vaultTargetPosition, vaultProgress);
+            // Calculate movement based on adjusted direction and progress
+            float vaultDistance = Vector3.Distance(vaultStartPosition, vaultTargetPosition);
+            Vector3 adjustedTarget = vaultStartPosition + currentVaultDirection * vaultDistance;
+            adjustedTarget.y = vaultStartPosition.y; // Keep at same Y level
+            
+            // Lerp position from start to adjusted target based on progress
+            transform.position = Vector3.Lerp(vaultStartPosition, adjustedTarget, vaultProgress);
+
+            // Rotate player towards the current vault direction
+            if (currentVaultDirection.magnitude > 0.1f)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(currentVaultDirection);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            }
 
             // End vault when duration is complete
             if (Time.time >= vaultTime)
             {
-                transform.position = vaultTargetPosition; // Snap to final position
+                transform.position = adjustedTarget; // Snap to final adjusted position
                 FinishVault();
             }
         }
@@ -689,11 +709,26 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         if (isVaulting)
         {
             Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(vaultTargetPosition, 0.2f);
             
-            // Show vault path
+            // Show original target
+            Gizmos.DrawWireSphere(vaultTargetPosition, 0.15f);
+            
+            // Show adjusted target with directional control
+            float vaultDistance = Vector3.Distance(vaultStartPosition, vaultTargetPosition);
+            Vector3 adjustedTarget = vaultStartPosition + currentVaultDirection * vaultDistance;
+            adjustedTarget.y = vaultStartPosition.y;
+            
+            Gizmos.color = Color.magenta;
+            Gizmos.DrawWireSphere(adjustedTarget, 0.2f);
+            
+            // Show vault path (adjusted)
             Gizmos.color = Color.cyan;
-            Gizmos.DrawLine(transform.position, vaultTargetPosition);
+            Gizmos.DrawLine(transform.position, adjustedTarget);
+            
+            // Show current vault direction
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawLine(transform.position, transform.position + currentVaultDirection * 2f);
+            Gizmos.DrawWireSphere(transform.position + currentVaultDirection * 2f, 0.1f);
         }
 
         // Capsule cast for collision detection visualization

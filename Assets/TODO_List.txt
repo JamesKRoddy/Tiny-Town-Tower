@@ -2,8 +2,7 @@
 
 
 Tomorrow work:
-
-So the rooms are getting pretty chaotic which makes sense because they might have a lot of stuff so maybe the idea is to build on the dash/vault mechanics so the player automatically does that to all obstacles?
+N/A
 
 
 Enviromental hazzards in the roguelike section enviromental hazzards, electrical/acid etc.
