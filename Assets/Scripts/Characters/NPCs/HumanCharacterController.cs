@@ -612,6 +612,45 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     #region Movement
 
+    /// <summary>
+    /// Calculates sliding movement along a wall surface when direct movement is blocked
+    /// </summary>
+    /// <param name="originalMovement">The intended movement vector</param>
+    /// <param name="wallNormal">The normal vector of the wall surface</param>
+    /// <returns>Modified movement vector that slides along the wall</returns>
+    private Vector3 CalculateWallSlide(Vector3 originalMovement, Vector3 wallNormal)
+    {
+        // Get the movement direction from input (not the calculated movement with deltaTime)
+        Vector3 inputDirection = movementInput.normalized;
+        
+        // Calculate how much the player is trying to move parallel to the wall vs into it
+        Vector3 parallelComponent = inputDirection - Vector3.Project(inputDirection, wallNormal);
+        Vector3 perpendicularComponent = Vector3.Project(inputDirection, wallNormal);
+        
+        // Calculate sliding factor based on how much parallel movement the player intends
+        float parallelIntensity = parallelComponent.magnitude;
+        float perpendicularIntensity = Mathf.Abs(Vector3.Dot(inputDirection, wallNormal));
+        
+        // Reduce sliding based on how much the player is pushing into the wall
+        float slidingFactor = parallelIntensity * (1f - perpendicularIntensity * 0.5f);
+        
+        // Project the original movement onto the wall surface
+        Vector3 slidingMovement = originalMovement - Vector3.Project(originalMovement, wallNormal);
+        
+        // Apply the sliding factor to make it feel more responsive to input
+        if (slidingMovement.magnitude > 0.01f)
+        {
+            slidingMovement = slidingMovement.normalized * (originalMovement.magnitude * slidingFactor);
+        }
+        else
+        {
+            // If there's no sliding component (moving directly into wall), stop movement
+            slidingMovement = Vector3.zero;
+        }
+        
+        return slidingMovement;
+    }
+
     protected void MoveCharacter()
     {
         if (isVaulting)
@@ -738,13 +777,14 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                                 }
                                 else
                                 {
-                                    targetMovement = Vector3.zero; // Block movement if vault would be unsafe
+                                    // Calculate sliding movement along the obstacle
+                                    targetMovement = CalculateWallSlide(targetMovement, obstacleInfo.normal);
                                 }
                             }
                             else
                             {
-                                // Stop movement to prevent collision while waiting for cooldown
-                                targetMovement = Vector3.zero;
+                                // Calculate sliding movement while waiting for cooldown
+                                targetMovement = CalculateWallSlide(targetMovement, obstacleInfo.normal);
                             }
                             break;
                             
@@ -764,25 +804,26 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                                     }
                                     else
                                     {
-                                        targetMovement = Vector3.zero; // Block movement if vault would be unsafe
+                                        // Calculate sliding movement along the obstacle
+                                        targetMovement = CalculateWallSlide(targetMovement, obstacleInfo.normal);
                                     }
                                 }
                             }
                             else
                             {
-                                // Stop movement to prevent collision while waiting for cooldown
-                                targetMovement = Vector3.zero;
+                                // Calculate sliding movement while waiting for cooldown
+                                targetMovement = CalculateWallSlide(targetMovement, obstacleInfo.normal);
                             }
                             break;
                             
                         case ObstacleType.TooHigh:
-                            // Obstacle too high, stop movement in that direction
-                            targetMovement = Vector3.zero;
+                            // Obstacle too high, slide along the wall instead of stopping
+                            targetMovement = CalculateWallSlide(targetMovement, obstacleInfo.normal);
                             break;
                             
                         case ObstacleType.Block:
-                            // Obstacle marked as non-vaultable by component, stop movement
-                            targetMovement = Vector3.zero;
+                            // Obstacle marked as non-vaultable by component, slide along the wall
+                            targetMovement = CalculateWallSlide(targetMovement, obstacleInfo.normal);
                             break;
                             
                         case ObstacleType.None:
