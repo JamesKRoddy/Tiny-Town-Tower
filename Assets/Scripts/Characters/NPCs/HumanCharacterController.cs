@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEngine.AI;
 using Managers;
 using Enemies;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 {
@@ -38,20 +41,21 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     [Header("Enhanced Obstacle Navigation")]
     public float maxVaultHeight = 1.2f; // Maximum height the player can vault over
     public float minVaultHeight = 0.3f; // Minimum height to consider vaulting (below this, just walk over)
-    public float rollUnderHeight = 0.8f; // Height threshold for rolling under (future feature)
     public float obstacleAnalysisRange = 1.5f; // Range for analyzing obstacles ahead
     public int heightCheckRayCount = 5; // Number of raycasts for height analysis
     public bool autoNavigateObstacles = true; // Enable/disable automatic obstacle navigation
 
-    // Automatic obstacle navigation: analyzes height to determine WalkOver, Vault, RollUnder, or TooHigh
+    // Automatic obstacle navigation: analyzes height to determine WalkOver, Vault, or TooHigh
+    // RollUnder and Block types only come from ObstacleVaultBehavior components
 
     public enum ObstacleType
     {
         None,
         WalkOver,    // Too low, just walk over
         Vault,       // Perfect height for vaulting
-        RollUnder,   // Medium height, could roll under (future)
-        TooHigh      // Too high to navigate
+        RollUnder,   // Medium height, could roll under
+        TooHigh,     // Too high to navigate
+        Block        // Cannot be vaulted (from component override)
     }
 
     [Header("Input and Movement State")]
@@ -72,6 +76,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private Vector3 vaultTargetPosition; // Target position for vaulting
     private Vector3 currentVaultDirection; // Current direction during vault (can be adjusted)
     private float vaultTurnSpeed = 1f; // Speed at which the player can turn while vaulting
+    private ObstacleType currentVaultType = ObstacleType.None; // Type of obstacle being vaulted
+    private ObstacleVaultBehavior currentObstacleComponent = null; // Component on the obstacle being vaulted
 
     [Header("Health")]
     [SerializeField] private float health = 100f;
@@ -178,8 +184,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             StopAttacking(); // Ensure player stops attacking when dashing
 
-            if (CanVault(out RaycastHit hitInfo))
+            if (CanVault(out RaycastHit hitInfo, out ObstacleType obstacleType))
             {
+                currentVaultType = obstacleType; // Store the vault type for animation
                 CalculateVaultTarget(hitInfo);
                 StartVault();
             }
@@ -259,15 +266,18 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     #region Vaulting
 
-    private bool CanVault(out RaycastHit hitInfo)
+    private bool CanVault(out RaycastHit hitInfo, out ObstacleType obstacleType)
     {
         if (movementInput.magnitude > 0.1f)
         {
-            ObstacleType obstacleType = AnalyzeObstacle(transform.forward, out hitInfo, enableLogs: false);
+            // Use movement direction instead of transform.forward for more accurate detection
+            Vector3 movementDirection = movementInput.normalized;
+            obstacleType = AnalyzeObstacle(movementDirection, out hitInfo, enableLogs: false);
             return obstacleType == ObstacleType.Vault || obstacleType == ObstacleType.RollUnder;
         }
         
         hitInfo = default;
+        obstacleType = ObstacleType.None;
         return false;
     }
 
@@ -284,10 +294,32 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         isDashing = false; // Ensure dashing is stopped when starting a vault
         dashTime = 0f; // Reset dash timer
         dashCooldownTime = 0f; // Reset dash cooldown to allow immediate subsequent vaults
-        vaultTime = Time.time + vaultDuration; // Set vault duration timer
+        
+        // Use custom duration if obstacle component specifies it
+        float duration = currentObstacleComponent != null ? 
+            currentObstacleComponent.GetVaultDuration(vaultDuration) : vaultDuration;
+        vaultTime = Time.time + duration;
+        
         vaultStartPosition = transform.position; // Store starting position for lerp
         currentVaultDirection = (vaultTargetPosition - transform.position).normalized; // Initialize vault direction
-        animator.SetTrigger("IsVaulting"); // Trigger vault animation
+        
+        // Trigger different animations based on obstacle type
+        switch (currentVaultType)
+        {
+            case ObstacleType.Vault:
+                animator.SetTrigger("IsVaulting"); // High vault animation
+                break;
+            case ObstacleType.RollUnder:
+                animator.SetTrigger("IsRolling"); // Low vault/roll animation
+                break;
+            default:
+                animator.SetTrigger("IsVaulting"); // Default vault animation
+                break;
+        }
+        
+        // Call obstacle component callback if present
+        currentObstacleComponent?.OnVaultStart(this);
+        
         humanCollider.enabled = false; // Disable the player's collider to avoid collision during vaulting
     }
 
@@ -296,6 +328,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         isVaulting = false;
         vaultCooldownTime = Time.time + vaultCooldown; // Set vault cooldown
         humanCollider.enabled = true; // Re-enable the player's collider
+        
+        // Call obstacle component callback if present
+        currentObstacleComponent?.OnVaultComplete(this);
+        currentObstacleComponent = null; // Clear reference
     }
 
     #endregion
@@ -325,39 +361,71 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private ObstacleType AnalyzeObstacle(Vector3 direction, out RaycastHit obstacleInfo, bool enableLogs = true)
     {
         obstacleInfo = default;
+        currentObstacleComponent = null;
         
         if (!autoNavigateObstacles || direction.magnitude < 0.1f)
         {
             return ObstacleType.None;
         }
 
-        // Check for obstacles in the movement direction
-        Vector3 rayOrigin = transform.position + Vector3.up * 0.1f; // Start just above ground
-        float maxCheckHeight = transform.position.y + maxVaultHeight + 0.5f;
+        // Check for obstacles in the movement direction using capsule cast (more reliable than single raycast)
+        Vector3 capsuleBottom = transform.position + Vector3.up * 0.3f;
+        Vector3 capsuleTop = transform.position + Vector3.up * humanCollider.bounds.size.y;
         
-        // First, check if there's any obstacle at all at chest height
-        Vector3 chestRayOrigin = transform.position + Vector3.up * vaultHeight;
-        
-        if (!Physics.Raycast(chestRayOrigin, direction.normalized, out obstacleInfo, obstacleAnalysisRange, GetCombinedObstacleLayers()))
+        // First try capsule cast for better detection
+        bool foundObstacle = false;
+        foreach (LayerMask layer in obstacleLayers)
         {
-            return ObstacleType.None;
+            if (Physics.CapsuleCast(capsuleBottom, capsuleTop, capsuleCastRadius, direction.normalized, out obstacleInfo, obstacleAnalysisRange, layer))
+            {
+                foundObstacle = true;
+                break;
+            }
+        }
+        
+        // Fallback to raycast at chest height if capsule cast fails
+        if (!foundObstacle)
+        {
+            Vector3 chestRayOrigin = transform.position + Vector3.up * vaultHeight;
+            if (!Physics.Raycast(chestRayOrigin, direction.normalized, out obstacleInfo, obstacleAnalysisRange, GetCombinedObstacleLayers()))
+            {
+                return ObstacleType.None;
+            }
         }
 
-        // Analyze the height of the obstacle using multiple raycasts
+        // First priority: Check if the obstacle has a component that overrides behavior
+        currentObstacleComponent = obstacleInfo.collider.GetComponent<ObstacleVaultBehavior>();
+        if (currentObstacleComponent != null)
+        {
+            var effectiveVaultType = currentObstacleComponent.GetEffectiveVaultType();
+            
+            // Map component vault type to our ObstacleType enum
+            switch (effectiveVaultType)
+            {
+                case ObstacleVaultBehavior.VaultAnimationType.Vault:
+                    return ObstacleType.Vault;
+                case ObstacleVaultBehavior.VaultAnimationType.Roll:
+                    return ObstacleType.RollUnder;
+                case ObstacleVaultBehavior.VaultAnimationType.WalkOver:
+                    return ObstacleType.WalkOver;
+                case ObstacleVaultBehavior.VaultAnimationType.Block:
+                    return ObstacleType.Block;
+                default:
+                    return ObstacleType.Vault; // Default to vault
+            }
+        }
+
+        // Fallback: Use height-based analysis if no component is found
         float obstacleHeight = AnalyzeObstacleHeight(direction, obstacleInfo.point, enableLogs);
         
-        // Determine obstacle type based on height
+        // Determine obstacle type based on height (roll vs vault only determined by component)
         if (obstacleHeight <= minVaultHeight)
         {
             return ObstacleType.WalkOver;
         }
-        else if (obstacleHeight <= rollUnderHeight)
-        {
-            return ObstacleType.RollUnder; // Future feature
-        }
         else if (obstacleHeight <= maxVaultHeight)
         {
-            return ObstacleType.Vault;
+            return ObstacleType.Vault; // Default to vault for all vaultable heights
         }
         else
         {
@@ -491,6 +559,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                     ObstacleType obstacleType = AnalyzeObstacle(currentDirection, out RaycastHit obstacleInfo, enableLogs: false);
                     if (obstacleType == ObstacleType.Vault || obstacleType == ObstacleType.RollUnder)
                     {
+                        // Store the vault type and component for proper animation selection
+                        currentVaultType = obstacleType;
+                        
                         // If it's vaultable, start vaulting
                         CalculateVaultTargetEnhanced(hitInfo, currentDirection);
                         StartVault();
@@ -530,6 +601,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                             // Perfect height for vaulting, automatically start vault - but check cooldown first
                             if (Time.time > vaultCooldownTime)
                             {
+                                currentVaultType = obstacleType; // Store vault type for animation
                                 CalculateVaultTargetEnhanced(obstacleInfo, movementInput.normalized);
                                 StartVault();
                                 return; // Exit early since we're now vaulting
@@ -542,11 +614,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                             break;
                             
                         case ObstacleType.RollUnder:
-                            // Future: implement rolling under - but for now treat as vault if possible
+                            // Implement rolling under animation for lower obstacles
                             if (Time.time > vaultCooldownTime)
                             {
                                 if (AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point, enableLogs: false) <= maxVaultHeight)
                                 {
+                                    currentVaultType = obstacleType; // Store vault type for animation
                                     CalculateVaultTargetEnhanced(obstacleInfo, movementInput.normalized);
                                     StartVault();
                                     return;
@@ -561,6 +634,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                             
                         case ObstacleType.TooHigh:
                             // Obstacle too high, stop movement in that direction
+                            targetMovement = Vector3.zero;
+                            break;
+                            
+                        case ObstacleType.Block:
+                            // Obstacle marked as non-vaultable by component, stop movement
                             targetMovement = Vector3.zero;
                             break;
                             
@@ -660,10 +738,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 // Color code the rays based on height thresholds
                 if (checkHeight - transform.position.y <= minVaultHeight)
                     Gizmos.color = Color.green; // Walk over range
-                else if (checkHeight - transform.position.y <= rollUnderHeight)
-                    Gizmos.color = Color.blue; // Roll under range
                 else if (checkHeight - transform.position.y <= maxVaultHeight)
-                    Gizmos.color = new Color(1f, 0.5f, 0f); // Vault range (orange)
+                    Gizmos.color = new Color(1f, 0.5f, 0f); // Vault range (orange) - includes both vault and roll
                 else
                     Gizmos.color = Color.red; // Too high range
                 
@@ -685,7 +761,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                         Gizmos.color = new Color(1f, 0.5f, 0f); // Orange
                         break;
                     case ObstacleType.RollUnder:
-                        Gizmos.color = Color.blue;
+                        Gizmos.color = Color.blue; // Only from component override
+                        break;
+                    case ObstacleType.Block:
+                        Gizmos.color = Color.gray; // Component-defined block
                         break;
                     case ObstacleType.TooHigh:
                         Gizmos.color = Color.red;
@@ -769,15 +848,28 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             Vector3 minHeightPos = transform.position + Vector3.up * minVaultHeight;
             Gizmos.DrawWireCube(minHeightPos + transform.forward * 0.5f, new Vector3(1f, 0.05f, 0.1f));
             
-            // Roll under height
-            Gizmos.color = Color.blue;
-            Vector3 rollHeightPos = transform.position + Vector3.up * rollUnderHeight;
-            Gizmos.DrawWireCube(rollHeightPos + transform.forward * 0.5f, new Vector3(1f, 0.05f, 0.1f));
-            
-            // Max vault height
+            // Max vault height (vault and roll both use same height range)
             Gizmos.color = new Color(1f, 0.5f, 0f); // Orange
             Vector3 maxHeightPos = transform.position + Vector3.up * maxVaultHeight;
             Gizmos.DrawWireCube(maxHeightPos + transform.forward * 0.5f, new Vector3(1f, 0.05f, 0.1f));
+        }
+
+        // Show current vault type if vaulting
+        if (isVaulting && Application.isPlaying)
+        {
+#if UNITY_EDITOR
+            // Display vault type text above the player
+            Vector3 textPos = transform.position + Vector3.up * 3f;
+            string vaultTypeText = $"Vault Type: {currentVaultType}";
+            
+            // Draw the vault type as a debug label (this will show in Scene view)
+            var style = new GUIStyle();
+            style.normal.textColor = Color.white;
+            style.fontSize = 12;
+            
+            // Note: This text will only be visible in Scene view, not Game view
+            Handles.Label(textPos, vaultTypeText, style);
+#endif
         }
     }
 

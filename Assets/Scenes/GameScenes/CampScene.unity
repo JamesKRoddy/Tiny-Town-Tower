@@ -639,8 +639,8 @@ MonoBehaviour:
   dashSpeed: 20
   dashDuration: 0.2
   dashCooldown: 1
-  vaultSpeed: 5
-  vaultDetectionRange: 1
+  vaultDuration: 0.4
+  vaultCooldown: 0.3
   obstacleLayers: []
   capsuleCastRadius: 0.5
   vaultHeight: 1
@@ -651,7 +651,6 @@ MonoBehaviour:
   obstacleAnalysisRange: 1.5
   heightCheckRayCount: 5
   autoNavigateObstacles: 1
-  enableObstacleDebugLogs: 1
   health: 100
   maxHealth: 100
   nPCDataObj: {fileID: 11400000, guid: 53176b9bdbcc0754eb1288d1758d866a, type: 2}
@@ -1683,7 +1682,7 @@ Transform:
   m_GameObject: {fileID: 1452307100}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.00606256, y: 0.57265234, z: 15.504383}
+  m_LocalPosition: {x: 0.00606256, y: 1.0196524, z: 15.504383}
   m_LocalScale: {x: 4.7995, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

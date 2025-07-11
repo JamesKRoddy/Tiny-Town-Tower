@@ -196,6 +196,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
             case PlayerControlType.CAMP_NPC_MOVEMENT:
                 PlayerInput.Instance.OnLeftJoystick += HandleLeftJoystick;
+                PlayerInput.Instance.OnYPressed += HandleYInput;
                 PlayerInput.Instance.OnSelectPressed += () => OpenUtilityMenu();
                 PlayerInput.Instance.OnStartPressed += () => OpenPauseMenu();
                 playerCamera.UpdateTarget((_possessedNPC as MonoBehaviour)?.transform);
@@ -263,7 +264,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
     private void HandleAInput()
     {
-        if (_possessedNPC != null && PlayerInput.Instance.CurrentControlType == PlayerControlType.COMBAT_NPC_MOVEMENT)
+        if (_possessedNPC != null)
         {
             _possessedNPC.Attack();
         }
@@ -271,7 +272,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
     private void HandleYInput()
     {
-        if (_possessedNPC != null && PlayerInput.Instance.CurrentControlType == PlayerControlType.COMBAT_NPC_MOVEMENT)
+        if (_possessedNPC != null)
         {
             _possessedNPC.Dash();
         }
