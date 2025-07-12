@@ -2455,20 +2455,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pushSpeed: 2
   pushDistance: 2
-  requireContinuousPush: 1
-  pushForce: 10
-  allowedDirections: 4
-  useSnapPositions: 0
-  snapPositions: []
-  useGridMovement: 1
-  gridSize: 2
-  preferPushDirections: 4
-  allowMixedBehavior: 1
-  obstacleCheckLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  obstacleCheckRadius: 0.5
-  canPushOntoOtherObjects: 0
+  allowedDirections: 12
+  maxPushesPerDirection: 3
+  showBoundaryArea: 1
   pushStartSound: {fileID: 0}
   pushEndSound: {fileID: 0}
   pushEffect: {fileID: 0}

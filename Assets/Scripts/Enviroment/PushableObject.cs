@@ -67,7 +67,7 @@ public class PushableObject : MonoBehaviour
     public bool ShouldBePushed(Vector3 direction)
     {
         Vector3 pushDir = GetCardinalDirection(direction);
-        return pushDir != Vector3.zero && IsDirectionAllowed(pushDir);
+        return pushDir != Vector3.zero && IsDirectionAllowed(pushDir) && CanPushInDirection(pushDir);
     }
 
     /// <summary>

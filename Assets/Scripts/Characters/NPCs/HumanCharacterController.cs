@@ -540,9 +540,19 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
         // First priority: Check if the obstacle is pushable and should be pushed from this direction
         PushableObject pushableComponent = obstacleInfo.collider.GetComponent<PushableObject>();
-        if (pushableComponent != null && !pushableComponent.IsBeingPushed && pushableComponent.ShouldBePushed(direction))
+        if (pushableComponent != null)
         {
-            return ObstacleType.Pushable;
+            if (pushableComponent.IsBeingPushed)
+            {
+                // Object is currently being pushed, treat as blocking obstacle (can't vault over moving objects)
+                return ObstacleType.Block;
+            }
+            else if (pushableComponent.ShouldBePushed(direction))
+            {
+                return ObstacleType.Pushable;
+            }
+            // If object can't be pushed further (at max distance), continue with normal obstacle analysis
+            // to allow vaulting if height is appropriate - don't return here, let it fall through
         }
 
         // Second priority: Check if the obstacle has a component that overrides behavior
