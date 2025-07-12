@@ -130,8 +130,8 @@ public class RogueLiteRoomParent : MonoBehaviour
             return;
         }
 
-        // Calculate the world position for the room
-        Vector3 worldPosition = targetTransform.position;
+        // Find a valid position for the room to avoid overlaps
+        Vector3 worldPosition = FindValidRoomPosition(targetTransform, roomPrefab);
 
         GameObject room = Instantiate(roomPrefab, worldPosition, targetTransform.rotation, targetTransform);
         spawnedRooms[worldPosition] = room;
@@ -140,6 +140,91 @@ public class RogueLiteRoomParent : MonoBehaviour
         roomComponent.Setup();
 
         RandomizePropsInSection(room.transform);
+    }
+
+    private Vector3 FindValidRoomPosition(Transform targetTransform, GameObject roomPrefab)
+    {
+        Vector3 preferredPosition = targetTransform.position;
+        
+        // If no rooms spawned yet, use the preferred position
+        if (spawnedRooms.Count == 0)
+        {
+            return preferredPosition;
+        }
+
+        // Get the room component to check bounds
+        RogueLiteRoom prefabRoom = roomPrefab.GetComponent<RogueLiteRoom>();
+        if (prefabRoom == null)
+        {
+            return preferredPosition;
+        }
+
+        // Test the preferred position first
+        if (!WouldRoomOverlapAtPosition(prefabRoom, preferredPosition))
+        {
+            return preferredPosition;
+        }
+
+        // If preferred position overlaps, try positions in expanding circles
+        float stepSize = 10f;
+        int maxAttempts = 20;
+        
+        for (int radius = 1; radius <= maxAttempts; radius++)
+        {
+            for (int angle = 0; angle < 360; angle += 45)
+            {
+                float radians = angle * Mathf.Deg2Rad;
+                Vector3 offset = new Vector3(
+                    Mathf.Cos(radians) * radius * stepSize,
+                    0,
+                    Mathf.Sin(radians) * radius * stepSize
+                );
+                
+                Vector3 testPosition = preferredPosition + offset;
+                
+                if (!WouldRoomOverlapAtPosition(prefabRoom, testPosition))
+                {
+                    Debug.Log($"[RogueLiteRoomParent] Found valid position for {roomPrefab.name} at {testPosition} (offset from preferred: {offset})");
+                    return testPosition;
+                }
+            }
+        }
+
+        // If no valid position found, use the preferred position anyway and log a warning
+        Debug.LogWarning($"[RogueLiteRoomParent] Could not find non-overlapping position for {roomPrefab.name}, using preferred position");
+        return preferredPosition;
+    }
+
+    private bool WouldRoomOverlapAtPosition(RogueLiteRoom roomToTest, Vector3 position)
+    {
+        // Temporarily move the room to test position to calculate bounds
+        Vector3 originalPosition = roomToTest.transform.position;
+        roomToTest.transform.position = position;
+        
+        // Force bounds calculation
+        roomToTest.CalculateRoomBounds();
+        Bounds testBounds = roomToTest.GetWorldBounds();
+        
+        // Restore original position
+        roomToTest.transform.position = originalPosition;
+        
+        // Check against all spawned rooms
+        foreach (var spawnedRoom in spawnedRooms.Values)
+        {
+            if (spawnedRoom == null) continue;
+            
+            RogueLiteRoom spawnedRoomComponent = spawnedRoom.GetComponent<RogueLiteRoom>();
+            if (spawnedRoomComponent == null) continue;
+            
+            Bounds spawnedBounds = spawnedRoomComponent.GetWorldBounds();
+            
+            if (testBounds.Intersects(spawnedBounds))
+            {
+                return true; // Overlap detected
+            }
+        }
+        
+        return false; // No overlap
     }
 
     private void RandomizePropsInSection(Transform sectionTransform)
