@@ -119,59 +119,18 @@ namespace Managers
 
         private Vector3 CalculateNewRoomPosition(Vector3 currentPosition, RogueLiteDoor entranceDoor)
         {
-            // Get the door's forward direction in world space
-            Vector3 doorDirection = entranceDoor.transform.forward;
+            // Simple line formation: spawn building parents in a straight line along the X-axis
+            // This ensures no overlapping and predictable placement
             
-            // Try to find a suitable position with proper spacing
-            Vector3 basePosition = currentPosition + (doorDirection * minRoomSpacing);
+            int roomCount = placedRooms.Count;
+            float buildingSpacing = 150f; // Larger spacing for entire building parents
             
-            // Check for collisions and adjust position if needed
-            Vector3 finalPosition = FindValidRoomPosition(basePosition, doorDirection);
+            // Calculate position in line formation
+            Vector3 newPosition = new Vector3(roomCount * buildingSpacing, 0, 0);
             
-            // Round the position to avoid floating point issues
-            finalPosition = new Vector3(
-                Mathf.Round(finalPosition.x / minRoomSpacing) * minRoomSpacing,
-                Mathf.Round(finalPosition.y / minRoomSpacing) * minRoomSpacing,
-                Mathf.Round(finalPosition.z / minRoomSpacing) * minRoomSpacing
-            );
-
-            return finalPosition;
-        }
-        
-        private Vector3 FindValidRoomPosition(Vector3 basePosition, Vector3 direction)
-        {
-            // If no rooms have been placed yet, return the base position
-            if (placedRooms.Count == 0)
-                return basePosition;
+            Debug.Log($"[BuildingManager] Positioning building parent {roomCount} at: {newPosition}");
             
-            Vector3 testPosition = basePosition;
-            int maxAttempts = 10;
-            float stepSize = minRoomSpacing;
-            
-            for (int i = 0; i < maxAttempts; i++)
-            {
-                bool validPosition = true;
-                
-                // Check against all placed rooms
-                foreach (var placedRoom in placedRooms)
-                {
-                    float distance = Vector3.Distance(testPosition, placedRoom.position);
-                    if (distance < minRoomSpacing)
-                    {
-                        validPosition = false;
-                        break;
-                    }
-                }
-                
-                if (validPosition)
-                    return testPosition;
-                
-                // Move further along the direction
-                testPosition += direction * stepSize;
-            }
-            
-            // If we couldn't find a valid position, return the furthest position tried
-            return testPosition;
+            return newPosition;
         }
 
         private void SpawnRoom(BuildingType buildingType, Vector3 position)
@@ -201,13 +160,8 @@ namespace Managers
                 {
                     randomizer.GenerateRandomRooms(selectedBuilding);
                     
-                    // Store room placement data for collision detection
-                    RogueLiteRoom roomComponent = newBuildingParent.GetComponent<RogueLiteRoom>();
-                    if (roomComponent != null)
-                    {
-                        Bounds roomBounds = roomComponent.GetWorldBounds();
-                        placedRooms.Add(new RoomPlacementData(position, newBuildingParent, roomBounds, roomComponent));
-                    }
+                    // Store building placement data for tracking
+                    placedRooms.Add(new RoomPlacementData(position, newBuildingParent, new Bounds(position, Vector3.one * 100f), null));
                 }
                 else
                 {
