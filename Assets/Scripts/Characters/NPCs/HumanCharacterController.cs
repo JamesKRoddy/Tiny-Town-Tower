@@ -55,13 +55,15 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         Vault,       // Perfect height for vaulting
         RollUnder,   // Medium height, could roll under
         TooHigh,     // Too high to navigate
-        Block        // Cannot be vaulted (from component override)
+        Block,       // Cannot be vaulted (from component override)
+        Pushable     // Can be pushed to move it
     }
 
     [Header("Input and Movement State")]
     protected Vector3 movementInput; // Stores the current movement input
     private bool isDashing = false; // Whether the player is currently dashing
     private bool isVaulting = false; // Whether the player is currently vaulting
+    private bool isPushing = false; // Whether the player is currently pushing an object
 
     [Header("Dash State")]
     private float dashTime = 0f; // Timer for the current dash
@@ -80,6 +82,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private ObstacleVaultBehavior currentObstacleComponent = null; // Component on the obstacle being vaulted
     private Collider currentObstacleCollider = null; // Reference to the collider being vaulted (for safety checks)
     private bool isVaultTargetSafe = false; // Whether the calculated vault target is safe
+
+    [Header("Push State")]
+    private PushableObject currentPushTarget = null; // The object currently being pushed
+    private float pushHoldTime = 0f; // How long the player has been trying to push
+    private float pushActivationDelay = 0.5f; // Time to hold before push activates
+    private Vector3 lastPushDirection = Vector3.zero; // Last direction the player tried to push
 
     [Header("Health")]
     [SerializeField] private float health = 100f;
@@ -173,7 +181,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void Attack()
     {
-        if (!isDashing && !isVaulting && characterInventory.equippedWeaponScriptObj != null)
+        if (!isDashing && !isVaulting && !isPushing && characterInventory.equippedWeaponScriptObj != null)
         {
             isAttacking = true;
             animator.SetBool("LightAttack", true);
@@ -182,7 +190,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void Dash()
     {
-        if (!isDashing && !isVaulting && Time.time > dashCooldownTime && Time.time > vaultCooldownTime && movementInput.magnitude > 0.1f)
+        if (!isDashing && !isVaulting && !isPushing && Time.time > dashCooldownTime && Time.time > vaultCooldownTime && movementInput.magnitude > 0.1f)
         {
             StopAttacking(); // Ensure player stops attacking when dashing
 
@@ -212,6 +220,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public Transform GetTransform()
     {
         return transform;
+    }
+
+    public Vector3 GetMovementInput()
+    {
+        return movementInput;
     }
 
     #endregion
@@ -361,6 +374,109 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     #endregion
 
+    #region Pushing
+
+    /// <summary>
+    /// Handles pushing logic when encountering a pushable object
+    /// </summary>
+    /// <param name="obstacleInfo">Information about the pushable obstacle</param>
+    /// <param name="movementDirection">Direction the player is trying to move</param>
+    /// <param name="targetMovement">Reference to the movement vector to modify</param>
+    private void HandlePushing(RaycastHit obstacleInfo, Vector3 movementDirection, ref Vector3 targetMovement)
+    {
+        PushableObject pushableObject = obstacleInfo.collider.GetComponent<PushableObject>();
+        if (pushableObject == null)
+        {
+            // No pushable component, treat as regular obstacle
+            targetMovement = CalculateWallSlide(targetMovement, obstacleInfo.normal);
+            return;
+        }
+
+        // Check if we're trying to push in the same direction as before
+        bool samePushDirection = currentPushTarget == pushableObject && 
+                                Vector3.Dot(movementDirection, lastPushDirection) > 0.8f;
+
+        if (samePushDirection)
+        {
+            // Continue building up push time
+            pushHoldTime += Time.deltaTime;
+        }
+        else
+        {
+            // New push attempt, reset timer
+            pushHoldTime = 0f;
+            currentPushTarget = pushableObject;
+            lastPushDirection = movementDirection;
+        }
+
+        // Check if we've held long enough to start pushing
+        if (pushHoldTime >= pushActivationDelay)
+        {
+            // Attempt to start pushing
+            if (pushableObject.TryStartPush(movementDirection, this))
+            {
+                isPushing = true;
+                // Stop player movement while pushing
+                targetMovement = Vector3.zero;
+                
+                // Trigger push animation if you have one
+                animator.SetBool("IsPushing", true);
+                
+                // Reset push state
+                pushHoldTime = 0f;
+            }
+            else
+            {
+                // Push failed (blocked or invalid direction), slide along obstacle
+                targetMovement = CalculateWallSlide(targetMovement, obstacleInfo.normal);
+                pushHoldTime = 0f; // Reset timer since push failed
+            }
+        }
+        else
+        {
+            // Still building up push time, prevent movement but allow rotation
+            targetMovement = Vector3.zero;
+            
+            // Rotate player towards push direction
+            if (movementDirection.magnitude > 0.1f)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(movementDirection);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 
+                    rotationSpeed * Time.deltaTime);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Called when a push operation completes
+    /// </summary>
+    public void OnPushComplete()
+    {
+        isPushing = false;
+        currentPushTarget = null;
+        animator.SetBool("IsPushing", false);
+    }
+
+    /// <summary>
+    /// Resets push state when player stops trying to push
+    /// </summary>
+    private void ResetPushState()
+    {
+        if (currentPushTarget != null && !isPushing)
+        {
+            // Check if player is still trying to push the same object
+            if (movementInput.magnitude < 0.1f || 
+                Vector3.Dot(movementInput.normalized, lastPushDirection) < 0.5f)
+            {
+                pushHoldTime = 0f;
+                currentPushTarget = null;
+                lastPushDirection = Vector3.zero;
+            }
+        }
+    }
+
+    #endregion
+
     #region Enhanced Obstacle Navigation
 
     /// <summary>
@@ -422,7 +538,14 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Store reference to the obstacle collider for safety checks
         currentObstacleCollider = obstacleInfo.collider;
 
-        // First priority: Check if the obstacle has a component that overrides behavior
+        // First priority: Check if the obstacle is pushable and should be pushed from this direction
+        PushableObject pushableComponent = obstacleInfo.collider.GetComponent<PushableObject>();
+        if (pushableComponent != null && !pushableComponent.IsBeingPushed && pushableComponent.ShouldBePushed(direction))
+        {
+            return ObstacleType.Pushable;
+        }
+
+        // Second priority: Check if the obstacle has a component that overrides behavior
         currentObstacleComponent = obstacleInfo.collider.GetComponent<ObstacleVaultBehavior>();
         if (currentObstacleComponent != null)
         {
@@ -826,6 +949,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                             targetMovement = CalculateWallSlide(targetMovement, obstacleInfo.normal);
                             break;
                             
+                        case ObstacleType.Pushable:
+                            // Handle pushing logic
+                            HandlePushing(obstacleInfo, movementInput.normalized, ref targetMovement);
+                            break;
+                            
                         case ObstacleType.None:
                         default:
                             // No obstacle, continue normal movement
@@ -855,6 +983,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 }
             }
         }
+        
+        // Reset push state if player stops trying to push
+        ResetPushState();
     }
 
     private bool IsObstacleInPath(Vector3 direction, out RaycastHit hitInfo)
@@ -952,6 +1083,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                         break;
                     case ObstacleType.TooHigh:
                         Gizmos.color = Color.red;
+                        break;
+                    case ObstacleType.Pushable:
+                        Gizmos.color = Color.magenta;
                         break;
                 }
                 
@@ -1060,6 +1194,37 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             
             // Note: This text will only be visible in Scene view, not Game view
             Handles.Label(textPos, vaultTypeText, style);
+#endif
+        }
+        
+        // Show push state visualization
+        if (currentPushTarget != null && Application.isPlaying)
+        {
+            // Draw line to push target
+            Gizmos.color = Color.magenta;
+            Gizmos.DrawLine(transform.position, currentPushTarget.transform.position);
+            
+            // Draw push direction arrow
+            Vector3 pushArrowStart = transform.position + Vector3.up * 1.5f;
+            Vector3 pushArrowEnd = pushArrowStart + lastPushDirection * 1.2f;
+            Gizmos.DrawLine(pushArrowStart, pushArrowEnd);
+            Gizmos.DrawWireSphere(pushArrowEnd, 0.1f);
+            
+            // Draw push progress circle
+            float pushProgress = pushHoldTime / pushActivationDelay;
+            Gizmos.color = Color.Lerp(Color.yellow, Color.green, pushProgress);
+            Gizmos.DrawWireSphere(transform.position + Vector3.up * 2f, 0.3f * pushProgress);
+            
+#if UNITY_EDITOR
+            // Display push status text
+            Vector3 pushTextPos = transform.position + Vector3.up * 2.5f;
+            string pushText = isPushing ? "PUSHING" : $"Push Hold: {pushProgress:F1}";
+            
+            var pushStyle = new GUIStyle();
+            pushStyle.normal.textColor = isPushing ? Color.green : Color.yellow;
+            pushStyle.fontSize = 10;
+            
+            Handles.Label(pushTextPos, pushText, pushStyle);
 #endif
         }
     }

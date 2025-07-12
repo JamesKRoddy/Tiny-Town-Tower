@@ -2,10 +2,7 @@
 
 
 Tomorrow work:
-Player obstacle vaulting:
-Fix low obstacles to big step over
-Add in a vaulting animation
-Create a class that basically distinguishes which animation should play
+Maybe object to push around the environment too, so a bookcase blocks a secret path?
 
 
 Enviromental hazzards in the roguelike section enviromental hazzards, electrical/acid etc.
