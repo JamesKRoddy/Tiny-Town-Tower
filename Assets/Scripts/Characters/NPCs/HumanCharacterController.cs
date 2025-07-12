@@ -64,6 +64,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private bool isDashing = false; // Whether the player is currently dashing
     private bool isVaulting = false; // Whether the player is currently vaulting
     private bool isPushing = false; // Whether the player is currently pushing an object
+    
+    [Header("Movement Tracking")]
+    private Vector3 lastPosition; // Position from previous frame for speed calculation
+    private float actualMovementSpeed; // Actual speed the player is moving (not input speed)
 
     [Header("Dash State")]
     private float dashTime = 0f; // Timer for the current dash
@@ -88,6 +92,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private float pushHoldTime = 0f; // How long the player has been trying to push
     private float pushActivationDelay = 0.5f; // Time to hold before push activates
     private Vector3 lastPushDirection = Vector3.zero; // Last direction the player tried to push
+    private Vector3 pushOffsetFromObject = Vector3.zero; // Player's offset from the pushed object
+    private Vector3 lastPushObjectPosition = Vector3.zero; // Last position of the pushed object
 
     [Header("Health")]
     [SerializeField] private float health = 100f;
@@ -120,13 +126,16 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             Managers.CampManager.Instance.RegisterTarget(this);
         }
         
-
+        // Initialize movement tracking
+        lastPosition = transform.position;
+        actualMovementSpeed = 0f;
     }
 
     public virtual void PossessedUpdate()
     {
         HandleDash();
         MoveCharacter();
+        UpdateActualMovementSpeed();
         UpdateAnimations();
     }
 
@@ -419,6 +428,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 // Stop player movement while pushing
                 targetMovement = Vector3.zero;
                 
+                // Store the offset from the object to the player
+                pushOffsetFromObject = transform.position - pushableObject.transform.position;
+                lastPushObjectPosition = pushableObject.transform.position;
+                
                 // Trigger push animation if you have one
                 animator.SetBool("IsPushing", true);
                 
@@ -455,6 +468,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         isPushing = false;
         currentPushTarget = null;
         animator.SetBool("IsPushing", false);
+        
+        // Clear push tracking variables
+        pushOffsetFromObject = Vector3.zero;
+        lastPushObjectPosition = Vector3.zero;
     }
 
     /// <summary>
@@ -471,6 +488,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 pushHoldTime = 0f;
                 currentPushTarget = null;
                 lastPushDirection = Vector3.zero;
+                pushOffsetFromObject = Vector3.zero;
+                lastPushObjectPosition = Vector3.zero;
             }
         }
     }
@@ -786,7 +805,30 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     protected void MoveCharacter()
     {
-        if (isVaulting)
+        if (isPushing)
+        {
+            // When pushing, follow the object's movement and maintain offset
+            if (currentPushTarget != null)
+            {
+                Vector3 currentObjectPosition = currentPushTarget.transform.position;
+                Vector3 objectMovement = currentObjectPosition - lastPushObjectPosition;
+                
+                // Move player with the object, maintaining the offset
+                transform.position = currentObjectPosition + pushOffsetFromObject;
+                
+                // Update last object position for next frame
+                lastPushObjectPosition = currentObjectPosition;
+                
+                // Rotate to face the push direction
+                if (lastPushDirection.magnitude > 0.1f)
+                {
+                    Quaternion targetRotation = Quaternion.LookRotation(lastPushDirection);
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 
+                        rotationSpeed * Time.deltaTime);
+                }
+            }
+        }
+        else if (isVaulting)
         {
             // Allow slight directional control during vault, similar to dash
             if (movementInput.magnitude > 0.1f)
@@ -1021,10 +1063,21 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     #region Animation
 
+    private void UpdateActualMovementSpeed()
+    {
+        // Calculate actual movement speed based on position change
+        Vector3 currentPosition = transform.position;
+        float distanceMoved = Vector3.Distance(currentPosition, lastPosition);
+        actualMovementSpeed = distanceMoved / Time.deltaTime;
+        
+        // Update last position for next frame
+        lastPosition = currentPosition;
+    }
+
     protected void UpdateAnimations()
     {
         float maxSpeed = isDashing ? dashSpeed : moveMaxSpeed;
-        float currentSpeedNormalized = movementInput.magnitude * moveMaxSpeed / maxSpeed;
+        float currentSpeedNormalized = actualMovementSpeed / maxSpeed;
 
         animator.SetFloat("Speed", currentSpeedNormalized);
     }
