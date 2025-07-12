@@ -41,15 +41,16 @@ public class RogueLikeRoomDoor : RogueLiteDoor
         {
             RogueLiteManager.Instance.EnterRoomWithTransition(this);
         }
-        else if (doorType == DoorStatus.EXIT)
-        {
-            RogueLiteManager.Instance.ReturnToPreviousRoom(this);
-        }
+        // EXIT doors are locked - no return to previous room functionality
     }
 
     public override bool CanInteract()
     {
         if (RogueLiteManager.Instance.GetEnemySetupState() != EnemySetupState.ALL_WAVES_CLEARED)
+            return false;
+
+        // EXIT doors are always locked - no going back
+        if (doorType == DoorStatus.EXIT)
             return false;
 
         return base.CanInteract();
@@ -64,7 +65,7 @@ public class RogueLikeRoomDoor : RogueLiteDoor
             case DoorStatus.ENTRANCE:
                 return "Enter Room";
             case DoorStatus.EXIT:
-                return "Can't Go Back";
+                return "Exit Locked";
             default:
                 return "INVALID";
         }

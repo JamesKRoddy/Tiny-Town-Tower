@@ -125,8 +125,8 @@ namespace Managers
             int roomCount = placedRooms.Count;
             float buildingSpacing = 150f; // Larger spacing for entire building parents
             
-            // Calculate position in line formation
-            Vector3 newPosition = new Vector3(roomCount * buildingSpacing, 0, 0);
+            // Start at an offset to avoid overlapping with building entrance at (0,0,0)
+            Vector3 newPosition = new Vector3((roomCount + 1) * buildingSpacing, 0, 0);
             
             Debug.Log($"[BuildingManager] Positioning building parent {roomCount} at: {newPosition}");
             
