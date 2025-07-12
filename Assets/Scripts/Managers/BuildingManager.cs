@@ -3,6 +3,23 @@ using UnityEngine;
 
 namespace Managers
 {
+    [System.Serializable]
+    public class RoomPlacementData
+    {
+        public Vector3 position;
+        public GameObject roomObject;
+        public Bounds bounds;
+        public RogueLiteRoom roomComponent;
+        
+        public RoomPlacementData(Vector3 pos, GameObject obj, Bounds roomBounds, RogueLiteRoom room)
+        {
+            position = pos;
+            roomObject = obj;
+            bounds = roomBounds;
+            roomComponent = room;
+        }
+    }
+    
     public class BuildingManager : MonoBehaviour
     {
         [Header("Building Settings")]
@@ -14,8 +31,9 @@ namespace Managers
         private GameObject currentRoomParent;        
         private int currentMaxRooms;
         private Vector3 lastPlayerSpawnPoint;
-        private float roomSpacing = 100f;
+        private float minRoomSpacing = 20f;
         private Dictionary<Vector3, GameObject> spawnedRooms = new Dictionary<Vector3, GameObject>();
+        private List<RoomPlacementData> placedRooms = new List<RoomPlacementData>();
 
         public GameObject CurrentRoomParent => currentRoomParent;
 
@@ -104,17 +122,56 @@ namespace Managers
             // Get the door's forward direction in world space
             Vector3 doorDirection = entranceDoor.transform.forward;
             
-            // Calculate the new position based on the door's direction
-            Vector3 newPosition = currentPosition + (doorDirection * roomSpacing);
+            // Try to find a suitable position with proper spacing
+            Vector3 basePosition = currentPosition + (doorDirection * minRoomSpacing);
+            
+            // Check for collisions and adjust position if needed
+            Vector3 finalPosition = FindValidRoomPosition(basePosition, doorDirection);
             
             // Round the position to avoid floating point issues
-            newPosition = new Vector3(
-                Mathf.Round(newPosition.x / roomSpacing) * roomSpacing,
-                Mathf.Round(newPosition.y / roomSpacing) * roomSpacing,
-                Mathf.Round(newPosition.z / roomSpacing) * roomSpacing
+            finalPosition = new Vector3(
+                Mathf.Round(finalPosition.x / minRoomSpacing) * minRoomSpacing,
+                Mathf.Round(finalPosition.y / minRoomSpacing) * minRoomSpacing,
+                Mathf.Round(finalPosition.z / minRoomSpacing) * minRoomSpacing
             );
 
-            return newPosition;
+            return finalPosition;
+        }
+        
+        private Vector3 FindValidRoomPosition(Vector3 basePosition, Vector3 direction)
+        {
+            // If no rooms have been placed yet, return the base position
+            if (placedRooms.Count == 0)
+                return basePosition;
+            
+            Vector3 testPosition = basePosition;
+            int maxAttempts = 10;
+            float stepSize = minRoomSpacing;
+            
+            for (int i = 0; i < maxAttempts; i++)
+            {
+                bool validPosition = true;
+                
+                // Check against all placed rooms
+                foreach (var placedRoom in placedRooms)
+                {
+                    float distance = Vector3.Distance(testPosition, placedRoom.position);
+                    if (distance < minRoomSpacing)
+                    {
+                        validPosition = false;
+                        break;
+                    }
+                }
+                
+                if (validPosition)
+                    return testPosition;
+                
+                // Move further along the direction
+                testPosition += direction * stepSize;
+            }
+            
+            // If we couldn't find a valid position, return the furthest position tried
+            return testPosition;
         }
 
         private void SpawnRoom(BuildingType buildingType, Vector3 position)
@@ -143,6 +200,14 @@ namespace Managers
                 if (randomizer != null)
                 {
                     randomizer.GenerateRandomRooms(selectedBuilding);
+                    
+                    // Store room placement data for collision detection
+                    RogueLiteRoom roomComponent = newBuildingParent.GetComponent<RogueLiteRoom>();
+                    if (roomComponent != null)
+                    {
+                        Bounds roomBounds = roomComponent.GetWorldBounds();
+                        placedRooms.Add(new RoomPlacementData(position, newBuildingParent, roomBounds, roomComponent));
+                    }
                 }
                 else
                 {
@@ -208,6 +273,7 @@ namespace Managers
             currentBuilding = null;
             currentRoomParent = null;
             lastPlayerSpawnPoint = Vector3.zero;
+            placedRooms.Clear();
             DifficultyManager.Instance.ResetDifficulty();
         }
     }
