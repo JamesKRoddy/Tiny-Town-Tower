@@ -2,7 +2,12 @@
 
 
 Tomorrow work:
-Maybe object to push around the environment too, so a bookcase blocks a secret path?
+Review overlapping room fix
+Enemy nav and animation fixes
+Go through todo below and bugs to see if any are fixed
+Start setting up the player progression manager? Use this to keep track of what the player has unlocked
+Do finishing bits on the spitter enemy, build 2 more after. the boomer that explodes near the player and the one that splits into smaller enemies
+
 
 
 Enviromental hazzards in the roguelike section enviromental hazzards, electrical/acid etc.
