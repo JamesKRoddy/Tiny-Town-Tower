@@ -73,6 +73,70 @@ public class BuildingDataScriptableObj : ScriptableObject
         int randomIndex = Random.Range(0, suitableRooms.Count);
         return suitableRooms[randomIndex].buildingRoom;
     }
+
+    /// <summary>
+    /// Get a room of a specific size that fits the difficulty requirement
+    /// </summary>
+    public GameObject GetBuildingRoomBySize(int difficulty, RoomSize preferredSize)
+    {
+        // Find all suitable rooms based on difficulty and size
+        List<BuildingRooms> suitableRooms = new List<BuildingRooms>();
+        
+        foreach (var room in buildingRooms)
+        {
+            if (room.difficulty <= difficulty && room.roomSize == preferredSize)
+            {
+                suitableRooms.Add(room);
+            }
+        }
+
+        // If no rooms of preferred size found, return null to try different size
+        if (suitableRooms.Count == 0)
+        {
+            return null;
+        }
+
+        // Randomly select from suitable rooms
+        int randomIndex = Random.Range(0, suitableRooms.Count);
+        return suitableRooms[randomIndex].buildingRoom;
+    }
+
+    /// <summary>
+    /// Get the best fitting room for a spawn point, trying sizes in order of preference
+    /// </summary>
+    public GameObject GetBestFittingRoom(int difficulty, RoomSize[] sizePreferences)
+    {
+        // Try each size preference in order
+        foreach (var size in sizePreferences)
+        {
+            var room = GetBuildingRoomBySize(difficulty, size);
+            if (room != null)
+            {
+                return room;
+            }
+        }
+
+        // Fallback to any suitable room
+        return GetBuildingRoom(difficulty);
+    }
+
+    /// <summary>
+    /// Get all available room sizes for this building at the given difficulty
+    /// </summary>
+    public RoomSize[] GetAvailableRoomSizes(int difficulty)
+    {
+        List<RoomSize> availableSizes = new List<RoomSize>();
+        
+        foreach (var room in buildingRooms)
+        {
+            if (room.difficulty <= difficulty && !availableSizes.Contains(room.roomSize))
+            {
+                availableSizes.Add(room.roomSize);
+            }
+        }
+
+        return availableSizes.ToArray();
+    }
 }
 
 [System.Serializable]
@@ -87,5 +151,6 @@ public struct BuildingRooms
 {
     public GameObject buildingRoom;
     public int difficulty;
+    public RoomSize roomSize;
 }
 

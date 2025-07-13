@@ -3,6 +3,23 @@ using UnityEngine;
 
 namespace Managers
 {
+    [System.Serializable]
+    public class RoomPlacementData
+    {
+        public Vector3 position;
+        public GameObject roomObject;
+        public Bounds bounds;
+        public RogueLiteRoom roomComponent;
+        
+        public RoomPlacementData(Vector3 pos, GameObject obj, Bounds roomBounds, RogueLiteRoom room)
+        {
+            position = pos;
+            roomObject = obj;
+            bounds = roomBounds;
+            roomComponent = room;
+        }
+    }
+    
     public class BuildingManager : MonoBehaviour
     {
         [Header("Building Settings")]
@@ -14,8 +31,9 @@ namespace Managers
         private GameObject currentRoomParent;        
         private int currentMaxRooms;
         private Vector3 lastPlayerSpawnPoint;
-        private float roomSpacing = 100f;
+        private float minRoomSpacing = 20f;
         private Dictionary<Vector3, GameObject> spawnedRooms = new Dictionary<Vector3, GameObject>();
+        private List<RoomPlacementData> placedRooms = new List<RoomPlacementData>();
 
         public GameObject CurrentRoomParent => currentRoomParent;
 
@@ -101,23 +119,21 @@ namespace Managers
 
         private Vector3 CalculateNewRoomPosition(Vector3 currentPosition, RogueLiteDoor entranceDoor)
         {
-            // Get the door's forward direction in world space
-            Vector3 doorDirection = entranceDoor.transform.forward;
+            // Simple line formation: spawn building parents in a straight line along the X-axis
+            // This ensures no overlapping and predictable placement
             
-            // Calculate the new position based on the door's direction
-            Vector3 newPosition = currentPosition + (doorDirection * roomSpacing);
+            int roomCount = placedRooms.Count;
+            float buildingSpacing = 150f; // Larger spacing for entire building parents
             
-            // Round the position to avoid floating point issues
-            newPosition = new Vector3(
-                Mathf.Round(newPosition.x / roomSpacing) * roomSpacing,
-                Mathf.Round(newPosition.y / roomSpacing) * roomSpacing,
-                Mathf.Round(newPosition.z / roomSpacing) * roomSpacing
-            );
-
+            // Start at an offset to avoid overlapping with building entrance at (0,0,0)
+            Vector3 newPosition = new Vector3((roomCount + 1) * buildingSpacing, 0, 0);
+            
+            Debug.Log($"[BuildingManager] Positioning building parent {roomCount} at: {newPosition}");
+            
             return newPosition;
         }
 
-        private void SpawnRoom(BuildingType buildingType, Vector3 position)
+        public void SpawnRoom(BuildingType buildingType, Vector3 position)
         {
             // Store the current player spawn point before creating the new building
             if (currentRoomParent != null)
@@ -143,6 +159,9 @@ namespace Managers
                 if (randomizer != null)
                 {
                     randomizer.GenerateRandomRooms(selectedBuilding);
+                    
+                    // Store building placement data for tracking
+                    placedRooms.Add(new RoomPlacementData(position, newBuildingParent, new Bounds(position, Vector3.one * 100f), null));
                 }
                 else
                 {
@@ -208,7 +227,16 @@ namespace Managers
             currentBuilding = null;
             currentRoomParent = null;
             lastPlayerSpawnPoint = Vector3.zero;
+            placedRooms.Clear();
             DifficultyManager.Instance.ResetDifficulty();
+        }
+
+        public void ClearDebugState()
+        {
+            currentRoomParent = null;
+            spawnedRooms.Clear();
+            placedRooms.Clear();
+            Debug.Log("[BuildingManager] Debug state cleared");
         }
     }
 } 

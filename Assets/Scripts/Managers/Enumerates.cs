@@ -27,6 +27,18 @@ public enum BuildingType
     NONE
 }
 
+/// <summary>
+/// Room size categories for intelligent room placement in roguelike buildings
+/// </summary>
+[System.Serializable]
+public enum RoomSize
+{
+    SMALL,      // Compact rooms that fit in tight spaces
+    MEDIUM,     // Standard-sized rooms
+    LARGE,      // Spacious rooms that need more room
+    EXTRA_LARGE // Massive rooms that require lots of space
+}
+
 [System.Serializable]
 public enum PlaceableObjectCategory
 {
@@ -173,18 +185,6 @@ public enum EnemySetupState
     ENEMY_SPAWN_START, //Enemies are spawned in
     ENEMIES_SPAWNED, //The room game play has started
     ALL_WAVES_CLEARED // enemies are all dea, player is free the move around and choose the next path
-}
-
-// =========================
-// ROOM AND WALL ENUMS
-// =========================
-
-public enum RoomPosition
-{
-    FRONT,
-    BACK,
-    LEFT,
-    RIGHT
 }
 
 public enum WallType

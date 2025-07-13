@@ -1,7 +1,15 @@
 *****Current Work*****
 
 
-To Test:
+Tomorrow work:
+Debug menu setup, assign vars for room debug menu
+Review overlapping room fix
+Enemy nav and animation fixes
+Go through todo below and bugs to see if any are fixed
+Start setting up the player progression manager? Use this to keep track of what the player has unlocked
+Do finishing bits on the spitter enemy, build 2 more after. the boomer that explodes near the player and the one that splits into smaller enemies
+
+
 
 Enviromental hazzards in the roguelike section enviromental hazzards, electrical/acid etc.
 
@@ -41,13 +49,17 @@ Player moving through walls while attack animation is running
 Enemy still doing attack flash while dead
 Have to review the room spawning grid system, I think just to get rid of it and have the rooms spawn in a line, currently the grid can cause rooms to spawn over the entrance
 Pressing B while moving an already place mutation breaks the menu, just dont allow B presses
-Construction sites can have npcs manually assigned to them
+Construction sites need to be able to  have npcs manually assigned to them
 When moving the camera around the camp the selection icon can move off into the distance, should also be bound by the building grid
 Return to camp selection from roguelike is showing up when npcs die in camp  (might be only happening when the npc was possessed before it died)
 After a building is constructed the taken grid prefabs are being enabled
-NPCs still moving artound when they are dead
+NPCs still moving around when they are dead
 Main menu start button is being unselected.
 Possible Issue with the flee state? the npc did just stop fleeing after one time of running away
+Coroutines starting error on npcs hiding in bunker
+Enemies targeting buildings ok but not prioritising npcs over them
+So there is some jackyness around the building placer, i think sometimes building parent objects can spawn on top of each other
+So when baking the nav agent 
 
 
 

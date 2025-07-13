@@ -43,7 +43,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3419556268444168053}
   m_Layer: 6
-  m_Name: Front
+  m_Name: Spawn Pt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -74,7 +74,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2542803515789947336}
   m_Layer: 6
-  m_Name: Back
+  m_Name: Spawn Pt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -105,7 +105,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4662829175617881025}
   m_Layer: 6
-  m_Name: Left
+  m_Name: Spawn Pt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -218,10 +218,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   centerPiece: {fileID: 6463753889405488631}
-  frontTransform: {fileID: 3419556268444168053}
-  backTransform: {fileID: 2542803515789947336}
-  leftTransform: {fileID: 4662829175617881025}
-  rightTransform: {fileID: 3459746477652338397}
+  roomSpawnPointsParent: {fileID: 3846975403741790461}
+  showDirectionArrows: 1
+  arrowLength: 5
+  arrowHeadLength: 1.5
+  arrowHeadAngle: 20
+  arrowColor: {r: 0, g: 1, b: 0.7696707, a: 1}
 --- !u!1 &7767438849479311874
 GameObject:
   m_ObjectHideFlags: 0
@@ -232,7 +234,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3459746477652338397}
   m_Layer: 6
-  m_Name: Right
+  m_Name: Spawn Pt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -310,7 +312,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3846975403741790461}
   m_Layer: 6
-  m_Name: Sides
+  m_Name: RoomSpawnPoints
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

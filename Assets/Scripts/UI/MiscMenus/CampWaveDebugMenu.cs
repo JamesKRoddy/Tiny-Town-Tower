@@ -4,7 +4,7 @@ using TMPro;
 using Managers;
 using Enemies;
 
-public class DebugMenu: MonoBehaviour
+public class CampWaveDebugMenu : BaseDebugMenu
 {
     [Header("Debug Menu UI")]
     [SerializeField] private Button waveButton;
@@ -20,8 +20,15 @@ public class DebugMenu: MonoBehaviour
     private bool waveLoopingEnabled = true;
     private float waveDelay = 5f;
 
-    private void Start()
+    public override void RegisterMenu()
     {
+        // Set menu properties
+        menuName = "Wave Debug Menu";
+        toggleKey = KeyCode.F1;
+        
+        // Call base Start to handle registration
+        base.RegisterMenu();
+        
         waveButton.onClick.AddListener(ToggleWave);
         
         // Setup additional wave test controls
@@ -52,7 +59,7 @@ public class DebugMenu: MonoBehaviour
             // Update the single status text with all information
             if (statusText != null)
             {
-                var enemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
+                var enemies = Object.FindObjectsOfType<EnemyBase>();
                 int currentWave = CampManager.Instance.GetCurrentWaveNumber();
                 int maxWaves = CampManager.Instance.GetCurrentMaxWaves();
                 string statusInfo = $"Wave Status: {(isWaveActive ? "Active" : "Inactive")}\n";
@@ -169,6 +176,8 @@ public class DebugMenu: MonoBehaviour
             waveDelayText.text = $"Delay: {waveDelay:F1}s";
         }
     }
+
+
     
     private void OnDestroy()
     {
