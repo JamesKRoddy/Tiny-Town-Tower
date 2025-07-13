@@ -27,7 +27,7 @@ namespace Enemies
                         SetCurrentAttack(attack);
                         
                         // Use sophisticated distance checking that considers obstacles
-                        float effectiveAttackDistance = CalculateEffectiveAttackDistance(navMeshTarget);
+                        float effectiveAttackDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, stoppingDistance, obstacleBoundsOffset);
                         agent.stoppingDistance = Mathf.Max(attack.range, effectiveAttackDistance);
                         
                         BeginAttackSequence();

@@ -40,11 +40,11 @@ namespace Enemies
         [Header("Movement Settings")]
         [SerializeField] protected bool useRootMotion = false;
         [SerializeField] protected float stoppingDistance = 1.5f;
-        [SerializeField] protected float rotationSpeed = 10f;
+        [SerializeField] protected float rotationSpeed = 10f; // Only used for non-root motion
         [SerializeField] protected float movementSpeed = 3.5f;
         [SerializeField] protected float acceleration = 8f;
         [SerializeField] protected float angularSpeed = 120f;
-        [SerializeField] protected float obstacleBoundsOffset = 1f; // Additional distance to add to obstacle bounds
+        [SerializeField] protected float obstacleBoundsOffset = 1f;
 
         // Add these fields for better root motion control
         [Header("Root Motion Settings")]
@@ -137,14 +137,10 @@ namespace Enemies
             // Find initial target
             FindNewTarget();
             
-            // Initialize stuck detection
+            // Initialize timers
             lastPosition = transform.position;
             lastStuckCheckTime = Time.time;
-            
-            // Initialize reachability check
             lastReachabilityCheckTime = Time.time;
-            
-            // Initialize target search timer
             lastTargetSearchTime = Time.time;
         }
         
@@ -272,12 +268,7 @@ namespace Enemies
             }
         }
 
-        private void InitializeTimers()
-        {
-            lastPosition = transform.position;
-            lastStuckCheckTime = Time.time;
-            lastReachabilityCheckTime = Time.time;
-        }
+
 
         protected virtual void SetupRootMotion()
         {
@@ -309,22 +300,18 @@ namespace Enemies
 
         private void UpdateMovement()
         {
-            // Don't update movement if no target
             if (navMeshTarget == null) return;
-            
-            // Calculate effective attack distance considering obstacles using shared utility
-            float effectiveAttackDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, stoppingDistance, obstacleBoundsOffset);
             
             // Update the destination continuously
             agent.SetDestination(navMeshTarget.position);
             
-            // Update animation parameters based on agent velocity
+            // Update animation parameters
             UpdateAnimationParameters();
             
             // Check if we're stuck (not moving towards target)
             CheckIfStuck();
             
-            // Handle rotation towards target (only if not using root motion, as agent handles rotation)
+            // Handle rotation towards target (only if not using root motion)
             if (!useRootMotion)
             {
                 UpdateRotation();
@@ -335,28 +322,14 @@ namespace Enemies
         {
             if (animator == null) return;
             
-            bool shouldMove = false;
+            // Determine if character should be moving
+            bool shouldMove = useRootMotion 
+                ? (navMeshTarget != null && !isAttacking && 
+                   Vector3.Distance(transform.position, navMeshTarget.position) > 
+                   NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, stoppingDistance, obstacleBoundsOffset))
+                : agent.velocity.magnitude > 0.1f;
             
-            if (useRootMotion)
-            {
-                // For root motion, determine movement based on whether we have a target and aren't attacking
-                // The animation will drive the actual speed - we just tell it whether to move or not
-                if (navMeshTarget != null && !isAttacking)
-                {
-                    float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
-                    float effectiveStoppingDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, stoppingDistance, obstacleBoundsOffset);
-                    
-                    // Only move if we're not already at the target
-                    shouldMove = distanceToTarget > effectiveStoppingDistance;
-                }
-            }
-            else
-            {
-                // For non-root motion, use agent's actual velocity
-                shouldMove = agent.velocity.magnitude > 0.1f;
-            }
-            
-            // Set walk type based on movement (this is what RandomZombieAnimation uses)
+            // Set walk type for animation system
             animator.SetFloat("WalkType", shouldMove ? 1f : 0f);
         }
         
@@ -441,25 +414,7 @@ namespace Enemies
             }
         }
 
-        /// <summary>
-        /// Calculate the effective attack distance considering NavMesh obstacles and their bounds
-        /// </summary>
-        /// <param name="target">The target transform</param>
-        /// <returns>The effective distance required to attack this target</returns>
-        protected virtual float CalculateEffectiveAttackDistance(Transform target)
-        {
-            return NavigationUtils.CalculateEffectiveReachDistance(transform.position, target, stoppingDistance, obstacleBoundsOffset);
-        }
 
-        /// <summary>
-        /// Check if the enemy is close enough to attack the target
-        /// </summary>
-        /// <param name="target">The target to check distance to</param>
-        /// <returns>True if close enough to attack</returns>
-        protected virtual bool IsCloseEnoughToAttack(Transform target)
-        {
-            return NavigationUtils.IsCloseEnoughToReach(transform.position, target, stoppingDistance, obstacleBoundsOffset);
-        }
 
         #endregion
 
@@ -754,11 +709,6 @@ namespace Enemies
             Health = Mathf.Min(Health + amount, MaxHealth);
         }
 
-        internal float GetDamageValue()
-        {
-            return damage;
-        }
-
         public void AttackWarning()
         {
             if (skinnedMeshRenderer != null)
@@ -778,10 +728,13 @@ namespace Enemies
         {
             navMeshTarget = navAgentTarget;
         }
-
-        public void SetEnemyDestination(Vector3 navMeshTarget)
+        
+        /// <summary>
+        /// Sets the destination for the NavMesh agent
+        /// </summary>
+        public void SetDestination(Vector3 destination)
         {
-            agent.SetDestination(navMeshTarget);
+            agent.SetDestination(destination);
         }
 
         private void CheckForNewTargetsPeriodically()
@@ -809,7 +762,7 @@ namespace Enemies
             Gizmos.DrawWireSphere(transform.position, stoppingDistance);
 
             // Draw the effective attack distance
-            float effectiveDistance = CalculateEffectiveAttackDistance(navMeshTarget);
+            float effectiveDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, stoppingDistance, obstacleBoundsOffset);
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(transform.position, effectiveDistance);
 

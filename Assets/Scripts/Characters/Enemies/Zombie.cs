@@ -27,7 +27,7 @@ namespace Enemies
             if (navMeshTarget == null) return;
 
             // Use the sophisticated distance checking that considers obstacles
-            float effectiveAttackDistance = CalculateEffectiveAttackDistance(navMeshTarget);
+            float effectiveAttackDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, stoppingDistance, obstacleBoundsOffset);
             float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
             
             // Debug distance and attack state
