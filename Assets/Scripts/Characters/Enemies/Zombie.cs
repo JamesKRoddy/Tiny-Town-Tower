@@ -33,9 +33,11 @@ namespace Enemies
             // Debug distance and attack state
             Debug.DrawLine(transform.position, navMeshTarget.position, Color.yellow);
 
-            // Adjust speed based on distance to target using effective distance
-            if (!isAttacking)
+            // For root motion, we don't manually adjust agent speed - the animation drives movement
+            // The agent handles pathfinding and turning, animation handles forward movement
+            if (!useRootMotion && !isAttacking)
             {
+                // Only adjust speed for non-root motion zombies
                 if (distanceToTarget <= effectiveAttackDistance)
                 {
                     // Stop completely when in attack range
@@ -57,17 +59,23 @@ namespace Enemies
             // Check for attack range and cooldown using effective distance
             if (distanceToTarget <= effectiveAttackDistance && !isAttacking && Time.time >= lastAttackTime + attackCooldown)
             {
-                // Face the target before attacking
-                Vector3 direction = (navMeshTarget.position - transform.position).normalized;
-                direction.y = 0;
-                if (direction != Vector3.zero)
+                // For root motion, the agent handles rotation automatically
+                // For non-root motion, we need to manually rotate
+                if (!useRootMotion)
                 {
-                    Quaternion targetRotation = Quaternion.LookRotation(direction);
-                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+                    // Face the target before attacking
+                    Vector3 direction = (navMeshTarget.position - transform.position).normalized;
+                    direction.y = 0;
+                    if (direction != Vector3.zero)
+                    {
+                        Quaternion targetRotation = Quaternion.LookRotation(direction);
+                        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+                    }
                 }
 
-                // Only attack if we're facing the target (within 30 degrees)
-                float angleToTarget = Vector3.Angle(transform.forward, direction);
+                // Check if we're facing the target (within 30 degrees)
+                Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
+                float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
                 if (angleToTarget <= 30f)
                 {
                     BeginAttackSequence();
@@ -96,17 +104,16 @@ namespace Enemies
             if (agent != null && agent.isOnNavMesh)
             {
                 agent.isStopped = false;
-                agent.speed = originalSpeed; // Reset to original speed
+                
+                // For non-root motion, reset to original speed
+                if (!useRootMotion)
+                {
+                    agent.speed = originalSpeed;
+                }
+                // For root motion, the animation will drive the speed
             }
         }
 
-        protected virtual void MoveTowardsPlayer()
-        {
-            if (!isAttacking && navMeshTarget != null)
-            {
-                // The NavMeshAgent moves the zombie, but root motion from animation drives actual movement
-                SetEnemyDestination(navMeshTarget.position);
-            }
-        }
+
     }
 }

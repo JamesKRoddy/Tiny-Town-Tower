@@ -399,8 +399,8 @@ MonoBehaviour:
   doors: []
   chests: []
   roomBounds:
-    m_Center: {x: 20.000004, y: 1, z: 0.0000047683716}
-    m_Extent: {x: 11.000006, y: 2.25, z: 11.000005}
+    m_Center: {x: 170, y: 1, z: 0.0000047683716}
+    m_Extent: {x: 11, y: 2.25, z: 11.000005}
   autoCalculateBounds: 1
   boundsPadding: 2
   showRoomBounds: 1

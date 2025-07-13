@@ -45,29 +45,34 @@ namespace Enemies
 
             float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
 
-            // Always try to face the target, but slower during attack and paused after firing
-            Vector3 direction = (navMeshTarget.position - transform.position).normalized;
-            direction.y = 0;
-            if (direction != Vector3.zero)
+            // For root motion, let the agent handle most rotation automatically
+            // For non-root motion, handle rotation manually with special logic for attacks
+            if (!useRootMotion)
             {
-                Quaternion targetRotation = Quaternion.LookRotation(direction);
-                float currentRotationSpeed = 0f;
+                // Always try to face the target, but slower during attack and paused after firing
+                Vector3 direction = (navMeshTarget.position - transform.position).normalized;
+                direction.y = 0;
+                if (direction != Vector3.zero)
+                {
+                    Quaternion targetRotation = Quaternion.LookRotation(direction);
+                    float currentRotationSpeed = 0f;
 
-                // Determine rotation speed based on state
-                if (Time.time < rotationPauseEndTime)
-                {
-                    currentRotationSpeed = 0f;
-                }
-                else if (isAttacking)
-                {
-                    currentRotationSpeed = attackRotationSpeed;
-                }
-                else
-                {
-                    currentRotationSpeed = rotationSpeed;
-                }
+                    // Determine rotation speed based on state
+                    if (Time.time < rotationPauseEndTime)
+                    {
+                        currentRotationSpeed = 0f;
+                    }
+                    else if (isAttacking)
+                    {
+                        currentRotationSpeed = attackRotationSpeed;
+                    }
+                    else
+                    {
+                        currentRotationSpeed = rotationSpeed;
+                    }
 
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
+                }
             }
 
             // Only attack if within range and cooldown is ready
@@ -76,8 +81,9 @@ namespace Enemies
                 !isAttacking && 
                 Time.time >= lastShootTime + shootCooldown)
             {
-                // Only attack if we're facing the target (within 45 degrees)
-                float angleToTarget = Vector3.Angle(transform.forward, direction);
+                // Check if we're facing the target (within 45 degrees)
+                Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
+                float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
                 if (angleToTarget <= 45f)
                 {
                     BeginAttackSequence();
@@ -130,7 +136,7 @@ namespace Enemies
             base.BeginAttackSequence();
             
             // Stop movement during attack
-            if (agent != null)
+            if (agent != null && agent.isOnNavMesh)
             {
                 agent.isStopped = true;
                 agent.velocity = Vector3.zero;
@@ -142,9 +148,11 @@ namespace Enemies
             base.EndAttack();
             
             // Resume movement after attack
-            if (agent != null)
+            if (agent != null && agent.isOnNavMesh)
             {
                 agent.isStopped = false;
+                // For root motion, the animation will drive the speed
+                // For non-root motion, speed is already set in the base class
             }
         }
     }

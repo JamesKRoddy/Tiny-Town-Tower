@@ -7,6 +7,27 @@ using Managers;
 
 namespace Enemies
 {
+    /// <summary>
+    /// Enemy base class that provides common functionality for all enemy types.
+    /// Handles movement, targeting, health, and basic AI behaviors.
+    /// 
+    /// NAVIGATION SYSTEM:
+    /// - Uses Unity's NavMesh for pathfinding and obstacle avoidance
+    /// - Supports both traditional NavMesh movement and pure root motion
+    /// - Root motion: Animation drives movement completely, NavMesh agent handles pathfinding + rotation
+    /// - Non-root motion: NavMesh agent drives both movement and turning
+    /// 
+    /// ROOT MOTION CONFIGURATION:
+    /// - Set useRootMotion = true for pure animation-driven movement
+    /// - Agent calculates paths and handles rotation, animation controls speed/movement
+    /// - Character follows animation exactly, staying on NavMesh
+    /// - Excellent animation quality with natural movement patterns
+    /// 
+    /// ANIMATION PARAMETERS:
+    /// - "move": Boolean indicating if the character should be moving
+    /// - "WalkType": Float controlling walk animation (0=idle, 1=moving)
+    /// - Note: Velocity parameters removed - animation drives speed directly
+    /// </summary>
     [RequireComponent(typeof(NavMeshAgent))]
     [RequireComponent(typeof(Animator))]
     public class EnemyBase : MonoBehaviour, IDamageable
@@ -24,6 +45,11 @@ namespace Enemies
         [SerializeField] protected float acceleration = 8f;
         [SerializeField] protected float angularSpeed = 120f;
         [SerializeField] protected float obstacleBoundsOffset = 1f; // Additional distance to add to obstacle bounds
+
+        // Add these fields for better root motion control
+        [Header("Root Motion Settings")]
+        [SerializeField] protected float rootMotionMultiplier = 1f;
+        [SerializeField] protected bool debugRootMotion = false; // Enable to debug teleporting issues
 
         [Header("Health Settings")]
         [SerializeField] private float health = 100f;
@@ -155,39 +181,52 @@ namespace Enemies
             }
         }
 
-        // This method is called by the Animator when root motion is being applied
+                // This method is called by the Animator when root motion is being applied
         protected virtual void OnAnimatorMove()
         {
             if (!useRootMotion || Health <= 0 || !agent.isOnNavMesh) return;
+            
+            Vector3 oldPosition = transform.position;
+            if (debugRootMotion)
+            {
+                Debug.Log($"[{gameObject.name}] OnAnimatorMove - Old Pos: {oldPosition}, Root Delta: {animator.deltaPosition}");
+            }
 
-            // Get the root motion delta (movement from animation)
-            Vector3 rootMotion = animator.deltaPosition;
-            rootMotion.y = 0; // We don't want to apply any vertical movement (gravity, etc.)
-
-            // Calculate the new position
+            // Pure root motion approach: Animation drives movement completely
+            Vector3 rootMotion = animator.deltaPosition * rootMotionMultiplier;
+            rootMotion.y = 0; // Ignore vertical movement from animation
+            
+            // Calculate new position based purely on root motion
             Vector3 newPosition = transform.position + rootMotion;
-
-            // Sample the NavMesh with a larger radius to ensure we stay on it
+            
+            // Only ensure we stay on the NavMesh - don't constrain to agent position
             if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
             {
-                // Move the enemy using root motion
                 transform.position = hit.position;
                 
-                // Update agent's position to match with root motion
+                // Update the agent's position to follow the character (not the other way around)
                 agent.nextPosition = hit.position;
-            }
-            else if (NavMesh.FindClosestEdge(transform.position, out NavMeshHit edgeHit, NavMesh.AllAreas))
-            {
-                // Move to the nearest valid position
-                transform.position = edgeHit.position;
-                agent.Warp(edgeHit.position);
             }
             else
             {
-                // If we can't find any valid position, disable root motion temporarily
-                useRootMotion = false;
-                agent.updatePosition = true;
-                agent.updateRotation = true;
+                // If we can't find a valid NavMesh position, try a smaller step
+                Vector3 smallerStep = transform.position + rootMotion * 0.5f;
+                if (NavMesh.SamplePosition(smallerStep, out NavMeshHit smallerHit, 1.0f, NavMesh.AllAreas))
+                {
+                    transform.position = smallerHit.position;
+                    agent.nextPosition = smallerHit.position;
+                }
+                // If still no valid position, don't move this frame (stay where we are)
+            }
+            
+            if (debugRootMotion)
+            {
+                Vector3 newPos = transform.position;
+                float distanceMoved = Vector3.Distance(oldPosition, newPos);
+                if (distanceMoved > 2f) // Only log if we moved a significant distance
+                {
+                    Debug.LogWarning($"[{gameObject.name}] Large movement detected! Distance: {distanceMoved}, Old: {oldPosition}, New: {newPos}");
+                }
             }
         }
 
@@ -207,8 +246,19 @@ namespace Enemies
             agent.speed = movementSpeed;
             agent.acceleration = acceleration;
             agent.angularSpeed = angularSpeed;
-            agent.updateRotation = true;
             agent.updateUpAxis = false;
+            
+            // Configure for root motion if enabled
+            if (useRootMotion)
+            {
+                agent.updatePosition = false;  // Root motion drives position
+                agent.updateRotation = true;   // Agent drives rotation for pathfinding
+            }
+            else
+            {
+                agent.updatePosition = true;   // Agent drives position
+                agent.updateRotation = true;   // Agent drives rotation
+            }
         }
 
         private void SetupMaterialFlash()
@@ -231,17 +281,25 @@ namespace Enemies
 
         protected virtual void SetupRootMotion()
         {
-            agent.updatePosition = false;
-            agent.updateRotation = true;
+            // Configuration is now handled in SetupNavMeshAgent()
             
+            // Ensure the character is on the NavMesh
             if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 2.0f, NavMesh.AllAreas))
             {
-                transform.position = hit.position;
-                agent.Warp(hit.position);
+                // Only move if we're not already very close to a valid position
+                if (Vector3.Distance(transform.position, hit.position) > 0.1f)
+                {
+                    transform.position = hit.position;
+                    agent.Warp(hit.position);
+                    Debug.Log($"Enemy {gameObject.name} moved to valid NavMesh position: {hit.position}");
+                }
             }
             else
             {
                 Debug.LogWarning($"Enemy {gameObject.name} could not be placed on NavMesh at spawn position {transform.position}");
+                // If we can't place on NavMesh, disable root motion
+                useRootMotion = false;
+                SetupNavMeshAgent(); // Reconfigure agent without root motion
             }
         }
 
@@ -260,13 +318,48 @@ namespace Enemies
             // Update the destination continuously
             agent.SetDestination(navMeshTarget.position);
             
+            // Update animation parameters based on agent velocity
+            UpdateAnimationParameters();
+            
             // Check if we're stuck (not moving towards target)
             CheckIfStuck();
             
-            // Handle rotation towards target
-            UpdateRotation();
+            // Handle rotation towards target (only if not using root motion, as agent handles rotation)
+            if (!useRootMotion)
+            {
+                UpdateRotation();
+            }
         }
 
+        private void UpdateAnimationParameters()
+        {
+            if (animator == null) return;
+            
+            bool shouldMove = false;
+            
+            if (useRootMotion)
+            {
+                // For root motion, determine movement based on whether we have a target and aren't attacking
+                // The animation will drive the actual speed - we just tell it whether to move or not
+                if (navMeshTarget != null && !isAttacking)
+                {
+                    float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
+                    float effectiveStoppingDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, stoppingDistance, obstacleBoundsOffset);
+                    
+                    // Only move if we're not already at the target
+                    shouldMove = distanceToTarget > effectiveStoppingDistance;
+                }
+            }
+            else
+            {
+                // For non-root motion, use agent's actual velocity
+                shouldMove = agent.velocity.magnitude > 0.1f;
+            }
+            
+            // Set walk type based on movement (this is what RandomZombieAnimation uses)
+            animator.SetFloat("WalkType", shouldMove ? 1f : 0f);
+        }
+        
         private void UpdateRotation()
         {
             if (navMeshTarget == null) return;
@@ -289,7 +382,15 @@ namespace Enemies
             {
                 float distanceMoved = Vector3.Distance(transform.position, lastPosition);
                 
-                if (distanceMoved < stuckThreshold && agent.velocity.magnitude < 0.1f)
+                // For root motion, only check if we haven't moved physically
+                // For non-root motion, also check agent velocity
+                bool isStuck = distanceMoved < stuckThreshold;
+                if (!useRootMotion)
+                {
+                    isStuck = isStuck && agent.velocity.magnitude < 0.1f;
+                }
+                
+                if (isStuck && navMeshTarget != null)
                 {
                     AttemptToGetUnstuck();
                 }
@@ -595,9 +696,18 @@ namespace Enemies
                 float t = elapsed / duration;
                 Vector3 newPosition = Vector3.Lerp(startPosition, targetPosition, t);
                 
-                if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 0.1f, NavMesh.AllAreas))
+                if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 0.5f, NavMesh.AllAreas))
                 {
-                    agent.Warp(hit.position);
+                    if (useRootMotion)
+                    {
+                        // For root motion, just move the transform - the agent will catch up
+                        transform.position = hit.position;
+                    }
+                    else
+                    {
+                        // For non-root motion, use agent.Warp
+                        agent.Warp(hit.position);
+                    }
                 }
                 
                 yield return null;
