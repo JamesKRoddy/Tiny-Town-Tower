@@ -32,7 +32,8 @@ public class PlayerUIManager : MonoBehaviour
     }
 
     [Header("Debug Menu References")]
-    public DebugMenu debugMenu;
+    public CampWaveDebugMenu campWaveDebugMenu;
+    public RoomDebugMenu roomDebugMenu;
 
     [Header("UI References")]
     [SerializeField, ReadOnly] public MenuBase currentMenu;
@@ -95,20 +96,44 @@ public class PlayerUIManager : MonoBehaviour
     private void Update()
     {
         #if UNITY_EDITOR
-        // Keyboard shortcut to open debug menu (F1)
+        // F1 - Wave Debug Menu
         if (Input.GetKeyDown(KeyCode.F1))
         {
-            if (debugMenu != null && !debugMenu.gameObject.activeInHierarchy)
-            {
-                debugMenu.gameObject.SetActive(true);
-            }
-            else if (debugMenu != null && debugMenu.gameObject.activeInHierarchy)
-            {
-                debugMenu.gameObject.SetActive(false);
-            }
+            ToggleDebugMenu(campWaveDebugMenu);
+        }
+        
+        // F2 - Room Debug Menu
+        if (Input.GetKeyDown(KeyCode.F2))
+        {
+            ToggleDebugMenu(roomDebugMenu);
         }
         #endif
     }
+    
+    #if UNITY_EDITOR
+    private void ToggleDebugMenu(MonoBehaviour menu)
+    {
+        if (menu != null)
+        {
+            if (!menu.gameObject.activeInHierarchy)
+            {
+                // Hide other debug menus first
+                HideAllDebugMenus();
+                menu.gameObject.SetActive(true);
+            }
+            else
+            {
+                menu.gameObject.SetActive(false);
+            }
+        }
+    }
+    
+    private void HideAllDebugMenus()
+    {
+        if (campWaveDebugMenu != null) campWaveDebugMenu.gameObject.SetActive(false);
+        if (roomDebugMenu != null) roomDebugMenu.gameObject.SetActive(false);
+    }
+    #endif
 
     /// <summary>
     /// Use this to open any menus
@@ -184,7 +209,10 @@ public class PlayerUIManager : MonoBehaviour
         settlerNPCMenu.SetScreenActive(false);
         geneticMutationMenu.SetScreenActive(false);
         utilityMenu.SetScreenActive(false);
-        debugMenu.gameObject.SetActive(false);
+        
+        #if UNITY_EDITOR
+        HideAllDebugMenus();
+        #endif
     }
 
     public void HidePauseMenus()

@@ -133,7 +133,7 @@ namespace Managers
             return newPosition;
         }
 
-        private void SpawnRoom(BuildingType buildingType, Vector3 position)
+        public void SpawnRoom(BuildingType buildingType, Vector3 position)
         {
             // Store the current player spawn point before creating the new building
             if (currentRoomParent != null)
@@ -229,6 +229,14 @@ namespace Managers
             lastPlayerSpawnPoint = Vector3.zero;
             placedRooms.Clear();
             DifficultyManager.Instance.ResetDifficulty();
+        }
+
+        public void ClearDebugState()
+        {
+            currentRoomParent = null;
+            spawnedRooms.Clear();
+            placedRooms.Clear();
+            Debug.Log("[BuildingManager] Debug state cleared");
         }
     }
 } 

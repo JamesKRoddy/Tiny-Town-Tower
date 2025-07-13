@@ -149,11 +149,13 @@ MonoBehaviour:
   doors: []
   chests: []
   roomBounds:
-    m_Center: {x: -0.000009536743, y: 2.25, z: 10.153015}
-    m_Extent: {x: 11, y: 3.5, z: 1.4730148}
+    m_Center: {x: 19.750017, y: 1.125, z: -9.99949}
+    m_Extent: {x: 1.25, y: 2.125, z: 1.1255102}
   autoCalculateBounds: 1
   boundsPadding: 2
-  showDebugInfo: 1
+  showRoomBounds: 1
+  connectionTolerance: 15
+  showConnectionDebug: 0
 --- !u!1 &5466462518210956541
 GameObject:
   m_ObjectHideFlags: 0

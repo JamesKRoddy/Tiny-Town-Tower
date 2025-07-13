@@ -184,6 +184,7 @@ Transform:
   - {fileID: 3868888678722008520}
   - {fileID: 2211646702075191331}
   - {fileID: 6739254822893265709}
+  - {fileID: 6955620494822992172}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6303821086052416740
@@ -294,6 +295,52 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 83115b41ecc29d44284ef52b7551852a, type: 2}
   - {fileID: 11400000, guid: e917dc6f66606014dbfa9cec973cd6f3, type: 2}
   poolSize: 20
+--- !u!1 &2832878052533813605
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6955620494822992172}
+  - component: {fileID: 8507678153877644282}
+  m_Layer: 0
+  m_Name: DebugMenuManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6955620494822992172
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2832878052533813605}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4686915863895893509}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8507678153877644282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2832878052533813605}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7168f29d1d254b74ea8cb69c81f3cb05, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableDebugMenus: 1
+  registeredMenus: []
 --- !u!1 &3286751178416191525
 GameObject:
   m_ObjectHideFlags: 0
@@ -474,7 +521,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26c2b1d435a05d44f819fc1fa1cf1cba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buildingForAssignment: {fileID: 0}
 --- !u!1 &5084882977589491775
 GameObject:
   m_ObjectHideFlags: 0
@@ -583,6 +629,8 @@ MonoBehaviour:
   sharedGridSize: 2
   showSharedGridBounds: 1
   waveEndCheckInterval: 2
+  waveLoopDelay: 5
+  maxWavesPerLoop: 3
 --- !u!1 &5361118978591634034
 GameObject:
   m_ObjectHideFlags: 0

@@ -14,6 +14,10 @@ public class RogueLiteRoom : MonoBehaviour
     [SerializeField] private float boundsPadding = 2f;
     [SerializeField] private bool showRoomBounds = true;
     
+    [Header("Room Connection Settings")]
+    [SerializeField] private float connectionTolerance = 15f; // Allow up to 15% overlap for connections
+    [SerializeField] private bool showConnectionDebug = false;
+    
     private Collider[] roomColliders;
     private bool boundsCalculated = false;
     
@@ -99,7 +103,7 @@ public class RogueLiteRoom : MonoBehaviour
     }
     
     /// <summary>
-    /// Check if this room would overlap with another room at the given position
+    /// Check if this room would overlap excessively with another room at the given position
     /// </summary>
     public bool WouldOverlapWith(RogueLiteRoom otherRoom, Vector3 thisPosition)
     {
@@ -110,18 +114,72 @@ public class RogueLiteRoom : MonoBehaviour
         
         Bounds otherBounds = otherRoom.GetWorldBounds();
         
-        return thisBounds.Intersects(otherBounds);
+        // Allow some overlap for connections
+        if (thisBounds.Intersects(otherBounds))
+        {
+            float overlapPercentage = CalculateOverlapPercentage(thisBounds, otherBounds);
+            bool wouldOverlap = overlapPercentage > connectionTolerance;
+            
+            if (showConnectionDebug)
+            {
+                Debug.Log($"[RoomConnection] {gameObject.name} vs {otherRoom.gameObject.name}: {overlapPercentage:F1}% overlap " +
+                         $"(tolerance: {connectionTolerance}%) -> {(wouldOverlap ? "BLOCKED" : "ALLOWED")}");
+            }
+            
+            return wouldOverlap;
+        }
+        
+        return false; // No intersection at all
     }
     
     /// <summary>
-    /// Check if this room would overlap with any bounds at the given position
+    /// Check if this room would overlap excessively with any bounds at the given position
     /// </summary>
     public bool WouldOverlapWith(Bounds otherBounds, Vector3 thisPosition)
     {
         Bounds thisBounds = GetWorldBounds();
         thisBounds.center = thisPosition;
         
-        return thisBounds.Intersects(otherBounds);
+        // Allow some overlap for connections
+        if (thisBounds.Intersects(otherBounds))
+        {
+            float overlapPercentage = CalculateOverlapPercentage(thisBounds, otherBounds);
+            return overlapPercentage > connectionTolerance;
+        }
+        
+        return false; // No intersection at all
+    }
+    
+    /// <summary>
+    /// Calculate the percentage of overlap between two bounds
+    /// </summary>
+    private float CalculateOverlapPercentage(Bounds bounds1, Bounds bounds2)
+    {
+        // Calculate the intersection bounds
+        Vector3 intersectionMin = Vector3.Max(bounds1.min, bounds2.min);
+        Vector3 intersectionMax = Vector3.Min(bounds1.max, bounds2.max);
+        
+        // If no intersection, return 0
+        if (intersectionMin.x >= intersectionMax.x || 
+            intersectionMin.y >= intersectionMax.y || 
+            intersectionMin.z >= intersectionMax.z)
+        {
+            return 0f;
+        }
+        
+        // Calculate intersection volume
+        Vector3 intersectionSize = intersectionMax - intersectionMin;
+        float intersectionVolume = intersectionSize.x * intersectionSize.y * intersectionSize.z;
+        
+        // Calculate volumes of both bounds
+        float volume1 = bounds1.size.x * bounds1.size.y * bounds1.size.z;
+        float volume2 = bounds2.size.x * bounds2.size.y * bounds2.size.z;
+        
+        // Calculate overlap percentage relative to the smaller room
+        float smallerVolume = Mathf.Min(volume1, volume2);
+        float overlapPercentage = (intersectionVolume / smallerVolume) * 100f;
+        
+        return overlapPercentage;
     }
     
     /// <summary>
