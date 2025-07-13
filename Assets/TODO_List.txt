@@ -2,8 +2,6 @@
 
 
 Tomorrow work:
-Debug menu setup, assign vars for room debug menu
-Review overlapping room fix
 Enemy nav and animation fixes
 Go through todo below and bugs to see if any are fixed
 Start setting up the player progression manager? Use this to keep track of what the player has unlocked
