@@ -25,6 +25,9 @@ namespace Enemies
         [SerializeField] private EffectDefinition vomitProjectileEffect;
         [SerializeField] private EffectDefinition vomitPoolEffect;
 
+        // Store the target position when attack begins
+        private Vector3 attackTargetPosition;
+
         protected override void Awake()
         {
             base.Awake();
@@ -90,37 +93,12 @@ namespace Enemies
         // Called by animation event
         public void RangedAttack()
         {
+            Debug.Log($"[{gameObject.name}] RangedAttack called");
             // Don't attack if dead
             if (Health <= 0) return;
-            // Validate attack using base class method
-            if (!ValidateAttack(maxAttackRange, RANGED_ATTACK_ANGLE_THRESHOLD, out float distanceToTarget, out float angleToTarget))
-            {
-                if (navMeshTarget == null)
-                {
-                    Debug.Log($"[RangedZombie] {gameObject.name}: No target - aborting attack");
-                }
-                else if (!IsTargetStillValid(navMeshTarget))
-                {
-                    Debug.Log($"[RangedZombie] {gameObject.name}: Target {navMeshTarget.name} invalid - aborting attack");
-                }
-                else
-                {
-                    Debug.Log($"[RangedZombie] {gameObject.name} → {navMeshTarget.name}: " +
-                             $"Dist={distanceToTarget:F1}, Angle={angleToTarget:F1}° VALIDATION_FAIL");
-                }
-                return;
-            }
-
-            // Additional range check for ranged attacks (min distance)
-            if (distanceToTarget < minAttackRange)
-            {
-                Debug.Log($"[RangedZombie] {gameObject.name} → {navMeshTarget.name}: " +
-                         $"Dist={distanceToTarget:F1} < {minAttackRange:F1} TOO_CLOSE");
-                return;
-            }
-
-            // Calculate direction to target
-            Vector3 direction = (navMeshTarget.position - transform.position).normalized;
+            
+            // Always fire in the direction we were aiming when the attack started
+            Vector3 direction = (attackTargetPosition - transform.position).normalized;
             
             // Play the vomit projectile effect and get the spawned GameObject
             GameObject projectileObj = EffectManager.Instance.PlayEffect(
@@ -137,12 +115,12 @@ namespace Enemies
                 ZombieVomitProjectile projectile = projectileObj.GetComponent<ZombieVomitProjectile>();
                 if (projectile != null)
                 {
-                    projectile.Initialize(navMeshTarget.position, rangedDamage, vomitPoolEffect);
+                    projectile.Initialize(attackTargetPosition, rangedDamage, vomitPoolEffect);
                 }
                 else
                 {
                     projectile = projectileObj.AddComponent<ZombieVomitProjectile>();
-                    projectile.Initialize(navMeshTarget.position, rangedDamage, vomitPoolEffect);
+                    projectile.Initialize(attackTargetPosition, rangedDamage, vomitPoolEffect);
                     Debug.LogWarning("ZombieVomitProjectile component not found on spawned projectile, added it to the projectile object");
                 }
             }
@@ -176,6 +154,12 @@ namespace Enemies
         protected override void BeginAttackSequence()
         {
             base.BeginAttackSequence();
+            
+            // Store the target position when attack begins
+            if (navMeshTarget != null)
+            {
+                attackTargetPosition = navMeshTarget.position;
+            }
             
             // Stop movement during attack
             if (agent != null && agent.isOnNavMesh)
