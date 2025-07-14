@@ -485,8 +485,6 @@ namespace Enemies
             // Use CampManager's cached target system for efficiency
             CampManager.Instance.GetCategorizedTargets(npcTargets, buildingTargets);
             
-
-            
             // Simple priority: NPCs > Buildings (including turrets)
             Transform target = FindClosestReachableTarget(npcTargets);
             if (target != null) 

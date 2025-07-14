@@ -390,18 +390,21 @@ namespace Managers
             {
                 if (target == null || target.Health <= 0) continue;
                 
+                // Check if the target is still active in the scene (this will filter out NPCs in bunkers)
+                if (target is MonoBehaviour mb && !mb.gameObject.activeInHierarchy) continue;
+                
                 if (target is HumanCharacterController npc && npc != PlayerController.Instance._possessedNPC)
                 {
-                    if (target is MonoBehaviour mb)
+                    if (target is MonoBehaviour mbNpc)
                     {
-                        npcTargets.Add(mb.transform);
+                        npcTargets.Add(mbNpc.transform);
                     }
                 }
                 else if (target is IPlaceableStructure)
                 {
-                    if (target is MonoBehaviour mb)
+                    if (target is MonoBehaviour mbBuilding)
                     {
-                        buildingTargets.Add(mb.transform);
+                        buildingTargets.Add(mbBuilding.transform);
                     }
                 }
             }

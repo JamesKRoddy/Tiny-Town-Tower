@@ -163,7 +163,7 @@ public static class NavigationUtils
     /// <returns>True if the agent has reached the target</returns>
     public static bool HasReachedDestination(NavMeshAgent agent, Transform target, float baseStoppingDistance, float obstacleBoundsOffset = 1f)
     {
-        if (agent == null || target == null) return false;
+        if (agent == null) return false;
 
         // Check if the agent has reached its destination using NavMeshAgent's built-in logic
         if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
@@ -171,8 +171,20 @@ public static class NavigationUtils
             return true;
         }
 
-        // Also check using our sophisticated distance calculation
+        // For targets without a transform, use the agent's built-in logic only
+        if (target == null)
+        {
+            return !agent.pathPending && agent.remainingDistance <= agent.stoppingDistance;
+        }
+
+        // Also check using our sophisticated distance calculation, but cap it at a reasonable maximum
         float effectiveDistance = CalculateEffectiveReachDistance(agent.transform.position, target, baseStoppingDistance, obstacleBoundsOffset);
+        
+        // Cap the effective distance to prevent issues with very large buildings like bunkers
+        // This ensures NPCs can still reach large buildings without requiring them to be unreasonably close
+        // Set to 6f to accommodate enemy building attack ranges (5f) while still providing reasonable limits
+        effectiveDistance = Mathf.Min(effectiveDistance, 6f);
+        
         float distanceToTarget = Vector3.Distance(agent.transform.position, target.position);
         
         return distanceToTarget <= effectiveDistance;

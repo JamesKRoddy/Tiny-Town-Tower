@@ -97,6 +97,13 @@ namespace Enemies
         {
             if (navMeshTarget == null) return;
 
+            // Check if target is still valid (active, alive, not in bunker, etc.)
+            if (!IsTargetStillValid(navMeshTarget))
+            {
+                Debug.Log($"[RangedZombie] {gameObject.name} target {navMeshTarget.name} is no longer valid - aborting attack");
+                return;
+            }
+
             // Calculate direction to target
             Vector3 direction = (navMeshTarget.position - transform.position).normalized;
             
@@ -129,6 +136,28 @@ namespace Enemies
             rotationPauseEndTime = Time.time + postAttackRotationPause;
             
             Debug.Log("Ranged zombie fired projectile");
+        }
+
+        /// <summary>
+        /// Check if the target is still a valid, attackable target
+        /// </summary>
+        private bool IsTargetStillValid(Transform target)
+        {
+            if (target == null || target.gameObject == null) return false;
+            
+            // Check if the target is still active in the scene (this will catch NPCs in bunkers)
+            if (!target.gameObject.activeInHierarchy) return false;
+            
+            var damageable = target.GetComponent<IDamageable>();
+            if (damageable == null || damageable.Health <= 0) return false;
+            
+            // Special check for walls - they might be destroyed but still have health > 0
+            if (target.GetComponent<WallBuilding>() is WallBuilding wallBuilding)
+            {
+                if (wallBuilding.IsDestroyed || wallBuilding.IsBeingDestroyed) return false;
+            }
+            
+            return damageable.GetAllegiance() == Allegiance.FRIENDLY;
         }
 
         protected override void BeginAttackSequence()

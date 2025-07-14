@@ -144,6 +144,12 @@ namespace Enemies.BossAttacks
                 IDamageable damageable = hitCollider.GetComponent<IDamageable>();
                 if (damageable != null && damageable.GetAllegiance() == Allegiance.FRIENDLY)
                 {
+                    // Check if the target is still active (this will catch NPCs in bunkers)
+                    if (!hitCollider.gameObject.activeInHierarchy)
+                    {
+                        continue; // Skip inactive targets (like NPCs in bunkers)
+                    }
+                    
                     damageable.TakeDamage(damageAmount, transform);
                     // Play hit effect at the point of impact
                     Vector3 hitPoint = hitCollider.ClosestPoint(attackPosition);
