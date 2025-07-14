@@ -25,8 +25,8 @@ namespace Enemies
     /// 
     /// ANIMATION PARAMETERS:
     /// - "move": Boolean indicating if the character should be moving
-    /// - "WalkType": Float controlling walk animation (0=idle, 1=moving)
-    /// - Note: Velocity parameters removed - animation drives speed directly
+    /// - "Speed": Float controlling walk animation (0=idle, 1=full speed)
+    /// - Note: Speed is normalized based on NavMeshAgent velocity
     /// </summary>
     [RequireComponent(typeof(NavMeshAgent))]
     [RequireComponent(typeof(Animator))]
@@ -168,7 +168,14 @@ namespace Enemies
         protected virtual void Update()
         {
             // Don't do anything if dead
-            if (Health <= 0) return;
+            if (Health <= 0) 
+            {
+                if (Time.frameCount % 60 == 0) // Log every 60 frames to avoid spam
+                {
+                    Debug.Log($"[{gameObject.name}] Update called while dead! Health: {Health}");
+                }
+                return;
+            }
 
             // If no target, periodically check for new targets
             if (navMeshTarget == null)
@@ -193,11 +200,18 @@ namespace Enemies
             }
         }
 
-                // This method is called by the Animator when root motion is being applied
+        // This method is called by the Animator when root motion is being applied
         protected virtual void OnAnimatorMove()
         {
-            if (!useRootMotion || Health <= 0 || !agent.isOnNavMesh) return;
-            
+            if (!useRootMotion || Health <= 0 || !agent.isOnNavMesh) 
+            {
+                if (Health <= 0 && Time.frameCount % 60 == 0) // Log every 60 frames for dead zombies
+                {
+                    Debug.Log($"[{gameObject.name}] OnAnimatorMove called while dead! Health: {Health}, useRootMotion: {useRootMotion}");
+                }
+                return;
+            }
+
             Vector3 oldPosition = transform.position;
             if (debugRootMotion)
             {
@@ -207,10 +221,10 @@ namespace Enemies
             // Pure root motion approach: Animation drives movement completely
             Vector3 rootMotion = animator.deltaPosition * rootMotionMultiplier;
             rootMotion.y = 0; // Ignore vertical movement from animation
-            
+
             // Calculate new position based purely on root motion
             Vector3 newPosition = transform.position + rootMotion;
-            
+
             // Only ensure we stay on the NavMesh - don't constrain to agent position
             if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
             {
@@ -224,10 +238,10 @@ namespace Enemies
                 // If we can't find a valid NavMesh position, try a smaller step
                 Vector3 smallerStep = transform.position + rootMotion * 0.5f;
                 if (NavMesh.SamplePosition(smallerStep, out NavMeshHit smallerHit, 1.0f, NavMesh.AllAreas))
-                {
+            {
                     transform.position = smallerHit.position;
                     agent.nextPosition = smallerHit.position;
-                }
+            }
                 // If still no valid position, don't move this frame (stay where we are)
             }
             
@@ -295,9 +309,9 @@ namespace Enemies
             {
                 // Only move if we're not already very close to a valid position
                 if (Vector3.Distance(transform.position, hit.position) > MOVEMENT_VELOCITY_THRESHOLD)
-                {
-                    transform.position = hit.position;
-                    agent.Warp(hit.position);
+            {
+                transform.position = hit.position;
+                agent.Warp(hit.position);
                     Debug.Log($"Enemy {gameObject.name} moved to valid NavMesh position: {hit.position}");
                 }
             }
@@ -318,6 +332,35 @@ namespace Enemies
         {
             if (navMeshTarget == null) return;
             
+            // For root motion zombies, check if we should stop the agent
+            if (useRootMotion)
+            {
+                float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
+                float effectiveAttackDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, stoppingDistance, obstacleBoundsOffset);
+                
+                // Stop agent when in attack range or during attack phases
+                // But maintain a minimum distance to prevent spinning
+                float minDistance = 1.0f;
+                bool shouldStop = (distanceToTarget <= effectiveAttackDistance && distanceToTarget >= minDistance) || isAttacking || isRotatingToAttack;
+                
+                if (shouldStop)
+                {
+                    if (!agent.isStopped)
+                    {
+                        agent.isStopped = true;
+                        agent.velocity = Vector3.zero;
+                    }
+                }
+                else
+                {
+                    // Resume movement when out of attack range or too close
+                    if (agent.isStopped)
+                    {
+                        agent.isStopped = false;
+                    }
+                }
+            }
+            
             // Update the destination continuously
             agent.SetDestination(navMeshTarget.position);
             
@@ -327,7 +370,8 @@ namespace Enemies
             // Check if we're stuck (not moving towards target)
             CheckIfStuck();
             
-            // Handle rotation towards target (only if not using root motion)
+            // For root motion, let Unity handle rotation automatically
+            // For non-root motion, manually handle rotation
             if (!useRootMotion)
             {
                 UpdateRotation();
@@ -338,17 +382,14 @@ namespace Enemies
         {
             if (animator == null) return;
             
-            // Determine if character should be moving
-            bool shouldMove = useRootMotion 
-                ? (navMeshTarget != null && !isAttacking && 
-                   Vector3.Distance(transform.position, navMeshTarget.position) > 
-                   NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, stoppingDistance, obstacleBoundsOffset))
-                : agent.velocity.magnitude > MOVEMENT_VELOCITY_THRESHOLD;
+            // Calculate normalized speed based on agent velocity
+            float velocity = agent.velocity.magnitude;
+            float normalizedSpeed = Mathf.Clamp01(velocity / movementSpeed);
             
-            // Set walk type for animation system
-            animator.SetFloat("WalkType", shouldMove ? 1f : 0f);
+            // Set Speed parameter (0-1 range) based on normalized velocity
+            animator.SetFloat("Speed", normalizedSpeed);
         }
-        
+
         private void UpdateRotation()
         {
             if (navMeshTarget == null) return;
@@ -468,7 +509,7 @@ namespace Enemies
             if (newTarget != null)
             {
                 navMeshTarget = newTarget;
-                animator.SetFloat("WalkType", 1);
+                // Speed will be set by UpdateAnimationParameters based on agent velocity
             }
             else
             {
@@ -483,10 +524,10 @@ namespace Enemies
         {
             if (agent != null)
             {
-                animator.SetFloat("WalkType", 0);
                 agent.ResetPath();
                 agent.isStopped = true;
                 agent.velocity = Vector3.zero;
+                // Speed will be set to 0 by UpdateAnimationParameters when velocity is zero
             }
         }
 
@@ -590,6 +631,7 @@ namespace Enemies
             
             Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
             float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
+            
             return angleToTarget <= ATTACK_READY_ANGLE_THRESHOLD;
         }
 
@@ -600,6 +642,13 @@ namespace Enemies
         protected bool RotateTowardsTargetForAttack()
         {
             if (navMeshTarget == null) return false;
+            
+            // Don't rotate if dead
+            if (Health <= 0) 
+            {
+                Debug.Log($"[{gameObject.name}] RotateTowardsTargetForAttack called while dead! Health: {Health}");
+                return false;
+            }
 
             Vector3 direction = (navMeshTarget.position - transform.position).normalized;
             direction.y = 0;
@@ -758,7 +807,7 @@ namespace Enemies
                     else
                     {
                         // For non-root motion, use agent.Warp
-                        agent.Warp(hit.position);
+                    agent.Warp(hit.position);
                     }
                 }
                 
@@ -768,16 +817,23 @@ namespace Enemies
 
         public void Die()
         {
+            Debug.Log($"[{gameObject.name}] Die() called! Health: {Health}");
+            
             OnDeath?.Invoke();
             
             // Play death animation
             if (animator != null)
             {
+                Debug.Log($"[{gameObject.name}] Setting death animation and disabling root motion. applyRootMotion before: {animator.applyRootMotion}");
                 animator.SetTrigger("Dead");
+                // Disable root motion to prevent dead zombies from rotating
+                animator.applyRootMotion = false;
+                Debug.Log($"[{gameObject.name}] applyRootMotion after: {animator.applyRootMotion}");
             }
             
             // Disable components
             isAttacking = false;
+            isRotatingToAttack = false; // Stop any rotation attempts
             agent.enabled = false;
             GetComponent<Collider>().enabled = false;
 
@@ -806,6 +862,9 @@ namespace Enemies
             Health = Mathf.Min(Health + amount, MaxHealth);
         }
 
+        /// <summary>
+        /// Called from the animator to flash the material when the enemy is attacking
+        /// </summary>
         public void AttackWarning()
         {
             if (skinnedMeshRenderer != null)
@@ -825,7 +884,7 @@ namespace Enemies
         {
             navMeshTarget = navAgentTarget;
         }
-        
+
         /// <summary>
         /// Sets the destination for the NavMesh agent
         /// </summary>

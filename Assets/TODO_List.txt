@@ -3,7 +3,7 @@
 
 Tomorrow work:
 Redo zombie animations
-Do finishing bits on the spitter enemy, build 2 more after. the boomer that explodes near the player and the one that splits into smaller enemies
+Do finishing bits on the spitter enemy (doesn't fire the projectile if the player is too far away), build 2 more after. the boomer that explodes near the player and the one that splits into smaller enemies
 Go through todo below and bugs to see if any are fixed
 Start setting up the player progression manager? Use this to keep track of what the player has unlocked
 
@@ -25,13 +25,14 @@ Setup some new enemies: Boomer that runs towards you and explodes (elemental  va
 
 
 Extras:
-Instead of spawning enemies from the same points, add in code to select randow points on the nave mesh to spawn, spawn points!!!
+Instead of spawning enemies from the same points, add in code to select random points on the nave mesh to spawn, spawn points!!!
 Implement a day/night cycle for the entire game.
 Figure out what happens in the camp while youre gone, does progress on stuff freeze? Does it keep going or does it progress but slower?
 Swap out basic enemy animations for better ones.
 Have to review the enemy nav agent and root motion animation link because it is not good.
 Enemy animator walk types and idle is super janky, specifically around not having targets then finding a new target, need a better way of organizing that.
 Trash spawning in camp should take up spaces on the grid
+Goal at the the start just says survive, recruit 10 survivours
 
 
 

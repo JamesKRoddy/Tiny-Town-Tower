@@ -51,6 +51,9 @@ namespace Enemies.BossAttacks
         /// </summary>
         public void StartJump()
         {
+            // Don't jump if dead
+            if (boss != null && boss.Health <= 0) return;
+            
             if (target == null)
             {
                 Debug.LogWarning("[BossJumpAttack] StartJump failed: target is null");

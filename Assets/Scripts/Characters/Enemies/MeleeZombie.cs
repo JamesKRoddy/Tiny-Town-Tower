@@ -7,7 +7,7 @@ namespace Enemies
         #region Constants
         
         // Use the attack-ready threshold from base class for validation
-        private const float MELEE_ATTACK_ANGLE_THRESHOLD = 5f; // Now using stricter threshold
+        private const float MELEE_ATTACK_ANGLE_THRESHOLD = 45f; // Now using stricter threshold
         
         #endregion
         
@@ -20,6 +20,9 @@ namespace Enemies
         // Called by animation event or timing logic
         public void MeleeAttack()
         {
+            // Don't attack if dead
+            if (Health <= 0) return;
+            
             // Use building-specific attack range if attacking a building, otherwise use normal attack range
             float currentAttackRange = attackRange;
             if (navMeshTarget != null && navMeshTarget.GetComponent<Building>() != null)

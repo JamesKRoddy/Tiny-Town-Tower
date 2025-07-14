@@ -39,39 +39,8 @@ namespace Enemies
             // Debug distance and attack state
             Debug.DrawLine(transform.position, navMeshTarget.position, Color.yellow);
 
-            // Handle movement speed adjustment for non-root motion
-            HandleMovementSpeed(distanceToTarget, effectiveAttackDistance);
-
-            // Handle attack logic
+            // Handle attack logic first
             HandleAttackLogic(distanceToTarget, effectiveAttackDistance);
-        }
-
-        /// <summary>
-        /// Handles movement speed adjustment for non-root motion zombies based on distance to target
-        /// </summary>
-        private void HandleMovementSpeed(float distanceToTarget, float effectiveAttackDistance)
-        {
-            // For root motion, we don't manually adjust agent speed - the animation drives movement
-            // The agent handles pathfinding and turning, animation handles forward movement
-            // Also stop movement during rotation-to-attack phase and during attacks
-            if (useRootMotion || isAttacking || isRotatingToAttack) return;
-
-            if (distanceToTarget <= effectiveAttackDistance)
-            {
-                // Stop completely when in attack range or preparing to attack
-                agent.speed = 0f;
-            }
-            else if (distanceToTarget <= approachDistance)
-            {
-                // Slow down when approaching attack range
-                float speedFactor = (distanceToTarget - effectiveAttackDistance) / (approachDistance - effectiveAttackDistance);
-                agent.speed = originalSpeed * speedFactor;
-            }
-            else
-            {
-                // Normal speed when far away
-                agent.speed = originalSpeed;
-            }
         }
 
         /// <summary>
@@ -83,6 +52,21 @@ namespace Enemies
             if (distanceToTarget > effectiveAttackDistance || isAttacking || Time.time < lastAttackTime + attackCooldown)
             {
                 isRotatingToAttack = false; // Stop rotation phase if out of range
+                return;
+            }
+
+            // Prevent getting too close to the target (causes spinning during attack animation)
+            float minDistance = 1.0f; // Minimum distance to maintain
+            if (distanceToTarget < minDistance)
+            {
+                // Move away from target slightly
+                Vector3 directionFromTarget = (transform.position - navMeshTarget.position).normalized;
+                Vector3 targetPosition = navMeshTarget.position + directionFromTarget * minDistance;
+                
+                // Set destination to move away
+                agent.isStopped = false;
+                agent.SetDestination(targetPosition);
+                isRotatingToAttack = false;
                 return;
             }
 

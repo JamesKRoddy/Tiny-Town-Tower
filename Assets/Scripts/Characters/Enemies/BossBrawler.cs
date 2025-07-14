@@ -31,7 +31,7 @@ namespace Enemies
                         agent.stoppingDistance = Mathf.Max(attack.range, effectiveAttackDistance);
                         
                         BeginAttackSequence();
-                        animator.SetFloat("WalkType", 0);
+                        // Speed will be set to 0 by UpdateAnimationParameters when attacking
                         attack.StartAttack();
                         break;
                     }

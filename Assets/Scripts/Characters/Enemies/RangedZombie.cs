@@ -90,6 +90,8 @@ namespace Enemies
         // Called by animation event
         public void RangedAttack()
         {
+            // Don't attack if dead
+            if (Health <= 0) return;
             // Validate attack using base class method
             if (!ValidateAttack(maxAttackRange, RANGED_ATTACK_ANGLE_THRESHOLD, out float distanceToTarget, out float angleToTarget))
             {
@@ -153,6 +155,13 @@ namespace Enemies
         /// </summary>
         private void HandleRangedRotation()
         {
+            // Don't rotate if dead
+            if (Health <= 0) 
+            {
+                Debug.Log($"[{gameObject.name}] HandleRangedRotation called while dead! Health: {Health}");
+                return;
+            }
+            
             // Simple rotation towards target during normal movement
             Vector3 direction = (navMeshTarget.position - transform.position).normalized;
             direction.y = 0;

@@ -29,7 +29,7 @@ namespace Enemies{
 
         void Start(){
             StartCoroutine(WaitForPlayer());
-            animator.SetFloat("WalkType", 1); //TODO testing purposes
+            // Speed will be set by UpdateAnimationParameters based on agent velocity
         }
         private void InitializeAttacks()
         {
@@ -110,6 +110,9 @@ namespace Enemies{
         // Called by animator events
         public void AttackHit()
         {
+            // Don't attack if dead
+            if (Health <= 0) return;
+            
             if (currentAttack != null)
             {
                 currentAttack.OnAttack();
@@ -119,13 +122,16 @@ namespace Enemies{
         // Called by animator events
         public void AttackEnd()
         {
+            // Don't execute attack end logic if dead
+            if (Health <= 0) return;
+            
             if (currentAttack != null)
             {
                 EndAttack();
                 currentAttack.OnAttackEnd();
                 currentAttack = null;
                 animator.SetInteger("AttackType", 0);
-                animator.SetFloat("WalkType", 1);
+                // Speed will be set by UpdateAnimationParameters based on agent velocity
             }
         }
     }
