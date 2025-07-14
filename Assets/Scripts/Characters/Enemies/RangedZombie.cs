@@ -6,15 +6,20 @@ namespace Enemies
 {
     public class RangedZombie : Zombie
     {
+        #region Constants
+        
+        // Use the attack-ready threshold from base class for validation  
+        private const float RANGED_ATTACK_ANGLE_THRESHOLD = 5f; // Now using stricter threshold
+        private const float PROJECTILE_SPAWN_HEIGHT = 1.5f;
+        
+        #endregion
+        
         [Header("Ranged Attack Settings")]
         [SerializeField] protected float rangedDamage = 15f;
         [SerializeField] protected float shootCooldown = 2f;
         [SerializeField] protected float minAttackRange = 5f;
         [SerializeField] protected float maxAttackRange = 15f;
-        [SerializeField] protected float attackRotationSpeed = 2f;
-        [SerializeField] protected float postAttackRotationPause = 0.5f;
         protected float lastShootTime;
-        protected float rotationPauseEndTime;
 
         [Header("Vomit Effects")]
         [SerializeField] private EffectDefinition vomitProjectileEffect;
@@ -45,34 +50,10 @@ namespace Enemies
 
             float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
 
-            // For root motion, let the agent handle most rotation automatically
-            // For non-root motion, handle rotation manually with special logic for attacks
-            if (!useRootMotion)
+            // Handle rotation for non-root motion - but only when not attacking
+            if (!useRootMotion && !isAttacking && !isRotatingToAttack)
             {
-                // Always try to face the target, but slower during attack and paused after firing
-                Vector3 direction = (navMeshTarget.position - transform.position).normalized;
-                direction.y = 0;
-                if (direction != Vector3.zero)
-                {
-                    Quaternion targetRotation = Quaternion.LookRotation(direction);
-                    float currentRotationSpeed = 0f;
-
-                    // Determine rotation speed based on state
-                    if (Time.time < rotationPauseEndTime)
-                    {
-                        currentRotationSpeed = 0f;
-                    }
-                    else if (isAttacking)
-                    {
-                        currentRotationSpeed = attackRotationSpeed;
-                    }
-                    else
-                    {
-                        currentRotationSpeed = rotationSpeed;
-                    }
-
-                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
-                }
+                HandleRangedRotation();
             }
 
             // Only attack if within range and cooldown is ready
@@ -81,26 +62,58 @@ namespace Enemies
                 !isAttacking && 
                 Time.time >= lastShootTime + shootCooldown)
             {
-                // Check if we're facing the target (within 45 degrees)
-                Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
-                float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
-                if (angleToTarget <= 45f)
+                // Phase 1: Rotation phase - rotate towards target until properly aligned
+                if (!IsReadyToAttack())
+                {
+                    isRotatingToAttack = true;
+                    
+                    // Use faster rotation for attack preparation
+                    RotateTowardsTargetForAttack();
+                    return;
+                }
+
+                // Phase 2: Attack phase - we're properly aligned, execute attack
+                if (isRotatingToAttack || IsReadyToAttack())
                 {
                     BeginAttackSequence();
                     lastShootTime = Time.time;
+                    isRotatingToAttack = false;
                 }
+            }
+            else
+            {
+                // Stop rotation phase if out of range or on cooldown
+                isRotatingToAttack = false;
             }
         }
 
         // Called by animation event
         public void RangedAttack()
         {
-            if (navMeshTarget == null) return;
-
-            // Check if target is still valid (active, alive, not in bunker, etc.)
-            if (!IsTargetStillValid(navMeshTarget))
+            // Validate attack using base class method
+            if (!ValidateAttack(maxAttackRange, RANGED_ATTACK_ANGLE_THRESHOLD, out float distanceToTarget, out float angleToTarget))
             {
-                Debug.Log($"[RangedZombie] {gameObject.name} target {navMeshTarget.name} is no longer valid - aborting attack");
+                if (navMeshTarget == null)
+                {
+                    Debug.Log($"[RangedZombie] {gameObject.name}: No target - aborting attack");
+                }
+                else if (!IsTargetStillValid(navMeshTarget))
+                {
+                    Debug.Log($"[RangedZombie] {gameObject.name}: Target {navMeshTarget.name} invalid - aborting attack");
+                }
+                else
+                {
+                    Debug.Log($"[RangedZombie] {gameObject.name} → {navMeshTarget.name}: " +
+                             $"Dist={distanceToTarget:F1}, Angle={angleToTarget:F1}° VALIDATION_FAIL");
+                }
+                return;
+            }
+
+            // Additional range check for ranged attacks (min distance)
+            if (distanceToTarget < minAttackRange)
+            {
+                Debug.Log($"[RangedZombie] {gameObject.name} → {navMeshTarget.name}: " +
+                         $"Dist={distanceToTarget:F1} < {minAttackRange:F1} TOO_CLOSE");
                 return;
             }
 
@@ -109,7 +122,7 @@ namespace Enemies
             
             // Play the vomit projectile effect and get the spawned GameObject
             GameObject projectileObj = EffectManager.Instance.PlayEffect(
-                transform.position + Vector3.up * 1.5f, // Spawn slightly above the zombie
+                transform.position + Vector3.up * PROJECTILE_SPAWN_HEIGHT, // Spawn slightly above the zombie
                 direction,
                 Quaternion.LookRotation(direction),
                 null,
@@ -131,34 +144,25 @@ namespace Enemies
                     Debug.LogWarning("ZombieVomitProjectile component not found on spawned projectile, added it to the projectile object");
                 }
             }
-
-            // Start rotation pause
-            rotationPauseEndTime = Time.time + postAttackRotationPause;
             
             Debug.Log("Ranged zombie fired projectile");
         }
 
         /// <summary>
-        /// Check if the target is still a valid, attackable target
+        /// Handles basic rotation logic for movement (not attack preparation)
         /// </summary>
-        private bool IsTargetStillValid(Transform target)
+        private void HandleRangedRotation()
         {
-            if (target == null || target.gameObject == null) return false;
-            
-            // Check if the target is still active in the scene (this will catch NPCs in bunkers)
-            if (!target.gameObject.activeInHierarchy) return false;
-            
-            var damageable = target.GetComponent<IDamageable>();
-            if (damageable == null || damageable.Health <= 0) return false;
-            
-            // Special check for walls - they might be destroyed but still have health > 0
-            if (target.GetComponent<WallBuilding>() is WallBuilding wallBuilding)
-            {
-                if (wallBuilding.IsDestroyed || wallBuilding.IsBeingDestroyed) return false;
-            }
-            
-            return damageable.GetAllegiance() == Allegiance.FRIENDLY;
+            // Simple rotation towards target during normal movement
+            Vector3 direction = (navMeshTarget.position - transform.position).normalized;
+            direction.y = 0;
+            if (direction == Vector3.zero) return;
+
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
+
+
 
         protected override void BeginAttackSequence()
         {

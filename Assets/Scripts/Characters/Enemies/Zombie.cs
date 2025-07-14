@@ -6,6 +6,12 @@ namespace Enemies
 {
     public class Zombie : EnemyBase
     {
+        #region Constants
+        
+        private const float MELEE_ATTACK_ANGLE_THRESHOLD = 30f;
+        
+        #endregion
+        
         [Header("Attack Settings")]
         [SerializeField] protected float attackRange = 2f; // Keep reasonable for NPC vs zombie combat
         [SerializeField] protected float attackCooldown = 1.5f;
@@ -26,61 +32,76 @@ namespace Enemies
 
             if (navMeshTarget == null) return;
 
-            // Use the sophisticated distance checking that considers obstacles
-            float effectiveAttackDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, stoppingDistance, obstacleBoundsOffset);
+            // Cache distance calculation to avoid repeated Vector3.Distance calls
             float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
+            float effectiveAttackDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, stoppingDistance, obstacleBoundsOffset);
             
             // Debug distance and attack state
             Debug.DrawLine(transform.position, navMeshTarget.position, Color.yellow);
 
+            // Handle movement speed adjustment for non-root motion
+            HandleMovementSpeed(distanceToTarget, effectiveAttackDistance);
+
+            // Handle attack logic
+            HandleAttackLogic(distanceToTarget, effectiveAttackDistance);
+        }
+
+        /// <summary>
+        /// Handles movement speed adjustment for non-root motion zombies based on distance to target
+        /// </summary>
+        private void HandleMovementSpeed(float distanceToTarget, float effectiveAttackDistance)
+        {
             // For root motion, we don't manually adjust agent speed - the animation drives movement
             // The agent handles pathfinding and turning, animation handles forward movement
-            if (!useRootMotion && !isAttacking)
+            // Also stop movement during rotation-to-attack phase and during attacks
+            if (useRootMotion || isAttacking || isRotatingToAttack) return;
+
+            if (distanceToTarget <= effectiveAttackDistance)
             {
-                // Only adjust speed for non-root motion zombies
-                if (distanceToTarget <= effectiveAttackDistance)
-                {
-                    // Stop completely when in attack range
-                    agent.speed = 0f;
-                }
-                else if (distanceToTarget <= approachDistance)
-                {
-                    // Slow down when approaching attack range
-                    float speedFactor = (distanceToTarget - effectiveAttackDistance) / (approachDistance - effectiveAttackDistance);
-                    agent.speed = originalSpeed * speedFactor;
-                }
-                else
-                {
-                    // Normal speed when far away
-                    agent.speed = originalSpeed;
-                }
+                // Stop completely when in attack range or preparing to attack
+                agent.speed = 0f;
+            }
+            else if (distanceToTarget <= approachDistance)
+            {
+                // Slow down when approaching attack range
+                float speedFactor = (distanceToTarget - effectiveAttackDistance) / (approachDistance - effectiveAttackDistance);
+                agent.speed = originalSpeed * speedFactor;
+            }
+            else
+            {
+                // Normal speed when far away
+                agent.speed = originalSpeed;
+            }
+        }
+
+        /// <summary>
+        /// Handles attack logic with proper rotation-before-attack behavior
+        /// </summary>
+        private void HandleAttackLogic(float distanceToTarget, float effectiveAttackDistance)
+        {
+            // Check for attack range and cooldown
+            if (distanceToTarget > effectiveAttackDistance || isAttacking || Time.time < lastAttackTime + attackCooldown)
+            {
+                isRotatingToAttack = false; // Stop rotation phase if out of range
+                return;
             }
 
-            // Check for attack range and cooldown using effective distance
-            if (distanceToTarget <= effectiveAttackDistance && !isAttacking && Time.time >= lastAttackTime + attackCooldown)
+            // Phase 1: Rotation phase - rotate towards target until properly aligned
+            if (!IsReadyToAttack())
             {
-                // For root motion, the agent handles rotation automatically
-                // For non-root motion, we need to manually rotate
-                if (!useRootMotion)
-                {
-                    // Face the target before attacking
-                    Vector3 direction = (navMeshTarget.position - transform.position).normalized;
-                    direction.y = 0;
-                    if (direction != Vector3.zero)
-                    {
-                        Quaternion targetRotation = Quaternion.LookRotation(direction);
-                        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-                    }
-                }
+                isRotatingToAttack = true;
+                
+                // Rotate towards target (works for both root motion and non-root motion)
+                RotateTowardsTargetForAttack();
+                return;
+            }
 
-                // Check if we're facing the target (within 30 degrees)
-                Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
-                float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
-                if (angleToTarget <= 30f)
-                {
-                    BeginAttackSequence();
-                    lastAttackTime = Time.time;
-                }
+            // Phase 2: Attack phase - we're properly aligned, execute attack
+            if (isRotatingToAttack || IsReadyToAttack())
+            {
+                BeginAttackSequence();
+                lastAttackTime = Time.time;
+                isRotatingToAttack = false;
             }
         }
 

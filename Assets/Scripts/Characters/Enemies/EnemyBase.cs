@@ -32,6 +32,21 @@ namespace Enemies
     [RequireComponent(typeof(Animator))]
     public class EnemyBase : MonoBehaviour, IDamageable
     {
+        #region Constants
+        
+        protected const float DEFAULT_ATTACK_ANGLE_THRESHOLD = 45f;
+        protected const float MOVEMENT_VELOCITY_THRESHOLD = 0.1f;
+        protected const float TARGET_SEARCH_DELAY = 0.2f;
+        protected const float NAVMESH_SAMPLE_DISTANCE = 2.0f;
+        protected const float UNSTUCK_SEARCH_RADIUS = 3f;
+        protected const float KNOCKBACK_SAMPLE_DISTANCE = 0.5f;
+        
+        // Attack rotation constants
+        protected const float ATTACK_READY_ANGLE_THRESHOLD = 5f; // Must be within 5 degrees to attack
+        protected const float ROTATION_TOWARDS_TARGET_SPEED_MULTIPLIER = 3f; // Faster rotation when preparing to attack
+        
+        #endregion
+        
         #region Serialized Fields
         
         [Header("Character Type")]
@@ -63,6 +78,7 @@ namespace Enemies
         protected Animator animator;
         protected Transform navMeshTarget;        
         protected bool isAttacking = false;
+        protected bool isRotatingToAttack = false; // New state for rotation phase before attack
         protected float damage;
 
         // Material flash effect
@@ -275,10 +291,10 @@ namespace Enemies
             // Configuration is now handled in SetupNavMeshAgent()
             
             // Ensure the character is on the NavMesh
-            if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 2.0f, NavMesh.AllAreas))
+            if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, NAVMESH_SAMPLE_DISTANCE, NavMesh.AllAreas))
             {
                 // Only move if we're not already very close to a valid position
-                if (Vector3.Distance(transform.position, hit.position) > 0.1f)
+                if (Vector3.Distance(transform.position, hit.position) > MOVEMENT_VELOCITY_THRESHOLD)
                 {
                     transform.position = hit.position;
                     agent.Warp(hit.position);
@@ -327,7 +343,7 @@ namespace Enemies
                 ? (navMeshTarget != null && !isAttacking && 
                    Vector3.Distance(transform.position, navMeshTarget.position) > 
                    NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, stoppingDistance, obstacleBoundsOffset))
-                : agent.velocity.magnitude > 0.1f;
+                : agent.velocity.magnitude > MOVEMENT_VELOCITY_THRESHOLD;
             
             // Set walk type for animation system
             animator.SetFloat("WalkType", shouldMove ? 1f : 0f);
@@ -360,7 +376,7 @@ namespace Enemies
                 bool isStuck = distanceMoved < stuckThreshold;
                 if (!useRootMotion)
                 {
-                    isStuck = isStuck && agent.velocity.magnitude < 0.1f;
+                    isStuck = isStuck && agent.velocity.magnitude < MOVEMENT_VELOCITY_THRESHOLD;
                 }
                 
                 if (isStuck && navMeshTarget != null)
@@ -379,8 +395,8 @@ namespace Enemies
             
             for (int i = 0; i < 8; i++)
             {
-                float angle = i * 45f * Mathf.Deg2Rad;
-                Vector3 offset = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * 3f;
+                float angle = i * DEFAULT_ATTACK_ANGLE_THRESHOLD * Mathf.Deg2Rad;
+                Vector3 offset = new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)) * UNSTUCK_SEARCH_RADIUS;
                 Vector3 testPosition = navMeshTarget.position + offset;
                 
                 NavMeshPath testPath = new NavMeshPath();
@@ -515,11 +531,15 @@ namespace Enemies
         }
 
         /// <summary>
-        /// Check if the target is still a valid, attackable target
+        /// Check if the target is still a valid, attackable target.
+        /// This method is used both for target selection and attack validation.
         /// </summary>
-        private bool IsTargetStillValid(Transform target)
+        protected bool IsTargetStillValid(Transform target)
         {
             if (target == null || target.gameObject == null) return false;
+            
+            // Check if the target is still active in the scene (catches NPCs in bunkers)
+            if (!target.gameObject.activeInHierarchy) return false;
             
             var damageable = target.GetComponent<IDamageable>();
             if (damageable == null || damageable.Health <= 0) return false;
@@ -529,9 +549,6 @@ namespace Enemies
             {
                 if (wallBuilding.IsDestroyed || wallBuilding.IsBeingDestroyed) return false;
             }
-            
-            // Check if the target is still active in the scene
-            if (!target.gameObject.activeInHierarchy) return false;
             
             return damageable.GetAllegiance() == Allegiance.FRIENDLY;
         }
@@ -550,7 +567,7 @@ namespace Enemies
         
         private IEnumerator FindNewTargetAfterDelay()
         {
-            yield return new WaitForSeconds(0.2f);
+            yield return new WaitForSeconds(TARGET_SEARCH_DELAY);
             FindNewTarget();
         }
         
@@ -561,28 +578,110 @@ namespace Enemies
 
         #endregion
 
+        #region Attack Rotation Utilities
+
+        /// <summary>
+        /// Checks if the enemy is properly facing the target and ready to attack
+        /// </summary>
+        /// <returns>True if within attack-ready angle threshold</returns>
+        protected bool IsReadyToAttack()
+        {
+            if (navMeshTarget == null) return false;
+            
+            Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
+            float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
+            return angleToTarget <= ATTACK_READY_ANGLE_THRESHOLD;
+        }
+
+        /// <summary>
+        /// Rotates towards target with enhanced speed for attack preparation
+        /// </summary>
+        /// <returns>True if rotation is complete and ready to attack</returns>
+        protected bool RotateTowardsTargetForAttack()
+        {
+            if (navMeshTarget == null) return false;
+
+            Vector3 direction = (navMeshTarget.position - transform.position).normalized;
+            direction.y = 0;
+            if (direction == Vector3.zero) return true;
+
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            float enhancedRotationSpeed = rotationSpeed * ROTATION_TOWARDS_TARGET_SPEED_MULTIPLIER;
+            
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, enhancedRotationSpeed * Time.deltaTime);
+            
+            return IsReadyToAttack();
+        }
+
+        #endregion
+
+        #region Attack Validation
+
+        /// <summary>
+        /// Validates if an attack can be performed on the current target
+        /// </summary>
+        /// <param name="attackRange">The range for this specific attack</param>
+        /// <param name="angleThreshold">Maximum angle deviation for attack</param>
+        /// <param name="distanceToTarget">Current distance to target (output)</param>
+        /// <param name="angleToTarget">Current angle to target (output)</param>
+        /// <returns>True if attack is valid</returns>
+        protected bool ValidateAttack(float attackRange, float angleThreshold, out float distanceToTarget, out float angleToTarget)
+        {
+            distanceToTarget = 0f;
+            angleToTarget = 0f;
+
+            // Basic target validation
+            if (navMeshTarget == null || !IsTargetStillValid(navMeshTarget))
+            {
+                return false;
+            }
+
+            // Distance validation
+            distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
+            float effectiveAttackDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, attackRange, obstacleBoundsOffset);
+            
+            if (distanceToTarget > effectiveAttackDistance)
+            {
+                return false;
+            }
+
+            // Angle validation
+            Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
+            angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
+            
+            return angleToTarget <= angleThreshold;
+        }
+
+        #endregion
+
         #region Combat & Damage
 
         protected virtual void BeginAttackSequence()
         {
             animator.SetBool("Attack", true);
             isAttacking = true;
+            isRotatingToAttack = false; // Stop rotation phase
 
+            // Stop rotation completely during attacks for both root motion and non-root motion
             if (useRootMotion)
             {
                 agent.updateRotation = false;
             }
+            // For non-root motion, rotation will be prevented in the update logic by checking isAttacking
         }
 
         protected virtual void EndAttack()
         {
             animator.SetBool("Attack", false);
             isAttacking = false;
+            isRotatingToAttack = false; // Reset rotation state
 
+            // Resume rotation after attack
             if (useRootMotion)
             {
                 agent.updateRotation = true;
             }
+            // For non-root motion, rotation will resume automatically in update logic
         }
 
         public void TakeDamage(float amount, Transform damageSource = null)
@@ -649,7 +748,7 @@ namespace Enemies
                 float t = elapsed / duration;
                 Vector3 newPosition = Vector3.Lerp(startPosition, targetPosition, t);
                 
-                if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 0.5f, NavMesh.AllAreas))
+                if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, KNOCKBACK_SAMPLE_DISTANCE, NavMesh.AllAreas))
                 {
                     if (useRootMotion)
                     {
