@@ -3,10 +3,10 @@
 
 Tomorrow work:
 Redo zombie animations
-Do finishing bits on the spitter enemy (doesn't fire the projectile if the player is too far away), build 2 more after. the boomer that explodes near the player and the one that splits into smaller enemies
+Zombie boss animator speed parameter
+build 2 more after. the boomer that explodes near the player and the one that splits into smaller enemies
 Go through todo below and bugs to see if any are fixed
 Start setting up the player progression manager? Use this to keep track of what the player has unlocked
-
 
 
 
