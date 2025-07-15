@@ -903,6 +903,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Ranged_Zombie
       objectReference: {fileID: 0}
+    - target: {fileID: 7886037407994308560, guid: b5c3cb9ae758fb549906e6cc604c6b3e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -922,7 +926,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3498937984024521076, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4521413630554356895, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_LocalPosition.x

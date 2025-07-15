@@ -705,6 +705,10 @@ namespace Enemies
 
         #region Combat & Damage
 
+        protected virtual void Attack() {
+            Debug.LogWarning($"[{gameObject.name}] Attack not implemented");
+        }
+
         protected virtual void BeginAttackSequence()
         {
             animator.SetBool("Attack", true);
