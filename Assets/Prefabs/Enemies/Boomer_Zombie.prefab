@@ -2898,6 +2898,7 @@ GameObject:
   - component: {fileID: -6610119119996104940}
   - component: {fileID: 4816306560198809998}
   - component: {fileID: 5237491215696526443}
+  - component: {fileID: 6096021547279428693}
   m_Layer: 8
   m_Name: Boomer_Zombie
   m_TagString: Untagged
@@ -2975,7 +2976,7 @@ Animator:
   m_GameObject: {fileID: 6477775522615659138}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 0045ffb477e043a46950af7e617beb06, type: 3}
-  m_Controller: {fileID: 9100000, guid: c3207e38939cf1e428d075844965e796, type: 2}
+  m_Controller: {fileID: 9100000, guid: 1a48bc8dfc6f7604baf7f6a550a4ad63, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
   m_ApplyRootMotion: 1
@@ -3009,6 +3010,37 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &6096021547279428693
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6477775522615659138}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ecb4f3324fc237449a3bad05a1dc0fbe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  characterType: 201
+  useRootMotion: 1
+  stoppingDistance: 1.5
+  rotationSpeed: 10
+  movementSpeed: 3.5
+  acceleration: 8
+  angularSpeed: 120
+  obstacleBoundsOffset: 1
+  rootMotionMultiplier: 1
+  health: 100
+  maxHealth: 100
+  attackRange: 2
+  attackCooldown: 1.5
+  approachDistance: 3
+  explosionRadius: 5
+  explosionDamage: 50
+  explosionEffect: {fileID: 0}
+  chargeSpeed: 8
+  useChargeAnimation: 1
 --- !u!1 &6616253873932381118
 GameObject:
   m_ObjectHideFlags: 0

@@ -17,8 +17,7 @@ namespace Enemies
         [SerializeField] private float explosionRadius = EXPLOSION_RADIUS;
         [SerializeField] private float explosionDamage = EXPLOSION_DAMAGE;
         [SerializeField] private EffectDefinition explosionEffect;
-        [SerializeField] private float detonationDistance = 1.5f; // Distance at which to explode
-        
+
         [Header("Movement Settings")]
         [SerializeField] private float chargeSpeed = 8f; // Faster than normal zombies
         [SerializeField] private bool useChargeAnimation = true;
@@ -45,6 +44,8 @@ namespace Enemies
 
         protected override void Update()
         {
+            if (Health <= 0) return;
+
             base.Update();
 
             if (navMeshTarget == null || hasExploded) return;
@@ -52,36 +53,18 @@ namespace Enemies
             float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
             
             // Check if we should explode
-            if (distanceToTarget <= detonationDistance && !hasExploded)
+            if (distanceToTarget <= attackRange && !hasExploded)
             {
-                Explode();
+                BeginAttackSequence();
+                //Explode();
                 return;
             }
-            
-            // Handle charging behavior
-            HandleChargingBehavior(distanceToTarget);
         }
 
-        private void HandleChargingBehavior(float distanceToTarget)
-        {
-            // Don't use normal attack logic - just charge towards target
-            if (isAttacking) return;
-            
-            // Set animation parameter for charging
-            if (animator != null && useChargeAnimation)
-            {
-                animator.SetFloat("Speed", agent.velocity.magnitude);
-            }
-            
-            // Ensure we're moving towards the target
-            if (agent != null && agent.isOnNavMesh)
-            {
-                agent.isStopped = false;
-                agent.SetDestination(navMeshTarget.position);
-            }
-        }
-
-        private void Explode()
+        /// <summary>
+        /// Called from animator
+        /// </summary>
+        public void Attack()
         {
             if (hasExploded) return;
             
@@ -114,15 +97,7 @@ namespace Enemies
                 }
             }
             
-            // Destroy the boomer
-            Destroy(gameObject);
-        }
-
-        // Override attack methods to prevent normal attacks
-        protected override void BeginAttackSequence()
-        {
-            // Boomers don't use normal attacks - they explode instead
-            return;
+            Die();
         }
 
         // Override death to prevent normal death behavior
@@ -131,7 +106,7 @@ namespace Enemies
             // If we die before exploding, still explode
             if (!hasExploded)
             {
-                Explode();
+                BeginAttackSequence();
             }
             else
             {
@@ -148,7 +123,7 @@ namespace Enemies
             
             // Draw detonation distance
             Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(transform.position, detonationDistance);
+            Gizmos.DrawWireSphere(transform.position, attackRange);
         }
     }
 } 

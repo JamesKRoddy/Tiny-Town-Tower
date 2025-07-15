@@ -28,6 +28,8 @@ namespace Enemies
 
         protected override void Update()
         {
+            if (Health <= 0) return;
+
             base.Update(); // Call base Update to handle destination setting
 
             if (navMeshTarget == null) return;
@@ -48,6 +50,8 @@ namespace Enemies
         /// </summary>
         private void HandleAttackLogic(float distanceToTarget, float effectiveAttackDistance)
         {
+            if (Health <= 0) return;
+
             // Check for attack range and cooldown
             if (distanceToTarget > effectiveAttackDistance || isAttacking || Time.time < lastAttackTime + attackCooldown)
             {

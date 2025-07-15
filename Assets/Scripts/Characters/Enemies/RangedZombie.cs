@@ -91,9 +91,8 @@ namespace Enemies
         }
 
         // Called by animation event
-        public void RangedAttack()
+        public void Attack()
         {
-            Debug.Log($"[{gameObject.name}] RangedAttack called");
             // Don't attack if dead
             if (Health <= 0) return;
             

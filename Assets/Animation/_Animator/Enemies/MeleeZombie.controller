@@ -393,7 +393,7 @@ AnimatorController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: BasicZombie
+  m_Name: MeleeZombie
   serializedVersion: 5
   m_AnimatorParameters:
   - m_Name: Speed
@@ -707,7 +707,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   functionCalls:
-  - componentTypeName: Enemies.MeleeZombie
+  - componentTypeName: Enemies.Zombie
     functionName: EndAttack
     callOnEnter: 1
     callOnExit: 0

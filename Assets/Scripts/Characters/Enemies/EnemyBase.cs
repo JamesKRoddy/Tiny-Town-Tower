@@ -64,7 +64,6 @@ namespace Enemies
         // Add these fields for better root motion control
         [Header("Root Motion Settings")]
         [SerializeField] protected float rootMotionMultiplier = 1f;
-        [SerializeField] protected bool debugRootMotion = false; // Enable to debug teleporting issues
 
         [Header("Health Settings")]
         [SerializeField] private float health = 100f;
@@ -212,12 +211,6 @@ namespace Enemies
                 return;
             }
 
-            Vector3 oldPosition = transform.position;
-            if (debugRootMotion)
-            {
-                Debug.Log($"[{gameObject.name}] OnAnimatorMove - Old Pos: {oldPosition}, Root Delta: {animator.deltaPosition}");
-            }
-
             // Pure root motion approach: Animation drives movement completely
             Vector3 rootMotion = animator.deltaPosition * rootMotionMultiplier;
             rootMotion.y = 0; // Ignore vertical movement from animation
@@ -245,15 +238,6 @@ namespace Enemies
                 // If still no valid position, don't move this frame (stay where we are)
             }
             
-            if (debugRootMotion)
-            {
-                Vector3 newPos = transform.position;
-                float distanceMoved = Vector3.Distance(oldPosition, newPos);
-                if (distanceMoved > 2f) // Only log if we moved a significant distance
-                {
-                    Debug.LogWarning($"[{gameObject.name}] Large movement detected! Distance: {distanceMoved}, Old: {oldPosition}, New: {newPos}");
-                }
-            }
         }
 
         #endregion
