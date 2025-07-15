@@ -3033,11 +3033,11 @@ MonoBehaviour:
   rootMotionMultiplier: 1
   health: 100
   maxHealth: 100
-  attackRange: 2
+  attackRange: 4
   attackCooldown: 1.5
   approachDistance: 3
   explosionRadius: 5
-  explosionDamage: 50
+  explosionDamage: 20
   explosionEffect: {fileID: 0}
   chargeSpeed: 8
   useChargeAnimation: 1
