@@ -705,10 +705,6 @@ namespace Enemies
 
         #region Combat & Damage
 
-        protected virtual void Attack() {
-            Debug.LogWarning($"[{gameObject.name}] Attack not implemented");
-        }
-
         protected virtual void BeginAttackSequence()
         {
             animator.SetBool("Attack", true);
@@ -819,7 +815,7 @@ namespace Enemies
             }
         }
 
-        public void Die()
+        public virtual void Die()
         {
             Debug.Log($"[{gameObject.name}] Die() called! Health: {Health}");
             

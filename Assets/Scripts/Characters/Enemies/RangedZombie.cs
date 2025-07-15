@@ -91,7 +91,7 @@ namespace Enemies
         }
 
         // Called by animation event
-        protected override void Attack()
+        public void RangedAttack()
         {
             Debug.Log($"[{gameObject.name}] RangedAttack called");
             // Don't attack if dead
