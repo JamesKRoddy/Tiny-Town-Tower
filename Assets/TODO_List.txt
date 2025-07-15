@@ -2,7 +2,6 @@
 
 
 Tomorrow work:
-Redo zombie animations
 Zombie boss animator speed parameter
 build 2 more after. the boomer that explodes near the player and the one that splits into smaller enemies
 Go through todo below and bugs to see if any are fixed

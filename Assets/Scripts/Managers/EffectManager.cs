@@ -329,8 +329,6 @@ namespace Managers
             Vector3 effectNormal = normal ?? owner.transform.forward;
             Quaternion effectRotation = rotation ?? Quaternion.LookRotation(effectNormal);
             
-            Debug.Log($"[EffectPlayer] Play - Effect Position: {effectPosition}, Normal: {effectNormal}, Rotation: {effectRotation.eulerAngles}, Parent: {parent?.name}, Owner Position: {owner.transform.position}");
-            
             activeCoroutine = owner.StartCoroutine(PlayWithDelay(effectPosition, effectNormal, effectRotation, parent));
         }
 
@@ -352,7 +350,6 @@ namespace Managers
             {
                 yield return new WaitForSeconds(delay);
             }
-            Debug.Log($"[EffectPlayer] PlayWithDelay - Final Position: {position}, Normal: {normal}, Rotation: {rotation.eulerAngles}, Parent: {parent?.name}");
             EffectManager.Instance.PlayEffect(position, normal, rotation, parent, effect);
         }
     }

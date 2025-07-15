@@ -117,7 +117,6 @@ namespace Enemies.BossAttacks
 
         protected void PlayAttackEffect(Vector3? position = null, Vector3? normal = null, Quaternion? rotation = null, Transform parent = null)
         {
-            Debug.Log($"[BossAttackBase] PlayAttackEffect - Position: {position}, Normal: {normal}, Rotation: {rotation?.eulerAngles}, Parent: {parent?.name}, Attack Origin: {attackOrigin?.position}");
             attackEffectPlayer.Play(position, normal, rotation, parent);
         }
 
