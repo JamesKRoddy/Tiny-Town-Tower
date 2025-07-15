@@ -154,16 +154,8 @@ public class RogueLiteRoomParent : MonoBehaviour
 
     private bool WouldRoomOverlapAtPosition(RogueLiteRoom roomToTest, Vector3 position)
     {
-        // Temporarily move the room to test position to calculate bounds
-        Vector3 originalPosition = roomToTest.transform.position;
-        roomToTest.transform.position = position;
-        
-        // Force bounds calculation
-        roomToTest.CalculateRoomBounds();
-        Bounds testBounds = roomToTest.GetWorldBounds();
-        
-        // Restore original position
-        roomToTest.transform.position = originalPosition;
+        // Use the new CalculateTestBounds method that doesn't modify the original prefab
+        Bounds testBounds = roomToTest.CalculateTestBounds(position);
         
         // Check against all spawned rooms
         foreach (var spawnedRoom in spawnedRooms.Values)
@@ -573,12 +565,8 @@ public class RogueLiteRoomParent : MonoBehaviour
         RogueLiteRoom testRoom = roomPrefab.GetComponent<RogueLiteRoom>();
         if (testRoom == null) return float.MaxValue;
 
-        // Temporarily move the test room to calculate bounds
-        Vector3 originalPosition = testRoom.transform.position;
-        testRoom.transform.position = position;
-        testRoom.CalculateRoomBounds();
-        Bounds testBounds = testRoom.GetWorldBounds();
-        testRoom.transform.position = originalPosition;
+        // Use the new CalculateTestBounds method that doesn't modify the original prefab
+        Bounds testBounds = testRoom.CalculateTestBounds(position);
 
         float maxOverlap = 0f;
 
@@ -663,12 +651,8 @@ public class RogueLiteRoomParent : MonoBehaviour
         RogueLiteRoom testRoom = roomPrefab.GetComponent<RogueLiteRoom>();
         if (testRoom == null) return conflictingSpawns;
 
-        // Temporarily move the test room to calculate bounds
-        Vector3 originalPosition = testRoom.transform.position;
-        testRoom.transform.position = testPosition;
-        testRoom.CalculateRoomBounds();
-        Bounds testBounds = testRoom.GetWorldBounds();
-        testRoom.transform.position = originalPosition;
+        // Use the new CalculateTestBounds method that doesn't modify the original prefab
+        Bounds testBounds = testRoom.CalculateTestBounds(testPosition);
 
         // Check against all placed rooms
         foreach (var kvp in placedRoomsBySpawnIndex)
