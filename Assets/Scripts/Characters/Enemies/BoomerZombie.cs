@@ -75,7 +75,7 @@ namespace Enemies
             if (explosionEffect != null)
             {
                 EffectManager.Instance.PlayEffect(
-                    transform.position,
+                    transform.position + Vector3.up * 1.0f,
                     Vector3.zero,
                     Quaternion.identity,
                     null,

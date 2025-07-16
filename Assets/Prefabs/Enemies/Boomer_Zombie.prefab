@@ -3038,7 +3038,7 @@ MonoBehaviour:
   approachDistance: 3
   explosionRadius: 5
   explosionDamage: 20
-  explosionEffect: {fileID: 0}
+  explosionEffect: {fileID: 11400000, guid: ce058444ab7d3b24ebc0ffb7c961e39e, type: 2}
   chargeSpeed: 8
   useChargeAnimation: 1
 --- !u!1 &6616253873932381118
