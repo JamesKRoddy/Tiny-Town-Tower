@@ -3,6 +3,7 @@
 
 Tomorrow work:
 VFX for ranged attack and boomer
+Lazer enemy
 Go through todo below and bugs to see if any are fixed
 Start setting up the player progression manager? Use this to keep track of what the player has unlocked
 
