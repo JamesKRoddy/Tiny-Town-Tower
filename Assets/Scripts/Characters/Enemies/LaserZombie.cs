@@ -176,14 +176,11 @@ namespace Enemies
             if (laserFirePoint == null || navMeshTarget == null) return;
             
             Vector3 startPosition = laserFirePoint.position;
-            Vector3 targetPosition = navMeshTarget.position + Vector3.up; // Aim at upper body/head
-            Vector3 direction = (targetPosition - startPosition).normalized;
             
-            // Position and orient the laser beam
+            // Position the laser beam at the fire point
             if (laserBeam != null)
             {
                 laserBeam.transform.position = startPosition;
-                laserBeam.transform.rotation = Quaternion.LookRotation(direction);
                 
                 // Enable the beam
                 laserBeam.gameObject.SetActive(true);
@@ -211,10 +208,10 @@ namespace Enemies
         /// </summary>
         private void CheckLaserDamageFromPoint()
         {
-            if (laserFirePoint == null || laserBeam == null) return;
+            if (laserFirePoint == null) return;
             
             Vector3 startPosition = laserFirePoint.position;
-            Vector3 direction = laserBeam.transform.forward; // Use actual beam direction
+            Vector3 direction = laserFirePoint.forward; // Use fire point's forward direction
             
             // Raycast to find the actual hit point (same as the visual beam)
             RaycastHit hit;
@@ -291,10 +288,10 @@ namespace Enemies
             // Calculate neutral position (always forward relative to current rotation)
             Vector3 neutralPosition = transform.position + transform.forward * 5f + Vector3.up;
             
-            bool shouldUseIK = false;
+            bool shouldLookAtPlayer = false;
             Vector3 targetPosition = neutralPosition;
             
-            // Check if we should use IK targeting
+            // Check if we should be looking at the player
             if (navMeshTarget != null)
             {
                 float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
@@ -311,29 +308,18 @@ namespace Enemies
                     
                     if (angleToTarget <= maxHeadRotationAngle)
                     {
-                        // Target is within head rotation range - use IK
+                        // Target is within head rotation range - look at player
                         targetPosition = targetPos;
-                        shouldUseIK = true;
+                        shouldLookAtPlayer = true;
                     }
                 }
             }
             
-            // Update IK state and lerp position
-            if (shouldUseIK)
-            {
-                // Target is valid - lerp to target
-                currentLookAtTarget = Vector3.Lerp(currentLookAtTarget, targetPosition, headIKLerpSpeed * Time.deltaTime);
-                isHeadIKActive = true;
-            }
-            else
-            {
-                // No valid target - lerp back to neutral position
-                currentLookAtTarget = Vector3.Lerp(currentLookAtTarget, neutralPosition, headIKLerpSpeed * Time.deltaTime);
-                isHeadIKActive = false;
-            }
+            // Update look target position
+            currentLookAtTarget = Vector3.Lerp(currentLookAtTarget, targetPosition, headIKLerpSpeed * Time.deltaTime);
             
-            // Smoothly lerp IK weight
-            float targetWeight = isHeadIKActive ? headIKWeight : 0f;
+            // Smoothly lerp IK weight based on whether we should be looking at the player
+            float targetWeight = shouldLookAtPlayer ? headIKWeight : 0f;
             currentIKWeight = Mathf.Lerp(currentIKWeight, targetWeight, headIKLerpSpeed * Time.deltaTime);
             
             // Apply IK with smooth weight transition
