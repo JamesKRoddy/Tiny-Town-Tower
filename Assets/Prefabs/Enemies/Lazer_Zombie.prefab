@@ -3037,14 +3037,15 @@ MonoBehaviour:
   attackRange: 2
   attackCooldown: 1.5
   approachDistance: 3
-  laserAttackRange: 8
-  laserAttackCooldown: 3
   laserDamage: 25
   laserHitLayers:
     serializedVersion: 2
     m_Bits: 4294967295
   laserFirePoint: {fileID: 9031626134019856262}
   laserBeam: {fileID: 3550279635202582810}
+  headIKWeight: 1
+  headIKRotationWeight: 1
+  headIKLerpSpeed: 3
 --- !u!1 &6616253873932381118
 GameObject:
   m_ObjectHideFlags: 0
@@ -4410,11 +4411,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2726819458961310880, guid: 927088891c0fe6047a2aa0200d7505e9, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.99144495
+      value: 0.9817182
       objectReference: {fileID: 0}
     - target: {fileID: 2726819458961310880, guid: 927088891c0fe6047a2aa0200d7505e9, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.13052566
+      value: -0.19034055
       objectReference: {fileID: 0}
     - target: {fileID: 2726819458961310880, guid: 927088891c0fe6047a2aa0200d7505e9, type: 3}
       propertyPath: m_LocalRotation.y
@@ -4426,7 +4427,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2726819458961310880, guid: 927088891c0fe6047a2aa0200d7505e9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: -15
+      value: -21.945
       objectReference: {fileID: 0}
     - target: {fileID: 2726819458961310880, guid: 927088891c0fe6047a2aa0200d7505e9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y

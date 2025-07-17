@@ -15,8 +15,6 @@ namespace Enemies
         #endregion
         
         [Header("Laser Attack Settings")]
-        [SerializeField] protected float laserAttackRange = 8f; // Longer range than melee
-        [SerializeField] protected float laserAttackCooldown = 3f;
         [SerializeField] protected float laserDamage = 25f;
         [SerializeField] protected LayerMask laserHitLayers = -1; // Default to everything
         
@@ -34,7 +32,6 @@ namespace Enemies
         
         // Laser attack state
         protected bool isFiringLaser = false;
-        protected float lastLaserAttackTime;
         protected Coroutine laserDamageCoroutine;
         protected Vector3 currentLookAtTarget;
         protected bool isHeadIKActive = false;
@@ -64,7 +61,7 @@ namespace Enemies
 
             // Cache distance calculation
             float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
-            float effectiveLaserDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, laserAttackRange, obstacleBoundsOffset);
+            float effectiveLaserDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, attackRange, obstacleBoundsOffset);
             
             // Debug distance and attack state
             Debug.DrawLine(transform.position, navMeshTarget.position, Color.yellow);
@@ -90,7 +87,7 @@ namespace Enemies
             if (distanceToTarget > effectiveLaserDistance || 
                 isAttacking || 
                 isFiringLaser || 
-                Time.time < lastLaserAttackTime + laserAttackCooldown)
+                Time.time < lastAttackTime + attackCooldown)
             {
                 return false;
             }
@@ -165,7 +162,7 @@ namespace Enemies
             // Fire laser from fire point
             FireLaserFromPoint();
             
-            lastLaserAttackTime = Time.time;
+            lastAttackTime = Time.time;
             
             // Start continuous damage checking
             laserDamageCoroutine = StartCoroutine(ContinuousLaserDamage());
@@ -221,7 +218,7 @@ namespace Enemies
             
             // Raycast to find the actual hit point (same as the visual beam)
             RaycastHit hit;
-            if (Physics.Raycast(startPosition, direction, out hit, laserAttackRange, laserHitLayers))
+            if (Physics.Raycast(startPosition, direction, out hit, attackRange, laserHitLayers))
             {
                 // Check if hit object is damageable
                 IDamageable damageable = hit.collider.GetComponent<IDamageable>();
@@ -301,7 +298,7 @@ namespace Enemies
             if (navMeshTarget != null)
             {
                 float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
-                float effectiveLaserDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, laserAttackRange, obstacleBoundsOffset);
+                float effectiveLaserDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, attackRange, obstacleBoundsOffset);
                 
                 if (distanceToTarget <= effectiveLaserDistance)
                 {
@@ -354,7 +351,7 @@ namespace Enemies
             
             // Draw laser attack range
             Gizmos.color = Color.cyan;
-            Gizmos.DrawWireSphere(transform.position, laserAttackRange);
+            Gizmos.DrawWireSphere(transform.position, attackRange);
             
             // Draw fire point position
             if (laserFirePoint != null)
@@ -368,7 +365,7 @@ namespace Enemies
             {
                 Vector3 direction = (navMeshTarget.position - transform.position).normalized;
                 Gizmos.color = Color.cyan;
-                Gizmos.DrawRay(transform.position, direction * laserAttackRange);
+                Gizmos.DrawRay(transform.position, direction * attackRange);
             }
         }
         
