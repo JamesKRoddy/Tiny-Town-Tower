@@ -703,6 +703,9 @@ namespace Enemies
             // For non-root motion, rotation will be prevented in the update logic by checking isAttacking
         }
 
+        /// <summary>
+        /// Called by the animator to end the attack sequence
+        /// </summary>
         protected virtual void EndAttack()
         {
             animator.SetBool("Attack", false);
