@@ -18,7 +18,7 @@ namespace Enemies
         [SerializeField] protected float buildingAttackRange = 5f; // Special attack range for buildings (separate from NPC combat)
 
         // Called by animation event or timing logic
-        public void MeleeAttack()
+        public override void Attack()
         {
             // Don't attack if dead
             if (Health <= 0) return;

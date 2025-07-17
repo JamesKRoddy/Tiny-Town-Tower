@@ -689,6 +689,11 @@ namespace Enemies
 
         #region Combat & Damage
 
+        public virtual void Attack()
+        {
+            Debug.LogWarning($"Attack not overridden for {gameObject.name}");
+        }
+
         protected virtual void BeginAttackSequence()
         {
             animator.SetBool("Attack", true);
@@ -852,7 +857,7 @@ namespace Enemies
         /// <summary>
         /// Called from the animator to flash the material when the enemy is attacking
         /// </summary>
-        public void AttackWarning()
+        public virtual void AttackWarning()
         {
             if (skinnedMeshRenderer != null)
             {

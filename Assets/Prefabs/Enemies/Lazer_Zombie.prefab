@@ -4410,23 +4410,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2726819458961310880, guid: 927088891c0fe6047a2aa0200d7505e9, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.99144495
       objectReference: {fileID: 0}
     - target: {fileID: 2726819458961310880, guid: 927088891c0fe6047a2aa0200d7505e9, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0.13052566
       objectReference: {fileID: 0}
     - target: {fileID: 2726819458961310880, guid: 927088891c0fe6047a2aa0200d7505e9, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 2726819458961310880, guid: 927088891c0fe6047a2aa0200d7505e9, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 2726819458961310880, guid: 927088891c0fe6047a2aa0200d7505e9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
+      value: -15
       objectReference: {fileID: 0}
     - target: {fileID: 2726819458961310880, guid: 927088891c0fe6047a2aa0200d7505e9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
@@ -4439,6 +4439,10 @@ PrefabInstance:
     - target: {fileID: 2726819458961310894, guid: 927088891c0fe6047a2aa0200d7505e9, type: 3}
       propertyPath: m_Name
       value: PolyBeamStaticBlue
+      objectReference: {fileID: 0}
+    - target: {fileID: 2726819458961310894, guid: 927088891c0fe6047a2aa0200d7505e9, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

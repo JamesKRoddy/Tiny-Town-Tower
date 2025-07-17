@@ -11,7 +11,7 @@ AnimatorStateMachine:
   m_ChildStates:
   - serializedVersion: 1
     m_State: {fileID: -6797914147578181217}
-    m_Position: {x: 580, y: 110, z: 0}
+    m_Position: {x: 600, y: 120, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 338793937520370307}
     m_Position: {x: 330, y: 120, z: 0}
@@ -113,7 +113,7 @@ AnimatorStateMachine:
     m_Position: {x: 560, y: 120, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -1789426732708039173}
-    m_Position: {x: 900, y: 130, z: 0}
+    m_Position: {x: 880, y: 130, z: 0}
   m_ChildStateMachines: []
   m_AnyStateTransitions: []
   m_EntryTransitions: []
@@ -629,7 +629,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   functionCalls:
-  - componentTypeName: Enemies.MeleeZombie
+  - componentTypeName: Enemies.Zombie
     functionName: EndAttack
     callOnEnter: 1
     callOnExit: 0

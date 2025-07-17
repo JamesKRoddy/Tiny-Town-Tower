@@ -24,12 +24,21 @@ namespace Enemies
         [SerializeField] protected Transform laserFirePoint;
         [SerializeField] protected PolygonBeamStatic laserBeam;
         
+        [Header("Head IK Settings")]
+        [SerializeField] protected float headIKWeight = 1f;
+        [SerializeField] protected float headIKRotationWeight = 1f;
+        [SerializeField] protected float headIKLerpSpeed = 3f;
+        private float maxHeadRotationAngle = 90f; // Maximum angle the head can turn
+        
 
         
         // Laser attack state
         protected bool isFiringLaser = false;
         protected float lastLaserAttackTime;
         protected Coroutine laserDamageCoroutine;
+        protected Vector3 currentLookAtTarget;
+        protected bool isHeadIKActive = false;
+        protected float currentIKWeight = 0f;
         
         protected override void Awake()
         {
@@ -40,6 +49,9 @@ namespace Enemies
             {
                 Debug.LogWarning($"[{gameObject.name}] LaserZombie: Laser fire point not assigned! Please assign laserFirePoint.");
             }
+            
+            // Initialize current look target to forward position
+            currentLookAtTarget = transform.position + transform.forward * 5f + Vector3.up;
         }
         
         protected override void Update()
@@ -86,7 +98,7 @@ namespace Enemies
             // Check if we're properly aligned for laser attack
             if (!IsReadyForLaserAttack())
             {
-                // Rotate towards target for laser attack
+                // Rotate body towards target for laser attack
                 RotateTowardsTargetForLaserAttack();
                 return true;
             }
@@ -103,19 +115,22 @@ namespace Enemies
         {
             if (navMeshTarget == null) return false;
             
-            Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
-            float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
+            // Calculate direction from fire point to target (with Y offset)
+            Vector3 targetPosition = navMeshTarget.position + Vector3.up;
+            Vector3 directionToTarget = (targetPosition - laserFirePoint.position).normalized;
+            float angleToTarget = Vector3.Angle(laserFirePoint.forward, directionToTarget);
             
             return angleToTarget <= LASER_ATTACK_ANGLE_THRESHOLD;
         }
         
         /// <summary>
-        /// Rotates towards target with enhanced precision for laser attacks
+        /// Rotates body towards target with enhanced precision for laser attacks
         /// </summary>
         private void RotateTowardsTargetForLaserAttack()
         {
             if (navMeshTarget == null) return;
             
+            // Calculate direction from body to target (not head)
             Vector3 direction = (navMeshTarget.position - transform.position).normalized;
             direction.y = 0;
             if (direction == Vector3.zero) return;
@@ -129,10 +144,10 @@ namespace Enemies
         /// <summary>
         /// Called by animator for laser charge effects - uses base AttackWarning
         /// </summary>
-        public void LaserAttackWarning()
+        public override void AttackWarning()
         {
             // Call base method for material flash
-            AttackWarning();
+            base.AttackWarning();
             
             // Add any laser-specific charge effects here if needed
             // For now, just use the base material flash
@@ -141,7 +156,7 @@ namespace Enemies
         /// <summary>
         /// Called by the animator to fire the laser
         /// </summary>
-        public void FireLaser()
+        public override void Attack()
         {
             if (!isAttacking || navMeshTarget == null) return;
             
@@ -164,7 +179,8 @@ namespace Enemies
             if (laserFirePoint == null || navMeshTarget == null) return;
             
             Vector3 startPosition = laserFirePoint.position;
-            Vector3 direction = (navMeshTarget.position - startPosition).normalized;
+            Vector3 targetPosition = navMeshTarget.position + Vector3.up; // Aim at upper body/head
+            Vector3 direction = (targetPosition - startPosition).normalized;
             
             // Position and orient the laser beam
             if (laserBeam != null)
@@ -184,7 +200,7 @@ namespace Enemies
         {
             float damageInterval = 0.1f; // Check for damage every 0.1 seconds
             
-            while (isFiringLaser)
+            while (isFiringLaser && isAttacking)
             {
                 // Check damage from fire point
                 CheckLaserDamageFromPoint();
@@ -198,12 +214,12 @@ namespace Enemies
         /// </summary>
         private void CheckLaserDamageFromPoint()
         {
-            if (laserFirePoint == null || navMeshTarget == null) return;
+            if (laserFirePoint == null || laserBeam == null) return;
             
             Vector3 startPosition = laserFirePoint.position;
-            Vector3 direction = (navMeshTarget.position - startPosition).normalized;
+            Vector3 direction = laserBeam.transform.forward; // Use actual beam direction
             
-            // Raycast to find targets
+            // Raycast to find the actual hit point (same as the visual beam)
             RaycastHit hit;
             if (Physics.Raycast(startPosition, direction, out hit, laserAttackRange, laserHitLayers))
             {
@@ -263,6 +279,69 @@ namespace Enemies
             }
             
             base.Die();
+        }
+        
+        /// <summary>
+        /// Unity IK callback for head targeting
+        /// </summary>
+        protected virtual void OnAnimatorIK(int layerIndex)
+        {
+            if (animator == null) return;
+            
+            // Only apply head IK when not dead
+            if (Health <= 0) return;
+            
+            // Calculate neutral position (always forward relative to current rotation)
+            Vector3 neutralPosition = transform.position + transform.forward * 5f + Vector3.up;
+            
+            bool shouldUseIK = false;
+            Vector3 targetPosition = neutralPosition;
+            
+            // Check if we should use IK targeting
+            if (navMeshTarget != null)
+            {
+                float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
+                float effectiveLaserDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, laserAttackRange, obstacleBoundsOffset);
+                
+                if (distanceToTarget <= effectiveLaserDistance)
+                {
+                    // Calculate target position with Y offset (aim at upper body/head)
+                    Vector3 targetPos = navMeshTarget.position + Vector3.up;
+                    
+                    // Check if target is within head rotation limits
+                    Vector3 directionToTarget = (targetPos - transform.position).normalized;
+                    float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
+                    
+                    if (angleToTarget <= maxHeadRotationAngle)
+                    {
+                        // Target is within head rotation range - use IK
+                        targetPosition = targetPos;
+                        shouldUseIK = true;
+                    }
+                }
+            }
+            
+            // Update IK state and lerp position
+            if (shouldUseIK)
+            {
+                // Target is valid - lerp to target
+                currentLookAtTarget = Vector3.Lerp(currentLookAtTarget, targetPosition, headIKLerpSpeed * Time.deltaTime);
+                isHeadIKActive = true;
+            }
+            else
+            {
+                // No valid target - lerp back to neutral position
+                currentLookAtTarget = Vector3.Lerp(currentLookAtTarget, neutralPosition, headIKLerpSpeed * Time.deltaTime);
+                isHeadIKActive = false;
+            }
+            
+            // Smoothly lerp IK weight
+            float targetWeight = isHeadIKActive ? headIKWeight : 0f;
+            currentIKWeight = Mathf.Lerp(currentIKWeight, targetWeight, headIKLerpSpeed * Time.deltaTime);
+            
+            // Apply IK with smooth weight transition
+            animator.SetLookAtWeight(currentIKWeight, headIKRotationWeight, 0f, 0f, 0f);
+            animator.SetLookAtPosition(currentLookAtTarget);
         }
         
         #region Debug Visualization

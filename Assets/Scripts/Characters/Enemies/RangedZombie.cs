@@ -91,7 +91,7 @@ namespace Enemies
         }
 
         // Called by animation event
-        public void Attack()
+        public override void Attack()
         {
             // Don't attack if dead
             if (Health <= 0) return;
