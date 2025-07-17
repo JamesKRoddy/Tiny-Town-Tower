@@ -3,7 +3,8 @@
 
 Tomorrow work:
 VFX for ranged attack and boomer
-Lazer enemy
+VFX for player
+Damage animation for player and cooldown to take more damage
 Go through todo below and bugs to see if any are fixed
 Start setting up the player progression manager? Use this to keep track of what the player has unlocked
 
