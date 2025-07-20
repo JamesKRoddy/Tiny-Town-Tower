@@ -51,6 +51,8 @@ NPCs still moving around when they are dead
 Coroutines starting error on npcs hiding in bunker
 Enemies targeting buildings ok but not prioritising npcs over them
 So there is some jackyness around the building placer, i think sometimes building parent objects can spawn on top of each other
+Player dying and returning to camp
+Returning to camp from menu
 
 
 
