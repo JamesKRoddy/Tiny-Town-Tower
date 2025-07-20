@@ -2,11 +2,6 @@
 
 
 Tomorrow work:
-VFX for ranged attack and boomer
-VFX for player
-Damage animation for player and cooldown to take more damage
-Go through todo below and bugs to see if any are fixed
-Start setting up the player progression manager? Use this to keep track of what the player has unlocked
 
 
 
@@ -59,6 +54,10 @@ Returning to camp from menu
 
 
 ******Stuff for later******
+
+VFX for player
+Damage animation for player and cooldown to take more damage
+Start setting up the player progression manager. Use this to keep track of what the player has unlocked
 
 Have to do some refactoring on the npc animator and what has access to it
 
