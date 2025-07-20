@@ -19,6 +19,12 @@ namespace Enemies
         protected float lastAttackTime;
         protected float originalSpeed;
 
+        [Header("Backstep Settings")]
+        [SerializeField] protected bool enableBackstep = true;
+        [SerializeField] protected float backstepTriggerDistance = 1.0f; // Distance that triggers backstep
+        [SerializeField] protected float backstepTargetDistance = 1.5f; // Distance to backstep to
+        [SerializeField] protected float backstepSpeed = -1f; // Negative speed for backstep animation
+
         protected override void Awake()
         {
             useRootMotion = true; // Enable root motion for the zombie
@@ -41,7 +47,29 @@ namespace Enemies
             // Debug distance and attack state
             Debug.DrawLine(transform.position, navMeshTarget.position, Color.yellow);
 
-            // Handle attack logic first
+            // Simple backstep logic
+            if (enableBackstep && !isAttacking)
+            {
+                if (distanceToTarget < backstepTriggerDistance)
+                {
+                    // Too close - backstep
+                    if (animator != null)
+                    {
+                        animator.SetFloat("Speed", backstepSpeed);
+                    }
+                    return; // Skip attack logic while backstepping
+                }
+                else if (distanceToTarget >= backstepTargetDistance)
+                {
+                    // Far enough away - resume normal speed
+                    if (animator != null)
+                    {
+                        animator.SetFloat("Speed", 1f);
+                    }
+                }
+            }
+
+            // Handle attack logic
             HandleAttackLogic(distanceToTarget, effectiveAttackDistance);
         }
 
@@ -103,6 +131,27 @@ namespace Enemies
                 agent.isStopped = true;
                 agent.velocity = Vector3.zero;
             }
+            
+            // Ensure we're not too close to the target before starting attack
+            if (navMeshTarget != null)
+            {
+                float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
+                float minAttackDistance = 1.2f; // Slightly more than the minimum distance
+                
+                if (distanceToTarget < minAttackDistance)
+                {
+                    // Move away slightly to prevent overlap during attack
+                    Vector3 directionFromTarget = (transform.position - navMeshTarget.position).normalized;
+                    Vector3 targetPosition = navMeshTarget.position + directionFromTarget * minAttackDistance;
+                    
+                    // Only move if we can find a valid NavMesh position
+                    if (NavMesh.SamplePosition(targetPosition, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+                    {
+                        transform.position = hit.position;
+                        agent.nextPosition = hit.position;
+                    }
+                }
+            }
         }
 
         protected override void EndAttack()
@@ -123,6 +172,31 @@ namespace Enemies
             }
         }
 
-
+        /// <summary>
+        /// Override collision detection to allow backstep movement
+        /// </summary>
+        protected override Vector3 IsRootMotionCollisionSafe(Vector3 rootMotion, out bool collisionDetected)
+        {
+            // If we're backstepping (negative speed), allow movement away from target
+            if (animator != null && animator.GetFloat("Speed") < 0)
+            {
+                // Check if we're moving away from the target
+                if (navMeshTarget != null)
+                {
+                    Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
+                    float dotProduct = Vector3.Dot(rootMotion.normalized, directionToTarget);
+                    
+                    // If moving away from target (negative dot product), allow movement
+                    if (dotProduct < 0)
+                    {
+                        collisionDetected = false;
+                        return rootMotion;
+                    }
+                }
+            }
+            
+            // Use base collision detection for all other cases
+            return base.IsRootMotionCollisionSafe(rootMotion, out collisionDetected);
+        }
     }
 }
