@@ -71,7 +71,7 @@ namespace Enemies
             if (enemyTarget != null)
             {
                 enemyBase.Setup(enemyTarget);
-                enemyBase.SetEnemyDestination(enemyTarget.position);
+                enemyBase.SetDestination(enemyTarget.position);
             }
             else
             {

@@ -3616,7 +3616,7 @@ Animator:
   m_GameObject: {fileID: 7886037407994308560}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 0045ffb477e043a46950af7e617beb06, type: 3}
-  m_Controller: {fileID: 9100000, guid: a1a17e39e53e38b4a927a36f4a6bcbba, type: 2}
+  m_Controller: {fileID: 9100000, guid: b2e79cab7445f44459a595f830f50ab1, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
   m_ApplyRootMotion: 1
@@ -3670,6 +3670,8 @@ MonoBehaviour:
   acceleration: 8
   angularSpeed: 120
   obstacleBoundsOffset: 1
+  rootMotionMultiplier: 1
+  debugRootMotion: 0
   health: 100
   maxHealth: 100
   attackRange: 2
@@ -3679,8 +3681,6 @@ MonoBehaviour:
   shootCooldown: 2
   minAttackRange: 5
   maxAttackRange: 10
-  attackRotationSpeed: 2
-  postAttackRotationPause: 0.5
   vomitProjectileEffect: {fileID: 11400000, guid: 94e6acf029b2a8e4f947c2e75662ee75, type: 2}
   vomitPoolEffect: {fileID: 11400000, guid: 2f3ea51455a426f48b24456a8147c1f2, type: 2}
 --- !u!1 &7944999906928915032

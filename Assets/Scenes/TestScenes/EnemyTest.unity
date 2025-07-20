@@ -119,6 +119,67 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1001 &105877854
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5979949113929886864, guid: c7cf93e6ddbc19d4fa0a346de2106a48, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -9.417508
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: c7cf93e6ddbc19d4fa0a346de2106a48, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: c7cf93e6ddbc19d4fa0a346de2106a48, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 1.014821
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: c7cf93e6ddbc19d4fa0a346de2106a48, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: c7cf93e6ddbc19d4fa0a346de2106a48, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: c7cf93e6ddbc19d4fa0a346de2106a48, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: c7cf93e6ddbc19d4fa0a346de2106a48, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: c7cf93e6ddbc19d4fa0a346de2106a48, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: c7cf93e6ddbc19d4fa0a346de2106a48, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: c7cf93e6ddbc19d4fa0a346de2106a48, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6477775522615659138, guid: c7cf93e6ddbc19d4fa0a346de2106a48, type: 3}
+      propertyPath: m_Name
+      value: Boomer_Zombie
+      objectReference: {fileID: 0}
+    - target: {fileID: 6477775522615659138, guid: c7cf93e6ddbc19d4fa0a346de2106a48, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c7cf93e6ddbc19d4fa0a346de2106a48, type: 3}
 --- !u!1 &164481933
 GameObject:
   m_ObjectHideFlags: 0
@@ -661,6 +722,79 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
+--- !u!1001 &1444955840
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4816306560198809998, guid: 3b7d470b21c168e4787198fb36f0c7fc, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 2798e3a0557a82d4aa41b8fa44729e91, type: 2}
+    - target: {fileID: 5544021385977096053, guid: 3b7d470b21c168e4787198fb36f0c7fc, type: 3}
+      propertyPath: attackRange
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 5544021385977096053, guid: 3b7d470b21c168e4787198fb36f0c7fc, type: 3}
+      propertyPath: laserDamage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5544021385977096053, guid: 3b7d470b21c168e4787198fb36f0c7fc, type: 3}
+      propertyPath: laserAttackRange
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 3b7d470b21c168e4787198fb36f0c7fc, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1.77
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 3b7d470b21c168e4787198fb36f0c7fc, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.00000047683716
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 3b7d470b21c168e4787198fb36f0c7fc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -5.04
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 3b7d470b21c168e4787198fb36f0c7fc, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 3b7d470b21c168e4787198fb36f0c7fc, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 3b7d470b21c168e4787198fb36f0c7fc, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 3b7d470b21c168e4787198fb36f0c7fc, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 3b7d470b21c168e4787198fb36f0c7fc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 3b7d470b21c168e4787198fb36f0c7fc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 3b7d470b21c168e4787198fb36f0c7fc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6477775522615659138, guid: 3b7d470b21c168e4787198fb36f0c7fc, type: 3}
+      propertyPath: m_Name
+      value: Lazer_Zombie
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 3b7d470b21c168e4787198fb36f0c7fc, type: 3}
 --- !u!1 &1530691259
 GameObject:
   m_ObjectHideFlags: 0
@@ -792,7 +926,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2119277817041921988, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: orthographic
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3801556061967502168, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: m_LocalPosition.x
@@ -903,6 +1037,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Ranged_Zombie
       objectReference: {fileID: 0}
+    - target: {fileID: 7886037407994308560, guid: b5c3cb9ae758fb549906e6cc604c6b3e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1003,3 +1141,5 @@ SceneRoots:
   - {fileID: 697773652}
   - {fileID: 442000832490903104}
   - {fileID: 1009346758}
+  - {fileID: 105877854}
+  - {fileID: 1444955840}

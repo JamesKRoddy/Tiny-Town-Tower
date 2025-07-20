@@ -16,6 +16,11 @@ public class PushableObject : MonoBehaviour
     [SerializeField] private AudioClip pushEndSound;
     [SerializeField] private ParticleSystem pushEffect;
     
+    [Header("Collision Detection")]
+    [SerializeField] private LayerMask obstacleLayerMask = -1; // Layers to check for obstacles
+    [SerializeField] private float collisionCheckMargin = 0.1f; // Small margin for collision detection
+    [SerializeField] private bool showCollisionDebug = false; // Show collision detection debug info
+    
     [System.Flags]
     public enum PushDirection
     {
@@ -97,7 +102,7 @@ public class PushableObject : MonoBehaviour
         // Calculate target position
         Vector3 targetPos = transform.position + pushDir * pushDistance;
         
-        // Check if target position is clear (simple check)
+        // Check if target position is clear using the improved collision detection method
         if (!IsPositionClear(targetPos))
         {
             OnPushBlocked?.Invoke();
@@ -278,18 +283,63 @@ public class PushableObject : MonoBehaviour
         return false;
     }
     
+
+    
     /// <summary>
-    /// Simple check if a position is clear for the object to move to
+    /// Improved collision detection method that works better with different collider types
     /// </summary>
     private bool IsPositionClear(Vector3 position)
     {
-        // Simple check using the object's collider bounds
         Collider objectCollider = GetComponent<Collider>();
         if (objectCollider == null) return true;
         
-        // Check if anything is in the way at the target position
-        Vector3 size = objectCollider.bounds.size;
-        return !Physics.CheckBox(position, size * 0.5f, transform.rotation, ~0, QueryTriggerInteraction.Ignore);
+        // Calculate the movement vector
+        Vector3 movement = position - transform.position;
+        
+        // Use Physics.ComputePenetration for more accurate collision detection
+        // This works well with different collider types (Box, Sphere, Capsule, etc.)
+        
+        // Get all colliders in the scene that could be obstacles
+        Collider[] allColliders = FindObjectsOfType<Collider>();
+        
+        foreach (Collider otherCollider in allColliders)
+        {
+            // Skip this object's collider and triggers
+            if (otherCollider == objectCollider || otherCollider.isTrigger || otherCollider.gameObject == gameObject)
+                continue;
+            
+            // Skip if the other collider is on a layer we're not checking
+            if (((1 << otherCollider.gameObject.layer) & obstacleLayerMask) == 0)
+                continue;
+            
+            // Skip the current pusher
+            if (currentPusher != null && otherCollider.gameObject == currentPusher.gameObject)
+                continue;
+            
+            // Temporarily move our object to the target position
+            Vector3 originalPos = transform.position;
+            transform.position = position;
+            
+            // Check for penetration between the two colliders
+            Vector3 direction;
+            float distance;
+            bool hasPenetration = Physics.ComputePenetration(
+                objectCollider, transform.position, transform.rotation,
+                otherCollider, otherCollider.transform.position, otherCollider.transform.rotation,
+                out direction, out distance
+            );
+            
+            // Restore original position
+            transform.position = originalPos;
+            
+            // If there's penetration and it's significant, the position is not clear
+            if (hasPenetration && distance > collisionCheckMargin)
+            {
+                return false;
+            }
+        }
+        
+        return true;
     }
     
     // Public getters
@@ -298,6 +348,15 @@ public class PushableObject : MonoBehaviour
     public float PushProgress => pushProgress;
     public Vector3 OriginalPosition => originalPosition;
     public float DistanceFromOrigin => Vector3.Distance(transform.position, originalPosition);
+    
+    /// <summary>
+    /// Gets the current collider bounds for debugging
+    /// </summary>
+    public Bounds GetCurrentColliderBounds()
+    {
+        Collider col = GetComponent<Collider>();
+        return col != null ? col.bounds : new Bounds(transform.position, Vector3.one);
+    }
     
     /// <summary>
     /// Resets the object back to its original position
@@ -318,6 +377,18 @@ public class PushableObject : MonoBehaviour
     {
         showBoundaryArea = !showBoundaryArea;
         Debug.Log($"Boundary area display: {(showBoundaryArea ? "ON" : "OFF")}");
+    }
+    
+
+    
+    /// <summary>
+    /// Toggles collision debug visualization
+    /// </summary>
+    [ContextMenu("Toggle Collision Debug")]
+    public void ToggleCollisionDebug()
+    {
+        showCollisionDebug = !showCollisionDebug;
+        Debug.Log($"Collision debug visualization: {(showCollisionDebug ? "ON" : "OFF")}");
     }
     
     private void OnDrawGizmos()
@@ -459,6 +530,17 @@ public class PushableObject : MonoBehaviour
             // Draw line from original to current position
             Gizmos.color = Color.cyan;
             Gizmos.DrawLine(originalPosition, transform.position);
+            
+            // Show collider bounds if debug is enabled
+            if (showCollisionDebug)
+            {
+                Collider col = GetComponent<Collider>();
+                if (col != null)
+                {
+                    Gizmos.color = new Color(0f, 1f, 1f, 0.3f); // Semi-transparent cyan
+                    Gizmos.DrawWireCube(col.bounds.center, col.bounds.size);
+                }
+            }
             
             #if UNITY_EDITOR
             Vector3 textPos = transform.position + Vector3.up * 1.2f;

@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enemyPrefabs:
   - {fileID: 6477775522615659138, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
+  - {fileID: 7886037407994308560, guid: b5c3cb9ae758fb549906e6cc604c6b3e, type: 3}
+  - {fileID: 6477775522615659138, guid: c7cf93e6ddbc19d4fa0a346de2106a48, type: 3}
   minWaves: 1
   maxWaves: 1
   minEnemiesPerWave: 1

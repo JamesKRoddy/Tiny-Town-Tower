@@ -4,6 +4,13 @@ namespace Enemies
 {
     public class MeleeZombie : Zombie
     {
+        #region Constants
+        
+        // Use the attack-ready threshold from base class for validation
+        private const float MELEE_ATTACK_ANGLE_THRESHOLD = 45f; // Now using stricter threshold
+        
+        #endregion
+        
         [Header("Melee Settings")]
         [SerializeField] protected float meleeDamage = 2f;
         [SerializeField] protected float meleeAttackRadius = 1.5f; // Radius of the attack sphere
@@ -11,42 +18,58 @@ namespace Enemies
         [SerializeField] protected float buildingAttackRange = 5f; // Special attack range for buildings (separate from NPC combat)
 
         // Called by animation event or timing logic
-        public void MeleeAttack()
+        public override void Attack()
         {
-            if (navMeshTarget == null) return;
-
+            // Don't attack if dead
+            if (Health <= 0) return;
+            
             // Use building-specific attack range if attacking a building, otherwise use normal attack range
             float currentAttackRange = attackRange;
-            if (navMeshTarget.GetComponent<Building>() != null)
+            if (navMeshTarget != null && navMeshTarget.GetComponent<Building>() != null)
             {
                 currentAttackRange = buildingAttackRange;
             }
             
-            // Use shared navigation utility to calculate effective attack distance
-            float effectiveAttackDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, currentAttackRange, 1.0f);
-            float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
-            
-            if (distanceToTarget <= effectiveAttackDistance)
+            // Use base class validation
+            if (!ValidateAttack(currentAttackRange, MELEE_ATTACK_ANGLE_THRESHOLD, out float distanceToTarget, out float angleToTarget))
             {
-                // Check if target is in front of us
-                Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
-                float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
-
-                if (angleToTarget <= 45f) // Allow a wider attack angle
+                // Log failure reason
+                if (navMeshTarget == null)
                 {
-                    // Try to get IDamageable from the target
-                    IDamageable target = navMeshTarget.GetComponent<IDamageable>();
-                    if (target != null)
-                    {
-                        target.TakeDamage(meleeDamage, transform);
-                    }
-                    else
-                    {
-                        Debug.LogError($"[MeleeZombie] {gameObject.name}: Target {navMeshTarget.name} does not implement IDamageable! Target type: {navMeshTarget.GetType().Name}");
-                    }
+                    Debug.Log($"[MeleeZombie] {gameObject.name}: No target - aborting attack");
                 }
+                else if (!IsTargetStillValid(navMeshTarget))
+                {
+                    Debug.Log($"[MeleeZombie] {gameObject.name}: Target {navMeshTarget.name} invalid - aborting attack");
+                }
+                else
+                {
+                    float effectiveDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, currentAttackRange, 1.0f);
+                    string reason = distanceToTarget > effectiveDistance ? "RANGE_FAIL" : "ANGLE_FAIL";
+                    Debug.Log($"[MeleeZombie] {gameObject.name} → {navMeshTarget.name}: " +
+                             $"Dist={distanceToTarget:F1}, Angle={angleToTarget:F1}° {reason}");
+                }
+                return;
+            }
+
+            // Execute the attack
+            IDamageable target = navMeshTarget.GetComponent<IDamageable>();
+            if (target != null)
+            {
+                target.TakeDamage(meleeDamage, transform);
+                
+                // Success logging
+                Debug.Log($"[MeleeZombie] {gameObject.name} → {navMeshTarget.name}: " +
+                         $"DMG={meleeDamage}, Range={currentAttackRange:F1}, " +
+                         $"Dist={distanceToTarget:F1}, Angle={angleToTarget:F1}° SUCCESS");
+            }
+            else
+            {
+                Debug.LogError($"[MeleeZombie] {gameObject.name}: Target {navMeshTarget.name} missing IDamageable!");
             }
         }
+
+
 
         // Optional: Visualize attack range in editor
         private void OnDrawGizmosSelected()

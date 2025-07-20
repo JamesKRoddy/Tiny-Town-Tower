@@ -56,6 +56,12 @@ public class RogueLiteRoom : MonoBehaviour
     /// </summary>
     public void CalculateRoomBounds()
     {
+        // Debug warning if this is being called on a prefab
+        if (gameObject.scene.name == null)
+        {
+            Debug.LogWarning($"[RogueLiteRoom] CalculateRoomBounds called on prefab {gameObject.name}! This will modify the prefab. Use CalculateTestBounds for testing.");
+        }
+        
         // Refresh colliders in case they changed
         roomColliders = GetComponentsInChildren<Collider>();
         
@@ -88,6 +94,46 @@ public class RogueLiteRoom : MonoBehaviour
         bounds.Expand(boundsPadding);
         roomBounds = bounds;
         boundsCalculated = true;
+    }
+    
+    /// <summary>
+    /// Calculate bounds for testing without modifying the original roomBounds field
+    /// </summary>
+    public Bounds CalculateTestBounds(Vector3 testPosition)
+    {
+        // Refresh colliders in case they changed
+        var testColliders = GetComponentsInChildren<Collider>();
+        
+        if (testColliders == null || testColliders.Length == 0)
+        {
+            return new Bounds(testPosition, Vector3.one * 10f);
+        }
+        
+        Bounds bounds = new Bounds();
+        bool boundsInitialized = false;
+        
+        foreach (var collider in testColliders)
+        {
+            if (collider == null || !collider.enabled) continue;
+            
+            if (!boundsInitialized)
+            {
+                bounds = collider.bounds;
+                boundsInitialized = true;
+            }
+            else
+            {
+                bounds.Encapsulate(collider.bounds);
+            }
+        }
+        
+        // Add padding to the bounds
+        bounds.Expand(boundsPadding);
+        
+        // Adjust bounds to test position
+        bounds.center = testPosition;
+        
+        return bounds;
     }
     
     /// <summary>
