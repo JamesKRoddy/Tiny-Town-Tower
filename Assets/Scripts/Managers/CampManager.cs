@@ -812,8 +812,11 @@ namespace Managers
                 slot.TakenGridObject = Instantiate(takenPrefab, displayPosition, Quaternion.identity, sharedGridParent);
             }
             
-            slot.FreeGridObject?.SetActive(!isOccupied && gridObjectsInitialized);
-            slot.TakenGridObject?.SetActive(isOccupied && gridObjectsInitialized);
+            // Only show grid objects if they are initialized AND the grid should be visible
+            bool shouldShowGrid = gridObjectsInitialized && IsGridVisible();
+            
+            slot.FreeGridObject?.SetActive(!isOccupied && shouldShowGrid);
+            slot.TakenGridObject?.SetActive(isOccupied && shouldShowGrid);
         }
 
         private List<Vector3> GetRequiredSharedGridSlots(Vector3 position, Vector2Int size)
@@ -905,6 +908,16 @@ namespace Managers
                 slot.FreeGridObject?.SetActive(false);
                 slot.TakenGridObject?.SetActive(false);
             }
+        }
+
+        /// <summary>
+        /// Check if the grid should currently be visible (i.e., in placement mode)
+        /// </summary>
+        private bool IsGridVisible()
+        {
+            // Check if we're in building placement mode by checking the current control type
+            return PlayerInput.Instance != null && 
+                   PlayerInput.Instance.CurrentControlType == PlayerControlType.BUILDING_PLACEMENT;
         }
 
         #endregion
