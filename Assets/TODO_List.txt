@@ -36,8 +36,6 @@ Goal at the the start just says survive, recruit 10 survivours
 
 Bugs
 
-Player moving through walls while attack animation is running
-Pressing B while moving an already place mutation breaks the menu, just dont allow B presses
 Construction sites need to be able to  have npcs manually assigned to them
 When moving the camera around the camp the selection icon can move off into the distance, should also be bound by the building grid
 Return to camp selection from roguelike is showing up in camp when npcs die in camp  (might be only happening when the npc was possessed before it died)

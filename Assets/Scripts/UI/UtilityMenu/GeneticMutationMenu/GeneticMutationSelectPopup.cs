@@ -62,7 +62,7 @@ public class GeneticMutationSelectPopup : PreviewPopupBase<GeneticMutationObj, G
         SetParentUIButtonsInteractable(true);
         gameObject.SetActive(false);
 
-        // Switch to movement controls
+        // Switch to movement controls (uses delayed update to prevent immediate A button press)
         PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.GENETIC_MUTATION_MOVEMENT);
     }
 }

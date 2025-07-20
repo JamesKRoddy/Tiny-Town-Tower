@@ -43,6 +43,15 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         selectedMutationElement = null;
     }
 
+    private void OnDisable()
+    {
+        // Reset placement state when menu is closed
+        selectedMutation = null;
+        selectedMutationElement = null;
+        isPlacingMutation = false;
+        isMovingExistingMutation = false;
+    }
+
     public override void SetPlayerControls(PlayerControlType controlType)
     {
         base.SetPlayerControls(controlType);
@@ -83,30 +92,16 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
 
     private void CancelPlacement()
     {
+        // Don't allow B key to cancel when moving an existing mutation
+        if (isMovingExistingMutation)
+        {
+            return;
+        }
+
         if (isPlacingMutation && selectedMutationElement != null)
         {
-            // If we're moving an existing mutation, put it back in the grid
-            if (isMovingExistingMutation)
-            {
-                // Find a suitable position
-                for (int x = 0; x < mutationGrid.GetGridWidth(); x++)
-                {
-                    for (int y = 0; y < mutationGrid.GetGridHeight(); y++)
-                    {
-                        Vector2Int pos = new Vector2Int(x, y);
-                        if (mutationGrid.CanPlaceMutation(pos, selectedMutationElement))
-                        {
-                            mutationGrid.PlaceMutation(selectedMutationElement, pos, selectedMutationElement.Size);
-                            break;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                // If we're placing a new mutation, destroy it
-                Destroy(selectedMutationElement.gameObject);
-            }
+            // If we're placing a new mutation, destroy it
+            Destroy(selectedMutationElement.gameObject);
 
             // Reset state
             selectedMutation = null;
@@ -220,7 +215,10 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
         selectedMutation = uiElement.mutation;
         isPlacingMutation = true;
         isMovingExistingMutation = true;
-        selectedPosition = new Vector2Int(0, 0);
+        
+        // Get the current position before clearing it from the grid
+        selectedPosition = mutationGrid.GetMutationPosition(uiElement);
+        
         selectedMutationElement = uiElement;
         mutationGrid.ClearPosition(selectedMutationElement);
         if (selectedMutationElement == null)
@@ -495,6 +493,27 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
 
     internal void HandleBackButtonPress()
     {
+        // Clear selection from all mutations in the grid before closing
+        if (mutationGridPrefabContainer != null)
+        {
+            // Get all child objects (mutation elements) and clear their selection
+            foreach (Transform child in mutationGridPrefabContainer)
+            {
+                var mutationElement = child.GetComponent<MutationUIElement>();
+                if (mutationElement != null)
+                {
+                    mutationElement.ClearAllStates();
+                }
+            }
+        }
+        
+        // Clear any selected mutation element
+        if (selectedMutationElement != null)
+        {
+            selectedMutationElement.ClearAllStates();
+            selectedMutationElement = null;
+        }
+        
         if(PlayerInventory.Instance.availableMutations.Count > 0)
         {
             geneticMutationClosePopup.DisplayPopup(null, this, leftScreenBtn.gameObject);
