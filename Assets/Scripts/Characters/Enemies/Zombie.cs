@@ -25,6 +25,8 @@ namespace Enemies
         [SerializeField] protected float backstepTargetDistance = 1.5f; // Distance to backstep to
         [SerializeField] protected float backstepSpeed = -1f; // Negative speed for backstep animation
 
+        private float currentAnimSpeed = 1f;
+
         protected override void Awake()
         {
             useRootMotion = true; // Enable root motion for the zombie
@@ -47,26 +49,30 @@ namespace Enemies
             // Debug distance and attack state
             Debug.DrawLine(transform.position, navMeshTarget.position, Color.yellow);
 
-            // Simple backstep logic
+            // Smoothly lerp the animator speed parameter
+            float targetAnimSpeed = 1f;
             if (enableBackstep && !isAttacking)
             {
                 if (distanceToTarget < backstepTriggerDistance)
                 {
-                    // Too close - backstep
+                    targetAnimSpeed = backstepSpeed;
+                    // Skip attack logic while backstepping
+                    currentAnimSpeed = Mathf.Lerp(currentAnimSpeed, targetAnimSpeed, Time.deltaTime * 8f);
                     if (animator != null)
                     {
-                        animator.SetFloat("Speed", backstepSpeed);
+                        animator.SetFloat("Speed", currentAnimSpeed);
                     }
-                    return; // Skip attack logic while backstepping
+                    return;
                 }
                 else if (distanceToTarget >= backstepTargetDistance)
                 {
-                    // Far enough away - resume normal speed
-                    if (animator != null)
-                    {
-                        animator.SetFloat("Speed", 1f);
-                    }
+                    targetAnimSpeed = 1f;
                 }
+            }
+            currentAnimSpeed = Mathf.Lerp(currentAnimSpeed, targetAnimSpeed, Time.deltaTime * 8f);
+            if (animator != null)
+            {
+                animator.SetFloat("Speed", currentAnimSpeed);
             }
 
             // Handle attack logic
