@@ -129,11 +129,7 @@ public class WorkState : _TaskState
 
         // Debug logging for movement issues
         if (Time.frameCount % 60 == 0) // Log every 60 frames to avoid spam
-        {
-            Debug.Log($"[WorkState] {npc.name} - Distance to task: {Vector3.Distance(transform.position, taskDestination.position):F2}, " +
-                     $"Agent destination: {agent.destination}, Agent isStopped: {agent.isStopped}, " +
-                     $"Agent velocity: {agent.velocity.magnitude:F2}, Path status: {agent.pathStatus}");
-            
+        {            
             // Check if agent is stuck
             if (agent.velocity.magnitude < 0.1f && !agent.isStopped && !hasReachedDestination)
             {

@@ -40,7 +40,6 @@ public class BunkerBuilding : Building
     /// <returns>True if successfully sheltered, false if no space</returns>
     public bool ShelterNPC(HumanCharacterController npc)
     {
-        Debug.Log($"Sheltering NPC {npc.name} in bunker. HasSpace: {HasSpace}, npc: {npc}");
         if (!HasSpace || npc == null)
         {
             return false;
@@ -59,7 +58,6 @@ public class BunkerBuilding : Building
             OnBunkerOccupied?.Invoke(this);
         }
 
-        Debug.Log($"NPC {npc.name} sheltered in bunker. Occupancy: {shelteredNPCs.Count}/{maxCapacity}");
         return true;
     }
 
@@ -102,7 +100,6 @@ public class BunkerBuilding : Building
         shelteredNPCs.Clear();
         isOccupied = false;
         OnBunkerVacated?.Invoke(this);
-        Debug.Log("All NPCs evacuated from bunker");
     }
 
     /// <summary>
@@ -112,7 +109,6 @@ public class BunkerBuilding : Building
     {
         // Evacuate all NPCs before destroying the bunker
         EvacuateAll();
-        Debug.LogWarning("Bunker destroyed! All NPCs evacuated.");
         
         // Call base Die method to handle building destruction
         base.Die();

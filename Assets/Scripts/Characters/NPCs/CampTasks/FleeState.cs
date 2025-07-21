@@ -199,7 +199,6 @@ public class FleeState : _TaskState
                 Vector3 currentFleeDirection = (npc.transform.position - fleeTarget).normalized;
                 fleeTarget = npc.transform.position + currentFleeDirection * fleeDistance;
                 agent.SetDestination(fleeTarget);
-                Debug.Log($"{npc.name} still threatened, fleeing further");
             }
             else
             {
@@ -211,12 +210,6 @@ public class FleeState : _TaskState
                     isSeekingBunker = true;
                     targetBunker = nearestBunker;
                     agent.SetDestination(nearestBunker.transform.position);
-                    Debug.Log($"{npc.name} found bunker after fleeing, seeking shelter");
-                }
-                else
-                {
-                    // No bunker available, stay at current safe location
-                    Debug.Log($"{npc.name} reached safe location, staying put");
                 }
             }
         }

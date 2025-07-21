@@ -108,15 +108,14 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlace
         NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
         if (obstacle == null)
         {
+            Debug.LogWarning($"Adding NavMeshObstacle to {gameObject.name}");
             obstacle = gameObject.AddComponent<NavMeshObstacle>();
             obstacle.carving = true;
             obstacle.size = new Vector3(structureScriptableObj.size.x, 1.0f, structureScriptableObj.size.y);
         }
         else
         {
-            // Update existing obstacle size if needed
             obstacle.carving = true;
-            obstacle.size = new Vector3(structureScriptableObj.size.x, 1.0f, structureScriptableObj.size.y);
         }        
     }
 
