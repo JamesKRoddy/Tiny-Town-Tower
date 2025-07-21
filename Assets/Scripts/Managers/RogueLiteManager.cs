@@ -218,14 +218,14 @@ namespace Managers
 
         private void OnNPCPossessed(IPossessable npc)
         {
-            // Unsubscribe from previous NPC's health events if it was damageable
+            // Always unsubscribe from previous NPC's health events if it was damageable
             if (PlayerController.Instance._possessedNPC is IDamageable previousDamageable)
             {
                 previousDamageable.OnDeath -= PlayerDied;
             }
 
-            // Subscribe to new NPC's health events
-            if (npc is IDamageable damageable)
+            // Only subscribe to new NPC's health events in roguelike mode
+            if (GameManager.Instance.CurrentGameMode == GameMode.ROGUE_LITE && npc is IDamageable damageable)
             {
                 damageable.OnDeath += PlayerDied;
             }
@@ -233,6 +233,12 @@ namespace Managers
 
         private void PlayerDied()
         {
+            // Only handle player death in roguelike mode
+            if (GameManager.Instance.CurrentGameMode != GameMode.ROGUE_LITE)
+            {
+                return;
+            }
+
             SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
 
             PlayerUIManager.Instance.deathMenu.SetScreenActive(true, 0.1f);       
