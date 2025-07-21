@@ -315,6 +315,23 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 }
                 return;
             }
+
+            // Check if it's a construction site
+            StructureConstructionTask constructionTask = workTask.GetComponent<StructureConstructionTask>();
+            if (constructionTask != null)
+            {
+                Debug.Log($"Found construction site: {constructionTask.name}");
+                if(CampManager.Instance.WorkManager.IsNPCForAssignmentSet()){
+                    Debug.Log("NPC for assignment is set, creating construction work task options");
+                    CreateConstructionSiteWorkTaskOptions(constructionTask, (task) => {
+                        CampManager.Instance.WorkManager.AssignWorkToBuilding(task);
+                    });
+                } else{
+                    Debug.Log("No NPC for assignment, showing construction site selection options");
+                    CreateConstructionSiteSelectionOptions(constructionTask);
+                }
+                return;
+            }
         }
     }
 
@@ -352,6 +369,19 @@ public class PlayerController : MonoBehaviour, IControllerInput
             onTaskSelected(task);
             CampManager.Instance.WorkManager.CloseSelectionPopup();
         });
+    }
+
+    private void CreateConstructionSiteWorkTaskOptions(StructureConstructionTask constructionTask, Action<WorkTask> onTaskSelected)
+    {
+        CampManager.Instance.WorkManager.ShowWorkTaskOptions(constructionTask, null, (task) => {
+            onTaskSelected(task);
+            CampManager.Instance.WorkManager.CloseSelectionPopup();
+        });
+    }
+
+    private void CreateConstructionSiteSelectionOptions(StructureConstructionTask constructionTask)
+    {
+        CampManager.Instance.BuildManager.ShowConstructionSiteSelectionOptions(constructionTask);
     }
 
     #endregion
