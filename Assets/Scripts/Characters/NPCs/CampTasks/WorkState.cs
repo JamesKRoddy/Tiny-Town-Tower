@@ -108,16 +108,6 @@ public class WorkState : _TaskState
         }
     }
 
-    private void ResetAgentState()
-    {
-        agent.speed = MaxSpeed();
-        agent.angularSpeed = npc.rotationSpeed;
-        agent.isStopped = false;
-        agent.stoppingDistance = stoppingDistance;
-        agent.updatePosition = true;
-        agent.updateRotation = true;
-    }
-
     public override void UpdateState()
     {
         if (assignedTask == null) return;
@@ -277,19 +267,7 @@ public class WorkState : _TaskState
             settler.StopWorkAnimation();
         }
 
-        // Try to assign the next available task from the work queue
-        if (CampManager.Instance?.WorkManager != null)
-        {
-            bool taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(npc);
-            if (taskAssigned)
-            {
-                // A new task was assigned, so we stay in work state
-                // The work animation will be started again when we reach the new task
-                return;
-            }
-        }
-
-        // No more tasks available, go to wander state
-        npc.ChangeTask(TaskType.WANDER);
+        // Use shared method to assign work or wander
+        TryAssignWorkOrWander();
     }
 }

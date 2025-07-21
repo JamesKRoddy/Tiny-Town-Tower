@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI;
+using Managers;
 
 public abstract class _TaskState : MonoBehaviour
 {
@@ -62,6 +63,108 @@ public abstract class _TaskState : MonoBehaviour
         if (agent == null) return false;
         
         return NavigationUtils.HasReachedDestination(agent, target, stoppingDistance, obstacleBoundsOffset);
+    }
+
+    /// <summary>
+    /// Shared method to check if food is available at any operational canteen
+    /// </summary>
+    protected bool HasAvailableFood()
+    {
+        var canteens = CampManager.Instance.CookingManager.GetRegisteredCanteens();
+        foreach (var canteen in canteens)
+        {
+            if (canteen.HasAvailableMeals() && canteen.IsOperational())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Shared method to check for nearby enemy threats
+    /// </summary>
+    /// <param name="detectionRange">Range to check for threats (default 10f)</param>
+    /// <returns>True if threats are detected nearby</returns>
+    protected bool CheckForNearbyThreats(float detectionRange = 10f)
+    {
+        // Check for nearby enemies using FindObjectsByType
+        var nearbyEnemies = FindObjectsByType<Enemies.EnemyBase>(FindObjectsSortMode.None);
+        
+        foreach (var enemy in nearbyEnemies)
+        {
+            if (enemy != null)
+            {
+                float distance = Vector3.Distance(npc.transform.position, enemy.transform.position);
+                if (distance <= detectionRange)
+                {
+                    return true; // Threat detected
+                }
+            }
+        }
+        
+        return false; // No threats nearby
+    }
+
+    /// <summary>
+    /// Shared method to find the nearest canteen with available food
+    /// </summary>
+    /// <returns>Nearest canteen with food, or null if none found</returns>
+    protected CanteenBuilding FindNearestCanteen()
+    {
+        CanteenBuilding nearest = null;
+        float nearestDistance = float.MaxValue;
+
+        var canteens = CampManager.Instance.CookingManager.GetRegisteredCanteens();
+        foreach (var canteen in canteens)
+        {
+            if (canteen.HasAvailableMeals() && canteen.IsOperational())
+            {
+                float distance = Vector3.Distance(npc.transform.position, canteen.transform.position);
+                if (distance < nearestDistance)
+                {
+                    nearestDistance = distance;
+                    nearest = canteen;
+                }
+            }
+        }
+
+        return nearest;
+    }
+
+    /// <summary>
+    /// Shared method to reset agent to default state
+    /// </summary>
+    protected void ResetAgentState()
+    {
+        if (agent != null)
+        {
+            agent.speed = MaxSpeed();
+            agent.angularSpeed = npc.rotationSpeed;
+            agent.isStopped = false;
+            agent.stoppingDistance = stoppingDistance;
+            agent.updatePosition = true;
+            agent.updateRotation = true;
+        }
+    }
+
+    /// <summary>
+    /// Shared method to try assigning work or fallback to wander
+    /// </summary>
+    protected void TryAssignWorkOrWander()
+    {
+        if (CampManager.Instance?.WorkManager != null)
+        {
+            bool taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(npc);
+            if (!taskAssigned)
+            {
+                npc.ChangeTask(TaskType.WANDER);
+            }
+        }
+        else
+        {
+            npc.ChangeTask(TaskType.WANDER);
+        }
     }
 
     public abstract TaskType GetTaskType();

@@ -397,6 +397,40 @@ public class SettlerNPC : HumanCharacterController
     {
         lastNoFoodTime = Time.time;
     }
+
+    /// <summary>
+    /// Call this to put the NPC into the sheltered state (e.g., when entering a bunker)
+    /// </summary>
+    public void EnterShelter(BunkerBuilding bunker)
+    {
+        ChangeTask(TaskType.SHELTERED);
+    }
+
+    /// <summary>
+    /// Call this to remove the NPC from the sheltered state (e.g., when leaving a bunker)
+    /// </summary>
+    public void ExitShelter()
+    {
+        // Ensure the GameObject is active before changing state
+        if (!gameObject.activeInHierarchy)
+            gameObject.SetActive(true);
+
+        // Ensure the NavMeshAgent is enabled and on the NavMesh
+        if (agent != null && !agent.enabled)
+            agent.enabled = true;
+        if (agent != null && !agent.isOnNavMesh)
+        {
+            // Try to warp the agent to the nearest NavMesh position
+            NavMeshHit hit;
+            if (NavMesh.SamplePosition(transform.position, out hit, 2f, NavMesh.AllAreas))
+            {
+                agent.Warp(hit.position);
+            }
+        }
+
+        // Go to wander state - let WanderState handle threat detection and task assignment
+        ChangeTask(TaskType.WANDER);
+    }
 }
 
 namespace Characters.NPC

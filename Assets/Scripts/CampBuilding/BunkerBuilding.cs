@@ -48,6 +48,12 @@ public class BunkerBuilding : Building
         // Add NPC to sheltered list
         shelteredNPCs.Add(npc);
         
+        // If this is a SettlerNPC, enter the ShelteredState
+        if (npc is SettlerNPC settler)
+        {
+            settler.EnterShelter(this);
+        }
+        
         // Disable the NPC GameObject to make them invisible and untargetable
         npc.gameObject.SetActive(false);
         
@@ -72,6 +78,12 @@ public class BunkerBuilding : Building
             // Re-enable the NPC GameObject when they leave the bunker
             npc.gameObject.SetActive(true);
             
+            // If this is a SettlerNPC, exit the ShelteredState
+            if (npc is SettlerNPC settler)
+            {
+                settler.ExitShelter();
+            }
+            
             Debug.Log($"NPC {npc.name} removed from bunker. Occupancy: {shelteredNPCs.Count}/{maxCapacity}");
             
             // Check if bunker is now empty
@@ -94,6 +106,11 @@ public class BunkerBuilding : Building
             if (npc != null)
             {
                 npc.gameObject.SetActive(true);
+                // If this is a SettlerNPC, exit the ShelteredState
+                if (npc is SettlerNPC settler)
+                {
+                    settler.ExitShelter();
+                }
             }
         }
         

@@ -416,7 +416,6 @@ namespace Enemies
             {
                 transform.position = hit.position;
                 agent.Warp(hit.position);
-                    Debug.Log($"Enemy {gameObject.name} moved to valid NavMesh position: {hit.position}");
                 }
             }
             else

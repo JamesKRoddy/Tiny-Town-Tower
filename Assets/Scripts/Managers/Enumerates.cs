@@ -65,7 +65,8 @@ public enum TaskType
     WANDER,
     ATTACK,
     EAT,
-    FLEE
+    FLEE,
+    SHELTERED // Added for NPCs in bunkers
 }
 
 [System.Serializable]

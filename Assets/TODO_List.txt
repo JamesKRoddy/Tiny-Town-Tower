@@ -40,8 +40,6 @@ Bugs
 Construction sites need to be able to  have npcs manually assigned to them
 Return to camp selection from roguelike is showing up in camp when npcs die in camp  (might be only happening when the npc was possessed before it died)
 NPCs still moving around when they are dead
-Coroutines starting error on npcs hiding in bunker
-Enemies targeting buildings ok but not prioritising npcs over them
 So there is some jackyness around the building placer, i think sometimes building parent objects can spawn on top of each other
 Player dying and returning to camp
 Returning to camp from menu

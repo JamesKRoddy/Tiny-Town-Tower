@@ -1564,6 +1564,7 @@ GameObject:
   - component: {fileID: 6110800992483955535}
   - component: {fileID: 5759801616001992186}
   - component: {fileID: -6588995584392839030}
+  - component: {fileID: 4085220502539234452}
   m_Layer: 0
   m_Name: Test_Character_Player_NPC
   m_TagString: Untagged
@@ -1762,7 +1763,6 @@ MonoBehaviour:
   vaultOffset: 1
   maxVaultHeight: 1.2
   minVaultHeight: 0.3
-  rollUnderHeight: 0.8
   obstacleAnalysisRange: 1.5
   heightCheckRayCount: 5
   autoNavigateObstacles: 1
@@ -1852,6 +1852,18 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 256
+--- !u!114 &4085220502539234452
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2985604360754162274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bfb4472fd6e741f41b326f9d70272506, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &3466425493041804734
 GameObject:
   m_ObjectHideFlags: 0
