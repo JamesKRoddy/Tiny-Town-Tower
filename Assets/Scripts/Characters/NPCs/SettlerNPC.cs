@@ -126,6 +126,12 @@ public class SettlerNPC : HumanCharacterController
 
     private void Update()
     {
+        // Don't do anything if dead
+        if (Health <= 0) 
+        {
+            return;
+        }
+        
         if (currentState != null)
         {
             animator.SetFloat("Speed", agent.velocity.magnitude / 3.5f);

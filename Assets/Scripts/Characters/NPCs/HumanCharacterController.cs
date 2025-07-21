@@ -139,6 +139,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public virtual void PossessedUpdate()
     {
+        // Don't do anything if dead
+        if (health <= 0) 
+        {
+            return;
+        }
+        
         HandleDash();
         MoveCharacter();
         UpdateActualMovementSpeed();
@@ -1421,6 +1427,44 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         characterInventory.ClearInventory();
 
         animator.SetBool("Dead", true);
+
+        // Disable movement and AI components to prevent dead NPCs from moving
+        isAttacking = false;
+        isDashing = false;
+        isVaulting = false;
+        isPushing = false;
+        
+        // Disable NavMeshAgent
+        if (agent != null)
+        {
+            agent.enabled = false;
+        }
+        
+        // If this is a SettlerNPC, clear all states and tasks
+        if (this is SettlerNPC settler)
+        {
+            settler.ChangeState(null);
+            if (settler.HasAssignedWork())
+            {
+                settler.StopWork();
+            }
+        }
+        
+        // Disable all task states
+        foreach (var taskState in GetComponents<_TaskState>())
+        {
+            if (taskState != null)
+            {
+                taskState.enabled = false;
+            }
+        }
+        
+        // Disable interaction collider but keep main collider for physics
+        var narrativeInteractive = GetComponent<NarrativeInteractive>();
+        if (narrativeInteractive != null)
+        {
+            narrativeInteractive.enabled = false;
+        }
 
         // Play death VFX
         Vector3 deathPoint = transform.position + Vector3.up * 1.5f;
