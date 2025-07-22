@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8ccf30521a69cb741ad56958e7173ea0, type: 3}
-  m_Name: PLANTING_SEEDS
+  m_Name: Planting_Seeds
   m_EditorClassIdentifier: 
   prefabs:
   - {fileID: 1643851402782444, guid: ea5f61d0cb4f3ba4086449c103b0a9df, type: 3}

@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41387a36be586e943a3114932b8858a8, type: 3}
   m_Name: Basic_Building
   m_EditorClassIdentifier: 
-  impactEffects: []
+  impactEffects:
+  - {fileID: 11400000, guid: 0bdd9c418c7395b41b13f49714f9c1b0, type: 2}
   destructionEffects: []
-  buildingCategory: 0
+  buildingCategory: 1
   constructionEffects: []
   constructionCompleteEffects: []
   repairEffects: []
