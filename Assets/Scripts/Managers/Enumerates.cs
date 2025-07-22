@@ -21,17 +21,19 @@ public enum SceneNames
 
 /// <summary>
 /// Building type used in roguelike section to determine the type of building and floor to spawn
+/// Also used by the effect system to determine which effects to play for buildings
 /// </summary>
-public enum BuildingType
+public enum RogueLikeBuildingType
 {
-    NONE
+    // Category 0: None/Default
+    NONE = 0,
 }
 
 /// <summary>
 /// Room size categories for intelligent room placement in roguelike buildings
 /// </summary>
 [System.Serializable]
-public enum RoomSize
+public enum RogueLikeRoomSize
 {
     SMALL,      // Compact rooms that fit in tight spaces
     MEDIUM,     // Standard-sized rooms
@@ -39,8 +41,15 @@ public enum RoomSize
     EXTRA_LARGE // Massive rooms that require lots of space
 }
 
+public enum CampBuildingCategory
+{
+    NONE,
+    BASIC_BUILDING
+}
+
+
 [System.Serializable]
-public enum PlaceableObjectCategory
+public enum CampPlaceableObjectCategory
 {
     GENERAL,
     FOOD,

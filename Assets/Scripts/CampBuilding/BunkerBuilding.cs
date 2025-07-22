@@ -190,15 +190,4 @@ public class BunkerBuilding : Building
         EvacuateAll();
         base.OnDestroy();
     }
-
-    /// <summary>
-    /// Override TakeDamage to add debug logging for bunkers
-    /// </summary>
-    /// <param name="amount">Amount of damage to take</param>
-    /// <param name="damageSource">Source of the damage</param>
-    public override void TakeDamage(float amount, Transform damageSource = null)
-    {
-        // Call base TakeDamage to handle the damage
-        base.TakeDamage(amount, damageSource);
-    }
 } 

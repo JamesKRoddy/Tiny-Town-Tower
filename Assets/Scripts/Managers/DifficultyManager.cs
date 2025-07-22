@@ -52,7 +52,7 @@ namespace Managers
         /// </summary>
         /// <param name="buildingType">Type of building being entered</param>
         /// <param name="buildingBaseDifficulty">Base difficulty of the building (from BuildingDataScriptableObj)</param>
-        public void InitializeBuildingDifficulty(BuildingType buildingType, int buildingBaseDifficulty)
+        public void InitializeBuildingDifficulty(RogueLikeBuildingType buildingType, int buildingBaseDifficulty)
         {
             currentBuildingDifficulty = buildingBaseDifficulty;
             currentRoomNumber = 0;

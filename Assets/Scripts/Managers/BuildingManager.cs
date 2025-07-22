@@ -42,7 +42,7 @@ namespace Managers
         public int CurrentRoom => DifficultyManager.Instance.GetCurrentRoomNumber();
         public int CurrentRoomDifficulty => DifficultyManager.Instance.GetCurrentRoomDifficulty();
 
-        public BuildingDataScriptableObj SetBuildingData(BuildingType buildingType){
+        public BuildingDataScriptableObj SetBuildingData(RogueLikeBuildingType buildingType){
             // Find all buildings matching the door's building type
             List<BuildingDataScriptableObj> matchingBuildings = buildingDataScriptableObjs.FindAll(
                 building => building.buildingType == buildingType
@@ -133,7 +133,7 @@ namespace Managers
             return newPosition;
         }
 
-        public void SpawnRoom(BuildingType buildingType, Vector3 position)
+        public void SpawnRoom(RogueLikeBuildingType buildingType, Vector3 position)
         {
             // Store the current player spawn point before creating the new building
             if (currentRoomParent != null)
@@ -177,7 +177,7 @@ namespace Managers
             }
         }
 
-        private GameObject GetBuildingParent(BuildingType buildingType, int difficulty, out BuildingDataScriptableObj selectedBuilding)
+        private GameObject GetBuildingParent(RogueLikeBuildingType buildingType, int difficulty, out BuildingDataScriptableObj selectedBuilding)
         {
             foreach (var buildingData in buildingDataScriptableObjs)
             {

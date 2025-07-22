@@ -12,12 +12,13 @@ using Enemies;
 /// </summary>
 [RequireComponent(typeof(StructureRepairTask))]
 [RequireComponent(typeof(StructureUpgradeTask))]
-public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlaceableStructure where T : PlaceableObjectParent
+public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuildingDamageable, IPlaceableStructure where T : PlaceableObjectParent
 {
     #region Serialized Fields
     
     [Header("Structure Configuration")]
     [SerializeField] private T structureScriptableObj;
+    [SerializeField] protected CampBuildingCategory buildingCategory = CampBuildingCategory.BASIC_BUILDING;
 
     [Header("Structure State")]
     [SerializeField, ReadOnly] protected bool isOperational = false;
@@ -47,7 +48,12 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlace
         set { /* Override in derived classes if needed */ }
     }
     
+    // IDamageable implementation - for compatibility with existing systems
     public CharacterType CharacterType => CharacterType.NONE;
+    
+    // IBuildingDamageable implementation - for building-specific effects
+    public CampBuildingCategory BuildingCategory => buildingCategory;
+    
     public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
     public WorkTask GetCurrentWorkTask() => currentWorkTask;
 
@@ -164,6 +170,11 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlace
         {
             CampManager.Instance.RegisterTarget(this);
         }
+        
+        // Play construction complete effect
+        Vector3 effectPosition = transform.position + Vector3.up * 1.5f;
+        Vector3 effectNormal = Vector3.up;
+        EffectManager.Instance?.PlayConstructionCompleteEffect(effectPosition, effectNormal, buildingCategory);
     }
 
     public bool IsOperational() => isOperational;
@@ -189,12 +200,12 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlace
         OnDamageTaken?.Invoke(amount, currentHealth);
         OnHealthChanged?.Invoke(currentHealth / MaxHealth);
         
-        // Play hit VFX
+        // Play hit VFX using building effects
         Vector3 hitPoint = transform.position + Vector3.up * 1.5f;
         Vector3 hitNormal = damageSource != null 
             ? (transform.position - damageSource.position).normalized 
             : Vector3.up;
-        EffectManager.Instance?.PlayHitEffect(hitPoint, hitNormal, this);
+        EffectManager.Instance?.PlayHitEffect(hitPoint, hitNormal, buildingCategory);
         
         if (currentHealth <= 0)
         {
@@ -212,17 +223,38 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlace
         OnStructureRepaired?.Invoke();
     }
 
+    public virtual void Repair(float amount)
+    {
+        Heal(amount);
+        
+        // Play repair effect
+        Vector3 repairPoint = transform.position + Vector3.up * 1.5f;
+        Vector3 repairNormal = Vector3.up;
+        EffectManager.Instance?.PlayRepairEffect(repairPoint, repairNormal, buildingCategory);
+    }
+
     public virtual void Die()
     {
         Debug.Log($"{gameObject.name} has been destroyed!");
         OnDeath?.Invoke();
+        OnDestroyed?.Invoke();
         OnStructureDestroyed?.Invoke();
         
         // Notify all enemies that this structure was destroyed
         EnemyBase.NotifyTargetDestroyed(transform);
         
+        // Play destruction VFX using building effects
+        Vector3 destructionPoint = transform.position + Vector3.up * 1.5f;
+        Vector3 destructionNormal = Vector3.up;
+        EffectManager.Instance?.PlayDestructionEffect(destructionPoint, destructionNormal, buildingCategory);
+        
         // Destroy the structure
         Destroy(gameObject);
+    }
+
+    public virtual void Destroy()
+    {
+        Die();
     }
 
     #endregion
@@ -236,6 +268,7 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlace
     public event Action<float, float> OnDamageTaken;
     public event Action<float, float> OnHeal;
     public event Action OnDeath;
+    public event Action OnDestroyed;
 
     #endregion
 
@@ -259,6 +292,11 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlace
     public void TriggerUpgradeEvent()
     {
         OnStructureUpgraded?.Invoke();
+        
+        // Play upgrade effect
+        Vector3 upgradePoint = transform.position + Vector3.up * 1.5f;
+        Vector3 upgradeNormal = Vector3.up;
+        EffectManager.Instance?.PlayUpgradeEffect(upgradePoint, upgradeNormal, buildingCategory);
     }
 
     public void TriggerRepairEvent()

@@ -12,7 +12,7 @@ namespace Managers
 
         [SerializeField] private List<LootTableForBuildingType> buildingLootTables;
 
-        internal ResourceItemCount GetBuildingLootTable(BuildingType buildingType, int roomDifficulty) //
+        internal ResourceItemCount GetBuildingLootTable(RogueLikeBuildingType buildingType, int roomDifficulty) //
         {
             LootTableForBuildingType lootTableForBuildingType = buildingLootTables.Find(lootTable => lootTable.buildingType == buildingType);
             LootTableScriptableObj lootTableScriptableObj = lootTableForBuildingType.lootTable;
@@ -41,7 +41,7 @@ namespace Managers
     [System.Serializable]
     internal class LootTableForBuildingType
     {
-        public BuildingType buildingType;
+        public RogueLikeBuildingType buildingType;
         public LootTableScriptableObj lootTable;
     }
 

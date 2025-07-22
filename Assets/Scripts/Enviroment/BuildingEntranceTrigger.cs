@@ -7,7 +7,7 @@ using UnityEngine;
 public class BuildingEntranceTrigger : SceneTransitionTrigger
 {
     [SerializeField] private Transform playerSpawnPoint;
-    [SerializeField] private BuildingType buildingType;
+    [SerializeField] private RogueLikeBuildingType buildingType;
 
     BuildingDataScriptableObj buildingData;
 

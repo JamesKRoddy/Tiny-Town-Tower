@@ -5,7 +5,7 @@ public class OverWorldDoor : RogueLiteDoor
 {
     [Header("Overworld Door Settings")]
     [SerializeField] private int buildingDifficulty = 10;
-    [SerializeField] private BuildingType buildingType;
+    [SerializeField] private RogueLikeBuildingType buildingType;
     [SerializeField] private string buildingName = "Unknown Building";
     
     [Header("Scene Transition")]
@@ -87,7 +87,7 @@ public class OverWorldDoor : RogueLiteDoor
         return buildingDifficulty;
     }
 
-    public BuildingType GetBuildingType()
+    public RogueLikeBuildingType GetBuildingType()
     {
         return buildingType;
     }
