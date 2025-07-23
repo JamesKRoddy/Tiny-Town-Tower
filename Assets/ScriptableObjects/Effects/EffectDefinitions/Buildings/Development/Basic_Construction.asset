@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8ccf30521a69cb741ad56958e7173ea0, type: 3}
-  m_Name: Watering_Plants
+  m_Name: Basic_Construction
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 1487774844701372, guid: 128fc8d234f831243bfe6a4c23948dda, type: 3}
+  - {fileID: 7381760930260317775, guid: 196bd896de1fc6c45ad43b572affa333, type: 3}
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

@@ -12,12 +12,13 @@ using Enemies;
 /// </summary>
 [RequireComponent(typeof(StructureRepairTask))]
 [RequireComponent(typeof(StructureUpgradeTask))]
-public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlaceableStructure where T : PlaceableObjectParent
+public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuildingDamageable, IPlaceableStructure where T : PlaceableObjectParent
 {
     #region Serialized Fields
     
     [Header("Structure Configuration")]
     [SerializeField] private T structureScriptableObj;
+    [SerializeField] protected CampBuildingCategory buildingCategory = CampBuildingCategory.BASIC_BUILDING;
 
     [Header("Structure State")]
     [SerializeField, ReadOnly] protected bool isOperational = false;
@@ -29,6 +30,19 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlace
     [SerializeField, ReadOnly] protected StructureRepairTask repairTask;
     [SerializeField, ReadOnly] protected StructureUpgradeTask upgradeTask;
 
+    [Header("Damage Effects")]
+    [SerializeField] private float shakeIntensity = 0.1f;
+    [SerializeField] private float shakeDuration = 0.3f;
+    [SerializeField] private AnimationCurve shakeDecay = AnimationCurve.EaseInOut(0, 1, 1, 0);
+
+    #endregion
+
+    #region Private Fields
+    
+    private MeshRenderer[] meshRenderers;
+    private Vector3[] originalMeshPositions;
+    private Coroutine currentShakeCoroutine;
+    
     #endregion
 
     #region Properties
@@ -47,7 +61,12 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlace
         set { /* Override in derived classes if needed */ }
     }
     
+    // IDamageable implementation - for compatibility with existing systems
     public CharacterType CharacterType => CharacterType.NONE;
+    
+    // IBuildingDamageable implementation - for building-specific effects
+    public CampBuildingCategory BuildingCategory => buildingCategory;
+    
     public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
     public WorkTask GetCurrentWorkTask() => currentWorkTask;
 
@@ -62,6 +81,13 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlace
 
     protected virtual void OnDestroy()
     {
+        // Stop any ongoing shake effects
+        if (currentShakeCoroutine != null)
+        {
+            StopCoroutine(currentShakeCoroutine);
+            RestoreOriginalMeshPositions();
+        }
+        
         // Unregister from CampManager target tracking
         if (CampManager.Instance != null)
         {
@@ -93,6 +119,22 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlace
     {
         SetupRepairTask();
         SetupUpgradeTask();
+        SetupDamageShakeEffect();
+    }
+
+    private void SetupDamageShakeEffect()
+    {
+        // Find all mesh renderers in this building and its children
+        meshRenderers = GetComponentsInChildren<MeshRenderer>();
+        originalMeshPositions = new Vector3[meshRenderers.Length];
+        
+        // Store original positions
+        for (int i = 0; i < meshRenderers.Length; i++)
+        {
+            originalMeshPositions[i] = meshRenderers[i].transform.localPosition;
+        }
+        
+        Debug.Log($"[{gameObject.name}] Setup damage shake effect for {meshRenderers.Length} mesh renderers");
     }
 
     private void SetupCollider()
@@ -108,15 +150,14 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlace
         NavMeshObstacle obstacle = GetComponent<NavMeshObstacle>();
         if (obstacle == null)
         {
+            Debug.LogWarning($"Adding NavMeshObstacle to {gameObject.name}");
             obstacle = gameObject.AddComponent<NavMeshObstacle>();
             obstacle.carving = true;
             obstacle.size = new Vector3(structureScriptableObj.size.x, 1.0f, structureScriptableObj.size.y);
         }
         else
         {
-            // Update existing obstacle size if needed
             obstacle.carving = true;
-            obstacle.size = new Vector3(structureScriptableObj.size.x, 1.0f, structureScriptableObj.size.y);
         }        
     }
 
@@ -165,6 +206,11 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlace
         {
             CampManager.Instance.RegisterTarget(this);
         }
+        
+        // Play construction complete effect
+        Vector3 effectPosition = transform.position + Vector3.up * 1.5f;
+        Vector3 effectNormal = Vector3.up;
+        EffectManager.Instance?.PlayConstructionCompleteEffect(effectPosition, effectNormal, buildingCategory);
     }
 
     public bool IsOperational() => isOperational;
@@ -190,17 +236,294 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlace
         OnDamageTaken?.Invoke(amount, currentHealth);
         OnHealthChanged?.Invoke(currentHealth / MaxHealth);
         
-        // Play hit VFX
-        Vector3 hitPoint = transform.position + Vector3.up * 1.5f;
-        Vector3 hitNormal = damageSource != null 
-            ? (transform.position - damageSource.position).normalized 
-            : Vector3.up;
-        EffectManager.Instance?.PlayHitEffect(hitPoint, hitNormal, this);
+        // Calculate actual hit point and surface normal
+        Vector3 hitPoint;
+        Vector3 hitNormal;
+        
+        if (damageSource != null)
+        {
+            // Calculate hit point on building surface
+            hitPoint = CalculateHitPoint(damageSource.position);
+            // Calculate surface normal at hit point
+            hitNormal = CalculateSurfaceNormal(hitPoint, damageSource.position);
+        }
+        else
+        {
+            // Fallback for damage without source (like environmental damage)
+            hitPoint = transform.position + Vector3.up * 1.5f;
+            hitNormal = Vector3.up;
+        }
+        
+        // Play hit VFX using building effects at actual hit point
+        EffectManager.Instance?.PlayHitEffect(hitPoint, hitNormal, buildingCategory);
+        
+        // Trigger damage shake effect
+        TriggerDamageShake(amount);
         
         if (currentHealth <= 0)
         {
             Die();
         }
+    }
+
+    /// <summary>
+    /// Triggers the damage shake effect on all mesh renderers
+    /// </summary>
+    private void TriggerDamageShake(float damageAmount)
+    {
+        if (meshRenderers == null || meshRenderers.Length == 0) return;
+        
+        // Stop any existing shake
+        if (currentShakeCoroutine != null)
+        {
+            StopCoroutine(currentShakeCoroutine);
+        }
+        
+        // Scale shake intensity based on damage amount and current health percentage
+        float healthPercentage = GetHealthPercentage();
+        float damageIntensityMultiplier = Mathf.Clamp01(damageAmount / MaxHealth * 10f); // Scale based on relative damage
+        float healthIntensityMultiplier = Mathf.Lerp(0.5f, 1.5f, 1f - healthPercentage); // Shake more when damaged
+        
+        float finalIntensity = shakeIntensity * damageIntensityMultiplier * healthIntensityMultiplier;
+        
+        // Start shake coroutine
+        currentShakeCoroutine = StartCoroutine(ShakeMeshRenderers(finalIntensity));
+    }
+
+    /// <summary>
+    /// Coroutine that shakes all mesh renderers for the specified duration
+    /// </summary>
+    private IEnumerator ShakeMeshRenderers(float intensity)
+    {
+        float elapsed = 0f;
+        
+        while (elapsed < shakeDuration)
+        {
+            float progress = elapsed / shakeDuration;
+            float currentIntensity = intensity * shakeDecay.Evaluate(progress);
+            
+            // Apply random shake to each mesh renderer
+            for (int i = 0; i < meshRenderers.Length; i++)
+            {
+                if (meshRenderers[i] != null)
+                {
+                    Vector3 randomOffset = new Vector3(
+                        UnityEngine.Random.Range(-currentIntensity, currentIntensity),
+                        UnityEngine.Random.Range(-currentIntensity, currentIntensity),
+                        UnityEngine.Random.Range(-currentIntensity, currentIntensity)
+                    );
+                    
+                    meshRenderers[i].transform.localPosition = originalMeshPositions[i] + randomOffset;
+                }
+            }
+            
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        
+        // Restore original positions
+        RestoreOriginalMeshPositions();
+        currentShakeCoroutine = null;
+    }
+
+    /// <summary>
+    /// Restores all mesh renderers to their original positions
+    /// </summary>
+    private void RestoreOriginalMeshPositions()
+    {
+        if (meshRenderers == null || originalMeshPositions == null) return;
+        
+        for (int i = 0; i < meshRenderers.Length; i++)
+        {
+            if (meshRenderers[i] != null)
+            {
+                meshRenderers[i].transform.localPosition = originalMeshPositions[i];
+            }
+        }
+    }
+
+    /// <summary>
+    /// Calculates the actual hit point on the building's surface closest to the damage source
+    /// </summary>
+    private Vector3 CalculateHitPoint(Vector3 damageSourcePosition)
+    {
+        Collider buildingCollider = GetComponent<Collider>();
+        if (buildingCollider == null)
+        {
+            // Fallback if no collider
+            return transform.position + Vector3.up * 1.5f;
+        }
+
+        // Try to get the damage source's collider (enemy attack cube)
+        GameObject damageSourceObj = null;
+        Collider damageSourceCollider = null;
+        
+        // Look for damage source in nearby area (enemies typically have colliders)
+        Collider[] nearbyColliders = Physics.OverlapSphere(damageSourcePosition, 2f);
+        foreach (var collider in nearbyColliders)
+        {
+            // Look for enemy colliders or weapon colliders
+            if (collider.gameObject.layer == LayerMask.NameToLayer("Enemy") ||
+                collider.gameObject.layer == LayerMask.NameToLayer("Weapon") ||
+                collider.CompareTag("Enemy") ||
+                collider.name.Contains("Attack") ||
+                collider.name.Contains("Weapon"))
+            {
+                damageSourceCollider = collider;
+                damageSourceObj = collider.gameObject;
+                break;
+            }
+        }
+
+        Vector3 hitPoint;
+
+        if (damageSourceCollider != null)
+        {
+            // Calculate intersection center between damage source collider and building collider
+            hitPoint = CalculateColliderIntersectionCenter(buildingCollider, damageSourceCollider);
+        }
+        else
+        {
+            // Fallback: use closest point but offset it upward to a more reasonable height
+            Vector3 closestPoint = buildingCollider.ClosestPoint(damageSourcePosition);
+            
+            // If the closest point is too low, adjust it to a more reasonable height
+            Bounds buildingBounds = buildingCollider.bounds;
+            float minHeight = buildingBounds.min.y + buildingBounds.size.y * 0.2f; // 20% up from bottom
+            float maxHeight = buildingBounds.max.y - buildingBounds.size.y * 0.1f; // 90% of total height
+            
+            if (closestPoint.y < minHeight)
+            {
+                closestPoint.y = minHeight;
+            }
+            else if (closestPoint.y > maxHeight)
+            {
+                closestPoint.y = maxHeight;
+            }
+            
+            hitPoint = closestPoint;
+        }
+        
+        return hitPoint;
+    }
+
+    /// <summary>
+    /// Calculates the center point of intersection between two colliders
+    /// </summary>
+    private Vector3 CalculateColliderIntersectionCenter(Collider buildingCollider, Collider damageSourceCollider)
+    {
+        Bounds buildingBounds = buildingCollider.bounds;
+        Bounds damageBounds = damageSourceCollider.bounds;
+        
+        // Calculate the intersection bounds
+        Vector3 intersectionMin = Vector3.Max(buildingBounds.min, damageBounds.min);
+        Vector3 intersectionMax = Vector3.Min(buildingBounds.max, damageBounds.max);
+        
+        // Check if there's actually an intersection
+        if (intersectionMin.x <= intersectionMax.x && 
+            intersectionMin.y <= intersectionMax.y && 
+            intersectionMin.z <= intersectionMax.z)
+        {
+            // Return the center of the intersection volume
+            Vector3 intersectionCenter = (intersectionMin + intersectionMax) * 0.5f;
+            
+            // Project this center point onto the building's surface
+            Vector3 surfacePoint = buildingCollider.ClosestPoint(intersectionCenter);
+            
+            // If the surface point is too different from our intersection center,
+            // use the intersection center but clamp it to the building bounds
+            float distance = Vector3.Distance(intersectionCenter, surfacePoint);
+            if (distance > 0.5f) // If too far from surface
+            {
+                // Move the intersection center to the building surface
+                Vector3 directionToCenter = (intersectionCenter - buildingBounds.center).normalized;
+                surfacePoint = buildingBounds.center + directionToCenter * (buildingBounds.size.magnitude * 0.5f);
+                surfacePoint = buildingCollider.ClosestPoint(surfacePoint);
+            }
+            
+            return surfacePoint;
+        }
+        else
+        {
+            // No intersection found, fall back to closest point with height adjustment
+            Vector3 closestPoint = buildingCollider.ClosestPoint(damageBounds.center);
+            
+            // Adjust height to be more in the middle of the building vertically
+            float targetHeight = Mathf.Lerp(buildingBounds.min.y, buildingBounds.max.y, 0.4f); // 40% up the building
+            closestPoint.y = Mathf.Max(closestPoint.y, targetHeight);
+            
+            return closestPoint;
+        }
+    }
+
+    /// <summary>
+    /// Calculates the surface normal at the hit point, facing outward from the building
+    /// </summary>
+    private Vector3 CalculateSurfaceNormal(Vector3 hitPoint, Vector3 damageSourcePosition)
+    {
+        Collider buildingCollider = GetComponent<Collider>();
+        if (buildingCollider == null)
+        {
+            // Fallback: direction from building center to damage source
+            return (damageSourcePosition - transform.position).normalized;
+        }
+
+        // Cast a ray from slightly inside the building toward the hit point to get surface normal
+        Vector3 rayOrigin = Vector3.Lerp(transform.position, hitPoint, 0.9f);
+        Vector3 rayDirection = (hitPoint - rayOrigin).normalized;
+        
+        if (Physics.Raycast(rayOrigin, rayDirection, out RaycastHit hit, 10f))
+        {
+            if (hit.collider == buildingCollider)
+            {
+                return hit.normal;
+            }
+        }
+        
+        // Alternative method: use the direction from building center to hit point
+        Vector3 outwardDirection = (hitPoint - transform.position).normalized;
+        
+        // For box colliders, we can snap to the closest face normal
+        if (buildingCollider is BoxCollider)
+        {
+            return SnapToBoxFaceNormal(outwardDirection);
+        }
+        
+        return outwardDirection;
+    }
+
+    /// <summary>
+    /// Snaps a direction to the closest box face normal for more accurate effects on rectangular buildings
+    /// </summary>
+    private Vector3 SnapToBoxFaceNormal(Vector3 direction)
+    {
+        // Transform direction to local space
+        Vector3 localDirection = transform.InverseTransformDirection(direction);
+        
+        // Find the axis with the largest absolute component
+        float absX = Mathf.Abs(localDirection.x);
+        float absY = Mathf.Abs(localDirection.y);
+        float absZ = Mathf.Abs(localDirection.z);
+        
+        Vector3 snappedLocal;
+        if (absX >= absY && absX >= absZ)
+        {
+            // X axis is dominant
+            snappedLocal = new Vector3(Mathf.Sign(localDirection.x), 0, 0);
+        }
+        else if (absY >= absX && absY >= absZ)
+        {
+            // Y axis is dominant
+            snappedLocal = new Vector3(0, Mathf.Sign(localDirection.y), 0);
+        }
+        else
+        {
+            // Z axis is dominant
+            snappedLocal = new Vector3(0, 0, Mathf.Sign(localDirection.z));
+        }
+        
+        // Transform back to world space
+        return transform.TransformDirection(snappedLocal);
     }
 
     public virtual void Heal(float amount)
@@ -213,17 +536,38 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlace
         OnStructureRepaired?.Invoke();
     }
 
+    public virtual void Repair(float amount)
+    {
+        Heal(amount);
+        
+        // Play repair effect
+        Vector3 repairPoint = transform.position + Vector3.up * 1.5f;
+        Vector3 repairNormal = Vector3.up;
+        EffectManager.Instance?.PlayRepairEffect(repairPoint, repairNormal, buildingCategory);
+    }
+
     public virtual void Die()
     {
         Debug.Log($"{gameObject.name} has been destroyed!");
         OnDeath?.Invoke();
+        OnDestroyed?.Invoke();
         OnStructureDestroyed?.Invoke();
         
         // Notify all enemies that this structure was destroyed
         EnemyBase.NotifyTargetDestroyed(transform);
         
+        // Play destruction VFX using building effects
+        Vector3 destructionPoint = transform.position + Vector3.up * 1.5f;
+        Vector3 destructionNormal = Vector3.up;
+        EffectManager.Instance?.PlayDestructionEffect(destructionPoint, destructionNormal, buildingCategory);
+        
         // Destroy the structure
         Destroy(gameObject);
+    }
+
+    public virtual void Destroy()
+    {
+        Die();
     }
 
     #endregion
@@ -237,6 +581,7 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlace
     public event Action<float, float> OnDamageTaken;
     public event Action<float, float> OnHeal;
     public event Action OnDeath;
+    public event Action OnDestroyed;
 
     #endregion
 
@@ -260,6 +605,11 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IPlace
     public void TriggerUpgradeEvent()
     {
         OnStructureUpgraded?.Invoke();
+        
+        // Play upgrade effect
+        Vector3 upgradePoint = transform.position + Vector3.up * 1.5f;
+        Vector3 upgradeNormal = Vector3.up;
+        EffectManager.Instance?.PlayUpgradeEffect(upgradePoint, upgradeNormal, buildingCategory);
     }
 
     public void TriggerRepairEvent()

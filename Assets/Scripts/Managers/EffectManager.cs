@@ -12,6 +12,10 @@ namespace Managers
         [Tooltip("Array of effect sets for different character types")]
         public CharacterEffects[] characterEffects;
 
+        [Header("Building Effects")]
+        [Tooltip("Array of effect sets for different building types")]
+        public BuildingEffects[] buildingEffects;
+
         [Tooltip("Number of instances of each effect to keep in the object pool")]
         public int poolSize = 20;
 
@@ -33,6 +37,12 @@ namespace Managers
 
         private void InitializePools()
         {
+            InitializeCharacterEffectPools();
+            InitializeBuildingEffectPools();
+        }
+
+        private void InitializeCharacterEffectPools()
+        {
             if (characterEffects == null) return;
 
             foreach (var charEffect in characterEffects)
@@ -42,8 +52,27 @@ namespace Managers
                 InitializeEffectPool(charEffect.bloodEffects);
                 InitializeEffectPool(charEffect.impactEffects);
                 InitializeEffectPool(charEffect.deathEffects);
+                InitializeEffectPool(charEffect.destructionEffects);
                 InitializeEffectPool(charEffect.footstepEffects);
                 InitializeEffectPool(charEffect.idleEffects);
+            }
+        }
+
+        private void InitializeBuildingEffectPools()
+        {
+            if (buildingEffects == null) return;
+
+            foreach (var buildingEffect in buildingEffects)
+            {
+                if (buildingEffect == null) continue;
+
+                InitializeEffectPool(buildingEffect.impactEffects);
+                InitializeEffectPool(buildingEffect.destructionEffects);
+                InitializeEffectPool(buildingEffect.constructionEffects);
+                InitializeEffectPool(buildingEffect.constructionCompleteEffects);
+                InitializeEffectPool(buildingEffect.repairEffects);
+                InitializeEffectPool(buildingEffect.upgradeEffects);
+                InitializeEffectPool(buildingEffect.ambientEffects);
             }
         }
 
@@ -78,18 +107,32 @@ namespace Managers
         public void PlayHitEffect(Vector3 position, Vector3 normal, IDamageable damageable)
         {
             if (damageable == null) return;
-            var effects = GetCharacterEffects(damageable.CharacterType);
-            if (effects == null) return;
-
-            if (effects.bloodEffects != null && effects.bloodEffects.Length > 0)
+            
+            var characterEffects = GetCharacterEffects(damageable.CharacterType);
+            if (characterEffects != null)
             {
-                PlayEffect(position, normal, Quaternion.LookRotation(normal), null, effects.bloodEffects[Random.Range(0, effects.bloodEffects.Length)]);
+                if (characterEffects.bloodEffects != null && characterEffects.bloodEffects.Length > 0)
+                {
+                    PlayEffect(position, normal, Quaternion.LookRotation(normal), null, characterEffects.bloodEffects[Random.Range(0, characterEffects.bloodEffects.Length)]);
+                }
+
+                if (characterEffects.impactEffects != null && characterEffects.impactEffects.Length > 0)
+                {
+                    PlayEffect(position, normal, Quaternion.LookRotation(normal), null, characterEffects.impactEffects[Random.Range(0, characterEffects.impactEffects.Length)]);
+                }
+            }
+        }
+
+        public void PlayHitEffect(Vector3 position, Vector3 normal, CampBuildingCategory buildingCategory)
+        {
+            var buildingEffects = GetBuildingEffects(buildingCategory);
+            if (buildingEffects == null || buildingEffects.impactEffects == null || buildingEffects.impactEffects.Length == 0) 
+            {
+                Debug.LogWarning($"No hit effects found for building category: {buildingCategory}");
+                return;
             }
 
-            if (effects.impactEffects != null && effects.impactEffects.Length > 0)
-            {
-                PlayEffect(position, normal, Quaternion.LookRotation(normal), null, effects.impactEffects[Random.Range(0, effects.impactEffects.Length)]);
-            }
+            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, buildingEffects.impactEffects[Random.Range(0, buildingEffects.impactEffects.Length)]);
         }
 
         public void PlayDeathEffect(Vector3 position, Vector3 normal, IDamageable damageable)
@@ -103,6 +146,50 @@ namespace Managers
             }
 
             PlayEffect(position, normal, Quaternion.LookRotation(normal), null, effects.deathEffects[Random.Range(0, effects.deathEffects.Length)]);
+        }
+
+        public void PlayDestructionEffect(Vector3 position, Vector3 normal, CampBuildingCategory buildingCategory)
+        {
+            var buildingEffects = GetBuildingEffects(buildingCategory);
+            if (buildingEffects == null || buildingEffects.destructionEffects == null || buildingEffects.destructionEffects.Length == 0)
+            {
+                Debug.LogWarning($"No destruction effects found for building category: {buildingCategory}");
+                return;
+            }
+
+            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, buildingEffects.destructionEffects[Random.Range(0, buildingEffects.destructionEffects.Length)]);
+        }
+
+        public void PlayConstructionEffect(Vector3 position, Vector3 normal, CampBuildingCategory buildingCategory)
+        {
+            var buildingEffects = GetBuildingEffects(buildingCategory);
+            if (buildingEffects == null || buildingEffects.constructionEffects == null || buildingEffects.constructionEffects.Length == 0) return;
+
+            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, buildingEffects.constructionEffects[Random.Range(0, buildingEffects.constructionEffects.Length)]);
+        }
+
+        public void PlayConstructionCompleteEffect(Vector3 position, Vector3 normal, CampBuildingCategory buildingCategory)
+        {
+            var buildingEffects = GetBuildingEffects(buildingCategory);
+            if (buildingEffects == null || buildingEffects.constructionCompleteEffects == null || buildingEffects.constructionCompleteEffects.Length == 0) return;
+
+            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, buildingEffects.constructionCompleteEffects[Random.Range(0, buildingEffects.constructionCompleteEffects.Length)]);
+        }
+
+        public void PlayRepairEffect(Vector3 position, Vector3 normal, CampBuildingCategory buildingCategory)
+        {
+            var buildingEffects = GetBuildingEffects(buildingCategory);
+            if (buildingEffects == null || buildingEffects.repairEffects == null || buildingEffects.repairEffects.Length == 0) return;
+
+            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, buildingEffects.repairEffects[Random.Range(0, buildingEffects.repairEffects.Length)]);
+        }
+
+        public void PlayUpgradeEffect(Vector3 position, Vector3 normal, CampBuildingCategory buildingCategory)
+        {
+            var buildingEffects = GetBuildingEffects(buildingCategory);
+            if (buildingEffects == null || buildingEffects.upgradeEffects == null || buildingEffects.upgradeEffects.Length == 0) return;
+
+            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, buildingEffects.upgradeEffects[Random.Range(0, buildingEffects.upgradeEffects.Length)]);
         }
 
         public void PlayFootstepEffect(Vector3 position, Vector3 normal, CharacterType characterType)
@@ -125,6 +212,21 @@ namespace Managers
                 }
             }
             Debug.LogWarning($"No effects found for character type: {characterType}");
+            return null;
+        }
+
+        private BuildingEffects GetBuildingEffects(CampBuildingCategory buildingCategory)
+        {
+            if (buildingEffects == null) return null;
+
+            foreach (var effect in buildingEffects)
+            {
+                if (effect != null && effect.buildingCategory == buildingCategory)
+                {
+                    return effect;
+                }
+            }
+            Debug.LogWarning($"No effects found for building category: {buildingCategory}");
             return null;
         }
 

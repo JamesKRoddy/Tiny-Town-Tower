@@ -40,7 +40,6 @@ public class BunkerBuilding : Building
     /// <returns>True if successfully sheltered, false if no space</returns>
     public bool ShelterNPC(HumanCharacterController npc)
     {
-        Debug.Log($"Sheltering NPC {npc.name} in bunker. HasSpace: {HasSpace}, npc: {npc}");
         if (!HasSpace || npc == null)
         {
             return false;
@@ -48,6 +47,12 @@ public class BunkerBuilding : Building
 
         // Add NPC to sheltered list
         shelteredNPCs.Add(npc);
+        
+        // If this is a SettlerNPC, enter the ShelteredState
+        if (npc is SettlerNPC settler)
+        {
+            settler.EnterShelter(this);
+        }
         
         // Disable the NPC GameObject to make them invisible and untargetable
         npc.gameObject.SetActive(false);
@@ -59,7 +64,6 @@ public class BunkerBuilding : Building
             OnBunkerOccupied?.Invoke(this);
         }
 
-        Debug.Log($"NPC {npc.name} sheltered in bunker. Occupancy: {shelteredNPCs.Count}/{maxCapacity}");
         return true;
     }
 
@@ -73,6 +77,12 @@ public class BunkerBuilding : Building
         {
             // Re-enable the NPC GameObject when they leave the bunker
             npc.gameObject.SetActive(true);
+            
+            // If this is a SettlerNPC, exit the ShelteredState
+            if (npc is SettlerNPC settler)
+            {
+                settler.ExitShelter();
+            }
             
             Debug.Log($"NPC {npc.name} removed from bunker. Occupancy: {shelteredNPCs.Count}/{maxCapacity}");
             
@@ -96,13 +106,17 @@ public class BunkerBuilding : Building
             if (npc != null)
             {
                 npc.gameObject.SetActive(true);
+                // If this is a SettlerNPC, exit the ShelteredState
+                if (npc is SettlerNPC settler)
+                {
+                    settler.ExitShelter();
+                }
             }
         }
         
         shelteredNPCs.Clear();
         isOccupied = false;
         OnBunkerVacated?.Invoke(this);
-        Debug.Log("All NPCs evacuated from bunker");
     }
 
     /// <summary>
@@ -112,7 +126,6 @@ public class BunkerBuilding : Building
     {
         // Evacuate all NPCs before destroying the bunker
         EvacuateAll();
-        Debug.LogWarning("Bunker destroyed! All NPCs evacuated.");
         
         // Call base Die method to handle building destruction
         base.Die();
@@ -176,16 +189,5 @@ public class BunkerBuilding : Building
         // Evacuate all NPCs when bunker is destroyed
         EvacuateAll();
         base.OnDestroy();
-    }
-
-    /// <summary>
-    /// Override TakeDamage to add debug logging for bunkers
-    /// </summary>
-    /// <param name="amount">Amount of damage to take</param>
-    /// <param name="damageSource">Source of the damage</param>
-    public override void TakeDamage(float amount, Transform damageSource = null)
-    {
-        // Call base TakeDamage to handle the damage
-        base.TakeDamage(amount, damageSource);
     }
 } 

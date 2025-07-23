@@ -18,9 +18,9 @@ public class RoomDebugMenu : BaseDebugMenu
     [SerializeField] private TMP_Dropdown roomSizeDropdown;
     [SerializeField] private TMP_Text roomSizeText;
     
-    private BuildingType currentBuildingType = BuildingType.NONE;
+    private RogueLikeBuildingType currentBuildingType = RogueLikeBuildingType.NONE;
     private int currentDifficulty = 1;
-    private RoomSize currentRoomSize = RoomSize.MEDIUM;
+    private RogueLikeRoomSize currentRoomSize = RogueLikeRoomSize.MEDIUM;
     private List<GameObject> spawnedTestRooms = new List<GameObject>();
     
     public override void RegisterMenu()
@@ -59,7 +59,7 @@ public class RoomDebugMenu : BaseDebugMenu
         buildingTypeDropdown.ClearOptions();
         List<string> options = new List<string>();
         
-        foreach (BuildingType buildingType in System.Enum.GetValues(typeof(BuildingType)))
+        foreach (RogueLikeBuildingType buildingType in System.Enum.GetValues(typeof(RogueLikeBuildingType)))
         {
             options.Add(buildingType.ToString());
         }
@@ -87,7 +87,7 @@ public class RoomDebugMenu : BaseDebugMenu
         roomSizeDropdown.ClearOptions();
         List<string> options = new List<string>();
         
-        foreach (RoomSize roomSize in System.Enum.GetValues(typeof(RoomSize)))
+        foreach (RogueLikeRoomSize roomSize in System.Enum.GetValues(typeof(RogueLikeRoomSize)))
         {
             options.Add(roomSize.ToString());
         }
@@ -101,7 +101,7 @@ public class RoomDebugMenu : BaseDebugMenu
     
     private void OnBuildingTypeChanged(int index)
     {
-        BuildingType[] buildingTypes = (BuildingType[])System.Enum.GetValues(typeof(BuildingType));
+        RogueLikeBuildingType[] buildingTypes = (RogueLikeBuildingType[])System.Enum.GetValues(typeof(RogueLikeBuildingType));
         if (index >= 0 && index < buildingTypes.Length)
         {
             currentBuildingType = buildingTypes[index];
@@ -127,7 +127,7 @@ public class RoomDebugMenu : BaseDebugMenu
     
     private void OnRoomSizeChanged(int index)
     {
-        RoomSize[] roomSizes = (RoomSize[])System.Enum.GetValues(typeof(RoomSize));
+        RogueLikeRoomSize[] roomSizes = (RogueLikeRoomSize[])System.Enum.GetValues(typeof(RogueLikeRoomSize));
         if (index >= 0 && index < roomSizes.Length)
         {
             currentRoomSize = roomSizes[index];

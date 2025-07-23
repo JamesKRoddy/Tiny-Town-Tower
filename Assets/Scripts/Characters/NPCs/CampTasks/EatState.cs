@@ -31,7 +31,7 @@ public class EatState : _TaskState
         // Subscribe to food availability events
         CampManager.Instance.CookingManager.OnFoodAvailable += HandleFoodAvailable;
 
-        // Find nearest canteen with food
+        // Find nearest canteen with food using shared method
         targetCanteen = FindNearestCanteen();
         if (targetCanteen != null)
         {
@@ -151,51 +151,9 @@ public class EatState : _TaskState
         }
         else
         {
-            // Check if there are available tasks before going to wander
-            if (CampManager.Instance?.WorkManager != null)
-            {
-                bool taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(npc);
-                if (!taskAssigned)
-                {
-                    // No tasks available, go to wander state
-                    npc.ChangeTask(TaskType.WANDER);
-                }
+            // Use shared method to assign work or wander
+            TryAssignWorkOrWander();
         }
-        else
-        {
-            npc.ChangeTask(TaskType.WANDER);
-            }
-        }
-    }
-
-    private CanteenBuilding FindNearestCanteen()
-    {
-        CanteenBuilding nearest = null;
-        float nearestDistance = float.MaxValue;
-
-        var canteens = CampManager.Instance.CookingManager.GetRegisteredCanteens();
-        foreach (var canteen in canteens)
-        {
-            if (canteen.HasAvailableMeals() && canteen.IsOperational())
-            {
-                float distance = Vector3.Distance(transform.position, canteen.transform.position);
-                if (distance < nearestDistance)
-                {
-                    nearestDistance = distance;
-                    nearest = canteen;
-                }
-            }
-        }
-
-        return nearest;
-    }
-
-    private void ResetAgentState()
-    {
-        agent.speed = MaxSpeed();
-        agent.angularSpeed = npc.rotationSpeed;
-        agent.isStopped = false;
-        agent.stoppingDistance = stoppingDistance;
     }
 
     public override float MaxSpeed()

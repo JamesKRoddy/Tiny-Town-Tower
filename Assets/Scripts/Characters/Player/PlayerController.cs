@@ -34,7 +34,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
     [Header("NPC Possesion")]
     public IPossessable _possessedNPC;
-    public event Action<IPossessable> OnNPCPossessed;
+    public event Action<IPossessable, IPossessable> OnNPCPossessed; // oldNPC, newNPC
     private CharacterInventory _cachedInventory;
 
     [Header("Camera")]
@@ -90,6 +90,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
         _possessedNPC?.OnUnpossess();
 
         // Assign new NPC and possess it
+        IPossessable oldNPC = _possessedNPC;
         _possessedNPC = npc;
         _possessedNPC?.OnPossess();
         
@@ -97,7 +98,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
         _cachedInventory = _possessedNPC?.GetTransform().GetComponent<CharacterInventory>();
         
         // Invoke the event when an NPC is possessed
-        OnNPCPossessed?.Invoke(_possessedNPC);
+        OnNPCPossessed?.Invoke(oldNPC, _possessedNPC);
     }
 
     /// <summary>
@@ -315,6 +316,23 @@ public class PlayerController : MonoBehaviour, IControllerInput
                 }
                 return;
             }
+
+            // Check if it's a construction site
+            StructureConstructionTask constructionTask = workTask.GetComponent<StructureConstructionTask>();
+            if (constructionTask != null)
+            {
+                Debug.Log($"Found construction site: {constructionTask.name}");
+                if(CampManager.Instance.WorkManager.IsNPCForAssignmentSet()){
+                    Debug.Log("NPC for assignment is set, creating construction work task options");
+                    CreateConstructionSiteWorkTaskOptions(constructionTask, (task) => {
+                        CampManager.Instance.WorkManager.AssignWorkToBuilding(task);
+                    });
+                } else{
+                    Debug.Log("No NPC for assignment, showing construction site selection options");
+                    CreateConstructionSiteSelectionOptions(constructionTask);
+                }
+                return;
+            }
         }
     }
 
@@ -352,6 +370,19 @@ public class PlayerController : MonoBehaviour, IControllerInput
             onTaskSelected(task);
             CampManager.Instance.WorkManager.CloseSelectionPopup();
         });
+    }
+
+    private void CreateConstructionSiteWorkTaskOptions(StructureConstructionTask constructionTask, Action<WorkTask> onTaskSelected)
+    {
+        CampManager.Instance.WorkManager.ShowWorkTaskOptions(constructionTask, null, (task) => {
+            onTaskSelected(task);
+            CampManager.Instance.WorkManager.CloseSelectionPopup();
+        });
+    }
+
+    private void CreateConstructionSiteSelectionOptions(StructureConstructionTask constructionTask)
+    {
+        CampManager.Instance.BuildManager.ShowConstructionSiteSelectionOptions(constructionTask);
     }
 
     #endregion

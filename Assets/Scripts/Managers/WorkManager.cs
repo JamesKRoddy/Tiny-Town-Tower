@@ -15,7 +15,7 @@ namespace Managers
         private HumanCharacterController npcForAssignment;
         private Dictionary<WorkTask, HumanCharacterController> previousWorkers = new Dictionary<WorkTask, HumanCharacterController>();
 
-        public IPlaceableStructure buildingForAssignment;
+        public object buildingForAssignment; // Can be IPlaceableStructure or WorkTask (for construction sites)
 
         // Method to add a new work task to the queue
         public void AddWorkTask(WorkTask newTask)
@@ -138,6 +138,7 @@ namespace Managers
         {
             Debug.Log($"Clearing NPC for assignment. Was: {npcForAssignment?.name ?? "null"}");
             npcForAssignment = null;
+            buildingForAssignment = null; // Also clear building assignment
         }
 
         public void AssignWorkToBuilding(WorkTask workTask)
@@ -258,31 +259,44 @@ namespace Managers
 
             var options = new List<SelectionPopup.SelectionOption>();
 
-            // Add Destroy Structure option first
-            options.Add(new SelectionPopup.SelectionOption
+            // Add Destroy Structure option first (only for buildings and turrets, not construction sites)
+            if (structure is Building || structure is BaseTurret)
             {
-                optionName = "Destroy Structure",
-                onSelected = () => {
-                    if (structure is MonoBehaviour mb)
-                    {
-                        // Call StartDestruction through the interface or cast to the appropriate type
-                        if (mb is Building building)
+                options.Add(new SelectionPopup.SelectionOption
+                {
+                    optionName = "Destroy Structure",
+                    onSelected = () => {
+                        if (structure is MonoBehaviour mb)
                         {
-                    building.StartDestruction();
+                            // Call StartDestruction through the interface or cast to the appropriate type
+                            if (mb is Building building)
+                            {
+                        building.StartDestruction();
+                            }
+                            else if (mb is BaseTurret turret)
+                            {
+                                turret.StartDestruction();
+                            }
                         }
-                        else if (mb is BaseTurret turret)
-                        {
-                            turret.StartDestruction();
-                        }
-                    }
-                    CloseSelectionPopup();
-                    PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
-                    ClearNPCForAssignment(); // Clear assignment when destroying structure
-                },
-                canSelect = () => !structure.IsUnderConstruction(),
-                workTask = null
-            });
+                        CloseSelectionPopup();
+                        PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
+                        ClearNPCForAssignment(); // Clear assignment when destroying structure
+                    },
+                    canSelect = () => !structure.IsUnderConstruction(),
+                    workTask = null
+                });
+            }
 
+            ShowWorkTaskOptions(workTasks, characterToAssign, onTaskSelected, options);
+        }
+
+        // Overload for construction sites that are WorkTasks but not IPlaceableStructure
+        public void ShowWorkTaskOptions(StructureConstructionTask constructionTask, HumanCharacterController characterToAssign, Action<WorkTask> onTaskSelected)
+        {
+            var workTasks = constructionTask.GetComponents<WorkTask>();
+            var options = new List<SelectionPopup.SelectionOption>();
+
+            // Construction sites don't get a destroy option - they're completed or abandoned
             ShowWorkTaskOptions(workTasks, characterToAssign, onTaskSelected, options);
         }
 
@@ -337,6 +351,10 @@ namespace Managers
                     (task as StructureUpgradeTask)?.ExecuteUpgrade();
                     CloseSelectionPopup();
                     PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
+                    ClearNPCForAssignment(); // Clear assignment after work is started
+                }),
+                StructureConstructionTask => ("Build", () => {
+                    onTaskSelected(task);
                     ClearNPCForAssignment(); // Clear assignment after work is started
                 }),
                 FarmingTask => ("Farm", () => {

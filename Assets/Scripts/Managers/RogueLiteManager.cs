@@ -59,6 +59,9 @@ namespace Managers
 
             // Subscribe to the NPC possessed event
             PlayerController.Instance.OnNPCPossessed += OnNPCPossessed;
+            
+            // Subscribe to game mode changes
+            GameManager.Instance.OnGameModeChanged += OnGameModeChanged;
         }
 
         protected override void Start()
@@ -216,25 +219,44 @@ namespace Managers
             transitionCoroutine = null;
         }
 
-        private void OnNPCPossessed(IPossessable npc)
+        private void OnNPCPossessed(IPossessable oldNPC, IPossessable newNPC)
         {
-            // Unsubscribe from previous NPC's health events if it was damageable
-            if (PlayerController.Instance._possessedNPC is IDamageable previousDamageable)
+            // Always unsubscribe from old NPC's death events if it was damageable
+            if (oldNPC is IDamageable oldDamageable)
             {
-                previousDamageable.OnDeath -= PlayerDied;
+                oldDamageable.OnDeath -= PlayerDied;
             }
 
-            // Subscribe to new NPC's health events
-            if (npc is IDamageable damageable)
+            // Only subscribe to new NPC's death events in roguelike mode
+            if (GameManager.Instance.CurrentGameMode == GameMode.ROGUE_LITE && newNPC is IDamageable newDamageable)
+            {
+                newDamageable.OnDeath += PlayerDied;
+            }
+        }
+
+        private void OnGameModeChanged(GameMode newGameMode)
+        {
+            // If entering ROGUE_LITE mode and there's a possessed NPC, subscribe to its death events
+            if (newGameMode == GameMode.ROGUE_LITE && PlayerController.Instance._possessedNPC is IDamageable damageable)
             {
                 damageable.OnDeath += PlayerDied;
+            }
+            // If leaving ROGUE_LITE mode and there's a possessed NPC, unsubscribe from its death events
+            else if (newGameMode != GameMode.ROGUE_LITE && PlayerController.Instance._possessedNPC is IDamageable damageableOld)
+            {
+                damageableOld.OnDeath -= PlayerDied;
             }
         }
 
         private void PlayerDied()
         {
+            // Only handle player death in roguelike mode
+            if (GameManager.Instance.CurrentGameMode != GameMode.ROGUE_LITE)
+            {
+                return;
+            }
+            
             SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
-
             PlayerUIManager.Instance.deathMenu.SetScreenActive(true, 0.1f);       
         }
 
@@ -249,6 +271,9 @@ namespace Managers
             base.OnDestroy();
             // Unsubscribe from the NPC possessed event
             if (PlayerController.Instance != null) PlayerController.Instance.OnNPCPossessed -= OnNPCPossessed;
+            
+            // Unsubscribe from game mode changes
+            if (GameManager.Instance != null) GameManager.Instance.OnGameModeChanged -= OnGameModeChanged;
         }
     }
 }

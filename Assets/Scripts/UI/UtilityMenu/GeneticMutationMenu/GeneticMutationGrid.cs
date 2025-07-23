@@ -283,5 +283,26 @@ public class GeneticMutationGrid : MonoBehaviour
         }
         return null;
     }
+
+    /// <summary>
+    /// Gets the position of a mutation in the grid before it's cleared
+    /// </summary>
+    /// <param name="element">The mutation element to find</param>
+    /// <returns>The position of the mutation, or Vector2Int.zero if not found</returns>
+    public Vector2Int GetMutationPosition(MutationUIElement element)
+    {
+        // Search through the grid for the mutation
+        for (int x = 0; x < gridWidth; x++)
+        {
+            for (int y = 0; y < gridHeight; y++)
+            {
+                if (grid[x, y] == element)
+                {
+                    return new Vector2Int(x, y);
+                }
+            }
+        }
+        return Vector2Int.zero;
+    }
 }
 

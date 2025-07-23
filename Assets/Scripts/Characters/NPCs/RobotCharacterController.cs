@@ -19,6 +19,12 @@ public class RobotCharacterController : HumanCharacterController
 
     public override void PossessedUpdate()
     {
+        // Don't do anything if dead
+        if (Health <= 0) 
+        {
+            return;
+        }
+        
         if (!isWorking)
         {
             MoveCharacter();

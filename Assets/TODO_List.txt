@@ -2,11 +2,7 @@
 
 
 Tomorrow work:
-VFX for ranged attack and boomer
-VFX for player
-Damage animation for player and cooldown to take more damage
-Go through todo below and bugs to see if any are fixed
-Start setting up the player progression manager? Use this to keep track of what the player has unlocked
+
 
 
 
@@ -29,36 +25,21 @@ Instead of spawning enemies from the same points, add in code to select random p
 Implement a day/night cycle for the entire game.
 Figure out what happens in the camp while youre gone, does progress on stuff freeze? Does it keep going or does it progress but slower?
 Trash spawning in camp should take up spaces on the grid
-Goal at the the start just says survive, recruit 10 survivours
+Goal at the start just says survive, recruit 10 survivors
 
 
 
-
-
-
-
-
-
-Bugs
-
-Player moving through walls while attack animation is running
-Pressing B while moving an already place mutation breaks the menu, just dont allow B presses
-Construction sites need to be able to  have npcs manually assigned to them
-When moving the camera around the camp the selection icon can move off into the distance, should also be bound by the building grid
-Return to camp selection from roguelike is showing up in camp when npcs die in camp  (might be only happening when the npc was possessed before it died)
-After a building is constructed the taken grid prefabs are being enabled
-NPCs still moving around when they are dead
-Coroutines starting error on npcs hiding in bunker
-Enemies targeting buildings ok but not prioritising npcs over them
-So there is some jackyness around the building placer, i think sometimes building parent objects can spawn on top of each other
-Player dying and returning to camp
-Returning to camp from menu
+Bugs:
 
 
 
 
 
 ******Stuff for later******
+
+VFX for player
+Damage animation for player and cooldown to take more damage
+Start setting up the player progression manager. Use this to keep track of what the player has unlocked
 
 Have to do some refactoring on the npc animator and what has access to it
 

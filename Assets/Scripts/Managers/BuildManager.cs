@@ -144,5 +144,44 @@ namespace Managers
             Debug.Log($"Setting up selection popup with {options.Count} options");
             PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
         }
+
+        public void ShowConstructionSiteSelectionOptions(StructureConstructionTask constructionTask)
+        {
+            Debug.Log($"ShowConstructionSiteSelectionOptions called for construction site: {constructionTask.name}");
+            var options = new List<SelectionPopup.SelectionOption>();
+
+            // Add Construction Stats option
+            options.Add(new SelectionPopup.SelectionOption
+            {
+                optionName = "Construction Info",
+                onSelected = () => {
+                    // Do nothing - info is shown as tooltip
+                },
+                customTooltip = GetConstructionSiteInfoText(constructionTask)
+            });
+
+            // Add Assign Worker option
+            options.Add(new SelectionPopup.SelectionOption
+            {
+                optionName = "Assign Worker",
+                onSelected = () => {
+                    CampManager.Instance.WorkManager.buildingForAssignment = constructionTask;
+                    PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(true);
+                },
+            });
+
+            Debug.Log($"Created {options.Count} options for construction site selection");
+            // Show the selection popup
+            PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
+        }
+
+        private string GetConstructionSiteInfoText(StructureConstructionTask constructionTask)
+        {
+            string info = $"Construction Site\n";
+            info += $"Building: {constructionTask.GetInteractionText()}\n";
+            info += $"Progress: {(constructionTask.GetProgress() * 100):F1}%\n";
+            info += $"Workers: {(constructionTask.IsOccupied ? "Active" : "None")}\n";
+            return info;
+        }
     }
 }

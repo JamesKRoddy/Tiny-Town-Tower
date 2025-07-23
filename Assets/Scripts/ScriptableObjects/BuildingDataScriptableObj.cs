@@ -8,7 +8,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "BuildingDataScriptableObj", menuName = "Scriptable Objects/Roguelite/BuildingDataScriptableObj")]
 public class BuildingDataScriptableObj : ScriptableObject
 {
-    public BuildingType buildingType;
+    public RogueLikeBuildingType buildingType;
     public GameObject buildingEntrance;
     public List<BuildingParents> buildingParents;
     public List<BuildingRooms> buildingRooms;
@@ -77,7 +77,7 @@ public class BuildingDataScriptableObj : ScriptableObject
     /// <summary>
     /// Get a room of a specific size that fits the difficulty requirement
     /// </summary>
-    public GameObject GetBuildingRoomBySize(int difficulty, RoomSize preferredSize)
+    public GameObject GetBuildingRoomBySize(int difficulty, RogueLikeRoomSize preferredSize)
     {
         // Find all suitable rooms based on difficulty and size
         List<BuildingRooms> suitableRooms = new List<BuildingRooms>();
@@ -104,7 +104,7 @@ public class BuildingDataScriptableObj : ScriptableObject
     /// <summary>
     /// Get the best fitting room for a spawn point, trying sizes in order of preference
     /// </summary>
-    public GameObject GetBestFittingRoom(int difficulty, RoomSize[] sizePreferences)
+    public GameObject GetBestFittingRoom(int difficulty, RogueLikeRoomSize[] sizePreferences)
     {
         // Try each size preference in order
         foreach (var size in sizePreferences)
@@ -123,9 +123,9 @@ public class BuildingDataScriptableObj : ScriptableObject
     /// <summary>
     /// Get all available room sizes for this building at the given difficulty
     /// </summary>
-    public RoomSize[] GetAvailableRoomSizes(int difficulty)
+    public RogueLikeRoomSize[] GetAvailableRoomSizes(int difficulty)
     {
-        List<RoomSize> availableSizes = new List<RoomSize>();
+        List<RogueLikeRoomSize> availableSizes = new List<RogueLikeRoomSize>();
         
         foreach (var room in buildingRooms)
         {
@@ -151,6 +151,6 @@ public struct BuildingRooms
 {
     public GameObject buildingRoom;
     public int difficulty;
-    public RoomSize roomSize;
+    public RogueLikeRoomSize roomSize;
 }
 

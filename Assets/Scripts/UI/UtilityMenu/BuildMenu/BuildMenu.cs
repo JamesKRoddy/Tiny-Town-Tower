@@ -7,7 +7,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using Managers;
 
-public class BuildMenu : PreviewListMenuBase<PlaceableObjectCategory, PlaceableObjectParent>, IControllerInput
+public class BuildMenu : PreviewListMenuBase<CampPlaceableObjectCategory, PlaceableObjectParent>, IControllerInput
 {
     [Header("Build Menu Preview UI")]
     [SerializeField] GameObject previewResourceCostPrefab;
@@ -53,7 +53,7 @@ public class BuildMenu : PreviewListMenuBase<PlaceableObjectCategory, PlaceableO
         }
     }
 
-    public override PlaceableObjectCategory GetItemCategory(PlaceableObjectParent item)
+    public override CampPlaceableObjectCategory GetItemCategory(PlaceableObjectParent item)
     {        
         return item.placeableObjectCategory;
     }

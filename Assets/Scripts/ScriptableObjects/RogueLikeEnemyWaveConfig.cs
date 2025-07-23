@@ -4,5 +4,5 @@ using UnityEngine;
 public class RogueLikeEnemyWaveConfig : EnemyWaveConfig
 {
     // Contextual variables
-    public BuildingType buildingType;
+    public RogueLikeBuildingType buildingType;
 }

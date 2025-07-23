@@ -163,19 +163,19 @@ public class SceneTransitionManager : MonoBehaviour
         //5. Invoke actions passed in from the previous scene
         OnActionsFromPreviousScene?.Invoke();
 
-        //6. Short pause for camera transition
-        yield return new WaitForSeconds(0.5f);
+        //6. Update scene tracking and game mode BEFORE fade out
+        CurrentScene = NextScene;
+        NextScene = SceneNames.NONE;
+        GameManager.Instance.CurrentGameMode = NextGameMode;
 
-        //7. Fade out
+        //7. Short pause for camera transition
+        yield return new WaitForSeconds(1.0f);
+
+        //8. Fade out (now uses correct game mode for control type)
         if (PlayerUIManager.Instance.transitionMenu != null)
         {
             yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
         }
-
-        //8. Update scene tracking after the new scene is active
-        CurrentScene = NextScene;
-        NextScene = SceneNames.NONE;
-        GameManager.Instance.CurrentGameMode = NextGameMode;
     }
 
     #endregion

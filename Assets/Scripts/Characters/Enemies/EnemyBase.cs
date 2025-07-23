@@ -64,6 +64,7 @@ namespace Enemies
         // Add these fields for better root motion control
         [Header("Root Motion Settings")]
         [SerializeField] protected float rootMotionMultiplier = 1f;
+        [SerializeField] protected bool showCollisionDebug = false; // Debug visualization for collision detection
 
         [Header("Health Settings")]
         [SerializeField] private float health = 100f;
@@ -215,29 +216,148 @@ namespace Enemies
             Vector3 rootMotion = animator.deltaPosition * rootMotionMultiplier;
             rootMotion.y = 0; // Ignore vertical movement from animation
 
+            // If there's no movement from root motion, don't do anything
+            if (rootMotion.magnitude < 0.001f)
+            {
+                return;
+            }
+
             // Calculate new position based purely on root motion
             Vector3 newPosition = transform.position + rootMotion;
 
-            // Only ensure we stay on the NavMesh - don't constrain to agent position
-            if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
+            // Check for collisions before applying root motion
+            Vector3 adjustedRootMotion = IsRootMotionCollisionSafe(rootMotion, out bool collisionDetected);
+            
+            if (!collisionDetected)
             {
-                transform.position = hit.position;
+                // No collision detected, apply full root motion
+                Vector3 finalPosition = transform.position + adjustedRootMotion;
                 
-                // Update the agent's position to follow the character (not the other way around)
-                agent.nextPosition = hit.position;
+                // Only ensure we stay on the NavMesh - don't constrain to agent position
+                if (NavMesh.SamplePosition(finalPosition, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
+                {
+                    transform.position = hit.position;
+                    
+                    // Update the agent's position to follow the character (not the other way around)
+                    agent.nextPosition = hit.position;
+                }
+                else
+                {
+                    // If we can't find a valid NavMesh position, try a smaller step
+                    Vector3 smallerStep = transform.position + adjustedRootMotion * 0.5f;
+                    if (NavMesh.SamplePosition(smallerStep, out NavMeshHit smallerHit, 1.0f, NavMesh.AllAreas))
+                    {
+                        transform.position = smallerHit.position;
+                        agent.nextPosition = smallerHit.position;
+                    }
+                    // If still no valid position, don't move this frame (stay where we are)
+                }
             }
             else
             {
-                // If we can't find a valid NavMesh position, try a smaller step
-                Vector3 smallerStep = transform.position + rootMotion * 0.5f;
-                if (NavMesh.SamplePosition(smallerStep, out NavMeshHit smallerHit, 1.0f, NavMesh.AllAreas))
-            {
-                    transform.position = smallerHit.position;
-                    agent.nextPosition = smallerHit.position;
+                // Collision detected, apply reduced movement if possible
+                if (adjustedRootMotion.magnitude > 0.001f)
+                {
+                    Vector3 finalPosition = transform.position + adjustedRootMotion;
+                    
+                    if (NavMesh.SamplePosition(finalPosition, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
+                    {
+                        transform.position = hit.position;
+                        agent.nextPosition = hit.position;
+                    }
+                }
+                // If no adjusted movement possible, zombie stays in place
+                // This prevents the zombie from moving through the player during attack animations
             }
-                // If still no valid position, don't move this frame (stay where we are)
-            }
+        }
+
+        /// <summary>
+        /// Checks if the root motion movement would cause a collision with the player or other obstacles
+        /// Returns an adjusted root motion vector that prevents overlapping
+        /// </summary>
+        /// <param name="rootMotion">The root motion delta to check</param>
+        /// <param name="collisionDetected">Output parameter indicating if a collision was detected</param>
+        /// <returns>Adjusted root motion vector that prevents overlapping</returns>
+        protected virtual Vector3 IsRootMotionCollisionSafe(Vector3 rootMotion, out bool collisionDetected)
+        {
+            collisionDetected = false;
             
+            // Get the character's collider for collision detection
+            Collider characterCollider = GetComponent<Collider>();
+            if (characterCollider == null)
+            {
+                return rootMotion; // No collider, assume safe
+            }
+
+            // Use capsule cast to check for collisions in the root motion direction
+            // This is similar to how HumanCharacterController handles it
+            Vector3 capsuleBottom = transform.position + Vector3.up * 0.3f;
+            Vector3 capsuleTop = transform.position + Vector3.up * characterCollider.bounds.size.y;
+            float capsuleRadius = characterCollider.bounds.extents.x; // Use X extent as radius
+
+            // Check for collisions with player and other obstacles
+            // Layer mask for player (Default layer) and obstacles (ObstacleLayer)
+            LayerMask collisionLayers = LayerMask.GetMask("Default", "ObstacleLayer");
+
+            if (Physics.CapsuleCast(capsuleBottom, capsuleTop, capsuleRadius * 0.8f, 
+                rootMotion.normalized, out RaycastHit hitInfo, rootMotion.magnitude, collisionLayers))
+            {
+                collisionDetected = true;
+                
+                // Debug visualization
+                if (showCollisionDebug)
+                {
+                    Debug.DrawLine(transform.position, hitInfo.point, Color.red, 0.1f);
+                    Debug.Log($"[{gameObject.name}] Root motion collision detected with {hitInfo.collider.name}");
+                }
+                
+                // Check if we hit the player specifically
+                if (hitInfo.collider.CompareTag("Player") || hitInfo.collider.GetComponent<PlayerController>() != null)
+                {
+                    // Allow partial movement towards player but prevent complete overlap
+                    float playerSafeDistance = hitInfo.distance - 0.2f; // Leave a buffer
+                    if (playerSafeDistance > 0)
+                    {
+                        if (showCollisionDebug)
+                            Debug.Log($"[{gameObject.name}] Partial movement towards player: {playerSafeDistance:F2} units");
+                        return rootMotion.normalized * playerSafeDistance;
+                    }
+                    
+                    if (showCollisionDebug)
+                        Debug.Log($"[{gameObject.name}] Blocked by player collision");
+                    return Vector3.zero;
+                }
+
+                // Check if we hit an NPC (HumanCharacterController)
+                if (hitInfo.collider.GetComponent<HumanCharacterController>() != null)
+                {
+                    // Allow partial movement towards NPCs but prevent complete overlap
+                    float npcSafeDistance = hitInfo.distance - 0.2f; // Leave a buffer
+                    if (npcSafeDistance > 0)
+                    {
+                        if (showCollisionDebug)
+                            Debug.Log($"[{gameObject.name}] Partial movement towards NPC: {npcSafeDistance:F2} units");
+                        return rootMotion.normalized * npcSafeDistance;
+                    }
+                    
+                    if (showCollisionDebug)
+                        Debug.Log($"[{gameObject.name}] Blocked by NPC collision");
+                    return Vector3.zero;
+                }
+
+                // For other obstacles (walls, etc.), allow partial movement up to the collision point
+                float safeDistance = hitInfo.distance - 0.1f; // Leave a small buffer
+                if (safeDistance > 0)
+                {
+                    if (showCollisionDebug)
+                        Debug.Log($"[{gameObject.name}] Partial movement allowed: {safeDistance:F2} units");
+                    return rootMotion.normalized * safeDistance;
+                }
+                
+                return Vector3.zero; // No safe movement possible
+            }
+
+            return rootMotion; // No collision detected, return original root motion
         }
 
         #endregion
@@ -296,7 +416,6 @@ namespace Enemies
             {
                 transform.position = hit.position;
                 agent.Warp(hit.position);
-                    Debug.Log($"Enemy {gameObject.name} moved to valid NavMesh position: {hit.position}");
                 }
             }
             else

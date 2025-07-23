@@ -136,7 +136,6 @@ public class FleeState : _TaskState
                     // No bunker available, flee to safe location
                     isFleeing = true;
                     agent.SetDestination(fleeTarget);
-                    Debug.Log($"{npc.name} fleeing from enemy at distance {closestDistance:F1}");
                 }
             }
         }
@@ -147,20 +146,8 @@ public class FleeState : _TaskState
             {
                 Debug.Log($"{npc.name} no longer threatened after {threatCooldown}s cooldown, returning to normal behavior");
                 
-                // Check for available work before returning to normal behavior
-                if (CampManager.Instance?.WorkManager != null)
-                {
-                    bool taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(npc);
-                    if (!taskAssigned)
-                    {
-                        // No tasks available, go to wander state
-                        npc.ChangeTask(TaskType.WANDER);
-                    }
-                }
-                else
-                {
-                npc.ChangeTask(TaskType.WANDER);
-                }
+                // Use shared method to assign work or wander
+                TryAssignWorkOrWander();
             }
             else if (isFleeing || isSeekingBunker)
             {
@@ -199,7 +186,6 @@ public class FleeState : _TaskState
                 Vector3 currentFleeDirection = (npc.transform.position - fleeTarget).normalized;
                 fleeTarget = npc.transform.position + currentFleeDirection * fleeDistance;
                 agent.SetDestination(fleeTarget);
-                Debug.Log($"{npc.name} still threatened, fleeing further");
             }
             else
             {
@@ -211,12 +197,6 @@ public class FleeState : _TaskState
                     isSeekingBunker = true;
                     targetBunker = nearestBunker;
                     agent.SetDestination(nearestBunker.transform.position);
-                    Debug.Log($"{npc.name} found bunker after fleeing, seeking shelter");
-                }
-                else
-                {
-                    // No bunker available, stay at current safe location
-                    Debug.Log($"{npc.name} reached safe location, staying put");
                 }
             }
         }
@@ -224,6 +204,8 @@ public class FleeState : _TaskState
     
     private void UpdateBunkerSeekBehavior()
     {
+        if (npc == null || agent == null || !npc.gameObject.activeInHierarchy || !agent.enabled)
+            return;
         if (targetBunker == null)
         {
             isSeekingBunker = false;
@@ -250,34 +232,38 @@ public class FleeState : _TaskState
                 {
                     Debug.Log($"{npc.name} entered bunker for shelter");
                     
-                    // Subscribe to bunker events to know when we're evacuated
-                    targetBunker.OnBunkerVacated += OnBunkerVacated;
+                    if(targetBunker != null)
+                    {
+                        // Subscribe to bunker events to know when we're evacuated
+                        targetBunker.OnBunkerVacated += OnBunkerVacated;
+                    }
                     
                     // Stay in flee state but don't move - the NPC is now hidden
                     isSeekingBunker = false;
-                    agent.isStopped = true;
+                    if (agent != null && agent.enabled && agent.isOnNavMesh)
+                        agent.isStopped = true;
                     
                     // The NPC GameObject is now disabled, so they're safe from enemies
                     // They will remain in this state until the bunker is evacuated or they're manually removed
+                    return; // Exit immediately since state has changed to SHELTERED
+                }
+                
+                // If we reach here, sheltering failed
+                // Failed to shelter, find another bunker or flee
+                BunkerBuilding alternativeBunker = FindNearestBunker();
+                if (alternativeBunker != null && alternativeBunker.HasSpace)
+                {
+                    targetBunker = alternativeBunker;
+                    agent.SetDestination(alternativeBunker.transform.position);
                 }
                 else
                 {
-                    // Failed to shelter, find another bunker or flee
-                    BunkerBuilding alternativeBunker = FindNearestBunker();
-                    if (alternativeBunker != null && alternativeBunker.HasSpace)
-                    {
-                        targetBunker = alternativeBunker;
-                        agent.SetDestination(alternativeBunker.transform.position);
-                    }
-                    else
-                    {
-                        // No bunkers available, flee to safe location
-                        isSeekingBunker = false;
-                        isFleeing = true;
-                        Vector3 fleeDirection = (npc.transform.position - targetBunker.transform.position).normalized;
-                        fleeTarget = npc.transform.position + fleeDirection * fleeDistance;
-                        agent.SetDestination(fleeTarget);
-                    }
+                    // No bunkers available, flee to safe location
+                    isSeekingBunker = false;
+                    isFleeing = true;
+                    Vector3 fleeDirection = (npc.transform.position - targetBunker.transform.position).normalized;
+                    fleeTarget = npc.transform.position + fleeDirection * fleeDistance;
+                    agent.SetDestination(fleeTarget);
                 }
             }
             else
@@ -378,19 +364,7 @@ public class FleeState : _TaskState
             else
             {
                 // No threats, check for available work before returning to normal behavior
-                if (CampManager.Instance?.WorkManager != null)
-                {
-                    bool taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(npc);
-                    if (!taskAssigned)
-                    {
-                        // No tasks available, go to wander state
-                        npc.ChangeTask(TaskType.WANDER);
-                    }
-                }
-                else
-                {
-                npc.ChangeTask(TaskType.WANDER);
-                }
+                TryAssignWorkOrWander();
             }
         }
     }

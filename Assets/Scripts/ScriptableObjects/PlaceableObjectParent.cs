@@ -7,7 +7,7 @@ public class PlaceableObjectParent : WorldItemBase
     public List<ResourceItemCount> _resourceCost;
     public GameObject prefab;
     public Vector2Int size = new Vector2Int(1, 1);
-    public PlaceableObjectCategory placeableObjectCategory;
+    public CampPlaceableObjectCategory placeableObjectCategory;
 
     [Header("Health Parameters")]
     public float maxHealth = 100f;

@@ -39,9 +39,10 @@ public class WanderState : _TaskState
 
     private void OnEnable()
     {
-        if (isWandering)
+        // If we were supposed to be wandering but couldn't start due to inactive GameObject, start now
+        if (isWandering && wanderCoroutine == null && npc.gameObject.activeInHierarchy)
         {
-            OnEnterState();
+            wanderCoroutine = npc.StartCoroutine(WanderCoroutine());
         }
     }
 
@@ -52,17 +53,43 @@ public class WanderState : _TaskState
 
     public override void OnEnterState()
     {
-        if (!isWandering)
+        if (!isWandering && npc.gameObject.activeInHierarchy)
         {
+            // Centralized state priority checking
+            // 1. Check for threats first (highest priority)
+            if (CheckForNearbyThreats())
+            {
+                npc.ChangeTask(TaskType.FLEE);
+                return;
+            }
+            
+            // 2. Check if hungry and food is available
+            if (npc.IsHungry() && HasAvailableFood())
+            {
+                npc.ChangeTask(TaskType.EAT);
+                return;
+            }
+            
+            // 3. Check for work assignment
+            if (CampManager.Instance?.WorkManager != null)
+            {
+                bool taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(npc);
+                if (taskAssigned)
+                {
+                    // Work was assigned, NPC will change to work state
+                    return;
+                }
+            }
+            
+            // 4. If no higher priority tasks, start wandering
             isWandering = true;
             isWaiting = false;
             agent.speed = MaxSpeed();
             agent.angularSpeed = npc.rotationSpeed / 2f;
-            
             // Use base class helper for stopping distance
             agent.stoppingDistance = GetEffectiveStoppingDistance(null, 0.5f);
-            
-            wanderCoroutine = npc.StartCoroutine(WanderCoroutine());
+            if (wanderCoroutine == null)
+                wanderCoroutine = npc.StartCoroutine(WanderCoroutine());
             CampManager.Instance.WorkManager.OnTaskAvailable += WorkAvalible;
             lastPosition = npc.transform.position;
             lastPositionCheckTime = Time.time;

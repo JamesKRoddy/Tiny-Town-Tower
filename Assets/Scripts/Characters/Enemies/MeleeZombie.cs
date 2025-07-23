@@ -33,22 +33,9 @@ namespace Enemies
             // Use base class validation
             if (!ValidateAttack(currentAttackRange, MELEE_ATTACK_ANGLE_THRESHOLD, out float distanceToTarget, out float angleToTarget))
             {
-                // Log failure reason
-                if (navMeshTarget == null)
-                {
-                    Debug.Log($"[MeleeZombie] {gameObject.name}: No target - aborting attack");
-                }
-                else if (!IsTargetStillValid(navMeshTarget))
-                {
-                    Debug.Log($"[MeleeZombie] {gameObject.name}: Target {navMeshTarget.name} invalid - aborting attack");
-                }
-                else
-                {
-                    float effectiveDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, currentAttackRange, 1.0f);
-                    string reason = distanceToTarget > effectiveDistance ? "RANGE_FAIL" : "ANGLE_FAIL";
-                    Debug.Log($"[MeleeZombie] {gameObject.name} → {navMeshTarget.name}: " +
-                             $"Dist={distanceToTarget:F1}, Angle={angleToTarget:F1}° {reason}");
-                }
+                float effectiveDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, currentAttackRange, 1.0f);
+                string reason = distanceToTarget > effectiveDistance ? "RANGE_FAIL" : "ANGLE_FAIL";
+
                 return;
             }
 
@@ -57,15 +44,6 @@ namespace Enemies
             if (target != null)
             {
                 target.TakeDamage(meleeDamage, transform);
-                
-                // Success logging
-                Debug.Log($"[MeleeZombie] {gameObject.name} → {navMeshTarget.name}: " +
-                         $"DMG={meleeDamage}, Range={currentAttackRange:F1}, " +
-                         $"Dist={distanceToTarget:F1}, Angle={angleToTarget:F1}° SUCCESS");
-            }
-            else
-            {
-                Debug.LogError($"[MeleeZombie] {gameObject.name}: Target {navMeshTarget.name} missing IDamageable!");
             }
         }
 

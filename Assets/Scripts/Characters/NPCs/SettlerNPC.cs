@@ -126,6 +126,12 @@ public class SettlerNPC : HumanCharacterController
 
     private void Update()
     {
+        // Don't do anything if dead
+        if (Health <= 0) 
+        {
+            return;
+        }
+        
         if (currentState != null)
         {
             animator.SetFloat("Speed", agent.velocity.magnitude / 3.5f);
@@ -396,6 +402,40 @@ public class SettlerNPC : HumanCharacterController
     public void SetNoFoodCooldown()
     {
         lastNoFoodTime = Time.time;
+    }
+
+    /// <summary>
+    /// Call this to put the NPC into the sheltered state (e.g., when entering a bunker)
+    /// </summary>
+    public void EnterShelter(BunkerBuilding bunker)
+    {
+        ChangeTask(TaskType.SHELTERED);
+    }
+
+    /// <summary>
+    /// Call this to remove the NPC from the sheltered state (e.g., when leaving a bunker)
+    /// </summary>
+    public void ExitShelter()
+    {
+        // Ensure the GameObject is active before changing state
+        if (!gameObject.activeInHierarchy)
+            gameObject.SetActive(true);
+
+        // Ensure the NavMeshAgent is enabled and on the NavMesh
+        if (agent != null && !agent.enabled)
+            agent.enabled = true;
+        if (agent != null && !agent.isOnNavMesh)
+        {
+            // Try to warp the agent to the nearest NavMesh position
+            NavMeshHit hit;
+            if (NavMesh.SamplePosition(transform.position, out hit, 2f, NavMesh.AllAreas))
+            {
+                agent.Warp(hit.position);
+            }
+        }
+
+        // Go to wander state - let WanderState handle threat detection and task assignment
+        ChangeTask(TaskType.WANDER);
     }
 }
 

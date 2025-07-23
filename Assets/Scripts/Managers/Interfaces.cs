@@ -60,6 +60,30 @@ public interface IDamageable
 }
 
 /// <summary>
+/// Interface for buildings and structures that can be damaged and have building-specific effects
+/// </summary>
+public interface IBuildingDamageable
+{
+    [SerializeField] public float Health { get; set; } // Property for current health
+    [SerializeField] public float MaxHealth { get; set; } // Property for max health
+
+    // Building category for VFX and sound effects
+    CampBuildingCategory BuildingCategory { get; }
+
+    // Event that fires when damage is taken, providing the damage amount and remaining health
+    event System.Action<float, float> OnDamageTaken;
+    // Event that fires when healing occurs, providing the heal amount and new health
+    event System.Action<float, float> OnHeal;
+    // Event that fires when the building is destroyed
+    event System.Action OnDestroyed;
+
+    void TakeDamage(float amount, Transform damageSource = null); // Method to handle damage
+    void Repair(float amount);       // Method to handle repair
+    void Destroy();
+    Allegiance GetAllegiance(); // Method to get the allegiance of the building
+}
+
+/// <summary>
 /// Interface for placeable structures to provide common functionality
 /// </summary>
 public interface IPlaceableStructure

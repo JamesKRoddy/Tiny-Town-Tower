@@ -59,9 +59,19 @@ public class SettlerNPCPopup : PreviewPopupBase<HumanCharacterController, string
             }
             // If there is a building for assignment, we are assigning work to the building. Happens by selecting a building first then an npc.
             else{
-                CampManager.Instance.WorkManager.ShowWorkTaskOptions(CampManager.Instance.WorkManager.buildingForAssignment, currentItem, (task) => {
-                    CampManager.Instance.WorkManager.AssignWorkToBuilding(task);
-                });
+                // Handle both IPlaceableStructure (buildings/turrets) and WorkTask (construction sites)
+                if (CampManager.Instance.WorkManager.buildingForAssignment is IPlaceableStructure structure)
+                {
+                    CampManager.Instance.WorkManager.ShowWorkTaskOptions(structure, currentItem, (task) => {
+                        CampManager.Instance.WorkManager.AssignWorkToBuilding(task);
+                    });
+                }
+                else if (CampManager.Instance.WorkManager.buildingForAssignment is StructureConstructionTask constructionTask)
+                {
+                    CampManager.Instance.WorkManager.ShowWorkTaskOptions(constructionTask, currentItem, (task) => {
+                        CampManager.Instance.WorkManager.AssignWorkToBuilding(task);
+                    });
+                }
             }
             // Store the NPC we're assigning work to
             CampManager.Instance.WorkManager.SetNPCForAssignment(currentItem as SettlerNPC);

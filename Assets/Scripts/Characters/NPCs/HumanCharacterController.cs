@@ -98,6 +98,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     [Header("Health")]
     [SerializeField] private float health = 100f;
     [SerializeField] private float maxHealth = 100f;
+    private bool isDead = false;
 
     public event Action<float, float> OnDamageTaken;
     public event Action<float, float> OnHeal;
@@ -129,10 +130,22 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Initialize movement tracking
         lastPosition = transform.position;
         actualMovementSpeed = 0f;
+        
+        // Ensure root motion is disabled by default
+        if (animator != null)
+        {
+            animator.applyRootMotion = false;
+        }
     }
 
     public virtual void PossessedUpdate()
     {
+        // Don't do anything if dead
+        if (health <= 0 || isDead) 
+        {
+            return;
+        }
+        
         HandleDash();
         MoveCharacter();
         UpdateActualMovementSpeed();
@@ -194,6 +207,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             isAttacking = true;
             animator.SetBool("LightAttack", true);
+            
+            // Enable root motion for attack animations
+            if (animator != null)
+            {
+                animator.applyRootMotion = true;
+            }
         }
     }
 
@@ -270,6 +289,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         isAttacking = false;
         if(characterCombat != null)
             characterCombat.StopAttacking();
+        
+        // Disable root motion for attack animations
+        if (animator != null)
+        {
+            animator.applyRootMotion = false;
+        }
     }
 
     #endregion
@@ -292,6 +317,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         dashCooldownTime = Time.time + dashCooldown;
         currentDirection = movementInput.normalized; // Initialize dash direction based on input
         animator.SetTrigger("IsDashing");
+
+        // Disable root motion during dash
+        if (animator != null)
+        {
+            animator.applyRootMotion = false;
+        }
 
         characterCombat.DashVFX();
     }
@@ -349,6 +380,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         
         vaultStartPosition = transform.position; // Store starting position for lerp
         currentVaultDirection = (vaultTargetPosition - transform.position).normalized; // Initialize vault direction
+        
+        // Disable root motion during vault
+        if (animator != null)
+        {
+            animator.applyRootMotion = false;
+        }
         
         // Trigger different animations based on obstacle type
         switch (currentVaultType)
@@ -428,6 +465,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 // Stop player movement while pushing
                 targetMovement = Vector3.zero;
                 
+                // Disable root motion during push
+                if (animator != null)
+                {
+                    animator.applyRootMotion = false;
+                }
+                
                 // Store the offset from the object to the player
                 pushOffsetFromObject = transform.position - pushableObject.transform.position;
                 lastPushObjectPosition = pushableObject.transform.position;
@@ -468,6 +511,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         isPushing = false;
         currentPushTarget = null;
         animator.SetBool("IsPushing", false);
+        
+        // Ensure root motion is disabled after push
+        if (animator != null)
+        {
+            animator.applyRootMotion = false;
+        }
         
         // Clear push tracking variables
         pushOffsetFromObject = Vector3.zero;
@@ -760,6 +809,58 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         return true; // Path is clear
     }
     
+    #endregion
+
+    #region Root Motion Handling
+
+    /// <summary>
+    /// Handles root motion from animations, particularly during attack animations
+    /// This prevents the character from moving through walls during root motion
+    /// </summary>
+    private void OnAnimatorMove()
+    {
+        // Only handle root motion if we're attacking and the animator is applying root motion
+        if (!isAttacking || animator == null || !animator.applyRootMotion)
+        {
+            return;
+        }
+
+        // Get the root motion delta from the animator
+        Vector3 rootMotionDelta = animator.deltaPosition;
+        
+        // If there's no movement from root motion, don't do anything
+        if (rootMotionDelta.magnitude < 0.001f)
+        {
+            return;
+        }
+
+        // Check if the root motion movement would cause a collision
+        Vector3 proposedPosition = transform.position + rootMotionDelta;
+        
+        // Use capsule cast to check for collisions in the root motion direction
+        Vector3 capsuleBottom = transform.position + Vector3.up * 0.3f;
+        Vector3 capsuleTop = transform.position + Vector3.up * humanCollider.bounds.size.y;
+        
+        bool collisionDetected = false;
+        foreach (LayerMask layer in obstacleLayers)
+        {
+            if (Physics.CapsuleCast(capsuleBottom, capsuleTop, capsuleCastRadius * 0.8f, 
+                rootMotionDelta.normalized, out RaycastHit hitInfo, rootMotionDelta.magnitude, layer))
+            {
+                collisionDetected = true;
+                break;
+            }
+        }
+
+        // If no collision detected, apply the root motion movement
+        if (!collisionDetected)
+        {
+            transform.position = proposedPosition;
+        }
+        // If collision detected, don't apply the movement (character stays in place)
+        // This prevents the character from moving through walls during attack animations
+    }
+
     #endregion
 
     #region Movement
@@ -1307,7 +1408,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             : Vector3.up; // Use upward direction as fallback
         EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
 
-        if (health <= 0) Die();
+        if (health <= 0 && !isDead) Die();
     }
 
     public void Heal(float amount)
@@ -1318,6 +1419,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void Die()
     {
+        // Prevent multiple calls to Die()
+        if (isDead) return;
+        isDead = true;
+        
         Debug.Log($"{gameObject.name} has died!");
         OnDeath?.Invoke();
 
@@ -1327,6 +1432,44 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         characterInventory.ClearInventory();
 
         animator.SetBool("Dead", true);
+
+        // Disable movement and AI components to prevent dead NPCs from moving
+        isAttacking = false;
+        isDashing = false;
+        isVaulting = false;
+        isPushing = false;
+        
+        // Disable NavMeshAgent
+        if (agent != null)
+        {
+            agent.enabled = false;
+        }
+        
+        // If this is a SettlerNPC, clear all states and tasks
+        if (this is SettlerNPC settler)
+        {
+            settler.ChangeState(null);
+            if (settler.HasAssignedWork())
+            {
+                settler.StopWork();
+            }
+        }
+        
+        // Disable all task states
+        foreach (var taskState in GetComponents<_TaskState>())
+        {
+            if (taskState != null)
+            {
+                taskState.enabled = false;
+            }
+        }
+        
+        // Disable interaction collider but keep main collider for physics
+        var narrativeInteractive = GetComponent<NarrativeInteractive>();
+        if (narrativeInteractive != null)
+        {
+            narrativeInteractive.enabled = false;
+        }
 
         // Play death VFX
         Vector3 deathPoint = transform.position + Vector3.up * 1.5f;

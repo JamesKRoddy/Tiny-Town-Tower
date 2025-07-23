@@ -63,6 +63,7 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
         if (target == defaultTarget)
         {
             HandleCameraPanning();
+            ClampWorkDetectionPointToBounds(); // Clamp the work detection point to bounds
         }
 
         FollowTarget();
@@ -92,9 +93,21 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
     {
         Vector3 panMovement = new Vector3(joystickInput.x, 0, joystickInput.y) * panSpeed * Time.deltaTime;
 
-        // Clamp the camera's new position within the X and Z bounds
+        // Calculate new position for the default target
         Vector3 newPosition = defaultTarget.position + panMovement;
-        ClampPositionToBounds();
+        
+        // Clamp the default target's position within the X and Z bounds
+        Vector2 xBounds = new Vector2(-25f, 25f);
+        Vector2 zBounds = new Vector2(-25f, 25f);
+
+        if (CampManager.Instance != null)
+        {
+            xBounds = CampManager.Instance.SharedXBounds;
+            zBounds = CampManager.Instance.SharedZBounds;
+        }
+
+        newPosition.x = Mathf.Clamp(newPosition.x, xBounds.x, xBounds.y);
+        newPosition.z = Mathf.Clamp(newPosition.z, zBounds.x, zBounds.y);
 
         defaultTarget.position = newPosition;
     }
@@ -146,5 +159,43 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
         newPosition.z = Mathf.Clamp(newPosition.z, zBounds.x, zBounds.y);
 
         transform.position = newPosition;
+    }
+
+    /// <summary>
+    /// Clamps the work detection point position to the camp's grid bounds
+    /// </summary>
+    private void ClampWorkDetectionPointToBounds()
+    {
+        if (workDetectionPoint == null) return;
+
+        Vector3 currentPosition = workDetectionPoint.transform.position;
+
+        // Get bounds from CampManager if available, otherwise use PlacementManager
+        Vector2 xBounds = new Vector2(-25f, 25f);
+        Vector2 zBounds = new Vector2(-25f, 25f);
+
+        if (CampManager.Instance != null)
+        {
+            xBounds = CampManager.Instance.SharedXBounds;
+            zBounds = CampManager.Instance.SharedZBounds;
+        }
+        else if (Managers.PlacementManager.Instance != null)
+        {
+            xBounds = Managers.PlacementManager.Instance.GetXBounds();
+            zBounds = Managers.PlacementManager.Instance.GetZBounds();
+        }
+
+        // Clamp the position to the bounds
+        Vector3 clampedPosition = new Vector3(
+            Mathf.Clamp(currentPosition.x, xBounds.x, xBounds.y),
+            currentPosition.y,
+            Mathf.Clamp(currentPosition.z, zBounds.x, zBounds.y)
+        );
+
+        // Only update if the position actually changed
+        if (clampedPosition != currentPosition)
+        {
+            workDetectionPoint.transform.position = clampedPosition;
+        }
     }
 }

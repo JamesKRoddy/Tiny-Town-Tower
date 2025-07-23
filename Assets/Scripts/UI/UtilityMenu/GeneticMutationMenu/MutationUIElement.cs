@@ -182,9 +182,13 @@ public class MutationUIElement : MonoBehaviour
     {
         Color targetColor = button.colors.normalColor;
         if (isSelected)
+        {
             targetColor = button.colors.selectedColor;
+        }
         else if (isHighlighted)
+        {
             targetColor = button.colors.highlightedColor;
+        }
 
         foreach (var cell in cellObjects)
         {
@@ -252,6 +256,13 @@ public class MutationUIElement : MonoBehaviour
     public void SetSelected(bool selected)
     {
         isSelected = selected;
+        UpdateCellColors();
+    }
+
+    public void ClearAllStates()
+    {
+        isSelected = false;
+        isHighlighted = false;
         UpdateCellColors();
     }
 
