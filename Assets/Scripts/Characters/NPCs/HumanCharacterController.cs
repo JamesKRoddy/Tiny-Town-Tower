@@ -98,6 +98,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     [Header("Health")]
     [SerializeField] private float health = 100f;
     [SerializeField] private float maxHealth = 100f;
+    private bool isDead = false;
 
     public event Action<float, float> OnDamageTaken;
     public event Action<float, float> OnHeal;
@@ -140,7 +141,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public virtual void PossessedUpdate()
     {
         // Don't do anything if dead
-        if (health <= 0) 
+        if (health <= 0 || isDead) 
         {
             return;
         }
@@ -1407,7 +1408,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             : Vector3.up; // Use upward direction as fallback
         EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
 
-        if (health <= 0) Die();
+        if (health <= 0 && !isDead) Die();
     }
 
     public void Heal(float amount)
@@ -1418,6 +1419,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void Die()
     {
+        // Prevent multiple calls to Die()
+        if (isDead) return;
+        isDead = true;
+        
         Debug.Log($"{gameObject.name} has died!");
         OnDeath?.Invoke();
 

@@ -34,7 +34,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
     [Header("NPC Possesion")]
     public IPossessable _possessedNPC;
-    public event Action<IPossessable> OnNPCPossessed;
+    public event Action<IPossessable, IPossessable> OnNPCPossessed; // oldNPC, newNPC
     private CharacterInventory _cachedInventory;
 
     [Header("Camera")]
@@ -90,6 +90,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
         _possessedNPC?.OnUnpossess();
 
         // Assign new NPC and possess it
+        IPossessable oldNPC = _possessedNPC;
         _possessedNPC = npc;
         _possessedNPC?.OnPossess();
         
@@ -97,7 +98,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
         _cachedInventory = _possessedNPC?.GetTransform().GetComponent<CharacterInventory>();
         
         // Invoke the event when an NPC is possessed
-        OnNPCPossessed?.Invoke(_possessedNPC);
+        OnNPCPossessed?.Invoke(oldNPC, _possessedNPC);
     }
 
     /// <summary>

@@ -10,7 +10,7 @@ public class RogueLikeGameUI : MonoBehaviour
     [SerializeField] private Image healthFillImage;
     [SerializeField] private Color fullHealthColor = Color.green;
     [SerializeField] private Color lowHealthColor = Color.red;
-
+    
     public void Setup()
     {
         // Subscribe to game mode changes
@@ -35,17 +35,17 @@ public class RogueLikeGameUI : MonoBehaviour
         gameObject.SetActive(newGameMode == GameMode.ROGUE_LITE);
     }
 
-    private void OnNPCPossessed(IPossessable npc)
+    private void OnNPCPossessed(IPossessable oldNPC, IPossessable newNPC)
     {
-        // Unsubscribe from previous NPC's health events if it was damageable
-        if (PlayerController.Instance._possessedNPC is IDamageable previousDamageable)
+        // Unsubscribe from old NPC's health events if it was damageable
+        if (oldNPC is IDamageable oldDamageable)
         {
-            previousDamageable.OnDamageTaken -= UpdateHealthUI;
-            previousDamageable.OnHeal -= UpdateHealthUI;
+            oldDamageable.OnDamageTaken -= UpdateHealthUI;
+            oldDamageable.OnHeal -= UpdateHealthUI;
         }
 
         // Subscribe to new NPC's health events
-        SubscribeToHealthEvents(npc);
+        SubscribeToHealthEvents(newNPC);
     }
 
     private void SubscribeToHealthEvents(IPossessable npc)
