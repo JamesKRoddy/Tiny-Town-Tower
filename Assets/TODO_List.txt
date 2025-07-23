@@ -2,7 +2,7 @@
 
 
 Tomorrow work:
-Zombie backstep freezing
+
 
 
 
@@ -25,20 +25,11 @@ Instead of spawning enemies from the same points, add in code to select random p
 Implement a day/night cycle for the entire game.
 Figure out what happens in the camp while youre gone, does progress on stuff freeze? Does it keep going or does it progress but slower?
 Trash spawning in camp should take up spaces on the grid
-Goal at the the start just says survive, recruit 10 survivours
+Goal at the start just says survive, recruit 10 survivors
 
 
 
-
-
-
-
-
-
-Bugs
-
-Player dying and returning to camp
-Returning to camp from menu/dying
+Bugs:
 
 
 
