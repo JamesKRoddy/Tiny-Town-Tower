@@ -93,7 +93,7 @@ public class PlayerInput : MonoBehaviour
     {
         Debug.Log($"Update Controls playerControlType : <color=cyan> {playerControlType} </color>");
 
-        if(playerControlType == PlayerControlType.IN_MENU || playerControlType == PlayerControlType.GENETIC_MUTATION_MOVEMENT)
+        if(playerControlType == PlayerControlType.IN_MENU || playerControlType == PlayerControlType.GENETIC_MUTATION_MOVEMENT || playerControlType == PlayerControlType.MAIN_MENU)
         {
             UpdatePlayerControlsWithDelay(playerControlType, 1);
         }

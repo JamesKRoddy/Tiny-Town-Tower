@@ -189,7 +189,7 @@ public class SaveLoadManager : MonoBehaviour
     
     [Header("Save Settings")]
     [SerializeField] private bool autoSaveEnabled = true;
-    [SerializeField] private float autoSaveInterval = 300f; // 5 minutes
+    [SerializeField] private float autoSaveInterval = 30f; // 30 seconds
     private float lastAutoSaveTime;
 
     private void Awake()
@@ -237,12 +237,12 @@ public class SaveLoadManager : MonoBehaviour
             string json = JsonUtility.ToJson(data, true);
             File.WriteAllText(saveFilePath, json);
             
-            Debug.Log($"Game Saved Successfully at: {saveFilePath}");
+            Debug.Log($"<color=green>Game Saved Successfully at: {saveFilePath}</color>");
             PlayerUIManager.Instance?.DisplayTextPopup("Game Saved");
         }
         catch (Exception e)
         {
-            Debug.LogError($"Failed to save game: {e.Message}");
+            Debug.LogError($"<color=red>Failed to save game: {e.Message}</color>");
             PlayerUIManager.Instance?.DisplayUIErrorMessage("Failed to save game!");
         }
     }
@@ -269,12 +269,12 @@ public class SaveLoadManager : MonoBehaviour
             LoadBuildingData(data.buildingData);
             LoadManagerData(data.managerData);
 
-            Debug.Log($"Game Loaded Successfully from: {data.saveTime}");
+            Debug.Log($"<color=green>Game Loaded Successfully from: {data.saveTime}</color>");
             PlayerUIManager.Instance?.DisplayTextPopup("Game Loaded");
         }
         catch (Exception e)
         {
-            Debug.LogError($"Failed to load game: {e.Message}");
+            Debug.LogError($"<color=red>Failed to load game: {e.Message}</color>");
             PlayerUIManager.Instance?.DisplayUIErrorMessage("Failed to load game!");
         }
     }
@@ -304,29 +304,56 @@ public class SaveLoadManager : MonoBehaviour
     {
         if (CampManager.Instance?.SharedGridSlots == null) return;
 
+        // Track which buildings we've already saved to avoid duplicates
+        HashSet<GameObject> savedBuildings = new HashSet<GameObject>();
+
         foreach (var kvp in CampManager.Instance.SharedGridSlots)
         {
             var slot = kvp.Value;
-            if (slot.IsOccupied && slot.OccupyingObject != null)
+            if (slot.IsOccupied && slot.OccupyingObject != null && !savedBuildings.Contains(slot.OccupyingObject))
             {
                 // Get the building component to determine size
                 Vector2Int size = Vector2Int.one;
                 if (slot.OccupyingObject.TryGetComponent<IPlaceableStructure>(out var structure))
                 {
                     // Try to get size from building scriptable object
-                                         if (slot.OccupyingObject.TryGetComponent<Building>(out var building) && building.GetStructureScriptableObj() != null)
-                     {
-                         size = building.GetStructureScriptableObj().size;
+                    if (slot.OccupyingObject.TryGetComponent<Building>(out var building) && building.GetStructureScriptableObj() != null)
+                    {
+                        size = building.GetStructureScriptableObj().size;
                     }
                 }
 
+                // Get the scriptable object name from the building/turret component
+                string scriptableObjName = "";
+                if (slot.OccupyingObject.TryGetComponent<Building>(out var buildingComponent))
+                {
+                    var buildingScriptable = buildingComponent.GetStructureScriptableObj();
+                    scriptableObjName = buildingScriptable?.name ?? slot.OccupyingObject.name.Replace("(Clone)", "").Trim();
+                }
+                else if (slot.OccupyingObject.TryGetComponent<BaseTurret>(out var turretComponent))
+                {
+                    var turretScriptable = turretComponent.GetStructureScriptableObj();
+                    scriptableObjName = turretScriptable?.name ?? slot.OccupyingObject.name.Replace("(Clone)", "").Trim();
+                }
+                else
+                {
+                    // Fallback to GameObject name if no scriptable object found
+                    scriptableObjName = slot.OccupyingObject.name.Replace("(Clone)", "").Trim();
+                }
+
+                // Save the actual building position instead of grid slot position
+                Vector3 buildingPosition = slot.OccupyingObject.transform.position;
+
                 gridData.occupiedSlots.Add(new GridSlotSaveData
                 {
-                    position = kvp.Key,
-                    occupyingObjectName = slot.OccupyingObject.name.Replace("(Clone)", "").Trim(),
+                    position = buildingPosition,
+                    occupyingObjectName = scriptableObjName,
                     occupyingObjectPrefabPath = GetPrefabPath(slot.OccupyingObject),
                     size = size
                 });
+
+                // Mark this building as saved to avoid duplicates
+                savedBuildings.Add(slot.OccupyingObject);
             }
         }
     }
@@ -725,8 +752,11 @@ public class SaveLoadManager : MonoBehaviour
             return;
         }
 
-        // Instantiate the building
-        GameObject buildingObj = Instantiate(buildingScriptable.prefab, slotData.position, Quaternion.identity);
+        // Use the saved position directly since it's already the building's actual position
+        Vector3 buildingPosition = slotData.position;
+
+        // Instantiate the building at the saved position
+        GameObject buildingObj = Instantiate(buildingScriptable.prefab, buildingPosition, Quaternion.identity);
         
         // Setup the building component
         Building buildingComponent = buildingObj.GetComponent<Building>();
@@ -736,13 +766,13 @@ public class SaveLoadManager : MonoBehaviour
             buildingComponent.CompleteConstruction(); // Mark as completed since it was saved
         }
 
-        // Mark grid slots as occupied
+        // Mark grid slots as occupied using the building position
         if (CampManager.Instance != null)
         {
-            CampManager.Instance.MarkSharedGridSlotsOccupied(slotData.position, slotData.size, buildingObj);
+            CampManager.Instance.MarkSharedGridSlotsOccupied(buildingPosition, slotData.size, buildingObj);
         }
 
-        Debug.Log($"Recreated building: {buildingScriptable.name} at {slotData.position}");
+        Debug.Log($"Recreated building: {buildingScriptable.name} at {buildingPosition}");
     }
 
     private void CreateTurretFromSave(TurretScriptableObject turretScriptable, GridSlotSaveData slotData)
@@ -753,8 +783,11 @@ public class SaveLoadManager : MonoBehaviour
             return;
         }
 
-        // Instantiate the turret
-        GameObject turretObj = Instantiate(turretScriptable.prefab, slotData.position, Quaternion.identity);
+        // Use the saved position directly since it's already the turret's actual position
+        Vector3 turretPosition = slotData.position;
+
+        // Instantiate the turret at the saved position
+        GameObject turretObj = Instantiate(turretScriptable.prefab, turretPosition, Quaternion.identity);
         
         // Setup the turret component
         BaseTurret turretComponent = turretObj.GetComponent<BaseTurret>();
@@ -764,13 +797,13 @@ public class SaveLoadManager : MonoBehaviour
             turretComponent.CompleteConstruction(); // Mark as completed since it was saved
         }
 
-        // Mark grid slots as occupied
+        // Mark grid slots as occupied using the turret position
         if (CampManager.Instance != null)
         {
-            CampManager.Instance.MarkSharedGridSlotsOccupied(slotData.position, slotData.size, turretObj);
+            CampManager.Instance.MarkSharedGridSlotsOccupied(turretPosition, slotData.size, turretObj);
         }
 
-        Debug.Log($"Recreated turret: {turretScriptable.name} at {slotData.position}");
+        Debug.Log($"Recreated turret: {turretScriptable.name} at {turretPosition}");
     }
 
     #endregion
