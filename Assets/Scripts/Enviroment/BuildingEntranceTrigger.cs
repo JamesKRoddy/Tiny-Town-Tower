@@ -9,7 +9,7 @@ public class BuildingEntranceTrigger : SceneTransitionTrigger
     [SerializeField] private Transform playerSpawnPoint;
     [SerializeField] private RogueLikeBuildingType buildingType;
 
-    BuildingDataScriptableObj buildingData;
+    RogueLikeBuildingDataScriptableObj buildingData;
 
     protected override void OnTriggerEnter(Collider other)
     {
@@ -39,7 +39,7 @@ public class BuildingEntranceTrigger : SceneTransitionTrigger
     {
         if (buildingData != null)
         {
-            Transform buildingEntrance = buildingData.buildingEntrance.GetComponent<BuildingEntrance>().PlayerSpawnPoint;
+            Transform buildingEntrance = buildingData.buildingEntrance.GetComponent<RogueLikeBuildingEntrance>().PlayerSpawnPoint;
             if (buildingEntrance == null)
             {
                 Debug.LogError($"No buildingEntranceSpawnPoint found on gameobject: {buildingData.buildingEntrance.name}");

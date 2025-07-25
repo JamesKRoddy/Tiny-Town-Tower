@@ -20,14 +20,14 @@ namespace Managers
         }
     }
     
-    public class BuildingManager : MonoBehaviour
+    public class RogueLikeBuildingManager : MonoBehaviour
     {
-        [Header("Building Settings")]
-        [SerializeField] private List<BuildingDataScriptableObj> buildingDataScriptableObjs;
+        [Header("RogueLike Building Settings")]
+        [SerializeField] private List<RogueLikeBuildingDataScriptableObj> rogueLikeBuildingDataScriptableObjs;
         
-        private BuildingDataScriptableObj currentBuilding;
-        private Transform buildingSpawn;
-        public Transform BuildingSpawn => buildingSpawn;
+        private RogueLikeBuildingDataScriptableObj currentBuilding;
+        private Transform rogueLikeBuildingSpawn;
+        public Transform RogueLikeBuildingSpawn => rogueLikeBuildingSpawn;
         private GameObject currentRoomParent;        
         private int currentMaxRooms;
         private Vector3 lastPlayerSpawnPoint;
@@ -37,14 +37,14 @@ namespace Managers
 
         public GameObject CurrentRoomParent => currentRoomParent;
 
-        public BuildingDataScriptableObj CurrentBuilding => currentBuilding;
-        public int BuildingDifficulty => DifficultyManager.Instance.GetCurrentBuildingDifficulty();
+        public RogueLikeBuildingDataScriptableObj CurrentBuilding => currentBuilding;
+        public int RogueLikeBuildingDifficulty => DifficultyManager.Instance.GetCurrentRogueLikeBuildingDifficulty();
         public int CurrentRoom => DifficultyManager.Instance.GetCurrentRoomNumber();
         public int CurrentRoomDifficulty => DifficultyManager.Instance.GetCurrentRoomDifficulty();
 
-        public BuildingDataScriptableObj SetBuildingData(RogueLikeBuildingType buildingType){
+        public RogueLikeBuildingDataScriptableObj SetBuildingData(RogueLikeBuildingType buildingType){
             // Find all buildings matching the door's building type
-            List<BuildingDataScriptableObj> matchingBuildings = buildingDataScriptableObjs.FindAll(
+            List<RogueLikeBuildingDataScriptableObj> matchingBuildings = rogueLikeBuildingDataScriptableObjs.FindAll(
                 building => building.buildingType == buildingType
             );
 
@@ -57,13 +57,13 @@ namespace Managers
             // Select a random building from the matching ones
             int randomIndex = Random.Range(0, matchingBuildings.Count);
 
-            currentBuilding = buildingDataScriptableObjs[randomIndex];
+            currentBuilding = rogueLikeBuildingDataScriptableObjs[randomIndex];
 
             // Note: Difficulty is now initialized by the OverWorldDoor before this method is called
             currentMaxRooms = currentBuilding.GetMaxRoomsForDifficulty(DifficultyManager.Instance.GetCurrentWaveDifficulty());
 
-            buildingSpawn = matchingBuildings[randomIndex].buildingEntrance.GetComponent<BuildingEntrance>().PlayerSpawnPoint;
-            if (buildingSpawn == null)
+            rogueLikeBuildingSpawn = matchingBuildings[randomIndex].buildingEntrance.GetComponent<RogueLikeBuildingEntrance>().PlayerSpawnPoint;
+            if (rogueLikeBuildingSpawn == null)
             {
                 Debug.LogError($"No buildingEntranceSpawnPoint found on gameobject: {matchingBuildings[0].buildingEntrance.name}");
                 return null;
@@ -147,7 +147,7 @@ namespace Managers
 
             // Create the new building
             int difficulty = DifficultyManager.Instance.GetCurrentWaveDifficulty();
-            GameObject newBuildingParent = Instantiate(GetBuildingParent(buildingType, difficulty, out BuildingDataScriptableObj selectedBuilding));
+            GameObject newBuildingParent = Instantiate(GetBuildingParent(buildingType, difficulty, out RogueLikeBuildingDataScriptableObj selectedBuilding));
 
             if (newBuildingParent != null && selectedBuilding != null)
             {
@@ -177,11 +177,11 @@ namespace Managers
             }
         }
 
-        private GameObject GetBuildingParent(RogueLikeBuildingType buildingType, int difficulty, out BuildingDataScriptableObj selectedBuilding)
+        private GameObject GetBuildingParent(RogueLikeBuildingType buildingType, int difficulty, out RogueLikeBuildingDataScriptableObj selectedBuilding)
         {
-            foreach (var buildingData in buildingDataScriptableObjs)
+            foreach (var buildingData in rogueLikeBuildingDataScriptableObjs)
             {
-                if (buildingData is BuildingDataScriptableObj building && building.buildingType == buildingType)
+                if (buildingData is RogueLikeBuildingDataScriptableObj building && building.buildingType == buildingType)
                 {
                     selectedBuilding = building;
                     return building.GetBuildingParent(difficulty);

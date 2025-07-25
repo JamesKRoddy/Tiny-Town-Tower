@@ -259,7 +259,7 @@ GameObject:
   - component: {fileID: 3458277318788093592}
   - component: {fileID: 7451046357896141963}
   m_Layer: 0
-  m_Name: EffectManagerManager
+  m_Name: EffectManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -399,7 +399,7 @@ GameObject:
   - component: {fileID: 7729418689376073349}
   - component: {fileID: 8102012326405835519}
   m_Layer: 0
-  m_Name: BuildingManager
+  m_Name: RogueLikeBuildingManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -432,7 +432,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 730918d4ea011ef4aa8dfe3c7a83c9a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buildingDataScriptableObjs:
+  rogueLikeBuildingDataScriptableObjs:
   - {fileID: 11400000, guid: cabb675861ade9446b9fd0936ab40689, type: 2}
 --- !u!1 &4877649756777795953
 GameObject:

@@ -219,7 +219,7 @@ GameObject:
   - component: {fileID: 2914457574434242328}
   - component: {fileID: 3918048866752933220}
   m_Layer: 6
-  m_Name: BuildingEntrance
+  m_Name: RogueLikeBuildingEntrance
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

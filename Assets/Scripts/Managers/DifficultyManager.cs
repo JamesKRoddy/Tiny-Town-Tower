@@ -119,7 +119,7 @@ namespace Managers
         /// <summary>
         /// Get the current building difficulty
         /// </summary>
-        public int GetCurrentBuildingDifficulty()
+        public int GetCurrentRogueLikeBuildingDifficulty()
         {
             return currentBuildingDifficulty;
         }

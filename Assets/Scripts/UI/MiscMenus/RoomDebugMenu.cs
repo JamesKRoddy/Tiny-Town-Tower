@@ -244,7 +244,7 @@ public class RoomDebugMenu : BaseDebugMenu
             if (buildingManager.CurrentBuilding != null)
             {
                 status += $"Current Building: {buildingManager.CurrentBuilding.buildingType}\n";
-                status += $"Building Difficulty: {buildingManager.BuildingDifficulty}\n";
+                status += $"Building Difficulty: {buildingManager.RogueLikeBuildingDifficulty}\n";
                 status += $"Current Room: {buildingManager.CurrentRoom}\n";
                 
                 // Show available room sizes for this building

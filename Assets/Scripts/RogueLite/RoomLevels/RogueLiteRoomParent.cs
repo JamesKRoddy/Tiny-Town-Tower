@@ -81,7 +81,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
     }
 
-    public void GenerateRandomRooms(BuildingDataScriptableObj buildingScriptableObj)
+    public void GenerateRandomRooms(RogueLikeBuildingDataScriptableObj buildingScriptableObj)
     {
         if (buildingScriptableObj == null)
         {
@@ -229,7 +229,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// Intelligently place rooms based on size, starting with large rooms at key positions
     /// GUARANTEES that every spawn point gets a room
     /// </summary>
-    private void HierarchicalRoomPlacement(BuildingDataScriptableObj buildingScriptableObj, int currentDifficulty)
+    private void HierarchicalRoomPlacement(RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty)
     {
         if (roomTransforms == null || roomTransforms.Length == 0)
         {
@@ -343,7 +343,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// Intelligently place rooms using constraint satisfaction with room swapping
     /// Tries to resolve conflicts by swapping blocking rooms with smaller alternatives
     /// </summary>
-    private bool GuaranteedRoomPlacement(Transform targetTransform, GameObject preferredRoomPrefab, BuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName)
+    private bool GuaranteedRoomPlacement(Transform targetTransform, GameObject preferredRoomPrefab, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName)
     {
         int spawnIndex = GetSpawnIndex(targetTransform);
         if (spawnIndex == -1)
@@ -358,7 +358,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// <summary>
     /// Smart room placement with conflict resolution through room swapping and minimum overlap selection
     /// </summary>
-    private bool SmartRoomPlacement(int spawnIndex, GameObject preferredRoomPrefab, BuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName, int retryCount)
+    private bool SmartRoomPlacement(int spawnIndex, GameObject preferredRoomPrefab, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName, int retryCount)
     {
         if (retryCount >= maxSwapRetries)
         {
@@ -425,7 +425,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// <summary>
     /// Try to place a room with intelligent conflict resolution through room swapping
     /// </summary>
-    private bool TryPlaceWithConflictResolution(int spawnIndex, GameObject roomPrefab, RogueLikeRoomSize roomSize, BuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName, int retryCount)
+    private bool TryPlaceWithConflictResolution(int spawnIndex, GameObject roomPrefab, RogueLikeRoomSize roomSize, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName, int retryCount)
     {
         Transform targetTransform = roomTransforms[spawnIndex];
         
@@ -477,7 +477,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// Smart room placement that finds the room with minimum overlap
     /// Priority: 1) Rooms within tolerance, 2) Room with smallest overlap, 3) Force placement
     /// </summary>
-    private bool ForcePlaceAnyRoom(int spawnIndex, BuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName)
+    private bool ForcePlaceAnyRoom(int spawnIndex, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName)
     {
         Transform targetTransform = roomTransforms[spawnIndex];
         
@@ -528,7 +528,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// <summary>
     /// Find the room size that produces the minimum overlap at a given spawn point
     /// </summary>
-    private GameObject FindRoomWithMinimumOverlap(int spawnIndex, BuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, out RogueLikeRoomSize bestSize, out float minOverlap)
+    private GameObject FindRoomWithMinimumOverlap(int spawnIndex, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, out RogueLikeRoomSize bestSize, out float minOverlap)
     {
         Transform targetTransform = roomTransforms[spawnIndex];
         
@@ -684,7 +684,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// <summary>
     /// Attempt to swap a room at the given spawn index with a smaller alternative
     /// </summary>
-    private bool AttemptRoomSwap(int spawnIndex, BuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, int retryCount)
+    private bool AttemptRoomSwap(int spawnIndex, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, int retryCount)
     {
         if (!placedRoomsBySpawnIndex.ContainsKey(spawnIndex))
         {

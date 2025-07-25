@@ -6,7 +6,7 @@ using UnityEngine;
 /// </summary>
 
 [CreateAssetMenu(fileName = "BuildingDataScriptableObj", menuName = "Scriptable Objects/Roguelite/BuildingDataScriptableObj")]
-public class BuildingDataScriptableObj : ScriptableObject
+public class RogueLikeBuildingDataScriptableObj : ScriptableObject
 {
     public RogueLikeBuildingType buildingType;
     public GameObject buildingEntrance;

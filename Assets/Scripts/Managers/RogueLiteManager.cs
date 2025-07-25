@@ -7,12 +7,12 @@ namespace Managers
     public class RogueLiteManager : GameModeManager<RogueLikeEnemyWaveConfig>
     {
         [Header("RogueLite Manager References")]
-        [SerializeField] private BuildingManager buildingManager;
+        [SerializeField] private RogueLikeBuildingManager buildingManager;
         [SerializeField] private OverworldManager overworldManager;
         
         private int currentEnemyCount;
 
-        public BuildingManager BuildingManager => buildingManager;
+        public RogueLikeBuildingManager BuildingManager => buildingManager;
         public OverworldManager OverworldManager => overworldManager;
 
         private EnemySetupState currentEnemySetupState;

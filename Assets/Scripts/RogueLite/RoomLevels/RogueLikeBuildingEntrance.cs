@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class BuildingEntrance : MonoBehaviour
+public class RogueLikeBuildingEntrance : MonoBehaviour
 {
     [SerializeField] private Transform playerSpawnPoint;
     [SerializeField] private Transform[] weaponSpawnPoints;
