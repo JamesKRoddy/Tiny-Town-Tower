@@ -687,6 +687,16 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
         return structureScriptableObj;
     }
 
+    string IPlaceableStructure.GetSaveId()
+    {
+        return GetSaveId();
+    }
+
+    void IPlaceableStructure.RestoreFromSaveData(object saveData)
+    {
+        RestoreFromSaveData(saveData);
+    }
+
     public virtual string GetInteractionText()
     {
         if (isUnderConstruction) return "Structure under construction";
@@ -706,6 +716,26 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
     public StructureUpgradeTask GetUpgradeTask() => upgradeTask;
 
     #endregion
-}
 
- 
+    #region Save/Load Implementation
+
+    public virtual string GetSaveId()
+    {
+        return gameObject.GetInstanceID().ToString();
+    }
+
+    public virtual void RestoreFromSaveData(object saveData)
+    {
+        if (saveData is BuildingSaveData buildingData)
+        {
+            currentHealth = buildingData.health;
+            isOperational = buildingData.isOperational;
+            isUnderConstruction = buildingData.isUnderConstruction;
+            
+            // Restore position
+            transform.position = buildingData.position;
+        }
+    }
+
+    #endregion
+}

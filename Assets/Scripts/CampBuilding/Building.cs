@@ -84,7 +84,33 @@ public class Building : PlaceableStructure<BuildingScriptableObj>, IInteractive<
 
     #endregion
 
-    #region Interaction
+    #region Save/Load Implementation
+
+    public override string GetSaveId()
+    {
+        return gameObject.GetInstanceID().ToString();
+    }
+
+
+
+    public override void RestoreFromSaveData(object saveData)
+    {
+        if (saveData is BuildingSaveData buildingData)
+        {
+            Health = buildingData.health;
+            isOperational = buildingData.isOperational;
+            isUnderConstruction = buildingData.isUnderConstruction;
+            
+            // Restore position
+            transform.position = buildingData.position;
+            
+            // TODO: Restore construction progress if needed
+        }
+    }
+
+    #endregion
+
+    #region Interaction Implementation
 
     public override string GetInteractionText()
     {

@@ -178,13 +178,14 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8921448851626463710}
+  - {fileID: 5151133988580293085}
+  - {fileID: 6955620494822992172}
   - {fileID: 324688132105225691}
   - {fileID: 4773933793551168376}
   - {fileID: 3458277318788093592}
   - {fileID: 3868888678722008520}
   - {fileID: 2211646702075191331}
   - {fileID: 6739254822893265709}
-  - {fileID: 6955620494822992172}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6303821086052416740
@@ -729,6 +730,52 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3a8a25e27794d7845b4281207ea01f30, type: 2}
   buildingManager: {fileID: 8102012326405835519}
   overworldManager: {fileID: 2562150565286651685}
+--- !u!1 &5711646058787768948
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5151133988580293085}
+  - component: {fileID: 5397687326794407557}
+  m_Layer: 0
+  m_Name: SaveLoadManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5151133988580293085
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5711646058787768948}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4686915863895893509}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5397687326794407557
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5711646058787768948}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f38d5454ed299714a975a9bc08d0281e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  autoSaveEnabled: 1
+  autoSaveInterval: 30
 --- !u!1 &6054493739826329417
 GameObject:
   m_ObjectHideFlags: 0

@@ -2,6 +2,12 @@
 
 
 Tomorrow work:
+Recruiting NPCs:
+Specific rooms with friendly interaction (no enemies) and finding npcs in them
+Randomly generating npcs, stats, models etc.
+Narative elements to recruit them
+Narative options so the player can chose to add them to the camp.
+Saving once one is recruited
 
 
 
@@ -30,7 +36,7 @@ Goal at the start just says survive, recruit 10 survivors
 
 
 Bugs:
-
+In game quit button doesn't exit the game
 
 
 
