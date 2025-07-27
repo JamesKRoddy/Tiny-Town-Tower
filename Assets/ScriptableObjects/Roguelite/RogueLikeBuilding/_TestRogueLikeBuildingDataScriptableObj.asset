@@ -35,8 +35,10 @@ MonoBehaviour:
   - buildingRoom: {fileID: 5318116250113263644, guid: e3e10d8d0b272594ca693d9183282991, type: 3}
     difficulty: 0
     roomSize: 0
+  friendlyRooms:
   - buildingRoom: {fileID: 5318116250113263644, guid: 4dd61a44160145b448518cb32744f622, type: 3}
     difficulty: 0
     roomSize: 0
+  friendlyRoomSpawnChance: 7.1
   minRoomCount: 1
   maxRoomCount: 3
