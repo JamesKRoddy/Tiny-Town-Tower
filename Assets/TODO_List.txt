@@ -3,7 +3,8 @@
 
 Tomorrow work:
 Recruiting NPCs:
-First off use the RogueLikeBuildingManager to generate either friendly or hostile rooms
+First off use the RogueLikeBuildingManager to generate either friendly or hostile rooms denoted by RogueLikeRoomType
+If a single friendly room is added the room parent is friendly so all rooms are friendly for that room parent to block the enemy spawning process.
 Specific rooms with friendly interaction (no enemies) and finding npcs in them hostile does the currently implementation of spawning enemies
 Narative options so the player can chose to add them to the camp.
 Once one is recruited maybe store it in the npc manager, then when the player gets back to the camp its spawned in?
@@ -36,8 +37,9 @@ Goal at the start just says survive, recruit 10 survivors
 
 
 
-Bugs:
+Bugs and refactoring:
 In game quit button doesn't exit the game
+Theres these small, medium and large enums for room sizes that need to be removed
 
 
 

@@ -129,9 +129,7 @@ namespace Managers
             
             // Start at an offset to avoid overlapping with building entrance at (0,0,0)
             Vector3 newPosition = new Vector3((roomCount + 1) * buildingSpacing, 0, 0);
-            
-            Debug.Log($"[BuildingManager] Positioning building parent {roomCount} at: {newPosition}");
-            
+                        
             return newPosition;
         }
 

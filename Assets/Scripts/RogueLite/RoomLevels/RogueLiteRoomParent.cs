@@ -326,8 +326,6 @@ public class RogueLiteRoomParent : MonoBehaviour
             }
         }
 
-        Debug.Log($"[HierarchicalPlacement] Completed room placement. Total rooms placed: {placedRoomsBySpawnIndex.Count}/{roomTransforms.Length}");
-        
         // Verify all spawn points have rooms
         if (placedRoomsBySpawnIndex.Count != roomTransforms.Length)
         {
@@ -341,10 +339,6 @@ public class RogueLiteRoomParent : MonoBehaviour
                     Debug.LogError($"[HierarchicalPlacement] Missing room at spawn point {i}");
                 }
             }
-        }
-        else
-        {
-            Debug.Log($"[HierarchicalPlacement] SUCCESS: All spawn points have rooms!");
         }
     }
 
