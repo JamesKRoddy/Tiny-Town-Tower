@@ -745,7 +745,6 @@ namespace Enemies
             // Don't rotate if dead
             if (Health <= 0) 
             {
-                Debug.Log($"[{gameObject.name}] RotateTowardsTargetForAttack called while dead! Health: {Health}");
                 return false;
             }
 
