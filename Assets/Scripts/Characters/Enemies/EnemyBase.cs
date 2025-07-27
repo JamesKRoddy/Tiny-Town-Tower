@@ -205,10 +205,6 @@ namespace Enemies
         {
             if (!useRootMotion || Health <= 0 || !agent.isOnNavMesh) 
             {
-                if (Health <= 0 && Time.frameCount % 60 == 0) // Log every 60 frames for dead zombies
-                {
-                    Debug.Log($"[{gameObject.name}] OnAnimatorMove called while dead! Health: {Health}, useRootMotion: {useRootMotion}");
-                }
                 return;
             }
 

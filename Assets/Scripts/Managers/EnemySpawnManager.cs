@@ -70,6 +70,18 @@ namespace Managers
 
             if(GameManager.Instance.CurrentGameMode == GameMode.ROGUE_LITE)
             {
+                // Check if the current room parent is friendly - if so, skip enemy spawning
+                if (RogueLiteManager.Instance.BuildingManager.CurrentRoomParentComponent != null)
+                {
+                    var roomParentComponent = RogueLiteManager.Instance.BuildingManager.CurrentRoomParentComponent;
+                    
+                    if (roomParentComponent != null && roomParentComponent.RoomType == RogueLikeRoomType.FRIENDLY)
+                    {
+                        RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                        return;
+                    }
+                }
+                
                 spawnPoints = new List<EnemySpawnPoint>(RogueLiteManager.Instance.BuildingManager.CurrentRoomParent.GetComponent<RogueLiteRoomParent>().GetEnemySpawnPoints());
 
             } else if(GameManager.Instance.CurrentGameMode == GameMode.CAMP_ATTACK)

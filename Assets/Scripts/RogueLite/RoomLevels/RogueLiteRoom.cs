@@ -8,6 +8,9 @@ public class RogueLiteRoom : MonoBehaviour
     public List<RogueLikeRoomDoor> doors = new List<RogueLikeRoomDoor>();
     public List<ChestParent> chests = new List<ChestParent>();
     
+    [Header("Room Type")]
+    [SerializeField] private RogueLikeRoomType roomType = RogueLikeRoomType.HOSTILE;
+    
     [Header("Room Bounds")]
     [SerializeField] private Bounds roomBounds;
     [SerializeField] private bool autoCalculateBounds = true;
@@ -20,6 +23,9 @@ public class RogueLiteRoom : MonoBehaviour
     
     private Collider[] roomColliders;
     private bool boundsCalculated = false;
+    
+    // Property to get the room type
+    public RogueLikeRoomType RoomType => roomType;
     
     private void Awake()
     {

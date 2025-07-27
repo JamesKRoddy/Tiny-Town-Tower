@@ -28,7 +28,8 @@ namespace Managers
         private RogueLikeBuildingDataScriptableObj currentBuilding;
         private Transform rogueLikeBuildingSpawn;
         public Transform RogueLikeBuildingSpawn => rogueLikeBuildingSpawn;
-        private GameObject currentRoomParent;        
+        private GameObject currentRoomParent;  
+        private RogueLiteRoomParent currentRoomParentComponent;
         private int currentMaxRooms;
         private Vector3 lastPlayerSpawnPoint;
         private float minRoomSpacing = 20f;
@@ -36,6 +37,7 @@ namespace Managers
         private List<RoomPlacementData> placedRooms = new List<RoomPlacementData>();
 
         public GameObject CurrentRoomParent => currentRoomParent;
+        public RogueLiteRoomParent CurrentRoomParentComponent => currentRoomParentComponent;
 
         public RogueLikeBuildingDataScriptableObj CurrentBuilding => currentBuilding;
         public int RogueLikeBuildingDifficulty => DifficultyManager.Instance.GetCurrentRogueLikeBuildingDifficulty();
@@ -138,10 +140,9 @@ namespace Managers
             // Store the current player spawn point before creating the new building
             if (currentRoomParent != null)
             {
-                RogueLiteRoomParent oldRandomizer = currentRoomParent.GetComponent<RogueLiteRoomParent>();
-                if (oldRandomizer != null)
+                if (currentRoomParentComponent != null)
                 {
-                    lastPlayerSpawnPoint = oldRandomizer.GetPlayerSpawnPoint();
+                    lastPlayerSpawnPoint = currentRoomParentComponent.GetPlayerSpawnPoint();
                 }
             }
 
@@ -169,6 +170,7 @@ namespace Managers
                 }
 
                 currentRoomParent = newBuildingParent;
+                currentRoomParentComponent = newBuildingParent.GetComponent<RogueLiteRoomParent>();
                 spawnedRooms[position] = newBuildingParent;
             }
             else
@@ -203,10 +205,9 @@ namespace Managers
 
             if (currentRoomParent != null)
             {
-                RogueLiteRoomParent randomizer = currentRoomParent.GetComponent<RogueLiteRoomParent>();
-                if (randomizer != null)
+                if (currentRoomParentComponent != null)
                 {
-                    Vector3 spawnPoint = randomizer.GetPlayerSpawnPoint();
+                    Vector3 spawnPoint = currentRoomParentComponent.GetPlayerSpawnPoint();
                     if (spawnPoint != Vector3.zero)
                     {
                         playerTransform.position = spawnPoint;
