@@ -3,6 +3,10 @@
 
 Tomorrow work:
 Recruiting NPCs:
+
+Conversation progression eg. after an npc is recruited then respond differently.
+Slightly more complicated conversations, how to track them?
+
 Randomly generating npcs, stats, models etc. in the npc manager.
 Randomly generating NPC models
 Randomly assigning narrative elements (have these stored in a specific place, in the json assign a character type or something and have it assigned by that?

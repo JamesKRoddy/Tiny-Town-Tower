@@ -9,7 +9,7 @@ public class NarrativeInteractive : MonoBehaviour, IInteractive<NarrativeAsset>
     [Header("Narrative Configuration")]
     [SerializeField] private NPCNarrativeType npcNarrativeType = NPCNarrativeType.GENERIC_CONVERSATION;
     
-    [Header("Legacy Support (Optional)")]
+    [Header("Unique Conversation (Optional)")]
     [SerializeField] private NarrativeAsset narrativeAsset; // For backward compatibility
 
     [Header("Options")]
@@ -24,20 +24,20 @@ public class NarrativeInteractive : MonoBehaviour, IInteractive<NarrativeAsset>
     /// </summary>
     public NarrativeAsset Interact() 
     {
+        if (narrativeAsset != null)
+        {
+            // Legacy mode: return the asset for external handling
+            return narrativeAsset;
+        }
         // Start conversation through NarrativeManager
-        if (useNarrativeType && NarrativeManager.Instance != null)
+        else if (useNarrativeType && NarrativeManager.Instance != null)
         {
             // Use dynamic loading based on NPCNarrativeType
             NarrativeManager.Instance.StartConversation(npcNarrativeType, GetNarrativeTarget());
             
             // Return null since we're handling the conversation through NarrativeManager
             return null;
-        }
-        else if (narrativeAsset != null)
-        {
-            // Legacy mode: return the asset for external handling
-            return narrativeAsset;
-        }
+        }         
         else
         {
             Debug.LogWarning($"[NarrativeInteractive] No narrative configuration found on {gameObject.name}!");
