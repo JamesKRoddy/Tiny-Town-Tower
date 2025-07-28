@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "NPCScriptableObj", menuName = "Scriptable Objects/Camp/NPCScriptableObj")]
+[CreateAssetMenu(fileName = "NPCScriptableObj", menuName = "Scriptable Objects/NPCScriptableObj")]
 public class NPCScriptableObj : ScriptableObject
 {
     public string nPCName;
