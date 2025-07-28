@@ -12,7 +12,7 @@ using Mono.Cecil.Cil;
 public class SettlerNPC : HumanCharacterController
 {
     [Header("NPC Data")]
-    public SettlerNPCScriptableObj nPCDataObj;
+    public NPCScriptableObj nPCDataObj;
     [SerializeField, ReadOnly] internal NPCCharacteristicSystem characteristicSystem;
     private _TaskState currentState;
     private WorkTask assignedWorkTask; // Track the assigned work task

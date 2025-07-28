@@ -1,4 +1,5 @@
 using UnityEngine;
+using Managers;
 
 /// <summary>
 /// Friendly room where NPCs spawn and no combat occurs
@@ -7,10 +8,7 @@ public class FriendlyRoom : RogueLiteRoom
 {
     [Header("Friendly Room Settings")]
     [SerializeField] private Transform[] npcSpawnPoints;
-    [SerializeField] private GameObject[] friendlyNPCPrefabs;
-    [SerializeField] private bool autoSpawnNPCs = true;
     [SerializeField] private bool showNPCSpawnGizmos = true;
-    [SerializeField, Range(0f, 100f)] private float npcSpawnChance = 75f; // 75% chance to spawn an NPC per spawn point
     
     [Header("Room Ambiance")]
     [SerializeField] private AudioClip ambientSound;
@@ -54,8 +52,8 @@ public class FriendlyRoom : RogueLiteRoom
         // Start ambient effects
         StartAmbientEffects();
         
-        // Spawn NPCs if auto spawn is enabled
-        if (autoSpawnNPCs)
+        // Spawn NPCs if auto spawn is enabled (from building data)
+        if (GetAutoSpawnNPCs())
         {
             SpawnNPCs();
         }
@@ -68,9 +66,10 @@ public class FriendlyRoom : RogueLiteRoom
     /// </summary>
     public void SpawnNPCs()
     {
-        if (friendlyNPCPrefabs == null || friendlyNPCPrefabs.Length == 0)
+        var settlerNPCs = GetBuildingNPCs();
+        if (settlerNPCs == null || settlerNPCs.Length == 0)
         {
-            Debug.LogWarning($"[FriendlyRoom] No friendly NPC prefabs assigned to {gameObject.name}");
+            Debug.LogWarning($"[FriendlyRoom] No settler NPCs available for building in {gameObject.name}");
             return;
         }
         
@@ -80,16 +79,24 @@ public class FriendlyRoom : RogueLiteRoom
             if (spawnPoint == null) continue;
             
             // Random chance to spawn an NPC at this point
-            if (Random.Range(0f, 100f) <= npcSpawnChance)
+            if (Random.Range(0f, 100f) <= GetNPCSpawnChance())
             {
-                // Select a random NPC prefab
-                GameObject npcPrefab = friendlyNPCPrefabs[Random.Range(0, friendlyNPCPrefabs.Length)];
+                // Select a random settler NPC
+                NPCScriptableObj settlerNPC = settlerNPCs[Random.Range(0, settlerNPCs.Length)];
                 
-                // Spawn the NPC
-                GameObject spawnedNPC = Instantiate(npcPrefab, spawnPoint.position, spawnPoint.rotation, spawnPoint);
-                spawnedNPCs[i] = spawnedNPC;
-                
-                Debug.Log($"[FriendlyRoom] Spawned NPC '{npcPrefab.name}' at spawn point {i + 1} in room '{gameObject.name}'");
+                // Get the prefab from the settler NPC and spawn it
+                GameObject npcPrefab = settlerNPC.prefab;
+                if (npcPrefab != null)
+                {
+                    GameObject spawnedNPC = Instantiate(npcPrefab, spawnPoint.position, spawnPoint.rotation, spawnPoint);
+                    spawnedNPCs[i] = spawnedNPC;
+                    
+                    Debug.Log($"[FriendlyRoom] Spawned NPC '{settlerNPC.nPCName}' at spawn point {i + 1} in room '{gameObject.name}'");
+                }
+                else
+                {
+                    Debug.LogWarning($"[FriendlyRoom] Settler NPC '{settlerNPC.nPCName}' has no prefab assigned!");
+                }
             }
         }
     }
@@ -159,11 +166,63 @@ public class FriendlyRoom : RogueLiteRoom
     }
     
     /// <summary>
-    /// Set the NPC spawn chance (0-100%)
+    /// Set the NPC spawn chance (0-100%) in the building data
     /// </summary>
     public void SetNPCSpawnChance(float chance)
     {
-        npcSpawnChance = Mathf.Clamp(chance, 0f, 100f);
+        if (RogueLiteManager.Instance != null && 
+            RogueLiteManager.Instance.BuildingManager != null && 
+            RogueLiteManager.Instance.BuildingManager.CurrentBuilding != null)
+        {
+            RogueLiteManager.Instance.BuildingManager.CurrentBuilding.SetNPCSpawnChance(chance);
+        }
+    }
+    
+    /// <summary>
+    /// Get the available settler NPCs for this room from the building data
+    /// </summary>
+    public NPCScriptableObj[] GetBuildingNPCs()
+    {
+        // Get settler NPCs from the current building data
+        if (RogueLiteManager.Instance != null && 
+            RogueLiteManager.Instance.BuildingManager != null && 
+            RogueLiteManager.Instance.BuildingManager.CurrentBuilding != null)
+        {
+            return RogueLiteManager.Instance.BuildingManager.CurrentBuilding.GetBuildingNPCs();
+        }
+        
+        Debug.LogWarning($"[FriendlyRoom] Cannot access building data to get settler NPCs for {gameObject.name}");
+        return new NPCScriptableObj[0];
+    }
+
+    /// <summary>
+    /// Get whether NPCs should auto-spawn from building data
+    /// </summary>
+    private bool GetAutoSpawnNPCs()
+    {
+        if (RogueLiteManager.Instance != null && 
+            RogueLiteManager.Instance.BuildingManager != null && 
+            RogueLiteManager.Instance.BuildingManager.CurrentBuilding != null)
+        {
+            return RogueLiteManager.Instance.BuildingManager.CurrentBuilding.GetAutoSpawnNPCs();
+        }
+        
+        return true; // Default fallback
+    }
+
+    /// <summary>
+    /// Get the NPC spawn chance from building data
+    /// </summary>
+    private float GetNPCSpawnChance()
+    {
+        if (RogueLiteManager.Instance != null && 
+            RogueLiteManager.Instance.BuildingManager != null && 
+            RogueLiteManager.Instance.BuildingManager.CurrentBuilding != null)
+        {
+            return RogueLiteManager.Instance.BuildingManager.CurrentBuilding.GetNPCSpawnChance();
+        }
+        
+        return 75f; // Default fallback
     }
     
     #if UNITY_EDITOR
@@ -206,13 +265,14 @@ public class FriendlyRoom : RogueLiteRoom
                     
                     // Draw spawn chance indicator
                     Gizmos.color = new Color(0, 1, 0, 0.3f);
-                    float radius = Mathf.Lerp(0.5f, 1.5f, npcSpawnChance / 100f);
+                    float spawnChance = GetNPCSpawnChance();
+                    float radius = Mathf.Lerp(0.5f, 1.5f, spawnChance / 100f);
                     Gizmos.DrawSphere(spawnPoint.position + Vector3.up * 0.1f, radius);
                     
                     #if UNITY_EDITOR
                     UnityEditor.Handles.color = Color.white;
                     UnityEditor.Handles.Label(spawnPoint.position + Vector3.up * 2.5f, 
-                        $"NPC Spawn {i + 1}\n{npcSpawnChance:F0}% chance");
+                        $"NPC Spawn {i + 1}\n{spawnChance:F0}% chance");
                     #endif
                 }
             }

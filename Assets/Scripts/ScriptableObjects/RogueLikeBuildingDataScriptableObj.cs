@@ -16,6 +16,11 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     [Header("Friendly Rooms")]
     [SerializeField] private List<BuildingRooms> friendlyRooms = new List<BuildingRooms>();
     [SerializeField, Range(0f, 100f)] private float friendlyRoomSpawnChance = 15f; // 15% chance for friendly rooms by default
+    
+    [Header("NPC Configuration")]
+    [SerializeField] private NPCScriptableObj[] buildingNPCs;
+    [SerializeField] private bool autoSpawnNPCs = true;
+    [SerializeField, Range(0f, 100f)] private float npcSpawnChance = 75f; // 75% chance to spawn an NPC per spawn point
 
     [Header("Room Settings")]
     public int minRoomCount = 3;
@@ -257,6 +262,38 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     public float GetFriendlyRoomSpawnChance()
     {
         return friendlyRoomSpawnChance;
+    }
+
+    /// <summary>
+    /// Get the settler NPCs available for this building type
+    /// </summary>
+    public NPCScriptableObj[] GetBuildingNPCs()
+    {
+        return buildingNPCs ?? new NPCScriptableObj[0];
+    }
+
+    /// <summary>
+    /// Get whether NPCs should auto-spawn in friendly rooms
+    /// </summary>
+    public bool GetAutoSpawnNPCs()
+    {
+        return autoSpawnNPCs;
+    }
+
+    /// <summary>
+    /// Get the NPC spawn chance (0-100%)
+    /// </summary>
+    public float GetNPCSpawnChance()
+    {
+        return npcSpawnChance;
+    }
+
+    /// <summary>
+    /// Set the NPC spawn chance (0-100%)
+    /// </summary>
+    public void SetNPCSpawnChance(float chance)
+    {
+        npcSpawnChance = Mathf.Clamp(chance, 0f, 100f);
     }
 }
 

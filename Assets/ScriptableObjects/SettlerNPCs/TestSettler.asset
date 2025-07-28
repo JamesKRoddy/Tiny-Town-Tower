@@ -15,3 +15,4 @@ MonoBehaviour:
   nPCName: Player
   nPCAge: 30
   nPCDescription: Test guy
+  prefab: {fileID: 2985604360754162274, guid: 1905ec17cae70e440a4d722be3469249, type: 3}

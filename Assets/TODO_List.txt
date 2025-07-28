@@ -40,6 +40,7 @@ Goal at the start just says survive, recruit 10 survivors
 Bugs and refactoring:
 In game quit button doesn't exit the game
 Theres these small, medium and large enums for room sizes that need to be removed
+Enemy waves in buildings the enemy wave scriptable obj has a reference to a building type. Maybe figure out a better way to handle it?
 
 
 

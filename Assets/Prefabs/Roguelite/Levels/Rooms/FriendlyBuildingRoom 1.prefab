@@ -757,10 +757,9 @@ MonoBehaviour:
   showConnectionDebug: 0
   npcSpawnPoints:
   - {fileID: 235809470178591743}
-  friendlyNPCPrefabs: []
   autoSpawnNPCs: 1
   showNPCSpawnGizmos: 1
-  npcSpawnChance: 75
+  npcSpawnChance: 100
   ambientSound: {fileID: 0}
   ambientEffects: []
 --- !u!1 &5466462518210956541

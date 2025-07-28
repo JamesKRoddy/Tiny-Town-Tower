@@ -230,21 +230,5 @@ namespace Managers
                 }
             }
         }
-
-        /// <summary>
-        /// Used by the PlacementManager to make sure a turret is not blocking the enemy path
-        /// </summary>
-        public Vector3? SpawnPointPosition()
-        {
-            if (spawnPoints.Count != 0)
-            {
-                return spawnPoints[0].transform.position;
-            }
-            else
-            {
-                spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
-                return spawnPoints[0].transform.position;
-            }
-        }
     }
 }
