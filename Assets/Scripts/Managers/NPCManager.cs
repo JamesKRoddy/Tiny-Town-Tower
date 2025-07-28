@@ -40,8 +40,17 @@ namespace Managers
 
         private void Start()
         {
-            // Check if we need to transfer NPCs when camp scene loads
-            if (PlayerInventory.Instance != null && PlayerInventory.Instance.HasRecruitedNPCs())
+            // Subscribe to game mode changes to detect when returning to camp
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.OnGameModeChanged += OnGameModeChanged;
+            }
+        }
+
+        private void OnGameModeChanged(GameMode newGameMode)
+        {            
+            // Check if we're returning to camp mode and have recruited NPCs to transfer
+            if (newGameMode == GameMode.CAMP && PlayerInventory.Instance != null && PlayerInventory.Instance.HasRecruitedNPCs())
             {
                 Invoke(nameof(TransferRecruitedNPCs), transferDelay);
             }
@@ -182,7 +191,12 @@ namespace Managers
 
         private void OnDestroy()
         {
-            // Clean up event subscription
+            // Clean up event subscriptions
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.OnGameModeChanged -= OnGameModeChanged;
+            }
+            
             if (PlayerInventory.Instance != null)
             {
                 PlayerInventory.Instance.OnNPCsTransferredToCamp -= ShowTransferNotification;

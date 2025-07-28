@@ -376,11 +376,16 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     /// </summary>
     public void RecruitNPC(NPCScriptableObj npc)
     {
+        Debug.Log($"[PlayerInventory] RecruitNPC called with NPC: {(npc != null ? npc.nPCName : "null")}");
+        
         if (npc == null)
         {
             Debug.LogWarning("[PlayerInventory] Attempted to recruit null NPC!");
             return;
         }
+
+        Debug.Log($"[PlayerInventory] Current recruited NPCs count: {recruitedNPCs.Count}");
+        Debug.Log($"[PlayerInventory] Checking if '{npc.nPCName}' is already recruited...");
 
         if (recruitedNPCs.Contains(npc))
         {
@@ -388,13 +393,27 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             return;
         }
 
+        Debug.Log($"[PlayerInventory] Adding '{npc.nPCName}' to recruited NPCs list...");
         recruitedNPCs.Add(npc);
+        
+        Debug.Log($"[PlayerInventory] Invoking OnNPCRecruited event for '{npc.nPCName}'...");
         OnNPCRecruited?.Invoke(npc);
         
-        Debug.Log($"[PlayerInventory] Recruited NPC '{npc.nPCName}' - will be transferred to camp when returning");
+        Debug.Log($"[PlayerInventory] Successfully recruited NPC '{npc.nPCName}' - will be transferred to camp when returning");
+        Debug.Log($"[PlayerInventory] New recruited NPCs count: {recruitedNPCs.Count}");
         
         // Show recruitment popup (similar to inventory items)
-        PlayerUIManager.Instance.inventoryPopup?.ShowInventoryPopup(npc, 1, true);
+        Debug.Log($"[PlayerInventory] Attempting to show recruitment popup for '{npc.nPCName}'...");
+        if (PlayerUIManager.Instance?.inventoryPopup != null)
+        {
+            Debug.Log("[PlayerInventory] PlayerUIManager and inventoryPopup found, calling ShowInventoryPopup...");
+            PlayerUIManager.Instance.inventoryPopup.ShowInventoryPopup(npc, 1, true);
+            Debug.Log("[PlayerInventory] ShowInventoryPopup call completed");
+        }
+        else
+        {
+            Debug.LogWarning("[PlayerInventory] PlayerUIManager or inventoryPopup is null - cannot show recruitment popup!");
+        }
     }
 
     /// <summary>

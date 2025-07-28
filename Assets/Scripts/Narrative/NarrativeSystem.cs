@@ -161,11 +161,15 @@ public class NarrativeSystem : MenuBase
     }
 
     public void HandleOptionSelected(DialogueOption option)
-    {
+    {        
         // Handle NPC recruitment if specified
         if (!string.IsNullOrEmpty(option.recruitNPC))
         {
             RecruitNPC(option.recruitNPC);
+        }
+        else
+        {
+            Debug.LogWarning("[NarrativeSystem] No NPC recruitment specified for this option");
         }
 
         // Continue to next dialogue line
@@ -213,7 +217,7 @@ public class NarrativeSystem : MenuBase
     /// Recruit an NPC by name through the dialogue system
     /// </summary>
     private void RecruitNPC(string npcName)
-    {
+    {        
         if (string.IsNullOrEmpty(npcName))
         {
             Debug.LogWarning("[NarrativeSystem] Cannot recruit NPC with empty name!");
@@ -226,20 +230,33 @@ public class NarrativeSystem : MenuBase
             return;
         }
 
-        // Find NPCScriptableObj with matching name
-        NPCScriptableObj[] allNPCs = Resources.FindObjectsOfTypeAll<NPCScriptableObj>();
-        
-        foreach (var npc in allNPCs)
-        {
-            if (npc.nPCName.Equals(npcName, System.StringComparison.OrdinalIgnoreCase))
+        // Get the NPCScriptableObj directly from the conversation target
+        if (currentConversationTarget != null)
+        {            
+            // Check if the conversation target is a SettlerNPC
+            if (currentConversationTarget is SettlerNPC settlerNPC)
             {
-                PlayerInventory.Instance.RecruitNPC(npc);
-                Debug.Log($"[NarrativeSystem] Successfully recruited {npcName}!");
-                return;
+                
+                if (settlerNPC.nPCDataObj != null)
+                {                    
+                    
+                    // Verify the name matches (optional safety check)
+                    if (settlerNPC.nPCDataObj.nPCName.Equals(npcName, System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        PlayerInventory.Instance.RecruitNPC(settlerNPC.nPCDataObj);
+                        return;
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[NarrativeSystem] NPC name mismatch! ScriptableObj name: '{settlerNPC.nPCDataObj.nPCName}', requested: '{npcName}'");
+                        PlayerInventory.Instance.RecruitNPC(settlerNPC.nPCDataObj);
+                        return;
+                    }
+                }
             }
         }
 
-        Debug.LogWarning($"[NarrativeSystem] Could not find NPC with name '{npcName}'!");
+        Debug.LogError($"[NarrativeSystem] Failed to recruit NPC '{npcName}' - could not get NPCScriptableObj from conversation target");
     }
 
     /// <summary>
