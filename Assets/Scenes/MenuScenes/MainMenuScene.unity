@@ -1720,6 +1720,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5397687326794407557, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: autoSaveEnabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8102012326405835519, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: rogueLikeBuildingDataScriptableObjs.Array.size
       value: 1
