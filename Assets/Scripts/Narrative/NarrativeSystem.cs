@@ -15,18 +15,17 @@ public class NarrativeSystem : MenuBase
     [SerializeField] private GameObject optionsContainer;
     [SerializeField] private GameObject optionPrefab;
 
-    private GameObject dialoguePanel;
     private DialogueData currentDialogue;
     private Dictionary<string, DialogueLine> dialogueLinesMap;
-
-    public void Awake()
-    {
-        dialoguePanel = gameObject; //TODO can i get rid of dialoguePanel?
-        dialoguePanel.SetActive(false);
-    }
+    private INarrativeTarget currentConversationTarget;
 
     public void StartConversation(NarrativeAsset narrativeAsset)
     {
+        // Find the NPC we're talking to by getting the current interactive target
+        FindConversationTarget();
+        
+        gameObject.SetActive(true);
+        
         if (currentDialogue == null)
         {
             LoadDialogue(narrativeAsset.dialogueFile);
@@ -34,9 +33,19 @@ public class NarrativeSystem : MenuBase
 
         if (currentDialogue != null && currentDialogue.lines.Count > 0)
         {
+            // Pause the conversation target if it implements IConversationTarget
+            if (currentConversationTarget != null)
+            {
+                currentConversationTarget.PauseForConversation();
+            }
+            
             PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_CONVERSATION);
-            dialoguePanel.SetActive(true);
+            gameObject.SetActive(true);
             ShowDialogue(currentDialogue.lines[0]);
+        }
+        else
+        {
+            Debug.LogWarning("[NarrativeSystem] Failed to load dialogue or dialogue has no lines!");
         }
     }
 
@@ -45,12 +54,23 @@ public class NarrativeSystem : MenuBase
         if (dialogueFile != null)
         {
             string json = dialogueFile.text;
+            
             currentDialogue = JsonUtility.FromJson<DialogueData>(json);
 
-            dialogueLinesMap = new Dictionary<string, DialogueLine>();
-            foreach (var line in currentDialogue.lines)
+            if (currentDialogue != null)
             {
-                dialogueLinesMap[line.id] = line; // Use 'id' as the key
+                dialogueLinesMap = new Dictionary<string, DialogueLine>();
+                if (currentDialogue.lines != null)
+                {
+                    foreach (var line in currentDialogue.lines)
+                    {
+                        dialogueLinesMap[line.id] = line; // Use 'id' as the key
+                    }
+                }
+            }
+            else
+            {
+                Debug.LogError("[NarrativeSystem] Failed to parse JSON dialogue!");
             }
         }
         else
@@ -60,9 +80,16 @@ public class NarrativeSystem : MenuBase
     }
 
     public void ShowDialogue(DialogueLine line)
-    {
-        npcNameText.text = line.speaker;
-        dialogueText.text = line.text;
+    {        
+        if (npcNameText != null)
+            npcNameText.text = line.speaker;
+        else
+            Debug.LogError("[NarrativeSystem] npcNameText is null!");
+            
+        if (dialogueText != null)
+            dialogueText.text = line.text;
+        else
+            Debug.LogError("[NarrativeSystem] dialogueText is null!");
 
         // Clear previous options
         foreach (Transform child in optionsContainer.transform)
@@ -82,7 +109,7 @@ public class NarrativeSystem : MenuBase
 
                 // Add click event
                 Button optionButton = optionObj.GetComponent<Button>();
-                optionButton.onClick.AddListener(() => HandleOptionSelected(option.nextLine));
+                optionButton.onClick.AddListener(() => HandleOptionSelected(option));
 
                 if (firstOption == null)
                 {
@@ -90,7 +117,7 @@ public class NarrativeSystem : MenuBase
                 }
             }
 
-            StartCoroutine(SetSelectedButton(firstOption));
+            SetSelectedButton(firstOption);
             return;
         }
 
@@ -103,7 +130,7 @@ public class NarrativeSystem : MenuBase
             Button closeButtonComponent = closeButton.GetComponent<Button>();
             closeButtonComponent.onClick.AddListener(() => EndConversation());
 
-            StartCoroutine(SetSelectedButton(closeButton));
+            SetSelectedButton(closeButton);
             return;
         }
 
@@ -116,7 +143,7 @@ public class NarrativeSystem : MenuBase
             Button continueButtonComponent = continueButton.GetComponent<Button>();
             continueButtonComponent.onClick.AddListener(() => HandleOptionSelected(line.nextLine));
 
-            StartCoroutine(SetSelectedButton(continueButton));
+            SetSelectedButton(continueButton);
         }
         else
         {
@@ -125,13 +152,24 @@ public class NarrativeSystem : MenuBase
         }
     }
 
-    private IEnumerator SetSelectedButton(GameObject button)
+    private void SetSelectedButton(GameObject button)
     {
-        yield return new WaitForEndOfFrame();
         if (button != null)
         {
             PlayerUIManager.Instance.SetSelectedGameObject(button);
         }
+    }
+
+    public void HandleOptionSelected(DialogueOption option)
+    {
+        // Handle NPC recruitment if specified
+        if (!string.IsNullOrEmpty(option.recruitNPC))
+        {
+            RecruitNPC(option.recruitNPC);
+        }
+
+        // Continue to next dialogue line
+        HandleOptionSelected(option.nextLine);
     }
 
     public void HandleOptionSelected(string nextLine)
@@ -148,8 +186,15 @@ public class NarrativeSystem : MenuBase
 
     public void EndConversation()
     {
+        // Resume the conversation target if it implements IConversationTarget
+        if (currentConversationTarget != null)
+        {
+            currentConversationTarget.ResumeAfterConversation();
+            currentConversationTarget = null;
+        }
+        
         ReturnToGame();
-        dialoguePanel.SetActive(false);
+        gameObject.SetActive(false);
     }
 
     public void ReturnToGame(PlayerControlType playerControlType = PlayerControlType.NONE)
@@ -161,6 +206,69 @@ public class NarrativeSystem : MenuBase
         else
         {
             PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
+        }
+    }
+
+    /// <summary>
+    /// Recruit an NPC by name through the dialogue system
+    /// </summary>
+    private void RecruitNPC(string npcName)
+    {
+        if (string.IsNullOrEmpty(npcName))
+        {
+            Debug.LogWarning("[NarrativeSystem] Cannot recruit NPC with empty name!");
+            return;
+        }
+
+        if (PlayerInventory.Instance == null)
+        {
+            Debug.LogWarning("[NarrativeSystem] PlayerInventory not found!");
+            return;
+        }
+
+        // Find NPCScriptableObj with matching name
+        NPCScriptableObj[] allNPCs = Resources.FindObjectsOfTypeAll<NPCScriptableObj>();
+        
+        foreach (var npc in allNPCs)
+        {
+            if (npc.nPCName.Equals(npcName, System.StringComparison.OrdinalIgnoreCase))
+            {
+                PlayerInventory.Instance.RecruitNPC(npc);
+                Debug.Log($"[NarrativeSystem] Successfully recruited {npcName}!");
+                return;
+            }
+        }
+
+        Debug.LogWarning($"[NarrativeSystem] Could not find NPC with name '{npcName}'!");
+    }
+
+    /// <summary>
+    /// Finds the NPC we're currently talking to by detecting what the player is currently interacting with
+    /// </summary>
+    private void FindConversationTarget()
+    {
+        currentConversationTarget = null;
+        
+        if (PlayerInventory.Instance == null || PlayerController.Instance?._possessedNPC == null)
+        {
+            return;
+        }
+
+        // Use the same detection logic as PlayerInventory to find what we're looking at
+        RaycastHit hit;
+        Vector3 startPos = PlayerController.Instance._possessedNPC.GetTransform().position + Vector3.up;
+        Vector3 direction = PlayerController.Instance._possessedNPC.GetTransform().forward;
+        Vector3 boxCastSize = new Vector3(0.5f, 0.5f, 0.5f); // Same as PlayerInventory
+        float interactionRange = 3f; // Same as PlayerInventory
+        
+        if (Physics.BoxCast(startPos, boxCastSize * 0.5f, direction, out hit, PlayerController.Instance._possessedNPC.GetTransform().rotation, interactionRange))
+        {
+            // Check if the hit object implements IConversationTarget
+            INarrativeTarget conversationTarget = hit.collider.GetComponent<INarrativeTarget>();
+            if (conversationTarget != null)
+            {
+                currentConversationTarget = conversationTarget;
+            }
         }
     }
 }

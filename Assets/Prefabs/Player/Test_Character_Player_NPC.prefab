@@ -1690,7 +1690,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   narrativeAsset:
-    dialogueFile: {fileID: 0}
+    dialogueFile: {fileID: 4900000, guid: 0ecadcc43a3a6af4698fca13c7f38067, type: 3}
 --- !u!114 &2254817619120094739
 MonoBehaviour:
   m_ObjectHideFlags: 0

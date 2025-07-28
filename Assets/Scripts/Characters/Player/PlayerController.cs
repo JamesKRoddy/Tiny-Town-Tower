@@ -153,6 +153,9 @@ public class PlayerController : MonoBehaviour, IControllerInput
     /// <param name="controlType">The desired control type.</param>
     public void SetPlayerControlType(PlayerControlType controlType)
     {
+        // Stop possessed NPC movement when control type changes
+        StopPossessedNPCMovement();
+        
         //Disabling the collider so the npc doesnt hit any colliders during transitions
         var npcBehaviour = _possessedNPC as MonoBehaviour;
         Collider collider = null;
@@ -383,6 +386,18 @@ public class PlayerController : MonoBehaviour, IControllerInput
     private void CreateConstructionSiteSelectionOptions(StructureConstructionTask constructionTask)
     {
         CampManager.Instance.BuildManager.ShowConstructionSiteSelectionOptions(constructionTask);
+    }
+
+    /// <summary>
+    /// Stops the currently possessed NPC's movement by setting movement input to zero.
+    /// This ensures the NPC stops immediately when control type changes.
+    /// </summary>
+    private void StopPossessedNPCMovement()
+    {
+        if (_possessedNPC != null)
+        {
+            _possessedNPC.Movement(Vector3.zero);
+        }
     }
 
     #endregion

@@ -4,7 +4,8 @@
 Tomorrow work:
 Recruiting NPCs:
 
-Spawning in friendly npcs.
+Randomly generating NPC models
+Randomly assigning narrative elements (have these stored in a specific place, in the json assign a character type or something and have it assigned by that?
 
 Narative options so the player can chose to add them to the camp.
 Once one is recruited maybe store it in the npc manager, then when the player gets back to the camp its spawned in?
@@ -41,6 +42,7 @@ Bugs and refactoring:
 In game quit button doesn't exit the game
 Theres these small, medium and large enums for room sizes that need to be removed
 Enemy waves in buildings the enemy wave scriptable obj has a reference to a building type. Maybe figure out a better way to handle it?
+Overload
 
 
 

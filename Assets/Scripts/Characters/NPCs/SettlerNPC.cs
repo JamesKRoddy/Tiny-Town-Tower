@@ -9,7 +9,7 @@ using Mono.Cecil.Cil;
 
 
 [RequireComponent(typeof(NavMeshAgent))]
-public class SettlerNPC : HumanCharacterController
+public class SettlerNPC : HumanCharacterController, INarrativeTarget
 {
     [Header("NPC Data")]
     public NPCScriptableObj nPCDataObj;
@@ -437,6 +437,65 @@ public class SettlerNPC : HumanCharacterController
         // Go to wander state - let WanderState handle threat detection and task assignment
         ChangeTask(TaskType.WANDER);
     }
+
+    #region Conversation Control
+
+    private _TaskState stateBeforeConversation;
+    private bool wasAgentEnabledBeforeConversation;
+
+    /// <summary>
+    /// Pauses the NPC's AI and movement during conversations
+    /// </summary>
+    public void PauseForConversation()
+    {
+        // Store current state to restore later
+        stateBeforeConversation = currentState;
+        wasAgentEnabledBeforeConversation = agent != null && agent.enabled;
+
+        // Stop the NavMeshAgent
+        if (agent != null && agent.enabled)
+        {
+            agent.isStopped = true;
+            agent.velocity = Vector3.zero;
+        }
+
+        // Disable current state to prevent AI updates
+        if (currentState != null)
+        {
+            currentState.enabled = false;
+        }
+    }
+
+    /// <summary>
+    /// Resumes the NPC's AI and movement after conversations
+    /// </summary>
+    public void ResumeAfterConversation()
+    {
+        // Resume NavMeshAgent
+        if (agent != null && wasAgentEnabledBeforeConversation)
+        {
+            agent.isStopped = false;
+        }
+
+        // Re-enable the previous state
+        if (stateBeforeConversation != null)
+        {
+            stateBeforeConversation.enabled = true;
+        }
+
+        // Clear stored data
+        stateBeforeConversation = null;
+    }
+
+    /// <summary>
+    /// Gets the Transform of this SettlerNPC for the IConversationTarget interface
+    /// </summary>
+    public new Transform GetTransform()
+    {
+        return transform;
+    }
+
+    #endregion
 }
 
 namespace Characters.NPC

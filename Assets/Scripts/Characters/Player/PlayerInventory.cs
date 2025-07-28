@@ -44,8 +44,16 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     public List<MutationQuantityEntry> availableMutations = new List<MutationQuantityEntry>(); // List of available mutations, removed when mutation screen is closed
 
+    [Header("Recruited NPCs")]
+    [SerializeField] private List<NPCScriptableObj> recruitedNPCs = new List<NPCScriptableObj>(); // NPCs recruited during roguelite exploration
+
     public int MaxMutationSlots => maxMutationSlots;
     public List<GeneticMutationObj> EquippedMutations => equippedMutations;
+    public List<NPCScriptableObj> RecruitedNPCs => recruitedNPCs;
+
+    // Events for NPC recruitment
+    public event System.Action<NPCScriptableObj> OnNPCRecruited;
+    public event System.Action<List<NPCScriptableObj>> OnNPCsTransferredToCamp;
 
     private void Awake()
     {
@@ -360,4 +368,155 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             AddItem(item.resourceScriptableObj, item.count);
         }
     }
+
+    #region NPC Recruitment
+
+    /// <summary>
+    /// Recruit an NPC during roguelite exploration (stores temporarily in inventory)
+    /// </summary>
+    public void RecruitNPC(NPCScriptableObj npc)
+    {
+        if (npc == null)
+        {
+            Debug.LogWarning("[PlayerInventory] Attempted to recruit null NPC!");
+            return;
+        }
+
+        if (recruitedNPCs.Contains(npc))
+        {
+            Debug.LogWarning($"[PlayerInventory] NPC '{npc.nPCName}' is already recruited!");
+            return;
+        }
+
+        recruitedNPCs.Add(npc);
+        OnNPCRecruited?.Invoke(npc);
+        
+        Debug.Log($"[PlayerInventory] Recruited NPC '{npc.nPCName}' - will be transferred to camp when returning");
+        
+        // Show recruitment popup (similar to inventory items)
+        PlayerUIManager.Instance.inventoryPopup?.ShowInventoryPopup(npc, 1, true);
+    }
+
+    /// <summary>
+    /// Get all currently recruited NPCs
+    /// </summary>
+    public List<NPCScriptableObj> GetRecruitedNPCs()
+    {
+        return new List<NPCScriptableObj>(recruitedNPCs);
+    }
+
+    /// <summary>
+    /// Check if any NPCs are ready to be transferred to camp
+    /// </summary>
+    public bool HasRecruitedNPCs()
+    {
+        return recruitedNPCs.Count > 0;
+    }
+
+    /// <summary>
+    /// Transfer all recruited NPCs to the camp and clear the temporary storage
+    /// </summary>
+    public void TransferRecruitedNPCsToCamp()
+    {
+        if (recruitedNPCs.Count == 0)
+        {
+            Debug.Log("[PlayerInventory] No recruited NPCs to transfer to camp");
+            return;
+        }
+
+        var npcsToTransfer = new List<NPCScriptableObj>(recruitedNPCs);
+        
+        // Spawn NPCs in the camp
+        foreach (var npc in npcsToTransfer)
+        {
+            SpawnNPCInCamp(npc);
+        }
+
+        // Clear the recruited NPCs list
+        recruitedNPCs.Clear();
+        
+        // Notify listeners
+        OnNPCsTransferredToCamp?.Invoke(npcsToTransfer);
+        
+        Debug.Log($"[PlayerInventory] Transferred {npcsToTransfer.Count} recruited NPCs to camp");
+    }
+
+    /// <summary>
+    /// Spawn a recruited NPC in the camp
+    /// </summary>
+    private void SpawnNPCInCamp(NPCScriptableObj npc)
+    {
+        if (npc.prefab == null)
+        {
+            Debug.LogWarning($"[PlayerInventory] NPC '{npc.nPCName}' has no prefab assigned!");
+            return;
+        }
+
+        // Find a suitable spawn location in the camp
+        Vector3 spawnPosition = FindCampSpawnPosition();
+        
+        // Instantiate the NPC prefab
+        GameObject npcObject = Instantiate(npc.prefab, spawnPosition, Quaternion.identity);
+        
+        // Set up the NPC (name, etc.)
+        if (npcObject.TryGetComponent<SettlerNPC>(out var settlerNPC))
+        {
+            // The SettlerNPC will automatically register with NPCManager and CampManager
+            Debug.Log($"[PlayerInventory] Successfully spawned recruited NPC '{npc.nPCName}' in camp at {spawnPosition}");
+        }
+        else
+        {
+            Debug.LogWarning($"[PlayerInventory] Spawned NPC '{npc.nPCName}' does not have SettlerNPC component!");
+        }
+    }
+
+    /// <summary>
+    /// Find a suitable spawn position in the camp for a new NPC
+    /// </summary>
+    private Vector3 FindCampSpawnPosition()
+    {
+        // Try to find CampManager for spawn bounds
+        if (CampManager.Instance != null)
+        {
+            // Use camp bounds to find a suitable spawn location
+            Vector2 xBounds = CampManager.Instance.SharedXBounds;
+            Vector2 zBounds = CampManager.Instance.SharedZBounds;
+            
+            // Try to find a clear position within camp bounds
+            for (int attempts = 0; attempts < 10; attempts++)
+            {
+                Vector3 randomPosition = new Vector3(
+                    UnityEngine.Random.Range(xBounds.x, xBounds.y),
+                    0,
+                    UnityEngine.Random.Range(zBounds.x, zBounds.y)
+                );
+                
+                // Simple ground raycast to place on terrain
+                if (Physics.Raycast(randomPosition + Vector3.up * 10f, Vector3.down, out RaycastHit hit, 20f))
+                {
+                    return hit.point;
+                }
+            }
+            
+            // Fallback to center of camp if no clear position found
+            return new Vector3((xBounds.x + xBounds.y) / 2f, 0f, (zBounds.x + zBounds.y) / 2f);
+        }
+        
+        // Ultimate fallback to origin
+        Debug.LogWarning("[PlayerInventory] CampManager not found, spawning NPC at origin");
+        return Vector3.zero;
+    }
+
+    /// <summary>
+    /// Remove a recruited NPC (in case of cancellation or other reasons)
+    /// </summary>
+    public void RemoveRecruitedNPC(NPCScriptableObj npc)
+    {
+        if (recruitedNPCs.Remove(npc))
+        {
+            Debug.Log($"[PlayerInventory] Removed recruited NPC '{npc.nPCName}' from temporary storage");
+        }
+    }
+
+    #endregion
 }

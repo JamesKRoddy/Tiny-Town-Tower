@@ -1,26 +1,16 @@
-using System.Collections.Generic;
 using UnityEngine;
-using Characters.NPC.Characteristic;
-using Characters.NPC;
-using System;
+using Managers;
 
 namespace Managers
 {
-    public class NPCManager : MonoBehaviour
+    /// <summary>
+    /// Handles transferring recruited NPCs from player inventory to camp when returning from roguelite
+    /// </summary>
+    public class CampNPCTransferManager : MonoBehaviour
     {
-        public static NPCManager Instance { get; private set; }
+        public static CampNPCTransferManager Instance { get; private set; }
 
-        [Header("Characteristic Settings")]
-        [SerializeField] private List<NPCCharacteristicScriptableObj> allCharacteristics = new List<NPCCharacteristicScriptableObj>();
-
-        [Header("NPC Tracking")]
-        private List<SettlerNPC> activeNPCs = new List<SettlerNPC>();
-        public int TotalNPCs => activeNPCs.Count;
-
-        // Event for NPC count changes
-        public event Action<int> OnNPCCountChanged;
-
-        [Header("NPC Transfer Settings")]
+        [Header("Transfer Settings")]
         [SerializeField] private float transferDelay = 2f; // Delay before transferring NPCs to allow scene setup
         [SerializeField] private bool showTransferNotification = true;
 
@@ -35,6 +25,7 @@ namespace Managers
             else
             {
                 Destroy(gameObject);
+                return;
             }
         }
 
@@ -46,50 +37,6 @@ namespace Managers
                 Invoke(nameof(TransferRecruitedNPCs), transferDelay);
             }
         }
-
-        public void RegisterNPC(SettlerNPC npc)
-        {
-            if (!activeNPCs.Contains(npc))
-            {
-                activeNPCs.Add(npc);
-                OnNPCCountChanged?.Invoke(TotalNPCs);
-            }
-        }
-
-        public void UnregisterNPC(SettlerNPC npc)
-        {
-            if (activeNPCs.Remove(npc))
-            {
-                OnNPCCountChanged?.Invoke(TotalNPCs);
-            }
-        }
-
-        public List<NPCCharacteristicScriptableObj> GetAllCharacteristics()
-        {
-            return allCharacteristics;
-        }
-
-        public void AddCharacteristicToNPC(SettlerNPC npc, NPCCharacteristicScriptableObj characteristic)
-        {
-            if (npc == null || characteristic == null) return;
-
-            NPCCharacteristicSystem characteristicSystem = npc.GetComponent<NPCCharacteristicSystem>();
-            if (characteristicSystem == null) return;
-
-            characteristicSystem.EquipCharacteristic(characteristic);
-        }
-
-        public void RemoveCharacteristicFromNPC(SettlerNPC npc, NPCCharacteristicScriptableObj characteristic)
-        {
-            if (npc == null || characteristic == null) return;
-
-            NPCCharacteristicSystem characteristicsSystem = npc.GetComponent<NPCCharacteristicSystem>();
-            if (characteristicsSystem == null) return;
-
-            characteristicsSystem.RemoveCharacteristic(characteristic);
-        }
-
-        #region NPC Transfer Management
 
         /// <summary>
         /// Transfer recruited NPCs from player inventory to camp
@@ -103,7 +50,7 @@ namespace Managers
 
             if (PlayerInventory.Instance == null)
             {
-                Debug.LogWarning("[NPCManager] PlayerInventory not found!");
+                Debug.LogWarning("[CampNPCTransferManager] PlayerInventory not found!");
                 return;
             }
 
@@ -132,14 +79,11 @@ namespace Managers
         private void ShowTransferNotification(System.Collections.Generic.List<NPCScriptableObj> transferredNPCs)
         {
             // Unsubscribe from event
-            if (PlayerInventory.Instance != null)
-            {
-                PlayerInventory.Instance.OnNPCsTransferredToCamp -= ShowTransferNotification;
-            }
+            PlayerInventory.Instance.OnNPCsTransferredToCamp -= ShowTransferNotification;
 
             if (transferredNPCs.Count == 1)
             {
-                Debug.Log($"[NPCManager] {transferredNPCs[0].nPCName} has joined your camp!");
+                Debug.Log($"[CampNPCTransferManager] {transferredNPCs[0].nPCName} has joined your camp!");
                 
                 // Show UI notification if available
                 if (PlayerUIManager.Instance?.inventoryPopup != null)
@@ -150,7 +94,7 @@ namespace Managers
             }
             else
             {
-                Debug.Log($"[NPCManager] {transferredNPCs.Count} new settlers have joined your camp!");
+                Debug.Log($"[CampNPCTransferManager] {transferredNPCs.Count} new settlers have joined your camp!");
                 
                 // Show a summary notification for multiple NPCs
                 foreach (var npc in transferredNPCs)
@@ -177,8 +121,6 @@ namespace Managers
             hasTransferredThisSession = false;
             TransferRecruitedNPCs();
         }
-
-        #endregion
 
         private void OnDestroy()
         {
