@@ -60,7 +60,7 @@ public class PlayerUIManager : MonoBehaviour
     public DeathMenu deathMenu;
     [SerializeField] UIPanelController interactionPromptUI; // UI text for interactionPromptUI
     [SerializeField] TextPopup textPopup;
-    public NarrativeSystem narrativeSystem;
+    public NarrativeMenu narrativeMenu;
     public WeaponComparisonMenu weaponComparisonMenu;
     [SerializeField] public AddedToInventoryPopup inventoryPopup; // Reference to inventory popup system
 
@@ -204,7 +204,7 @@ public class PlayerUIManager : MonoBehaviour
     public void HideUtilityMenus()
     {
         buildMenu.SetScreenActive(false);
-        narrativeSystem.SetScreenActive(false);
+        narrativeMenu.SetScreenActive(false);
         playerInventoryMenu.SetScreenActive(false);
         settlerNPCMenu.SetScreenActive(false);
         geneticMutationMenu.SetScreenActive(false);

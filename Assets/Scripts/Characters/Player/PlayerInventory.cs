@@ -238,7 +238,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 AddToPlayerInventory(resourcePickup);
                 break;
             case NarrativeAsset narrative:
-                PlayerUIManager.Instance.narrativeSystem.StartConversation(narrative);
+                NarrativeManager.Instance.StartConversation(narrative);
                 break;
             case Building building:
                 // Show the work task selection popup

@@ -324,6 +324,13 @@ public enum CharacterType
     BOSS_3 = 403
 }
 
+public enum NPCNarrativeType{
+    NONE,
+    FRIENDLY_SETTLER,
+    RECRUITMENT_DIALOGUE,
+    GENERIC_CONVERSATION
+}
+
 // =========================
 // MISCELLANEOUS ENUMS
 // =========================

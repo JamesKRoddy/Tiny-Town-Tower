@@ -3,14 +3,9 @@
 
 Tomorrow work:
 Recruiting NPCs:
-
-
-
 Randomly generating npcs, stats, models etc. in the npc manager.
 Randomly generating NPC models
 Randomly assigning narrative elements (have these stored in a specific place, in the json assign a character type or something and have it assigned by that?
-
-Once one is recruited maybe store it in the npc manager, then when the player gets back to the camp its spawned in?
 
 
 

@@ -12014,7 +12014,7 @@ MonoBehaviour:
   deathMenu: {fileID: 4664923270008323421}
   interactionPromptUI: {fileID: 1019080610871490543}
   textPopup: {fileID: 7294044140538644966}
-  narrativeSystem: {fileID: 7899024836448388358}
+  narrativeMenu: {fileID: 7899024836448388358}
   weaponComparisonMenu: {fileID: 7384259939431617857}
   inventoryPopup: {fileID: 1831406896274799761}
   rogueLikeGameUI: {fileID: 132560972929078240}

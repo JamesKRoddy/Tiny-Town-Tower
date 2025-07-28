@@ -1689,8 +1689,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b50e09eed254cf439e89561fdf9ab98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  npcNarrativeType: 1
   narrativeAsset:
     dialogueFile: {fileID: 4900000, guid: 0ecadcc43a3a6af4698fca13c7f38067, type: 3}
+  useNarrativeType: 1
 --- !u!114 &2254817619120094739
 MonoBehaviour:
   m_ObjectHideFlags: 0
