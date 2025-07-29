@@ -9,6 +9,7 @@ Recruiting NPCs:
 
 ApplyRandomCharacteristic
 Do the same for a random skin mesh
+
 Randomly generating npcs, stats, models etc. in the npc manager.
 Randomly generating NPC models
 Randomly assigning narrative elements (have these stored in a specific place, in the json assign a character type or something and have it assigned by that?
@@ -43,8 +44,8 @@ Goal at the start just says survive, recruit 10 survivors
 Bugs and refactoring:
 In game quit button doesn't exit the game
 Theres these small, medium and large enums for room sizes that need to be removed
-Enemy waves in buildings the enemy wave scriptable obj has a reference to a building type. Maybe figure out a better way to handle it?
-Overload
+After returning the the camp theres an error originating front the dirt piles
+NPCs spawned into the roguelike section have nav errors
 
 
 

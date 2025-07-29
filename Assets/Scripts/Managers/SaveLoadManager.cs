@@ -506,10 +506,43 @@ public class SaveLoadManager : MonoBehaviour
 
     private void LoadNPCData(NPCData npcData)
     {
-        // TODO: Implement NPC loading
-        // This would involve finding existing NPCs and restoring their states
-        // or spawning new NPCs if they don't exist
-        Debug.Log($"TODO: Load NPC data for {npcData.npcs.Count} NPCs");
+        if (npcData?.npcs == null || npcData.npcs.Count == 0)
+        {
+            Debug.Log("[SaveLoadManager] No NPC data to load");
+            return;
+        }
+
+        foreach (var npcSaveData in npcData.npcs)
+        {
+            // Find the NPCScriptableObj by name
+            NPCScriptableObj npcScriptable = FindNPCScriptableByName(npcSaveData.npcDataObjName);
+            if (npcScriptable?.prefab == null)
+            {
+                Debug.LogWarning($"[SaveLoadManager] Could not find NPCScriptableObj or prefab for: {npcSaveData.npcDataObjName}");
+                continue;
+            }
+
+            // Instantiate the NPC prefab
+            GameObject npcObject = Instantiate(npcScriptable.prefab, npcSaveData.position, Quaternion.identity);
+            
+            if (npcObject.TryGetComponent<SettlerNPC>(out var settlerNPC))
+            {
+                // Set initialization context for loaded NPCs
+                settlerNPC.SetInitializationContext(NPCInitializationContext.LOADED_FROM_SAVE);
+                
+                // Restore the NPC's state from save data
+                settlerNPC.RestoreFromSaveData(npcSaveData);
+                
+                Debug.Log($"[SaveLoadManager] Loaded NPC: {npcSaveData.npcDataObjName} at {npcSaveData.position}");
+            }
+            else
+            {
+                Debug.LogWarning($"[SaveLoadManager] Spawned NPC '{npcSaveData.npcDataObjName}' does not have SettlerNPC component!");
+                Destroy(npcObject);
+            }
+        }
+        
+        Debug.Log($"[SaveLoadManager] Finished loading {npcData.npcs.Count} NPCs");
     }
 
     #endregion

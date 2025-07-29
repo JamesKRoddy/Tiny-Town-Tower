@@ -91,6 +91,12 @@ public class FriendlyRoom : RogueLiteRoom
                     GameObject spawnedNPC = Instantiate(npcPrefab, spawnPoint.position, spawnPoint.rotation, spawnPoint);
                     spawnedNPCs[i] = spawnedNPC;
                     
+                    // Set the initialization context for fresh spawns in roguelike rooms
+                    if (spawnedNPC.TryGetComponent<SettlerNPC>(out var settlerNPCComponent))
+                    {
+                        settlerNPCComponent.SetInitializationContext(NPCInitializationContext.FRESH_SPAWN);
+                    }
+                    
                     Debug.Log($"[FriendlyRoom] Spawned NPC '{settlerNPC.nPCName}' at spawn point {i + 1} in room '{gameObject.name}'");
                 }
                 else

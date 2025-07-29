@@ -78,6 +78,19 @@ namespace Managers
             return allCharacteristics;
         }
 
+        /// <summary>
+        /// Get a characteristic by its name/ID (used for save/load)
+        /// </summary>
+        public NPCCharacteristicScriptableObj GetCharacteristicById(string characteristicId)
+        {
+            if (string.IsNullOrEmpty(characteristicId))
+            {
+                return null;
+            }
+            
+            return allCharacteristics.Find(c => c.name == characteristicId);
+        }
+
         public void AddCharacteristicToNPC(SettlerNPC npc, NPCCharacteristicScriptableObj characteristic)
         {
             if (npc == null || characteristic == null) return;

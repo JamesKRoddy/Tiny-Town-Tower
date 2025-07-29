@@ -18,6 +18,10 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     private WorkTask assignedWorkTask; // Track the assigned work task
     private bool isOnBreak = false; // Track if NPC is on break
 
+    [Header("Initialization Control")]
+    [SerializeField] private NPCInitializationContext initializationContext = NPCInitializationContext.FRESH_SPAWN; //Set this to the context of the NPC when it is spawned, override to loaded for NPCs in scene already
+    [SerializeField, ReadOnly] private bool hasBeenInitialized = false;
+
     [Header("NPC Stats")]
     public int additionalMutationSlots = 3; //Additional mutation slots
 
@@ -73,19 +77,18 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
             Debug.LogError($"[WorkState] Could not find 'Work Layer' in animator for {gameObject.name}");
         }
 
-        // Ensure NPC reference is set for each state component
-        // Default to WanderState
-        if (taskStates.ContainsKey(TaskType.WANDER))
+        // Initialize based on context if not already initialized
+        if (!hasBeenInitialized)
         {
-            ChangeState(taskStates[TaskType.WANDER]);
+            InitializeForContext(initializationContext);
         }
+    }
 
-        // Apply random characteristics after everything is initialized
-        if (characteristicSystem != null)
-        {
-            characteristicSystem.ApplyRandomCharacteristic();
-        }
-
+    /// <summary>
+    /// Register this NPC with the relevant managers
+    /// </summary>
+    private void RegisterWithManagers()
+    {
         // Register with NPCManager
         NPCManager.Instance.RegisterNPC(this);
         
@@ -94,6 +97,151 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         {
             CampManager.Instance.AddNPC(this);
         }
+    }
+
+    /// <summary>
+    /// Initialize the NPC based on the specified context
+    /// </summary>
+    private void InitializeForContext(NPCInitializationContext context)
+    {
+        switch (context)
+        {
+            case NPCInitializationContext.FRESH_SPAWN:
+                InitializeAsFreshSpawn();
+                break;
+            case NPCInitializationContext.RECRUITED:
+                RegisterWithManagers();
+                InitializeAsRecruited();
+                break;
+            case NPCInitializationContext.LOADED_FROM_SAVE:
+                RegisterWithManagers();
+                InitializeAsLoadedFromSave();
+                break;
+        }
+        
+        hasBeenInitialized = true;
+    }
+
+    /// <summary>
+    /// Initialize as a fresh spawn (roguelike rooms, etc.)
+    /// </summary>
+    private void InitializeAsFreshSpawn()
+    {
+        // Default to WanderState
+        if (taskStates.ContainsKey(TaskType.WANDER))
+        {
+            ChangeState(taskStates[TaskType.WANDER]);
+        }
+
+        // Apply random characteristics
+        if (characteristicSystem != null)
+        {
+            characteristicSystem.ApplyRandomCharacteristic();
+        }
+    }
+
+    /// <summary>
+    /// Initialize as a recruited NPC (from player inventory)
+    /// </summary>
+    private void InitializeAsRecruited()
+    {
+        // Default to WanderState
+        if (taskStates.ContainsKey(TaskType.WANDER))
+        {
+            ChangeState(taskStates[TaskType.WANDER]);
+        }
+
+        // Apply characteristics from NPCScriptableObj or random if none specified
+        if (characteristicSystem != null)
+        {
+            // TODO: Check if nPCDataObj has predefined characteristics, otherwise apply random
+            characteristicSystem.ApplyRandomCharacteristic();
+        }
+    }
+
+    /// <summary>
+    /// Initialize as an NPC loaded from save data
+    /// </summary>
+    private void InitializeAsLoadedFromSave()
+    {
+        // Don't apply random characteristics - they should be restored from save data
+        // Don't default to WanderState - task state should be restored from save data
+        // This method is called when NPCs are loaded from save files
+        Debug.Log($"[SettlerNPC] {gameObject.name} initialized as loaded from save - characteristics and state should be restored externally");
+    }
+
+    /// <summary>
+    /// Set the initialization context before Start() is called
+    /// This should be called immediately after instantiation
+    /// </summary>
+    public void SetInitializationContext(NPCInitializationContext context)
+    {
+        if (hasBeenInitialized)
+        {
+            Debug.LogWarning($"[SettlerNPC] {gameObject.name} - Cannot change initialization context after NPC has been initialized");
+            return;
+        }
+        
+        initializationContext = context;
+    }
+
+    /// <summary>
+    /// Restore NPC state from save data
+    /// This should be called after SetInitializationContext(LOADED_FROM_SAVE)
+    /// </summary>
+    public void RestoreFromSaveData(NPCSaveData saveData)
+    {
+        if (initializationContext != NPCInitializationContext.LOADED_FROM_SAVE)
+        {
+            Debug.LogWarning($"[SettlerNPC] {gameObject.name} - RestoreFromSaveData should only be called for NPCs loaded from save");
+            return;
+        }
+
+        // Restore basic stats
+        Health = saveData.health;
+        MaxHealth = saveData.maxHealth;
+        currentStamina = saveData.stamina;
+        currentHunger = saveData.hunger;
+        additionalMutationSlots = saveData.additionalMutationSlots;
+
+        // Restore position
+        transform.position = saveData.position;
+
+        // Restore characteristics
+        if (characteristicSystem != null && saveData.equippedCharacteristicIds != null)
+        {
+            foreach (string characteristicId in saveData.equippedCharacteristicIds)
+            {
+                var characteristic = NPCManager.Instance.GetCharacteristicById(characteristicId);
+                if (characteristic != null)
+                {
+                    characteristicSystem.EquipCharacteristic(characteristic);
+                }
+                else
+                {
+                    Debug.LogWarning($"[SettlerNPC] Could not find characteristic with ID: {characteristicId}");
+                }
+            }
+        }
+
+        // Restore task state
+        if (!string.IsNullOrEmpty(saveData.currentTaskType) && 
+            Enum.TryParse<TaskType>(saveData.currentTaskType, out TaskType taskType) &&
+            taskStates.ContainsKey(taskType))
+        {
+            ChangeState(taskStates[taskType]);
+        }
+        else
+        {
+            // Fallback to wander if task type is invalid
+            if (taskStates.ContainsKey(TaskType.WANDER))
+            {
+                ChangeState(taskStates[TaskType.WANDER]);
+            }
+        }
+
+        hasBeenInitialized = true;
+        Debug.Log($"[SettlerNPC] {gameObject.name} state restored from save data");
     }
 
     private void OnDestroy()

@@ -331,6 +331,16 @@ public enum NPCNarrativeType{
     GENERIC_CONVERSATION
 }
 
+/// <summary>
+/// Defines how an NPC should be initialized when spawned
+/// </summary>
+public enum NPCInitializationContext
+{
+    FRESH_SPAWN,      // New NPC spawned in roguelike rooms, needs full random initialization
+    RECRUITED,        // NPC recruited from roguelike, may have predetermined characteristics  
+    LOADED_FROM_SAVE  // NPC loaded from save file, should restore previous state
+}
+
 // =========================
 // MISCELLANEOUS ENUMS
 // =========================

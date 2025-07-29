@@ -529,8 +529,11 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         foreach (var npc in npcsToTransfer)
         {
             Debug.Log($"[PlayerInventory] Transferring recruited NPC '{npc.nPCName}' to camp");
-            // Additional transfer logic would go here if needed
+            SpawnNPCInCamp(npc);
         }
+
+        // Fire the event to notify other systems about the transfer
+        OnNPCsTransferredToCamp?.Invoke(npcsToTransfer);
 
         recruitedNPCs.Clear();
         recruitedNPCComponentIds.Clear();
@@ -559,7 +562,9 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         // Set up the NPC (name, etc.)
         if (npcObject.TryGetComponent<SettlerNPC>(out var settlerNPC))
         {
-            // The SettlerNPC will automatically register with NPCManager and CampManager
+            // Set the initialization context for recruited NPCs before Start() is called
+            settlerNPC.SetInitializationContext(NPCInitializationContext.RECRUITED);
+            
             Debug.Log($"[PlayerInventory] Successfully spawned recruited NPC '{npc.nPCName}' in camp at {spawnPosition}");
         }
         else
@@ -580,6 +585,8 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             Vector2 xBounds = CampManager.Instance.SharedXBounds;
             Vector2 zBounds = CampManager.Instance.SharedZBounds;
             
+            Debug.Log($"[PlayerInventory] Camp bounds - X: {xBounds}, Z: {zBounds}");
+            
             // Try to find a clear position within camp bounds
             for (int attempts = 0; attempts < 10; attempts++)
             {
@@ -592,12 +599,15 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 // Simple ground raycast to place on terrain
                 if (Physics.Raycast(randomPosition + Vector3.up * 10f, Vector3.down, out RaycastHit hit, 20f))
                 {
+                    Debug.Log($"[PlayerInventory] Found spawn position: {hit.point}");
                     return hit.point;
                 }
             }
             
             // Fallback to center of camp if no clear position found
-            return new Vector3((xBounds.x + xBounds.y) / 2f, 0f, (zBounds.x + zBounds.y) / 2f);
+            Vector3 fallbackPosition = new Vector3((xBounds.x + xBounds.y) / 2f, 0f, (zBounds.x + zBounds.y) / 2f);
+            Debug.LogWarning($"[PlayerInventory] No clear spawn position found after 10 attempts, using fallback: {fallbackPosition}");
+            return fallbackPosition;
         }
         
         // Ultimate fallback to origin
