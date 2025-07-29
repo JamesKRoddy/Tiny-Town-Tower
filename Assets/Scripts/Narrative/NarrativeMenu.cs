@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System;
 using Managers;
+using System.Linq;
 
 /// <summary>
 /// UI presentation layer for narrative conversations.
@@ -37,11 +38,15 @@ public class NarrativeMenu : MenuBase
         // Clear previous options
         ClearOptions();
 
-        // If the line has options, show them
+        // If the line has options, show them (filtered by flags)
         if (line.options != null && line.options.Count > 0)
         {
-            ShowOptions(line.options);
-            return;
+            var filteredOptions = FilterOptionsByFlags(line.options);
+            if (filteredOptions.Count > 0)
+            {
+                ShowOptions(filteredOptions);
+                return;
+            }
         }
 
         // If the line is terminal, show a "Close" button
@@ -61,6 +66,44 @@ public class NarrativeMenu : MenuBase
             // End conversation if no next line and no options
             NarrativeManager.Instance.EndConversation();
         }
+    }
+
+    /// <summary>
+    /// Filter dialogue options based on interaction flags
+    /// </summary>
+    private List<DialogueOption> FilterOptionsByFlags(List<DialogueOption> options)
+    {
+        if (NarrativeManager.Instance == null)
+            return options;
+
+        return options.Where(option => 
+        {
+            // Check required flags
+            if (option.requiredFlags != null && option.requiredFlags.Count > 0)
+            {
+                foreach (string flag in option.requiredFlags)
+                {
+                    if (!NarrativeManager.Instance.HasFlag(flag))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            // Check blocked flags
+            if (option.blockedByFlags != null && option.blockedByFlags.Count > 0)
+            {
+                foreach (string flag in option.blockedByFlags)
+                {
+                    if (NarrativeManager.Instance.HasFlag(flag))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }).ToList();
     }
 
     /// <summary>
