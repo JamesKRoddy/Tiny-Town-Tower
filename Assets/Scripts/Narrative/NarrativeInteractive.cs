@@ -10,10 +10,7 @@ public class NarrativeInteractive : MonoBehaviour, IInteractive<NarrativeAsset>
     [SerializeField] private NPCNarrativeType npcNarrativeType = NPCNarrativeType.GENERIC_CONVERSATION;
     
     [Header("Unique Conversation (Optional)")]
-    [SerializeField] private NarrativeAsset narrativeAsset; // For backward compatibility
-
-    [Header("Options")]
-    [SerializeField] private bool useNarrativeType = true; // If true, uses npcNarrativeType; if false, uses narrativeAsset
+    [SerializeField] private NarrativeAsset narrativeAsset;
 
     public string GetInteractionText() => "Start Conversation";
 
@@ -24,14 +21,16 @@ public class NarrativeInteractive : MonoBehaviour, IInteractive<NarrativeAsset>
     /// </summary>
     public NarrativeAsset Interact() 
     {
-        if (narrativeAsset != null)
+        // If a specific narrative asset is assigned, use it
+        if (narrativeAsset != null && narrativeAsset.dialogueFile != null)
         {
-            // Legacy mode: return the asset for external handling
+            Debug.Log($"[NarrativeInteractive] Interacting with narrative asset: {narrativeAsset}");
             return narrativeAsset;
         }
-        // Start conversation through NarrativeManager
-        else if (useNarrativeType && NarrativeManager.Instance != null)
+        // Otherwise use dynamic loading based on NPCNarrativeType
+        else if (NarrativeManager.Instance != null)
         {
+            Debug.Log($"[NarrativeInteractive] Interacting with narrative type: {npcNarrativeType}");
             // Use dynamic loading based on NPCNarrativeType
             NarrativeManager.Instance.StartConversation(npcNarrativeType, GetNarrativeTarget());
             
@@ -76,7 +75,8 @@ public class NarrativeInteractive : MonoBehaviour, IInteractive<NarrativeAsset>
     public void SetNarrativeType(NPCNarrativeType newType)
     {
         npcNarrativeType = newType;
-        useNarrativeType = true;
+        // Clear narrative asset to ensure we use the narrative type
+        narrativeAsset = null;
     }
 
     /// <summary>
@@ -85,7 +85,6 @@ public class NarrativeInteractive : MonoBehaviour, IInteractive<NarrativeAsset>
     public void SetNarrativeAsset(NarrativeAsset asset)
     {
         narrativeAsset = asset;
-        useNarrativeType = false;
     }
 
     /// <summary>
