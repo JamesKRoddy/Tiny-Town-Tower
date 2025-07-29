@@ -2,6 +2,9 @@
 
 
 Tomorrow work:
+
+
+
 Recruiting NPCs:
 
 Conversation progression eg. after an npc is recruited then respond differently.
@@ -62,7 +65,7 @@ NPCs have to use toilets, need to figure out timers for when they need it
 Damaging buildings: ties into turret system
 Repairing buildings: wait until damage is finished
 
-Narrative diologue and recruiting NPCs
+Save game UI already class made SaveGameUI.cs
 
 
 

@@ -7,6 +7,34 @@ using Characters.NPC.Characteristic;
 using System.Linq;
 
 [Serializable]
+public class NarrativeAssetData
+{
+    public List<NarrativeInteractiveSaveData> narrativeInteractives = new List<NarrativeInteractiveSaveData>();
+}
+
+[Serializable]
+public class NarrativeInteractiveSaveData
+{
+    public string componentInstanceId; // Instance ID of the NarrativeInteractive component
+    public string gameObjectName; // For debugging/reference
+    public Vector3 position; // Position for identification
+    public List<NarrativeAssetFlagSaveData> assetFlags = new List<NarrativeAssetFlagSaveData>();
+}
+
+[Serializable]
+public class NarrativeAssetFlagSaveData
+{
+    public string flagName;
+    public string value;
+    
+    public NarrativeAssetFlagSaveData(string name, string val)
+    {
+        flagName = name;
+        value = val;
+    }
+}
+
+[Serializable]
 public class GameData
 {
     public GridData gridData = new GridData();
@@ -15,6 +43,7 @@ public class GameData
     public PlayerData playerData = new PlayerData();
     public BuildingData buildingData = new BuildingData();
     public ManagerData managerData = new ManagerData();
+    public NarrativeAssetData narrativeAssetData = new NarrativeAssetData();
     
     // Metadata
     public string saveVersion = "1.0";
@@ -78,6 +107,10 @@ public class PlayerData
     public int maxMutationSlots;
     public WeaponData equippedWeapon;
     public string dashElement;
+    
+    // Recruited NPCs data
+    public List<string> recruitedNPCIds = new List<string>(); // References to NPCScriptableObj names
+    public List<string> recruitedNPCComponentIds = new List<string>(); // Component IDs for tracking
 }
 
 [Serializable]
@@ -233,12 +266,13 @@ public class SaveLoadManager : MonoBehaviour
             SavePlayerData(data.playerData);
             SaveBuildingData(data.buildingData);
             SaveManagerData(data.managerData);
+            SaveNarrativeAssetData(data.narrativeAssetData);
 
             string json = JsonUtility.ToJson(data, true);
             File.WriteAllText(saveFilePath, json);
             
             Debug.Log($"<color=green>Game Saved Successfully at: {saveFilePath}</color>");
-            PlayerUIManager.Instance?.DisplayTextPopup("Game Saved");
+            PlayerUIManager.Instance?.DisplayNotification("Game Saved");
         }
         catch (Exception e)
         {
@@ -252,7 +286,7 @@ public class SaveLoadManager : MonoBehaviour
         if (!File.Exists(saveFilePath))
         {
             Debug.LogWarning("No save file found");
-            PlayerUIManager.Instance?.DisplayTextPopup("No save file found");
+            PlayerUIManager.Instance?.DisplayNotification("No save file found");
             return;
         }
 
@@ -268,9 +302,10 @@ public class SaveLoadManager : MonoBehaviour
             LoadPlayerData(data.playerData);
             LoadBuildingData(data.buildingData);
             LoadManagerData(data.managerData);
+            LoadNarrativeAssetData(data.narrativeAssetData);
 
             Debug.Log($"<color=green>Game Loaded Successfully from: {data.saveTime}</color>");
-            PlayerUIManager.Instance?.DisplayTextPopup("Game Loaded");
+            PlayerUIManager.Instance?.DisplayNotification("Game Loaded");
         }
         catch (Exception e)
         {
@@ -285,7 +320,7 @@ public class SaveLoadManager : MonoBehaviour
         {
             File.Delete(saveFilePath);
             Debug.Log("Save file deleted");
-            PlayerUIManager.Instance?.DisplayTextPopup("Save file deleted");
+            PlayerUIManager.Instance?.DisplayNotification("Save file deleted");
         }
         else
         {
@@ -516,6 +551,20 @@ public class SaveLoadManager : MonoBehaviour
                 GetPrefabPath(playerInventory.equippedWeaponScriptObj.prefab)
             );
         }
+
+        // Save recruited NPCs with component tracking
+        var recruitedNPCs = playerInventory.RecruitedNPCs;
+        foreach (var npc in recruitedNPCs)
+        {
+            if (npc != null)
+            {
+                playerData.recruitedNPCIds.Add(npc.name);
+            }
+        }
+
+        // Get component IDs (this accesses the private field through reflection or a public getter)
+        var componentIds = playerInventory.GetRecruitedNPCComponentIds();
+        playerData.recruitedNPCComponentIds.AddRange(componentIds);
     }
 
     private void LoadPlayerData(PlayerData playerData)
@@ -528,9 +577,55 @@ public class SaveLoadManager : MonoBehaviour
         playerInventory.ClearInventory();
         playerInventory.ClearAvailableMutations();
 
-        // TODO: Implement player data loading
+        // Load recruited NPCs with component tracking
+        if (playerData.recruitedNPCIds != null && playerData.recruitedNPCIds.Count > 0)
+        {
+            // Clear existing recruited NPCs
+            playerInventory.TransferRecruitedNPCsToCamp(); // This clears the lists
+            
+            // Load recruited NPCs
+            for (int i = 0; i < playerData.recruitedNPCIds.Count; i++)
+            {
+                string npcId = playerData.recruitedNPCIds[i];
+                string componentId = i < playerData.recruitedNPCComponentIds.Count ? playerData.recruitedNPCComponentIds[i] : null;
+                
+                // Find the NPCScriptableObj by name
+                NPCScriptableObj npcScriptable = FindNPCScriptableByName(npcId);
+                if (npcScriptable != null)
+                {
+                    playerInventory.RecruitNPC(npcScriptable, componentId);
+                    Debug.Log($"[SaveLoadManager] Loaded recruited NPC: {npcId} with component ID: {componentId}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[SaveLoadManager] Could not find NPCScriptableObj for: {npcId}");
+                }
+            }
+        }
+
+        // TODO: Implement remaining player data loading
         // You'd need to find resource/mutation objects by ID and restore inventory
-        Debug.Log($"TODO: Load player data - {playerData.inventory.Count} inventory items");
+        Debug.Log($"[SaveLoadManager] TODO: Load remaining player data - {playerData.inventory.Count} inventory items");
+    }
+
+    /// <summary>
+    /// Get recruited NPC component IDs from PlayerInventory (helper method)
+    /// </summary>
+    private List<string> GetRecruitedNPCComponentIds(PlayerInventory playerInventory)
+    {
+        return playerInventory.GetRecruitedNPCComponentIds();
+    }
+
+    /// <summary>
+    /// Find an NPCScriptableObj by name (helper method)
+    /// </summary>
+    private NPCScriptableObj FindNPCScriptableByName(string npcName)
+    {
+        // TODO: Implement NPC scriptable object lookup
+        // You'll need to access your NPC database/collection
+        // For now, return null - you can implement this based on your NPC data structure
+        Debug.LogWarning($"[SaveLoadManager] TODO: Implement FindNPCScriptableByName for: {npcName}");
+        return null;
     }
 
     #endregion
@@ -598,6 +693,87 @@ public class SaveLoadManager : MonoBehaviour
     {
         // TODO: Implement manager data loading
         Debug.Log("TODO: Load manager data");
+    }
+
+    #endregion
+
+    #region Narrative Asset Data Save/Load
+
+    private void SaveNarrativeAssetData(NarrativeAssetData narrativeAssetData)
+    {
+        // Find all NarrativeInteractive components in the scene
+        var narrativeInteractives = FindObjectsByType<NarrativeInteractive>(FindObjectsSortMode.None);
+        
+        foreach (var interactive in narrativeInteractives)
+        {
+            var saveData = new NarrativeInteractiveSaveData
+            {
+                componentInstanceId = interactive.gameObject.GetInstanceID().ToString(),
+                gameObjectName = interactive.gameObject.name,
+                position = interactive.transform.position
+            };
+
+            // Get the narrative asset and save its flags
+            var narrativeAsset = interactive.GetOrCreateNarrativeAsset();
+            if (narrativeAsset?.flags != null)
+            {
+                foreach (var flag in narrativeAsset.flags)
+                {
+                    saveData.assetFlags.Add(new NarrativeAssetFlagSaveData(flag.flagName, flag.value));
+                }
+                
+                Debug.Log($"[SaveLoadManager] Saved {saveData.assetFlags.Count} flags for {interactive.gameObject.name}");
+            }
+            else
+            {
+                Debug.Log($"[SaveLoadManager] No flags to save for {interactive.gameObject.name}");
+            }
+
+            narrativeAssetData.narrativeInteractives.Add(saveData);
+        }
+        
+        Debug.Log($"[SaveLoadManager] Saved {narrativeInteractives.Length} NarrativeInteractive components with narrative asset data");
+    }
+
+    private void LoadNarrativeAssetData(NarrativeAssetData narrativeAssetData)
+    {
+        // Find all existing NarrativeInteractive components in the scene
+        var existingInteractives = FindObjectsByType<NarrativeInteractive>(FindObjectsSortMode.None);
+        var interactiveDict = new Dictionary<string, NarrativeInteractive>();
+        
+        // Build a lookup dictionary by instance ID
+        foreach (var interactive in existingInteractives)
+        {
+            string instanceId = interactive.gameObject.GetInstanceID().ToString();
+            interactiveDict[instanceId] = interactive;
+        }
+        
+        // Load narrative asset data
+        foreach (var saveData in narrativeAssetData.narrativeInteractives)
+        {
+            if (interactiveDict.TryGetValue(saveData.componentInstanceId, out NarrativeInteractive interactive))
+            {
+                // Clear existing flags
+                interactive.GetOrCreateNarrativeAsset().flags?.Clear();
+                
+                // Restore flags from save data
+                if (saveData.assetFlags != null)
+                {
+                    foreach (var flagData in saveData.assetFlags)
+                    {
+                        interactive.SetFlag(flagData.flagName, flagData.value);
+                    }
+                }
+                
+                Debug.Log($"[SaveLoadManager] Loaded flags for NarrativeInteractive: {saveData.gameObjectName} ({saveData.assetFlags?.Count ?? 0} flags)");
+            }
+            else
+            {
+                Debug.LogWarning($"[SaveLoadManager] Could not find NarrativeInteractive with instance ID: {saveData.componentInstanceId} for {saveData.gameObjectName}");
+            }
+        }
+        
+        Debug.Log($"[SaveLoadManager] Loaded narrative asset data for {narrativeAssetData.narrativeInteractives.Count} components");
     }
 
     #endregion

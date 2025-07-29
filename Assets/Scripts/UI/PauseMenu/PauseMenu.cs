@@ -12,6 +12,7 @@ public class PauseMenu : MenuBase, IControllerInput
         settingsBtn.onClick.AddListener(OpenSettings);
         returnToCampBtn.onClick.AddListener(ReturnToCamp);
         quitGameBtn.onClick.AddListener(QuitGame);
+        saveGameBtn.onClick.AddListener(OpenSaveGameMenu);
     }
 
     public override void OnDestroy()
@@ -21,11 +22,13 @@ public class PauseMenu : MenuBase, IControllerInput
         settingsBtn.onClick.RemoveAllListeners();
         returnToCampBtn.onClick.RemoveAllListeners();
         quitGameBtn.onClick.RemoveAllListeners();
+        saveGameBtn.onClick.RemoveAllListeners();
     }
 
     [SerializeField] Button resumeGameBtn;
     [SerializeField] Button settingsBtn;
     [SerializeField] Button returnToCampBtn;
+    [SerializeField] Button saveGameBtn;
     [SerializeField] Button quitGameBtn;
 
     public void ReturnToGame(PlayerControlType playerControlType = PlayerControlType.NONE)
@@ -60,6 +63,12 @@ public class PauseMenu : MenuBase, IControllerInput
         PlayerUIManager.Instance.returnToCampMenu.SetScreenActive(true, 0.1f);
     }
 
+    private void OpenSaveGameMenu()
+    {
+        PlayerUIManager.Instance.HidePauseMenus();
+        PlayerUIManager.Instance.saveGameMenu.SetScreenActive(true, 0.1f);
+    }
+
     private void QuitGame()
     {
         PlayerUIManager.Instance.HidePauseMenus();
@@ -72,7 +81,7 @@ public class PauseMenu : MenuBase, IControllerInput
         settingsBtn.gameObject.SetActive(false);
         returnToCampBtn.gameObject.SetActive(false);
         quitGameBtn.gameObject.SetActive(false);
-
+        saveGameBtn.gameObject.SetActive(false);
         switch (GameManager.Instance.CurrentGameMode)
         {
             case GameMode.ROGUE_LITE:
@@ -84,6 +93,7 @@ public class PauseMenu : MenuBase, IControllerInput
                 resumeGameBtn.gameObject.SetActive(true);
                 settingsBtn.gameObject.SetActive(true);
                 quitGameBtn.gameObject.SetActive(true);
+                saveGameBtn.gameObject.SetActive(true);
                 break;
             case GameMode.CAMP_ATTACK:
                 resumeGameBtn.gameObject.SetActive(true);

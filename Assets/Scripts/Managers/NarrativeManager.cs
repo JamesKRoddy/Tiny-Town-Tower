@@ -6,7 +6,8 @@ using System.Linq;
 
 /// <summary>
 /// Central manager for all narrative interactions in the game.
-/// Handles dynamic dialogue loading, conversation flow, NPC recruitment, and interaction tracking.
+/// Handles dynamic dialogue loading, conversation flow, and NPC recruitment.
+/// Delegates progression tracking to individual NarrativeInteractive components.
 /// </summary>
 public class NarrativeManager : MonoBehaviour
 {
@@ -31,10 +32,6 @@ public class NarrativeManager : MonoBehaviour
 
     [Header("Narrative Configuration")]
     [SerializeField] private NarrativeAssetMapping[] narrativeMappings;
-    
-    [Header("Interaction Tracking")]
-    [SerializeField] private bool persistInteractionFlags = true; // Save flags between sessions
-    [SerializeField] private bool debugInteractionFlags = false; // Log flag operations for debugging
 
     // Cache for loaded dialogues
     private Dictionary<NPCNarrativeType, DialogueData> loadedDialogues = new Dictionary<NPCNarrativeType, DialogueData>();
@@ -42,9 +39,8 @@ public class NarrativeManager : MonoBehaviour
     private INarrativeTarget currentConversationTarget;
     private DialogueData currentDialogue;
     
-    // Interaction tracking
-    private Dictionary<string, HashSet<string>> npcInteractionFlags = new Dictionary<string, HashSet<string>>();
-    private string currentNPCId; // ID of the current NPC we're talking to
+    // Current conversation context
+    private NarrativeInteractive currentNarrativeComponent; // The component we're currently talking to
 
     private void Awake()
     {
@@ -52,7 +48,6 @@ public class NarrativeManager : MonoBehaviour
         {
             _instance = this;
             DontDestroyOnLoad(gameObject);
-            LoadInteractionFlags();
         }
         else if (_instance != this)
         {
@@ -63,30 +58,6 @@ public class NarrativeManager : MonoBehaviour
     private void Start()
     {
         InitializeNarrativeSystem();
-    }
-
-    private void OnApplicationPause(bool pauseStatus)
-    {
-        if (pauseStatus && persistInteractionFlags)
-        {
-            SaveInteractionFlags();
-        }
-    }
-
-    private void OnApplicationFocus(bool hasFocus)
-    {
-        if (!hasFocus && persistInteractionFlags)
-        {
-            SaveInteractionFlags();
-        }
-    }
-
-    private void OnDestroy()
-    {
-        if (persistInteractionFlags)
-        {
-            SaveInteractionFlags();
-        }
     }
 
     private void InitializeNarrativeSystem()
@@ -110,8 +81,9 @@ public class NarrativeManager : MonoBehaviour
 
     /// <summary>
     /// Start a conversation with dynamic dialogue loading based on NPCNarrativeType
+    /// Called by NarrativeInteractive components
     /// </summary>
-    public void StartConversation(NPCNarrativeType narrativeType, INarrativeTarget conversationTarget = null)
+    public void StartConversation(NPCNarrativeType narrativeType, INarrativeTarget conversationTarget = null, NarrativeInteractive sourceComponent = null)
     {
         // Set the conversation target
         currentConversationTarget = conversationTarget ?? FindConversationTarget();
@@ -122,11 +94,20 @@ public class NarrativeManager : MonoBehaviour
             return;
         }
 
-        // Generate NPC ID for interaction tracking
-        currentNPCId = GenerateNPCId(currentConversationTarget, narrativeType);
+        // Set the source component for progression tracking
+        currentNarrativeComponent = sourceComponent;
         
-        // Load flags for this NPC
-        LoadFlagsForNPC(currentNPCId);
+        if (currentNarrativeComponent == null)
+        {
+            // Try to find the narrative component
+            var narrativeComponent = currentConversationTarget as MonoBehaviour;
+            currentNarrativeComponent = narrativeComponent?.GetComponent<NarrativeInteractive>();
+            
+            if (currentNarrativeComponent == null)
+            {
+                Debug.LogWarning("[NarrativeManager] No NarrativeInteractive component found - progression tracking disabled!");
+            }
+        }
 
         // Load dialogue for the specified type
         DialogueData dialogue = LoadDialogueForType(narrativeType);
@@ -143,7 +124,7 @@ public class NarrativeManager : MonoBehaviour
     /// <summary>
     /// Start a conversation with a specific narrative asset (legacy support)
     /// </summary>
-    public void StartConversation(NarrativeAsset narrativeAsset)
+    public void StartConversation(NarrativeAsset narrativeAsset, NarrativeInteractive sourceComponent = null)
     {
         currentConversationTarget = FindConversationTarget();
         
@@ -152,11 +133,8 @@ public class NarrativeManager : MonoBehaviour
             DialogueData dialogue = LoadDialogueFromAsset(narrativeAsset.dialogueFile);
             if (dialogue != null)
             {
-                // Use dialogue file name as NPC ID for legacy support
-                currentNPCId = narrativeAsset.dialogueFile.name;
-                
-                // Load flags for this NPC
-                LoadFlagsForNPC(currentNPCId);
+                // Set the source component for progression tracking
+                currentNarrativeComponent = sourceComponent;
                 
                 StartConversationWithDialogue(dialogue);
             }
@@ -180,7 +158,7 @@ public class NarrativeManager : MonoBehaviour
             // Update player controls
             PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_CONVERSATION);
             
-            // Find the appropriate starting line based on interaction flags
+            // Find the appropriate starting line based on component's progression flags
             DialogueLine startingLine = GetStartingDialogueLine();
             
             // Show the conversation UI
@@ -201,7 +179,7 @@ public class NarrativeManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Get the appropriate starting dialogue line based on interaction flags
+    /// Get the appropriate starting dialogue line based on component's progression flags
     /// </summary>
     private DialogueLine GetStartingDialogueLine()
     {
@@ -218,10 +196,6 @@ public class NarrativeManager : MonoBehaviour
                 var chosenStart = validStarts.First();
                 if (currentDialogueLinesMap.TryGetValue(chosenStart.lineId, out DialogueLine conditionalLine))
                 {
-                    if (debugInteractionFlags)
-                    {
-                        Debug.Log($"[NarrativeManager] Using conditional start: {chosenStart.lineId} for NPC: {currentNPCId}");
-                    }
                     return conditionalLine;
                 }
             }
@@ -381,7 +355,7 @@ public class NarrativeManager : MonoBehaviour
             currentDialogueLinesMap != null && 
             currentDialogueLinesMap.TryGetValue(nextLineId, out DialogueLine nextLine))
         {
-            // Check if the line can be accessed based on flags
+            // Check if the line can be accessed based on component's flags
             if (CheckConditions(nextLine.requiredFlags, nextLine.blockedByFlags))
             {
                 // Process flags for the line
@@ -394,10 +368,6 @@ public class NarrativeManager : MonoBehaviour
             }
             else
             {
-                if (debugInteractionFlags)
-                {
-                    Debug.LogWarning($"[NarrativeManager] Line {nextLineId} blocked by flag conditions for NPC {currentNPCId}");
-                }
                 EndConversation();
             }
         }
@@ -412,12 +382,6 @@ public class NarrativeManager : MonoBehaviour
     /// </summary>
     public void EndConversation()
     {
-        // Save interaction flags
-        if (persistInteractionFlags)
-        {
-            SaveInteractionFlags();
-        }
-
         // Resume the conversation target
         currentConversationTarget?.ResumeAfterConversation();
         currentConversationTarget = null;
@@ -434,7 +398,7 @@ public class NarrativeManager : MonoBehaviour
         // Clear current dialogue data
         currentDialogue = null;
         currentDialogueLinesMap = null;
-        currentNPCId = null;
+        currentNarrativeComponent = null;
     }
 
     /// <summary>
@@ -457,9 +421,11 @@ public class NarrativeManager : MonoBehaviour
         // Get the NPCScriptableObj from the conversation target
         if (currentConversationTarget is SettlerNPC settlerNPC && settlerNPC.nPCDataObj != null)
         {
-            PlayerInventory.Instance.RecruitNPC(settlerNPC.nPCDataObj);
+            // Pass the component ID to enable component-based recruitment tracking
+            string componentId = currentNarrativeComponent?.GetInstanceID().ToString();
+            PlayerInventory.Instance.RecruitNPC(settlerNPC.nPCDataObj, componentId);
             
-            // Set recruitment success flag
+            // Set recruitment success flag on the component
             SetFlag("recruited");
             SetFlag($"recruited_{npcName.Replace(" ", "_").ToLower()}");
             
@@ -467,7 +433,7 @@ public class NarrativeManager : MonoBehaviour
         }
         else
         {
-            // Set recruitment failed flag
+            // Set recruitment failed flag on the component
             SetFlag("recruitment_failed");
             Debug.LogError($"[NarrativeManager] Failed to recruit NPC '{npcName}' - could not get NPCScriptableObj from conversation target");
         }
@@ -499,262 +465,59 @@ public class NarrativeManager : MonoBehaviour
         return null;
     }
 
-    #region Interaction Flag Management
+    #region NarrativeAsset Flag Management (Delegates to NarrativeInteractive)
 
     /// <summary>
-    /// Generate a unique ID for an NPC based on the conversation target and narrative type
-    /// </summary>
-    private string GenerateNPCId(INarrativeTarget target, NPCNarrativeType narrativeType)
-    {
-        string baseId = "";
-        
-        // Try to get a unique identifier from the NPC
-        if (target is SettlerNPC settlerNPC && settlerNPC.nPCDataObj != null)
-        {
-            baseId = settlerNPC.nPCDataObj.nPCName.Replace(" ", "_").ToLower();
-        }
-        else if (target is MonoBehaviour mb)
-        {
-            baseId = $"{mb.gameObject.name}_{mb.GetInstanceID()}";
-        }
-        else
-        {
-            baseId = $"unknown_npc_{target.GetHashCode()}";
-        }
-
-        return $"{baseId}_{narrativeType}";
-    }
-
-    /// <summary>
-    /// Check if conditions are met based on required and blocked flags
+    /// Check if conditions are met based on the current narrative asset's flags
     /// </summary>
     private bool CheckConditions(List<string> requiredFlags, List<string> blockedByFlags)
     {
-        // Check required flags
-        if (requiredFlags != null && requiredFlags.Count > 0)
+        if (currentNarrativeComponent == null)
         {
-            foreach (string flag in requiredFlags)
-            {
-                if (!HasFlag(flag))
-                {
-                    return false;
-                }
-            }
+            // If no component, assume conditions are met (fallback behavior)
+            return true;
         }
 
-        // Check blocked flags
-        if (blockedByFlags != null && blockedByFlags.Count > 0)
-        {
-            foreach (string flag in blockedByFlags)
-            {
-                if (HasFlag(flag))
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
+        return currentNarrativeComponent.CheckConditions(requiredFlags, blockedByFlags);
     }
 
     /// <summary>
-    /// Process flag operations (set and remove)
+    /// Process flag operations on the current narrative asset
     /// </summary>
     private void ProcessFlags(List<string> setFlags, List<string> removeFlags)
     {
-        if (setFlags != null)
-        {
-            foreach (string flag in setFlags)
-            {
-                SetFlag(flag);
-            }
-        }
-
-        if (removeFlags != null)
-        {
-            foreach (string flag in removeFlags)
-            {
-                RemoveFlag(flag);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Set an interaction flag for the current NPC
-    /// </summary>
-    public void SetFlag(string flagName)
-    {
-        if (string.IsNullOrEmpty(currentNPCId) || string.IsNullOrEmpty(flagName))
+        if (currentNarrativeComponent == null)
             return;
 
-        if (!npcInteractionFlags.ContainsKey(currentNPCId))
-        {
-            npcInteractionFlags[currentNPCId] = new HashSet<string>();
-        }
-
-        bool wasAdded = npcInteractionFlags[currentNPCId].Add(flagName);
-        
-        if (debugInteractionFlags && wasAdded)
-        {
-            Debug.Log($"[NarrativeManager] Set flag '{flagName}' for NPC '{currentNPCId}'");
-        }
+        currentNarrativeComponent.ProcessFlags(setFlags, removeFlags);
     }
 
     /// <summary>
-    /// Remove an interaction flag for the current NPC
+    /// Set a flag on the current narrative asset
     /// </summary>
-    public void RemoveFlag(string flagName)
+    public void SetFlag(string flagName, string value = "true")
     {
-        if (string.IsNullOrEmpty(currentNPCId) || string.IsNullOrEmpty(flagName))
-            return;
-
-        if (npcInteractionFlags.ContainsKey(currentNPCId))
+        if (currentNarrativeComponent == null)
         {
-            bool wasRemoved = npcInteractionFlags[currentNPCId].Remove(flagName);
-            
-            if (debugInteractionFlags && wasRemoved)
-            {
-                Debug.Log($"[NarrativeManager] Removed flag '{flagName}' for NPC '{currentNPCId}'");
-            }
+            Debug.LogWarning($"[NarrativeManager] Cannot set flag '{flagName}' - no current narrative component!");
+            return;
         }
+
+        currentNarrativeComponent.SetFlag(flagName, value);
     }
 
     /// <summary>
-    /// Check if an interaction flag is set for the current NPC
+    /// Check if the current narrative asset has a flag
     /// </summary>
     public bool HasFlag(string flagName)
     {
-        if (string.IsNullOrEmpty(currentNPCId) || string.IsNullOrEmpty(flagName))
+        if (currentNarrativeComponent == null)
             return false;
 
-        return npcInteractionFlags.ContainsKey(currentNPCId) && 
-               npcInteractionFlags[currentNPCId].Contains(flagName);
-    }
-
-    /// <summary>
-    /// Get all flags for the current NPC
-    /// </summary>
-    public HashSet<string> GetAllFlags()
-    {
-        if (string.IsNullOrEmpty(currentNPCId))
-            return new HashSet<string>();
-
-        return npcInteractionFlags.ContainsKey(currentNPCId) ? 
-               new HashSet<string>(npcInteractionFlags[currentNPCId]) : 
-               new HashSet<string>();
-    }
-
-    /// <summary>
-    /// Clear all flags for the current NPC (useful for testing)
-    /// </summary>
-    public void ClearAllFlags()
-    {
-        if (!string.IsNullOrEmpty(currentNPCId) && npcInteractionFlags.ContainsKey(currentNPCId))
-        {
-            npcInteractionFlags[currentNPCId].Clear();
-            
-            if (debugInteractionFlags)
-            {
-                Debug.Log($"[NarrativeManager] Cleared all flags for NPC '{currentNPCId}'");
-            }
-        }
+        return currentNarrativeComponent.HasFlag(flagName);
     }
 
     #endregion
-
-    #region Persistence
-
-    /// <summary>
-    /// Save interaction flags to PlayerPrefs
-    /// </summary>
-    private void SaveInteractionFlags()
-    {
-        try
-        {
-            foreach (var npcData in npcInteractionFlags)
-            {
-                string flagsJson = string.Join(",", npcData.Value);
-                PlayerPrefs.SetString($"NarrativeFlags_{npcData.Key}", flagsJson);
-            }
-            PlayerPrefs.Save();
-            
-            if (debugInteractionFlags)
-            {
-                Debug.Log($"[NarrativeManager] Saved interaction flags for {npcInteractionFlags.Count} NPCs");
-            }
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"[NarrativeManager] Failed to save interaction flags: {e.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Load interaction flags from PlayerPrefs
-    /// </summary>
-    private void LoadInteractionFlags()
-    {
-        try
-        {
-            npcInteractionFlags.Clear();
-            
-            // PlayerPrefs doesn't have a way to enumerate keys, so we'll need to load flags as we encounter NPCs
-            // This method will be called when we need to load flags for a specific NPC
-            
-            if (debugInteractionFlags)
-            {
-                Debug.Log("[NarrativeManager] Interaction flags system initialized");
-            }
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"[NarrativeManager] Failed to load interaction flags: {e.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Load flags for a specific NPC ID
-    /// </summary>
-    private void LoadFlagsForNPC(string npcId)
-    {
-        if (string.IsNullOrEmpty(npcId) || npcInteractionFlags.ContainsKey(npcId))
-            return;
-
-        string savedFlags = PlayerPrefs.GetString($"NarrativeFlags_{npcId}", "");
-        
-        if (!string.IsNullOrEmpty(savedFlags))
-        {
-            npcInteractionFlags[npcId] = new HashSet<string>(savedFlags.Split(','));
-            
-            if (debugInteractionFlags)
-            {
-                Debug.Log($"[NarrativeManager] Loaded {npcInteractionFlags[npcId].Count} flags for NPC '{npcId}'");
-            }
-        }
-        else
-        {
-            npcInteractionFlags[npcId] = new HashSet<string>();
-        }
-    }
-
-    #endregion
-
-    /// <summary>
-    /// Get the current dialogue lines map for external access
-    /// </summary>
-    public Dictionary<string, DialogueLine> GetCurrentDialogueLinesMap()
-    {
-        return currentDialogueLinesMap;
-    }
-
-    /// <summary>
-    /// Override the current NPC ID (useful for testing or special cases)
-    /// </summary>
-    public void SetCurrentNPCId(string npcId)
-    {
-        currentNPCId = npcId;
-        LoadFlagsForNPC(npcId);
-    }
 }
 
 /// <summary>

@@ -69,7 +69,7 @@ public class NarrativeMenu : MenuBase
     }
 
     /// <summary>
-    /// Filter dialogue options based on interaction flags
+    /// Filter dialogue options based on component's progression flags
     /// </summary>
     private List<DialogueOption> FilterOptionsByFlags(List<DialogueOption> options)
     {

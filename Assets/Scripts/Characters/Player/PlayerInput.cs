@@ -55,6 +55,16 @@ public class PlayerInput : MonoBehaviour
     public event Action OnSelectPressed;
     public event Action OnLeftStickPressed;
     public event Action OnRightStickPressed;
+    
+    // Quick Access Buttons
+    public event Action OnQuickSavePressed;
+    public event Action OnQuickLoadPressed;
+    #endregion
+
+    #region Input Settings
+    [Header("Quick Access Keys")]
+    [SerializeField] private KeyCode quickSaveKey = KeyCode.F5;
+    [SerializeField] private KeyCode quickLoadKey = KeyCode.F9;
     #endregion
 
     #region Properties
@@ -127,6 +137,8 @@ public class PlayerInput : MonoBehaviour
         OnSelectPressed = null;
         OnLeftStickPressed = null;
         OnRightStickPressed = null;
+        OnQuickSavePressed = null;
+        OnQuickLoadPressed = null;
     }
     #endregion
 
@@ -155,6 +167,7 @@ public class PlayerInput : MonoBehaviour
         ProcessFaceButtons();
         ProcessShoulderButtons();
         ProcessSystemButtons();
+        ProcessQuickAccessButtons();
     }
 
     private void ProcessJoystickInput()
@@ -192,6 +205,12 @@ public class PlayerInput : MonoBehaviour
         if (Input.GetButtonDown("RightStickPress")) OnRightStickPressed?.Invoke();
         if (Input.GetButtonDown("Start")) OnStartPressed?.Invoke();
         if (Input.GetButtonDown("Select")) OnSelectPressed?.Invoke();
+    }
+
+    private void ProcessQuickAccessButtons()
+    {
+        if (Input.GetKeyDown(quickSaveKey)) OnQuickSavePressed?.Invoke();
+        if (Input.GetKeyDown(quickLoadKey)) OnQuickLoadPressed?.Invoke();
     }
 
     private void UpdatePlayerControlsWithDelay(PlayerControlType playerControlType, int frameDelay)

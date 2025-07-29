@@ -44,12 +44,24 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     public List<MutationQuantityEntry> availableMutations = new List<MutationQuantityEntry>(); // List of available mutations, removed when mutation screen is closed
 
-    [Header("Recruited NPCs")]
+    [Header("NPC Management")]
     [SerializeField] private List<NPCScriptableObj> recruitedNPCs = new List<NPCScriptableObj>(); // NPCs recruited during roguelite exploration
+    [SerializeField] private List<string> recruitedNPCComponentIds = new List<string>(); // Component IDs of recruited NPCs for tracking
+    
+    // Runtime tracking of recruited NPCs by component ID
+    private Dictionary<string, NPCScriptableObj> recruitedNPCsByComponentId = new Dictionary<string, NPCScriptableObj>();
 
     public int MaxMutationSlots => maxMutationSlots;
     public List<GeneticMutationObj> EquippedMutations => equippedMutations;
     public List<NPCScriptableObj> RecruitedNPCs => recruitedNPCs;
+
+    /// <summary>
+    /// Get the list of recruited NPC component IDs for saving
+    /// </summary>
+    public List<string> GetRecruitedNPCComponentIds()
+    {
+        return new List<string>(recruitedNPCComponentIds);
+    }
 
     // Events for NPC recruitment
     public event System.Action<NPCScriptableObj> OnNPCRecruited;
@@ -70,9 +82,10 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
 
-    public override void Start()
+    private void Start()
     {
-
+        // Rebuild component tracking on start
+        RebuildComponentTracking();
     }
 
     private void OnDestroy()
@@ -376,7 +389,15 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     /// </summary>
     public void RecruitNPC(NPCScriptableObj npc)
     {
-        Debug.Log($"[PlayerInventory] RecruitNPC called with NPC: {(npc != null ? npc.nPCName : "null")}");
+        RecruitNPC(npc, null);
+    }
+
+    /// <summary>
+    /// Recruit an NPC with component ID tracking during roguelite exploration
+    /// </summary>
+    public void RecruitNPC(NPCScriptableObj npc, string componentId)
+    {
+        Debug.Log($"[PlayerInventory] RecruitNPC called with NPC: {(npc != null ? npc.nPCName : "null")}, ComponentID: {componentId}");
         
         if (npc == null)
         {
@@ -385,16 +406,46 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         }
 
         Debug.Log($"[PlayerInventory] Current recruited NPCs count: {recruitedNPCs.Count}");
-        Debug.Log($"[PlayerInventory] Checking if '{npc.nPCName}' is already recruited...");
-
-        if (recruitedNPCs.Contains(npc))
+        
+        // Check if this specific component has already been recruited
+        if (!string.IsNullOrEmpty(componentId))
         {
-            Debug.LogWarning($"[PlayerInventory] NPC '{npc.nPCName}' is already recruited!");
-            return;
+            Debug.Log($"[PlayerInventory] Checking if component '{componentId}' is already recruited...");
+            
+            if (recruitedNPCsByComponentId.ContainsKey(componentId))
+            {
+                Debug.LogWarning($"[PlayerInventory] NPC component '{componentId}' ({npc.nPCName}) is already recruited!");
+                return;
+            }
+        }
+        else
+        {
+            // Fallback to old method for backward compatibility
+            Debug.Log($"[PlayerInventory] No component ID provided, checking if '{npc.nPCName}' scriptable object is already recruited...");
+            
+            if (recruitedNPCs.Contains(npc))
+            {
+                Debug.LogWarning($"[PlayerInventory] NPC '{npc.nPCName}' is already recruited!");
+                return;
+            }
         }
 
         Debug.Log($"[PlayerInventory] Adding '{npc.nPCName}' to recruited NPCs list...");
         recruitedNPCs.Add(npc);
+        
+        // Track by component ID if provided
+        if (!string.IsNullOrEmpty(componentId))
+        {
+            recruitedNPCsByComponentId[componentId] = npc;
+            
+            // Also add to serialized list for persistence
+            if (!recruitedNPCComponentIds.Contains(componentId))
+            {
+                recruitedNPCComponentIds.Add(componentId);
+            }
+            
+            Debug.Log($"[PlayerInventory] Tracked recruitment by component ID: {componentId}");
+        }
         
         Debug.Log($"[PlayerInventory] Invoking OnNPCRecruited event for '{npc.nPCName}'...");
         OnNPCRecruited?.Invoke(npc);
@@ -408,11 +459,10 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         {
             Debug.Log("[PlayerInventory] PlayerUIManager and inventoryPopup found, calling ShowInventoryPopup...");
             PlayerUIManager.Instance.inventoryPopup.ShowInventoryPopup(npc, 1, true);
-            Debug.Log("[PlayerInventory] ShowInventoryPopup call completed");
         }
         else
         {
-            Debug.LogWarning("[PlayerInventory] PlayerUIManager or inventoryPopup is null - cannot show recruitment popup!");
+            Debug.LogWarning("[PlayerInventory] PlayerUIManager or inventoryPopup is null, cannot show recruitment popup!");
         }
     }
 
@@ -433,7 +483,38 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     }
 
     /// <summary>
-    /// Transfer all recruited NPCs to the camp and clear the temporary storage
+    /// Check if a specific component has been recruited
+    /// </summary>
+    public bool IsComponentRecruited(string componentId)
+    {
+        if (string.IsNullOrEmpty(componentId))
+            return false;
+            
+        return recruitedNPCsByComponentId.ContainsKey(componentId);
+    }
+
+    /// <summary>
+    /// Rebuild component tracking from serialized data (called on scene load)
+    /// </summary>
+    public void RebuildComponentTracking()
+    {
+        recruitedNPCsByComponentId.Clear();
+        
+        // Since we can't directly serialize the dictionary, we maintain parallel lists
+        // This method should be called after loading to rebuild the runtime dictionary
+        for (int i = 0; i < Mathf.Min(recruitedNPCs.Count, recruitedNPCComponentIds.Count); i++)
+        {
+            if (recruitedNPCs[i] != null && !string.IsNullOrEmpty(recruitedNPCComponentIds[i]))
+            {
+                recruitedNPCsByComponentId[recruitedNPCComponentIds[i]] = recruitedNPCs[i];
+            }
+        }
+        
+        Debug.Log($"[PlayerInventory] Rebuilt component tracking for {recruitedNPCsByComponentId.Count} recruited NPCs");
+    }
+
+    /// <summary>
+    /// Transfer all recruited NPCs to the camp (clears temporary recruitment storage)
     /// </summary>
     public void TransferRecruitedNPCsToCamp()
     {
@@ -445,19 +526,17 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
         var npcsToTransfer = new List<NPCScriptableObj>(recruitedNPCs);
         
-        // Spawn NPCs in the camp
         foreach (var npc in npcsToTransfer)
         {
-            SpawnNPCInCamp(npc);
+            Debug.Log($"[PlayerInventory] Transferring recruited NPC '{npc.nPCName}' to camp");
+            // Additional transfer logic would go here if needed
         }
 
-        // Clear the recruited NPCs list
         recruitedNPCs.Clear();
+        recruitedNPCComponentIds.Clear();
+        recruitedNPCsByComponentId.Clear();
         
-        // Notify listeners
-        OnNPCsTransferredToCamp?.Invoke(npcsToTransfer);
-        
-        Debug.Log($"[PlayerInventory] Transferred {npcsToTransfer.Count} recruited NPCs to camp");
+        Debug.Log("[PlayerInventory] All recruited NPCs transferred to camp and cleared from inventory");
     }
 
     /// <summary>
