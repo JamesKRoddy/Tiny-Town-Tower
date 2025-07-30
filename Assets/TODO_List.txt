@@ -8,7 +8,7 @@ Tomorrow work:
 Recruiting NPCs:
 
 ApplyRandomCharacteristic
-Do the same for a random skin mesh
+Do the same for a random skin mesh, have to get this working with the save manager stuff
 
 Randomly generating npcs, stats, models etc. in the npc manager.
 Randomly generating NPC models
