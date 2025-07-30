@@ -13,6 +13,16 @@ namespace Managers
         [Header("Characteristic Settings")]
         [SerializeField] private List<NPCCharacteristicScriptableObj> allCharacteristics = new List<NPCCharacteristicScriptableObj>();
 
+        [Header("Settler Generation")]
+        [SerializeField] private GameObject settlerPrefab; // Base settler prefab for procedural generation
+        [SerializeField] private TextAsset settlerNamesFile; // Text file with settler names (one per line)
+        [SerializeField] private Vector2Int ageRange = new Vector2Int(18, 65); // Min and max age for settlers
+        [SerializeField] private TextAsset settlerDescriptionsFile; // Text file with description templates
+        
+        // Cached data for random generation
+        private List<string> availableNames = new List<string>();
+        private List<string> availableDescriptions = new List<string>();
+
         [Header("NPC Tracking")]
         private List<SettlerNPC> activeNPCs = new List<SettlerNPC>();
         public int TotalNPCs => activeNPCs.Count;
@@ -45,6 +55,9 @@ namespace Managers
             {
                 GameManager.Instance.OnGameModeChanged += OnGameModeChanged;
             }
+            
+            // Initialize settler generation data
+            InitializeSettlerGenerationData();
         }
 
         private void OnGameModeChanged(GameMode newGameMode)
@@ -202,6 +215,103 @@ namespace Managers
 
         #endregion
 
+        #region Settler Generation
+
+        /// <summary>
+        /// Initialize settler generation data from text files
+        /// </summary>
+        private void InitializeSettlerGenerationData()
+        {
+            // Load names from text file
+            if (settlerNamesFile != null)
+            {
+                string[] names = settlerNamesFile.text.Split('\n');
+                availableNames.Clear();
+                foreach (string name in names)
+                {
+                    string trimmedName = name.Trim();
+                    if (!string.IsNullOrEmpty(trimmedName))
+                    {
+                        availableNames.Add(trimmedName);
+                    }
+                }
+                Debug.Log($"[NPCManager] Loaded {availableNames.Count} settler names");
+            }
+            else
+            {
+                Debug.LogWarning("[NPCManager] No settler names file assigned! Using default names.");
+                availableNames.AddRange(new string[] { "Alex", "Morgan", "Casey", "Jordan", "Taylor", "Riley", "Sage", "Quinn", "Avery", "Blake" });
+            }
+
+            // Load descriptions from text file
+            if (settlerDescriptionsFile != null)
+            {
+                string[] descriptions = settlerDescriptionsFile.text.Split('\n');
+                availableDescriptions.Clear();
+                foreach (string description in descriptions)
+                {
+                    string trimmedDesc = description.Trim();
+                    if (!string.IsNullOrEmpty(trimmedDesc))
+                    {
+                        availableDescriptions.Add(trimmedDesc);
+                    }
+                }
+                Debug.Log($"[NPCManager] Loaded {availableDescriptions.Count} settler descriptions");
+            }
+            else
+            {
+                Debug.LogWarning("[NPCManager] No settler descriptions file assigned! Using default descriptions.");
+                availableDescriptions.AddRange(new string[] {
+                    "A hardworking individual with a strong sense of community.",
+                    "Someone who values both independence and cooperation.",
+                    "A resourceful person with varied life experiences.",
+                    "An adaptable settler ready for new challenges.",
+                    "A practical person with a positive outlook."
+                });
+            }
+        }
+
+        /// <summary>
+        /// Get the settler prefab for spawning (appearance randomization happens via appearance system)
+        /// </summary>
+        public GameObject GetSettlerPrefab()
+        {
+            if (settlerPrefab == null)
+            {
+                Debug.LogError("[NPCManager] No settler prefab assigned!");
+                return null;
+            }
+
+            return settlerPrefab;
+        }
+
+        /// <summary>
+        /// Generate random settler data (name, age, description)
+        /// </summary>
+        public SettlerData GenerateRandomSettlerData()
+        {
+            string randomName = availableNames.Count > 0 ? 
+                availableNames[UnityEngine.Random.Range(0, availableNames.Count)] : "Unknown Settler";
+            
+            int randomAge = UnityEngine.Random.Range(ageRange.x, ageRange.y + 1);
+            
+            string randomDescription = availableDescriptions.Count > 0 ? 
+                availableDescriptions[UnityEngine.Random.Range(0, availableDescriptions.Count)] : "A mysterious settler.";
+
+            return new SettlerData(randomName, randomAge, randomDescription);
+        }
+
+        /// <summary>
+        /// Check if settler generation is properly configured
+        /// </summary>
+        public bool IsSettlerGenerationConfigured()
+        {
+            return settlerPrefab != null &&
+                   availableNames.Count > 0 && availableDescriptions.Count > 0;
+        }
+
+        #endregion
+
         private void OnDestroy()
         {
             // Clean up event subscriptions
@@ -214,6 +324,24 @@ namespace Managers
             {
                 PlayerInventory.Instance.OnNPCsTransferredToCamp -= ShowTransferNotification;
             }
+        }
+    }
+
+    /// <summary>
+    /// Data structure for procedurally generated settler information
+    /// </summary>
+    [System.Serializable]
+    public class SettlerData
+    {
+        public string name;
+        public int age;
+        public string description;
+
+        public SettlerData(string name, int age, string description)
+        {
+            this.name = name;
+            this.age = age;
+            this.description = description;
         }
     }
 } 

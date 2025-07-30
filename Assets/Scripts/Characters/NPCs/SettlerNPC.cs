@@ -630,6 +630,65 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     }
 
     /// <summary>
+    /// Apply procedural settler data (name, age, description) for settlers without NPCScriptableObj
+    /// </summary>
+    public void ApplySettlerData(Managers.SettlerData settlerData)
+    {
+        if (settlerData == null)
+        {
+            Debug.LogWarning($"[SettlerNPC] {gameObject.name} - Settler data is null!");
+            return;
+        }
+
+        // Set the gameobject name to match the settler's name
+        gameObject.name = $"Settler_{settlerData.name}";
+        
+        // Store settler data for potential UI display
+        // Since we don't have an NPCScriptableObj, we store this data locally
+        settlerName = settlerData.name;
+        settlerAge = settlerData.age;
+        settlerDescription = settlerData.description;
+        
+        Debug.Log($"[SettlerNPC] Applied settler data - Name: {settlerData.name}, Age: {settlerData.age}");
+    }
+
+    // Procedural settler data fields (used when no NPCScriptableObj is available)
+    [Header("Procedural Settler Data")]
+    [SerializeField, ReadOnly] private string settlerName;
+    [SerializeField, ReadOnly] private int settlerAge;
+    [SerializeField, ReadOnly] private string settlerDescription;
+
+    /// <summary>
+    /// Get the settler's name (either from NPCScriptableObj or procedural data)
+    /// </summary>
+    public string GetSettlerName()
+    {
+        if (nPCDataObj != null)
+            return nPCDataObj.nPCName;
+        return !string.IsNullOrEmpty(settlerName) ? settlerName : "Unknown Settler";
+    }
+
+    /// <summary>
+    /// Get the settler's age (either from NPCScriptableObj or procedural data)
+    /// </summary>
+    public int GetSettlerAge()
+    {
+        if (nPCDataObj != null)
+            return nPCDataObj.nPCAge;
+        return settlerAge;
+    }
+
+    /// <summary>
+    /// Get the settler's description (either from NPCScriptableObj or procedural data)
+    /// </summary>
+    public string GetSettlerDescription()
+    {
+        if (nPCDataObj != null)
+            return nPCDataObj.nPCDescription;
+        return !string.IsNullOrEmpty(settlerDescription) ? settlerDescription : "A mysterious settler.";
+    }
+
+    /// <summary>
     /// Call this to put the NPC into the sheltered state (e.g., when entering a bunker)
     /// </summary>
     public void EnterShelter(BunkerBuilding bunker)

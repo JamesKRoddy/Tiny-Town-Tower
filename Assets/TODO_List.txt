@@ -7,8 +7,6 @@ Update the players camera to be at an angle!
 
 Recruiting NPCs:
 
-So npcs are coming back to the camp but their models are not enabled, guessing issues with saving/loading too.
-
 Randomly generating npcs, stats, models etc. in the npc manager.
 Randomly generating NPC models
 Randomly assigning narrative elements (have these stored in a specific place, in the json assign a character type or something and have it assigned by that?

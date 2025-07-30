@@ -95,8 +95,14 @@ public class NPCSaveData
     public List<string> equippedCharacteristicIds = new List<string>();
     public List<ResourceItemData> inventory = new List<ResourceItemData>();
     public WeaponData equippedWeapon;
-    public string npcDataObjName; // Reference to SettlerNPCScriptableObj
+    public string npcDataObjName; // Reference to NPCScriptableObj (for unique NPCs)
     public NPCAppearanceData appearanceData; // NPC appearance information
+    
+    // Procedural settler data (for NPCs without NPCScriptableObj)
+    public string settlerName;
+    public int settlerAge;
+    public string settlerDescription;
+    public bool isProceduralSettler; // Flag to distinguish between unique NPCs and procedural settlers
 }
 
 [Serializable]
@@ -516,6 +522,21 @@ public class SaveLoadManager : MonoBehaviour
                 Debug.LogWarning($"[SaveLoadManager] No appearance system found for {npc.name}");
             }
 
+            // Save settler data (for procedural settlers without NPCScriptableObj)
+            if (npc.nPCDataObj == null)
+            {
+                // This is a procedural settler, save their generated data
+                npcSaveData.isProceduralSettler = true;
+                npcSaveData.settlerName = npc.GetSettlerName();
+                npcSaveData.settlerAge = npc.GetSettlerAge();
+                npcSaveData.settlerDescription = npc.GetSettlerDescription();
+                Debug.Log($"[SaveLoadManager] Saved procedural settler data: {npcSaveData.settlerName}, Age {npcSaveData.settlerAge}");
+            }
+            else
+            {
+                npcSaveData.isProceduralSettler = false;
+            }
+
             npcData.npcs.Add(npcSaveData);
         }
     }
@@ -532,17 +553,27 @@ public class SaveLoadManager : MonoBehaviour
         {
             GameObject npcPrefab = null;
             
-            // Try to find the NPCScriptableObj by name first
+            // Try to find the NPCScriptableObj by name first (for unique NPCs)
             NPCScriptableObj npcScriptable = FindNPCScriptableByName(npcSaveData.npcDataObjName);
             if (npcScriptable?.prefab != null)
             {
                 npcPrefab = npcScriptable.prefab;
-                Debug.Log($"[SaveLoadManager] Using NPCScriptableObj prefab for: {npcSaveData.npcDataObjName}");
+                Debug.Log($"[SaveLoadManager] Using NPCScriptableObj prefab for unique NPC: {npcSaveData.npcDataObjName}");
             }
             else
             {
-                Debug.LogError($"[SaveLoadManager] No NPCScriptableObj available for: {npcSaveData.npcDataObjName}");
-                continue;
+                // For procedural settlers, use the settler prefab
+                if (NPCManager.Instance != null && NPCManager.Instance.IsSettlerGenerationConfigured())
+                {
+                    // Use the settler prefab (appearance randomization happens via appearance system)
+                    npcPrefab = NPCManager.Instance.GetSettlerPrefab();
+                    Debug.Log($"[SaveLoadManager] Using settler prefab for loading saved settler: {npcSaveData.settlerName ?? npcSaveData.npcDataObjName}");
+                }
+                else
+                {
+                    Debug.LogError($"[SaveLoadManager] No NPCScriptableObj or NPCManager available for: {npcSaveData.settlerName ?? npcSaveData.npcDataObjName}");
+                    continue;
+                }
             }
 
             // Instantiate the NPC prefab
@@ -550,10 +581,21 @@ public class SaveLoadManager : MonoBehaviour
             
             if (npcObject.TryGetComponent<SettlerNPC>(out var settlerNPC))
             {
-                // Set the NPCScriptableObj reference if we found one
+                // Set the NPCScriptableObj reference if we found one (unique NPCs)
                 if (npcScriptable != null)
                 {
                     settlerNPC.nPCDataObj = npcScriptable;
+                }
+                else if (npcSaveData.isProceduralSettler)
+                {
+                    // For procedural settlers, restore the saved settler data (NOT random!)
+                    var savedSettlerData = new Managers.SettlerData(
+                        npcSaveData.settlerName ?? "Unknown Settler",
+                        npcSaveData.settlerAge,
+                        npcSaveData.settlerDescription ?? "A mysterious settler."
+                    );
+                    settlerNPC.ApplySettlerData(savedSettlerData);
+                    Debug.Log($"[SaveLoadManager] Restored saved settler data: {savedSettlerData.name}, Age {savedSettlerData.age}");
                 }
                 
                 // Set initialization context for loaded NPCs
@@ -562,7 +604,8 @@ public class SaveLoadManager : MonoBehaviour
                 // Restore the NPC's state from save data
                 settlerNPC.RestoreFromSaveData(npcSaveData);
                 
-                Debug.Log($"[SaveLoadManager] Successfully loaded NPC: {npcSaveData.npcDataObjName} at {npcSaveData.position}");
+                string npcDisplayName = npcSaveData.settlerName ?? npcSaveData.npcDataObjName ?? "Unknown NPC";
+                Debug.Log($"[SaveLoadManager] Successfully loaded NPC: {npcDisplayName} at {npcSaveData.position}");
             }
             else
             {

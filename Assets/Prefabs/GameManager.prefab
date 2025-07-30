@@ -483,7 +483,6 @@ MonoBehaviour:
   - narrativeType: 0
     dialogueFile: {fileID: 0}
     description: 
-  narrativeMenu: {fileID: 0}
 --- !u!1 &4877649756777795953
 GameObject:
   m_ObjectHideFlags: 0
@@ -530,6 +529,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   allCharacteristics:
   - {fileID: 11400000, guid: 1b625b9d8abe06345a1c73f38c0ff940, type: 2}
+  settlerPrefab: {fileID: 2985604360754162274, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+  settlerNamesFile: {fileID: 4900000, guid: a790deceafeb3ee4598933fe9fec82cb, type: 3}
+  ageRange: {x: 18, y: 65}
+  settlerDescriptionsFile: {fileID: 4900000, guid: 61b07386d7bf93c42879a2019c54086f, type: 3}
   transferDelay: 2
   showTransferNotification: 1
 --- !u!1 &5052584228449062672

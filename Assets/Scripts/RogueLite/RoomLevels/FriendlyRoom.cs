@@ -62,14 +62,14 @@ public class FriendlyRoom : RogueLiteRoom
     }
     
     /// <summary>
-    /// Spawn friendly NPCs at the designated spawn points
+    /// Spawn friendly NPCs at the designated spawn points using procedural settler system
     /// </summary>
     public void SpawnNPCs()
     {
-        var settlerNPCs = GetBuildingNPCs();
-        if (settlerNPCs == null || settlerNPCs.Length == 0)
+        // Check if NPCManager is configured for procedural settler generation
+        if (NPCManager.Instance == null || !NPCManager.Instance.IsSettlerGenerationConfigured())
         {
-            Debug.LogWarning($"[FriendlyRoom] No settler NPCs available for building in {gameObject.name}");
+            Debug.LogWarning($"[FriendlyRoom] NPCManager not configured for settler generation in room: {gameObject.name}");
             return;
         }
         
@@ -81,27 +81,29 @@ public class FriendlyRoom : RogueLiteRoom
             // Random chance to spawn an NPC at this point
             if (Random.Range(0f, 100f) <= GetNPCSpawnChance())
             {
-                // Select a random settler NPC
-                NPCScriptableObj settlerNPC = settlerNPCs[Random.Range(0, settlerNPCs.Length)];
-                
-                // Get the prefab from the settler NPC and spawn it
-                GameObject npcPrefab = settlerNPC.prefab;
+                // Get the procedural settler prefab from NPCManager
+                GameObject npcPrefab = NPCManager.Instance.GetSettlerPrefab();
                 if (npcPrefab != null)
                 {
                     GameObject spawnedNPC = Instantiate(npcPrefab, spawnPoint.position, spawnPoint.rotation, spawnPoint);
                     spawnedNPCs[i] = spawnedNPC;
                     
-                    // Set the initialization context for fresh spawns in roguelike rooms
+                    // Set up the procedural settler
                     if (spawnedNPC.TryGetComponent<SettlerNPC>(out var settlerNPCComponent))
                     {
+                        // Generate random settler data
+                        var settlerData = NPCManager.Instance.GenerateRandomSettlerData();
+                        settlerNPCComponent.ApplySettlerData(settlerData);
+                        
+                        // Set initialization context (this will trigger appearance randomization)
                         settlerNPCComponent.SetInitializationContext(NPCInitializationContext.FRESH_SPAWN);
+                        
+                        Debug.Log($"[FriendlyRoom] Spawned procedural settler '{settlerData.name}' (Age {settlerData.age}) at spawn point {i + 1} in room '{gameObject.name}'");
                     }
-                    
-                    Debug.Log($"[FriendlyRoom] Spawned NPC '{settlerNPC.nPCName}' at spawn point {i + 1} in room '{gameObject.name}'");
                 }
                 else
                 {
-                    Debug.LogWarning($"[FriendlyRoom] Settler NPC '{settlerNPC.nPCName}' has no prefab assigned!");
+                    Debug.LogWarning($"[FriendlyRoom] No settler prefab available from NPCManager!");
                 }
             }
         }
@@ -185,7 +187,8 @@ public class FriendlyRoom : RogueLiteRoom
     }
     
     /// <summary>
-    /// Get the available settler NPCs for this room from the building data
+    /// Get the available unique NPCs for this room from the building data
+    /// Note: This method is now primarily for unique NPCs, not procedural settlers
     /// </summary>
     public NPCScriptableObj[] GetBuildingNPCs()
     {
