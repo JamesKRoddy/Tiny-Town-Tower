@@ -480,7 +480,7 @@ public class SaveLoadManager : MonoBehaviour
                                  hunger = npc.GetHungerPercentage() * 100f, // Convert percentage back to value
                 additionalMutationSlots = npc.additionalMutationSlots,
                 currentTaskType = npc.GetCurrentTaskType().ToString(),
-                npcDataObjName = npc.nPCDataObj?.name
+                npcDataObjName = null // SettlerNPC no longer uses NPCScriptableObj
             };
 
             // Save equipped characteristics
@@ -522,20 +522,12 @@ public class SaveLoadManager : MonoBehaviour
                 Debug.LogWarning($"[SaveLoadManager] No appearance system found for {npc.name}");
             }
 
-            // Save settler data (for procedural settlers without NPCScriptableObj)
-            if (npc.nPCDataObj == null)
-            {
-                // This is a procedural settler, save their generated data
-                npcSaveData.isProceduralSettler = true;
-                npcSaveData.settlerName = npc.GetSettlerName();
-                npcSaveData.settlerAge = npc.GetSettlerAge();
-                npcSaveData.settlerDescription = npc.GetSettlerDescription();
-                Debug.Log($"[SaveLoadManager] Saved procedural settler data: {npcSaveData.settlerName}, Age {npcSaveData.settlerAge}");
-            }
-            else
-            {
-                npcSaveData.isProceduralSettler = false;
-            }
+            // Save settler data (all SettlerNPCs are now procedural)
+            npcSaveData.isProceduralSettler = true;
+            npcSaveData.settlerName = npc.GetSettlerName();
+            npcSaveData.settlerAge = npc.GetSettlerAge();
+            npcSaveData.settlerDescription = npc.GetSettlerDescription();
+            Debug.Log($"[SaveLoadManager] Saved procedural settler data: {npcSaveData.settlerName}, Age {npcSaveData.settlerAge}");
 
             npcData.npcs.Add(npcSaveData);
         }
@@ -553,27 +545,16 @@ public class SaveLoadManager : MonoBehaviour
         {
             GameObject npcPrefab = null;
             
-            // Try to find the NPCScriptableObj by name first (for unique NPCs)
-            NPCScriptableObj npcScriptable = FindNPCScriptableByName(npcSaveData.npcDataObjName);
-            if (npcScriptable?.prefab != null)
+            // All saved NPCs are now procedural settlers, use NPCManager's settler prefab
+            if (NPCManager.Instance != null && NPCManager.Instance.IsSettlerGenerationConfigured())
             {
-                npcPrefab = npcScriptable.prefab;
-                Debug.Log($"[SaveLoadManager] Using NPCScriptableObj prefab for unique NPC: {npcSaveData.npcDataObjName}");
+                npcPrefab = NPCManager.Instance.GetSettlerPrefab();
+                Debug.Log($"[SaveLoadManager] Using settler prefab for loading saved settler: {npcSaveData.settlerName}");
             }
             else
             {
-                // For procedural settlers, use the settler prefab
-                if (NPCManager.Instance != null && NPCManager.Instance.IsSettlerGenerationConfigured())
-                {
-                    // Use the settler prefab (appearance randomization happens via appearance system)
-                    npcPrefab = NPCManager.Instance.GetSettlerPrefab();
-                    Debug.Log($"[SaveLoadManager] Using settler prefab for loading saved settler: {npcSaveData.settlerName ?? npcSaveData.npcDataObjName}");
-                }
-                else
-                {
-                    Debug.LogError($"[SaveLoadManager] No NPCScriptableObj or NPCManager available for: {npcSaveData.settlerName ?? npcSaveData.npcDataObjName}");
-                    continue;
-                }
+                Debug.LogError($"[SaveLoadManager] NPCManager not configured for settler generation. Cannot load settler: {npcSaveData.settlerName}");
+                continue;
             }
 
             // Instantiate the NPC prefab
@@ -581,22 +562,14 @@ public class SaveLoadManager : MonoBehaviour
             
             if (npcObject.TryGetComponent<SettlerNPC>(out var settlerNPC))
             {
-                // Set the NPCScriptableObj reference if we found one (unique NPCs)
-                if (npcScriptable != null)
-                {
-                    settlerNPC.nPCDataObj = npcScriptable;
-                }
-                else if (npcSaveData.isProceduralSettler)
-                {
-                    // For procedural settlers, restore the saved settler data (NOT random!)
-                    var savedSettlerData = new Managers.SettlerData(
-                        npcSaveData.settlerName ?? "Unknown Settler",
-                        npcSaveData.settlerAge,
-                        npcSaveData.settlerDescription ?? "A mysterious settler."
-                    );
-                    settlerNPC.ApplySettlerData(savedSettlerData);
-                    Debug.Log($"[SaveLoadManager] Restored saved settler data: {savedSettlerData.name}, Age {savedSettlerData.age}");
-                }
+                // Restore the saved settler data (all NPCs are now procedural)
+                var savedSettlerData = new Managers.SettlerData(
+                    npcSaveData.settlerName ?? "Unknown Settler",
+                    npcSaveData.settlerAge,
+                    npcSaveData.settlerDescription ?? "A mysterious settler."
+                );
+                settlerNPC.ApplySettlerData(savedSettlerData);
+                Debug.Log($"[SaveLoadManager] Restored saved settler data: {savedSettlerData.name}, Age {savedSettlerData.age}");
                 
                 // Set initialization context for loaded NPCs
                 settlerNPC.SetInitializationContext(NPCInitializationContext.LOADED_FROM_SAVE);
@@ -604,8 +577,7 @@ public class SaveLoadManager : MonoBehaviour
                 // Restore the NPC's state from save data
                 settlerNPC.RestoreFromSaveData(npcSaveData);
                 
-                string npcDisplayName = npcSaveData.settlerName ?? npcSaveData.npcDataObjName ?? "Unknown NPC";
-                Debug.Log($"[SaveLoadManager] Successfully loaded NPC: {npcDisplayName} at {npcSaveData.position}");
+                Debug.Log($"[SaveLoadManager] Successfully loaded settler: {npcSaveData.settlerName} at {npcSaveData.position}");
             }
             else
             {
@@ -657,15 +629,8 @@ public class SaveLoadManager : MonoBehaviour
             );
         }
 
-        // Save recruited NPCs with component tracking
-        var recruitedNPCs = playerInventory.RecruitedNPCs;
-        foreach (var npc in recruitedNPCs)
-        {
-            if (npc != null)
-            {
-                playerData.recruitedNPCIds.Add(npc.name);
-            }
-        }
+        // Recruited NPCs are now handled by the PlayerInventory transfer system
+        // No need to save them separately as they are transferred to camp immediately
 
         // Get component IDs (this accesses the private field through reflection or a public getter)
         var componentIds = playerInventory.GetRecruitedNPCComponentIds();
@@ -682,31 +647,9 @@ public class SaveLoadManager : MonoBehaviour
         playerInventory.ClearInventory();
         playerInventory.ClearAvailableMutations();
 
-        // Load recruited NPCs with component tracking
-        if (playerData.recruitedNPCIds != null && playerData.recruitedNPCIds.Count > 0)
-        {
-            // Clear existing recruited NPCs
-            playerInventory.TransferRecruitedNPCsToCamp(); // This clears the lists
-            
-            // Load recruited NPCs
-            for (int i = 0; i < playerData.recruitedNPCIds.Count; i++)
-            {
-                string npcId = playerData.recruitedNPCIds[i];
-                string componentId = i < playerData.recruitedNPCComponentIds.Count ? playerData.recruitedNPCComponentIds[i] : null;
-                
-                // Find the NPCScriptableObj by name
-                NPCScriptableObj npcScriptable = FindNPCScriptableByName(npcId);
-                if (npcScriptable != null)
-                {
-                    playerInventory.RecruitNPC(npcScriptable, componentId);
-                    Debug.Log($"[SaveLoadManager] Loaded recruited NPC: {npcId} with component ID: {componentId}");
-                }
-                else
-                {
-                    Debug.LogWarning($"[SaveLoadManager] Could not find NPCScriptableObj for: {npcId}");
-                }
-            }
-        }
+        // Recruited NPCs are now handled by immediate transfer to camp
+        // No longer need to load them separately as they become camp residents immediately
+        // and are saved as part of the camp's NPC data
 
         // TODO: Implement remaining player data loading
         // You'd need to find resource/mutation objects by ID and restore inventory

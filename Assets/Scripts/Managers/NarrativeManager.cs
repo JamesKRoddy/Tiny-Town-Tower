@@ -418,12 +418,12 @@ public class NarrativeManager : MonoBehaviour
             return;
         }
 
-        // Get the NPCScriptableObj from the conversation target
-        if (currentConversationTarget is SettlerNPC settlerNPC && settlerNPC.nPCDataObj != null)
+        // Recruit the procedural settler directly
+        if (currentConversationTarget is SettlerNPC settlerNPC)
         {
             // Pass the component ID and SettlerNPC reference to enable appearance data capture
             string componentId = currentNarrativeComponent?.GetInstanceID().ToString();
-            PlayerInventory.Instance.RecruitNPC(settlerNPC.nPCDataObj, componentId, settlerNPC);
+            PlayerInventory.Instance.RecruitNPC(settlerNPC, componentId);
             
             // Set recruitment success flag on the component
             SetFlag("recruited");

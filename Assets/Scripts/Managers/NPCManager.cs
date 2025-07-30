@@ -147,7 +147,7 @@ namespace Managers
                 return; // No NPCs to transfer
             }
 
-            var recruitedNPCs = PlayerInventory.Instance.GetRecruitedNPCs();
+            var recruitedNPCs = PlayerInventory.Instance.GetRecruitedSettlers();
             
             // Subscribe to transfer event to show notification
             if (showTransferNotification)
@@ -164,7 +164,7 @@ namespace Managers
         /// <summary>
         /// Show a notification when NPCs are transferred to camp
         /// </summary>
-        private void ShowTransferNotification(System.Collections.Generic.List<NPCScriptableObj> transferredNPCs)
+        private void ShowTransferNotification(System.Collections.Generic.List<SettlerData> transferredNPCs)
         {
             // Unsubscribe from event
             if (PlayerInventory.Instance != null)
@@ -174,13 +174,14 @@ namespace Managers
 
             if (transferredNPCs.Count == 1)
             {
-                Debug.Log($"[NPCManager] {transferredNPCs[0].nPCName} has joined your camp!");
+                Debug.Log($"[NPCManager] {transferredNPCs[0].name} has joined your camp!");
                 
                 // Show UI notification if available
                 if (PlayerUIManager.Instance?.inventoryPopup != null)
                 {
-                    // You could create a specific "NPC Joined Camp" popup here
-                    PlayerUIManager.Instance.inventoryPopup.ShowInventoryPopup(transferredNPCs[0], 1, true);
+                    // TODO: You could create a specific "NPC Joined Camp" popup here
+                    //PlayerUIManager.Instance.inventoryPopup.ShowInventoryPopup(transferredNPCs[0], 1, true);
+                    Debug.LogWarning("[NPCManager] NPC Joined Camp popup not implemented yet");
                 }
             }
             else
@@ -190,7 +191,7 @@ namespace Managers
                 // Show a summary notification for multiple NPCs
                 foreach (var npc in transferredNPCs)
                 {
-                    Debug.Log($"  - {npc.nPCName}");
+                    Debug.Log($"  - {npc.name}");
                 }
             }
         }

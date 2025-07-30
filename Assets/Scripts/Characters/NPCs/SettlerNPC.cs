@@ -11,10 +11,19 @@ using Mono.Cecil.Cil;
 [RequireComponent(typeof(NavMeshAgent))]
 public class SettlerNPC : HumanCharacterController, INarrativeTarget
 {
-    [Header("NPC Data")]
-    public NPCScriptableObj nPCDataObj;
+    [Header("Procedural Settler Data")]
+    [SerializeField, ReadOnly] private string settlerName;
+    [SerializeField, ReadOnly] private int settlerAge;
+    [SerializeField, ReadOnly] private string settlerDescription;
+    public string SettlerName => settlerName;
+    public int SettlerAge => settlerAge;
+    public string SettlerDescription => settlerDescription;
+
+    [Header("NPC Systems")]
     [SerializeField, ReadOnly] internal NPCCharacteristicSystem characteristicSystem;
     [SerializeField] internal NPCAppearanceSystem appearanceSystem;
+    
+    [Header("Task Management")]
     private _TaskState currentState;
     private WorkTask assignedWorkTask; // Track the assigned work task
     private bool isOnBreak = false; // Track if NPC is on break
@@ -190,10 +199,9 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
             ChangeState(taskStates[TaskType.WANDER]);
         }
 
-        // Apply characteristics from NPCScriptableObj or random if none specified
+        // Apply random characteristics for recruited settlers
         if (characteristicSystem != null)
         {
-            // TODO: Check if nPCDataObj has predefined characteristics, otherwise apply random
             characteristicSystem.ApplyRandomCharacteristic();
         }
     }
@@ -652,39 +660,27 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         Debug.Log($"[SettlerNPC] Applied settler data - Name: {settlerData.name}, Age: {settlerData.age}");
     }
 
-    // Procedural settler data fields (used when no NPCScriptableObj is available)
-    [Header("Procedural Settler Data")]
-    [SerializeField, ReadOnly] private string settlerName;
-    [SerializeField, ReadOnly] private int settlerAge;
-    [SerializeField, ReadOnly] private string settlerDescription;
-
     /// <summary>
-    /// Get the settler's name (either from NPCScriptableObj or procedural data)
+    /// Get the settler's name from procedural data
     /// </summary>
     public string GetSettlerName()
     {
-        if (nPCDataObj != null)
-            return nPCDataObj.nPCName;
         return !string.IsNullOrEmpty(settlerName) ? settlerName : "Unknown Settler";
     }
 
     /// <summary>
-    /// Get the settler's age (either from NPCScriptableObj or procedural data)
+    /// Get the settler's age from procedural data
     /// </summary>
     public int GetSettlerAge()
     {
-        if (nPCDataObj != null)
-            return nPCDataObj.nPCAge;
         return settlerAge;
     }
 
     /// <summary>
-    /// Get the settler's description (either from NPCScriptableObj or procedural data)
+    /// Get the settler's description from procedural data
     /// </summary>
     public string GetSettlerDescription()
     {
-        if (nPCDataObj != null)
-            return nPCDataObj.nPCDescription;
         return !string.IsNullOrEmpty(settlerDescription) ? settlerDescription : "A mysterious settler.";
     }
 
