@@ -155,13 +155,9 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     /// </summary>
     private void InitializeAsRecruited()
     {
-        // Apply appearance from NPCScriptableObj or random if none specified
-        if (appearanceSystem != null)
-        {
-            // TODO: Check if nPCDataObj has predefined appearance settings, otherwise apply random
-            appearanceSystem.RandomizeAppearance();
-        }
-
+        // Do NOT randomize appearance - it should be carried over from the recruited NPC gameobject
+        // The appearance was already set when the NPC was first spawned/recruited
+        
         // Default to WanderState
         if (taskStates.ContainsKey(TaskType.WANDER))
         {
@@ -239,6 +235,17 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
                     Debug.LogWarning($"[SettlerNPC] Could not find characteristic with ID: {characteristicId}");
                 }
             }
+        }
+
+        // Restore appearance
+        if (appearanceSystem != null && saveData.appearanceData != null)
+        {
+            appearanceSystem.SetAppearance(saveData.appearanceData);
+            Debug.Log($"[SettlerNPC] Restored appearance for {gameObject.name}");
+        }
+        else if (saveData.appearanceData == null)
+        {
+            Debug.LogWarning($"[SettlerNPC] No appearance data found for {gameObject.name}, keeping default appearance");
         }
 
         // Restore task state
@@ -866,9 +873,49 @@ public class NPCAppearanceSystem
     /// </summary>
     public void SetAppearance(NPCAppearanceData appearanceData)
     {
-        // TODO: Implement specific appearance setting for save/load functionality
-        // This would be used when loading NPCs from save data or setting predefined appearances
-        Debug.Log($"[NPCAppearanceSystem] SetAppearance called for {settlerNPC.name} - implementation needed");
+        if (settlerNPC == null)
+        {
+            Debug.LogError("NPCAppearanceSystem: Cannot set appearance - settlerNPC is null");
+            return;
+        }
+
+        if (appearanceData == null)
+        {
+            Debug.LogWarning($"[NPCAppearanceSystem] Appearance data is null for {settlerNPC.name}");
+            return;
+        }
+
+        // Clear current appearance
+        ClearCurrentAppearance();
+
+        // Set body parts
+        ActivateModelByName(bodyModels, appearanceData.bodyModelName, "Body");
+        ActivateModelByName(headModels, appearanceData.headModelName, "Head");
+        ActivateModelByName(hairModels, appearanceData.hairModelName, "Hair");
+
+        // Set clothing
+        ActivateModelByName(topClothing, appearanceData.topClothingName, "Top Clothing");
+        ActivateModelByName(bottomClothing, appearanceData.bottomClothingName, "Bottom Clothing");
+        ActivateModelByName(footwear, appearanceData.footwearName, "Footwear");
+
+        // Set accessories (only if they have values)
+        if (!string.IsNullOrEmpty(appearanceData.headAccessoryName))
+        {
+            ActivateModelByName(headAccessories, appearanceData.headAccessoryName, "Head Accessory");
+        }
+        if (!string.IsNullOrEmpty(appearanceData.backAccessoryName))
+        {
+            ActivateModelByName(backAccessories, appearanceData.backAccessoryName, "Back Accessory");
+        }
+        if (!string.IsNullOrEmpty(appearanceData.handAccessoryName))
+        {
+            ActivateModelByName(handAccessories, appearanceData.handAccessoryName, "Hand Accessory");
+        }
+
+        // Apply saved materials
+        ApplySavedMaterials(appearanceData);
+
+        Debug.Log($"[NPCAppearanceSystem] Set appearance for {settlerNPC.name} with {activeModels.Count} active models");
     }
     
     /// <summary>
@@ -876,10 +923,175 @@ public class NPCAppearanceSystem
     /// </summary>
     public NPCAppearanceData GetCurrentAppearanceData()
     {
-        // TODO: Implement appearance data extraction for save functionality
-        // This would return the current state of the NPC's appearance for saving
-        Debug.Log($"[NPCAppearanceSystem] GetCurrentAppearanceData called for {settlerNPC.name} - implementation needed");
-        return new NPCAppearanceData();
+        NPCAppearanceData appearanceData = new NPCAppearanceData();
+        
+        if (activeModels == null || activeModels.Count == 0)
+        {
+            Debug.LogWarning($"[NPCAppearanceSystem] No active models found for {settlerNPC?.name ?? "Unknown NPC"}");
+            return appearanceData;
+        }
+
+        foreach (GameObject activeModel in activeModels)
+        {
+            if (activeModel == null) continue;
+
+            string modelName = activeModel.name;
+            
+            // Determine which type of model this is and store its name
+            if (IsModelInArray(activeModel, bodyModels))
+            {
+                appearanceData.bodyModelName = modelName;
+            }
+            else if (IsModelInArray(activeModel, headModels))
+            {
+                appearanceData.headModelName = modelName;
+            }
+            else if (IsModelInArray(activeModel, hairModels))
+            {
+                appearanceData.hairModelName = modelName;
+            }
+            else if (IsModelInArray(activeModel, topClothing))
+            {
+                appearanceData.topClothingName = modelName;
+            }
+            else if (IsModelInArray(activeModel, bottomClothing))
+            {
+                appearanceData.bottomClothingName = modelName;
+            }
+            else if (IsModelInArray(activeModel, footwear))
+            {
+                appearanceData.footwearName = modelName;
+            }
+            else if (IsModelInArray(activeModel, headAccessories))
+            {
+                appearanceData.headAccessoryName = modelName;
+            }
+            else if (IsModelInArray(activeModel, backAccessories))
+            {
+                appearanceData.backAccessoryName = modelName;
+            }
+            else if (IsModelInArray(activeModel, handAccessories))
+            {
+                appearanceData.handAccessoryName = modelName;
+            }
+
+            // Get material names from the active model
+            Renderer[] renderers = activeModel.GetComponentsInChildren<Renderer>();
+            foreach (Renderer renderer in renderers)
+            {
+                if (renderer.material != null)
+                {
+                    string materialName = renderer.material.name.Replace(" (Instance)", "");
+                    
+                    // Categorize materials by model type
+                    if (modelName.Contains("Body") || modelName.Contains("Head"))
+                    {
+                        appearanceData.skinMaterialName = materialName;
+                    }
+                    else if (modelName.Contains("Hair"))
+                    {
+                        appearanceData.hairMaterialName = materialName;
+                    }
+                    else
+                    {
+                        appearanceData.clothingMaterialName = materialName;
+                    }
+                }
+            }
+        }
+        
+        Debug.Log($"[NPCAppearanceSystem] Captured appearance data for {settlerNPC?.name ?? "Unknown NPC"} with {activeModels.Count} active models");
+        return appearanceData;
+    }
+
+    /// <summary>
+    /// Helper method to check if a model exists in a given array
+    /// </summary>
+    private bool IsModelInArray(GameObject model, GameObject[] modelArray)
+    {
+        if (modelArray == null || model == null) return false;
+        
+        foreach (GameObject arrayModel in modelArray)
+        {
+            if (arrayModel == model) return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Activate a specific model by name from the given array
+    /// </summary>
+    private void ActivateModelByName(GameObject[] modelArray, string modelName, string categoryName)
+    {
+        if (modelArray == null || string.IsNullOrEmpty(modelName)) return;
+
+        foreach (GameObject model in modelArray)
+        {
+            if (model != null && model.name == modelName)
+            {
+                model.SetActive(true);
+                activeModels.Add(model);
+                Debug.Log($"[NPCAppearanceSystem] Activated {categoryName}: {modelName}");
+                return;
+            }
+        }
+        
+        Debug.LogWarning($"[NPCAppearanceSystem] Could not find {categoryName} model with name: {modelName}");
+    }
+
+    /// <summary>
+    /// Apply saved materials to active models
+    /// </summary>
+    private void ApplySavedMaterials(NPCAppearanceData appearanceData)
+    {
+        foreach (GameObject model in activeModels)
+        {
+            if (model == null) continue;
+
+            Renderer[] renderers = model.GetComponentsInChildren<Renderer>();
+            foreach (Renderer renderer in renderers)
+            {
+                Material targetMaterial = null;
+                string modelName = model.name;
+
+                // Determine which material to apply based on model type
+                if ((modelName.Contains("Body") || modelName.Contains("Head")) && !string.IsNullOrEmpty(appearanceData.skinMaterialName))
+                {
+                    targetMaterial = FindMaterialByName(skinMaterials, appearanceData.skinMaterialName);
+                }
+                else if (modelName.Contains("Hair") && !string.IsNullOrEmpty(appearanceData.hairMaterialName))
+                {
+                    targetMaterial = FindMaterialByName(hairMaterials, appearanceData.hairMaterialName);
+                }
+                else if (!string.IsNullOrEmpty(appearanceData.clothingMaterialName))
+                {
+                    targetMaterial = FindMaterialByName(clothingMaterials, appearanceData.clothingMaterialName);
+                }
+
+                if (targetMaterial != null)
+                {
+                    renderer.material = targetMaterial;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Find a material by name in the given material array
+    /// </summary>
+    private Material FindMaterialByName(Material[] materialArray, string materialName)
+    {
+        if (materialArray == null || string.IsNullOrEmpty(materialName)) return null;
+
+        foreach (Material material in materialArray)
+        {
+            if (material != null && material.name == materialName)
+            {
+                return material;
+            }
+        }
+        
+        return null;
     }
 }
 

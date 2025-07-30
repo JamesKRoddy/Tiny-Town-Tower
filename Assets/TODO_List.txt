@@ -3,12 +3,11 @@
 
 Tomorrow work:
 
-
+Update the players camera to be at an angle!
 
 Recruiting NPCs:
 
-ApplyRandomCharacteristic
-Do the same for a random skin mesh, have to get this working with the save manager stuff
+So npcs are coming back to the camp but their models are not enabled, guessing issues with saving/loading too.
 
 Randomly generating npcs, stats, models etc. in the npc manager.
 Randomly generating NPC models

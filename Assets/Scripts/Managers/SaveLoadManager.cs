@@ -96,6 +96,7 @@ public class NPCSaveData
     public List<ResourceItemData> inventory = new List<ResourceItemData>();
     public WeaponData equippedWeapon;
     public string npcDataObjName; // Reference to SettlerNPCScriptableObj
+    public NPCAppearanceData appearanceData; // NPC appearance information
 }
 
 [Serializable]
@@ -498,6 +499,17 @@ public class SaveLoadManager : MonoBehaviour
                         GetPrefabPath(inventory.equippedWeaponScriptObj.prefab)
                     );
                 }
+            }
+
+            // Save appearance data
+            if (npc.appearanceSystem != null)
+            {
+                npcSaveData.appearanceData = npc.appearanceSystem.GetCurrentAppearanceData();
+                Debug.Log($"[SaveLoadManager] Saved appearance data for {npc.name}");
+            }
+            else
+            {
+                Debug.LogWarning($"[SaveLoadManager] No appearance system found for {npc.name}");
             }
 
             npcData.npcs.Add(npcSaveData);
