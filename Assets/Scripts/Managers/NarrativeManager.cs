@@ -421,9 +421,9 @@ public class NarrativeManager : MonoBehaviour
         // Get the NPCScriptableObj from the conversation target
         if (currentConversationTarget is SettlerNPC settlerNPC && settlerNPC.nPCDataObj != null)
         {
-            // Pass the component ID to enable component-based recruitment tracking
+            // Pass the component ID and SettlerNPC reference to enable appearance data capture
             string componentId = currentNarrativeComponent?.GetInstanceID().ToString();
-            PlayerInventory.Instance.RecruitNPC(settlerNPC.nPCDataObj, componentId);
+            PlayerInventory.Instance.RecruitNPC(settlerNPC.nPCDataObj, componentId, settlerNPC);
             
             // Set recruitment success flag on the component
             SetFlag("recruited");

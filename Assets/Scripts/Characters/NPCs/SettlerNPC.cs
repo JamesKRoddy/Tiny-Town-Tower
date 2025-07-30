@@ -22,6 +22,9 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     [Header("Initialization Control")]
     [SerializeField] private NPCInitializationContext initializationContext = NPCInitializationContext.FRESH_SPAWN; //Set this to the context of the NPC when it is spawned, override to loaded for NPCs in scene already
     [SerializeField, ReadOnly] private bool hasBeenInitialized = false;
+    
+    // Store recruited appearance data for recruited NPCs
+    private NPCAppearanceData recruitedAppearanceData;
 
     [Header("NPC Stats")]
     public int additionalMutationSlots = 3; //Additional mutation slots
@@ -59,7 +62,14 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         characteristicSystem = new NPCCharacteristicSystem(this);
 
         // Initialize appearance system
+        if (appearanceSystem != null)
+        {
         appearanceSystem.SetSettlerNPC(this);
+        }
+        else
+        {
+            Debug.LogError($"[SettlerNPC] {gameObject.name} - appearanceSystem is null! Make sure it's assigned in the prefab inspector.");
+        }
 
         // Get all TaskState components attached to the SettlerNPC GameObject
         _TaskState[] states = GetComponents<_TaskState>();
@@ -155,8 +165,24 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     /// </summary>
     private void InitializeAsRecruited()
     {
-        // Do NOT randomize appearance - it should be carried over from the recruited NPC gameobject
-        // The appearance was already set when the NPC was first spawned/recruited
+        // Restore appearance data if available, otherwise randomize
+        if (appearanceSystem != null)
+        {
+            if (recruitedAppearanceData != null)
+            {
+                Debug.Log($"[SettlerNPC] {gameObject.name} - Restoring recruited NPC appearance from saved data");
+                appearanceSystem.SetAppearance(recruitedAppearanceData);
+            }
+            else
+            {
+                Debug.Log($"[SettlerNPC] {gameObject.name} - No recruited appearance data available, randomizing appearance");
+                appearanceSystem.RandomizeAppearance();
+            }
+        }
+        else
+        {
+            Debug.LogError($"[SettlerNPC] {gameObject.name} - Cannot set appearance for recruited NPC: appearanceSystem is null!");
+        }
         
         // Default to WanderState
         if (taskStates.ContainsKey(TaskType.WANDER))
@@ -595,6 +621,15 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     }
 
     /// <summary>
+    /// Set the recruited appearance data (called when spawning recruited NPCs)
+    /// </summary>
+    public void SetRecruitedAppearanceData(NPCAppearanceData appearanceData)
+    {
+        recruitedAppearanceData = appearanceData;
+        Debug.Log($"[SettlerNPC] {gameObject.name} - Stored recruited appearance data");
+    }
+
+    /// <summary>
     /// Call this to put the NPC into the sheltered state (e.g., when entering a bunker)
     /// </summary>
     public void EnterShelter(BunkerBuilding bunker)
@@ -736,14 +771,31 @@ public class NPCAppearanceSystem
             return;
         }
         
+        Debug.Log($"[NPCAppearanceSystem] Starting appearance randomization for {settlerNPC.name}");
+        
         // Clear any existing appearance models
         ClearCurrentAppearance();
-        Debug.Log($"[NPCAppearanceSystem] bodyModels count: {bodyModels.Length}");
+        
+        // Check if we have any models to work with
+        bool hasAnyModels = (bodyModels?.Length > 0) || (headModels?.Length > 0) || (hairModels?.Length > 0) || 
+                           (topClothing?.Length > 0) || (bottomClothing?.Length > 0) || (footwear?.Length > 0);
+        
+        if (!hasAnyModels)
+        {
+            Debug.LogError($"[NPCAppearanceSystem] No appearance models found for {settlerNPC.name}! Check prefab setup.");
+            return;
+        }
+        
+        Debug.Log($"[NPCAppearanceSystem] bodyModels count: {bodyModels?.Length ?? 0}");
         // Randomize body parts
         if (bodyModels != null && bodyModels.Length > 0)
         {
             Debug.Log($"[NPCAppearanceSystem] Randomizing body models for {settlerNPC.name}");
             ActivateRandomModel(bodyModels, "Body");
+        }
+        else
+        {
+            Debug.LogWarning($"[NPCAppearanceSystem] No body models available for {settlerNPC.name}");
         }
         
         if (headModels != null && headModels.Length > 0)

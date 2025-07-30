@@ -282,6 +282,8 @@ public class SaveLoadManager : MonoBehaviour
         }
     }
 
+    #region Load/Save Game Public Methods
+
     public void LoadGame()
     {
         if (!File.Exists(saveFilePath))
@@ -333,6 +335,8 @@ public class SaveLoadManager : MonoBehaviour
     {
         return File.Exists(saveFilePath);
     }
+
+    #endregion
 
     #region Grid Data Save/Load
 
@@ -526,30 +530,43 @@ public class SaveLoadManager : MonoBehaviour
 
         foreach (var npcSaveData in npcData.npcs)
         {
-            // Find the NPCScriptableObj by name
+            GameObject npcPrefab = null;
+            
+            // Try to find the NPCScriptableObj by name first
             NPCScriptableObj npcScriptable = FindNPCScriptableByName(npcSaveData.npcDataObjName);
-            if (npcScriptable?.prefab == null)
+            if (npcScriptable?.prefab != null)
             {
-                Debug.LogWarning($"[SaveLoadManager] Could not find NPCScriptableObj or prefab for: {npcSaveData.npcDataObjName}");
+                npcPrefab = npcScriptable.prefab;
+                Debug.Log($"[SaveLoadManager] Using NPCScriptableObj prefab for: {npcSaveData.npcDataObjName}");
+            }
+            else
+            {
+                Debug.LogError($"[SaveLoadManager] No NPCScriptableObj available for: {npcSaveData.npcDataObjName}");
                 continue;
             }
 
             // Instantiate the NPC prefab
-            GameObject npcObject = Instantiate(npcScriptable.prefab, npcSaveData.position, Quaternion.identity);
+            GameObject npcObject = Instantiate(npcPrefab, npcSaveData.position, Quaternion.identity);
             
             if (npcObject.TryGetComponent<SettlerNPC>(out var settlerNPC))
             {
+                // Set the NPCScriptableObj reference if we found one
+                if (npcScriptable != null)
+                {
+                    settlerNPC.nPCDataObj = npcScriptable;
+                }
+                
                 // Set initialization context for loaded NPCs
                 settlerNPC.SetInitializationContext(NPCInitializationContext.LOADED_FROM_SAVE);
                 
                 // Restore the NPC's state from save data
                 settlerNPC.RestoreFromSaveData(npcSaveData);
                 
-                Debug.Log($"[SaveLoadManager] Loaded NPC: {npcSaveData.npcDataObjName} at {npcSaveData.position}");
+                Debug.Log($"[SaveLoadManager] Successfully loaded NPC: {npcSaveData.npcDataObjName} at {npcSaveData.position}");
             }
             else
             {
-                Debug.LogWarning($"[SaveLoadManager] Spawned NPC '{npcSaveData.npcDataObjName}' does not have SettlerNPC component!");
+                Debug.LogWarning($"[SaveLoadManager] Spawned NPC prefab does not have SettlerNPC component!");
                 Destroy(npcObject);
             }
         }
@@ -666,10 +683,40 @@ public class SaveLoadManager : MonoBehaviour
     /// </summary>
     private NPCScriptableObj FindNPCScriptableByName(string npcName)
     {
-        // TODO: Implement NPC scriptable object lookup
-        // You'll need to access your NPC database/collection
-        // For now, return null - you can implement this based on your NPC data structure
-        Debug.LogWarning($"[SaveLoadManager] TODO: Implement FindNPCScriptableByName for: {npcName}");
+        if (string.IsNullOrEmpty(npcName))
+        {
+            Debug.LogWarning("[SaveLoadManager] NPCScriptableObj name is null or empty");
+            return null;
+        }
+
+        // Try to load from Resources folder first
+        NPCScriptableObj npcScriptable = Resources.Load<NPCScriptableObj>($"SettlerNPCs/{npcName}");
+        if (npcScriptable != null)
+        {
+            Debug.Log($"[SaveLoadManager] Found NPCScriptableObj in Resources: {npcName}");
+            return npcScriptable;
+        }
+
+        // Try alternative Resources path
+        npcScriptable = Resources.Load<NPCScriptableObj>(npcName);
+        if (npcScriptable != null)
+        {
+            Debug.Log($"[SaveLoadManager] Found NPCScriptableObj in Resources root: {npcName}");
+            return npcScriptable;
+        }
+
+        // Search through all NPCScriptableObj assets in the project
+        NPCScriptableObj[] allNPCs = Resources.FindObjectsOfTypeAll<NPCScriptableObj>();
+        foreach (var npc in allNPCs)
+        {
+            if (npc.name == npcName)
+            {
+                Debug.Log($"[SaveLoadManager] Found NPCScriptableObj via FindObjectsOfTypeAll: {npcName}");
+                return npc;
+            }
+        }
+
+        Debug.LogWarning($"[SaveLoadManager] Could not find NPCScriptableObj: {npcName}");
         return null;
     }
 

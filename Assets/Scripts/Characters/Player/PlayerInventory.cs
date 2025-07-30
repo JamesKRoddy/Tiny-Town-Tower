@@ -45,22 +45,18 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     public List<MutationQuantityEntry> availableMutations = new List<MutationQuantityEntry>(); // List of available mutations, removed when mutation screen is closed
 
     [Header("NPC Management")]
-    [SerializeField] private List<NPCScriptableObj> recruitedNPCs = new List<NPCScriptableObj>(); // NPCs recruited during roguelite exploration
-    [SerializeField] private List<string> recruitedNPCComponentIds = new List<string>(); // Component IDs of recruited NPCs for tracking
-    
-    // Runtime tracking of recruited NPCs by component ID
-    private Dictionary<string, NPCScriptableObj> recruitedNPCsByComponentId = new Dictionary<string, NPCScriptableObj>();
+    [SerializeField] private List<RecruitedNPCData> recruitedNPCs = new List<RecruitedNPCData>(); // NPCs recruited during roguelite exploration
 
     public int MaxMutationSlots => maxMutationSlots;
     public List<GeneticMutationObj> EquippedMutations => equippedMutations;
-    public List<NPCScriptableObj> RecruitedNPCs => recruitedNPCs;
+    public List<NPCScriptableObj> RecruitedNPCs => recruitedNPCs.ConvertAll(data => data.npcScriptableObj);
 
     /// <summary>
     /// Get the list of recruited NPC component IDs for saving
     /// </summary>
     public List<string> GetRecruitedNPCComponentIds()
     {
-        return new List<string>(recruitedNPCComponentIds);
+        return recruitedNPCs.ConvertAll(data => data.componentId);
     }
 
     // Events for NPC recruitment
@@ -80,12 +76,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         }
 
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
-    }
-
-    private void Start()
-    {
-        // Rebuild component tracking on start
-        RebuildComponentTracking();
     }
 
     private void OnDestroy()
@@ -397,6 +387,14 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     /// </summary>
     public void RecruitNPC(NPCScriptableObj npc, string componentId)
     {
+        RecruitNPC(npc, componentId, null);
+    }
+
+    /// <summary>
+    /// Recruit an NPC with appearance data tracking
+    /// </summary>
+    public void RecruitNPC(NPCScriptableObj npc, string componentId, SettlerNPC settlerNPCReference)
+    {
         Debug.Log($"[PlayerInventory] RecruitNPC called with NPC: {(npc != null ? npc.nPCName : "null")}, ComponentID: {componentId}");
         
         if (npc == null)
@@ -412,7 +410,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         {
             Debug.Log($"[PlayerInventory] Checking if component '{componentId}' is already recruited...");
             
-            if (recruitedNPCsByComponentId.ContainsKey(componentId))
+            if (recruitedNPCs.Exists(data => data.componentId == componentId))
             {
                 Debug.LogWarning($"[PlayerInventory] NPC component '{componentId}' ({npc.nPCName}) is already recruited!");
                 return;
@@ -423,27 +421,34 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             // Fallback to old method for backward compatibility
             Debug.Log($"[PlayerInventory] No component ID provided, checking if '{npc.nPCName}' scriptable object is already recruited...");
             
-            if (recruitedNPCs.Contains(npc))
+            if (recruitedNPCs.Exists(data => data.npcScriptableObj == npc))
             {
                 Debug.LogWarning($"[PlayerInventory] NPC '{npc.nPCName}' is already recruited!");
                 return;
             }
         }
 
+        // Capture appearance data from the actual SettlerNPC if provided
+        NPCAppearanceData appearanceData = null;
+        if (settlerNPCReference != null && settlerNPCReference.GetAppearanceSystem() != null)
+        {
+            appearanceData = settlerNPCReference.GetAppearanceSystem().GetCurrentAppearanceData();
+            Debug.Log($"[PlayerInventory] Captured appearance data for recruited NPC '{npc.nPCName}'");
+        }
+        else
+        {
+            Debug.LogWarning($"[PlayerInventory] Could not capture appearance data for '{npc.nPCName}' - SettlerNPC reference is null or has no appearance system");
+            appearanceData = new NPCAppearanceData(); // Empty appearance data as fallback
+        }
+
         Debug.Log($"[PlayerInventory] Adding '{npc.nPCName}' to recruited NPCs list...");
-        recruitedNPCs.Add(npc);
         
-        // Track by component ID if provided
+        // Create and add the recruited NPC data
+        var recruitedData = new RecruitedNPCData(npc, componentId, appearanceData);
+        recruitedNPCs.Add(recruitedData);
+        
         if (!string.IsNullOrEmpty(componentId))
         {
-            recruitedNPCsByComponentId[componentId] = npc;
-            
-            // Also add to serialized list for persistence
-            if (!recruitedNPCComponentIds.Contains(componentId))
-            {
-                recruitedNPCComponentIds.Add(componentId);
-            }
-            
             Debug.Log($"[PlayerInventory] Tracked recruitment by component ID: {componentId}");
         }
         
@@ -471,7 +476,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     /// </summary>
     public List<NPCScriptableObj> GetRecruitedNPCs()
     {
-        return new List<NPCScriptableObj>(recruitedNPCs);
+        return recruitedNPCs.ConvertAll(data => data.npcScriptableObj);
     }
 
     /// <summary>
@@ -490,27 +495,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         if (string.IsNullOrEmpty(componentId))
             return false;
             
-        return recruitedNPCsByComponentId.ContainsKey(componentId);
-    }
-
-    /// <summary>
-    /// Rebuild component tracking from serialized data (called on scene load)
-    /// </summary>
-    public void RebuildComponentTracking()
-    {
-        recruitedNPCsByComponentId.Clear();
-        
-        // Since we can't directly serialize the dictionary, we maintain parallel lists
-        // This method should be called after loading to rebuild the runtime dictionary
-        for (int i = 0; i < Mathf.Min(recruitedNPCs.Count, recruitedNPCComponentIds.Count); i++)
-        {
-            if (recruitedNPCs[i] != null && !string.IsNullOrEmpty(recruitedNPCComponentIds[i]))
-            {
-                recruitedNPCsByComponentId[recruitedNPCComponentIds[i]] = recruitedNPCs[i];
-            }
-        }
-        
-        Debug.Log($"[PlayerInventory] Rebuilt component tracking for {recruitedNPCsByComponentId.Count} recruited NPCs");
+        return recruitedNPCs.Exists(data => data.componentId == componentId);
     }
 
     /// <summary>
@@ -524,20 +509,19 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             return;
         }
 
-        var npcsToTransfer = new List<NPCScriptableObj>(recruitedNPCs);
+        var npcsToTransfer = new List<NPCScriptableObj>();
         
-        foreach (var npc in npcsToTransfer)
+        foreach (var recruitedData in recruitedNPCs)
         {
-            Debug.Log($"[PlayerInventory] Transferring recruited NPC '{npc.nPCName}' to camp");
-            SpawnNPCInCamp(npc);
+            npcsToTransfer.Add(recruitedData.npcScriptableObj);
+            Debug.Log($"[PlayerInventory] Transferring recruited NPC '{recruitedData.npcScriptableObj.nPCName}' to camp");
+            SpawnNPCInCamp(recruitedData.npcScriptableObj, recruitedData.appearanceData);
         }
 
         // Fire the event to notify other systems about the transfer
         OnNPCsTransferredToCamp?.Invoke(npcsToTransfer);
 
         recruitedNPCs.Clear();
-        recruitedNPCComponentIds.Clear();
-        recruitedNPCsByComponentId.Clear();
         
         Debug.Log("[PlayerInventory] All recruited NPCs transferred to camp and cleared from inventory");
     }
@@ -545,7 +529,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     /// <summary>
     /// Spawn a recruited NPC in the camp
     /// </summary>
-    private void SpawnNPCInCamp(NPCScriptableObj npc)
+    private void SpawnNPCInCamp(NPCScriptableObj npc, NPCAppearanceData appearanceData = null)
     {
         if (npc.prefab == null)
         {
@@ -564,6 +548,17 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         {
             // Set the initialization context for recruited NPCs before Start() is called
             settlerNPC.SetInitializationContext(NPCInitializationContext.RECRUITED);
+            
+            // Set the recruited appearance data if available
+            if (appearanceData != null)
+            {
+                settlerNPC.SetRecruitedAppearanceData(appearanceData);
+                Debug.Log($"[PlayerInventory] Set recruited appearance data for '{npc.nPCName}'");
+            }
+            else
+            {
+                Debug.LogWarning($"[PlayerInventory] No appearance data available for recruited NPC '{npc.nPCName}' - will use random appearance");
+            }
             
             Debug.Log($"[PlayerInventory] Successfully spawned recruited NPC '{npc.nPCName}' in camp at {spawnPosition}");
         }
@@ -620,11 +615,31 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     /// </summary>
     public void RemoveRecruitedNPC(NPCScriptableObj npc)
     {
-        if (recruitedNPCs.Remove(npc))
+        var dataToRemove = recruitedNPCs.Find(data => data.npcScriptableObj == npc);
+        if (dataToRemove != null)
         {
+            recruitedNPCs.Remove(dataToRemove);
             Debug.Log($"[PlayerInventory] Removed recruited NPC '{npc.nPCName}' from temporary storage");
         }
     }
 
     #endregion
+}
+
+/// <summary>
+/// Data class to store all information about a recruited NPC
+/// </summary>
+[System.Serializable]
+public class RecruitedNPCData
+{
+    public NPCScriptableObj npcScriptableObj;
+    public string componentId;
+    public NPCAppearanceData appearanceData;
+    
+    public RecruitedNPCData(NPCScriptableObj npc, string id, NPCAppearanceData appearance)
+    {
+        npcScriptableObj = npc;
+        componentId = id;
+        appearanceData = appearance;
+    }
 }

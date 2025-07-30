@@ -66,6 +66,11 @@ public class SceneTransitionManager : MonoBehaviour
         OnActionsFromPreviousScene = OnSceneLoaded;
         PreviousScene = CurrentScene;
 
+        // Save game when leaving camp
+        if(CurrentScene == SceneNames.CampScene){
+            SaveLoadManager.Instance.SaveGame();
+        }
+
         if(sceneName == SceneNames.NONE){
             Debug.LogError("Scene name is NONE");
         }
@@ -156,6 +161,9 @@ public class SceneTransitionManager : MonoBehaviour
             }
             yield return null;
         }
+
+        //3.5 Load the game
+        SaveLoadManager.Instance.LoadGame();
 
         //4. Update Player NPC position
         PlayerController.Instance.UpdateNPCPosition(GameManager.Instance.GetPlayerSpawnPoint());
