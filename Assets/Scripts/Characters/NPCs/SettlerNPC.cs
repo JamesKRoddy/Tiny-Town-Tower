@@ -14,6 +14,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     [Header("NPC Data")]
     public NPCScriptableObj nPCDataObj;
     [SerializeField, ReadOnly] internal NPCCharacteristicSystem characteristicSystem;
+    [SerializeField] internal NPCAppearanceSystem appearanceSystem;
     private _TaskState currentState;
     private WorkTask assignedWorkTask; // Track the assigned work task
     private bool isOnBreak = false; // Track if NPC is on break
@@ -56,6 +57,9 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
 
         // Initialize characteristic system
         characteristicSystem = new NPCCharacteristicSystem(this);
+
+        // Initialize appearance system
+        appearanceSystem.SetSettlerNPC(this);
 
         // Get all TaskState components attached to the SettlerNPC GameObject
         _TaskState[] states = GetComponents<_TaskState>();
@@ -127,6 +131,12 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     /// </summary>
     private void InitializeAsFreshSpawn()
     {
+        // Apply random appearance first
+        if (appearanceSystem != null)
+        {
+            appearanceSystem.RandomizeAppearance();
+        }
+
         // Default to WanderState
         if (taskStates.ContainsKey(TaskType.WANDER))
         {
@@ -145,6 +155,13 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     /// </summary>
     private void InitializeAsRecruited()
     {
+        // Apply appearance from NPCScriptableObj or random if none specified
+        if (appearanceSystem != null)
+        {
+            // TODO: Check if nPCDataObj has predefined appearance settings, otherwise apply random
+            appearanceSystem.RandomizeAppearance();
+        }
+
         // Default to WanderState
         if (taskStates.ContainsKey(TaskType.WANDER))
         {
@@ -244,8 +261,15 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         Debug.Log($"[SettlerNPC] {gameObject.name} state restored from save data");
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
+        // Clean up appearance models
+        if (appearanceSystem != null)
+        {
+            // This ensures appearance models are properly cleaned up
+            appearanceSystem.ClearCurrentAppearance();
+        }
+        
         // Unregister from NPCManager
         if (NPCManager.Instance != null)
         {
@@ -257,6 +281,9 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         {
             CampManager.Instance.RemoveNPC(this);
         }
+        
+        // Call base class cleanup
+        base.OnDestroy();
     }
 
     private bool HasAvailableFood()
@@ -553,6 +580,14 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     }
 
     /// <summary>
+    /// Get access to the NPC's appearance system
+    /// </summary>
+    public NPCAppearanceSystem GetAppearanceSystem()
+    {
+        return appearanceSystem;
+    }
+
+    /// <summary>
     /// Call this to put the NPC into the sheltered state (e.g., when entering a bunker)
     /// </summary>
     public void EnterShelter(BunkerBuilding bunker)
@@ -646,8 +681,231 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     #endregion
 }
 
+[System.Serializable]
+public class NPCAppearanceSystem
+{
+    [Header("Model Options")]
+    [SerializeField] private GameObject[] bodyModels; // Different body/mesh options
+    [SerializeField] private GameObject[] headModels; // Different head options
+    [SerializeField] private GameObject[] hairModels; // Different hair styles
+    
+    [Header("Clothing Options")]
+    [SerializeField] private GameObject[] topClothing; // Shirts, jackets, etc.
+    [SerializeField] private GameObject[] bottomClothing; // Pants, skirts, etc.
+    [SerializeField] private GameObject[] footwear; // Shoes, boots, etc.
+    
+    [Header("Accessories")]
+    [SerializeField] private GameObject[] headAccessories; // Hats, helmets, glasses
+    [SerializeField] private GameObject[] backAccessories; // Backpacks, cloaks
+    [SerializeField] private GameObject[] handAccessories; // Gloves, bracelets
+    
+    [Header("Material Variants")]
+    [SerializeField] private Material[] skinMaterials; // Different skin tones
+    [SerializeField] private Material[] hairMaterials; // Different hair colors
+    [SerializeField] private Material[] clothingMaterials; // Different clothing colors
+    
+    [Header("Accessory Spawn Chances")]
+    [Range(0f, 1f)] [SerializeField] private float headAccessoryChance = 0.3f;
+    [Range(0f, 1f)] [SerializeField] private float backAccessoryChance = 0.4f;
+    [Range(0f, 1f)] [SerializeField] private float handAccessoryChance = 0.2f;
+    
+    private SettlerNPC settlerNPC;
+    private List<GameObject> activeModels = new List<GameObject>();
+
+    public void SetSettlerNPC(SettlerNPC settlerNPC)
+    {
+        this.settlerNPC = settlerNPC;
+        activeModels = new List<GameObject>();
+    }
+    
+    /// <summary>
+    /// Randomize the NPC's appearance using the available options
+    /// </summary>
+    public void RandomizeAppearance()
+    {
+        if (settlerNPC == null)
+        {
+            Debug.LogError("NPCAppearanceSystem: Cannot randomize appearance - settlerNPC is null");
+            return;
+        }
+        
+        // Clear any existing appearance models
+        ClearCurrentAppearance();
+        Debug.Log($"[NPCAppearanceSystem] bodyModels count: {bodyModels.Length}");
+        // Randomize body parts
+        if (bodyModels != null && bodyModels.Length > 0)
+        {
+            Debug.Log($"[NPCAppearanceSystem] Randomizing body models for {settlerNPC.name}");
+            ActivateRandomModel(bodyModels, "Body");
+        }
+        
+        if (headModels != null && headModels.Length > 0)
+        {
+            ActivateRandomModel(headModels, "Head");
+        }
+        
+        if (hairModels != null && hairModels.Length > 0)
+        {
+            ActivateRandomModel(hairModels, "Hair");
+        }
+        
+        // Randomize clothing
+
+        if (topClothing != null && topClothing.Length > 0)
+        {
+            ActivateRandomModel(topClothing, "Top Clothing");
+        }
+        
+        if (bottomClothing != null && bottomClothing.Length > 0)
+        {
+            ActivateRandomModel(bottomClothing, "Bottom Clothing");
+        }
+        
+        if (footwear != null && footwear.Length > 0)
+        {
+            ActivateRandomModel(footwear, "Footwear");
+        }
+        
+        
+        // Randomize accessories based on spawn chances
+        if (headAccessories != null && headAccessories.Length > 0 && UnityEngine.Random.value <= headAccessoryChance)
+        {
+            ActivateRandomModel(headAccessories, "Head Accessory");
+        }
+        
+        if (backAccessories != null && backAccessories.Length > 0 && UnityEngine.Random.value <= backAccessoryChance)
+        {
+            ActivateRandomModel(backAccessories, "Back Accessory");
+        }
+        
+        if (handAccessories != null && handAccessories.Length > 0 && UnityEngine.Random.value <= handAccessoryChance)
+        {
+            ActivateRandomModel(handAccessories, "Hand Accessory");
+        }        
+        
+        // Apply random materials
+        ApplyRandomMaterials();
+        
+        Debug.Log($"[NPCAppearanceSystem] Randomized appearance for {settlerNPC.name} with {activeModels.Count} active models");
+    }
+    
+    /// <summary>
+    /// Activate a random model from the given array
+    /// </summary>
+    private void ActivateRandomModel(GameObject[] modelArray, string categoryName)
+    {
+        Debug.Log($"[NPCAppearanceSystem] Activating random model for {categoryName}");
+        if (modelArray == null || modelArray.Length == 0) return;
+        
+        GameObject selectedModel = modelArray[UnityEngine.Random.Range(0, modelArray.Length)];
+        if (selectedModel != null)
+        {
+            Debug.Log($"[NPCAppearanceSystem] Instantiating model: {selectedModel.name}");
+            selectedModel.SetActive(true);
+            activeModels.Add(selectedModel);
+            Debug.Log($"[NPCAppearanceSystem] Activated {categoryName}: {selectedModel.name}");
+        }
+    }
+    
+    /// <summary>
+    /// Apply random materials to the active models
+    /// </summary>
+    private void ApplyRandomMaterials()
+    {
+        foreach (GameObject model in activeModels)
+        {
+            Renderer[] renderers = model.GetComponentsInChildren<Renderer>();
+            foreach (Renderer renderer in renderers)
+            {
+                // Apply random skin material if available
+                if (skinMaterials != null && skinMaterials.Length > 0 && 
+                    (model.name.Contains("Body") || model.name.Contains("Head")))
+                {
+                    Material randomSkinMaterial = skinMaterials[UnityEngine.Random.Range(0, skinMaterials.Length)];
+                    renderer.material = randomSkinMaterial;
+                }
+                // Apply random hair material if available
+                else if (hairMaterials != null && hairMaterials.Length > 0 && model.name.Contains("Hair"))
+                {
+                    Material randomHairMaterial = hairMaterials[UnityEngine.Random.Range(0, hairMaterials.Length)];
+                    renderer.material = randomHairMaterial;
+                }
+                // Apply random clothing material if available
+                else if (clothingMaterials != null && clothingMaterials.Length > 0)
+                {
+                    Material randomClothingMaterial = clothingMaterials[UnityEngine.Random.Range(0, clothingMaterials.Length)];
+                    renderer.material = randomClothingMaterial;
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Clear all currently active appearance models
+    /// </summary>
+    public void ClearCurrentAppearance()
+    {
+        if (activeModels == null)
+        {
+            Debug.LogError("NPCAppearanceSystem: Cannot clear current appearance - activeModels is null");
+            return;
+        }
+
+        foreach (GameObject model in activeModels)
+        {
+            if (model != null)
+            {
+                model.SetActive(false);
+            }
+        }
+        activeModels.Clear();
+    }
+    
+    /// <summary>
+    /// Set specific appearance options (for saved/predefined appearances)
+    /// </summary>
+    public void SetAppearance(NPCAppearanceData appearanceData)
+    {
+        // TODO: Implement specific appearance setting for save/load functionality
+        // This would be used when loading NPCs from save data or setting predefined appearances
+        Debug.Log($"[NPCAppearanceSystem] SetAppearance called for {settlerNPC.name} - implementation needed");
+    }
+    
+    /// <summary>
+    /// Get current appearance data for saving
+    /// </summary>
+    public NPCAppearanceData GetCurrentAppearanceData()
+    {
+        // TODO: Implement appearance data extraction for save functionality
+        // This would return the current state of the NPC's appearance for saving
+        Debug.Log($"[NPCAppearanceSystem] GetCurrentAppearanceData called for {settlerNPC.name} - implementation needed");
+        return new NPCAppearanceData();
+    }
+}
+
+/// <summary>
+/// Data class to store NPC appearance information for saving/loading
+/// </summary>
+[System.Serializable]
+public class NPCAppearanceData
+{
+    public string bodyModelName;
+    public string headModelName;
+    public string hairModelName;
+    public string topClothingName;
+    public string bottomClothingName;
+    public string footwearName;
+    public string headAccessoryName;
+    public string backAccessoryName;
+    public string handAccessoryName;
+    public string skinMaterialName;
+    public string hairMaterialName;
+    public string clothingMaterialName;
+}
+
 namespace Characters.NPC
 {
+    [System.Serializable]
     public class NPCCharacteristicSystem
     {
         [Header("Characteristic Settings")]
