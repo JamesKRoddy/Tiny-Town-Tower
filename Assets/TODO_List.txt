@@ -7,8 +7,10 @@ Update the players camera to be at an angle!
 
 Recruiting NPCs:
 
-Have to put more control on the save/load manager based on the scene thats being loaded in.
+Have to put more control on the save/load manager based on the scene thats being loaded in:
+Currently when returning its spawning unknown npcs from somewhere. Just strip back logging and get ai to add some relevant stuff back in to help narrow it down.
 
+Get chatGPT to generate more recruitment diologue options
 Randomly generating npcs, stats, models etc. in the npc manager.
 Randomly assigning narrative elements (have these stored in a specific place, in the json assign a character type or something and have it assigned by that?
 
