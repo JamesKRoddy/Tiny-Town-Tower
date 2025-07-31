@@ -61,11 +61,41 @@ namespace Managers
         }
 
         private void OnGameModeChanged(GameMode newGameMode)
-        {            
-            // Check if we're returning to camp mode and have recruited NPCs to transfer
-            if (newGameMode == GameMode.CAMP && PlayerInventory.Instance != null && PlayerInventory.Instance.HasRecruitedNPCs())
+        {
+            Debug.Log($"[NPCManager] OnGameModeChanged called with new mode: {newGameMode}");
+            
+            // Reset transfer state when leaving camp (allows transfers when returning)
+            if (newGameMode != GameMode.CAMP && newGameMode != GameMode.CAMP_ATTACK)
             {
-                Invoke(nameof(TransferRecruitedNPCs), transferDelay);
+                Debug.Log("[NPCManager] Leaving camp mode - resetting transfer state");
+                ResetTransferState();
+            }
+            
+            // Check if we're returning to camp mode and have recruited NPCs to transfer
+            if (newGameMode == GameMode.CAMP)
+            {
+                Debug.Log($"[NPCManager] Detected CAMP mode change");
+                
+                if (PlayerInventory.Instance != null)
+                {
+                    bool hasRecruitedNPCs = PlayerInventory.Instance.HasRecruitedNPCs();
+                    Debug.Log($"[NPCManager] PlayerInventory found, hasRecruitedNPCs: {hasRecruitedNPCs}");
+                    Debug.Log($"[NPCManager] hasTransferredThisSession: {hasTransferredThisSession}");
+                    
+                    if (hasRecruitedNPCs)
+                    {
+                        Debug.Log($"[NPCManager] Scheduling recruited NPC transfer in {transferDelay} seconds");
+                        Invoke(nameof(TransferRecruitedNPCs), transferDelay);
+                    }
+                    else
+                    {
+                        Debug.Log("[NPCManager] No recruited NPCs found to transfer");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("[NPCManager] PlayerInventory.Instance is null during game mode change");
+                }
             }
         }
 
@@ -131,8 +161,11 @@ namespace Managers
         /// </summary>
         public void TransferRecruitedNPCs()
         {
+            Debug.Log("[NPCManager] TransferRecruitedNPCs called");
+            
             if (hasTransferredThisSession)
             {
+                Debug.Log("[NPCManager] Transfer blocked - already transferred this session");
                 return; // Prevent multiple transfers in the same session
             }
 
@@ -144,10 +177,17 @@ namespace Managers
 
             if (!PlayerInventory.Instance.HasRecruitedNPCs())
             {
+                Debug.Log("[NPCManager] No recruited NPCs found in PlayerInventory");
                 return; // No NPCs to transfer
             }
 
             var recruitedNPCs = PlayerInventory.Instance.GetRecruitedSettlers();
+            Debug.Log($"[NPCManager] Found {recruitedNPCs.Count} recruited NPCs to transfer");
+            
+            foreach (var npc in recruitedNPCs)
+            {
+                Debug.Log($"[NPCManager] - {npc.name} (Age {npc.age})");
+            }
             
             // Subscribe to transfer event to show notification
             if (showTransferNotification)
@@ -156,9 +196,11 @@ namespace Managers
             }
 
             // Transfer the NPCs
+            Debug.Log("[NPCManager] Calling PlayerInventory.TransferRecruitedNPCsToCamp()");
             PlayerInventory.Instance.TransferRecruitedNPCsToCamp();
             
             hasTransferredThisSession = true;
+            Debug.Log("[NPCManager] Transfer completed, hasTransferredThisSession set to true");
         }
 
         /// <summary>
@@ -201,6 +243,7 @@ namespace Managers
         /// </summary>
         public void ResetTransferState()
         {
+            Debug.Log("[NPCManager] ResetTransferState called - clearing hasTransferredThisSession flag");
             hasTransferredThisSession = false;
         }
 

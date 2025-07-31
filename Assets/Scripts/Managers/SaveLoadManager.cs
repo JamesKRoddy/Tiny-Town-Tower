@@ -491,10 +491,31 @@ public class SaveLoadManager : MonoBehaviour
 
     private void SaveNPCData(NPCData npcData)
     {
+        // Clear existing NPC data to prevent accumulation
+        npcData.npcs.Clear();
+        
         var npcs = FindObjectsByType<SettlerNPC>(FindObjectsSortMode.None);
+        var savedNpcIds = new HashSet<string>(); // Track saved NPCs to prevent duplicates
         
         foreach (var npc in npcs)
         {
+            // Skip test NPCs and invalid NPCs
+            if (IsTestOrInvalidNPC(npc))
+            {
+                Debug.Log($"[SaveLoadManager] Skipping test/invalid NPC: {npc.name}");
+                continue;
+            }
+            
+            // Create a more reliable unique identifier using name + position + age
+            string uniqueId = $"{npc.GetSettlerName()}_{npc.GetSettlerAge()}_{npc.transform.position.x:F2}_{npc.transform.position.z:F2}";
+            
+            // Skip if we've already saved this NPC (prevent duplicates)
+            if (savedNpcIds.Contains(uniqueId))
+            {
+                Debug.LogWarning($"[SaveLoadManager] Skipping duplicate NPC: {npc.GetSettlerName()} at {npc.transform.position}");
+                continue;
+            }
+            
             var npcSaveData = new NPCSaveData
             {
                 npcId = npc.gameObject.GetInstanceID().ToString(), // Use instance ID as unique identifier
@@ -502,7 +523,7 @@ public class SaveLoadManager : MonoBehaviour
                 health = npc.Health,
                 maxHealth = npc.MaxHealth,
                 stamina = npc.currentStamina,
-                                 hunger = npc.GetHungerPercentage() * 100f, // Convert percentage back to value
+                hunger = npc.GetHungerPercentage() * 100f, // Convert percentage back to value
                 additionalMutationSlots = npc.additionalMutationSlots,
                 currentTaskType = npc.GetCurrentTaskType().ToString(),
                 npcDataObjName = null // SettlerNPC no longer uses NPCScriptableObj
@@ -552,10 +573,20 @@ public class SaveLoadManager : MonoBehaviour
             npcSaveData.settlerName = npc.GetSettlerName();
             npcSaveData.settlerAge = npc.GetSettlerAge();
             npcSaveData.settlerDescription = npc.GetSettlerDescription();
+            
+            // Add debug logging to help track recruited NPC issues
+            if (npcSaveData.settlerName == "Unknown Settler" || npcSaveData.settlerAge == 0)
+            {
+                Debug.LogWarning($"[SaveLoadManager] NPC {npc.name} has default settler data - Name: '{npcSaveData.settlerName}', Age: {npcSaveData.settlerAge}. This might indicate a data application issue.");
+            }
+            
             Debug.Log($"[SaveLoadManager] Saved procedural settler data: {npcSaveData.settlerName}, Age {npcSaveData.settlerAge}");
 
             npcData.npcs.Add(npcSaveData);
+            savedNpcIds.Add(uniqueId); // Track this NPC as saved
         }
+        
+        Debug.Log($"[SaveLoadManager] Saved {npcData.npcs.Count} unique NPCs");
     }
 
     private void LoadNPCData(NPCData npcData)
@@ -568,6 +599,13 @@ public class SaveLoadManager : MonoBehaviour
 
         foreach (var npcSaveData in npcData.npcs)
         {
+            // Validate NPC save data before loading
+            if (!IsValidNPCSaveData(npcSaveData))
+            {
+                Debug.LogWarning($"[SaveLoadManager] Skipping invalid NPC data: Name='{npcSaveData.settlerName}', Age={npcSaveData.settlerAge}");
+                continue;
+            }
+            
             GameObject npcPrefab = null;
             
             // All saved NPCs are now procedural settlers, use NPCManager's settler prefab
@@ -589,10 +627,17 @@ public class SaveLoadManager : MonoBehaviour
             {
                 // Restore the saved settler data (all NPCs are now procedural)
                 var savedSettlerData = new Managers.SettlerData(
-                    npcSaveData.settlerName ?? "Unknown Settler",
+                    npcSaveData.settlerName,
                     npcSaveData.settlerAge,
                     npcSaveData.settlerDescription ?? "A mysterious settler."
                 );
+                
+                // Add debug logging for recruited NPCs
+                if (savedSettlerData.name == "Unknown Settler" || savedSettlerData.age == 0)
+                {
+                    Debug.LogWarning($"[SaveLoadManager] Loading NPC with default settler data - this might be a recruited NPC that had data issues: Name='{savedSettlerData.name}', Age={savedSettlerData.age}");
+                }
+                
                 settlerNPC.ApplySettlerData(savedSettlerData);
                 Debug.Log($"[SaveLoadManager] Restored saved settler data: {savedSettlerData.name}, Age {savedSettlerData.age}");
                 
@@ -612,6 +657,59 @@ public class SaveLoadManager : MonoBehaviour
         }
         
         Debug.Log($"[SaveLoadManager] Finished loading {npcData.npcs.Count} NPCs");
+    }
+
+    /// <summary>
+    /// Validates NPC save data to prevent loading corrupted or invalid NPCs
+    /// </summary>
+    private bool IsValidNPCSaveData(NPCSaveData npcSaveData)
+    {
+        // Check for critical corruption only - be more lenient with settler data
+        
+        // Check for invalid health values (critical)
+        if (npcSaveData.maxHealth <= 0)
+        {
+            Debug.LogWarning($"[SaveLoadManager] Invalid max health: {npcSaveData.maxHealth} for NPC: {npcSaveData.settlerName}");
+            return false;
+        }
+        
+        // Check for invalid position (not NaN or infinity)
+        if (float.IsNaN(npcSaveData.position.x) || float.IsNaN(npcSaveData.position.y) || float.IsNaN(npcSaveData.position.z) ||
+            float.IsInfinity(npcSaveData.position.x) || float.IsInfinity(npcSaveData.position.y) || float.IsInfinity(npcSaveData.position.z))
+        {
+            Debug.LogWarning($"[SaveLoadManager] Invalid position for NPC: {npcSaveData.settlerName}");
+            return false;
+        }
+        
+        // Allow NPCs with "Unknown Settler" names and age 0 - they might be recruited NPCs
+        // that had data application issues but should still be loaded
+        return true;
+    }
+
+    /// <summary>
+    /// Checks if an NPC is a test NPC or has invalid data that should not be saved
+    /// </summary>
+    private bool IsTestOrInvalidNPC(SettlerNPC npc)
+    {
+        if (npc == null) return true;
+        
+        // Check if it's a test NPC by name (be more specific to avoid false positives)
+        if (npc.name.Contains("Test_Character_Player_NPC") || npc.name.StartsWith("Test_"))
+        {
+            Debug.Log($"[SaveLoadManager] Filtering out test NPC: {npc.name}");
+            return true;
+        }
+        
+        // Check for critical health issues (but be less strict about settler data)
+        if (npc.MaxHealth <= 0)
+        {
+            Debug.LogWarning($"[SaveLoadManager] Filtering out NPC with invalid max health: {npc.name}");
+            return true;
+        }
+        
+        // Allow NPCs even if they have "Unknown Settler" as name - they might be legitimate recruited NPCs
+        // that had issues with data application but should still be saved
+        return false;
     }
 
     #endregion
