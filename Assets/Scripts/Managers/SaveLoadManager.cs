@@ -115,9 +115,27 @@ public class PlayerData
     public WeaponData equippedWeapon;
     public string dashElement;
     
-    // Recruited NPCs data
-    public List<string> recruitedNPCIds = new List<string>(); // References to NPCScriptableObj names
-    public List<string> recruitedNPCComponentIds = new List<string>(); // Component IDs for tracking
+    // Recruited NPCs data with full information
+    public List<RecruitedNPCSaveData> recruitedNPCs = new List<RecruitedNPCSaveData>();
+}
+
+[Serializable]
+public class RecruitedNPCSaveData
+{
+    public string componentId;
+    public string settlerName;
+    public int settlerAge;
+    public string settlerDescription;
+    public NPCAppearanceData appearanceData;
+    
+    public RecruitedNPCSaveData(string id, string name, int age, string description, NPCAppearanceData appearance)
+    {
+        this.componentId = id;
+        this.settlerName = name;
+        this.settlerAge = age;
+        this.settlerDescription = description;
+        this.appearanceData = appearance;
+    }
 }
 
 [Serializable]
@@ -256,41 +274,13 @@ public class SaveLoadManager : MonoBehaviour
         }
     }
 
-    public void SaveGame()
-    {
-        try
-        {
-            GameData data = new GameData
-            {
-                saveTime = DateTime.Now,
-                sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
-            };
-
-            // Save all game systems
-            SaveGridData(data.gridData);
-            SaveResearchData(data.researchData);
-            SaveNPCData(data.npcData);
-            SavePlayerData(data.playerData);
-            SaveBuildingData(data.buildingData);
-            SaveManagerData(data.managerData);
-            SaveNarrativeAssetData(data.narrativeAssetData);
-
-            string json = JsonUtility.ToJson(data, true);
-            File.WriteAllText(saveFilePath, json);
-            
-            Debug.Log($"<color=green>Game Saved Successfully at: {saveFilePath}</color>");
-            PlayerUIManager.Instance?.DisplayNotification("Game Saved");
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"<color=red>Failed to save game: {e.Message}</color>");
-            PlayerUIManager.Instance?.DisplayUIErrorMessage("Failed to save game!");
-        }
-    }
-
     #region Load/Save Game Public Methods
 
-    public void LoadGame()
+    /// <summary>
+    /// Loads the game from the save file.
+    /// </summary>
+    /// <param name="currentGameMode">The game mode to load the game for. If not provided, it will be determined from the current scene.</param>
+    public void LoadGame(GameMode currentGameMode = GameMode.NONE)
     {
         if (!File.Exists(saveFilePath))
         {
@@ -304,22 +294,57 @@ public class SaveLoadManager : MonoBehaviour
             string json = File.ReadAllText(saveFilePath);
             GameData data = JsonUtility.FromJson<GameData>(json);
 
-            // Load all game systems
-            LoadGridData(data.gridData);
-            LoadResearchData(data.researchData);
-            LoadNPCData(data.npcData);
-            LoadPlayerData(data.playerData);
-            LoadBuildingData(data.buildingData);
-            LoadManagerData(data.managerData);
-            LoadNarrativeAssetData(data.narrativeAssetData);
+            if(currentGameMode == GameMode.NONE){
+                // Get current game mode to determine what to load
+                currentGameMode = GetCurrentGameMode();
+            }
 
-            Debug.Log($"<color=green>Game Loaded Successfully from: {data.saveTime}</color>");
+            // Load only the data relevant to the current game mode
+            LoadGameModeSpecificData(data, currentGameMode);
+
+            Debug.Log($"<color=green>Game Loaded Successfully for {currentGameMode} from: {data.saveTime}</color>");
             PlayerUIManager.Instance?.DisplayNotification("Game Loaded");
         }
         catch (Exception e)
         {
             Debug.LogError($"<color=red>Failed to load game: {e.Message}</color>");
             PlayerUIManager.Instance?.DisplayUIErrorMessage("Failed to load game!");
+        }
+    }
+
+    /// <summary>
+    /// Saves the game to the save file.
+    /// </summary>
+    /// <param name="currentGameMode">The game mode to save the game for. If not provided, it will be determined from the current scene.</param>
+    public void SaveGame(GameMode currentGameMode = GameMode.NONE)
+    {
+        try
+        {
+            // Load existing save data first to preserve other scenes' data
+            GameData data = LoadExistingGameData();
+            
+            // Update metadata
+            data.saveTime = DateTime.Now;
+            data.sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+
+            if(currentGameMode == GameMode.NONE){
+                // Get current game mode to determine what to save
+                currentGameMode = GetCurrentGameMode();
+            }
+            
+            // Save only the data relevant to the current game mode
+            SaveGameModeSpecificData(data, currentGameMode);
+
+            string json = JsonUtility.ToJson(data, true);
+            File.WriteAllText(saveFilePath, json);
+            
+            Debug.Log($"<color=green>Game Saved Successfully for {currentGameMode} at: {saveFilePath}</color>");
+            PlayerUIManager.Instance?.DisplayNotification("Game Saved");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"<color=red>Failed to save game: {e.Message}</color>");
+            PlayerUIManager.Instance?.DisplayUIErrorMessage("Failed to save game!");
         }
     }
 
@@ -629,12 +654,27 @@ public class SaveLoadManager : MonoBehaviour
             );
         }
 
-        // Recruited NPCs are now handled by the PlayerInventory transfer system
-        // No need to save them separately as they are transferred to camp immediately
-
-        // Get component IDs (this accesses the private field through reflection or a public getter)
-        var componentIds = playerInventory.GetRecruitedNPCComponentIds();
-        playerData.recruitedNPCComponentIds.AddRange(componentIds);
+        // Save recruited NPCs with full data for proper restoration
+        if (playerInventory.HasRecruitedNPCs())
+        {
+            var recruitedNPCDataList = playerInventory.GetRecruitedNPCData();
+            foreach (var recruitedNPCData in recruitedNPCDataList)
+            {
+                // Convert PlayerInventory's RecruitedNPCData to our save format
+                var recruitedNPCSaveData = new RecruitedNPCSaveData(
+                    recruitedNPCData.componentId,
+                    recruitedNPCData.settlerData.name,
+                    recruitedNPCData.settlerData.age,
+                    recruitedNPCData.settlerData.description,
+                    recruitedNPCData.appearanceData
+                );
+                
+                playerData.recruitedNPCs.Add(recruitedNPCSaveData);
+                Debug.Log($"[SaveLoadManager] Saved recruited NPC data: {recruitedNPCData.settlerData.name}, Age {recruitedNPCData.settlerData.age}");
+            }
+            
+            Debug.Log($"[SaveLoadManager] Saved {playerData.recruitedNPCs.Count} recruited NPCs with full data");
+        }
     }
 
     private void LoadPlayerData(PlayerData playerData)
@@ -657,12 +697,89 @@ public class SaveLoadManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Get recruited NPC component IDs from PlayerInventory (helper method)
+    /// Load player data specifically for camp mode, handling recruited NPCs appropriately
     /// </summary>
-    private List<string> GetRecruitedNPCComponentIds(PlayerInventory playerInventory)
+    private void LoadPlayerDataForCamp(PlayerData playerData)
     {
-        return playerInventory.GetRecruitedNPCComponentIds();
+        if (PlayerInventory.Instance == null) return;
+
+        var playerInventory = PlayerInventory.Instance;
+
+        // In camp mode, we want to restore recruited NPCs to PlayerInventory 
+        // so they can be properly transferred by CampNPCTransferManager
+        if (playerData?.recruitedNPCs != null && playerData.recruitedNPCs.Count > 0)
+        {
+            Debug.Log($"[SaveLoadManager] Found {playerData.recruitedNPCs.Count} recruited NPCs to restore for camp transfer");
+            
+            // Restore recruited NPCs to PlayerInventory for transfer
+            // This will be handled by the CampNPCTransferManager when it detects recruited NPCs
+            RestoreRecruitedNPCsToPlayerInventory(playerData);
+        }
+        else
+        {
+            Debug.Log("[SaveLoadManager] No recruited NPCs found in save data for camp mode");
+        }
+
+        // Load other player data as normal
+        // TODO: Implement remaining player data loading (inventory, mutations, etc.)
+        Debug.Log($"[SaveLoadManager] TODO: Load remaining player data for camp - {playerData?.inventory?.Count ?? 0} inventory items");
     }
+
+    /// <summary>
+    /// Restore recruited NPCs to PlayerInventory from save data
+    /// </summary>
+    private void RestoreRecruitedNPCsToPlayerInventory(PlayerData playerData)
+    {
+        if (PlayerInventory.Instance == null)
+        {
+            Debug.LogError("[SaveLoadManager] PlayerInventory.Instance is null, cannot restore recruited NPCs");
+            return;
+        }
+
+        Debug.Log($"[SaveLoadManager] Restoring {playerData.recruitedNPCs.Count} recruited NPCs from save data");
+        
+        foreach (var recruitedNPCSaveData in playerData.recruitedNPCs)
+        {
+            // Create SettlerData from saved data
+            var settlerData = new Managers.SettlerData(
+                recruitedNPCSaveData.settlerName ?? "Unknown Settler",
+                recruitedNPCSaveData.settlerAge,
+                recruitedNPCSaveData.settlerDescription ?? "A mysterious settler."
+            );
+
+            // Create a full RecruitedNPCData object using the existing PlayerInventory structure
+            var recruitedNPCData = new RecruitedNPCData(
+                settlerData,
+                recruitedNPCSaveData.componentId,
+                recruitedNPCSaveData.appearanceData ?? new NPCAppearanceData()
+            );
+
+            // Restore to PlayerInventory
+            RestoreRecruitedNPCDataToInventory(recruitedNPCData);
+            
+            Debug.Log($"[SaveLoadManager] Restored recruited NPC: {settlerData.name}, Age {settlerData.age}");
+        }
+        
+        Debug.Log($"[SaveLoadManager] Successfully restored {playerData.recruitedNPCs.Count} recruited NPCs to PlayerInventory");
+    }
+
+    /// <summary>
+    /// Restore a recruited NPC data object to PlayerInventory
+    /// </summary>
+    private void RestoreRecruitedNPCDataToInventory(RecruitedNPCData recruitedNPCData)
+    {
+        if (PlayerInventory.Instance != null)
+        {
+            PlayerInventory.Instance.RestoreRecruitedNPC(recruitedNPCData);
+            Debug.Log($"[SaveLoadManager] Successfully restored recruited NPC to PlayerInventory: {recruitedNPCData.settlerData.name}");
+        }
+        else
+        {
+            Debug.LogError("[SaveLoadManager] PlayerInventory.Instance is null, cannot restore recruited NPC");
+        }
+    }
+
+
 
     /// <summary>
     /// Find an NPCScriptableObj by name (helper method)
@@ -856,6 +973,178 @@ public class SaveLoadManager : MonoBehaviour
 
     #endregion
 
+    #region Scene-Aware Save/Load Methods
+
+    /// <summary>
+    /// Get the current game mode to determine what data should be saved/loaded
+    /// </summary>
+    private GameMode GetCurrentGameMode()
+    {
+        // Try to get from GameManager first
+        if (GameManager.Instance != null)
+        {
+            return GameManager.Instance.CurrentGameMode;
+        }
+
+        // Fallback to scene name detection
+        string currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        return GetGameModeFromSceneName(currentSceneName);
+    }
+
+    /// <summary>
+    /// Map scene names to game modes for fallback detection
+    /// </summary>
+    private GameMode GetGameModeFromSceneName(string sceneName)
+    {
+        switch (sceneName)
+        {
+            case "CampScene":
+                return GameMode.CAMP;
+            case "RogueLikeScene":
+            case "OverworldScene":
+                return GameMode.ROGUE_LITE;
+            case "MainMenuScene":
+                return GameMode.MAIN_MENU;
+            default:
+                Debug.LogWarning($"Unknown scene name for game mode detection: {sceneName}");
+                return GameMode.NONE;
+        }
+    }
+
+    /// <summary>
+    /// Load existing save data to preserve other scenes' data, or create new data if none exists
+    /// </summary>
+    private GameData LoadExistingGameData()
+    {
+        if (File.Exists(saveFilePath))
+        {
+            try
+            {
+                string json = File.ReadAllText(saveFilePath);
+                GameData existingData = JsonUtility.FromJson<GameData>(json);
+                Debug.Log("[SaveLoadManager] Loaded existing save data to preserve other scenes' data");
+                return existingData;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[SaveLoadManager] Failed to load existing save data: {e.Message}. Creating new save data.");
+            }
+        }
+
+        // Return new game data if no existing save or failed to load
+        Debug.Log("[SaveLoadManager] Creating new save data");
+        return new GameData
+        {
+            saveTime = DateTime.Now,
+            sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
+        };
+    }
+
+    /// <summary>
+    /// Save only the data relevant to the current game mode
+    /// </summary>
+    private void SaveGameModeSpecificData(GameData data, GameMode currentGameMode)
+    {
+        Debug.Log($"[SaveLoadManager] Saving data for game mode: {currentGameMode}");
+
+        switch (currentGameMode)
+        {
+            case GameMode.CAMP:
+            case GameMode.CAMP_ATTACK:
+                // Save camp-specific data
+                SaveGridData(data.gridData);
+                SaveNPCData(data.npcData);
+                SaveBuildingData(data.buildingData);
+                SaveManagerData(data.managerData);
+                SaveNarrativeAssetData(data.narrativeAssetData);
+                SaveResearchData(data.researchData);
+                // IMPORTANT: Also save player data in camp mode to capture any recruited NPCs 
+                // that may still be in PlayerInventory before transfer
+                SavePlayerData(data.playerData);
+                Debug.Log("[SaveLoadManager] Saved CAMP mode data (grid, NPCs, buildings, managers, narrative, research, player)");
+                break;
+
+            case GameMode.ROGUE_LITE:
+                // Save roguelike-specific data (primarily player data)
+                SavePlayerData(data.playerData);
+                // Save narrative data as it might be relevant for story progression
+                SaveNarrativeAssetData(data.narrativeAssetData);
+                Debug.Log("[SaveLoadManager] Saved ROGUE_LITE mode data (player, narrative)");
+                break;
+
+            case GameMode.MAIN_MENU:
+                // For main menu, we might want to save global player data only
+                SavePlayerData(data.playerData);
+                Debug.Log("[SaveLoadManager] Saved MAIN_MENU mode data (player only)");
+                break;
+
+            default:
+                Debug.LogWarning($"[SaveLoadManager] Unknown game mode for saving: {currentGameMode}. Saving all data as fallback.");
+                // Fallback to saving all data
+                SaveGridData(data.gridData);
+                SaveResearchData(data.researchData);
+                SaveNPCData(data.npcData);
+                SavePlayerData(data.playerData);
+                SaveBuildingData(data.buildingData);
+                SaveManagerData(data.managerData);
+                SaveNarrativeAssetData(data.narrativeAssetData);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Load only the data relevant to the current game mode
+    /// </summary>
+    private void LoadGameModeSpecificData(GameData data, GameMode currentGameMode)
+    {
+        Debug.Log($"[SaveLoadManager] Loading data for game mode: {currentGameMode}");
+
+        switch (currentGameMode)
+        {
+            case GameMode.CAMP:
+            case GameMode.CAMP_ATTACK:
+                // Load camp-specific data
+                LoadGridData(data.gridData);
+                LoadNPCData(data.npcData);
+                LoadBuildingData(data.buildingData);
+                LoadManagerData(data.managerData);
+                LoadNarrativeAssetData(data.narrativeAssetData);
+                LoadResearchData(data.researchData);
+                // IMPORTANT: Also load player data in camp mode to restore any recruited NPCs
+                // that need to be transferred to camp
+                LoadPlayerDataForCamp(data.playerData);
+                Debug.Log("[SaveLoadManager] Loaded CAMP mode data (grid, NPCs, buildings, managers, narrative, research, player)");
+                break;
+
+            case GameMode.ROGUE_LITE:
+                // Load roguelike-specific data
+                LoadPlayerData(data.playerData);
+                LoadNarrativeAssetData(data.narrativeAssetData);
+                Debug.Log("[SaveLoadManager] Loaded ROGUE_LITE mode data (player, narrative)");
+                break;
+
+            case GameMode.MAIN_MENU:
+                // For main menu, load global player data only
+                LoadPlayerData(data.playerData);
+                Debug.Log("[SaveLoadManager] Loaded MAIN_MENU mode data (player only)");
+                break;
+
+            default:
+                Debug.LogWarning($"[SaveLoadManager] Unknown game mode for loading: {currentGameMode}. Loading all data as fallback.");
+                // Fallback to loading all data
+                LoadGridData(data.gridData);
+                LoadResearchData(data.researchData);
+                LoadNPCData(data.npcData);
+                LoadPlayerData(data.playerData);
+                LoadBuildingData(data.buildingData);
+                LoadManagerData(data.managerData);
+                LoadNarrativeAssetData(data.narrativeAssetData);
+                break;
+        }
+    }
+
+    #endregion
+
     #region Utility Methods
 
     private string GetPrefabPath(GameObject prefab)
@@ -964,6 +1253,84 @@ public class SaveLoadManager : MonoBehaviour
     {
         if (!autoSaveEnabled) return -1f;
         return autoSaveInterval - (Time.time - lastAutoSaveTime);
+    }
+
+    /// <summary>
+    /// Check if save data exists for a specific game mode
+    /// </summary>
+    public bool HasSaveDataForGameMode(GameMode gameMode)
+    {
+        if (!HasSaveFile()) return false;
+
+        try
+        {
+            string json = File.ReadAllText(saveFilePath);
+            GameData data = JsonUtility.FromJson<GameData>(json);
+            
+            switch (gameMode)
+            {
+                case GameMode.CAMP:
+                case GameMode.CAMP_ATTACK:
+                    return data.gridData?.occupiedSlots?.Count > 0 || 
+                           data.npcData?.npcs?.Count > 0 || 
+                           data.buildingData?.buildings?.Count > 0;
+                case GameMode.ROGUE_LITE:
+                    return data.playerData?.inventory?.Count > 0 || 
+                           data.playerData?.equippedMutationIds?.Count > 0 ||
+                           data.playerData?.recruitedNPCs?.Count > 0;
+                case GameMode.MAIN_MENU:
+                    return data.playerData != null;
+                default:
+                    return false;
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Failed to check save data for game mode {gameMode}: {e.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Get information about what data is saved for debugging/UI purposes
+    /// </summary>
+    public string GetSaveDataInfo()
+    {
+        if (!HasSaveFile()) return "No save file found";
+
+        try
+        {
+            string json = File.ReadAllText(saveFilePath);
+            GameData data = JsonUtility.FromJson<GameData>(json);
+            
+            var info = new System.Text.StringBuilder();
+            info.AppendLine($"Save Date: {data.saveTime}");
+            info.AppendLine($"Last Scene: {data.sceneName}");
+            info.AppendLine($"Version: {data.saveVersion}");
+            info.AppendLine();
+            
+            // Camp data
+            info.AppendLine("CAMP DATA:");
+            info.AppendLine($"  Grid Objects: {data.gridData?.occupiedSlots?.Count ?? 0}");
+            info.AppendLine($"  NPCs: {data.npcData?.npcs?.Count ?? 0}");
+            info.AppendLine($"  Buildings: {data.buildingData?.buildings?.Count ?? 0}");
+            info.AppendLine($"  Research Items: {data.researchData?.completedResearchIds?.Count ?? 0}");
+            info.AppendLine();
+            
+            // Player data
+            info.AppendLine("PLAYER DATA:");
+            info.AppendLine($"  Inventory Items: {data.playerData?.inventory?.Count ?? 0}");
+            info.AppendLine($"  Equipped Mutations: {data.playerData?.equippedMutationIds?.Count ?? 0}");
+            info.AppendLine($"  Available Mutations: {data.playerData?.availableMutations?.Count ?? 0}");
+            info.AppendLine($"  Equipped Weapon: {(data.playerData?.equippedWeapon?.weaponId ?? "None")}");
+            info.AppendLine($"  Recruited NPCs: {data.playerData?.recruitedNPCs?.Count ?? 0}");
+            
+            return info.ToString();
+        }
+        catch (Exception e)
+        {
+            return $"Error reading save data: {e.Message}";
+        }
     }
 
     #endregion

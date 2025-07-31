@@ -50,13 +50,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     public int MaxMutationSlots => maxMutationSlots;
     public List<GeneticMutationObj> EquippedMutations => equippedMutations;
 
-    /// <summary>
-    /// Get the list of recruited NPC component IDs for saving
-    /// </summary>
-    public List<string> GetRecruitedNPCComponentIds()
-    {
-        return recruitedNPCs.ConvertAll(data => data.componentId);
-    }
+
 
     // Events for NPC recruitment
     public event System.Action<Managers.SettlerData> OnNPCRecruited;
@@ -485,6 +479,37 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             return false;
             
         return recruitedNPCs.Exists(data => data.componentId == componentId);
+    }
+
+    /// <summary>
+    /// Restore a recruited NPC from save data (used by SaveLoadManager)
+    /// </summary>
+    public void RestoreRecruitedNPC(RecruitedNPCData recruitedNPCData)
+    {
+        if (recruitedNPCData == null)
+        {
+            Debug.LogWarning("[PlayerInventory] Cannot restore null recruited NPC data");
+            return;
+        }
+
+        // Check if this NPC is already in the list
+        if (!string.IsNullOrEmpty(recruitedNPCData.componentId) && 
+            recruitedNPCs.Exists(data => data.componentId == recruitedNPCData.componentId))
+        {
+            Debug.LogWarning($"[PlayerInventory] NPC with component ID '{recruitedNPCData.componentId}' is already recruited");
+            return;
+        }
+
+        recruitedNPCs.Add(recruitedNPCData);
+        Debug.Log($"[PlayerInventory] Restored recruited NPC from save data: {recruitedNPCData.settlerData.name}");
+    }
+
+    /// <summary>
+    /// Get all recruited NPC data (for save system access)
+    /// </summary>
+    public List<RecruitedNPCData> GetRecruitedNPCData()
+    {
+        return new List<RecruitedNPCData>(recruitedNPCs);
     }
 
     /// <summary>

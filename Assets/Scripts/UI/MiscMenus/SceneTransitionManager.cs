@@ -163,7 +163,7 @@ public class SceneTransitionManager : MonoBehaviour
         }
 
         //3.5 Load the game
-        SaveLoadManager.Instance.LoadGame();
+        SaveLoadManager.Instance.LoadGame(NextGameMode);
 
         //4. Update Player NPC position
         PlayerController.Instance.UpdateNPCPosition(GameManager.Instance.GetPlayerSpawnPoint());
