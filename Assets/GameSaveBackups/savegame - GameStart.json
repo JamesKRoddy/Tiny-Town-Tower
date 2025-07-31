@@ -1,0 +1,104 @@
+{
+    "gridData": {
+        "occupiedSlots": []
+    },
+    "researchData": {
+        "completedResearchIds": [],
+        "availableResearchIds": [
+            "_TestResearchScriptableObj",
+            "_TestResearchScriptableObj 1"
+        ],
+        "currentlyResearchingIds": [],
+        "unlockedItemIds": []
+    },
+    "npcData": {
+        "npcs": [
+            {
+                "npcId": "-437048",
+                "position": {
+                    "x": -3.103196382522583,
+                    "y": 0.08333301544189453,
+                    "z": 3.428556442260742
+                },
+                "health": 100.0,
+                "maxHealth": 100.0,
+                "stamina": 100.0,
+                "hunger": 97.63843536376953,
+                "additionalMutationSlots": 6,
+                "currentTaskType": "WANDER",
+                "equippedCharacteristicIds": [
+                    "_TestNPCCharacteristic"
+                ],
+                "inventory": [],
+                "equippedWeapon": {
+                    "weaponId": "",
+                    "weaponPrefabPath": ""
+                },
+                "npcDataObjName": "",
+                "appearanceData": {
+                    "bodyModelName": "Character_ToplessMale_01",
+                    "headModelName": "",
+                    "hairModelName": "",
+                    "topClothingName": "",
+                    "bottomClothingName": "",
+                    "footwearName": "",
+                    "headAccessoryName": "",
+                    "backAccessoryName": "",
+                    "handAccessoryName": "",
+                    "skinMaterialName": "",
+                    "hairMaterialName": "",
+                    "clothingMaterialName": "PolygonBattleRoyale_01_A"
+                },
+                "settlerName": "Edge",
+                "settlerAge": 40,
+                "settlerDescription": "An optimistic dreamer who believes in rebuilding civilization better than before.",
+                "isProceduralSettler": true
+            }
+        ]
+    },
+    "playerData": {
+        "inventory": [],
+        "equippedMutationIds": [],
+        "availableMutations": [],
+        "maxMutationSlots": 9,
+        "equippedWeapon": {
+            "weaponId": "",
+            "weaponPrefabPath": ""
+        },
+        "dashElement": "NONE",
+        "recruitedNPCs": []
+    },
+    "buildingData": {
+        "buildings": []
+    },
+    "managerData": {
+        "cookingData": {
+            "unlockedRecipeIds": [],
+            "availableRecipeIds": []
+        },
+        "upgradeData": {
+            "unlockedUpgradeIds": [],
+            "availableUpgradeIds": []
+        },
+        "cleanlinessData": {
+            "currentCleanliness": 0.0,
+            "dirtPilePositions": []
+        }
+    },
+    "narrativeAssetData": {
+        "narrativeInteractives": [
+            {
+                "componentInstanceId": "-437048",
+                "gameObjectName": "Settler_Edge",
+                "position": {
+                    "x": -3.103196382522583,
+                    "y": 0.08333301544189453,
+                    "z": 3.428556442260742
+                },
+                "assetFlags": []
+            }
+        ]
+    },
+    "saveVersion": "1.0",
+    "sceneName": "CampScene"
+}

@@ -455,23 +455,41 @@ public class SaveLoadManager : MonoBehaviour
 
         var researchManager = CampManager.Instance.ResearchManager;
         
+        // Clear existing data to prevent duplicates
+        researchData.completedResearchIds.Clear();
+        researchData.availableResearchIds.Clear();
+        researchData.currentlyResearchingIds.Clear();
+        researchData.unlockedItemIds.Clear();
+        
+        // Use HashSet to prevent duplicates during collection
+        var completedSet = new HashSet<string>();
+        var availableSet = new HashSet<string>();
+        var unlockedSet = new HashSet<string>();
+        
         // Save completed research
         foreach (var research in researchManager.GetCompletedResearch())
         {
-            researchData.completedResearchIds.Add(research.name);
+            completedSet.Add(research.name);
         }
 
         // Save available research
         foreach (var research in researchManager.GetAvailableResearch())
         {
-            researchData.availableResearchIds.Add(research.name);
+            availableSet.Add(research.name);
         }
 
         // Save unlocked items
         foreach (var item in researchManager.GetUnlockedItems())
         {
-            researchData.unlockedItemIds.Add(item.name);
+            unlockedSet.Add(item.name);
         }
+        
+        // Convert sets back to lists
+        researchData.completedResearchIds.AddRange(completedSet);
+        researchData.availableResearchIds.AddRange(availableSet);
+        researchData.unlockedItemIds.AddRange(unlockedSet);
+        
+        Debug.Log($"[SaveLoadManager] Saved research data - Completed: {completedSet.Count}, Available: {availableSet.Count}, Unlocked: {unlockedSet.Count}");
     }
 
     private void LoadResearchData(ResearchData researchData)
@@ -722,22 +740,60 @@ public class SaveLoadManager : MonoBehaviour
 
         var playerInventory = PlayerInventory.Instance;
 
-        // Save player inventory
+        // Clear existing data to prevent duplicates
+        playerData.inventory.Clear();
+        playerData.equippedMutationIds.Clear();
+        playerData.availableMutations.Clear();
+        playerData.recruitedNPCs.Clear();
+
+        // Consolidate inventory items by resourceId
+        var inventoryDict = new Dictionary<string, int>();
         foreach (var item in playerInventory.GetFullInventory())
         {
-            playerData.inventory.Add(new ResourceItemData(item.resourceScriptableObj.name, item.count));
+            string resourceId = item.resourceScriptableObj.name;
+            if (inventoryDict.ContainsKey(resourceId))
+            {
+                inventoryDict[resourceId] += item.count;
+            }
+            else
+            {
+                inventoryDict[resourceId] = item.count;
+            }
+        }
+        
+        // Convert consolidated inventory to save format
+        foreach (var kvp in inventoryDict)
+        {
+            playerData.inventory.Add(new ResourceItemData(kvp.Key, kvp.Value));
         }
 
-        // Save equipped mutations
+        // Save equipped mutations (use HashSet to prevent duplicates)
+        var equippedMutationSet = new HashSet<string>();
         foreach (var mutation in playerInventory.EquippedMutations)
         {
-            playerData.equippedMutationIds.Add(mutation.name);
+            equippedMutationSet.Add(mutation.name);
         }
+        playerData.equippedMutationIds.AddRange(equippedMutationSet);
 
-        // Save available mutations
+        // Consolidate available mutations by mutationId
+        var mutationDict = new Dictionary<string, int>();
         foreach (var mutation in playerInventory.availableMutations)
         {
-            playerData.availableMutations.Add(new MutationQuantityData(mutation.mutation.name, mutation.quantity));
+            string mutationId = mutation.mutation.name;
+            if (mutationDict.ContainsKey(mutationId))
+            {
+                mutationDict[mutationId] += mutation.quantity;
+            }
+            else
+            {
+                mutationDict[mutationId] = mutation.quantity;
+            }
+        }
+        
+        // Convert consolidated mutations to save format
+        foreach (var kvp in mutationDict)
+        {
+            playerData.availableMutations.Add(new MutationQuantityData(kvp.Key, kvp.Value));
         }
 
         playerData.maxMutationSlots = playerInventory.MaxMutationSlots;
@@ -756,8 +812,16 @@ public class SaveLoadManager : MonoBehaviour
         if (playerInventory.HasRecruitedNPCs())
         {
             var recruitedNPCDataList = playerInventory.GetRecruitedNPCData();
+            var recruitedNPCSet = new HashSet<string>(); // Track by componentId to prevent duplicates
+            
             foreach (var recruitedNPCData in recruitedNPCDataList)
             {
+                // Skip if already saved (prevent duplicates by componentId)
+                if (recruitedNPCSet.Contains(recruitedNPCData.componentId))
+                {
+                    continue;
+                }
+                
                 // Convert PlayerInventory's RecruitedNPCData to our save format
                 var recruitedNPCSaveData = new RecruitedNPCSaveData(
                     recruitedNPCData.componentId,
@@ -768,11 +832,14 @@ public class SaveLoadManager : MonoBehaviour
                 );
                 
                 playerData.recruitedNPCs.Add(recruitedNPCSaveData);
+                recruitedNPCSet.Add(recruitedNPCData.componentId);
                 Debug.Log($"[SaveLoadManager] Saved recruited NPC data: {recruitedNPCData.settlerData.name}, Age {recruitedNPCData.settlerData.age}");
             }
             
-            Debug.Log($"[SaveLoadManager] Saved {playerData.recruitedNPCs.Count} recruited NPCs with full data");
+            Debug.Log($"[SaveLoadManager] Saved {playerData.recruitedNPCs.Count} unique recruited NPCs with full data");
         }
+        
+        Debug.Log($"[SaveLoadManager] Saved player data - Inventory: {playerData.inventory.Count} items, Mutations: {playerData.availableMutations.Count} types, Equipped: {playerData.equippedMutationIds.Count}");
     }
 
     private void LoadPlayerData(PlayerData playerData)
@@ -997,11 +1064,23 @@ public class SaveLoadManager : MonoBehaviour
         // Find all NarrativeInteractive components in the scene
         var narrativeInteractives = FindObjectsByType<NarrativeInteractive>(FindObjectsSortMode.None);
         
+        // Create a dictionary to track existing entries by componentInstanceId
+        var existingDataDict = new Dictionary<string, NarrativeInteractiveSaveData>();
+        foreach (var existingData in narrativeAssetData.narrativeInteractives)
+        {
+            existingDataDict[existingData.componentInstanceId] = existingData;
+        }
+        
+        // Clear the list to rebuild it without duplicates
+        narrativeAssetData.narrativeInteractives.Clear();
+        
         foreach (var interactive in narrativeInteractives)
         {
+            string componentId = interactive.gameObject.GetInstanceID().ToString();
+            
             var saveData = new NarrativeInteractiveSaveData
             {
-                componentInstanceId = interactive.gameObject.GetInstanceID().ToString(),
+                componentInstanceId = componentId,
                 gameObjectName = interactive.gameObject.name,
                 position = interactive.transform.position
             };
@@ -1022,10 +1101,11 @@ public class SaveLoadManager : MonoBehaviour
                 Debug.Log($"[SaveLoadManager] No flags to save for {interactive.gameObject.name}");
             }
 
+            // Add or update the entry (this ensures no duplicates by componentInstanceId)
             narrativeAssetData.narrativeInteractives.Add(saveData);
         }
         
-        Debug.Log($"[SaveLoadManager] Saved {narrativeInteractives.Length} NarrativeInteractive components with narrative asset data");
+        Debug.Log($"[SaveLoadManager] Saved {narrativeInteractives.Length} unique NarrativeInteractive components with narrative asset data");
     }
 
     private void LoadNarrativeAssetData(NarrativeAssetData narrativeAssetData)
