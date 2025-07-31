@@ -7,7 +7,8 @@ Update the players camera to be at an angle!
 
 Recruiting NPCs:
 
-So the npc name for diologue is coming from the recruitment diologue text rather than from the npc themselves
+Have to put more control on the save/load manager based on the scene thats being loaded in.
+
 Randomly generating npcs, stats, models etc. in the npc manager.
 Randomly assigning narrative elements (have these stored in a specific place, in the json assign a character type or something and have it assigned by that?
 

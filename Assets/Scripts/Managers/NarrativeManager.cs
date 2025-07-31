@@ -518,6 +518,42 @@ public class NarrativeManager : MonoBehaviour
     }
 
     #endregion
+
+    /// <summary>
+    /// Get the display name of the current conversation target
+    /// </summary>
+    public string GetCurrentConversationTargetName()
+    {
+        if (currentConversationTarget == null)
+            return "Unknown NPC";
+
+        // Handle SettlerNPC specifically
+        if (currentConversationTarget is SettlerNPC settlerNPC)
+        {
+            string settlerName = settlerNPC.GetSettlerName();
+            // Double-check that we got a valid name
+            if (!string.IsNullOrEmpty(settlerName) && settlerName != "Unknown Settler")
+            {
+                return settlerName;
+            }
+        }
+
+        // For other NPC types or if SettlerNPC name is not available, 
+        // try to get the GameObject name as fallback
+        var transform = currentConversationTarget.GetTransform();
+        if (transform != null)
+        {
+            // Clean up the GameObject name for display (remove "Settler_" prefix if present)
+            string gameObjectName = transform.name;
+            if (gameObjectName.StartsWith("Settler_"))
+            {
+                return gameObjectName.Substring(8); // Remove "Settler_" prefix
+            }
+            return gameObjectName;
+        }
+
+        return "Unknown NPC";
+    }
 }
 
 /// <summary>

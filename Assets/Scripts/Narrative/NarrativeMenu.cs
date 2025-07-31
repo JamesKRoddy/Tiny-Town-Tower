@@ -26,7 +26,11 @@ public class NarrativeMenu : MenuBase
     public void DisplayDialogue(DialogueLine line)
     {        
         if (npcNameText != null)
-            npcNameText.text = line.speaker;
+        {
+            // Use the actual NPC's name instead of the speaker from the dialogue file
+            string actualNPCName = NarrativeManager.Instance?.GetCurrentConversationTargetName() ?? "Unknown NPC";
+            npcNameText.text = actualNPCName;
+        }
         else
             Debug.LogError("[NarrativeMenu] npcNameText is null!");
             
