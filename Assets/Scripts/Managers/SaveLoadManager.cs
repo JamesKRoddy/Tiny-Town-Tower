@@ -353,7 +353,7 @@ public class SaveLoadManager : MonoBehaviour
         if (File.Exists(saveFilePath))
         {
             File.Delete(saveFilePath);
-            Debug.Log("Save file deleted");
+            Debug.Log("<color=green>Save file deleted</color>");
             PlayerUIManager.Instance?.DisplayNotification("Save file deleted");
         }
         else
@@ -489,7 +489,6 @@ public class SaveLoadManager : MonoBehaviour
         researchData.availableResearchIds.AddRange(availableSet);
         researchData.unlockedItemIds.AddRange(unlockedSet);
         
-        Debug.Log($"[SaveLoadManager] Saved research data - Completed: {completedSet.Count}, Available: {availableSet.Count}, Unlocked: {unlockedSet.Count}");
     }
 
     private void LoadResearchData(ResearchData researchData)
@@ -500,7 +499,7 @@ public class SaveLoadManager : MonoBehaviour
         
         // TODO: Implement research loading
         // You'd need to find research objects by ID and restore their states
-        Debug.Log($"TODO: Load research data - {researchData.completedResearchIds.Count} completed research items");
+        Debug.LogWarning($"TODO: Load research data - {researchData.completedResearchIds.Count} completed research items");
     }
 
     #endregion
@@ -520,7 +519,6 @@ public class SaveLoadManager : MonoBehaviour
             // Skip test NPCs and invalid NPCs
             if (IsTestOrInvalidNPC(npc))
             {
-                Debug.Log($"[SaveLoadManager] Skipping test/invalid NPC: {npc.name}");
                 continue;
             }
             
@@ -579,7 +577,6 @@ public class SaveLoadManager : MonoBehaviour
             if (npc.appearanceSystem != null)
             {
                 npcSaveData.appearanceData = npc.appearanceSystem.GetCurrentAppearanceData();
-                Debug.Log($"[SaveLoadManager] Saved appearance data for {npc.name}");
             }
             else
             {
@@ -598,20 +595,16 @@ public class SaveLoadManager : MonoBehaviour
                 Debug.LogWarning($"[SaveLoadManager] NPC {npc.name} has default settler data - Name: '{npcSaveData.settlerName}', Age: {npcSaveData.settlerAge}. This might indicate a data application issue.");
             }
             
-            Debug.Log($"[SaveLoadManager] Saved procedural settler data: {npcSaveData.settlerName}, Age {npcSaveData.settlerAge}");
-
             npcData.npcs.Add(npcSaveData);
             savedNpcIds.Add(uniqueId); // Track this NPC as saved
         }
         
-        Debug.Log($"[SaveLoadManager] Saved {npcData.npcs.Count} unique NPCs");
     }
 
     private void LoadNPCData(NPCData npcData)
     {
         if (npcData?.npcs == null || npcData.npcs.Count == 0)
         {
-            Debug.Log("[SaveLoadManager] No NPC data to load");
             return;
         }
 
@@ -630,7 +623,6 @@ public class SaveLoadManager : MonoBehaviour
             if (NPCManager.Instance != null && NPCManager.Instance.IsSettlerGenerationConfigured())
             {
                 npcPrefab = NPCManager.Instance.GetSettlerPrefab();
-                Debug.Log($"[SaveLoadManager] Using settler prefab for loading saved settler: {npcSaveData.settlerName}");
             }
             else
             {
@@ -657,7 +649,6 @@ public class SaveLoadManager : MonoBehaviour
                 }
                 
                 settlerNPC.ApplySettlerData(savedSettlerData);
-                Debug.Log($"[SaveLoadManager] Restored saved settler data: {savedSettlerData.name}, Age {savedSettlerData.age}");
                 
                 // Set initialization context for loaded NPCs
                 settlerNPC.SetInitializationContext(NPCInitializationContext.LOADED_FROM_SAVE);
@@ -665,7 +656,6 @@ public class SaveLoadManager : MonoBehaviour
                 // Restore the NPC's state from save data
                 settlerNPC.RestoreFromSaveData(npcSaveData);
                 
-                Debug.Log($"[SaveLoadManager] Successfully loaded settler: {npcSaveData.settlerName} at {npcSaveData.position}");
             }
             else
             {
@@ -674,7 +664,6 @@ public class SaveLoadManager : MonoBehaviour
             }
         }
         
-        Debug.Log($"[SaveLoadManager] Finished loading {npcData.npcs.Count} NPCs");
     }
 
     /// <summary>
@@ -714,7 +703,6 @@ public class SaveLoadManager : MonoBehaviour
         // Check if it's a test NPC by name (be more specific to avoid false positives)
         if (npc.name.Contains("Test_Character_Player_NPC") || npc.name.StartsWith("Test_"))
         {
-            Debug.Log($"[SaveLoadManager] Filtering out test NPC: {npc.name}");
             return true;
         }
         
@@ -833,13 +821,10 @@ public class SaveLoadManager : MonoBehaviour
                 
                 playerData.recruitedNPCs.Add(recruitedNPCSaveData);
                 recruitedNPCSet.Add(recruitedNPCData.componentId);
-                Debug.Log($"[SaveLoadManager] Saved recruited NPC data: {recruitedNPCData.settlerData.name}, Age {recruitedNPCData.settlerData.age}");
             }
             
-            Debug.Log($"[SaveLoadManager] Saved {playerData.recruitedNPCs.Count} unique recruited NPCs with full data");
         }
         
-        Debug.Log($"[SaveLoadManager] Saved player data - Inventory: {playerData.inventory.Count} items, Mutations: {playerData.availableMutations.Count} types, Equipped: {playerData.equippedMutationIds.Count}");
     }
 
     private void LoadPlayerData(PlayerData playerData)
@@ -858,7 +843,7 @@ public class SaveLoadManager : MonoBehaviour
 
         // TODO: Implement remaining player data loading
         // You'd need to find resource/mutation objects by ID and restore inventory
-        Debug.Log($"[SaveLoadManager] TODO: Load remaining player data - {playerData.inventory.Count} inventory items");
+        Debug.LogWarning($"[SaveLoadManager] TODO: Load remaining player data - {playerData.inventory.Count} inventory items");
     }
 
     /// <summary>
@@ -873,21 +858,15 @@ public class SaveLoadManager : MonoBehaviour
         // In camp mode, we want to restore recruited NPCs to PlayerInventory 
         // so they can be properly transferred by CampNPCTransferManager
         if (playerData?.recruitedNPCs != null && playerData.recruitedNPCs.Count > 0)
-        {
-            Debug.Log($"[SaveLoadManager] Found {playerData.recruitedNPCs.Count} recruited NPCs to restore for camp transfer");
-            
+        {            
             // Restore recruited NPCs to PlayerInventory for transfer
             // This will be handled by the CampNPCTransferManager when it detects recruited NPCs
             RestoreRecruitedNPCsToPlayerInventory(playerData);
         }
-        else
-        {
-            Debug.Log("[SaveLoadManager] No recruited NPCs found in save data for camp mode");
-        }
 
         // Load other player data as normal
         // TODO: Implement remaining player data loading (inventory, mutations, etc.)
-        Debug.Log($"[SaveLoadManager] TODO: Load remaining player data for camp - {playerData?.inventory?.Count ?? 0} inventory items");
+        Debug.LogWarning($"[SaveLoadManager] TODO: Load remaining player data for camp - {playerData?.inventory?.Count ?? 0} inventory items");
     }
 
     /// <summary>
@@ -900,8 +879,6 @@ public class SaveLoadManager : MonoBehaviour
             Debug.LogError("[SaveLoadManager] PlayerInventory.Instance is null, cannot restore recruited NPCs");
             return;
         }
-
-        Debug.Log($"[SaveLoadManager] Restoring {playerData.recruitedNPCs.Count} recruited NPCs from save data");
         
         foreach (var recruitedNPCSaveData in playerData.recruitedNPCs)
         {
@@ -922,10 +899,8 @@ public class SaveLoadManager : MonoBehaviour
             // Restore to PlayerInventory
             RestoreRecruitedNPCDataToInventory(recruitedNPCData);
             
-            Debug.Log($"[SaveLoadManager] Restored recruited NPC: {settlerData.name}, Age {settlerData.age}");
         }
         
-        Debug.Log($"[SaveLoadManager] Successfully restored {playerData.recruitedNPCs.Count} recruited NPCs to PlayerInventory");
     }
 
     /// <summary>
@@ -936,7 +911,6 @@ public class SaveLoadManager : MonoBehaviour
         if (PlayerInventory.Instance != null)
         {
             PlayerInventory.Instance.RestoreRecruitedNPC(recruitedNPCData);
-            Debug.Log($"[SaveLoadManager] Successfully restored recruited NPC to PlayerInventory: {recruitedNPCData.settlerData.name}");
         }
         else
         {
@@ -961,7 +935,6 @@ public class SaveLoadManager : MonoBehaviour
         NPCScriptableObj npcScriptable = Resources.Load<NPCScriptableObj>($"SettlerNPCs/{npcName}");
         if (npcScriptable != null)
         {
-            Debug.Log($"[SaveLoadManager] Found NPCScriptableObj in Resources: {npcName}");
             return npcScriptable;
         }
 
@@ -969,7 +942,6 @@ public class SaveLoadManager : MonoBehaviour
         npcScriptable = Resources.Load<NPCScriptableObj>(npcName);
         if (npcScriptable != null)
         {
-            Debug.Log($"[SaveLoadManager] Found NPCScriptableObj in Resources root: {npcName}");
             return npcScriptable;
         }
 
@@ -979,7 +951,6 @@ public class SaveLoadManager : MonoBehaviour
         {
             if (npc.name == npcName)
             {
-                Debug.Log($"[SaveLoadManager] Found NPCScriptableObj via FindObjectsOfTypeAll: {npcName}");
                 return npc;
             }
         }
@@ -1013,7 +984,7 @@ public class SaveLoadManager : MonoBehaviour
     private void LoadBuildingData(BuildingData buildingData)
     {
         // TODO: Implement building data loading
-        Debug.Log($"TODO: Load building data for {buildingData.buildings.Count} buildings");
+        Debug.LogWarning($"TODO: Load building data for {buildingData.buildings.Count} buildings");
     }
 
     #endregion
@@ -1052,7 +1023,7 @@ public class SaveLoadManager : MonoBehaviour
     private void LoadManagerData(ManagerData managerData)
     {
         // TODO: Implement manager data loading
-        Debug.Log("TODO: Load manager data");
+        Debug.LogWarning("TODO: Load manager data");
     }
 
     #endregion
@@ -1094,18 +1065,11 @@ public class SaveLoadManager : MonoBehaviour
                     saveData.assetFlags.Add(new NarrativeAssetFlagSaveData(flag.flagName, flag.value));
                 }
                 
-                Debug.Log($"[SaveLoadManager] Saved {saveData.assetFlags.Count} flags for {interactive.gameObject.name}");
-            }
-            else
-            {
-                Debug.Log($"[SaveLoadManager] No flags to save for {interactive.gameObject.name}");
             }
 
             // Add or update the entry (this ensures no duplicates by componentInstanceId)
             narrativeAssetData.narrativeInteractives.Add(saveData);
         }
-        
-        Debug.Log($"[SaveLoadManager] Saved {narrativeInteractives.Length} unique NarrativeInteractive components with narrative asset data");
     }
 
     private void LoadNarrativeAssetData(NarrativeAssetData narrativeAssetData)
@@ -1138,7 +1102,6 @@ public class SaveLoadManager : MonoBehaviour
                     }
                 }
                 
-                Debug.Log($"[SaveLoadManager] Loaded flags for NarrativeInteractive: {saveData.gameObjectName} ({saveData.assetFlags?.Count ?? 0} flags)");
             }
             else
             {
@@ -1146,7 +1109,6 @@ public class SaveLoadManager : MonoBehaviour
             }
         }
         
-        Debug.Log($"[SaveLoadManager] Loaded narrative asset data for {narrativeAssetData.narrativeInteractives.Count} components");
     }
 
     #endregion
@@ -1200,7 +1162,6 @@ public class SaveLoadManager : MonoBehaviour
             {
                 string json = File.ReadAllText(saveFilePath);
                 GameData existingData = JsonUtility.FromJson<GameData>(json);
-                Debug.Log("[SaveLoadManager] Loaded existing save data to preserve other scenes' data");
                 return existingData;
             }
             catch (Exception e)
@@ -1210,7 +1171,6 @@ public class SaveLoadManager : MonoBehaviour
         }
 
         // Return new game data if no existing save or failed to load
-        Debug.Log("[SaveLoadManager] Creating new save data");
         return new GameData
         {
             saveTime = DateTime.Now,
@@ -1223,8 +1183,6 @@ public class SaveLoadManager : MonoBehaviour
     /// </summary>
     private void SaveGameModeSpecificData(GameData data, GameMode currentGameMode)
     {
-        Debug.Log($"[SaveLoadManager] Saving data for game mode: {currentGameMode}");
-
         switch (currentGameMode)
         {
             case GameMode.CAMP:
@@ -1239,7 +1197,6 @@ public class SaveLoadManager : MonoBehaviour
                 // IMPORTANT: Also save player data in camp mode to capture any recruited NPCs 
                 // that may still be in PlayerInventory before transfer
                 SavePlayerData(data.playerData);
-                Debug.Log("[SaveLoadManager] Saved CAMP mode data (grid, NPCs, buildings, managers, narrative, research, player)");
                 break;
 
             case GameMode.ROGUE_LITE:
@@ -1247,13 +1204,11 @@ public class SaveLoadManager : MonoBehaviour
                 SavePlayerData(data.playerData);
                 // Save narrative data as it might be relevant for story progression
                 SaveNarrativeAssetData(data.narrativeAssetData);
-                Debug.Log("[SaveLoadManager] Saved ROGUE_LITE mode data (player, narrative)");
                 break;
 
             case GameMode.MAIN_MENU:
                 // For main menu, we might want to save global player data only
                 SavePlayerData(data.playerData);
-                Debug.Log("[SaveLoadManager] Saved MAIN_MENU mode data (player only)");
                 break;
 
             default:
@@ -1275,8 +1230,6 @@ public class SaveLoadManager : MonoBehaviour
     /// </summary>
     private void LoadGameModeSpecificData(GameData data, GameMode currentGameMode)
     {
-        Debug.Log($"[SaveLoadManager] Loading data for game mode: {currentGameMode}");
-
         switch (currentGameMode)
         {
             case GameMode.CAMP:
@@ -1291,20 +1244,17 @@ public class SaveLoadManager : MonoBehaviour
                 // IMPORTANT: Also load player data in camp mode to restore any recruited NPCs
                 // that need to be transferred to camp
                 LoadPlayerDataForCamp(data.playerData);
-                Debug.Log("[SaveLoadManager] Loaded CAMP mode data (grid, NPCs, buildings, managers, narrative, research, player)");
                 break;
 
             case GameMode.ROGUE_LITE:
                 // Load roguelike-specific data
                 LoadPlayerData(data.playerData);
                 LoadNarrativeAssetData(data.narrativeAssetData);
-                Debug.Log("[SaveLoadManager] Loaded ROGUE_LITE mode data (player, narrative)");
                 break;
 
             case GameMode.MAIN_MENU:
                 // For main menu, load global player data only
                 LoadPlayerData(data.playerData);
-                Debug.Log("[SaveLoadManager] Loaded MAIN_MENU mode data (player only)");
                 break;
 
             default:
@@ -1421,7 +1371,6 @@ public class SaveLoadManager : MonoBehaviour
     public void SetAutoSave(bool enabled)
     {
         autoSaveEnabled = enabled;
-        Debug.Log($"Auto-save {(enabled ? "enabled" : "disabled")}");
     }
 
     /// <summary>
@@ -1571,7 +1520,6 @@ public class SaveLoadManager : MonoBehaviour
             CampManager.Instance.MarkSharedGridSlotsOccupied(buildingPosition, slotData.size, buildingObj);
         }
 
-        Debug.Log($"Recreated building: {buildingScriptable.name} at {buildingPosition}");
     }
 
     private void CreateTurretFromSave(TurretScriptableObject turretScriptable, GridSlotSaveData slotData)
@@ -1602,7 +1550,6 @@ public class SaveLoadManager : MonoBehaviour
             CampManager.Instance.MarkSharedGridSlotsOccupied(turretPosition, slotData.size, turretObj);
         }
 
-        Debug.Log($"Recreated turret: {turretScriptable.name} at {turretPosition}");
     }
 
     #endregion

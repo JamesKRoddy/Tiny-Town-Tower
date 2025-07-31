@@ -7,11 +7,7 @@ Update the players camera to be at an angle!
 
 Recruiting NPCs:
 
-Have to put more control on the save/load manager based on the scene thats being loaded in:
-Currently when returning its spawning unknown npcs from somewhere. Just strip back logging and get ai to add some relevant stuff back in to help narrow it down.
-
 Get chatGPT to generate more recruitment diologue options
-Randomly generating npcs, stats, models etc. in the npc manager.
 Randomly assigning narrative elements (have these stored in a specific place, in the json assign a character type or something and have it assigned by that?
 
 
@@ -65,7 +61,7 @@ NPCs have to use toilets, need to figure out timers for when they need it
 Damaging buildings: ties into turret system
 Repairing buildings: wait until damage is finished
 
-Save game UI already class made SaveGameUI.cs
+SaveLoadManager, have to implement saving/loading research, player data?, other player data for camp?, building data, cleaness and electricity, manager data? (? just means the ai put TODO there but not sure exactly what it means or what data is needed)
 
 
 

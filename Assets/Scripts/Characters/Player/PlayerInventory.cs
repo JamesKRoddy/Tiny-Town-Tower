@@ -123,7 +123,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 }
                 break;
             case GeneticMutationObj geneticMutation:
-                Debug.Log("Adding genetic mutation to player inventory: " + geneticMutation.objectName);
                 AddAvalibleMutation(geneticMutation);
                 PlayerUIManager.Instance.utilityMenu.EnableGeneticMutationMenu();
                 // Show popup for genetic mutation added to player inventory
@@ -135,7 +134,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 break;
             // Add additional cases here for other item types if necessary.
             default:
-                Debug.LogWarning("Unhandled chest item type.");
+                Debug.LogWarning($"Unhandled chest item type: {resourceItem.GetType().Name}");
                 break;
         }
     }
@@ -227,7 +226,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     {
         if (result == null) return;
 
-        Debug.Log("Handling interaction result: " + result.GetType().Name);
         switch (result)
         {
             case ResourceItemCount resourcePickup:
@@ -387,13 +385,10 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         }
 
         string settlerName = settlerNPCReference.GetSettlerName();
-        Debug.Log($"[PlayerInventory] RecruitNPC called with Settler: {settlerName}, ComponentID: {componentId}");
-        Debug.Log($"[PlayerInventory] Current recruited NPCs count: {recruitedNPCs.Count}");
         
         // Check if this specific component has already been recruited
         if (!string.IsNullOrEmpty(componentId))
         {
-            Debug.Log($"[PlayerInventory] Checking if component '{componentId}' is already recruited...");
             
             if (recruitedNPCs.Exists(data => data.componentId == componentId))
             {
@@ -413,40 +408,28 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         NPCAppearanceData appearanceData = null;
         if (settlerNPCReference.GetAppearanceSystem() != null)
         {
-            appearanceData = settlerNPCReference.GetAppearanceSystem().GetCurrentAppearanceData();
-            Debug.Log($"[PlayerInventory] Captured appearance data for recruited settler '{settlerName}'");
-        }
+            appearanceData = settlerNPCReference.GetAppearanceSystem().GetCurrentAppearanceData();        }
         else
         {
             Debug.LogWarning($"[PlayerInventory] Could not capture appearance data for '{settlerName}' - no appearance system");
             appearanceData = new NPCAppearanceData(); // Empty appearance data as fallback
         }
 
-        Debug.Log($"[PlayerInventory] Adding '{settlerName}' to recruited NPCs list...");
         
         // Create and add the recruited NPC data
         var recruitedData = new RecruitedNPCData(settlerData, componentId, appearanceData);
         recruitedNPCs.Add(recruitedData);
+
         
-        if (!string.IsNullOrEmpty(componentId))
-        {
-            Debug.Log($"[PlayerInventory] Tracked recruitment by component ID: {componentId}");
-        }
-        
-        Debug.Log($"[PlayerInventory] Invoking OnNPCRecruited event for '{settlerName}'...");
         OnNPCRecruited?.Invoke(settlerData);
         
-        Debug.Log($"[PlayerInventory] Successfully recruited settler '{settlerName}' - will be transferred to camp when returning");
-        Debug.Log($"[PlayerInventory] New recruited NPCs count: {recruitedNPCs.Count}");
-        
         // Show recruitment popup 
-        Debug.Log($"[PlayerInventory] Attempting to show recruitment popup for '{settlerName}'...");
         if (PlayerUIManager.Instance?.inventoryPopup != null)
         {
-            Debug.Log("[PlayerInventory] PlayerUIManager and inventoryPopup found, showing recruitment popup...");
+            Debug.LogWarning("[PlayerInventory] PlayerUIManager and inventoryPopup found, showing recruitment popup...");
             // We'll need to create a way to show settler recruitment in the UI
             // For now, just show a simple notification
-            Debug.Log($"[PlayerInventory] Recruited {settlerName} (Age {settlerData.age})!");
+            Debug.LogWarning($"[PlayerInventory] Recruited {settlerName} (Age {settlerData.age})!");
         }
         else
         {
@@ -501,7 +484,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         }
 
         recruitedNPCs.Add(recruitedNPCData);
-        Debug.Log($"[PlayerInventory] Restored recruited NPC from save data: {recruitedNPCData.settlerData.name}");
     }
 
     /// <summary>
@@ -519,7 +501,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     {
         if (recruitedNPCs.Count == 0)
         {
-            Debug.Log("[PlayerInventory] No recruited settlers to transfer to camp");
             return;
         }
 
@@ -528,7 +509,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         foreach (var recruitedData in recruitedNPCs)
         {
             settlersToTransfer.Add(recruitedData.settlerData);
-            Debug.Log($"[PlayerInventory] Transferring recruited settler '{recruitedData.settlerData.name}' to camp");
             SpawnSettlerInCamp(recruitedData.settlerData, recruitedData.appearanceData);
         }
 
@@ -537,7 +517,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
         recruitedNPCs.Clear();
         
-        Debug.Log("[PlayerInventory] All recruited settlers transferred to camp and cleared from inventory");
     }
 
     /// <summary>
@@ -578,14 +557,12 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             if (appearanceData != null)
             {
                 settlerNPC.SetRecruitedAppearanceData(appearanceData);
-                Debug.Log($"[PlayerInventory] Set recruited appearance data for '{settlerData.name}'");
             }
             else
             {
                 Debug.LogWarning($"[PlayerInventory] No appearance data available for recruited settler '{settlerData.name}' - will use random appearance");
             }
             
-            Debug.Log($"[PlayerInventory] Successfully spawned recruited settler '{settlerData.name}' (Age {settlerData.age}) in camp at {spawnPosition}");
         }
         else
         {
@@ -605,8 +582,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             Vector2 xBounds = CampManager.Instance.SharedXBounds;
             Vector2 zBounds = CampManager.Instance.SharedZBounds;
             
-            Debug.Log($"[PlayerInventory] Camp bounds - X: {xBounds}, Z: {zBounds}");
-            
             // Try to find a clear position within camp bounds
             for (int attempts = 0; attempts < 10; attempts++)
             {
@@ -619,7 +594,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 // Simple ground raycast to place on terrain
                 if (Physics.Raycast(randomPosition + Vector3.up * 10f, Vector3.down, out RaycastHit hit, 20f))
                 {
-                    Debug.Log($"[PlayerInventory] Found spawn position: {hit.point}");
                     return hit.point;
                 }
             }
@@ -644,7 +618,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         if (dataToRemove != null)
         {
             recruitedNPCs.Remove(dataToRemove);
-            Debug.Log($"[PlayerInventory] Removed recruited settler '{dataToRemove.settlerData.name}' from temporary storage");
         }
     }
 

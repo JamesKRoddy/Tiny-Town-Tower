@@ -58,7 +58,6 @@ public class FriendlyRoom : RogueLiteRoom
             SpawnNPCs();
         }
         
-        Debug.Log($"[FriendlyRoom] Friendly room '{gameObject.name}' setup complete with {npcSpawnPoints.Length} NPC spawn points");
     }
     
     /// <summary>
@@ -98,7 +97,6 @@ public class FriendlyRoom : RogueLiteRoom
                         // Set initialization context (this will trigger appearance randomization)
                         settlerNPCComponent.SetInitializationContext(NPCInitializationContext.FRESH_SPAWN);
                         
-                        Debug.Log($"[FriendlyRoom] Spawned procedural settler '{settlerData.name}' (Age {settlerData.age}) at spawn point {i + 1} in room '{gameObject.name}'");
                     }
                 }
                 else
@@ -145,7 +143,7 @@ public class FriendlyRoom : RogueLiteRoom
         if (ambientSound != null)
         {
             // AudioSource component or audio manager integration would go here
-            Debug.Log($"[FriendlyRoom] Starting ambient sound for room '{gameObject.name}'");
+            Debug.LogWarning($"[FriendlyRoom] Unimplemented ambient sound for room '{gameObject.name}'");
         }
     }
     

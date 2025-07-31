@@ -137,8 +137,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
                 InitializeAsRecruited();
                 break;
             case NPCInitializationContext.LOADED_FROM_SAVE:
-                RegisterWithManagers();
-                InitializeAsLoadedFromSave();
+                RegisterWithManagers(); 
                 break;
         }
         
@@ -179,12 +178,10 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         {
             if (recruitedAppearanceData != null)
             {
-                Debug.Log($"[SettlerNPC] {gameObject.name} - Restoring recruited NPC appearance from saved data");
                 appearanceSystem.SetAppearance(recruitedAppearanceData);
             }
             else
             {
-                Debug.Log($"[SettlerNPC] {gameObject.name} - No recruited appearance data available, randomizing appearance");
                 appearanceSystem.RandomizeAppearance();
             }
         }
@@ -206,16 +203,6 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         }
     }
 
-    /// <summary>
-    /// Initialize as an NPC loaded from save data
-    /// </summary>
-    private void InitializeAsLoadedFromSave()
-    {
-        // Don't apply random characteristics - they should be restored from save data
-        // Don't default to WanderState - task state should be restored from save data
-        // This method is called when NPCs are loaded from save files
-        Debug.Log($"[SettlerNPC] {gameObject.name} initialized as loaded from save - characteristics and state should be restored externally");
-    }
 
     /// <summary>
     /// Set the initialization context before Start() is called
@@ -275,7 +262,6 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         if (appearanceSystem != null && saveData.appearanceData != null)
         {
             appearanceSystem.SetAppearance(saveData.appearanceData);
-            Debug.Log($"[SettlerNPC] Restored appearance for {gameObject.name}");
         }
         else if (saveData.appearanceData == null)
         {
@@ -299,7 +285,6 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         }
 
         hasBeenInitialized = true;
-        Debug.Log($"[SettlerNPC] {gameObject.name} state restored from save data");
     }
 
     protected override void OnDestroy()
@@ -634,7 +619,6 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     public void SetRecruitedAppearanceData(NPCAppearanceData appearanceData)
     {
         recruitedAppearanceData = appearanceData;
-        Debug.Log($"[SettlerNPC] {gameObject.name} - Stored recruited appearance data");
     }
 
     /// <summary>
@@ -657,7 +641,6 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         settlerAge = settlerData.age;
         settlerDescription = settlerData.description;
         
-        Debug.Log($"[SettlerNPC] Applied settler data - Name: {settlerData.name}, Age: {settlerData.age}");
     }
 
     /// <summary>
@@ -826,7 +809,6 @@ public class NPCAppearanceSystem
             return;
         }
         
-        Debug.Log($"[NPCAppearanceSystem] Starting appearance randomization for {settlerNPC.name}");
         
         // Clear any existing appearance models
         ClearCurrentAppearance();
@@ -841,11 +823,9 @@ public class NPCAppearanceSystem
             return;
         }
         
-        Debug.Log($"[NPCAppearanceSystem] bodyModels count: {bodyModels?.Length ?? 0}");
         // Randomize body parts
         if (bodyModels != null && bodyModels.Length > 0)
         {
-            Debug.Log($"[NPCAppearanceSystem] Randomizing body models for {settlerNPC.name}");
             ActivateRandomModel(bodyModels, "Body");
         }
         else
@@ -900,7 +880,6 @@ public class NPCAppearanceSystem
         // Apply random materials
         ApplyRandomMaterials();
         
-        Debug.Log($"[NPCAppearanceSystem] Randomized appearance for {settlerNPC.name} with {activeModels.Count} active models");
     }
     
     /// <summary>
@@ -908,16 +887,13 @@ public class NPCAppearanceSystem
     /// </summary>
     private void ActivateRandomModel(GameObject[] modelArray, string categoryName)
     {
-        Debug.Log($"[NPCAppearanceSystem] Activating random model for {categoryName}");
         if (modelArray == null || modelArray.Length == 0) return;
         
         GameObject selectedModel = modelArray[UnityEngine.Random.Range(0, modelArray.Length)];
         if (selectedModel != null)
         {
-            Debug.Log($"[NPCAppearanceSystem] Instantiating model: {selectedModel.name}");
             selectedModel.SetActive(true);
             activeModels.Add(selectedModel);
-            Debug.Log($"[NPCAppearanceSystem] Activated {categoryName}: {selectedModel.name}");
         }
     }
     
@@ -1021,8 +997,6 @@ public class NPCAppearanceSystem
 
         // Apply saved materials
         ApplySavedMaterials(appearanceData);
-
-        Debug.Log($"[NPCAppearanceSystem] Set appearance for {settlerNPC.name} with {activeModels.Count} active models");
     }
     
     /// <summary>
@@ -1107,7 +1081,6 @@ public class NPCAppearanceSystem
             }
         }
         
-        Debug.Log($"[NPCAppearanceSystem] Captured appearance data for {settlerNPC?.name ?? "Unknown NPC"} with {activeModels.Count} active models");
         return appearanceData;
     }
 
@@ -1138,7 +1111,6 @@ public class NPCAppearanceSystem
             {
                 model.SetActive(true);
                 activeModels.Add(model);
-                Debug.Log($"[NPCAppearanceSystem] Activated {categoryName}: {modelName}");
                 return;
             }
         }
