@@ -6,31 +6,19 @@ using Managers;
 using Characters.NPC.Characteristic;
 using System.Linq;
 
+/// <summary>
+/// Serializable structure for narrative flags (Unity doesn't serialize Dictionaries)
+/// </summary>
 [Serializable]
-public class NarrativeAssetData
-{
-    public List<NarrativeInteractiveSaveData> narrativeInteractives = new List<NarrativeInteractiveSaveData>();
-}
-
-[Serializable]
-public class NarrativeInteractiveSaveData
-{
-    public string componentInstanceId; // Instance ID of the NarrativeInteractive component
-    public string gameObjectName; // For debugging/reference
-    public Vector3 position; // Position for identification
-    public List<NarrativeAssetFlagSaveData> assetFlags = new List<NarrativeAssetFlagSaveData>();
-}
-
-[Serializable]
-public class NarrativeAssetFlagSaveData
+public class NarrativeFlagData
 {
     public string flagName;
-    public string value;
+    public string flagValue;
     
-    public NarrativeAssetFlagSaveData(string name, string val)
+    public NarrativeFlagData(string name, string value)
     {
         flagName = name;
-        value = val;
+        flagValue = value;
     }
 }
 
@@ -43,7 +31,6 @@ public class GameData
     public PlayerData playerData = new PlayerData();
     public BuildingData buildingData = new BuildingData();
     public ManagerData managerData = new ManagerData();
-    public NarrativeAssetData narrativeAssetData = new NarrativeAssetData();
     
     // Metadata
     public string saveVersion = "1.0";
@@ -60,10 +47,14 @@ public class GridData
 [Serializable]
 public class GridSlotSaveData
 {
+    public string uuid; // Universal unique identifier
     public Vector3 position;
     public string occupyingObjectName; // Name/ID of the placed object
     public string occupyingObjectPrefabPath; // Path to the prefab for recreation
     public Vector2Int size; // Size of the object for grid management
+    
+    // Consolidated narrative data (serializable format)
+    public List<NarrativeFlagData> narrativeFlags = new List<NarrativeFlagData>();
 }
 
 [Serializable]
@@ -84,7 +75,8 @@ public class NPCData
 [Serializable]
 public class NPCSaveData
 {
-    public string npcId; // Unique identifier
+    public string uuid; // Universal unique identifier
+    public string npcId; // Legacy identifier (for compatibility)
     public Vector3 position;
     public float health;
     public float maxHealth;
@@ -103,6 +95,9 @@ public class NPCSaveData
     public int settlerAge;
     public string settlerDescription;
     public bool isProceduralSettler; // Flag to distinguish between unique NPCs and procedural settlers
+    
+    // Consolidated narrative data (serializable format)
+    public List<NarrativeFlagData> narrativeFlags = new List<NarrativeFlagData>();
 }
 
 [Serializable]
@@ -147,13 +142,17 @@ public class BuildingData
 [Serializable]
 public class BuildingSaveData
 {
-    public string buildingId; // Unique identifier
+    public string uuid; // Universal unique identifier
+    public string buildingId; // Legacy identifier (for compatibility)
     public Vector3 position;
     public float health;
     public bool isOperational;
     public bool isUnderConstruction;
     public string buildingScriptableObjName;
     public float constructionProgress; // For buildings under construction
+    
+    // Consolidated narrative data (serializable format)
+    public List<NarrativeFlagData> narrativeFlags = new List<NarrativeFlagData>();
 }
 
 [Serializable]
@@ -375,14 +374,32 @@ public class SaveLoadManager : MonoBehaviour
     {
         if (CampManager.Instance?.SharedGridSlots == null) return;
 
-        // Track which buildings we've already saved to avoid duplicates
-        HashSet<GameObject> savedBuildings = new HashSet<GameObject>();
+        // Clear existing grid data to prevent accumulation
+        gridData.occupiedSlots.Clear();
+
+        // Track which UUIDs we've already saved to avoid duplicates
+        HashSet<string> savedUuids = new HashSet<string>();
 
         foreach (var kvp in CampManager.Instance.SharedGridSlots)
         {
             var slot = kvp.Value;
-            if (slot.IsOccupied && slot.OccupyingObject != null && !savedBuildings.Contains(slot.OccupyingObject))
+            if (slot.IsOccupied && slot.OccupyingObject != null)
             {
+                // Get or add SaveableObject component for UUID management
+                SaveableObject saveableObj = slot.OccupyingObject.GetComponent<SaveableObject>();
+                if (saveableObj == null)
+                {
+                    saveableObj = slot.OccupyingObject.gameObject.AddComponent<SaveableObject>();
+                    Debug.Log($"[SaveLoadManager] Added SaveableObject component to {slot.OccupyingObject.name}");
+                }
+
+                // Skip if we've already saved this UUID (prevent duplicates)
+                if (savedUuids.Contains(saveableObj.UUID))
+                {
+                    Debug.LogWarning($"[SaveLoadManager] Skipping duplicate building/turret UUID: {slot.OccupyingObject.name} with UUID {saveableObj.UUID}");
+                    continue;
+                }
+
                 // Get the building component to determine size
                 Vector2Int size = Vector2Int.one;
                 if (slot.OccupyingObject.TryGetComponent<IPlaceableStructure>(out var structure))
@@ -415,18 +432,30 @@ public class SaveLoadManager : MonoBehaviour
                 // Save the actual building position instead of grid slot position
                 Vector3 buildingPosition = slot.OccupyingObject.transform.position;
 
-                gridData.occupiedSlots.Add(new GridSlotSaveData
+                var slotSaveData = new GridSlotSaveData
                 {
+                    uuid = saveableObj.UUID, // Use persistent UUID
                     position = buildingPosition,
                     occupyingObjectName = scriptableObjName,
                     occupyingObjectPrefabPath = GetPrefabPath(slot.OccupyingObject),
-                    size = size
-                });
+                    size = size,
+                    narrativeFlags = saveableObj.GetAllNarrativeFlagsSerializable() // Save consolidated narrative data
+                };
 
-                // Mark this building as saved to avoid duplicates
-                savedBuildings.Add(slot.OccupyingObject);
+                gridData.occupiedSlots.Add(slotSaveData);
+
+                // Track this UUID as saved
+                savedUuids.Add(saveableObj.UUID);
+
+                // Debug logging for narrative data
+                if (slotSaveData.narrativeFlags.Count > 0)
+                {
+                    Debug.Log($"[SaveLoadManager] Saved {slotSaveData.narrativeFlags.Count} narrative flags for {scriptableObjName} (UUID: {saveableObj.UUID})");
+                }
             }
         }
+
+        Debug.Log($"[SaveLoadManager] Saved {gridData.occupiedSlots.Count} grid objects with UUIDs");
     }
 
     private void LoadGridData(GridData gridData)
@@ -436,13 +465,23 @@ public class SaveLoadManager : MonoBehaviour
         // Clear existing grid state
         CampManager.Instance.ResetSharedGridObjects();
 
-        // Recreate buildings from save data
+        int loadedObjects = 0;
+        int totalNarrativeFlags = 0;
+
+        // Recreate buildings from save data with UUID support
         foreach (var slotData in gridData.occupiedSlots)
         {
-            // Find the appropriate scriptable object and recreate the building
-            // This would need to reference your building/turret databases
+            // Find the appropriate scriptable object and recreate the building/turret
             RecreateGridObject(slotData);
+            loadedObjects++;
+            
+            if (slotData.narrativeFlags != null)
+            {
+                totalNarrativeFlags += slotData.narrativeFlags.Count;
+            }
         }
+
+        Debug.Log($"[SaveLoadManager] Loaded {loadedObjects} grid objects with {totalNarrativeFlags} total narrative flags using UUID system");
     }
 
     #endregion
@@ -512,7 +551,7 @@ public class SaveLoadManager : MonoBehaviour
         npcData.npcs.Clear();
         
         var npcs = FindObjectsByType<SettlerNPC>(FindObjectsSortMode.None);
-        var savedNpcIds = new HashSet<string>(); // Track saved NPCs to prevent duplicates
+        var savedUuids = new HashSet<string>(); // Track saved NPCs by UUID to prevent duplicates
         
         foreach (var npc in npcs)
         {
@@ -522,19 +561,25 @@ public class SaveLoadManager : MonoBehaviour
                 continue;
             }
             
-            // Create a more reliable unique identifier using name + position + age
-            string uniqueId = $"{npc.GetSettlerName()}_{npc.GetSettlerAge()}_{npc.transform.position.x:F2}_{npc.transform.position.z:F2}";
-            
-            // Skip if we've already saved this NPC (prevent duplicates)
-            if (savedNpcIds.Contains(uniqueId))
+            // Get or add SaveableObject component for UUID management
+            SaveableObject saveableObj = npc.GetComponent<SaveableObject>();
+            if (saveableObj == null)
             {
-                Debug.LogWarning($"[SaveLoadManager] Skipping duplicate NPC: {npc.GetSettlerName()} at {npc.transform.position}");
+                saveableObj = npc.gameObject.AddComponent<SaveableObject>();
+                Debug.Log($"[SaveLoadManager] Added SaveableObject component to {npc.name}");
+            }
+            
+            // Skip if we've already saved this NPC UUID (prevent duplicates)
+            if (savedUuids.Contains(saveableObj.UUID))
+            {
+                Debug.LogWarning($"[SaveLoadManager] Skipping duplicate NPC UUID: {npc.GetSettlerName()} with UUID {saveableObj.UUID}");
                 continue;
             }
             
             var npcSaveData = new NPCSaveData
             {
-                npcId = npc.gameObject.GetInstanceID().ToString(), // Use instance ID as unique identifier
+                uuid = saveableObj.UUID, // Use persistent UUID
+                npcId = npc.gameObject.GetInstanceID().ToString(), // Keep legacy ID for compatibility
                 position = npc.transform.position,
                 health = npc.Health,
                 maxHealth = npc.MaxHealth,
@@ -589,14 +634,31 @@ public class SaveLoadManager : MonoBehaviour
             npcSaveData.settlerAge = npc.GetSettlerAge();
             npcSaveData.settlerDescription = npc.GetSettlerDescription();
             
+            // Save consolidated narrative data in serializable format
+            npcSaveData.narrativeFlags = saveableObj.GetAllNarrativeFlagsSerializable();
+            
             // Add debug logging to help track recruited NPC issues
             if (npcSaveData.settlerName == "Unknown Settler" || npcSaveData.settlerAge == 0)
             {
                 Debug.LogWarning($"[SaveLoadManager] NPC {npc.name} has default settler data - Name: '{npcSaveData.settlerName}', Age: {npcSaveData.settlerAge}. This might indicate a data application issue.");
             }
             
+            // Debug logging for narrative data
+            if (npcSaveData.narrativeFlags.Count > 0)
+            {
+                Debug.Log($"[SaveLoadManager] Saved {npcSaveData.narrativeFlags.Count} narrative flags for {npc.GetSettlerName()} (UUID: {saveableObj.UUID})");
+                foreach (var flag in npcSaveData.narrativeFlags)
+                {
+                    Debug.Log($"  - {flag.flagName}: {flag.flagValue}");
+                }
+            }
+            else
+            {
+                Debug.Log($"[SaveLoadManager] No narrative flags found for {npc.GetSettlerName()} (UUID: {saveableObj.UUID})");
+            }
+            
             npcData.npcs.Add(npcSaveData);
-            savedNpcIds.Add(uniqueId); // Track this NPC as saved
+            savedUuids.Add(saveableObj.UUID); // Track this NPC UUID as saved
         }
         
     }
@@ -632,6 +694,29 @@ public class SaveLoadManager : MonoBehaviour
 
             // Instantiate the NPC prefab
             GameObject npcObject = Instantiate(npcPrefab, npcSaveData.position, Quaternion.identity);
+            
+            // Get or add SaveableObject component and restore UUID
+            SaveableObject saveableObj = npcObject.GetComponent<SaveableObject>();
+            if (saveableObj == null)
+            {
+                saveableObj = npcObject.AddComponent<SaveableObject>();
+            }
+            
+            // Restore the UUID from save data
+            if (!string.IsNullOrEmpty(npcSaveData.uuid))
+            {
+                saveableObj.SetUUID(npcSaveData.uuid);
+            }
+            
+            // Restore narrative data from serializable format
+            if (npcSaveData.narrativeFlags != null)
+            {
+                saveableObj.SetAllNarrativeFlagsFromSerializable(npcSaveData.narrativeFlags);
+                if (npcSaveData.narrativeFlags.Count > 0)
+                {
+                    Debug.Log($"[SaveLoadManager] Restored {npcSaveData.narrativeFlags.Count} narrative flags for {npcSaveData.settlerName} (UUID: {saveableObj.UUID})");
+                }
+            }
             
             if (npcObject.TryGetComponent<SettlerNPC>(out var settlerNPC))
             {
@@ -1028,91 +1113,6 @@ public class SaveLoadManager : MonoBehaviour
 
     #endregion
 
-    #region Narrative Asset Data Save/Load
-
-    private void SaveNarrativeAssetData(NarrativeAssetData narrativeAssetData)
-    {
-        // Find all NarrativeInteractive components in the scene
-        var narrativeInteractives = FindObjectsByType<NarrativeInteractive>(FindObjectsSortMode.None);
-        
-        // Create a dictionary to track existing entries by componentInstanceId
-        var existingDataDict = new Dictionary<string, NarrativeInteractiveSaveData>();
-        foreach (var existingData in narrativeAssetData.narrativeInteractives)
-        {
-            existingDataDict[existingData.componentInstanceId] = existingData;
-        }
-        
-        // Clear the list to rebuild it without duplicates
-        narrativeAssetData.narrativeInteractives.Clear();
-        
-        foreach (var interactive in narrativeInteractives)
-        {
-            string componentId = interactive.gameObject.GetInstanceID().ToString();
-            
-            var saveData = new NarrativeInteractiveSaveData
-            {
-                componentInstanceId = componentId,
-                gameObjectName = interactive.gameObject.name,
-                position = interactive.transform.position
-            };
-
-            // Get the narrative asset and save its flags
-            var narrativeAsset = interactive.GetOrCreateNarrativeAsset();
-            if (narrativeAsset?.flags != null)
-            {
-                foreach (var flag in narrativeAsset.flags)
-                {
-                    saveData.assetFlags.Add(new NarrativeAssetFlagSaveData(flag.flagName, flag.value));
-                }
-                
-            }
-
-            // Add or update the entry (this ensures no duplicates by componentInstanceId)
-            narrativeAssetData.narrativeInteractives.Add(saveData);
-        }
-    }
-
-    private void LoadNarrativeAssetData(NarrativeAssetData narrativeAssetData)
-    {
-        // Find all existing NarrativeInteractive components in the scene
-        var existingInteractives = FindObjectsByType<NarrativeInteractive>(FindObjectsSortMode.None);
-        var interactiveDict = new Dictionary<string, NarrativeInteractive>();
-        
-        // Build a lookup dictionary by instance ID
-        foreach (var interactive in existingInteractives)
-        {
-            string instanceId = interactive.gameObject.GetInstanceID().ToString();
-            interactiveDict[instanceId] = interactive;
-        }
-        
-        // Load narrative asset data
-        foreach (var saveData in narrativeAssetData.narrativeInteractives)
-        {
-            if (interactiveDict.TryGetValue(saveData.componentInstanceId, out NarrativeInteractive interactive))
-            {
-                // Clear existing flags
-                interactive.GetOrCreateNarrativeAsset().flags?.Clear();
-                
-                // Restore flags from save data
-                if (saveData.assetFlags != null)
-                {
-                    foreach (var flagData in saveData.assetFlags)
-                    {
-                        interactive.SetFlag(flagData.flagName, flagData.value);
-                    }
-                }
-                
-            }
-            else
-            {
-                Debug.LogWarning($"[SaveLoadManager] Could not find NarrativeInteractive with instance ID: {saveData.componentInstanceId} for {saveData.gameObjectName}");
-            }
-        }
-        
-    }
-
-    #endregion
-
     #region Scene-Aware Save/Load Methods
 
     /// <summary>
@@ -1192,7 +1192,7 @@ public class SaveLoadManager : MonoBehaviour
                 SaveNPCData(data.npcData);
                 SaveBuildingData(data.buildingData);
                 SaveManagerData(data.managerData);
-                SaveNarrativeAssetData(data.narrativeAssetData);
+        
                 SaveResearchData(data.researchData);
                 // IMPORTANT: Also save player data in camp mode to capture any recruited NPCs 
                 // that may still be in PlayerInventory before transfer
@@ -1203,7 +1203,7 @@ public class SaveLoadManager : MonoBehaviour
                 // Save roguelike-specific data (primarily player data)
                 SavePlayerData(data.playerData);
                 // Save narrative data as it might be relevant for story progression
-                SaveNarrativeAssetData(data.narrativeAssetData);
+        
                 break;
 
             case GameMode.MAIN_MENU:
@@ -1220,7 +1220,7 @@ public class SaveLoadManager : MonoBehaviour
                 SavePlayerData(data.playerData);
                 SaveBuildingData(data.buildingData);
                 SaveManagerData(data.managerData);
-                SaveNarrativeAssetData(data.narrativeAssetData);
+        
                 break;
         }
     }
@@ -1239,7 +1239,7 @@ public class SaveLoadManager : MonoBehaviour
                 LoadNPCData(data.npcData);
                 LoadBuildingData(data.buildingData);
                 LoadManagerData(data.managerData);
-                LoadNarrativeAssetData(data.narrativeAssetData);
+        
                 LoadResearchData(data.researchData);
                 // IMPORTANT: Also load player data in camp mode to restore any recruited NPCs
                 // that need to be transferred to camp
@@ -1249,7 +1249,7 @@ public class SaveLoadManager : MonoBehaviour
             case GameMode.ROGUE_LITE:
                 // Load roguelike-specific data
                 LoadPlayerData(data.playerData);
-                LoadNarrativeAssetData(data.narrativeAssetData);
+        
                 break;
 
             case GameMode.MAIN_MENU:
@@ -1266,7 +1266,7 @@ public class SaveLoadManager : MonoBehaviour
                 LoadPlayerData(data.playerData);
                 LoadBuildingData(data.buildingData);
                 LoadManagerData(data.managerData);
-                LoadNarrativeAssetData(data.narrativeAssetData);
+        
                 break;
         }
     }
@@ -1506,6 +1506,29 @@ public class SaveLoadManager : MonoBehaviour
         // Instantiate the building at the saved position
         GameObject buildingObj = Instantiate(buildingScriptable.prefab, buildingPosition, Quaternion.identity);
         
+        // Get or add SaveableObject component and restore UUID
+        SaveableObject saveableObj = buildingObj.GetComponent<SaveableObject>();
+        if (saveableObj == null)
+        {
+            saveableObj = buildingObj.AddComponent<SaveableObject>();
+        }
+        
+        // Restore the UUID from save data
+        if (!string.IsNullOrEmpty(slotData.uuid))
+        {
+            saveableObj.SetUUID(slotData.uuid);
+        }
+        
+        // Restore narrative data from serializable format
+        if (slotData.narrativeFlags != null)
+        {
+            saveableObj.SetAllNarrativeFlagsFromSerializable(slotData.narrativeFlags);
+            if (slotData.narrativeFlags.Count > 0)
+            {
+                Debug.Log($"[SaveLoadManager] Restored {slotData.narrativeFlags.Count} narrative flags for building {buildingScriptable.name} (UUID: {saveableObj.UUID})");
+            }
+        }
+        
         // Setup the building component
         Building buildingComponent = buildingObj.GetComponent<Building>();
         if (buildingComponent != null)
@@ -1535,6 +1558,29 @@ public class SaveLoadManager : MonoBehaviour
 
         // Instantiate the turret at the saved position
         GameObject turretObj = Instantiate(turretScriptable.prefab, turretPosition, Quaternion.identity);
+        
+        // Get or add SaveableObject component and restore UUID
+        SaveableObject saveableObj = turretObj.GetComponent<SaveableObject>();
+        if (saveableObj == null)
+        {
+            saveableObj = turretObj.AddComponent<SaveableObject>();
+        }
+        
+        // Restore the UUID from save data
+        if (!string.IsNullOrEmpty(slotData.uuid))
+        {
+            saveableObj.SetUUID(slotData.uuid);
+        }
+        
+        // Restore narrative data from serializable format
+        if (slotData.narrativeFlags != null)
+        {
+            saveableObj.SetAllNarrativeFlagsFromSerializable(slotData.narrativeFlags);
+            if (slotData.narrativeFlags.Count > 0)
+            {
+                Debug.Log($"[SaveLoadManager] Restored {slotData.narrativeFlags.Count} narrative flags for turret {turretScriptable.name} (UUID: {saveableObj.UUID})");
+            }
+        }
         
         // Setup the turret component
         BaseTurret turretComponent = turretObj.GetComponent<BaseTurret>();

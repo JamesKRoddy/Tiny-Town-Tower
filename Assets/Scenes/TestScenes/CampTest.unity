@@ -288,6 +288,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Test_Character_Player_NPC
       objectReference: {fileID: 0}
+    - target: {fileID: 2985604360754162274, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4023079707919572210, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
       propertyPath: m_LocalPosition.x
       value: 7.4

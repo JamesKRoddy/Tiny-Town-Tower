@@ -14,16 +14,17 @@
     "npcData": {
         "npcs": [
             {
-                "npcId": "-437048",
+                "uuid": "1febe797-56ad-47f7-a8cf-f462d47d7519",
+                "npcId": "-665582",
                 "position": {
-                    "x": -3.103196382522583,
+                    "x": -7.3562912940979,
                     "y": 0.08333301544189453,
-                    "z": 3.428556442260742
+                    "z": 5.186154365539551
                 },
                 "health": 100.0,
                 "maxHealth": 100.0,
                 "stamina": 100.0,
-                "hunger": 97.63843536376953,
+                "hunger": 93.90697479248047,
                 "additionalMutationSlots": 6,
                 "currentTaskType": "WANDER",
                 "equippedCharacteristicIds": [
@@ -36,7 +37,7 @@
                 },
                 "npcDataObjName": "",
                 "appearanceData": {
-                    "bodyModelName": "Character_ToplessMale_01",
+                    "bodyModelName": "Character_SportyMale_02",
                     "headModelName": "",
                     "hairModelName": "",
                     "topClothingName": "",
@@ -49,10 +50,16 @@
                     "hairMaterialName": "",
                     "clothingMaterialName": "PolygonBattleRoyale_01_A"
                 },
-                "settlerName": "Edge",
-                "settlerAge": 40,
-                "settlerDescription": "An optimistic dreamer who believes in rebuilding civilization better than before.",
-                "isProceduralSettler": true
+                "settlerName": "Slade",
+                "settlerAge": 44,
+                "settlerDescription": "A former detective who has sharp investigative skills and attention to detail.",
+                "isProceduralSettler": true,
+                "narrativeFlags": [
+                    {
+                        "flagName": "test_flag",
+                        "flagValue": "test_value"
+                    }
+                ]
             }
         ]
     },
@@ -84,20 +91,6 @@
             "currentCleanliness": 0.0,
             "dirtPilePositions": []
         }
-    },
-    "narrativeAssetData": {
-        "narrativeInteractives": [
-            {
-                "componentInstanceId": "-437048",
-                "gameObjectName": "Settler_Edge",
-                "position": {
-                    "x": -3.103196382522583,
-                    "y": 0.08333301544189453,
-                    "z": 3.428556442260742
-                },
-                "assetFlags": []
-            }
-        ]
     },
     "saveVersion": "1.0",
     "sceneName": "CampScene"

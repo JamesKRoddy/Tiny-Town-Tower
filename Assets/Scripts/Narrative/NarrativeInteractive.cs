@@ -75,10 +75,27 @@ public class NarrativeInteractive : MonoBehaviour, IInteractive<NarrativeAsset>
         return target;
     }
 
-    #region NarrativeAsset Flag Management
+    #region NarrativeAsset Flag Management - UUID System Integration
 
     /// <summary>
-    /// Get the narrative asset (create one if using dynamic loading)
+    /// Get the SaveableObject component for UUID-based flag management
+    /// </summary>
+    private SaveableObject GetSaveableObject()
+    {
+        SaveableObject saveableObj = GetComponent<SaveableObject>();
+        if (saveableObj == null)
+        {
+            saveableObj = gameObject.AddComponent<SaveableObject>();
+            if (debugFlags)
+            {
+                Debug.Log($"[NarrativeInteractive] Added SaveableObject component to {gameObject.name}");
+            }
+        }
+        return saveableObj;
+    }
+
+    /// <summary>
+    /// Get the narrative asset (create one if using dynamic loading) - maintains legacy compatibility
     /// </summary>
     public NarrativeAsset GetOrCreateNarrativeAsset()
     {
@@ -109,8 +126,10 @@ public class NarrativeInteractive : MonoBehaviour, IInteractive<NarrativeAsset>
         if (string.IsNullOrEmpty(flagName))
             return false;
 
-        var asset = GetOrCreateNarrativeAsset();
-        return asset.flags.Any(f => f.flagName == flagName);
+        // Use UUID-based flag system
+        var saveableObj = GetSaveableObject();
+        string flagValue = saveableObj.GetNarrativeFlag(flagName);
+        return !string.IsNullOrEmpty(flagValue);
     }
 
     /// <summary>
@@ -121,9 +140,9 @@ public class NarrativeInteractive : MonoBehaviour, IInteractive<NarrativeAsset>
         if (string.IsNullOrEmpty(flagName))
             return null;
 
-        var asset = GetOrCreateNarrativeAsset();
-        var flag = asset.flags.FirstOrDefault(f => f.flagName == flagName);
-        return flag.flagName != null ? flag.value : null;
+        // Use UUID-based flag system
+        var saveableObj = GetSaveableObject();
+        return saveableObj.GetNarrativeFlag(flagName);
     }
 
     /// <summary>
@@ -134,32 +153,13 @@ public class NarrativeInteractive : MonoBehaviour, IInteractive<NarrativeAsset>
         if (string.IsNullOrEmpty(flagName))
             return;
 
-        var asset = GetOrCreateNarrativeAsset();
-        
-        // Find existing flag or create new one
-        for (int i = 0; i < asset.flags.Count; i++)
-        {
-            if (asset.flags[i].flagName == flagName)
-            {
-                // Update existing flag
-                var existingFlag = asset.flags[i];
-                existingFlag.value = value;
-                asset.flags[i] = existingFlag;
-                
-                if (debugFlags)
-                {
-                    Debug.Log($"[NarrativeInteractive] {gameObject.name} updated flag: {flagName} = {value}");
-                }
-                return;
-            }
-        }
-
-        // Add new flag
-        asset.flags.Add(new NarrativeAssetFlag { flagName = flagName, value = value });
+        // Use UUID-based flag system
+        var saveableObj = GetSaveableObject();
+        saveableObj.SetNarrativeFlag(flagName, value);
         
         if (debugFlags)
         {
-            Debug.Log($"[NarrativeInteractive] {gameObject.name} set flag: {flagName} = {value}");
+            Debug.Log($"[NarrativeInteractive] {gameObject.name} (UUID: {saveableObj.UUID}) set flag: {flagName} = {value}");
         }
     }
 
@@ -171,20 +171,13 @@ public class NarrativeInteractive : MonoBehaviour, IInteractive<NarrativeAsset>
         if (string.IsNullOrEmpty(flagName))
             return;
 
-        var asset = GetOrCreateNarrativeAsset();
+        // Use UUID-based flag system
+        var saveableObj = GetSaveableObject();
+        saveableObj.SetNarrativeFlag(flagName, null); // Setting to null removes the flag
         
-        for (int i = asset.flags.Count - 1; i >= 0; i--)
+        if (debugFlags)
         {
-            if (asset.flags[i].flagName == flagName)
-            {
-                asset.flags.RemoveAt(i);
-                
-                if (debugFlags)
-                {
-                    Debug.Log($"[NarrativeInteractive] {gameObject.name} removed flag: {flagName}");
-                }
-                return;
-            }
+            Debug.Log($"[NarrativeInteractive] {gameObject.name} (UUID: {saveableObj.UUID}) removed flag: {flagName}");
         }
     }
 
@@ -193,8 +186,9 @@ public class NarrativeInteractive : MonoBehaviour, IInteractive<NarrativeAsset>
     /// </summary>
     public Dictionary<string, string> GetAllFlags()
     {
-        var asset = GetOrCreateNarrativeAsset();
-        return asset.flags.ToDictionary(f => f.flagName, f => f.value);
+        // Use UUID-based flag system
+        var saveableObj = GetSaveableObject();
+        return saveableObj.GetAllNarrativeFlags();
     }
 
     /// <summary>
