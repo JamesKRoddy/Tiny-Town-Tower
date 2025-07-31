@@ -51,7 +51,7 @@ public class MainMenu : MonoBehaviour, IControllerInput
 
     private void LoadGame()
     {
-        Debug.Log("Loading game...");
+        Debug.Log("<color=green>Loading game...</color>");
         
         if (SaveLoadManager.Instance == null)
         {
