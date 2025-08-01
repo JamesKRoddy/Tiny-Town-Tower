@@ -23,7 +23,7 @@ public class OverWorldDoor : RogueLiteDoor
     [SerializeField] private bool showBuildingName = true;
     [SerializeField] private float textOffset = 0.5f;
 
-    private BuildingDataScriptableObj buildingData;
+    private RogueLikeBuildingDataScriptableObj buildingData;
 
     protected override void Awake()
     {
@@ -67,7 +67,7 @@ public class OverWorldDoor : RogueLiteDoor
     {
         if (buildingData != null)
         {
-            Transform buildingEntrance = buildingData.buildingEntrance.GetComponent<BuildingEntrance>().PlayerSpawnPoint;
+            Transform buildingEntrance = buildingData.buildingEntrance.GetComponent<RogueLikeBuildingEntrance>().PlayerSpawnPoint;
             if (buildingEntrance == null)
             {
                 Debug.LogError($"No buildingEntranceSpawnPoint found on gameobject: {buildingData.buildingEntrance.name}");

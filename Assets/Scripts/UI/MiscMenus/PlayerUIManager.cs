@@ -44,6 +44,7 @@ public class PlayerUIManager : MonoBehaviour
     public SettingsMenu settingsMenu;
     public ReturnToCampMenu returnToCampMenu;
     public QuitMenu quitMenu;
+    public SaveGameMenu saveGameMenu;
 
     [Header("Utility Menu References")]
     public UtilityMenu utilityMenu;
@@ -59,18 +60,19 @@ public class PlayerUIManager : MonoBehaviour
     [SerializeField] TMP_Text errorMessage;
     public DeathMenu deathMenu;
     [SerializeField] UIPanelController interactionPromptUI; // UI text for interactionPromptUI
-    [SerializeField] TextPopup textPopup;
-    public NarrativeSystem narrativeSystem;
+    [SerializeField] TextPopup textPopup; //Used for notifications that require input from the player
+    public NarrativeMenu narrativeMenu;
     public WeaponComparisonMenu weaponComparisonMenu;
     [SerializeField] public AddedToInventoryPopup inventoryPopup; // Reference to inventory popup system
+    [SerializeField] TMP_Text notificationText; //Used for notifications that dont require input from the player
 
     [Header("Game UI References")]
     public RogueLikeGameUI rogueLikeGameUI;
     public CampUI campUI;
     public CampWaveUI waveUI;
 
-
     private Coroutine openingMenuCoroutine;
+    private Coroutine notificationCoroutine; // For managing notification text timing
 
     // Ensure that there is only one instance of PlayerCombat
     private void Awake()
@@ -183,6 +185,45 @@ public class PlayerUIManager : MonoBehaviour
         textPopup.Setup(message);
     }
 
+    /// <summary>
+    /// Display a notification message for 3 seconds. If a new message comes in, replace it and restart the timer.
+    /// </summary>
+    /// <param name="message">The notification message to display</param>
+    public void DisplayNotification(string message)
+    {
+        if (notificationText == null)
+        {
+            Debug.LogWarning("Notification text component is not assigned!");
+            return;
+        }
+
+        // Stop any existing notification coroutine
+        if (notificationCoroutine != null)
+        {
+            StopCoroutine(notificationCoroutine);
+        }
+
+        // Set the new message and show the notification
+        notificationText.text = message;
+        notificationText.gameObject.SetActive(true);
+
+        // Start the new timer
+        notificationCoroutine = StartCoroutine(HideNotificationAfterDelay(3.0f));
+    }
+
+    private IEnumerator HideNotificationAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        if (notificationText != null)
+        {
+            notificationText.gameObject.SetActive(false);
+            notificationText.text = "";
+        }
+        
+        notificationCoroutine = null;
+    }
+
     private IEnumerator HideErrorMessageAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
@@ -204,7 +245,7 @@ public class PlayerUIManager : MonoBehaviour
     public void HideUtilityMenus()
     {
         buildMenu.SetScreenActive(false);
-        narrativeSystem.SetScreenActive(false);
+        narrativeMenu.SetScreenActive(false);
         playerInventoryMenu.SetScreenActive(false);
         settlerNPCMenu.SetScreenActive(false);
         geneticMutationMenu.SetScreenActive(false);
@@ -221,6 +262,18 @@ public class PlayerUIManager : MonoBehaviour
         settingsMenu.SetScreenActive(false);
         returnToCampMenu.SetScreenActive(false);
         quitMenu.SetScreenActive(false);
+        saveGameMenu.SetScreenActive(false);
+    }
+
+    /// <summary>
+    /// Open the save game menu
+    /// </summary>
+    public void OpenSaveGameMenu()
+    {
+        if (saveGameMenu != null)
+        {
+            saveGameMenu.SetScreenActive(true);
+        }
     }
 
     public void SetSelectedGameObject(GameObject gameObject)
@@ -263,9 +316,23 @@ public class PlayerUIManager : MonoBehaviour
             case QuitMenu:
                 pauseMenu.EnablePauseMenu();
                 break;
+            case SaveGameMenu:
+                pauseMenu.EnablePauseMenu();
+                currentMenu = null;
+                break;
             default:
                 Debug.LogWarning("BackPressed no menu found");
                 break;  
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Clean up any running coroutines
+        if (notificationCoroutine != null)
+        {
+            StopCoroutine(notificationCoroutine);
+            notificationCoroutine = null;
         }
     }
 }

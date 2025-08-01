@@ -51,7 +51,7 @@ public class MainMenu : MonoBehaviour, IControllerInput
 
     private void LoadGame()
     {
-        Debug.Log("Loading game...");
+        Debug.Log("<color=green>Loading game...</color>");
         
         if (SaveLoadManager.Instance == null)
         {
@@ -66,10 +66,7 @@ public class MainMenu : MonoBehaviour, IControllerInput
         }
 
         // Load the camp scene first, then load the save data
-        SceneTransitionManager.Instance?.LoadScene(SceneNames.CampScene, GameMode.CAMP, false, () => {
-            // This callback will be called after the scene loads
-            SaveLoadManager.Instance.LoadGame();
-        });
+        SceneTransitionManager.Instance?.LoadScene(SceneNames.CampScene, GameMode.CAMP, false);
     }
 
     private void OpenSettings()

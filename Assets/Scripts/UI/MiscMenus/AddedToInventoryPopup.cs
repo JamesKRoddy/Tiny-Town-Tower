@@ -58,6 +58,21 @@ public class AddedToInventoryPopup : MonoBehaviour
     }
 
     /// <summary>
+    /// Shows a popup for an NPC recruitment
+    /// </summary>
+    /// <param name="npc">The NPC that was recruited</param>
+    /// <param name="count">Always 1 for NPCs</param>
+    /// <param name="isPlayerInventory">Whether this was added to player inventory (true) or NPC inventory (false)</param>
+    public void ShowInventoryPopup(NPCScriptableObj npc, int count, bool isPlayerInventory)
+    {
+        if (npc == null) return;
+
+        // NPCs are always unique, so no need to check for existing popups
+        // Create new popup for NPC recruitment
+        CreateNewPopup(npc, count, isPlayerInventory);
+    }
+
+    /// <summary>
     /// Shows a popup for a weapon added to inventory
     /// </summary>
     /// <param name="weapon">The weapon that was added</param>

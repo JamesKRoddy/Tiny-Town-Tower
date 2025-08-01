@@ -9,14 +9,31 @@ using Mono.Cecil.Cil;
 
 
 [RequireComponent(typeof(NavMeshAgent))]
-public class SettlerNPC : HumanCharacterController
+public class SettlerNPC : HumanCharacterController, INarrativeTarget
 {
-    [Header("NPC Data")]
-    public SettlerNPCScriptableObj nPCDataObj;
+    [Header("Procedural Settler Data")]
+    [SerializeField, ReadOnly] private string settlerName;
+    [SerializeField, ReadOnly] private int settlerAge;
+    [SerializeField, ReadOnly] private string settlerDescription;
+    public string SettlerName => settlerName;
+    public int SettlerAge => settlerAge;
+    public string SettlerDescription => settlerDescription;
+
+    [Header("NPC Systems")]
     [SerializeField, ReadOnly] internal NPCCharacteristicSystem characteristicSystem;
+    [SerializeField] internal NPCAppearanceSystem appearanceSystem;
+    
+    [Header("Task Management")]
     private _TaskState currentState;
     private WorkTask assignedWorkTask; // Track the assigned work task
     private bool isOnBreak = false; // Track if NPC is on break
+
+    [Header("Initialization Control")]
+    [SerializeField] private NPCInitializationContext initializationContext = NPCInitializationContext.FRESH_SPAWN; //Set this to the context of the NPC when it is spawned, override to loaded for NPCs in scene already
+    [SerializeField, ReadOnly] private bool hasBeenInitialized = false;
+    
+    // Store recruited appearance data for recruited NPCs
+    private NPCAppearanceData recruitedAppearanceData;
 
     [Header("NPC Stats")]
     public int additionalMutationSlots = 3; //Additional mutation slots
@@ -53,6 +70,16 @@ public class SettlerNPC : HumanCharacterController
         // Initialize characteristic system
         characteristicSystem = new NPCCharacteristicSystem(this);
 
+        // Initialize appearance system
+        if (appearanceSystem != null)
+        {
+        appearanceSystem.SetSettlerNPC(this);
+        }
+        else
+        {
+            Debug.LogError($"[SettlerNPC] {gameObject.name} - appearanceSystem is null! Make sure it's assigned in the prefab inspector.");
+        }
+
         // Get all TaskState components attached to the SettlerNPC GameObject
         _TaskState[] states = GetComponents<_TaskState>();
 
@@ -73,19 +100,18 @@ public class SettlerNPC : HumanCharacterController
             Debug.LogError($"[WorkState] Could not find 'Work Layer' in animator for {gameObject.name}");
         }
 
-        // Ensure NPC reference is set for each state component
-        // Default to WanderState
-        if (taskStates.ContainsKey(TaskType.WANDER))
+        // Initialize based on context if not already initialized
+        if (!hasBeenInitialized)
         {
-            ChangeState(taskStates[TaskType.WANDER]);
+            InitializeForContext(initializationContext);
         }
+    }
 
-        // Apply random characteristics after everything is initialized
-        if (characteristicSystem != null)
-        {
-            characteristicSystem.ApplyRandomCharacteristic();
-        }
-
+    /// <summary>
+    /// Register this NPC with the relevant managers
+    /// </summary>
+    private void RegisterWithManagers()
+    {
         // Register with NPCManager
         NPCManager.Instance.RegisterNPC(this);
         
@@ -96,8 +122,180 @@ public class SettlerNPC : HumanCharacterController
         }
     }
 
-    private void OnDestroy()
+    /// <summary>
+    /// Initialize the NPC based on the specified context
+    /// </summary>
+    private void InitializeForContext(NPCInitializationContext context)
     {
+        switch (context)
+        {
+            case NPCInitializationContext.FRESH_SPAWN:
+                InitializeAsFreshSpawn();
+                break;
+            case NPCInitializationContext.RECRUITED:
+                RegisterWithManagers();
+                InitializeAsRecruited();
+                break;
+            case NPCInitializationContext.LOADED_FROM_SAVE:
+                RegisterWithManagers(); 
+                break;
+        }
+        
+        hasBeenInitialized = true;
+    }
+
+    /// <summary>
+    /// Initialize as a fresh spawn (roguelike rooms, etc.)
+    /// </summary>
+    private void InitializeAsFreshSpawn()
+    {
+        // Apply random appearance first
+        if (appearanceSystem != null)
+        {
+            appearanceSystem.RandomizeAppearance();
+        }
+
+        // Default to WanderState
+        if (taskStates.ContainsKey(TaskType.WANDER))
+        {
+            ChangeState(taskStates[TaskType.WANDER]);
+        }
+
+        // Apply random characteristics
+        if (characteristicSystem != null)
+        {
+            characteristicSystem.ApplyRandomCharacteristic();
+        }
+    }
+
+    /// <summary>
+    /// Initialize as a recruited NPC (from player inventory)
+    /// </summary>
+    private void InitializeAsRecruited()
+    {
+        // Restore appearance data if available, otherwise randomize
+        if (appearanceSystem != null)
+        {
+            if (recruitedAppearanceData != null)
+            {
+                appearanceSystem.SetAppearance(recruitedAppearanceData);
+            }
+            else
+            {
+                appearanceSystem.RandomizeAppearance();
+            }
+        }
+        else
+        {
+            Debug.LogError($"[SettlerNPC] {gameObject.name} - Cannot set appearance for recruited NPC: appearanceSystem is null!");
+        }
+        
+        // Default to WanderState
+        if (taskStates.ContainsKey(TaskType.WANDER))
+        {
+            ChangeState(taskStates[TaskType.WANDER]);
+        }
+
+        // Apply random characteristics for recruited settlers
+        if (characteristicSystem != null)
+        {
+            characteristicSystem.ApplyRandomCharacteristic();
+        }
+    }
+
+
+    /// <summary>
+    /// Set the initialization context before Start() is called
+    /// This should be called immediately after instantiation
+    /// </summary>
+    public void SetInitializationContext(NPCInitializationContext context)
+    {
+        if (hasBeenInitialized)
+        {
+            Debug.LogWarning($"[SettlerNPC] {gameObject.name} - Cannot change initialization context after NPC has been initialized");
+            return;
+        }
+        
+        initializationContext = context;
+    }
+
+    /// <summary>
+    /// Restore NPC state from save data
+    /// This should be called after SetInitializationContext(LOADED_FROM_SAVE)
+    /// </summary>
+    public void RestoreFromSaveData(NPCSaveData saveData)
+    {
+        if (initializationContext != NPCInitializationContext.LOADED_FROM_SAVE)
+        {
+            Debug.LogWarning($"[SettlerNPC] {gameObject.name} - RestoreFromSaveData should only be called for NPCs loaded from save");
+            return;
+        }
+
+        // Restore basic stats
+        Health = saveData.health;
+        MaxHealth = saveData.maxHealth;
+        currentStamina = saveData.stamina;
+        currentHunger = saveData.hunger;
+        additionalMutationSlots = saveData.additionalMutationSlots;
+
+        // Restore position
+        transform.position = saveData.position;
+
+        // Restore characteristics
+        if (characteristicSystem != null && saveData.equippedCharacteristicIds != null)
+        {
+            foreach (string characteristicId in saveData.equippedCharacteristicIds)
+            {
+                var characteristic = NPCManager.Instance.GetCharacteristicById(characteristicId);
+                if (characteristic != null)
+                {
+                    characteristicSystem.EquipCharacteristic(characteristic);
+                }
+                else
+                {
+                    Debug.LogWarning($"[SettlerNPC] Could not find characteristic with ID: {characteristicId}");
+                }
+            }
+        }
+
+        // Restore appearance
+        if (appearanceSystem != null && saveData.appearanceData != null)
+        {
+            appearanceSystem.SetAppearance(saveData.appearanceData);
+        }
+        else if (saveData.appearanceData == null)
+        {
+            Debug.LogWarning($"[SettlerNPC] No appearance data found for {gameObject.name}, keeping default appearance");
+        }
+
+        // Restore task state
+        if (!string.IsNullOrEmpty(saveData.currentTaskType) && 
+            Enum.TryParse<TaskType>(saveData.currentTaskType, out TaskType taskType) &&
+            taskStates.ContainsKey(taskType))
+        {
+            ChangeState(taskStates[taskType]);
+        }
+        else
+        {
+            // Fallback to wander if task type is invalid
+            if (taskStates.ContainsKey(TaskType.WANDER))
+            {
+                ChangeState(taskStates[TaskType.WANDER]);
+            }
+        }
+
+        hasBeenInitialized = true;
+    }
+
+    protected override void OnDestroy()
+    {
+        // Clean up appearance models
+        if (appearanceSystem != null)
+        {
+            // This ensures appearance models are properly cleaned up
+            appearanceSystem.ClearCurrentAppearance();
+        }
+        
         // Unregister from NPCManager
         if (NPCManager.Instance != null)
         {
@@ -109,6 +307,9 @@ public class SettlerNPC : HumanCharacterController
         {
             CampManager.Instance.RemoveNPC(this);
         }
+        
+        // Call base class cleanup
+        base.OnDestroy();
     }
 
     private bool HasAvailableFood()
@@ -405,6 +606,68 @@ public class SettlerNPC : HumanCharacterController
     }
 
     /// <summary>
+    /// Get access to the NPC's appearance system
+    /// </summary>
+    public NPCAppearanceSystem GetAppearanceSystem()
+    {
+        return appearanceSystem;
+    }
+
+    /// <summary>
+    /// Set the recruited appearance data (called when spawning recruited NPCs)
+    /// </summary>
+    public void SetRecruitedAppearanceData(NPCAppearanceData appearanceData)
+    {
+        recruitedAppearanceData = appearanceData;
+    }
+
+    /// <summary>
+    /// Apply procedural settler data (name, age, description) for settlers without NPCScriptableObj
+    /// </summary>
+    public void ApplySettlerData(Managers.SettlerData settlerData)
+    {
+        if (settlerData == null)
+        {
+            Debug.LogWarning($"[SettlerNPC] {gameObject.name} - Settler data is null!");
+            return;
+        }
+
+        // Set the gameobject name to match the settler's name
+        gameObject.name = $"Settler_{settlerData.name}";
+        
+        // Store settler data for potential UI display
+        // Since we don't have an NPCScriptableObj, we store this data locally
+        settlerName = settlerData.name;
+        settlerAge = settlerData.age;
+        settlerDescription = settlerData.description;
+        
+    }
+
+    /// <summary>
+    /// Get the settler's name from procedural data
+    /// </summary>
+    public string GetSettlerName()
+    {
+        return !string.IsNullOrEmpty(settlerName) ? settlerName : "Unknown Settler";
+    }
+
+    /// <summary>
+    /// Get the settler's age from procedural data
+    /// </summary>
+    public int GetSettlerAge()
+    {
+        return settlerAge;
+    }
+
+    /// <summary>
+    /// Get the settler's description from procedural data
+    /// </summary>
+    public string GetSettlerDescription()
+    {
+        return !string.IsNullOrEmpty(settlerDescription) ? settlerDescription : "A mysterious settler.";
+    }
+
+    /// <summary>
     /// Call this to put the NPC into the sheltered state (e.g., when entering a bunker)
     /// </summary>
     public void EnterShelter(BunkerBuilding bunker)
@@ -437,10 +700,503 @@ public class SettlerNPC : HumanCharacterController
         // Go to wander state - let WanderState handle threat detection and task assignment
         ChangeTask(TaskType.WANDER);
     }
+
+    #region Conversation Control
+
+    private _TaskState stateBeforeConversation;
+    private bool wasAgentEnabledBeforeConversation;
+
+    /// <summary>
+    /// Pauses the NPC's AI and movement during conversations
+    /// </summary>
+    public void PauseForConversation()
+    {
+        // Store current state to restore later
+        stateBeforeConversation = currentState;
+        wasAgentEnabledBeforeConversation = agent != null && agent.enabled;
+
+        // Stop the NavMeshAgent
+        if (agent != null && agent.enabled)
+        {
+            agent.isStopped = true;
+            agent.velocity = Vector3.zero;
+        }
+
+        // Disable current state to prevent AI updates
+        if (currentState != null)
+        {
+            currentState.enabled = false;
+        }
+    }
+
+    /// <summary>
+    /// Resumes the NPC's AI and movement after conversations
+    /// </summary>
+    public void ResumeAfterConversation()
+    {
+        // Resume NavMeshAgent
+        if (agent != null && wasAgentEnabledBeforeConversation)
+        {
+            agent.isStopped = false;
+        }
+
+        // Re-enable the previous state
+        if (stateBeforeConversation != null)
+        {
+            stateBeforeConversation.enabled = true;
+        }
+
+        // Clear stored data
+        stateBeforeConversation = null;
+    }
+
+    /// <summary>
+    /// Gets the Transform of this SettlerNPC for the IConversationTarget interface
+    /// </summary>
+    public new Transform GetTransform()
+    {
+        return transform;
+    }
+
+    #endregion
+}
+
+[System.Serializable]
+public class NPCAppearanceSystem
+{
+    [Header("Model Options")]
+    [SerializeField] private GameObject[] bodyModels; // Different body/mesh options
+    [SerializeField] private GameObject[] headModels; // Different head options
+    [SerializeField] private GameObject[] hairModels; // Different hair styles
+    
+    [Header("Clothing Options")]
+    [SerializeField] private GameObject[] topClothing; // Shirts, jackets, etc.
+    [SerializeField] private GameObject[] bottomClothing; // Pants, skirts, etc.
+    [SerializeField] private GameObject[] footwear; // Shoes, boots, etc.
+    
+    [Header("Accessories")]
+    [SerializeField] private GameObject[] headAccessories; // Hats, helmets, glasses
+    [SerializeField] private GameObject[] backAccessories; // Backpacks, cloaks
+    [SerializeField] private GameObject[] handAccessories; // Gloves, bracelets
+    
+    [Header("Material Variants")]
+    [SerializeField] private Material[] skinMaterials; // Different skin tones
+    [SerializeField] private Material[] hairMaterials; // Different hair colors
+    [SerializeField] private Material[] clothingMaterials; // Different clothing colors
+    
+    [Header("Accessory Spawn Chances")]
+    [Range(0f, 1f)] [SerializeField] private float headAccessoryChance = 0.3f;
+    [Range(0f, 1f)] [SerializeField] private float backAccessoryChance = 0.4f;
+    [Range(0f, 1f)] [SerializeField] private float handAccessoryChance = 0.2f;
+    
+    private SettlerNPC settlerNPC;
+    private List<GameObject> activeModels = new List<GameObject>();
+
+    public void SetSettlerNPC(SettlerNPC settlerNPC)
+    {
+        this.settlerNPC = settlerNPC;
+        activeModels = new List<GameObject>();
+    }
+    
+    /// <summary>
+    /// Randomize the NPC's appearance using the available options
+    /// </summary>
+    public void RandomizeAppearance()
+    {
+        if (settlerNPC == null)
+        {
+            Debug.LogError("NPCAppearanceSystem: Cannot randomize appearance - settlerNPC is null");
+            return;
+        }
+        
+        
+        // Clear any existing appearance models
+        ClearCurrentAppearance();
+        
+        // Check if we have any models to work with
+        bool hasAnyModels = (bodyModels?.Length > 0) || (headModels?.Length > 0) || (hairModels?.Length > 0) || 
+                           (topClothing?.Length > 0) || (bottomClothing?.Length > 0) || (footwear?.Length > 0);
+        
+        if (!hasAnyModels)
+        {
+            Debug.LogError($"[NPCAppearanceSystem] No appearance models found for {settlerNPC.name}! Check prefab setup.");
+            return;
+        }
+        
+        // Randomize body parts
+        if (bodyModels != null && bodyModels.Length > 0)
+        {
+            ActivateRandomModel(bodyModels, "Body");
+        }
+        else
+        {
+            Debug.LogWarning($"[NPCAppearanceSystem] No body models available for {settlerNPC.name}");
+        }
+        
+        if (headModels != null && headModels.Length > 0)
+        {
+            ActivateRandomModel(headModels, "Head");
+        }
+        
+        if (hairModels != null && hairModels.Length > 0)
+        {
+            ActivateRandomModel(hairModels, "Hair");
+        }
+        
+        // Randomize clothing
+
+        if (topClothing != null && topClothing.Length > 0)
+        {
+            ActivateRandomModel(topClothing, "Top Clothing");
+        }
+        
+        if (bottomClothing != null && bottomClothing.Length > 0)
+        {
+            ActivateRandomModel(bottomClothing, "Bottom Clothing");
+        }
+        
+        if (footwear != null && footwear.Length > 0)
+        {
+            ActivateRandomModel(footwear, "Footwear");
+        }
+        
+        
+        // Randomize accessories based on spawn chances
+        if (headAccessories != null && headAccessories.Length > 0 && UnityEngine.Random.value <= headAccessoryChance)
+        {
+            ActivateRandomModel(headAccessories, "Head Accessory");
+        }
+        
+        if (backAccessories != null && backAccessories.Length > 0 && UnityEngine.Random.value <= backAccessoryChance)
+        {
+            ActivateRandomModel(backAccessories, "Back Accessory");
+        }
+        
+        if (handAccessories != null && handAccessories.Length > 0 && UnityEngine.Random.value <= handAccessoryChance)
+        {
+            ActivateRandomModel(handAccessories, "Hand Accessory");
+        }        
+        
+        // Apply random materials
+        ApplyRandomMaterials();
+        
+    }
+    
+    /// <summary>
+    /// Activate a random model from the given array
+    /// </summary>
+    private void ActivateRandomModel(GameObject[] modelArray, string categoryName)
+    {
+        if (modelArray == null || modelArray.Length == 0) return;
+        
+        GameObject selectedModel = modelArray[UnityEngine.Random.Range(0, modelArray.Length)];
+        if (selectedModel != null)
+        {
+            selectedModel.SetActive(true);
+            activeModels.Add(selectedModel);
+        }
+    }
+    
+    /// <summary>
+    /// Apply random materials to the active models
+    /// </summary>
+    private void ApplyRandomMaterials()
+    {
+        foreach (GameObject model in activeModels)
+        {
+            Renderer[] renderers = model.GetComponentsInChildren<Renderer>();
+            foreach (Renderer renderer in renderers)
+            {
+                // Apply random skin material if available
+                if (skinMaterials != null && skinMaterials.Length > 0 && 
+                    (model.name.Contains("Body") || model.name.Contains("Head")))
+                {
+                    Material randomSkinMaterial = skinMaterials[UnityEngine.Random.Range(0, skinMaterials.Length)];
+                    renderer.material = randomSkinMaterial;
+                }
+                // Apply random hair material if available
+                else if (hairMaterials != null && hairMaterials.Length > 0 && model.name.Contains("Hair"))
+                {
+                    Material randomHairMaterial = hairMaterials[UnityEngine.Random.Range(0, hairMaterials.Length)];
+                    renderer.material = randomHairMaterial;
+                }
+                // Apply random clothing material if available
+                else if (clothingMaterials != null && clothingMaterials.Length > 0)
+                {
+                    Material randomClothingMaterial = clothingMaterials[UnityEngine.Random.Range(0, clothingMaterials.Length)];
+                    renderer.material = randomClothingMaterial;
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Clear all currently active appearance models
+    /// </summary>
+    public void ClearCurrentAppearance()
+    {
+        if (activeModels == null)
+        {
+            Debug.LogError("NPCAppearanceSystem: Cannot clear current appearance - activeModels is null");
+            return;
+        }
+
+        foreach (GameObject model in activeModels)
+        {
+            if (model != null)
+            {
+                model.SetActive(false);
+            }
+        }
+        activeModels.Clear();
+    }
+    
+    /// <summary>
+    /// Set specific appearance options (for saved/predefined appearances)
+    /// </summary>
+    public void SetAppearance(NPCAppearanceData appearanceData)
+    {
+        if (settlerNPC == null)
+        {
+            Debug.LogError("NPCAppearanceSystem: Cannot set appearance - settlerNPC is null");
+            return;
+        }
+
+        if (appearanceData == null)
+        {
+            Debug.LogWarning($"[NPCAppearanceSystem] Appearance data is null for {settlerNPC.name}");
+            return;
+        }
+
+        // Clear current appearance
+        ClearCurrentAppearance();
+
+        // Set body parts
+        ActivateModelByName(bodyModels, appearanceData.bodyModelName, "Body");
+        ActivateModelByName(headModels, appearanceData.headModelName, "Head");
+        ActivateModelByName(hairModels, appearanceData.hairModelName, "Hair");
+
+        // Set clothing
+        ActivateModelByName(topClothing, appearanceData.topClothingName, "Top Clothing");
+        ActivateModelByName(bottomClothing, appearanceData.bottomClothingName, "Bottom Clothing");
+        ActivateModelByName(footwear, appearanceData.footwearName, "Footwear");
+
+        // Set accessories (only if they have values)
+        if (!string.IsNullOrEmpty(appearanceData.headAccessoryName))
+        {
+            ActivateModelByName(headAccessories, appearanceData.headAccessoryName, "Head Accessory");
+        }
+        if (!string.IsNullOrEmpty(appearanceData.backAccessoryName))
+        {
+            ActivateModelByName(backAccessories, appearanceData.backAccessoryName, "Back Accessory");
+        }
+        if (!string.IsNullOrEmpty(appearanceData.handAccessoryName))
+        {
+            ActivateModelByName(handAccessories, appearanceData.handAccessoryName, "Hand Accessory");
+        }
+
+        // Apply saved materials
+        ApplySavedMaterials(appearanceData);
+    }
+    
+    /// <summary>
+    /// Get current appearance data for saving
+    /// </summary>
+    public NPCAppearanceData GetCurrentAppearanceData()
+    {
+        NPCAppearanceData appearanceData = new NPCAppearanceData();
+        
+        if (activeModels == null || activeModels.Count == 0)
+        {
+            Debug.LogWarning($"[NPCAppearanceSystem] No active models found for {settlerNPC?.name ?? "Unknown NPC"}");
+            return appearanceData;
+        }
+
+        foreach (GameObject activeModel in activeModels)
+        {
+            if (activeModel == null) continue;
+
+            string modelName = activeModel.name;
+            
+            // Determine which type of model this is and store its name
+            if (IsModelInArray(activeModel, bodyModels))
+            {
+                appearanceData.bodyModelName = modelName;
+            }
+            else if (IsModelInArray(activeModel, headModels))
+            {
+                appearanceData.headModelName = modelName;
+            }
+            else if (IsModelInArray(activeModel, hairModels))
+            {
+                appearanceData.hairModelName = modelName;
+            }
+            else if (IsModelInArray(activeModel, topClothing))
+            {
+                appearanceData.topClothingName = modelName;
+            }
+            else if (IsModelInArray(activeModel, bottomClothing))
+            {
+                appearanceData.bottomClothingName = modelName;
+            }
+            else if (IsModelInArray(activeModel, footwear))
+            {
+                appearanceData.footwearName = modelName;
+            }
+            else if (IsModelInArray(activeModel, headAccessories))
+            {
+                appearanceData.headAccessoryName = modelName;
+            }
+            else if (IsModelInArray(activeModel, backAccessories))
+            {
+                appearanceData.backAccessoryName = modelName;
+            }
+            else if (IsModelInArray(activeModel, handAccessories))
+            {
+                appearanceData.handAccessoryName = modelName;
+            }
+
+            // Get material names from the active model
+            Renderer[] renderers = activeModel.GetComponentsInChildren<Renderer>();
+            foreach (Renderer renderer in renderers)
+            {
+                if (renderer.material != null)
+                {
+                    string materialName = renderer.material.name.Replace(" (Instance)", "");
+                    
+                    // Categorize materials by model type
+                    if (modelName.Contains("Body") || modelName.Contains("Head"))
+                    {
+                        appearanceData.skinMaterialName = materialName;
+                    }
+                    else if (modelName.Contains("Hair"))
+                    {
+                        appearanceData.hairMaterialName = materialName;
+                    }
+                    else
+                    {
+                        appearanceData.clothingMaterialName = materialName;
+                    }
+                }
+            }
+        }
+        
+        return appearanceData;
+    }
+
+    /// <summary>
+    /// Helper method to check if a model exists in a given array
+    /// </summary>
+    private bool IsModelInArray(GameObject model, GameObject[] modelArray)
+    {
+        if (modelArray == null || model == null) return false;
+        
+        foreach (GameObject arrayModel in modelArray)
+        {
+            if (arrayModel == model) return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Activate a specific model by name from the given array
+    /// </summary>
+    private void ActivateModelByName(GameObject[] modelArray, string modelName, string categoryName)
+    {
+        if (modelArray == null || string.IsNullOrEmpty(modelName)) return;
+
+        foreach (GameObject model in modelArray)
+        {
+            if (model != null && model.name == modelName)
+            {
+                model.SetActive(true);
+                activeModels.Add(model);
+                return;
+            }
+        }
+        
+        Debug.LogWarning($"[NPCAppearanceSystem] Could not find {categoryName} model with name: {modelName}");
+    }
+
+    /// <summary>
+    /// Apply saved materials to active models
+    /// </summary>
+    private void ApplySavedMaterials(NPCAppearanceData appearanceData)
+    {
+        foreach (GameObject model in activeModels)
+        {
+            if (model == null) continue;
+
+            Renderer[] renderers = model.GetComponentsInChildren<Renderer>();
+            foreach (Renderer renderer in renderers)
+            {
+                Material targetMaterial = null;
+                string modelName = model.name;
+
+                // Determine which material to apply based on model type
+                if ((modelName.Contains("Body") || modelName.Contains("Head")) && !string.IsNullOrEmpty(appearanceData.skinMaterialName))
+                {
+                    targetMaterial = FindMaterialByName(skinMaterials, appearanceData.skinMaterialName);
+                }
+                else if (modelName.Contains("Hair") && !string.IsNullOrEmpty(appearanceData.hairMaterialName))
+                {
+                    targetMaterial = FindMaterialByName(hairMaterials, appearanceData.hairMaterialName);
+                }
+                else if (!string.IsNullOrEmpty(appearanceData.clothingMaterialName))
+                {
+                    targetMaterial = FindMaterialByName(clothingMaterials, appearanceData.clothingMaterialName);
+                }
+
+                if (targetMaterial != null)
+                {
+                    renderer.material = targetMaterial;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Find a material by name in the given material array
+    /// </summary>
+    private Material FindMaterialByName(Material[] materialArray, string materialName)
+    {
+        if (materialArray == null || string.IsNullOrEmpty(materialName)) return null;
+
+        foreach (Material material in materialArray)
+        {
+            if (material != null && material.name == materialName)
+            {
+                return material;
+            }
+        }
+        
+        return null;
+    }
+}
+
+/// <summary>
+/// Data class to store NPC appearance information for saving/loading
+/// </summary>
+[System.Serializable]
+public class NPCAppearanceData
+{
+    public string bodyModelName;
+    public string headModelName;
+    public string hairModelName;
+    public string topClothingName;
+    public string bottomClothingName;
+    public string footwearName;
+    public string headAccessoryName;
+    public string backAccessoryName;
+    public string handAccessoryName;
+    public string skinMaterialName;
+    public string hairMaterialName;
+    public string clothingMaterialName;
 }
 
 namespace Characters.NPC
 {
+    [System.Serializable]
     public class NPCCharacteristicSystem
     {
         [Header("Characteristic Settings")]

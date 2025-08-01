@@ -1,0 +1,247 @@
+{
+    "npcName": "Gruff Survivor",
+    "startingLineId": "Start",
+    "conditionalStarts": [
+        {
+            "lineId": "AlreadyRecruited",
+            "requiredFlags": ["recruited"],
+            "priority": 100,
+            "description": "If NPC was already recruited"
+        },
+        {
+            "lineId": "RefusedBefore",
+            "requiredFlags": ["recruitment_refused"],
+            "blockedByFlags": ["recruited"],
+            "priority": 90,
+            "description": "If player refused recruitment before"
+        },
+        {
+            "lineId": "SecondMeeting",
+            "requiredFlags": ["first_meeting"],
+            "blockedByFlags": ["recruited", "recruitment_refused"],
+            "priority": 80,
+            "description": "Second time meeting, but no recruitment decision yet"
+        }
+    ],
+    "lines": [
+        {
+            "id": "Start",
+            "speaker": "Gruff Survivor",
+            "text": "*adjusts worn cap and eyes you warily* Well, well... another soul wandering the wastelands. You don't look like the usual raiders or scavengers I run into. Got yourself a camp somewhere?",
+            "setFlags": ["first_meeting"],
+            "options": [
+                { "text": "Yes, and we could use someone with experience like you.", "nextLine": "RecruitOffer" },
+                { "text": "Maybe. Can't trust just anyone these days.", "nextLine": "CautiousResponse" },
+                { "text": "What's it to you? I don't owe you any explanations.", "nextLine": "HostileResponse" }
+            ]
+        },
+        {
+            "id": "SecondMeeting",
+            "speaker": "Gruff Survivor",
+            "text": "*nods grimly* Back again, I see. Still got that camp of yours running? World's getting rougher by the day. Maybe it's time I considered... alternatives.",
+            "options": [
+                { "text": "The offer still stands if you want to join us.", "nextLine": "RecruitOffer" },
+                { "text": "What's changed your mind?", "nextLine": "WhatsChanged" },
+                { "text": "We're doing fine without extra mouths to feed.", "nextLine": "RecruitRefusal", "setFlags": ["recruitment_refused"] }
+            ]
+        },
+        {
+            "id": "RefusedBefore",
+            "speaker": "Gruff Survivor",
+            "text": "*spits into the dirt* Still not good enough for your fancy camp, eh? Fine by me. I've survived this long on my own.",
+            "options": [
+                { "text": "Actually, I've reconsidered. Want to join us?", "nextLine": "RecruitOffer" },
+                { "text": "How have you been surviving out here?", "nextLine": "SurvivalStory" },
+                { "text": "Good luck with that.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "AlreadyRecruited",
+            "speaker": "Gruff Survivor",
+            "text": "*tips cap respectfully* Good to see you again, boss. How are things back at camp? I'm ready to head back whenever you are.",
+            "options": [
+                { "text": "Things are going well. Let's head back.", "nextLine": "End" },
+                { "text": "How are you adjusting to camp life?", "nextLine": "CampLife" }
+            ]
+        },
+        {
+            "id": "CautiousResponse",
+            "speaker": "Gruff Survivor",
+            "text": "*chuckles gruffly* Smart. Trust gets you killed out here. But I've been watching you, and you seem... different. More organized than most. What's your setup like?",
+            "options": [
+                { "text": "We've built something sustainable. You could be part of it.", "nextLine": "RecruitOffer" },
+                { "text": "Tell me about yourself first.", "nextLine": "AboutYourself" },
+                { "text": "That's classified information.", "nextLine": "Classified" }
+            ]
+        },
+        {
+            "id": "HostileResponse",
+            "speaker": "Gruff Survivor",
+            "text": "*raises hands defensively but maintains stern look* Easy there, friend. I'm not looking for trouble. Just making conversation. Been alone too long, maybe.",
+            "options": [
+                { "text": "Sorry, I'm just careful around strangers.", "nextLine": "AboutYourself" },
+                { "text": "If you're not causing trouble, maybe we can help each other.", "nextLine": "RecruitOffer" },
+                { "text": "Then keep it that way and stay out of my business.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "WhatsChanged",
+            "speaker": "Gruff Survivor",
+            "text": "*looks around nervously* The zombies are getting worse. Smarter. And I found signs of raiders moving through this area. Ain't safe for a lone wolf anymore.",
+            "options": [
+                { "text": "Then come with us. Safety in numbers.", "nextLine": "RecruitOffer" },
+                { "text": "What kind of signs?", "nextLine": "RaiderSigns" },
+                { "text": "You've made it this far alone. I'm sure you'll manage.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "RecruitOffer",
+            "speaker": "Gruff Survivor",
+            "text": "*studies you for a long moment* You're serious, aren't you? A real camp with real people... *pauses* What would you want from an old coot like me?",
+            "options": [
+                { "text": "Experience, skills, another pair of hands.", "nextLine": "AcceptRecruitment", "recruitNPC": "Gruff Survivor" },
+                { "text": "Everyone deserves a chance at survival.", "nextLine": "AcceptRecruitment", "recruitNPC": "Gruff Survivor" },
+                { "text": "Actually, maybe this isn't a good fit.", "nextLine": "RecruitRefusal", "setFlags": ["recruitment_refused"] }
+            ]
+        },
+        {
+            "id": "AcceptRecruitment",
+            "speaker": "Gruff Survivor",
+            "text": "*extends calloused hand* Well I'll be damned. You got yourself a deal. Name's Marcus, by the way. Been scavenging these parts for three years. I know every hiding spot and danger zone for miles.",
+            "setFlags": ["recruited"],
+            "options": [
+                { "text": "Welcome to the team, Marcus. Let's head to camp.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "RecruitRefusal",
+            "speaker": "Gruff Survivor",
+            "text": "*shrugs and hefts his pack* Your loss. Been surviving just fine without help. Good luck with that camp of yours.",
+            "setFlags": ["recruitment_refused"],
+            "options": [
+                { "text": "Take care of yourself out there.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "AboutYourself",
+            "speaker": "Gruff Survivor",
+            "text": "*leans against a broken fence post* Name's Marcus. Used to be a mechanic before all this hell broke loose. Now I fix what I can find and trade for what I can't. Know these wastelands like the back of my hand.",
+            "options": [
+                { "text": "We could use someone with mechanical skills.", "nextLine": "RecruitOffer" },
+                { "text": "How do you handle the zombies?", "nextLine": "ZombieStrategy" },
+                { "text": "Thanks for the info. I should get going.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "Classified",
+            "speaker": "Gruff Survivor",
+            "text": "*laughs harshly* Classified? What is this, the military? Fine, keep your secrets. I ain't that desperate for company anyway.",
+            "options": [
+                { "text": "Wait, I'm sorry. Let me start over.", "nextLine": "AboutYourself" },
+                { "text": "You're right, that was rude. Want to know about our community?", "nextLine": "RecruitOffer" },
+                { "text": "Good. Keep it that way.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "SurvivalStory",
+            "speaker": "Gruff Survivor",
+            "text": "*gestures to his patched gear* See this? All scavenged and modified by hand. I make traps, trade with other survivors, and stay mobile. Key is knowing when to fight and when to run.",
+            "options": [
+                { "text": "Impressive. You'd fit right in with our group.", "nextLine": "RecruitOffer" },
+                { "text": "What's the worst situation you've been in?", "nextLine": "WorstSituation" },
+                { "text": "Sounds like you have it figured out. Good luck.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "RaiderSigns",
+            "speaker": "Gruff Survivor",
+            "text": "*points east* Fresh tire tracks, organized search patterns, and they left warning markers. These ain't your typical scavengers. They're claiming territory.",
+            "options": [
+                { "text": "All the more reason to join a larger group.", "nextLine": "RecruitOffer" },
+                { "text": "How recent were these signs?", "nextLine": "RecentSigns" },
+                { "text": "Thanks for the warning.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "CampLife",
+            "speaker": "Gruff Survivor",
+            "text": "*grins slightly* Better than I expected. Having a warm bed and people to watch your back... forgot what that felt like. Still getting used to all the talking, though.",
+            "options": [
+                { "text": "Glad to hear it's working out.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "ZombieStrategy",
+            "speaker": "Gruff Survivor",
+            "text": "*taps temple* Brains over brawn. Make noise where you ain't, stay downwind, and always have an escape route. And when all else fails... *pats makeshift weapon* you fight dirty.",
+            "options": [
+                { "text": "Smart tactics. We could use that expertise.", "nextLine": "RecruitOffer" },
+                { "text": "Any particular zombie types to watch out for?", "nextLine": "ZombieTypes" },
+                { "text": "Good to know. Stay safe out here.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "WorstSituation",
+            "speaker": "Gruff Survivor",
+            "text": "*face darkens* Trapped in a basement for four days while a horde passed through. Had to ration water and stay absolutely silent. Lost twenty pounds and nearly my sanity.",
+            "options": [
+                { "text": "That sounds terrible. You wouldn't have to face that alone with us.", "nextLine": "RecruitOffer" },
+                { "text": "How did you finally get out?", "nextLine": "EscapeStory" },
+                { "text": "That takes real guts to survive.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "RecentSigns",
+            "speaker": "Gruff Survivor",
+            "text": "*checks the sky* Two, maybe three days ago. They're systematic, making camps and setting up supply lines. This used to be free territory.",
+            "options": [
+                { "text": "We should warn others. Want to help spread the word?", "nextLine": "RecruitOffer" },
+                { "text": "Do you think they'll come this way?", "nextLine": "RaiderThreat" },
+                { "text": "I'll be careful. Thanks for the intel.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "ZombieTypes",
+            "speaker": "Gruff Survivor",
+            "text": "*counts on fingers* Fast ones that screech and call others, big ones that can punch through walls, and the worst - smart ones that use tools and set ambushes.",
+            "options": [
+                { "text": "Sounds like you know how to handle them all.", "nextLine": "RecruitOffer" },
+                { "text": "Have you actually seen tool-using zombies?", "nextLine": "SmartZombies" },
+                { "text": "I'll keep that in mind. Thanks.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "EscapeStory",
+            "speaker": "Gruff Survivor",
+            "text": "*demonstrates quiet movement* Waited for rain to mask my sounds, then crawled through a drainage pipe I'd scouted earlier. Always have a backup plan.",
+            "options": [
+                { "text": "That kind of planning would be valuable to our group.", "nextLine": "RecruitOffer" },
+                { "text": "You're clearly a survivor. Respect.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "RaiderThreat",
+            "speaker": "Gruff Survivor",
+            "text": "*nods grimly* Their pattern suggests they're sweeping south. This area will be in their path within a week, maybe less.",
+            "options": [
+                { "text": "Then we need to move fast. Come with us now.", "nextLine": "RecruitOffer" },
+                { "text": "I need to warn my people. Take care.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "SmartZombies",
+            "speaker": "Gruff Survivor",
+            "text": "*voice drops to whisper* Saw one use a crowbar to pry open a door, then signal others with clicks. They're evolving, and that scares the hell out of me.",
+            "options": [
+                { "text": "That's exactly why we need experienced people like you.", "nextLine": "RecruitOffer" },
+                { "text": "That's... terrifying. Thanks for the warning.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "End",
+            "speaker": "",
+            "text": "",
+            "options": []
+        }
+    ]
+}

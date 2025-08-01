@@ -1,0 +1,317 @@
+{
+    "npcName": "Scout Leader",
+    "startingLineId": "Start",
+    "conditionalStarts": [
+        {
+            "lineId": "AlreadyRecruited",
+            "requiredFlags": ["recruited"],
+            "priority": 100,
+            "description": "If NPC was already recruited"
+        },
+        {
+            "lineId": "RefusedBefore",
+            "requiredFlags": ["recruitment_refused"],
+            "blockedByFlags": ["recruited"],
+            "priority": 90,
+            "description": "If player refused recruitment before"
+        },
+        {
+            "lineId": "SecondMeeting",
+            "requiredFlags": ["first_meeting"],
+            "blockedByFlags": ["recruited", "recruitment_refused"],
+            "priority": 80,
+            "description": "Second time meeting, but no recruitment decision yet"
+        }
+    ],
+    "lines": [
+        {
+            "id": "Start",
+            "speaker": "Scout Leader",
+            "text": "*emerges from behind cover with practiced stealth* You're either very brave or very foolish walking through this area so openly. I'm Maya Rodriguez, former Army Ranger. Judging by your gear and confidence, you're not just another scavenger.",
+            "setFlags": ["first_meeting"],
+            "options": [
+                { "text": "I lead a survivor community. We could use military expertise.", "nextLine": "RecruitOffer" },
+                { "text": "Army Ranger? What brings you out here alone?", "nextLine": "MilitaryBackground" },
+                { "text": "Just trying to survive like everyone else.", "nextLine": "SurvivalMentality" }
+            ]
+        },
+        {
+            "id": "SecondMeeting",
+            "speaker": "Scout Leader",
+            "text": "*nods in recognition* Back in my territory, I see. I've been thinking about our last conversation. The tactical situation out here is deteriorating rapidly. Might be time to consider... alternatives.",
+            "options": [
+                { "text": "My offer to join our community still stands.", "nextLine": "RecruitOffer" },
+                { "text": "What's changed in the tactical situation?", "nextLine": "TacticalUpdate" },
+                { "text": "You seem to have things under control here.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "RefusedBefore",
+            "speaker": "Scout Leader",
+            "text": "*checks her weapon while speaking* Still not interested in my particular skill set, I take it? No worries. I've been operating solo since this whole mess started. Works fine for me.",
+            "options": [
+                { "text": "Actually, I've reconsidered. We need someone with your experience.", "nextLine": "RecruitOffer" },
+                { "text": "How do you handle threats alone that would challenge a group?", "nextLine": "SoloTactics" },
+                { "text": "Stay sharp out there.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "AlreadyRecruited",
+            "speaker": "Scout Leader",
+            "text": "*gives a crisp salute* Good to see you, Commander. I've been conducting perimeter sweeps and mapping potential threats in the area. The defensive positioning of our camp is sound, but I have some recommendations.",
+            "options": [
+                { "text": "Excellent work. Let's discuss those recommendations back at camp.", "nextLine": "End" },
+                { "text": "What threats have you identified?", "nextLine": "ThreatAssessment" }
+            ]
+        },
+        {
+            "id": "MilitaryBackground",
+            "speaker": "Scout Leader",
+            "text": "*shoulders rifle with practiced ease* Three tours overseas, specialized in reconnaissance and asymmetric warfare. When the outbreak hit, my unit was deployed for disaster relief. We held the evacuation zones as long as we could.",
+            "options": [
+                { "text": "That experience would be invaluable to our community defense.", "nextLine": "RecruitOffer" },
+                { "text": "What happened to your unit?", "nextLine": "UnitFate" },
+                { "text": "That must have been hell.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "SurvivalMentality",
+            "speaker": "Scout Leader",
+            "text": "*studies you appraisingly* Fair enough. But 'just surviving' usually doesn't involve walking confidently through hostile territory. You've got backup or you've got skills. Which is it?",
+            "options": [
+                { "text": "Both. I represent a organized survivor community.", "nextLine": "RecruitOffer" },
+                { "text": "Skills. Hard-earned through experience.", "nextLine": "SkillExchange" },
+                { "text": "Luck, mostly.", "nextLine": "LuckResponse" }
+            ]
+        },
+        {
+            "id": "TacticalUpdate",
+            "speaker": "Scout Leader",
+            "text": "*points to various directions* Three raider groups are converging on this area, zombie hordes are moving in predictable patterns, and the resource competition is getting deadly. Solo operators won't last much longer.",
+            "options": [
+                { "text": "That's exactly why you should join us. Strength in numbers.", "nextLine": "RecruitOffer" },
+                { "text": "How do you track all these threats?", "nextLine": "ThreatTracking" },
+                { "text": "Sounds like time to relocate.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "RecruitOffer",
+            "speaker": "Scout Leader",
+            "text": "*considers seriously* A real community with proper leadership structure? That's... tempting. I could establish defensive protocols, train your people in combat tactics, set up early warning systems. What's your command structure like?",
+            "options": [
+                { "text": "Collaborative leadership focused on everyone's strengths.", "nextLine": "AcceptRecruitment", "recruitNPC": "Maya Rodriguez" },
+                { "text": "Organized but flexible. We adapt to threats as they arise.", "nextLine": "AcceptRecruitment", "recruitNPC": "Maya Rodriguez" },
+                { "text": "Still figuring that out as we grow.", "nextLine": "LeadershipConcerns" }
+            ]
+        },
+        {
+            "id": "AcceptRecruitment",
+            "speaker": "Scout Leader",
+            "text": "*extends her hand for a firm handshake* Maya Rodriguez, reporting for duty. I can start with a full tactical assessment of your current position and develop defensive strategies. Finally, a chance to protect people instead of just surviving.",
+            "setFlags": ["recruited"],
+            "options": [
+                { "text": "Welcome to the team, Maya. Let's head home and plan our defenses.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "RecruitRefusal",
+            "speaker": "Scout Leader",
+            "text": "*nods with military professionalism* Understood. Not every group needs a tactical specialist. I'll continue operations in this sector. Maybe our paths will cross again under different circumstances.",
+            "setFlags": ["recruitment_refused"],
+            "options": [
+                { "text": "Good luck with your mission.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "UnitFate",
+            "speaker": "Scout Leader",
+            "text": "*expression becomes distant* We held the line until we ran out of ammunition and supplies. Some scattered to find their families, others... didn't make it out. I kept the mission going as long as possible.",
+            "options": [
+                { "text": "You did your duty. Now you can protect people again with us.", "nextLine": "RecruitOffer" },
+                { "text": "How long were you isolated after that?", "nextLine": "IsolationPeriod" },
+                { "text": "That takes incredible dedication.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "SkillExchange",
+            "speaker": "Scout Leader",
+            "text": "*respects the honesty* Good answer. Skills are the only currency that matters now. What's your specialty? Combat, survival, leadership, technical?",
+            "options": [
+                { "text": "Leadership and coordination. I bring people together.", "nextLine": "RecruitOffer" },
+                { "text": "Whatever the situation requires. Adaptability.", "nextLine": "AdaptabilityDiscussion" },
+                { "text": "Still learning everything I can.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "LuckResponse",
+            "speaker": "Scout Leader",
+            "text": "*laughs dryly* Luck runs out. Skills and preparation don't. But I respect the honesty. Most people like to act tougher than they are.",
+            "options": [
+                { "text": "Maybe I could use some of your preparation techniques.", "nextLine": "RecruitOffer" },
+                { "text": "What's your best survival tip?", "nextLine": "SurvivalTip" },
+                { "text": "Honesty seems safer than bravado.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "SoloTactics",
+            "speaker": "Scout Leader",
+            "text": "*taps her head* Intelligence gathering, avoiding conflict when possible, superior positioning when conflict is unavoidable. Plus, I know when to retreat. Pride gets you killed in tactical situations.",
+            "options": [
+                { "text": "That wisdom would benefit our entire community.", "nextLine": "RecruitOffer" },
+                { "text": "What's your biggest tactical challenge as a solo operator?", "nextLine": "SoloChallenge" },
+                { "text": "Smart approach to staying alive.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "ThreatTracking",
+            "speaker": "Scout Leader",
+            "text": "*pulls out a hand-drawn map* Movement patterns, timing, resource preferences. I map everything and look for patterns. Most threats are predictable if you know what to look for.",
+            "options": [
+                { "text": "That intelligence network would protect our whole community.", "nextLine": "RecruitOffer" },
+                { "text": "How do you gather intelligence safely?", "nextLine": "IntelGathering" },
+                { "text": "Impressive operational awareness.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "LeadershipConcerns",
+            "speaker": "Scout Leader",
+            "text": "*crosses arms* Growing pains are understandable, but unclear command structure gets people killed in crisis situations. That said, flexibility can be a tactical advantage if managed properly.",
+            "options": [
+                { "text": "Help us develop better leadership protocols.", "nextLine": "AcceptRecruitment", "recruitNPC": "Maya Rodriguez" },
+                { "text": "What would you recommend for command structure?", "nextLine": "CommandAdvice" },
+                { "text": "Maybe we're not ready for military-style organization.", "nextLine": "RecruitRefusal", "setFlags": ["recruitment_refused"] }
+            ]
+        },
+        {
+            "id": "ThreatAssessment",
+            "speaker": "Scout Leader",
+            "text": "*points to different areas on mental map* Raider scouts probing eastern approaches, zombie migration pattern shifting north, and what looks like a competing survivor group fortifying three kilometers southwest.",
+            "options": [
+                { "text": "Good intel. What's your recommended response?", "nextLine": "TacticalRecommendations" },
+                { "text": "How do you distinguish between raiders and other survivors?", "nextLine": "ThreatIdentification" }
+            ]
+        },
+        {
+            "id": "IsolationPeriod",
+            "speaker": "Scout Leader",
+            "text": "*counts on fingers* Eight months completely alone, then sporadic contact with other survivors. Long enough to develop some... intense self-reliance habits. Took me a while to trust working with others again.",
+            "options": [
+                { "text": "That experience makes your survival skills even more valuable.", "nextLine": "RecruitOffer" },
+                { "text": "How did you cope with the isolation mentally?", "nextLine": "MentalCoping" },
+                { "text": "That's a long time to be completely alone.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "AdaptabilityDiscussion",
+            "speaker": "Scout Leader",
+            "text": "*nods approvingly* Adaptability is the most important military skill. Rigid doctrine gets you killed when the situation changes. You think like a good tactical leader.",
+            "options": [
+                { "text": "Then let's combine our approaches for better community defense.", "nextLine": "RecruitOffer" },
+                { "text": "What situations require the most adaptability?", "nextLine": "AdaptationExamples" },
+                { "text": "Survival has been a good teacher.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "SurvivalTip",
+            "speaker": "Scout Leader",
+            "text": "*becomes instructional* Always have three exit strategies from any position, and know the difference between cover and concealment. Cover stops bullets, concealment just hides you.",
+            "options": [
+                { "text": "That's exactly the kind of knowledge our people need.", "nextLine": "RecruitOffer" },
+                { "text": "What's the most common mistake survivors make?", "nextLine": "CommonMistakes" },
+                { "text": "I'll remember that. Thanks.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "SoloChallenge",
+            "speaker": "Scout Leader",
+            "text": "*gestures to her equipment* Resource management and medical backup. I can't carry everything I might need, and if I get seriously injured, there's no one to patch me up or provide overwatch.",
+            "options": [
+                { "text": "Those are exactly the support systems we provide each other.", "nextLine": "RecruitOffer" },
+                { "text": "How do you handle medical emergencies alone?", "nextLine": "SoloMedical" },
+                { "text": "The vulnerabilities of solo operations.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "IntelGathering",
+            "speaker": "Scout Leader",
+            "text": "*demonstrates low profile movement* Long-range observation, tracking sign, interviewing other survivors when possible. The key is staying invisible while gathering information.",
+            "options": [
+                { "text": "You could train our scouts in those techniques.", "nextLine": "RecruitOffer" },
+                { "text": "What's the most valuable intelligence you've gathered?", "nextLine": "ValuableIntel" },
+                { "text": "Impressive fieldcraft.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "CommandAdvice",
+            "speaker": "Scout Leader",
+            "text": "*becomes professional* Clear chain of command for emergencies, but collaborative decision-making for long-term planning. Everyone knows who's in charge when bullets start flying, but everyone has input when there's time to think.",
+            "options": [
+                { "text": "That's excellent advice. Help us implement it.", "nextLine": "AcceptRecruitment", "recruitNPC": "Maya Rodriguez" },
+                { "text": "How do you balance authority with collaboration?", "nextLine": "BalancingLeadership" },
+                { "text": "That makes a lot of sense.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "TacticalRecommendations",
+            "speaker": "Scout Leader",
+            "text": "*becomes tactical* Strengthen eastern defenses, establish early warning posts, and initiate diplomatic contact with the southwestern group to determine their intentions before they become a threat.",
+            "options": [
+                { "text": "Solid plan. Let's implement it together.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "ThreatIdentification",
+            "speaker": "Scout Leader",
+            "text": "*explains systematically* Movement patterns, equipment condition, group discipline, and treatment of weaker members. Raiders move aggressively, survivors move cautiously. Raiders take what they want, survivors trade.",
+            "options": [
+                { "text": "That's valuable reconnaissance knowledge.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "MentalCoping",
+            "speaker": "Scout Leader",
+            "text": "*speaks honestly* Routine, mission focus, and talking to myself - a lot. I treated it like an extended solo deployment. Having a purpose kept me sane when the isolation got overwhelming.",
+            "options": [
+                { "text": "That mental toughness is exactly what our community needs.", "nextLine": "RecruitOffer" },
+                { "text": "What was your mission during that time?", "nextLine": "SoloMission" },
+                { "text": "Finding purpose in chaos - that's wisdom.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "AdaptationExamples",
+            "speaker": "Scout Leader",
+            "text": "*counts scenarios* Zombie behavior changes, weather affecting visibility and movement, equipment failures, unexpected human contacts. Every plan needs backup plans, and those need backup plans too.",
+            "options": [
+                { "text": "That level of preparation would make our community much safer.", "nextLine": "RecruitOffer" },
+                { "text": "What's the most unexpected situation you've adapted to?", "nextLine": "UnexpectedSituation" },
+                { "text": "Thorough tactical thinking.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "CommonMistakes",
+            "speaker": "Scout Leader",
+            "text": "*becomes serious* Getting comfortable, assuming patterns will continue, and not maintaining equipment. Complacency kills more survivors than zombies or raiders.",
+            "options": [
+                { "text": "We need someone to keep us sharp and prepared.", "nextLine": "RecruitOffer" },
+                { "text": "How do you maintain vigilance without burning out?", "nextLine": "SustainedVigilance" },
+                { "text": "Good reminder to stay alert.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "SoloMedical",
+            "speaker": "Scout Leader",
+            "text": "*shows medical kit* Extensive first aid training, pre-positioned medical caches, and conservative risk assessment. If I can't treat it myself or it might incapacitate me, I avoid the situation entirely.",
+            "options": [
+                { "text": "With a community, you could take calculated risks for greater gains.", "nextLine": "RecruitOffer" },
+                { "text": "What medical training do you have?", "nextLine": "MedicalTraining" },
+                { "text": "Smart risk management.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "End",
+            "speaker": "",
+            "text": "",
+            "options": []
+        }
+    ]
+}

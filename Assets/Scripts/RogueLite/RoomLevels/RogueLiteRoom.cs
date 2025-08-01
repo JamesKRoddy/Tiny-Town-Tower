@@ -2,11 +2,11 @@ using UnityEngine;
 using System.Collections.Generic;
 using Managers;
 
-public class RogueLiteRoom : MonoBehaviour
+public abstract class RogueLiteRoom : MonoBehaviour
 {
     [Header("Room Components")]
-    public List<RogueLikeRoomDoor> doors = new List<RogueLikeRoomDoor>();
-    public List<ChestParent> chests = new List<ChestParent>();
+    [SerializeField, ReadOnly] private List<RogueLikeRoomDoor> doors = new List<RogueLikeRoomDoor>();
+    [SerializeField, ReadOnly] private List<ChestParent> chests = new List<ChestParent>();
     
     [Header("Room Bounds")]
     [SerializeField] private Bounds roomBounds;
@@ -21,6 +21,9 @@ public class RogueLiteRoom : MonoBehaviour
     private Collider[] roomColliders;
     private bool boundsCalculated = false;
     
+    // Abstract property that concrete classes must implement
+    public abstract RogueLikeRoomType RoomType { get; }
+    
     private void Awake()
     {
         // Cache all doors and chests in the room
@@ -34,9 +37,12 @@ public class RogueLiteRoom : MonoBehaviour
         {
             CalculateRoomBounds();
         }
+        
+        // Call abstract method for room-specific initialization
+        OnRoomAwake();
     }
 
-    public void Setup()
+    public virtual void Setup()
     {                
         // Initialize all doors
         foreach (var door in doors)
@@ -49,7 +55,20 @@ public class RogueLiteRoom : MonoBehaviour
         {
             chest.SetupChest(DifficultyManager.Instance.GetCurrentRoomDifficulty());
         }
+        
+        // Call abstract method for room-specific setup
+        OnRoomSetup();
     }
+    
+    /// <summary>
+    /// Abstract method for room-specific initialization during Awake
+    /// </summary>
+    protected abstract void OnRoomAwake();
+    
+    /// <summary>
+    /// Abstract method for room-specific setup
+    /// </summary>
+    protected abstract void OnRoomSetup();
     
     /// <summary>
     /// Calculate the bounds of this room based on all its colliders
@@ -265,6 +284,7 @@ public class RogueLiteRoom : MonoBehaviour
     {
         RogueLiteRoom room = (RogueLiteRoom)command.context;
         Debug.Log($"[RogueLiteRoom] === Room Info for {room.gameObject.name} ===");
+        Debug.Log($"Room Type: {room.RoomType}");
         Debug.Log($"Bounds Calculated: {room.boundsCalculated}");
         Debug.Log($"Auto Calculate: {room.autoCalculateBounds}");
         Debug.Log($"Bounds Padding: {room.boundsPadding}");
@@ -290,7 +310,7 @@ public class RogueLiteRoom : MonoBehaviour
         if (!showRoomBounds) return;
 
         // Always draw a basic gizmo to show the room exists
-        Gizmos.color = Color.cyan;
+        Gizmos.color = RoomType == RogueLikeRoomType.FRIENDLY ? Color.green : Color.cyan;
         Gizmos.DrawWireSphere(transform.position, 1f);
         
         // Try to calculate bounds if not done yet (works in both edit and play mode)
@@ -309,7 +329,7 @@ public class RogueLiteRoom : MonoBehaviour
         // Draw room bounds (always visible)
         if (boundsCalculated)
         {
-            Gizmos.color = Color.yellow;
+            Gizmos.color = RoomType == RogueLikeRoomType.FRIENDLY ? Color.green : Color.yellow;
             Gizmos.DrawWireCube(roomBounds.center, roomBounds.size);
         }
         else
@@ -324,7 +344,7 @@ public class RogueLiteRoom : MonoBehaviour
         UnityEditor.Handles.color = Color.white;
         string statusText = boundsCalculated ? "✓ Calculated" : "✗ Not Calculated";
         UnityEditor.Handles.Label(transform.position + Vector3.up * 3f, 
-            $"Room: {gameObject.name}\nStatus: {statusText}\nSize: {roomBounds.size}");
+            $"Room: {gameObject.name}\nType: {RoomType}\nStatus: {statusText}\nSize: {roomBounds.size}");
         #endif
     }
     
@@ -339,7 +359,8 @@ public class RogueLiteRoom : MonoBehaviour
         }
         
         // Draw filled bounds with transparency when selected
-        Gizmos.color = new Color(1, 1, 0, 0.1f);
+        Color roomColor = RoomType == RogueLikeRoomType.FRIENDLY ? new Color(0, 1, 0, 0.1f) : new Color(1, 1, 0, 0.1f);
+        Gizmos.color = roomColor;
         Gizmos.DrawCube(roomBounds.center, roomBounds.size);
         
         // Draw individual collider bounds

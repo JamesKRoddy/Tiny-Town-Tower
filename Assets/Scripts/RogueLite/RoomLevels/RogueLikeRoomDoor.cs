@@ -12,8 +12,12 @@ public class RogueLikeRoomDoor : RogueLiteDoor
     protected override void Start()
     {
         base.Start();
+        
         RogueLiteManager.Instance.OnEnemySetupStateChanged += OnEnemySetupStateChanged;
-        OnEnemySetupStateChanged(RogueLiteManager.Instance.GetEnemySetupState());
+        
+        // Check current state immediately in case it already changed before this door was ready
+        EnemySetupState currentState = RogueLiteManager.Instance.GetEnemySetupState();
+        OnEnemySetupStateChanged(currentState);
     }
 
     public void Initialize(RogueLiteRoom room)
@@ -35,7 +39,10 @@ public class RogueLikeRoomDoor : RogueLiteDoor
 
     public override void OnDoorEntered()
     {
-        if (isLocked) return;
+        if (isLocked) 
+        {
+            return;
+        }
 
         if (doorType == DoorStatus.ENTRANCE)
         {
@@ -46,14 +53,12 @@ public class RogueLikeRoomDoor : RogueLiteDoor
 
     public override bool CanInteract()
     {
-        if (RogueLiteManager.Instance.GetEnemySetupState() != EnemySetupState.ALL_WAVES_CLEARED)
-            return false;
-
-        // EXIT doors are always locked - no going back
-        if (doorType == DoorStatus.EXIT)
-            return false;
-
-        return base.CanInteract();
+        EnemySetupState currentState = RogueLiteManager.Instance.GetEnemySetupState();
+        bool wavesCleared = currentState == EnemySetupState.ALL_WAVES_CLEARED;
+        bool baseCanInteract = base.CanInteract();
+        bool notExitDoor = doorType != DoorStatus.EXIT;
+        
+        return wavesCleared && baseCanInteract && notExitDoor;
     }
 
     public override string GetInteractionText()

@@ -44,8 +44,17 @@ public class PlayerInventory : CharacterInventory, IControllerInput
 
     public List<MutationQuantityEntry> availableMutations = new List<MutationQuantityEntry>(); // List of available mutations, removed when mutation screen is closed
 
+    [Header("NPC Management")]
+    [SerializeField] private List<RecruitedNPCData> recruitedNPCs = new List<RecruitedNPCData>(); // NPCs recruited during roguelite exploration
+
     public int MaxMutationSlots => maxMutationSlots;
     public List<GeneticMutationObj> EquippedMutations => equippedMutations;
+
+
+
+    // Events for NPC recruitment
+    public event System.Action<Managers.SettlerData> OnNPCRecruited;
+    public event System.Action<List<Managers.SettlerData>> OnNPCsTransferredToCamp;
 
     private void Awake()
     {
@@ -60,11 +69,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         }
 
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
-    }
-
-    public override void Start()
-    {
-
     }
 
     private void OnDestroy()
@@ -119,7 +123,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 }
                 break;
             case GeneticMutationObj geneticMutation:
-                Debug.Log("Adding genetic mutation to player inventory: " + geneticMutation.objectName);
                 AddAvalibleMutation(geneticMutation);
                 PlayerUIManager.Instance.utilityMenu.EnableGeneticMutationMenu();
                 // Show popup for genetic mutation added to player inventory
@@ -131,7 +134,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 break;
             // Add additional cases here for other item types if necessary.
             default:
-                Debug.LogWarning("Unhandled chest item type.");
+                Debug.LogWarning($"Unhandled chest item type: {resourceItem.GetType().Name}");
                 break;
         }
     }
@@ -223,14 +226,13 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     {
         if (result == null) return;
 
-        Debug.Log("Handling interaction result: " + result.GetType().Name);
         switch (result)
         {
             case ResourceItemCount resourcePickup:
                 AddToPlayerInventory(resourcePickup);
                 break;
             case NarrativeAsset narrative:
-                PlayerUIManager.Instance.narrativeSystem.StartConversation(narrative);
+                NarrativeManager.Instance.StartConversation(narrative);
                 break;
             case Building building:
                 // Show the work task selection popup
@@ -359,5 +361,283 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         {
             AddItem(item.resourceScriptableObj, item.count);
         }
+    }
+
+    #region NPC Recruitment
+
+    /// <summary>
+    /// Recruit a procedural settler during exploration (stores temporarily in inventory)
+    /// </summary>
+    public void RecruitNPC(SettlerNPC settlerNPCReference)
+    {
+        RecruitNPC(settlerNPCReference, null);
+    }
+
+    /// <summary>
+    /// Recruit a procedural settler with component ID tracking during exploration
+    /// </summary>
+    public void RecruitNPC(SettlerNPC settlerNPCReference, string componentId)
+    {
+        if (settlerNPCReference == null)
+        {
+            Debug.LogWarning("[PlayerInventory] Attempted to recruit null SettlerNPC!");
+            return;
+        }
+
+        string settlerName = settlerNPCReference.GetSettlerName();
+        
+        // Check if this specific component has already been recruited
+        if (!string.IsNullOrEmpty(componentId))
+        {
+            
+            if (recruitedNPCs.Exists(data => data.componentId == componentId))
+            {
+                Debug.LogWarning($"[PlayerInventory] NPC component '{componentId}' ({settlerName}) is already recruited!");
+                return;
+            }
+        }
+
+        // Capture settler data from the SettlerNPC
+        var settlerData = new Managers.SettlerData(
+            settlerNPCReference.GetSettlerName(),
+            settlerNPCReference.GetSettlerAge(),
+            settlerNPCReference.GetSettlerDescription()
+        );
+
+        // Capture appearance data from the SettlerNPC
+        NPCAppearanceData appearanceData = null;
+        if (settlerNPCReference.GetAppearanceSystem() != null)
+        {
+            appearanceData = settlerNPCReference.GetAppearanceSystem().GetCurrentAppearanceData();        }
+        else
+        {
+            Debug.LogWarning($"[PlayerInventory] Could not capture appearance data for '{settlerName}' - no appearance system");
+            appearanceData = new NPCAppearanceData(); // Empty appearance data as fallback
+        }
+
+        
+        // Create and add the recruited NPC data
+        var recruitedData = new RecruitedNPCData(settlerData, componentId, appearanceData);
+        recruitedNPCs.Add(recruitedData);
+
+        
+        OnNPCRecruited?.Invoke(settlerData);
+        
+        // Show recruitment popup 
+        if (PlayerUIManager.Instance?.inventoryPopup != null)
+        {
+            Debug.LogWarning("[PlayerInventory] PlayerUIManager and inventoryPopup found, showing recruitment popup...");
+            // We'll need to create a way to show settler recruitment in the UI
+            // For now, just show a simple notification
+            Debug.LogWarning($"[PlayerInventory] Recruited {settlerName} (Age {settlerData.age})!");
+        }
+        else
+        {
+            Debug.LogWarning("[PlayerInventory] PlayerUIManager or inventoryPopup is null, cannot show recruitment popup!");
+        }
+    }
+
+    /// <summary>
+    /// Get all currently recruited settlers
+    /// </summary>
+    public List<Managers.SettlerData> GetRecruitedSettlers()
+    {
+        return recruitedNPCs.ConvertAll(data => data.settlerData);
+    }
+
+    /// <summary>
+    /// Check if any NPCs are ready to be transferred to camp
+    /// </summary>
+    public bool HasRecruitedNPCs()
+    {
+        return recruitedNPCs.Count > 0;
+    }
+
+    /// <summary>
+    /// Check if a specific component has been recruited
+    /// </summary>
+    public bool IsComponentRecruited(string componentId)
+    {
+        if (string.IsNullOrEmpty(componentId))
+            return false;
+            
+        return recruitedNPCs.Exists(data => data.componentId == componentId);
+    }
+
+    /// <summary>
+    /// Restore a recruited NPC from save data (used by SaveLoadManager)
+    /// </summary>
+    public void RestoreRecruitedNPC(RecruitedNPCData recruitedNPCData)
+    {
+        if (recruitedNPCData == null)
+        {
+            Debug.LogWarning("[PlayerInventory] Cannot restore null recruited NPC data");
+            return;
+        }
+
+        // Check if this NPC is already in the list
+        if (!string.IsNullOrEmpty(recruitedNPCData.componentId) && 
+            recruitedNPCs.Exists(data => data.componentId == recruitedNPCData.componentId))
+        {
+            Debug.LogWarning($"[PlayerInventory] NPC with component ID '{recruitedNPCData.componentId}' is already recruited");
+            return;
+        }
+
+        recruitedNPCs.Add(recruitedNPCData);
+    }
+
+    /// <summary>
+    /// Get all recruited NPC data (for save system access)
+    /// </summary>
+    public List<RecruitedNPCData> GetRecruitedNPCData()
+    {
+        return new List<RecruitedNPCData>(recruitedNPCs);
+    }
+
+    /// <summary>
+    /// Transfer all recruited settlers to the camp (clears temporary recruitment storage)
+    /// </summary>
+    public void TransferRecruitedNPCsToCamp()
+    {
+        if (recruitedNPCs.Count == 0)
+        {
+            return;
+        }
+
+        var settlersToTransfer = new List<Managers.SettlerData>();
+        
+        foreach (var recruitedData in recruitedNPCs)
+        {
+            settlersToTransfer.Add(recruitedData.settlerData);
+            SpawnSettlerInCamp(recruitedData.settlerData, recruitedData.appearanceData);
+        }
+
+        // Fire the event to notify other systems about the transfer
+        OnNPCsTransferredToCamp?.Invoke(settlersToTransfer);
+
+        recruitedNPCs.Clear();
+        
+    }
+
+    /// <summary>
+    /// Spawn a recruited settler in the camp
+    /// </summary>
+    private void SpawnSettlerInCamp(Managers.SettlerData settlerData, NPCAppearanceData appearanceData = null)
+    {
+        // Get the settler prefab from NPCManager
+        if (NPCManager.Instance == null || !NPCManager.Instance.IsSettlerGenerationConfigured())
+        {
+            Debug.LogError($"[PlayerInventory] NPCManager not configured for settler generation. Cannot spawn settler '{settlerData.name}'");
+            return;
+        }
+
+        GameObject settlerPrefab = NPCManager.Instance.GetSettlerPrefab();
+        if (settlerPrefab == null)
+        {
+            Debug.LogError($"[PlayerInventory] No settler prefab available from NPCManager!");
+            return;
+        }
+
+        // Find a suitable spawn location in the camp
+        Vector3 spawnPosition = FindCampSpawnPosition();
+        
+        // Instantiate the settler prefab
+        GameObject settlerObject = Instantiate(settlerPrefab, spawnPosition, Quaternion.identity);
+        
+        // Set up the settler
+        if (settlerObject.TryGetComponent<SettlerNPC>(out var settlerNPC))
+        {
+            // Apply settler data first
+            settlerNPC.ApplySettlerData(settlerData);
+            
+            // Set the initialization context for recruited settlers before Start() is called
+            settlerNPC.SetInitializationContext(NPCInitializationContext.RECRUITED);
+            
+            // Set the recruited appearance data if available
+            if (appearanceData != null)
+            {
+                settlerNPC.SetRecruitedAppearanceData(appearanceData);
+            }
+            else
+            {
+                Debug.LogWarning($"[PlayerInventory] No appearance data available for recruited settler '{settlerData.name}' - will use random appearance");
+            }
+            
+        }
+        else
+        {
+            Debug.LogWarning($"[PlayerInventory] Spawned settler prefab does not have SettlerNPC component!");
+        }
+    }
+
+    /// <summary>
+    /// Find a suitable spawn position in the camp for a new NPC
+    /// </summary>
+    private Vector3 FindCampSpawnPosition()
+    {
+        // Try to find CampManager for spawn bounds
+        if (CampManager.Instance != null)
+        {
+            // Use camp bounds to find a suitable spawn location
+            Vector2 xBounds = CampManager.Instance.SharedXBounds;
+            Vector2 zBounds = CampManager.Instance.SharedZBounds;
+            
+            // Try to find a clear position within camp bounds
+            for (int attempts = 0; attempts < 10; attempts++)
+            {
+                Vector3 randomPosition = new Vector3(
+                    UnityEngine.Random.Range(xBounds.x, xBounds.y),
+                    0,
+                    UnityEngine.Random.Range(zBounds.x, zBounds.y)
+                );
+                
+                // Simple ground raycast to place on terrain
+                if (Physics.Raycast(randomPosition + Vector3.up * 10f, Vector3.down, out RaycastHit hit, 20f))
+                {
+                    return hit.point;
+                }
+            }
+            
+            // Fallback to center of camp if no clear position found
+            Vector3 fallbackPosition = new Vector3((xBounds.x + xBounds.y) / 2f, 0f, (zBounds.x + zBounds.y) / 2f);
+            Debug.LogWarning($"[PlayerInventory] No clear spawn position found after 10 attempts, using fallback: {fallbackPosition}");
+            return fallbackPosition;
+        }
+        
+        // Ultimate fallback to origin
+        Debug.LogWarning("[PlayerInventory] CampManager not found, spawning NPC at origin");
+        return Vector3.zero;
+    }
+
+    /// <summary>
+    /// Remove a recruited settler (in case of cancellation or other reasons)
+    /// </summary>
+    public void RemoveRecruitedNPC(string componentId)
+    {
+        var dataToRemove = recruitedNPCs.Find(data => data.componentId == componentId);
+        if (dataToRemove != null)
+        {
+            recruitedNPCs.Remove(dataToRemove);
+        }
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Data class to store all information about a recruited procedural settler
+/// </summary>
+[System.Serializable]
+public class RecruitedNPCData
+{
+    public Managers.SettlerData settlerData;
+    public string componentId;
+    public NPCAppearanceData appearanceData;
+    
+    public RecruitedNPCData(Managers.SettlerData settler, string id, NPCAppearanceData appearance)
+    {
+        settlerData = settler;
+        componentId = id;
+        appearanceData = appearance;
     }
 }

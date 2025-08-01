@@ -1,0 +1,97 @@
+{
+    "gridData": {
+        "occupiedSlots": []
+    },
+    "researchData": {
+        "completedResearchIds": [],
+        "availableResearchIds": [
+            "_TestResearchScriptableObj",
+            "_TestResearchScriptableObj 1"
+        ],
+        "currentlyResearchingIds": [],
+        "unlockedItemIds": []
+    },
+    "npcData": {
+        "npcs": [
+            {
+                "uuid": "1febe797-56ad-47f7-a8cf-f462d47d7519",
+                "npcId": "-665582",
+                "position": {
+                    "x": -7.3562912940979,
+                    "y": 0.08333301544189453,
+                    "z": 5.186154365539551
+                },
+                "health": 100.0,
+                "maxHealth": 100.0,
+                "stamina": 100.0,
+                "hunger": 93.90697479248047,
+                "additionalMutationSlots": 6,
+                "currentTaskType": "WANDER",
+                "equippedCharacteristicIds": [
+                    "_TestNPCCharacteristic"
+                ],
+                "inventory": [],
+                "equippedWeapon": {
+                    "weaponId": "",
+                    "weaponPrefabPath": ""
+                },
+                "npcDataObjName": "",
+                "appearanceData": {
+                    "bodyModelName": "Character_SportyMale_02",
+                    "headModelName": "",
+                    "hairModelName": "",
+                    "topClothingName": "",
+                    "bottomClothingName": "",
+                    "footwearName": "",
+                    "headAccessoryName": "",
+                    "backAccessoryName": "",
+                    "handAccessoryName": "",
+                    "skinMaterialName": "",
+                    "hairMaterialName": "",
+                    "clothingMaterialName": "PolygonBattleRoyale_01_A"
+                },
+                "settlerName": "Slade",
+                "settlerAge": 44,
+                "settlerDescription": "A former detective who has sharp investigative skills and attention to detail.",
+                "isProceduralSettler": true,
+                "narrativeFlags": [
+                    {
+                        "flagName": "test_flag",
+                        "flagValue": "test_value"
+                    }
+                ]
+            }
+        ]
+    },
+    "playerData": {
+        "inventory": [],
+        "equippedMutationIds": [],
+        "availableMutations": [],
+        "maxMutationSlots": 9,
+        "equippedWeapon": {
+            "weaponId": "",
+            "weaponPrefabPath": ""
+        },
+        "dashElement": "NONE",
+        "recruitedNPCs": []
+    },
+    "buildingData": {
+        "buildings": []
+    },
+    "managerData": {
+        "cookingData": {
+            "unlockedRecipeIds": [],
+            "availableRecipeIds": []
+        },
+        "upgradeData": {
+            "unlockedUpgradeIds": [],
+            "availableUpgradeIds": []
+        },
+        "cleanlinessData": {
+            "currentCleanliness": 0.0,
+            "dirtPilePositions": []
+        }
+    },
+    "saveVersion": "1.0",
+    "sceneName": "CampScene"
+}

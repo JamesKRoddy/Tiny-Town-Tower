@@ -20,13 +20,20 @@ public enum SceneNames
 // =========================
 
 /// <summary>
-/// Building type used in roguelike section to determine the type of building and floor to spawn
+/// Building type used in roguelike section to determine the type of building the rooms spawn in
 /// Also used by the effect system to determine which effects to play for buildings
 /// </summary>
 public enum RogueLikeBuildingType
 {
     // Category 0: None/Default
     NONE = 0,
+}
+
+public enum RogueLikeRoomType
+{
+    NONE,
+    HOSTILE,
+    FRIENDLY
 }
 
 /// <summary>
@@ -315,6 +322,18 @@ public enum CharacterType
     BOSS_1 = 401,
     BOSS_2 = 402,
     BOSS_3 = 403
+}
+
+
+
+/// <summary>
+/// Defines how an NPC should be initialized when spawned
+/// </summary>
+public enum NPCInitializationContext
+{
+    FRESH_SPAWN,      // New NPC spawned in roguelike rooms, needs full random initialization
+    RECRUITED,        // NPC recruited from roguelike, may have predetermined characteristics  
+    LOADED_FROM_SAVE  // NPC loaded from save file, should restore previous state
 }
 
 // =========================

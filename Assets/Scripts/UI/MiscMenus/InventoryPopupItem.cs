@@ -109,6 +109,10 @@ public class InventoryPopupItem : MonoBehaviour
         {
             return mutation.sprite;
         }
+        else if (item is NPCScriptableObj npc)
+        {
+            return npc.sprite;
+        }
         return null;
     }
 
@@ -125,6 +129,10 @@ public class InventoryPopupItem : MonoBehaviour
         else if (item is GeneticMutationObj mutation)
         {
             return mutation.objectName;
+        }
+        else if (item is NPCScriptableObj npc)
+        {
+            return $"{npc.nPCName} Recruited!";
         }
         return "Unknown Item";
     }

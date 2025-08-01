@@ -1,0 +1,310 @@
+{
+    "npcName": "Field Medic",
+    "startingLineId": "Start",
+    "conditionalStarts": [
+        {
+            "lineId": "AlreadyRecruited",
+            "requiredFlags": ["recruited"],
+            "priority": 100,
+            "description": "If NPC was already recruited"
+        },
+        {
+            "lineId": "RefusedBefore",
+            "requiredFlags": ["recruitment_refused"],
+            "blockedByFlags": ["recruited"],
+            "priority": 90,
+            "description": "If player refused recruitment before"
+        },
+        {
+            "lineId": "SecondMeeting",
+            "requiredFlags": ["first_meeting"],
+            "blockedByFlags": ["recruited", "recruitment_refused"],
+            "priority": 80,
+            "description": "Second time meeting, but no recruitment decision yet"
+        }
+    ],
+    "lines": [
+        {
+            "id": "Start",
+            "speaker": "Field Medic",
+            "text": "*looks up from bandaging her own arm* Oh, hello there. Just patching up a scrape from my morning supply run. Dr. Sarah Chen, though most people just call me Doc. You look like you're doing better than most survivors I encounter.",
+            "setFlags": ["first_meeting"],
+            "options": [
+                { "text": "I'm with a survivor community. We could use medical expertise.", "nextLine": "RecruitOffer" },
+                { "text": "Are you injured? Do you need help?", "nextLine": "OfferedHelp" },
+                { "text": "What brings a doctor out here alone?", "nextLine": "WhyAlone" }
+            ]
+        },
+        {
+            "id": "SecondMeeting",
+            "speaker": "Field Medic",
+            "text": "*waves from her makeshift medical station* Good to see you again! I was just organizing my supplies. Been thinking about what you said about your community. The loneliness out here is getting to me, I'll admit.",
+            "options": [
+                { "text": "The offer to join us still stands.", "nextLine": "RecruitOffer" },
+                { "text": "How are your supplies holding up?", "nextLine": "SupplyStatus" },
+                { "text": "Stay strong out here. Take care.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "RefusedBefore",
+            "speaker": "Field Medic",
+            "text": "*continues sorting medical supplies* I understand your position. Not everyone needs a medic, especially one who comes with her own set of problems. I've made it this far on my own.",
+            "options": [
+                { "text": "Actually, I've reconsidered. We do need someone like you.", "nextLine": "RecruitOffer" },
+                { "text": "What kind of problems?", "nextLine": "PersonalProblems" },
+                { "text": "You're doing important work out here.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "AlreadyRecruited",
+            "speaker": "Field Medic",
+            "text": "*smiles warmly while cleaning medical instruments* It's so good to have proper facilities again! I've been able to treat people properly instead of just battlefield medicine. How is everyone back at camp?",
+            "options": [
+                { "text": "Everyone's healthy thanks to you. Ready to head back?", "nextLine": "End" },
+                { "text": "Tell me about the improvements you've made.", "nextLine": "MedicalImprovements" }
+            ]
+        },
+        {
+            "id": "OfferedHelp",
+            "speaker": "Field Medic",
+            "text": "*smiles gratefully* Thank you, but it's just a superficial cut. I've learned to be very careful out here. Still, it's rare to meet someone who offers help before asking for it. That says good things about you.",
+            "options": [
+                { "text": "We believe in looking out for each other. Want to join our community?", "nextLine": "RecruitOffer" },
+                { "text": "How do you manage medical care alone out here?", "nextLine": "SoloMedicine" },
+                { "text": "Just trying to do the right thing.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "WhyAlone",
+            "speaker": "Field Medic",
+            "text": "*expression becomes somber* I was part of a medical team at a refugee camp. When it got overrun, I barely escaped. Been trying to help other survivors ever since, but groups tend to... not work out for me.",
+            "options": [
+                { "text": "That sounds traumatic. You don't have to be alone anymore.", "nextLine": "RecruitOffer" },
+                { "text": "What happened to make groups not work out?", "nextLine": "GroupProblems" },
+                { "text": "I'm sorry for your loss. You're doing important work.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "SupplyStatus",
+            "speaker": "Field Medic",
+            "text": "*gestures to organized medical kit* Actually doing well. I know where to find medical supplies and how to make basic antibiotics from mold cultures. But it's the surgical procedures that worry me - no backup if something goes wrong.",
+            "options": [
+                { "text": "You'd have backup and proper facilities with us.", "nextLine": "RecruitOffer" },
+                { "text": "You can make antibiotics? How?", "nextLine": "AntibioticMaking" },
+                { "text": "That's impressive resourcefulness.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "RecruitOffer",
+            "speaker": "Field Medic",
+            "text": "*sets down her medical supplies and looks thoughtful* A real community with people who need medical care... That's what I became a doctor for. But I should be honest - I have PTSD episodes, especially around large groups. Would that be a problem?",
+            "options": [
+                { "text": "We'll work with you. Everyone has their struggles.", "nextLine": "AcceptRecruitment", "recruitNPC": "Dr. Sarah Chen" },
+                { "text": "What kind of episodes? How can we help?", "nextLine": "PTSDSupport" },
+                { "text": "That might be difficult for a community setting.", "nextLine": "RecruitRefusal", "setFlags": ["recruitment_refused"] }
+            ]
+        },
+        {
+            "id": "AcceptRecruitment",
+            "speaker": "Field Medic",
+            "text": "*tears up slightly* Thank you. I... I wasn't sure anyone would understand. I'm Dr. Sarah Chen, and I promise I'll do everything I can to keep your people healthy and safe. Just... be patient with me sometimes.",
+            "setFlags": ["recruited"],
+            "options": [
+                { "text": "Welcome to the family, Sarah. Let's go home.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "RecruitRefusal",
+            "speaker": "Field Medic",
+            "text": "*nods sadly but understandingly* I figured as much. Mental health issues are a luxury most communities can't afford to deal with. I understand. I'll keep helping people out here as best I can.",
+            "setFlags": ["recruitment_refused"],
+            "options": [
+                { "text": "I hope you find the right community someday.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "PersonalProblems",
+            "speaker": "Field Medic",
+            "text": "*looks down at her hands* PTSD from the medical camp attack. Sometimes I freeze up during emergencies, or panic when there are too many people around. Not exactly ideal traits for a community doctor.",
+            "options": [
+                { "text": "Those are understandable reactions to trauma. We'd support you.", "nextLine": "RecruitOffer" },
+                { "text": "How do you cope with it day to day?", "nextLine": "CopingMethods" },
+                { "text": "That must be very difficult to manage.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "SoloMedicine",
+            "speaker": "Field Medic",
+            "text": "*shows her well-organized kit* Lots of preparation and conservative treatment. I avoid risky procedures and focus on stabilization until I can get people to better facilities. It's not ideal, but it keeps people alive.",
+            "options": [
+                { "text": "Imagine what you could do with proper facilities and backup.", "nextLine": "RecruitOffer" },
+                { "text": "What's the most difficult case you've handled alone?", "nextLine": "DifficultCase" },
+                { "text": "That's solid medical practice.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "GroupProblems",
+            "speaker": "Field Medic",
+            "text": "*sighs heavily* Either they wanted me to do procedures I wasn't comfortable with, or they couldn't handle my PTSD episodes. Some groups just see doctors as magic healers who never break down.",
+            "options": [
+                { "text": "We understand that doctors are human too.", "nextLine": "RecruitOffer" },
+                { "text": "What kind of procedures were you uncomfortable with?", "nextLine": "UncomfortableProcedures" },
+                { "text": "That sounds like poor leadership on their part.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "AntibioticMaking",
+            "speaker": "Field Medic",
+            "text": "*brightens up* Penicillin cultivation from bread mold! It's basic but effective. I also make antiseptic from high-proof alcohol and know dozens of herbal remedies. Pre-apocalypse medical training plus survival necessity.",
+            "options": [
+                { "text": "That knowledge would be invaluable to our community.", "nextLine": "RecruitOffer" },
+                { "text": "Could you teach others these techniques?", "nextLine": "TeachingMedicine" },
+                { "text": "That's incredibly resourceful.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "PTSDSupport",
+            "speaker": "Field Medic",
+            "text": "*speaks carefully* Panic attacks mostly, especially in crowded spaces or during high-stress medical emergencies. I've developed coping strategies, but sometimes I just need space to breathe and reset.",
+            "options": [
+                { "text": "We can accommodate that. Mental health is health too.", "nextLine": "AcceptRecruitment", "recruitNPC": "Dr. Sarah Chen" },
+                { "text": "What coping strategies work best for you?", "nextLine": "CopingStrategies" },
+                { "text": "How often do these episodes occur?", "nextLine": "EpisodeFrequency" }
+            ]
+        },
+        {
+            "id": "MedicalImprovements",
+            "speaker": "Field Medic",
+            "text": "*gestures excitedly* I've set up a proper sterile surgery area, organized a medicine inventory system, and started training others in basic first aid. Having resources and help makes such a difference!",
+            "options": [
+                { "text": "Sounds like you've been busy. Great work!", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "CopingMethods",
+            "speaker": "Field Medic",
+            "text": "*counts on fingers* Breathing exercises, grounding techniques, keeping a routine, and honestly? Focusing on helping others. When I'm treating someone, the training kicks in and overrides the anxiety... usually.",
+            "options": [
+                { "text": "Using your skills to heal yourself too. That's wise.", "nextLine": "RecruitOffer" },
+                { "text": "What happens when the training doesn't override it?", "nextLine": "TrainingFailure" },
+                { "text": "That's a healthy approach to trauma.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "DifficultCase",
+            "speaker": "Field Medic",
+            "text": "*face becomes serious* Appendectomy in a makeshift shelter during a storm. No proper anesthesia, limited light, and zombie noises outside. Patient survived, but I was shaking for hours afterward.",
+            "options": [
+                { "text": "That's incredible skill under pressure. We need someone like you.", "nextLine": "RecruitOffer" },
+                { "text": "How did you manage without proper anesthesia?", "nextLine": "AnesthesiaAlternatives" },
+                { "text": "That must have been terrifying for both of you.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "UncomfortableProcedures",
+            "speaker": "Field Medic",
+            "text": "*voice becomes firm* Unnecessary amputations, experimental drug trials on people, or treating injuries that were clearly from abuse within the group. I took an oath to 'do no harm,' and some leaders don't respect that.",
+            "options": [
+                { "text": "Your medical ethics are exactly what we need.", "nextLine": "RecruitOffer" },
+                { "text": "How do you handle conflicts over medical decisions?", "nextLine": "MedicalConflicts" },
+                { "text": "Standing up for ethics takes courage.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "TeachingMedicine",
+            "speaker": "Field Medic",
+            "text": "*nods enthusiastically* Absolutely! Everyone should know basic first aid, wound care, and how to recognize common illnesses. The more people who can help, the better healthcare everyone gets.",
+            "options": [
+                { "text": "Perfect! We'd love to have you train our people.", "nextLine": "RecruitOffer" },
+                { "text": "What's the most important skill to teach first?", "nextLine": "FirstAidPriority" },
+                { "text": "That's a great philosophy.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "CopingStrategies",
+            "speaker": "Field Medic",
+            "text": "*ticks off on fingers* Deep breathing, counting exercises, having a safe space to retreat to, and warning people beforehand so they know what's happening if I need to step away.",
+            "options": [
+                { "text": "Those sound very manageable. Welcome to our community!", "nextLine": "AcceptRecruitment", "recruitNPC": "Dr. Sarah Chen" },
+                { "text": "How long do you usually need to recover?", "nextLine": "RecoveryTime" },
+                { "text": "You've developed good self-awareness.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "EpisodeFrequency",
+            "speaker": "Field Medic",
+            "text": "*considers carefully* Maybe once or twice a week at worst, and they're getting less frequent as I heal. Stress and large crowds are the main triggers, but I can usually feel them coming and prepare.",
+            "options": [
+                { "text": "That's very manageable. We'd be honored to have you.", "nextLine": "AcceptRecruitment", "recruitNPC": "Dr. Sarah Chen" },
+                { "text": "What helps you prepare when you feel one coming?", "nextLine": "PreparationTechniques" },
+                { "text": "It sounds like you're recovering well.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "TrainingFailure",
+            "speaker": "Field Medic",
+            "text": "*looks vulnerable* Then I have to step back and let someone else take over, or do what I can while managing a panic attack. It's... not ideal for patient confidence, but it's better than making mistakes.",
+            "options": [
+                { "text": "Knowing your limits is actually excellent medical practice.", "nextLine": "RecruitOffer" },
+                { "text": "Has a patient ever been harmed because of an episode?", "nextLine": "PatientSafety" },
+                { "text": "Self-awareness prevents larger problems.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "AnesthesiaAlternatives",
+            "speaker": "Field Medic",
+            "text": "*counts options* Pressure points, ice for numbing, alcohol when available, and a lot of talking to keep the patient calm and distracted. Plus working as fast as possible without sacrificing precision.",
+            "options": [
+                { "text": "That's impressive adaptation. You'd be amazing with proper resources.", "nextLine": "RecruitOffer" },
+                { "text": "How do you practice surgical skills without patients?", "nextLine": "SurgicalPractice" },
+                { "text": "Old-school medical techniques.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "MedicalConflicts",
+            "speaker": "Field Medic",
+            "text": "*straightens up* I explain the medical reasoning clearly, offer alternatives, and if they still insist on something harmful, I refuse and document everything. Patient safety always comes first.",
+            "options": [
+                { "text": "That integrity is exactly what our community needs.", "nextLine": "RecruitOffer" },
+                { "text": "Has that stance ever put you in danger?", "nextLine": "DangerousRefusal" },
+                { "text": "Strong medical ethics are rare these days.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "FirstAidPriority",
+            "speaker": "Field Medic",
+            "text": "*becomes instructional* Wound cleaning and bandaging. Most deaths in the field are from infection, not the initial injury. Teach people to clean wounds properly and they save more lives than any fancy procedure.",
+            "options": [
+                { "text": "Basic but vital knowledge. We need that taught to everyone.", "nextLine": "RecruitOffer" },
+                { "text": "What about more advanced techniques?", "nextLine": "AdvancedTechniques" },
+                { "text": "Prevention is better than cure.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "RecoveryTime",
+            "speaker": "Field Medic",
+            "text": "*thinks carefully* Usually 10-15 minutes to get my breathing under control, maybe an hour to feel completely steady again. I've gotten much better at managing them over time.",
+            "options": [
+                { "text": "That's very reasonable. Welcome aboard!", "nextLine": "AcceptRecruitment", "recruitNPC": "Dr. Sarah Chen" },
+                { "text": "What's helped you improve the most?", "nextLine": "ImprovementFactors" },
+                { "text": "Good progress on your recovery.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "PatientSafety",
+            "speaker": "Field Medic",
+            "text": "*shakes head firmly* Never. If I can't function safely, I don't treat. I'll stabilize and refer, or hand off to someone else if available. Patient safety is non-negotiable.",
+            "options": [
+                { "text": "That professional standard is exactly what we want.", "nextLine": "RecruitOffer" },
+                { "text": "How do you handle emergency situations when you're alone?", "nextLine": "EmergencyManagement" },
+                { "text": "Excellent medical judgment.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "End",
+            "speaker": "",
+            "text": "",
+            "options": []
+        }
+    ]
+}

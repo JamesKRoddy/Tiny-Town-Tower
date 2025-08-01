@@ -107,6 +107,28 @@ public interface IPlaceableStructure
     void RestoreFromSaveData(object saveData);
 }
 
+/// <summary>
+/// Interface for NPCs that can engage in conversations
+/// Provides methods to pause and resume AI behavior during dialogue
+/// </summary>
+public interface INarrativeTarget
+{
+    /// <summary>
+    /// Pauses the NPC's AI and movement during conversations
+    /// </summary>
+    void PauseForConversation();
+    
+    /// <summary>
+    /// Resumes the NPC's AI and movement after conversations
+    /// </summary>
+    void ResumeAfterConversation();
+    
+    /// <summary>
+    /// Gets the Transform of this conversation target for positioning and interaction detection
+    /// </summary>
+    Transform GetTransform();
+}
+
 
 /*
  * Known bugs:

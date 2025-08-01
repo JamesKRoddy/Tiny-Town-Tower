@@ -31,11 +31,17 @@ public class RogueLiteRoomParent : MonoBehaviour
     [SerializeField] private float arrowHeadAngle = 20f;
     [SerializeField] private Color arrowColor = Color.cyan;
 
+    [Header("Room Type")]
+    [SerializeField, ReadOnly] private RogueLikeRoomType roomType = RogueLikeRoomType.HOSTILE;
+
     private Transform playerSpawnPoint;
     private List<GameObject> roomPrefabs;
     private NavMeshSurface navMeshSurface;
     private Dictionary<Vector3, GameObject> spawnedRooms = new Dictionary<Vector3, GameObject>();
     private Dictionary<int, PlacedRoomData> placedRoomsBySpawnIndex = new Dictionary<int, PlacedRoomData>();
+    
+    // Property to get the room type
+    public RogueLikeRoomType RoomType => roomType;
     
     [System.Serializable]
     private class PlacedRoomData
@@ -81,7 +87,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
     }
 
-    public void GenerateRandomRooms(BuildingDataScriptableObj buildingScriptableObj)
+    public void GenerateRandomRooms(RogueLikeBuildingDataScriptableObj buildingScriptableObj)
     {
         if (buildingScriptableObj == null)
         {
@@ -104,6 +110,9 @@ public class RogueLiteRoomParent : MonoBehaviour
 
         SetupDoors();
         SetupChests();
+        
+        // Check if this is a friendly room and trigger door unlock if needed
+        CheckAndHandleFriendlyRoomDoors();
 
         if (navMeshSurface == null)
         {
@@ -229,7 +238,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// Intelligently place rooms based on size, starting with large rooms at key positions
     /// GUARANTEES that every spawn point gets a room
     /// </summary>
-    private void HierarchicalRoomPlacement(BuildingDataScriptableObj buildingScriptableObj, int currentDifficulty)
+    private void HierarchicalRoomPlacement(RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty)
     {
         if (roomTransforms == null || roomTransforms.Length == 0)
         {
@@ -317,8 +326,6 @@ public class RogueLiteRoomParent : MonoBehaviour
             }
         }
 
-        Debug.Log($"[HierarchicalPlacement] Completed room placement. Total rooms placed: {placedRoomsBySpawnIndex.Count}/{roomTransforms.Length}");
-        
         // Verify all spawn points have rooms
         if (placedRoomsBySpawnIndex.Count != roomTransforms.Length)
         {
@@ -333,17 +340,13 @@ public class RogueLiteRoomParent : MonoBehaviour
                 }
             }
         }
-        else
-        {
-            Debug.Log($"[HierarchicalPlacement] SUCCESS: All spawn points have rooms!");
-        }
     }
 
     /// <summary>
     /// Intelligently place rooms using constraint satisfaction with room swapping
     /// Tries to resolve conflicts by swapping blocking rooms with smaller alternatives
     /// </summary>
-    private bool GuaranteedRoomPlacement(Transform targetTransform, GameObject preferredRoomPrefab, BuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName)
+    private bool GuaranteedRoomPlacement(Transform targetTransform, GameObject preferredRoomPrefab, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName)
     {
         int spawnIndex = GetSpawnIndex(targetTransform);
         if (spawnIndex == -1)
@@ -358,7 +361,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// <summary>
     /// Smart room placement with conflict resolution through room swapping and minimum overlap selection
     /// </summary>
-    private bool SmartRoomPlacement(int spawnIndex, GameObject preferredRoomPrefab, BuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName, int retryCount)
+    private bool SmartRoomPlacement(int spawnIndex, GameObject preferredRoomPrefab, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName, int retryCount)
     {
         if (retryCount >= maxSwapRetries)
         {
@@ -425,7 +428,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// <summary>
     /// Try to place a room with intelligent conflict resolution through room swapping
     /// </summary>
-    private bool TryPlaceWithConflictResolution(int spawnIndex, GameObject roomPrefab, RogueLikeRoomSize roomSize, BuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName, int retryCount)
+    private bool TryPlaceWithConflictResolution(int spawnIndex, GameObject roomPrefab, RogueLikeRoomSize roomSize, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName, int retryCount)
     {
         Transform targetTransform = roomTransforms[spawnIndex];
         
@@ -477,7 +480,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// Smart room placement that finds the room with minimum overlap
     /// Priority: 1) Rooms within tolerance, 2) Room with smallest overlap, 3) Force placement
     /// </summary>
-    private bool ForcePlaceAnyRoom(int spawnIndex, BuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName)
+    private bool ForcePlaceAnyRoom(int spawnIndex, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName)
     {
         Transform targetTransform = roomTransforms[spawnIndex];
         
@@ -528,7 +531,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// <summary>
     /// Find the room size that produces the minimum overlap at a given spawn point
     /// </summary>
-    private GameObject FindRoomWithMinimumOverlap(int spawnIndex, BuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, out RogueLikeRoomSize bestSize, out float minOverlap)
+    private GameObject FindRoomWithMinimumOverlap(int spawnIndex, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, out RogueLikeRoomSize bestSize, out float minOverlap)
     {
         Transform targetTransform = roomTransforms[spawnIndex];
         
@@ -638,7 +641,45 @@ public class RogueLiteRoomParent : MonoBehaviour
         roomComponent.Setup();
         RandomizePropsInSection(room.transform);
         
+        // Update the parent's room type based on placed rooms
+        UpdateParentRoomType();
+        
         return true;
+    }
+    
+    /// <summary>
+    /// Update the parent's room type based on the placed rooms
+    /// If any single room is friendly, the entire parent becomes friendly
+    /// </summary>
+    private void UpdateParentRoomType()
+    {
+        bool hasFriendlyRoom = false;
+        
+        foreach (var kvp in placedRoomsBySpawnIndex)
+        {
+            var roomData = kvp.Value;
+            if (roomData.roomObject != null)
+            {
+                RogueLiteRoom roomComponent = roomData.roomObject.GetComponent<RogueLiteRoom>();
+                if (roomComponent != null)
+                {
+                    if (roomComponent.RoomType == RogueLikeRoomType.FRIENDLY)
+                    {
+                        hasFriendlyRoom = true;
+                    }
+                }
+            }
+        }
+        
+        // If any room is friendly, set the parent to friendly
+        if (hasFriendlyRoom)
+        {
+            roomType = RogueLikeRoomType.FRIENDLY;
+        }
+        else
+        {
+            roomType = RogueLikeRoomType.HOSTILE;
+        }
     }
 
     /// <summary>
@@ -684,7 +725,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// <summary>
     /// Attempt to swap a room at the given spawn index with a smaller alternative
     /// </summary>
-    private bool AttemptRoomSwap(int spawnIndex, BuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, int retryCount)
+    private bool AttemptRoomSwap(int spawnIndex, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, int retryCount)
     {
         if (!placedRoomsBySpawnIndex.ContainsKey(spawnIndex))
         {
@@ -798,49 +839,53 @@ public class RogueLiteRoomParent : MonoBehaviour
 
     private void SetupDoors()
     {
-        List<RogueLikeRoomDoor> doors = new List<RogueLikeRoomDoor>(transform.GetComponentsInChildren<RogueLikeRoomDoor>());
+        List<RogueLikeRoomDoor> allDoors = new List<RogueLikeRoomDoor>(transform.GetComponentsInChildren<RogueLikeRoomDoor>());
 
-        if (doors == null || doors.Count == 0)
+        if (allDoors.Count == 0)
         {
-            Debug.LogWarning("No doors found in the scene.");
+            Debug.LogWarning("[RogueLiteRoomParent] No doors found to setup!");
             return;
         }
 
-        // Assign a random door as the entrance
-        int entranceIndex = Random.Range(0, doors.Count);
-        playerSpawnPoint = doors[entranceIndex].playerSpawn;
-        doors[entranceIndex].doorType = DoorStatus.EXIT;
+        // Assign a random door as the EXIT (entrance from previous room)
+        int exitIndex = Random.Range(0, allDoors.Count);
+        playerSpawnPoint = allDoors[exitIndex].playerSpawn;
+        allDoors[exitIndex].doorType = DoorStatus.EXIT;
 
-        // Store the exit door for connecting to the previous room
-        RogueLikeRoomDoor exitDoor = doors[entranceIndex];
-        doors.RemoveAt(entranceIndex);
+        // Store the exit door for potential connections
+        RogueLikeRoomDoor exitDoor = allDoors[exitIndex];
+        allDoors.RemoveAt(exitIndex);
 
-        int exitCount = Mathf.Clamp(Random.Range(1, 4), 1, doors.Count);
+        // Select 1-3 doors to be ENTRANCE doors (from remaining doors)
+        int entranceDoorsCount = Mathf.Clamp(Random.Range(1, 4), 1, allDoors.Count);
 
-        for (int i = 0; i < exitCount; i++)
+        for (int i = 0; i < entranceDoorsCount; i++)
         {
-            int randomIndex = Random.Range(0, doors.Count);
-            doors[randomIndex].doorType = DoorStatus.ENTRANCE;
+            int randomIndex = Random.Range(0, allDoors.Count);
+            allDoors[randomIndex].doorType = DoorStatus.ENTRANCE;
             
-            // Connect this entrance door to the previous room's exit door
+            // Connect this entrance door to the exit door
             if (exitDoor != null)
             {
                 // Forward connection: entrance door -> previous room
-                doors[randomIndex].targetRoom = exitDoor.GetComponentInParent<RogueLiteRoomParent>();
-                doors[randomIndex].targetSpawnPoint = exitDoor.playerSpawn;
+                allDoors[randomIndex].targetRoom = exitDoor.GetComponentInParent<RogueLiteRoomParent>();
+                allDoors[randomIndex].targetSpawnPoint = exitDoor.playerSpawn;
 
                 // Backward connection: exit door -> this room
                 exitDoor.targetRoom = this;
-                exitDoor.targetSpawnPoint = doors[randomIndex].playerSpawn;
+                exitDoor.targetSpawnPoint = allDoors[randomIndex].playerSpawn;
             }
 
-            doors.RemoveAt(randomIndex);
+            allDoors.RemoveAt(randomIndex);
         }
 
-        foreach (var door in doors)
+        // Set remaining doors as LOCKED and optionally deactivate them
+        foreach (var door in allDoors)
         {
             door.doorType = DoorStatus.LOCKED;
-            if (Random.value < 0.75f)
+            
+            // 75% chance to deactivate locked doors
+            if (Random.Range(0f, 1f) < 0.75f)
             {
                 door.gameObject.SetActive(false);
             }
@@ -883,6 +928,45 @@ public class RogueLiteRoomParent : MonoBehaviour
     public List<EnemySpawnPoint> GetEnemySpawnPoints()
     {
         return new List<EnemySpawnPoint>(transform.GetComponentsInChildren<EnemySpawnPoint>());
+    }
+    
+    /// <summary>
+    /// Get a summary of room types in this parent for debugging
+    /// </summary>
+    public string GetRoomTypeSummary()
+    {
+        int friendlyCount = 0;
+        int hostileCount = 0;
+        
+        foreach (var kvp in placedRoomsBySpawnIndex)
+        {
+            var roomData = kvp.Value;
+            if (roomData.roomObject != null)
+            {
+                RogueLiteRoom roomComponent = roomData.roomObject.GetComponent<RogueLiteRoom>();
+                if (roomComponent != null)
+                {
+                    if (roomComponent.RoomType == RogueLikeRoomType.FRIENDLY)
+                        friendlyCount++;
+                    else if (roomComponent.RoomType == RogueLikeRoomType.HOSTILE)
+                        hostileCount++;
+                }
+            }
+        }
+        
+        return $"Parent Type: {roomType}, Rooms: {friendlyCount} friendly, {hostileCount} hostile";
+    }
+    
+    /// <summary>
+    /// Check if this is a friendly room and handle door unlocking if enemy spawning was skipped
+    /// </summary>
+    private void CheckAndHandleFriendlyRoomDoors()
+    {
+        if (roomType == RogueLikeRoomType.FRIENDLY)
+        {
+            // The EnemySpawnManager will handle setting ALL_WAVES_CLEARED for friendly rooms
+            // No backup mechanism needed - let the normal flow handle it
+        }
     }
 
     private void OnDrawGizmos()

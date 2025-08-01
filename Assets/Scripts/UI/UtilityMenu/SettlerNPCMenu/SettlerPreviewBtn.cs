@@ -30,8 +30,8 @@ public class SettlerPreviewBtn : PreviewButtonBase<HumanCharacterController>
         }
         else if (character is SettlerNPC settler)
         {
-            nameText.text = settler.nPCDataObj.nPCName;
-            base.SetupButton(settler, null, settler.nPCDataObj.nPCName);
+            nameText.text = settler.SettlerName;
+            base.SetupButton(settler, null, settler.SettlerName);
         }
     }
 }

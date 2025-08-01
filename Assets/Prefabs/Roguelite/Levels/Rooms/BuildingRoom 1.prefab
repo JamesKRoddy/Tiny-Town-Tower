@@ -109,7 +109,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 33782479450088449}
-  - component: {fileID: 7363324031835360350}
+  - component: {fileID: 7936936672624895372}
   m_Layer: 6
   m_Name: BuildingRoom 1
   m_TagString: Untagged
@@ -134,7 +134,7 @@ Transform:
   - {fileID: 5839153704661990959}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7363324031835360350
+--- !u!114 &7936936672624895372
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -143,19 +143,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 5318116250113263644}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 873657320dd72ff45819917f54dc23ce, type: 3}
+  m_Script: {fileID: 11500000, guid: 8c4b2e1f9d7a4e23b1f6c9e8a5d3f7b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   doors: []
   chests: []
   roomBounds:
-    m_Center: {x: 124.750015, y: 1.125, z: 10.00051}
-    m_Extent: {x: 1.25, y: 2.125, z: 1.1255102}
+    m_Center: {x: 0, y: 0, z: 0}
+    m_Extent: {x: 0, y: 0, z: 0}
   autoCalculateBounds: 1
   boundsPadding: 2
   showRoomBounds: 1
   connectionTolerance: 15
   showConnectionDebug: 0
+  enemySpawnPoints: []
+  showEnemySpawnGizmos: 1
 --- !u!1 &5466462518210956541
 GameObject:
   m_ObjectHideFlags: 0

@@ -31,7 +31,7 @@ namespace Managers
         [SerializeField] private int rareRarityThreshold = 40;
         [SerializeField] private int epicRarityThreshold = 60;
 
-        private int currentBuildingDifficulty;
+        private int currentRogueLikeBuildingDifficulty;
         private int currentRoomNumber;
         private int currentRoomDifficulty;
 
@@ -50,15 +50,15 @@ namespace Managers
         /// <summary>
         /// Initialize difficulty for a new building
         /// </summary>
-        /// <param name="buildingType">Type of building being entered</param>
-        /// <param name="buildingBaseDifficulty">Base difficulty of the building (from BuildingDataScriptableObj)</param>
-        public void InitializeBuildingDifficulty(RogueLikeBuildingType buildingType, int buildingBaseDifficulty)
+        /// <param name="rogueLikeBuildingType">Type of building being entered</param>
+        /// <param name="rogueLikeBuildingBaseDifficulty">Base difficulty of the building (from BuildingDataScriptableObj)</param>
+        public void InitializeBuildingDifficulty(RogueLikeBuildingType rogueLikeBuildingType, int rogueLikeBuildingBaseDifficulty)
         {
-            currentBuildingDifficulty = buildingBaseDifficulty;
+            currentRogueLikeBuildingDifficulty = rogueLikeBuildingBaseDifficulty;
             currentRoomNumber = 0;
             currentRoomDifficulty = 0;
             
-            Debug.Log($"<color=cyan>DifficultyManager: Initialized building {buildingType} with base difficulty {buildingBaseDifficulty}</color>");
+            Debug.Log($"<color=cyan>DifficultyManager: Initialized building {rogueLikeBuildingType} with base difficulty {rogueLikeBuildingBaseDifficulty}</color>");
         }
 
         /// <summary>
@@ -68,7 +68,7 @@ namespace Managers
         /// <returns>Calculated room difficulty</returns>
         public int CalculateRoomDifficulty(int roomNumber)
         {
-            int roomDifficulty = Mathf.RoundToInt(currentBuildingDifficulty * 0.5f + (roomNumber * difficultyScalingPerRoom));
+            int roomDifficulty = Mathf.RoundToInt(currentRogueLikeBuildingDifficulty * 0.5f + (roomNumber * difficultyScalingPerRoom));
             return Mathf.Clamp(roomDifficulty, 1, maxDifficulty);
         }
 
@@ -101,7 +101,7 @@ namespace Managers
         /// <returns>Calculated difficulty for enemy waves</returns>
         public int GetCurrentWaveDifficulty()
         {
-            int waveDifficulty = currentBuildingDifficulty + 
+            int waveDifficulty = currentRogueLikeBuildingDifficulty + 
                                Mathf.RoundToInt(currentRoomNumber * difficultyScalingPerRoom) + 
                                currentRoomDifficulty;
             
@@ -119,9 +119,9 @@ namespace Managers
         /// <summary>
         /// Get the current building difficulty
         /// </summary>
-        public int GetCurrentBuildingDifficulty()
+        public int GetCurrentRogueLikeBuildingDifficulty()
         {
-            return currentBuildingDifficulty;
+            return currentRogueLikeBuildingDifficulty;
         }
 
         /// <summary>
@@ -156,7 +156,7 @@ namespace Managers
         /// </summary>
         public void ResetDifficulty()
         {
-            currentBuildingDifficulty = 0;
+            currentRogueLikeBuildingDifficulty = 0;
             currentRoomNumber = 0;
             currentRoomDifficulty = 0;
             
@@ -168,7 +168,7 @@ namespace Managers
         /// </summary>
         public string GetDifficultyInfo()
         {
-            return $"Building: {currentBuildingDifficulty}, Room: {currentRoomNumber}, Room Mod: {currentRoomDifficulty}, Wave: {GetCurrentWaveDifficulty()}";
+            return $"Building: {currentRogueLikeBuildingDifficulty}, Room: {currentRoomNumber}, Room Mod: {currentRoomDifficulty}, Wave: {GetCurrentWaveDifficulty()}";
         }
     }
 } 

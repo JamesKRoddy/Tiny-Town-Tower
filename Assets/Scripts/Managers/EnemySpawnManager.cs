@@ -70,6 +70,18 @@ namespace Managers
 
             if(GameManager.Instance.CurrentGameMode == GameMode.ROGUE_LITE)
             {
+                // Check if the current room parent is friendly - if so, skip enemy spawning
+                if (RogueLiteManager.Instance.BuildingManager.CurrentRoomParentComponent != null)
+                {
+                    var roomParentComponent = RogueLiteManager.Instance.BuildingManager.CurrentRoomParentComponent;
+                    
+                    if (roomParentComponent != null && roomParentComponent.RoomType == RogueLikeRoomType.FRIENDLY)
+                    {
+                        RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                        return;
+                    }
+                }
+                
                 spawnPoints = new List<EnemySpawnPoint>(RogueLiteManager.Instance.BuildingManager.CurrentRoomParent.GetComponent<RogueLiteRoomParent>().GetEnemySpawnPoints());
 
             } else if(GameManager.Instance.CurrentGameMode == GameMode.CAMP_ATTACK)
@@ -216,22 +228,6 @@ namespace Managers
                 {
                 StartNextWave();
                 }
-            }
-        }
-
-        /// <summary>
-        /// Used by the PlacementManager to make sure a turret is not blocking the enemy path
-        /// </summary>
-        public Vector3? SpawnPointPosition()
-        {
-            if (spawnPoints.Count != 0)
-            {
-                return spawnPoints[0].transform.position;
-            }
-            else
-            {
-                spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
-                return spawnPoints[0].transform.position;
             }
         }
     }

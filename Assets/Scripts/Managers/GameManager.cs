@@ -108,7 +108,7 @@ namespace Managers
                 case SceneNames.OverworldScene:
                     return RogueLiteManager.Instance.OverworldManager.GetOverWorldSpawnPoint();
                 case SceneNames.RogueLikeScene:
-                    return RogueLiteManager.Instance.BuildingManager.BuildingSpawn.position;
+                    return RogueLiteManager.Instance.BuildingManager.RogueLikeBuildingSpawn.position;
                 default:
                     return Vector3.zero;
             }

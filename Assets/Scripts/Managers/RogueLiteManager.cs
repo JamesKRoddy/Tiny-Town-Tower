@@ -7,12 +7,12 @@ namespace Managers
     public class RogueLiteManager : GameModeManager<RogueLikeEnemyWaveConfig>
     {
         [Header("RogueLite Manager References")]
-        [SerializeField] private BuildingManager buildingManager;
+        [SerializeField] private RogueLikeBuildingManager buildingManager;
         [SerializeField] private OverworldManager overworldManager;
         
         private int currentEnemyCount;
 
-        public BuildingManager BuildingManager => buildingManager;
+        public RogueLikeBuildingManager BuildingManager => buildingManager;
         public OverworldManager OverworldManager => overworldManager;
 
         private EnemySetupState currentEnemySetupState;
@@ -72,7 +72,6 @@ namespace Managers
 
         protected override void EnemySetupStateChanged(EnemySetupState newState)
         {
-            Debug.Log($"<color=magenta>EnemySetupStateChanged: {newState}</color>");
             currentEnemySetupState = newState;
 
             switch (newState)
@@ -203,17 +202,18 @@ namespace Managers
             // Wait before enemies are spawned
             yield return new WaitForSeconds(1.0f);            
 
-            // 6. Spawn enemies
-            SetEnemySetupState(EnemySetupState.ENEMY_SPAWN_START);
-                        
-            // If we're in ALL_WAVES_CLEARED state, theres no spawn points
-            if (currentEnemySetupState == EnemySetupState.ALL_WAVES_CLEARED)
+            // 6. Check if this is a friendly room - if so, skip enemy spawning entirely
+            if (buildingManager.CurrentRoomParentComponent.RoomType == RogueLikeRoomType.FRIENDLY)
             {
+                SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                 transitionCoroutine = null;
                 yield break;
             }
 
-            // 7. Finish spawning enemies
+            // 7. Spawn enemies (only for hostile rooms)
+            SetEnemySetupState(EnemySetupState.ENEMY_SPAWN_START);
+
+            // 8. Finish spawning enemies
             SetEnemySetupState(EnemySetupState.ENEMIES_SPAWNED);
 
             transitionCoroutine = null;

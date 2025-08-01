@@ -16,8 +16,7 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
         }
 
         // Then get all settler NPCs
-        var npcs = FindObjectsByType<SettlerNPC>(FindObjectsSortMode.None)
-            .Where(npc => npc.nPCDataObj != null);
+        var npcs = FindObjectsByType<SettlerNPC>(FindObjectsSortMode.None);
 
         foreach (var npc in npcs)
             {
@@ -52,7 +51,7 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
         }
         else if (item is SettlerNPC settler)
     {
-            return settler.nPCDataObj.nPCName;
+            return settler.SettlerName;
         }
         return string.Empty;
     }
@@ -70,7 +69,7 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
         }
         else if (item is SettlerNPC settler)
         {
-            string baseDescription = settler.nPCDataObj.nPCDescription;
+            string baseDescription = settler.SettlerDescription;
             
             // Add characteristics descriptions if any exist
             if (settler.characteristicSystem != null && settler.characteristicSystem.EquippedCharacteristics.Count > 0)

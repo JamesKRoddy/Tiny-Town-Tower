@@ -1,0 +1,161 @@
+{
+    "npcName": "Generic Settler",
+    "startingLineId": "Start",
+    "conditionalStarts": [
+        {
+            "lineId": "PostRecruitment",
+            "requiredFlags": ["recruited"],
+            "priority": 100,
+            "description": "After recruitment - this specific NPC was recruited"
+        },
+        {
+            "lineId": "RefusedBefore", 
+            "requiredFlags": ["recruitment_refused"],
+            "blockedByFlags": ["recruited"],
+            "priority": 90,
+            "description": "Player refused this specific NPC before"
+        },
+        {
+            "lineId": "SecondEncounter",
+            "requiredFlags": ["first_meeting"],
+            "blockedByFlags": ["recruited", "recruitment_refused"], 
+            "priority": 80,
+            "description": "Met this specific NPC before but no decision made"
+        }
+    ],
+    "lines": [
+        {
+            "id": "Start",
+            "speaker": "Generic Settler",
+            "text": "Hello! I'm a survivor looking for a safe place. Are you from a settlement nearby?",
+            "setFlags": ["first_meeting"],
+            "options": [
+                { "text": "Yes, would you like to join our camp?", "nextLine": "RecruitmentOffer" },
+                { "text": "We can't take anyone new right now.", "nextLine": "Rejection", "setFlags": ["recruitment_refused"] },
+                { "text": "What can you contribute?", "nextLine": "SkillsDiscussion" }
+            ]
+        },
+        {
+            "id": "SecondEncounter",
+            "speaker": "Generic Settler", 
+            "text": "You're back! I've been hoping you'd reconsider my request to join your settlement.",
+            "options": [
+                { "text": "Actually, yes! Come with us.", "nextLine": "RecruitmentOffer" },
+                { "text": "Tell me about your skills again.", "nextLine": "SkillsDiscussion" },
+                { "text": "Sorry, still not possible.", "nextLine": "Rejection", "setFlags": ["recruitment_refused"] }
+            ]
+        },
+        {
+            "id": "RefusedBefore",
+            "speaker": "Generic Settler",
+            "text": "I understand you turned me down before, but I'm still hoping... Has your situation changed?",
+            "options": [
+                { 
+                    "text": "Yes, we can take you now!", 
+                    "nextLine": "SecondChanceOffer",
+                    "removeFlags": ["recruitment_refused"]
+                },
+                { "text": "I'm sorry, but no.", "nextLine": "FinalRejection" }
+            ]
+        },
+        {
+            "id": "PostRecruitment",
+            "speaker": "Generic Settler",
+            "text": "Thanks again for accepting me into your community! I'm doing my best to contribute.",
+            "options": [
+                { "text": "How are you settling in?", "nextLine": "SettlingWell" },
+                { "text": "Keep up the good work!", "nextLine": "Encouragement" },
+                { "text": "Any problems I should know about?", "nextLine": "CheckingProblems" }
+            ]
+        },
+        {
+            "id": "RecruitmentOffer",
+            "speaker": "Generic Settler",
+            "text": "Really?! That would be amazing! I promise I'll work hard and follow all the rules.",
+            "options": [
+                { "text": "Welcome to our camp!", "nextLine": "RecruitmentAccepted", "recruitNPC": "Generic Settler" },
+                { "text": "Let me think about it more first.", "nextLine": "StillConsidering" }
+            ]
+        },
+        {
+            "id": "SecondChanceOffer", 
+            "speaker": "Generic Settler",
+            "text": "You... you mean it?! Thank you for giving me another chance! I won't disappoint you!",
+            "options": [
+                { "text": "Welcome aboard!", "nextLine": "SecondChanceAccepted", "recruitNPC": "Generic Settler" }
+            ]
+        },
+        {
+            "id": "RecruitmentAccepted",
+            "speaker": "Generic Settler", 
+            "text": "Thank you so much! I'll gather my few belongings and be ready to go whenever you are.",
+            "isTerminal": true,
+            "setFlags": ["recruitment_accepted", "ready_to_travel"]
+        },
+        {
+            "id": "SecondChanceAccepted",
+            "speaker": "Generic Settler",
+            "text": "I can't believe it! This means everything to me. I'll prove that your faith in me is justified!",
+            "isTerminal": true, 
+            "setFlags": ["recruitment_accepted", "second_chance", "grateful"]
+        },
+        {
+            "id": "Rejection",
+            "speaker": "Generic Settler",
+            "text": "I understand. Resources are limited and you have to be careful. I hope we meet again under better circumstances.",
+            "isTerminal": true
+        },
+        {
+            "id": "FinalRejection",
+            "speaker": "Generic Settler",
+            "text": "I... I see. Well, I guess I'll keep looking elsewhere. Take care of yourselves.",
+            "isTerminal": true,
+            "setFlags": ["final_rejection", "disappointed"]
+        },
+        {
+            "id": "StillConsidering",
+            "speaker": "Generic Settler",
+            "text": "Of course, it's a big decision. I'll be around here for a while if you decide to come back.",
+            "isTerminal": true,
+            "setFlags": ["under_consideration"]
+        },
+        {
+            "id": "SkillsDiscussion",
+            "speaker": "Generic Settler",
+            "text": "I'm handy with basic repairs, decent at scavenging, and I know some first aid. Plus I get along well with people.",
+            "setFlags": ["discussed_skills"],
+            "options": [
+                { "text": "Those skills sound useful. Join us!", "nextLine": "RecruitmentOffer" },
+                { "text": "Interesting. Let me consider this.", "nextLine": "ConsideringSkills" }
+            ]
+        },
+        {
+            "id": "ConsideringSkills",
+            "speaker": "Generic Settler",
+            "text": "Take your time. I know it's important to choose the right people for your community.",
+            "isTerminal": true,
+            "setFlags": ["skills_considered"]
+        },
+        {
+            "id": "SettlingWell",
+            "speaker": "Generic Settler",
+            "text": "Really well! Everyone's been welcoming and I feel like I'm making a real difference here.",
+            "isTerminal": true,
+            "setFlags": ["settled_well"]
+        },
+        {
+            "id": "Encouragement",
+            "speaker": "Generic Settler", 
+            "text": "Thank you! It feels good to be part of something bigger and help protect what we've built.",
+            "isTerminal": true,
+            "setFlags": ["feeling_valued"]
+        },
+        {
+            "id": "CheckingProblems",
+            "speaker": "Generic Settler",
+            "text": "Nothing major. A few small disagreements here and there, but that's normal in any community. Overall things are great!",
+            "isTerminal": true,
+            "setFlags": ["no_major_issues"]
+        }
+    ]
+}

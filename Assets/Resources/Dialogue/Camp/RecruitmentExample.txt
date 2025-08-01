@@ -1,0 +1,163 @@
+{
+    "npcName": "Friendly Settler",
+    "startingLineId": "Start",
+    "conditionalStarts": [
+        {
+            "lineId": "AlreadyRecruited",
+            "requiredFlags": ["recruited"],
+            "priority": 100,
+            "description": "If NPC was already recruited"
+        },
+        {
+            "lineId": "RefusedBefore",
+            "requiredFlags": ["recruitment_refused"],
+            "blockedByFlags": ["recruited"],
+            "priority": 90,
+            "description": "If player refused recruitment before"
+        },
+        {
+            "lineId": "SecondMeeting",
+            "requiredFlags": ["first_meeting"],
+            "blockedByFlags": ["recruited", "recruitment_refused"],
+            "priority": 80,
+            "description": "Second time meeting, but no recruitment decision yet"
+        }
+    ],
+    "lines": [
+        {
+            "id": "Start",
+            "speaker": "Friendly Settler",
+            "text": "Hello there! I've been looking for a safe place to call home. I heard you have a camp nearby?",
+            "setFlags": ["first_meeting"],
+            "options": [
+                { "text": "Yes, would you like to join us?", "nextLine": "RecruitOffer" },
+                { "text": "Sorry, we're not taking new people.", "nextLine": "RecruitRefusal", "setFlags": ["recruitment_refused"] },
+                { "text": "Tell me about yourself first.", "nextLine": "AboutYourself" }
+            ]
+        },
+        {
+            "id": "SecondMeeting",
+            "speaker": "Friendly Settler",
+            "text": "Oh, it's you again! Have you given any more thought to my request to join your camp?",
+            "options": [
+                { "text": "Actually, yes! Would you like to join us?", "nextLine": "RecruitOffer" },
+                { "text": "I'm still not sure. Tell me more about yourself.", "nextLine": "AboutYourself" },
+                { "text": "Sorry, we still can't take new people.", "nextLine": "RecruitRefusal", "setFlags": ["recruitment_refused"] }
+            ]
+        },
+        {
+            "id": "RefusedBefore",
+            "speaker": "Friendly Settler",
+            "text": "I see you again... I understand you refused my request before, but I'm still hoping to find a safe place. Has anything changed?",
+            "options": [
+                { 
+                    "text": "Actually, we've changed our mind. You can join us!", 
+                    "nextLine": "RecruitOfferAfterRefusal",
+                    "removeFlags": ["recruitment_refused"]
+                },
+                { "text": "I'm sorry, our situation hasn't changed.", "nextLine": "FinalRefusal" },
+                { "text": "Maybe we can work something out. Tell me about your skills again.", "nextLine": "SecondChanceSkills" }
+            ]
+        },
+        {
+            "id": "AlreadyRecruited",
+            "speaker": "Friendly Settler",
+            "text": "Hey there! Thanks again for welcoming me into your camp. I'm settling in well and ready to help however I can!",
+            "options": [
+                { "text": "Glad to hear it! How are you finding camp life?", "nextLine": "CampLife" },
+                { "text": "Good to see you. Keep up the great work!", "nextLine": "KeepWorking" }
+            ]
+        },
+        {
+            "id": "RecruitOffer",
+            "speaker": "Friendly Settler",
+            "text": "Really? That would be wonderful! I can help with farming and cooking. Should I come with you?",
+            "options": [
+                { "text": "Welcome to the camp!", "nextLine": "RecruitSuccess", "recruitNPC": "Friendly Settler" },
+                { "text": "Actually, maybe not right now.", "nextLine": "RecruitChanged" }
+            ]
+        },
+        {
+            "id": "RecruitOfferAfterRefusal",
+            "speaker": "Friendly Settler",
+            "text": "Really?! I... I can't believe it! Thank you so much for giving me a second chance! I promise I won't let you down!",
+            "options": [
+                { "text": "Welcome to the camp!", "nextLine": "RecruitSuccessSecondChance", "recruitNPC": "Friendly Settler" }
+            ]
+        },
+        {
+            "id": "RecruitSuccess",
+            "speaker": "Friendly Settler",
+            "text": "Thank you so much! I'll gather my things and follow you back to camp when you're ready to leave.",
+            "isTerminal": true,
+            "setFlags": ["recruitment_successful"]
+        },
+        {
+            "id": "RecruitSuccessSecondChance",
+            "speaker": "Friendly Settler",
+            "text": "You won't regret this decision! I'll work twice as hard to prove myself worthy of this second chance. Let's go to camp!",
+            "isTerminal": true,
+            "setFlags": ["recruitment_successful", "second_chance_given"]
+        },
+        {
+            "id": "RecruitRefusal",
+            "speaker": "Friendly Settler",
+            "text": "I understand. Maybe another time. Stay safe out there!",
+            "isTerminal": true
+        },
+        {
+            "id": "FinalRefusal",
+            "speaker": "Friendly Settler",
+            "text": "I... I see. Well, I guess I'll keep looking for somewhere else. Good luck with your camp.",
+            "isTerminal": true,
+            "setFlags": ["final_refusal"]
+        },
+        {
+            "id": "RecruitChanged",
+            "speaker": "Friendly Settler",
+            "text": "Oh... I see. Well, I'll be here if you change your mind.",
+            "isTerminal": true,
+            "setFlags": ["recruitment_hesitation"]
+        },
+        {
+            "id": "AboutYourself",
+            "speaker": "Friendly Settler",
+            "text": "I'm a farmer by trade and I know my way around a kitchen too. I lost my family during the outbreak, but I'm looking to start fresh.",
+            "options": [
+                { "text": "You sound perfect for our camp!", "nextLine": "RecruitOffer" },
+                { "text": "I'm sorry for your loss.", "nextLine": "CondolenceResponse" }
+            ]
+        },
+        {
+            "id": "SecondChanceSkills",
+            "speaker": "Friendly Settler",
+            "text": "Well, besides farming and cooking, I've also learned basic medical skills since we last talked. I've been helping other survivors and could be useful in your medical bay.",
+            "setFlags": ["has_medical_skills"],
+            "options": [
+                { "text": "Medical skills? That changes things. You're welcome to join!", "nextLine": "RecruitOfferAfterRefusal", "removeFlags": ["recruitment_refused"] },
+                { "text": "That's impressive, but our decision stands.", "nextLine": "FinalRefusal" }
+            ]
+        },
+        {
+            "id": "CondolenceResponse",
+            "speaker": "Friendly Settler",
+            "text": "Thank you for your kindness. It means a lot in these dark times.",
+            "options": [
+                { "text": "Would you like to join our camp?", "nextLine": "RecruitOffer" },
+                { "text": "Good luck to you.", "nextLine": "RecruitRefusal", "setFlags": ["recruitment_refused"] }
+            ]
+        },
+        {
+            "id": "CampLife",
+            "speaker": "Friendly Settler",
+            "text": "It's wonderful! Everyone's been so welcoming, and I love contributing to the community. The gardens are thriving!",
+            "isTerminal": true
+        },
+        {
+            "id": "KeepWorking",
+            "speaker": "Friendly Settler",
+            "text": "Will do! I'm planning to expand the herb garden next - should help with our medical supplies.",
+            "isTerminal": true
+        }
+    ]
+}

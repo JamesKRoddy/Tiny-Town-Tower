@@ -1,10 +1,13 @@
 using UnityEngine;
 using UnityEditor;
 
-[CustomEditor(typeof(RogueLiteRoom))]
-public class RogueLiteRoomEditor : Editor
+/// <summary>
+/// Base editor for RogueLiteRoom - provides common functionality for all room types
+/// Since RogueLiteRoom is abstract, this editor won't be used directly but provides shared methods
+/// </summary>
+public class RogueLiteRoomEditorBase : Editor
 {
-    public override void OnInspectorGUI()
+    protected virtual void DrawCommonInspector()
     {
         DrawDefaultInspector();
         
@@ -12,6 +15,11 @@ public class RogueLiteRoomEditor : Editor
         EditorGUILayout.LabelField("Room Bounds Debug", EditorStyles.boldLabel);
         
         RogueLiteRoom room = (RogueLiteRoom)target;
+        
+        // Room type display (read-only since it's determined by class)
+        EditorGUILayout.LabelField($"Room Type: {room.RoomType}", EditorStyles.helpBox);
+        
+        EditorGUILayout.Space();
         
         if (GUILayout.Button("Recalculate Bounds"))
         {
@@ -41,9 +49,10 @@ public class RogueLiteRoomEditor : Editor
         }
     }
     
-    private void LogRoomInfo(RogueLiteRoom room)
+    protected void LogRoomInfo(RogueLiteRoom room)
     {
         Debug.Log($"[RogueLiteRoom] === Room Info for {room.gameObject.name} ===");
+        Debug.Log($"Room Type: {room.RoomType}");
         Debug.Log($"Bounds Calculated: {room.GetBoundsCalculated()}");
         Debug.Log($"Current Bounds: Center={room.GetWorldBounds().center}, Size={room.GetWorldBounds().size}");
         Debug.Log($"Colliders Found: {(room.GetRoomColliders() != null ? room.GetRoomColliders().Length : 0)}");
@@ -61,7 +70,7 @@ public class RogueLiteRoomEditor : Editor
         }
     }
     
-    private void TestBoundsCalculation(RogueLiteRoom room)
+    protected void TestBoundsCalculation(RogueLiteRoom room)
     {
         Debug.Log($"[RogueLiteRoom] === Testing Bounds Calculation for {room.gameObject.name} ===");
         

@@ -784,7 +784,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &6069539324455257614
 Transform:
   m_ObjectHideFlags: 0
@@ -1264,7 +1264,7 @@ Transform:
   m_GameObject: {fileID: 2528689534014035692}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1586,6 +1586,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7034930588691365147}
+  - {fileID: 8315795870122641535}
   - {fileID: 5045964284803098155}
   - {fileID: 1898180869485109804}
   - {fileID: 1224832780615326584}
@@ -1601,7 +1602,6 @@ Transform:
   - {fileID: 6285862802163967616}
   - {fileID: 8830360014794951064}
   - {fileID: 8227577049167925855}
-  - {fileID: 8315795870122641535}
   - {fileID: 1947893873708198300}
   - {fileID: 2301964630935323093}
   - {fileID: 5063939371432517492}
@@ -1689,8 +1689,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b50e09eed254cf439e89561fdf9ab98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  npcNarrativeType: 1
   narrativeAsset:
     dialogueFile: {fileID: 0}
+    flags: []
+  debugFlags: 0
 --- !u!114 &2254817619120094739
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1769,6 +1772,47 @@ MonoBehaviour:
   health: 100
   maxHealth: 100
   nPCDataObj: {fileID: 11400000, guid: ff84a74ffbac90849b0eb152033e7ac8, type: 2}
+  characteristicSystem:
+    equippedCcharacteristics: []
+  appearanceSystem:
+    bodyModels:
+    - {fileID: 8789542491122857513}
+    - {fileID: 1604490121191356894}
+    - {fileID: 8522615969212874167}
+    - {fileID: 3466425493041804734}
+    - {fileID: 7099266184895824406}
+    - {fileID: 2322111189666042706}
+    - {fileID: 290198349498715242}
+    - {fileID: 6359156424574328462}
+    - {fileID: 1891503315548289140}
+    - {fileID: 5199702049741519242}
+    - {fileID: 7469210088815557212}
+    - {fileID: 2682830901947620276}
+    - {fileID: 1285351530076042551}
+    - {fileID: 6947136392685347350}
+    - {fileID: 3873041726461278088}
+    - {fileID: 2413434000837951976}
+    - {fileID: 7037613153353916352}
+    - {fileID: 8500098900155136744}
+    - {fileID: 221683676280985864}
+    - {fileID: 4579426575060130501}
+    - {fileID: 2859712664392381687}
+    headModels: []
+    hairModels: []
+    topClothing: []
+    bottomClothing: []
+    footwear: []
+    headAccessories: []
+    backAccessories: []
+    handAccessories: []
+    skinMaterials: []
+    hairMaterials: []
+    clothingMaterials: []
+    headAccessoryChance: 0.5
+    backAccessoryChance: 0.5
+    handAccessoryChance: 0.5
+  initializationContext: 0
+  hasBeenInitialized: 0
   additionalMutationSlots: 3
   maxStamina: 100
   currentStamina: 100
