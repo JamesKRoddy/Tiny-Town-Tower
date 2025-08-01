@@ -4,13 +4,13 @@ using System.Linq;
 
 /// <summary>
 /// Interactive component for NPCs that can start narrative conversations.
-/// Uses NPCNarrativeType for dynamic dialogue loading through NarrativeManager.
+/// Uses CharacterType for dynamic dialogue loading through NarrativeManager.
 /// Progression state is stored on the NarrativeAsset itself.
 /// </summary>
 public class NarrativeInteractive : MonoBehaviour, IInteractive<NarrativeAsset>
 {
     [Header("Narrative Configuration")]
-    [SerializeField] private NPCNarrativeType npcNarrativeType = NPCNarrativeType.GENERIC_CONVERSATION;
+    [SerializeField] private CharacterType characterType = CharacterType.HUMAN_MALE_1;
     
     [Header("Unique Conversation")]
     [SerializeField] private NarrativeAsset narrativeAsset;
@@ -41,12 +41,12 @@ public class NarrativeInteractive : MonoBehaviour, IInteractive<NarrativeAsset>
             
             return narrativeAsset; // Fallback to legacy system
         }
-        // Otherwise use dynamic loading based on NPCNarrativeType
+        // Otherwise use dynamic loading based on CharacterType
         else if (NarrativeManager.Instance != null)
         {
-            Debug.Log($"[NarrativeInteractive] Interacting with narrative type: {npcNarrativeType}");
-            // Use dynamic loading based on NPCNarrativeType, passing this component as source
-            NarrativeManager.Instance.StartConversation(npcNarrativeType, GetNarrativeTarget(), this);
+            Debug.Log($"[NarrativeInteractive] Interacting with character type: {characterType}");
+            // Use dynamic loading based on CharacterType, passing this component as source
+            NarrativeManager.Instance.StartConversation(characterType, GetNarrativeTarget(), this);
             
             // Return null since we're handling the conversation through NarrativeManager
             return null;

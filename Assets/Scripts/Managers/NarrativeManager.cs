@@ -31,10 +31,10 @@ public class NarrativeManager : MonoBehaviour
     #endregion
 
     [Header("Narrative Configuration")]
-    [SerializeField] private NarrativeAssetMapping[] narrativeMappings;
+    [SerializeField] private CharacterDialogueMapping[] characterDialogueMappings;
 
-    // Cache for loaded dialogues
-    private Dictionary<NPCNarrativeType, DialogueData> loadedDialogues = new Dictionary<NPCNarrativeType, DialogueData>();
+    // Cache for loaded dialogues - now supports multiple dialogues per character type
+    private Dictionary<CharacterType, List<DialogueData>> loadedDialogues = new Dictionary<CharacterType, List<DialogueData>>();
     private Dictionary<string, DialogueLine> currentDialogueLinesMap;
     private INarrativeTarget currentConversationTarget;
     private DialogueData currentDialogue;
@@ -75,15 +75,15 @@ public class NarrativeManager : MonoBehaviour
     private void PreloadCriticalDialogues()
     {
         // Pre-load commonly used dialogues for better performance
-        LoadDialogueForType(NPCNarrativeType.FRIENDLY_SETTLER);
-        LoadDialogueForType(NPCNarrativeType.RECRUITMENT_DIALOGUE);
+        LoadDialoguesForCharacterType(CharacterType.HUMAN_MALE_1);
+        LoadDialoguesForCharacterType(CharacterType.HUMAN_FEMALE_1);
     }
 
     /// <summary>
-    /// Start a conversation with dynamic dialogue loading based on NPCNarrativeType
+    /// Start a conversation with dynamic dialogue loading based on CharacterType
     /// Called by NarrativeInteractive components
     /// </summary>
-    public void StartConversation(NPCNarrativeType narrativeType, INarrativeTarget conversationTarget = null, NarrativeInteractive sourceComponent = null)
+    public void StartConversation(CharacterType characterType, INarrativeTarget conversationTarget = null, NarrativeInteractive sourceComponent = null)
     {
         // Set the conversation target
         currentConversationTarget = conversationTarget ?? FindConversationTarget();
@@ -109,12 +109,12 @@ public class NarrativeManager : MonoBehaviour
             }
         }
 
-        // Load dialogue for the specified type
-        DialogueData dialogue = LoadDialogueForType(narrativeType);
+        // Load a random dialogue for the specified character type
+        DialogueData dialogue = GetRandomDialogueForCharacterType(characterType);
         
         if (dialogue == null)
         {
-            Debug.LogError($"[NarrativeManager] Failed to load dialogue for type: {narrativeType}");
+            Debug.LogError($"[NarrativeManager] Failed to load dialogue for character type: {characterType}");
             return;
         }
 
@@ -214,75 +214,228 @@ public class NarrativeManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Load dialogue for a specific NPCNarrativeType
+    /// Load all dialogues for a specific CharacterType
     /// </summary>
-    private DialogueData LoadDialogueForType(NPCNarrativeType narrativeType)
+    private void LoadDialoguesForCharacterType(CharacterType characterType)
     {
-        // Check cache first
-        if (loadedDialogues.TryGetValue(narrativeType, out DialogueData cachedDialogue))
+        // Check if already loaded
+        if (loadedDialogues.ContainsKey(characterType))
         {
-            return cachedDialogue;
+            return;
         }
 
-        // Find the appropriate dialogue file
-        TextAsset dialogueFile = GetDialogueFileForType(narrativeType);
+        List<DialogueData> dialogues = new List<DialogueData>();
+        List<TextAsset> dialogueFiles = GetDialogueFilesForCharacterType(characterType);
         
-        if (dialogueFile != null)
+        foreach (var dialogueFile in dialogueFiles)
         {
-            DialogueData dialogue = LoadDialogueFromAsset(dialogueFile);
-            if (dialogue != null)
+            if (dialogueFile != null)
             {
-                // Cache the loaded dialogue
-                loadedDialogues[narrativeType] = dialogue;
-                return dialogue;
+                DialogueData dialogue = LoadDialogueFromAsset(dialogueFile);
+                if (dialogue != null)
+                {
+                    dialogues.Add(dialogue);
+                }
             }
         }
 
-        Debug.LogWarning($"[NarrativeManager] No dialogue file found for type: {narrativeType}");
+        if (dialogues.Count > 0)
+        {
+            // Cache the loaded dialogues
+            loadedDialogues[characterType] = dialogues;
+        }
+        else
+        {
+            Debug.LogWarning($"[NarrativeManager] No dialogue files found for character type: {characterType}");
+        }
+    }
+
+    /// <summary>
+    /// Get a random dialogue for a specific CharacterType
+    /// </summary>
+    private DialogueData GetRandomDialogueForCharacterType(CharacterType characterType)
+    {
+        // Load dialogues if not already cached
+        LoadDialoguesForCharacterType(characterType);
+        
+        if (loadedDialogues.TryGetValue(characterType, out List<DialogueData> dialogues) && dialogues.Count > 0)
+        {
+            // Randomly select one of the available dialogues
+            int randomIndex = Random.Range(0, dialogues.Count);
+            return dialogues[randomIndex];
+        }
+
+        Debug.LogWarning($"[NarrativeManager] No dialogues available for character type: {characterType}");
         return null;
     }
 
     /// <summary>
-    /// Get the appropriate dialogue file for a NPCNarrativeType
+    /// Get all dialogue files for a specific CharacterType
     /// </summary>
-    private TextAsset GetDialogueFileForType(NPCNarrativeType narrativeType)
+    private List<TextAsset> GetDialogueFilesForCharacterType(CharacterType characterType)
     {
+        List<TextAsset> dialogueFiles = new List<TextAsset>();
+
         // Check configured mappings first
-        foreach (var mapping in narrativeMappings)
+        foreach (var mapping in characterDialogueMappings)
         {
-            if (mapping.narrativeType == narrativeType && mapping.dialogueFile != null)
+            if (mapping.characterType == characterType && mapping.dialogueFiles != null)
             {
-                return mapping.dialogueFile;
+                dialogueFiles.AddRange(mapping.dialogueFiles);
             }
         }
 
-        // Fallback to default dialogues based on type
-        return GetDefaultDialogueForType(narrativeType);
+        // If no configured mappings, try to load default dialogues
+        if (dialogueFiles.Count == 0)
+        {
+            dialogueFiles.AddRange(GetDefaultDialogueFilesForCharacterType(characterType));
+        }
+
+        return dialogueFiles;
     }
 
     /// <summary>
-    /// Get default dialogue files for narrative types (fallback system)
+    /// Get default dialogue files for character types using dynamic file discovery
     /// </summary>
-    private TextAsset GetDefaultDialogueForType(NPCNarrativeType narrativeType)
+    private List<TextAsset> GetDefaultDialogueFilesForCharacterType(CharacterType characterType)
     {
-        string fileName = "";
+        List<TextAsset> dialogueFiles = new List<TextAsset>();
         
-        switch (narrativeType)
+        // Convert character type to search pattern
+        string searchPattern = GetCharacterTypeSearchPattern(characterType);
+        
+        if (string.IsNullOrEmpty(searchPattern))
         {
-            case NPCNarrativeType.FRIENDLY_SETTLER:
-            case NPCNarrativeType.RECRUITMENT_DIALOGUE:
-                fileName = "RecruitmentExample";
-                break;
-            case NPCNarrativeType.GENERIC_CONVERSATION:
-                fileName = "_TestDialogue";
-                break;
+            Debug.LogWarning($"[NarrativeManager] No search pattern for character type: {characterType}");
+            // Fallback to generic dialogue
+            TextAsset fallbackAsset = Resources.Load<TextAsset>("Dialogue/Camp/_TestDialogue");
+            if (fallbackAsset != null)
+            {
+                dialogueFiles.Add(fallbackAsset);
+            }
+            return dialogueFiles;
+        }
+        
+        // Load all TextAssets from the Dialogue/Camp folder
+        TextAsset[] allDialogueAssets = Resources.LoadAll<TextAsset>("Dialogue/Camp");
+        
+        // Filter assets that match the character type pattern
+        foreach (TextAsset asset in allDialogueAssets)
+        {
+            if (asset.name.StartsWith(searchPattern, System.StringComparison.OrdinalIgnoreCase))
+            {
+                dialogueFiles.Add(asset);
+                Debug.Log($"[NarrativeManager] Found dialogue file for {characterType}: {asset.name}");
+            }
+        }
+        
+        // If no files found, try fallback patterns
+        if (dialogueFiles.Count == 0)
+        {
+            dialogueFiles.AddRange(GetFallbackDialogueFiles(characterType));
+        }
+        
+        Debug.Log($"[NarrativeManager] Loaded {dialogueFiles.Count} dialogue files for {characterType}");
+        return dialogueFiles;
+    }
+    
+    /// <summary>
+    /// Convert character type to file search pattern
+    /// </summary>
+    private string GetCharacterTypeSearchPattern(CharacterType characterType)
+    {
+        switch (characterType)
+        {
+            case CharacterType.HUMAN_MALE_1:
+                return "HumanMale1";
+            case CharacterType.HUMAN_FEMALE_1:
+                return "HumanFemale1";
+            case CharacterType.HUMAN_MALE_2:
+                return "HumanMale2";
+            case CharacterType.HUMAN_FEMALE_2:
+                return "HumanFemale2";
+            case CharacterType.MACHINE_ROBOT:
+                return "MachineRobot";
+            case CharacterType.MACHINE_DRONE:
+                return "MachineDrone";
+            case CharacterType.ZOMBIE_MELEE:
+                return "ZombieMelee";
+            case CharacterType.ZOMBIE_SPITTER:
+                return "ZombieSpitter";
+            case CharacterType.ZOMBIE_TANK:
+                return "ZombieTank";
             default:
-                Debug.LogWarning($"[NarrativeManager] No default dialogue for type: {narrativeType}");
                 return null;
         }
-
-        // Try to load from Resources or specific path
-        return Resources.Load<TextAsset>($"Dialogue/Camp/{fileName}");
+    }
+    
+    /// <summary>
+    /// Get fallback dialogue files when no character-specific files are found
+    /// </summary>
+    private List<TextAsset> GetFallbackDialogueFiles(CharacterType characterType)
+    {
+        List<TextAsset> fallbackFiles = new List<TextAsset>();
+        
+        // Try generic fallbacks based on character type
+        string[] fallbackPatterns = GetFallbackPatterns(characterType);
+        
+        TextAsset[] allDialogueAssets = Resources.LoadAll<TextAsset>("Dialogue/Camp");
+        
+        foreach (string pattern in fallbackPatterns)
+        {
+            foreach (TextAsset asset in allDialogueAssets)
+            {
+                if (asset.name.StartsWith(pattern, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    fallbackFiles.Add(asset);
+                    Debug.Log($"[NarrativeManager] Found fallback dialogue file for {characterType}: {asset.name}");
+                }
+            }
+            
+            // Stop at first pattern that finds files
+            if (fallbackFiles.Count > 0)
+            {
+                break;
+            }
+        }
+        
+        // Ultimate fallback to test dialogue
+        if (fallbackFiles.Count == 0)
+        {
+            TextAsset testAsset = Resources.Load<TextAsset>("Dialogue/Camp/_TestDialogue");
+            if (testAsset != null)
+            {
+                fallbackFiles.Add(testAsset);
+                Debug.Log($"[NarrativeManager] Using ultimate fallback dialogue for {characterType}: {testAsset.name}");
+            }
+        }
+        
+        return fallbackFiles;
+    }
+    
+    /// <summary>
+    /// Get fallback search patterns for character types
+    /// </summary>
+    private string[] GetFallbackPatterns(CharacterType characterType)
+    {
+        switch (characterType)
+        {
+            case CharacterType.HUMAN_MALE_1:
+            case CharacterType.HUMAN_MALE_2:
+                return new string[] { "HumanMale", "Human", "Recruitment" };
+            case CharacterType.HUMAN_FEMALE_1:
+            case CharacterType.HUMAN_FEMALE_2:
+                return new string[] { "HumanFemale", "Human", "Recruitment" };
+            case CharacterType.MACHINE_ROBOT:
+            case CharacterType.MACHINE_DRONE:
+                return new string[] { "Machine", "Robot", "Mechanical" };
+            case CharacterType.ZOMBIE_MELEE:
+            case CharacterType.ZOMBIE_SPITTER:
+            case CharacterType.ZOMBIE_TANK:
+                return new string[] { "Zombie", "Undead" };
+            default:
+                return new string[] { "Recruitment", "Generic" };
+        }
     }
 
     /// <summary>
@@ -557,13 +710,14 @@ public class NarrativeManager : MonoBehaviour
 }
 
 /// <summary>
-/// Mapping configuration for NPCNarrativeType to dialogue files
+/// Mapping configuration for CharacterType to multiple dialogue files
 /// </summary>
 [System.Serializable]
-public class NarrativeAssetMapping
+public class CharacterDialogueMapping
 {
-    public NPCNarrativeType narrativeType;
-    public TextAsset dialogueFile;
+    public CharacterType characterType;
+    public TextAsset[] dialogueFiles;
     [TextArea(2, 4)]
     public string description; // For editor documentation
 }
+

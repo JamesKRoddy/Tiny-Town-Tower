@@ -1,0 +1,320 @@
+{
+    "npcName": "Tech Specialist",
+    "startingLineId": "Start",
+    "conditionalStarts": [
+        {
+            "lineId": "AlreadyRecruited",
+            "requiredFlags": ["recruited"],
+            "priority": 100,
+            "description": "If NPC was already recruited"
+        },
+        {
+            "lineId": "RefusedBefore",
+            "requiredFlags": ["recruitment_refused"],
+            "blockedByFlags": ["recruited"],
+            "priority": 90,
+            "description": "If player refused recruitment before"
+        },
+        {
+            "lineId": "SecondMeeting",
+            "requiredFlags": ["first_meeting"],
+            "blockedByFlags": ["recruited", "recruitment_refused"],
+            "priority": 80,
+            "description": "Second time meeting, but no recruitment decision yet"
+        }
+    ],
+    "lines": [
+        {
+            "id": "Start",
+            "speaker": "Tech Specialist",
+            "text": "*looks up from tinkering with a small device* Oh! Sorry, didn't hear you approach. I was trying to modify this radio receiver. The name's Jake, and you are...? Wait, let me guess - you've got that 'survivor group leader' look about you.",
+            "setFlags": ["first_meeting"],
+            "options": [
+                { "text": "Good eye. I lead a survivor community. We could use tech skills.", "nextLine": "RecruitOffer" },
+                { "text": "Impressive gadget. What does it do?", "nextLine": "TechExplanation" },
+                { "text": "Just passing through. Don't mind me.", "nextLine": "JustPassing" }
+            ]
+        },
+        {
+            "id": "SecondMeeting",
+            "speaker": "Tech Specialist",
+            "text": "*waves with a screwdriver in hand* Hey, you're back! Still working on that power grid problem I mentioned. Actually made some progress. How's your community doing?",
+            "options": [
+                { "text": "Good. That offer to join still stands.", "nextLine": "RecruitOffer" },
+                { "text": "What kind of progress have you made?", "nextLine": "TechProgress" },
+                { "text": "We're managing. Good luck with your projects.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "RefusedBefore",
+            "speaker": "Tech Specialist",
+            "text": "*adjusts glasses and sighs* Still not interested in having a tech guy around, I see. No worries - plenty of broken electronics in the world to keep me busy.",
+            "options": [
+                { "text": "Actually, I've changed my mind. Want to reconsider?", "nextLine": "RecruitOffer" },
+                { "text": "What projects are you working on now?", "nextLine": "CurrentProjects" },
+                { "text": "Good luck with your work.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "AlreadyRecruited",
+            "speaker": "Tech Specialist",
+            "text": "*grins and shows off a modified device* Hey there! Check this out - I managed to boost our radio range by 40%! Camp life's been great for having actual workspace and materials to experiment with.",
+            "options": [
+                { "text": "Excellent work! Let's head back to camp.", "nextLine": "End" },
+                { "text": "Tell me more about this upgrade.", "nextLine": "RadioUpgrade" }
+            ]
+        },
+        {
+            "id": "TechExplanation",
+            "speaker": "Tech Specialist",
+            "text": "*holds up the device proudly* It's a long-range scanner that can detect electronic signatures. Helps me find abandoned tech and avoid automated defenses. Built it from scratch using salvaged components.",
+            "options": [
+                { "text": "That's incredible skill. We need someone like you.", "nextLine": "RecruitOffer" },
+                { "text": "How do you power it?", "nextLine": "PowerSource" },
+                { "text": "Impressive. Stay safe out there.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "JustPassing",
+            "speaker": "Tech Specialist",
+            "text": "*looks a bit disappointed* Oh, okay. Well, if you change your mind and want to see some interesting tech modifications, I'll probably be here for a while. This spot has good salvage opportunities.",
+            "options": [
+                { "text": "Actually, I am curious about your work.", "nextLine": "TechExplanation" },
+                { "text": "What brings you to this area?", "nextLine": "WhyHere" },
+                { "text": "Take care.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "TechProgress",
+            "speaker": "Tech Specialist",
+            "text": "*excitedly pulls out blueprints* I figured out how to create a stable power grid using solar panels, wind generators, and a battery bank system. It could power a whole settlement!",
+            "options": [
+                { "text": "That's exactly what our community needs!", "nextLine": "RecruitOffer" },
+                { "text": "How much power are we talking about?", "nextLine": "PowerDetails" },
+                { "text": "Sounds complex. Good luck implementing it.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "RecruitOffer",
+            "speaker": "Tech Specialist",
+            "text": "*eyes light up* A real community with people to help and protect? That's... that's actually my dream scenario. I've got so many ideas for security systems, power generation, communication networks...",
+            "options": [
+                { "text": "Perfect! We need all of that. Welcome aboard!", "nextLine": "AcceptRecruitment", "recruitNPC": "Jake" },
+                { "text": "What kind of security systems?", "nextLine": "SecuritySystems" },
+                { "text": "Actually, those projects might be too ambitious.", "nextLine": "RecruitRefusal", "setFlags": ["recruitment_refused"] }
+            ]
+        },
+        {
+            "id": "AcceptRecruitment",
+            "speaker": "Tech Specialist",
+            "text": "*practically bouncing with excitement* This is fantastic! I'm Jake, by the way - Jake Morrison. I've got a whole workshop worth of equipment hidden nearby. We can set up proper tech infrastructure for your community!",
+            "setFlags": ["recruited"],
+            "options": [
+                { "text": "Welcome to the team, Jake. Let's gather your equipment and head home.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "RecruitRefusal",
+            "speaker": "Tech Specialist",
+            "text": "*deflates slightly* Oh... I guess I do get a bit carried away with the tech talk. No worries, I understand. Maybe someday there'll be a place for someone like me.",
+            "setFlags": ["recruitment_refused"],
+            "options": [
+                { "text": "Don't give up. You'll find the right group.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "PowerSource",
+            "speaker": "Tech Specialist",
+            "text": "*taps a small solar panel on the device* Micro solar cells combined with a kinetic energy harvester from my movements. Plus a small battery backup. It's all about efficiency.",
+            "options": [
+                { "text": "Could you scale that up for a larger settlement?", "nextLine": "RecruitOffer" },
+                { "text": "How long did it take you to develop that?", "nextLine": "DevelopmentTime" },
+                { "text": "Very clever design.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "WhyHere",
+            "speaker": "Tech Specialist",
+            "text": "*gestures around* This area used to be an electronics manufacturing district. Lots of useful components in the ruins, if you know where to look and what to salvage.",
+            "options": [
+                { "text": "You could help us set up better salvage operations.", "nextLine": "RecruitOffer" },
+                { "text": "Any dangerous salvage spots to avoid?", "nextLine": "DangerZones" },
+                { "text": "Smart thinking. Good hunting.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "PowerDetails",
+            "speaker": "Tech Specialist",
+            "text": "*pulls out a calculator* Based on my calculations, enough to power lighting, heating, communications, and even some manufacturing equipment for 50-100 people, depending on usage patterns.",
+            "options": [
+                { "text": "That's perfect for our community size!", "nextLine": "RecruitOffer" },
+                { "text": "What about backup systems?", "nextLine": "BackupSystems" },
+                { "text": "Impressive calculations.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "SecuritySystems",
+            "speaker": "Tech Specialist",
+            "text": "*becomes animated* Motion sensors, automated alarms, electronic locks, even some defensive turret prototypes! All designed to be maintainable with scavenged parts.",
+            "options": [
+                { "text": "That sounds incredible. You're definitely hired!", "nextLine": "AcceptRecruitment", "recruitNPC": "Jake" },
+                { "text": "How do you prevent them from being hacked or sabotaged?", "nextLine": "SecurityMeasures" },
+                { "text": "Those systems might draw unwanted attention.", "nextLine": "AttentionConcerns" }
+            ]
+        },
+        {
+            "id": "CurrentProjects",
+            "speaker": "Tech Specialist",
+            "text": "*shows various gadgets* I'm working on a water purification system, a long-range communication device, and a zombie detection sensor. Keep me busy between salvage runs.",
+            "options": [
+                { "text": "All of those would benefit our community.", "nextLine": "RecruitOffer" },
+                { "text": "How does the zombie sensor work?", "nextLine": "ZombieSensor" },
+                { "text": "Sounds like you're keeping busy.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "RadioUpgrade",
+            "speaker": "Tech Specialist",
+            "text": "*points to antenna modifications* I redesigned the antenna array and boosted the signal amplifier. Now we can reach settlements three times further away than before!",
+            "options": [
+                { "text": "That's going to help with trade and coordination.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "DevelopmentTime",
+            "speaker": "Tech Specialist",
+            "text": "*scratches head* About six months of trial and error. The hardest part was finding the right components. Had to improvise with smartphone batteries and watch parts.",
+            "options": [
+                { "text": "That kind of resourcefulness is exactly what we need.", "nextLine": "RecruitOffer" },
+                { "text": "Where do you find smartphone parts these days?", "nextLine": "SalvageSpots" },
+                { "text": "Patience pays off, I guess.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "DangerZones",
+            "speaker": "Tech Specialist",
+            "text": "*marks locations on a makeshift map* Avoid the old server farm - automated security still active. And the chemical plant has toxic leaks that fry electronics.",
+            "options": [
+                { "text": "That intel could save our scavenging teams.", "nextLine": "RecruitOffer" },
+                { "text": "Any other hazards in the area?", "nextLine": "OtherHazards" },
+                { "text": "Thanks for the warning.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "BackupSystems",
+            "speaker": "Tech Specialist",
+            "text": "*flips to another blueprint* Multiple redundancies! If solar fails, wind kicks in. If both fail, we have manual crank generators and stored battery power. Never trust a single point of failure.",
+            "options": [
+                { "text": "That level of planning is exactly what we need.", "nextLine": "RecruitOffer" },
+                { "text": "How do you maintain all those systems?", "nextLine": "MaintenancePlan" },
+                { "text": "Thorough planning. I like it.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "SecurityMeasures",
+            "speaker": "Tech Specialist",
+            "text": "*taps temple* Isolated networks, manual override switches, and encrypted communications. Plus I design them with intentional vulnerabilities that only I know how to exploit - just in case.",
+            "options": [
+                { "text": "Smart security practices. You're hired!", "nextLine": "AcceptRecruitment", "recruitNPC": "Jake" },
+                { "text": "What if something happens to you?", "nextLine": "BackupPlan" },
+                { "text": "Clever thinking.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "AttentionConcerns",
+            "speaker": "Tech Specialist",
+            "text": "*nods seriously* Valid concern. That's why I design everything to look like junk from the outside. Hidden in plain sight, you know? Function over flashy appearance.",
+            "options": [
+                { "text": "Stealth technology. I like your thinking.", "nextLine": "RecruitOffer" },
+                { "text": "Can you teach others to maintain the systems?", "nextLine": "TeachingSkills" },
+                { "text": "Good approach for staying under the radar.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "ZombieSensor",
+            "speaker": "Tech Specialist",
+            "text": "*holds up a small device* It detects the electromagnetic signature of zombie brain activity. Crude but effective at about 100-meter range. Still working on improving sensitivity.",
+            "options": [
+                { "text": "That could revolutionize our defense systems!", "nextLine": "RecruitOffer" },
+                { "text": "How accurate is it?", "nextLine": "SensorAccuracy" },
+                { "text": "Fascinating concept.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "SalvageSpots",
+            "speaker": "Tech Specialist",
+            "text": "*points to different areas* Electronic stores, cell phone towers, abandoned cars with GPS units. The trick is knowing which components are still functional after all this time.",
+            "options": [
+                { "text": "You could teach our people what to look for.", "nextLine": "RecruitOffer" },
+                { "text": "What makes components last longer?", "nextLine": "ComponentDurability" },
+                { "text": "Good hunting spots to remember.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "OtherHazards",
+            "speaker": "Tech Specialist",
+            "text": "*counts on fingers* Unstable buildings with crushing hazards, areas with strange zombie mutations, and some spots where the radiation fries electronics on contact.",
+            "options": [
+                { "text": "That kind of area knowledge would keep our people safe.", "nextLine": "RecruitOffer" },
+                { "text": "Radiation that affects electronics? How is that possible?", "nextLine": "RadiationEffects" },
+                { "text": "I'll keep that in mind. Thanks.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "MaintenancePlan",
+            "speaker": "Tech Specialist",
+            "text": "*shows detailed schedules* Regular inspection cycles, preventive maintenance, and modular design so parts can be swapped quickly. Plus training others so I'm not a single point of failure.",
+            "options": [
+                { "text": "You've thought of everything. Join our community!", "nextLine": "RecruitOffer" },
+                { "text": "How long does it take to train someone?", "nextLine": "TrainingTime" },
+                { "text": "Very thorough approach.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "BackupPlan",
+            "speaker": "Tech Specialist",
+            "text": "*pulls out detailed documentation* Everything's documented with step-by-step guides and troubleshooting procedures. I believe in sharing knowledge, not hoarding it.",
+            "options": [
+                { "text": "That kind of knowledge sharing is valuable. Welcome aboard!", "nextLine": "AcceptRecruitment", "recruitNPC": "Jake" },
+                { "text": "How detailed are these guides?", "nextLine": "GuideDetails" },
+                { "text": "Good philosophy to have.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "TeachingSkills",
+            "speaker": "Tech Specialist",
+            "text": "*nods enthusiastically* Absolutely! I love teaching. Most of this stuff isn't rocket science once you understand the basics. Give me willing students and we'll have a whole tech team.",
+            "options": [
+                { "text": "Perfect! We need that kind of knowledge transfer.", "nextLine": "RecruitOffer" },
+                { "text": "What's the most important skill to learn first?", "nextLine": "FirstSkill" },
+                { "text": "Good attitude to have.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "SensorAccuracy",
+            "speaker": "Tech Specialist",
+            "text": "*checks notes* About 85% accurate so far. It occasionally picks up large animals or malfunctioning electronics, but it's never missed an actual zombie threat.",
+            "options": [
+                { "text": "That's good enough for early warning systems.", "nextLine": "RecruitOffer" },
+                { "text": "Could you reduce the false positives?", "nextLine": "ImproveSensor" },
+                { "text": "Pretty impressive for homebrew tech.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "ComponentDurability",
+            "speaker": "Tech Specialist",
+            "text": "*gestures to his gear* Military-grade components last longest, then industrial equipment. Consumer electronics are hit-or-miss. Temperature fluctuations and moisture are the biggest killers.",
+            "options": [
+                { "text": "That expertise would help our salvage efficiency.", "nextLine": "RecruitOffer" },
+                { "text": "Any tricks for protecting components?", "nextLine": "ProtectionTricks" },
+                { "text": "Good to know for future scavenging.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "End",
+            "speaker": "",
+            "text": "",
+            "options": []
+        }
+    ]
+}
