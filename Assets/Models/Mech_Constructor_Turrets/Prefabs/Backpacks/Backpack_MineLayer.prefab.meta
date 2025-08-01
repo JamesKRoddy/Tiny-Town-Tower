@@ -1,0 +1,38 @@
+fileFormatVersion: 2
+guid: 9ba44d938e27c8e4d8ca7bf8d6412743
+labels:
+- Constructor
+- Modular
+- Tower
+- Turret
+- scifi
+- sci-fi
+- lowpoly
+- low-poly
+- mobile
+- animated
+- battle
+- military
+- multilevel
+- worker
+- mine
+- landmine
+- cannon
+- laser
+- gun
+- weapon
+- handpainted
+- hand-painted
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 112002
+  packageName: Sci-Fi Turret Constructor
+  packageVersion: 2.1
+  assetPath: Assets/Mech_Constructor_Turrets/Prefabs/Backpacks/Backpack_MineLayer.prefab
+  uploadId: 609071

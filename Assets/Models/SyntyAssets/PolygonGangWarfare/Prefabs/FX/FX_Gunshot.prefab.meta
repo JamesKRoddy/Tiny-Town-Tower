@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 6cfc25a3fd1f2a04aa5ab1f5df308189
+timeCreated: 1563140633
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 150589
+  packageName: POLYGON Gang Warfare - Low Poly 3D Art by Synty
+  packageVersion: 1.6.1
+  assetPath: Assets/PolygonGangWarfare/Prefabs/FX/FX_Gunshot.prefab
+  uploadId: 735246

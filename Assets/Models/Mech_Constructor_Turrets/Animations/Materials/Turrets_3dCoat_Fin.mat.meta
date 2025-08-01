@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f8af7f1a328f4a24480927e62aa94264
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 112002
+  packageName: Sci-Fi Turret Constructor
+  packageVersion: 2.1
+  assetPath: Assets/Mech_Constructor_Turrets/Animations/Materials/Turrets_3dCoat_Fin.mat
+  uploadId: 609071

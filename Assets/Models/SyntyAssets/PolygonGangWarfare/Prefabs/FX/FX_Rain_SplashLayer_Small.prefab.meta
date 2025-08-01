@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 3ed69d60f08e8684881d2c706ea2e2b0
+timeCreated: 1563154856
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 150589
+  packageName: POLYGON Gang Warfare - Low Poly 3D Art by Synty
+  packageVersion: 1.6.1
+  assetPath: Assets/PolygonGangWarfare/Prefabs/FX/FX_Rain_SplashLayer_Small.prefab
+  uploadId: 735246

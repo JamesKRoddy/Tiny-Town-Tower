@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: b3fdd8f7988478b49b263559cd0fbfdd
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 112002
+  packageName: Sci-Fi Turret Constructor
+  packageVersion: 2.1
+  assetPath: Assets/Mech_Constructor_Turrets/Animations/HalfShoulder_Visor_CTRL.controller
+  uploadId: 609071

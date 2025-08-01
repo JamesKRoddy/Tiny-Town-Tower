@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: a0f05e7e7613f1e47bc8a7a40c4eb5fd
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 112002
+  packageName: Sci-Fi Turret Constructor
+  packageVersion: 2.1
+  assetPath: Assets/Mech_Constructor_Turrets/Animations/Weapon_Bazooka_Simple_CTRL.controller
+  uploadId: 609071

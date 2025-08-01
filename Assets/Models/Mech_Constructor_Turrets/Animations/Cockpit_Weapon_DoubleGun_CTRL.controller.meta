@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 21981293fe3277946a1d79b9d9aa0ee3
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 112002
+  packageName: Sci-Fi Turret Constructor
+  packageVersion: 2.1
+  assetPath: Assets/Mech_Constructor_Turrets/Animations/Cockpit_Weapon_DoubleGun_CTRL.controller
+  uploadId: 609071
