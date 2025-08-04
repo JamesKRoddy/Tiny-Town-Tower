@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: fcdb1d9ffb112b94386afd55753aaa66
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 112002
+  packageName: Sci-Fi Turret Constructor
+  packageVersion: 2.1
+  assetPath: Assets/Mech_Constructor_Turrets/Prefabs/Weapons/Weapon_Top_Nimbus.prefab
+  uploadId: 609071

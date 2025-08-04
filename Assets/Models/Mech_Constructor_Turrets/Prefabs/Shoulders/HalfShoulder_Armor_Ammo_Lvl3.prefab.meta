@@ -1,0 +1,42 @@
+fileFormatVersion: 2
+guid: f1e3a99f7cb563f47bd9550810cc56ab
+labels:
+- Constructor
+- Modular
+- Tower
+- Turret
+- scifi
+- sci-fi
+- lowpoly
+- low-poly
+- mobile
+- animated
+- battle
+- military
+- multilevel
+- drone
+- worker
+- mine
+- landmine
+- cannon
+- laser
+- gun
+- weapon
+- radar
+- handpainted
+- hand-painted
+- tripod
+- ammo
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 112002
+  packageName: Sci-Fi Turret Constructor
+  packageVersion: 2.1
+  assetPath: Assets/Mech_Constructor_Turrets/Prefabs/Shoulders/HalfShoulder_Armor_Ammo_Lvl3.prefab
+  uploadId: 609071

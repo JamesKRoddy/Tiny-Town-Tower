@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e29b61f44cd7882408432ba353cea0df
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 112002
+  packageName: Sci-Fi Turret Constructor
+  packageVersion: 2.1
+  assetPath: Assets/Mech_Constructor_Turrets/Materials/A_Ground_Mat.mat
+  uploadId: 609071

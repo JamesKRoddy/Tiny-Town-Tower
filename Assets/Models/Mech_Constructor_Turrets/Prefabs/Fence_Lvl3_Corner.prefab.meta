@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: ea70871817e786049b303d9cddb7fb06
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 112002
+  packageName: Sci-Fi Turret Constructor
+  packageVersion: 2.1
+  assetPath: Assets/Mech_Constructor_Turrets/Prefabs/Fence_Lvl3_Corner.prefab
+  uploadId: 609071

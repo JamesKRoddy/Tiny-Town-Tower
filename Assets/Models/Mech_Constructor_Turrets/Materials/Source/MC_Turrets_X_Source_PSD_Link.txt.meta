@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 625b0c8a307255346a4ae84a264eed14
+TextScriptImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 112002
+  packageName: Sci-Fi Turret Constructor
+  packageVersion: 2.1
+  assetPath: Assets/Mech_Constructor_Turrets/Materials/Source/MC_Turrets_X_Source_PSD_Link.txt
+  uploadId: 609071

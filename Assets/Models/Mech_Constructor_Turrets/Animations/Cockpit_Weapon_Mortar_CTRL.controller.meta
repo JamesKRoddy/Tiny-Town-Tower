@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c5e2c8f8d9474254a96d7983fe2c8ef2
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 112002
+  packageName: Sci-Fi Turret Constructor
+  packageVersion: 2.1
+  assetPath: Assets/Mech_Constructor_Turrets/Animations/Cockpit_Weapon_Mortar_CTRL.controller
+  uploadId: 609071
