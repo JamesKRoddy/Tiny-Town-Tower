@@ -386,7 +386,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         }
 
         string settlerName = settlerNPCReference.GetSettlerName();
-        Debug.Log($"[PlayerInventory] RecruitNPC called for '{settlerName}' with component ID: {componentId}");
         
         // Check if this specific component has already been recruited
         if (!string.IsNullOrEmpty(componentId))
@@ -425,18 +424,10 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         if (settlerNPCReference.TryGetComponent<SaveableObject>(out var saveableObj))
         {
             var allFlags = saveableObj.GetAllNarrativeFlags();
-            Debug.Log($"[PlayerInventory] Found SaveableObject on recruited NPC {settlerName} (UUID: {saveableObj.UUID})");
-            Debug.Log($"[PlayerInventory] All flags from recruited NPC: {string.Join(", ", allFlags.Select(f => $"{f.Key}={f.Value}"))}");
-            
             foreach (var flag in allFlags)
             {
                 recruitedData.AddNarrativeFlag(flag.Key, flag.Value);
             }
-            Debug.Log($"[PlayerInventory] Captured {allFlags.Count} narrative flags from recruited NPC {settlerName}");
-        }
-        else
-        {
-            Debug.LogWarning($"[PlayerInventory] No SaveableObject found on recruited NPC {settlerName} - no flags to capture");
         }
         
         recruitedNPCs.Add(recruitedData);
@@ -520,11 +511,8 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     /// </summary>
     public void TransferRecruitedNPCsToCamp()
     {
-        Debug.Log($"[PlayerInventory] TransferRecruitedNPCsToCamp called with {recruitedNPCs.Count} recruited NPCs");
-        
         if (recruitedNPCs.Count == 0)
         {
-            Debug.Log("[PlayerInventory] No recruited NPCs to transfer to camp");
             return;
         }
 
@@ -532,7 +520,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         
         foreach (var recruitedData in recruitedNPCs)
         {
-            Debug.Log($"[PlayerInventory] Transferring recruited NPC: {recruitedData.settlerData.name} (Component ID: {recruitedData.componentId})");
             settlersToTransfer.Add(recruitedData.settlerData);
             SpawnSettlerInCamp(recruitedData.settlerData, recruitedData.appearanceData, recruitedData.componentId);
         }
@@ -540,7 +527,6 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         // Fire the event to notify other systems about the transfer
         OnNPCsTransferredToCamp?.Invoke(settlersToTransfer);
 
-        Debug.Log($"[PlayerInventory] Clearing {recruitedNPCs.Count} recruited NPCs from temporary storage");
         recruitedNPCs.Clear();
         
     }
@@ -594,50 +580,16 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             if (campNPCSaveable == null)
             {
                 campNPCSaveable = settlerObject.AddComponent<SaveableObject>();
-                Debug.Log($"[PlayerInventory] Added SaveableObject to new camp NPC: {settlerObject.name}");
-            }
-            else
-            {
-                Debug.Log($"[PlayerInventory] Found existing SaveableObject on camp NPC: {settlerObject.name} (UUID: {campNPCSaveable.UUID})");
             }
 
             // Find the original recruited NPC data to get its flags
-            Debug.Log($"[PlayerInventory] Looking for recruited data with component ID: {originalComponentId}");
-            Debug.Log($"[PlayerInventory] Available recruited NPCs: {recruitedNPCs.Count}");
-            foreach (var data in recruitedNPCs)
-            {
-                Debug.Log($"[PlayerInventory] - Recruited NPC: {data.settlerData.name}, Component ID: {data.componentId}, Flags: {data.narrativeFlags?.Count ?? 0}");
-            }
-            
             var recruitedData = recruitedNPCs.Find(data => data.componentId == originalComponentId);
             if (recruitedData != null && recruitedData.narrativeFlags != null)
             {
-                Debug.Log($"[PlayerInventory] Found recruited data for {recruitedData.settlerData.name} with {recruitedData.narrativeFlags.Count} flags");
-                Debug.Log($"[PlayerInventory] Flags to transfer: {string.Join(", ", recruitedData.narrativeFlags.Select(f => $"{f.flagName}={f.flagValue}"))}");
-                
                 // Apply all captured narrative flags to the new camp NPC's SaveableObject
                 foreach (var flag in recruitedData.narrativeFlags)
                 {
                     campNPCSaveable.SetNarrativeFlag(flag.flagName, flag.flagValue);
-                    Debug.Log($"[PlayerInventory] Set flag '{flag.flagName}' = '{flag.flagValue}' on camp NPC {settlerObject.name}");
-                }
-                
-                // Verify the flags were set correctly
-                var verifyFlags = campNPCSaveable.GetAllNarrativeFlags();
-                Debug.Log($"[PlayerInventory] Verification: Camp NPC now has {verifyFlags.Count} flags: {string.Join(", ", verifyFlags.Select(f => $"{f.Key}={f.Value}"))}");
-                
-                Debug.Log($"[PlayerInventory] Successfully transferred {recruitedData.narrativeFlags.Count} narrative flags to camp NPC {settlerObject.name} (UUID: {campNPCSaveable.UUID})");
-            }
-            else
-            {
-                Debug.LogWarning($"[PlayerInventory] No narrative flags found for original component ID {originalComponentId} for camp NPC {settlerObject.name}");
-                if (recruitedData == null)
-                {
-                    Debug.LogWarning($"[PlayerInventory] No recruited data found for component ID {originalComponentId}");
-                }
-                else if (recruitedData.narrativeFlags == null)
-                {
-                    Debug.LogWarning($"[PlayerInventory] Recruited data found but narrativeFlags is null for {recruitedData.settlerData.name}");
                 }
             }
             

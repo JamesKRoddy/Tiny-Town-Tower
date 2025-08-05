@@ -280,12 +280,10 @@ public class NarrativeManager : MonoBehaviour
                         if (validStarts.Count > 0)
                         {
                             prioritizedDialogues.Add(dialogue);
-                            Debug.Log($"[NarrativeManager] Dialogue '{dialogue.npcName}' has {validStarts.Count} valid conditional starts");
                         }
                         else
                         {
                             fallbackDialogues.Add(dialogue);
-                            Debug.Log($"[NarrativeManager] Dialogue '{dialogue.npcName}' has no valid conditional starts");
                         }
                     }
                     else
@@ -298,20 +296,17 @@ public class NarrativeManager : MonoBehaviour
                 if (prioritizedDialogues.Count > 0)
                 {
                     int prioritizedIndex = Random.Range(0, prioritizedDialogues.Count);
-                    Debug.Log($"[NarrativeManager] Selected prioritized dialogue for {characterType} based on current flags (found {prioritizedDialogues.Count} matching dialogues)");
                     return prioritizedDialogues[prioritizedIndex];
                 }
                 else if (fallbackDialogues.Count > 0)
                 {
                     int fallbackIndex = Random.Range(0, fallbackDialogues.Count);
-                    Debug.Log($"[NarrativeManager] Selected fallback dialogue for {characterType} (no matching conditional starts, found {fallbackDialogues.Count} fallback dialogues)");
                     return fallbackDialogues[fallbackIndex];
                 }
             }
             
             // Fallback to random selection if no component or no appropriate dialogues found
             int randomIndex = Random.Range(0, dialogues.Count);
-            Debug.Log($"[NarrativeManager] Selected random dialogue for {characterType} (fallback)");
             return dialogues[randomIndex];
         }
 
@@ -625,13 +620,11 @@ public class NarrativeManager : MonoBehaviour
         if (currentConversationTarget is SettlerNPC settlerNPC)
         {
             // Set recruitment success flag on the component BEFORE recruitment to ensure it gets captured
-            Debug.Log($"[NarrativeManager] Setting 'recruited' flag on {currentNarrativeComponent?.gameObject.name} before recruitment");
             SetFlag("recruited");
             SetFlag($"recruited_{npcName.Replace(" ", "_").ToLower()}");
             
             // Pass the component ID and SettlerNPC reference to enable appearance data capture
             string componentId = currentNarrativeComponent?.GetInstanceID().ToString();
-            Debug.Log($"[NarrativeManager] Calling PlayerInventory.RecruitNPC with component ID: {componentId}");
             PlayerInventory.Instance.RecruitNPC(settlerNPC, componentId);
             
             Debug.Log($"[NarrativeManager] Successfully recruited NPC: {npcName}");
@@ -697,19 +690,7 @@ public class NarrativeManager : MonoBehaviour
             return true;
         }
 
-        bool result = component.CheckConditions(requiredFlags, blockedByFlags);
-        
-        // Debug logging for flag checking
-        if (requiredFlags != null && requiredFlags.Count > 0)
-        {
-            Debug.Log($"[NarrativeManager] Checking required flags: [{string.Join(", ", requiredFlags)}] for {component.gameObject.name} - Result: {result}");
-        }
-        if (blockedByFlags != null && blockedByFlags.Count > 0)
-        {
-            Debug.Log($"[NarrativeManager] Checking blocked flags: [{string.Join(", ", blockedByFlags)}] for {component.gameObject.name} - Result: {result}");
-        }
-        
-        return result;
+        return component.CheckConditions(requiredFlags, blockedByFlags);
     }
 
     /// <summary>
