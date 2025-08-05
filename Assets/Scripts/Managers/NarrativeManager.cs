@@ -109,8 +109,8 @@ public class NarrativeManager : MonoBehaviour
             }
         }
 
-        // Load a random dialogue for the specified character type
-        DialogueData dialogue = GetRandomDialogueForCharacterType(characterType);
+        // Load a dialogue for the specified character type, considering the narrative component's flags
+        DialogueData dialogue = GetRandomDialogueForCharacterType(characterType, currentNarrativeComponent);
         
         if (dialogue == null)
         {
@@ -253,15 +253,65 @@ public class NarrativeManager : MonoBehaviour
     /// <summary>
     /// Get a random dialogue for a specific CharacterType
     /// </summary>
-    private DialogueData GetRandomDialogueForCharacterType(CharacterType characterType)
+    private DialogueData GetRandomDialogueForCharacterType(CharacterType characterType, NarrativeInteractive narrativeComponent = null)
     {
         // Load dialogues if not already cached
         LoadDialoguesForCharacterType(characterType);
         
         if (loadedDialogues.TryGetValue(characterType, out List<DialogueData> dialogues) && dialogues.Count > 0)
         {
-            // Randomly select one of the available dialogues
+            // Check if we have a narrative component to check flags
+            if (narrativeComponent != null)
+            {
+                // Try to find a dialogue that has appropriate conditional starts for the current state
+                var prioritizedDialogues = new List<DialogueData>();
+                var fallbackDialogues = new List<DialogueData>();
+                
+                foreach (var dialogue in dialogues)
+                {
+                    if (dialogue.conditionalStarts != null && dialogue.conditionalStarts.Count > 0)
+                    {
+                        // Check if this dialogue has conditional starts that match current flags
+                        var validStarts = dialogue.conditionalStarts
+                            .Where(cs => CheckConditionsWithComponent(cs.requiredFlags, cs.blockedByFlags, narrativeComponent))
+                            .OrderByDescending(cs => cs.priority)
+                            .ToList();
+                            
+                        if (validStarts.Count > 0)
+                        {
+                            prioritizedDialogues.Add(dialogue);
+                            Debug.Log($"[NarrativeManager] Dialogue '{dialogue.npcName}' has {validStarts.Count} valid conditional starts");
+                        }
+                        else
+                        {
+                            fallbackDialogues.Add(dialogue);
+                            Debug.Log($"[NarrativeManager] Dialogue '{dialogue.npcName}' has no valid conditional starts");
+                        }
+                    }
+                    else
+                    {
+                        fallbackDialogues.Add(dialogue);
+                    }
+                }
+                
+                // Prefer dialogues with matching conditional starts
+                if (prioritizedDialogues.Count > 0)
+                {
+                    int prioritizedIndex = Random.Range(0, prioritizedDialogues.Count);
+                    Debug.Log($"[NarrativeManager] Selected prioritized dialogue for {characterType} based on current flags (found {prioritizedDialogues.Count} matching dialogues)");
+                    return prioritizedDialogues[prioritizedIndex];
+                }
+                else if (fallbackDialogues.Count > 0)
+                {
+                    int fallbackIndex = Random.Range(0, fallbackDialogues.Count);
+                    Debug.Log($"[NarrativeManager] Selected fallback dialogue for {characterType} (no matching conditional starts, found {fallbackDialogues.Count} fallback dialogues)");
+                    return fallbackDialogues[fallbackIndex];
+                }
+            }
+            
+            // Fallback to random selection if no component or no appropriate dialogues found
             int randomIndex = Random.Range(0, dialogues.Count);
+            Debug.Log($"[NarrativeManager] Selected random dialogue for {characterType} (fallback)");
             return dialogues[randomIndex];
         }
 
@@ -574,13 +624,15 @@ public class NarrativeManager : MonoBehaviour
         // Recruit the procedural settler directly
         if (currentConversationTarget is SettlerNPC settlerNPC)
         {
-            // Pass the component ID and SettlerNPC reference to enable appearance data capture
-            string componentId = currentNarrativeComponent?.GetInstanceID().ToString();
-            PlayerInventory.Instance.RecruitNPC(settlerNPC, componentId);
-            
-            // Set recruitment success flag on the component
+            // Set recruitment success flag on the component BEFORE recruitment to ensure it gets captured
+            Debug.Log($"[NarrativeManager] Setting 'recruited' flag on {currentNarrativeComponent?.gameObject.name} before recruitment");
             SetFlag("recruited");
             SetFlag($"recruited_{npcName.Replace(" ", "_").ToLower()}");
+            
+            // Pass the component ID and SettlerNPC reference to enable appearance data capture
+            string componentId = currentNarrativeComponent?.GetInstanceID().ToString();
+            Debug.Log($"[NarrativeManager] Calling PlayerInventory.RecruitNPC with component ID: {componentId}");
+            PlayerInventory.Instance.RecruitNPC(settlerNPC, componentId);
             
             Debug.Log($"[NarrativeManager] Successfully recruited NPC: {npcName}");
         }
@@ -632,6 +684,32 @@ public class NarrativeManager : MonoBehaviour
         }
 
         return currentNarrativeComponent.CheckConditions(requiredFlags, blockedByFlags);
+    }
+
+    /// <summary>
+    /// Check if conditions are met based on a specific narrative component's flags
+    /// </summary>
+    private bool CheckConditionsWithComponent(List<string> requiredFlags, List<string> blockedByFlags, NarrativeInteractive component)
+    {
+        if (component == null)
+        {
+            // If no component, assume conditions are met (fallback behavior)
+            return true;
+        }
+
+        bool result = component.CheckConditions(requiredFlags, blockedByFlags);
+        
+        // Debug logging for flag checking
+        if (requiredFlags != null && requiredFlags.Count > 0)
+        {
+            Debug.Log($"[NarrativeManager] Checking required flags: [{string.Join(", ", requiredFlags)}] for {component.gameObject.name} - Result: {result}");
+        }
+        if (blockedByFlags != null && blockedByFlags.Count > 0)
+        {
+            Debug.Log($"[NarrativeManager] Checking blocked flags: [{string.Join(", ", blockedByFlags)}] for {component.gameObject.name} - Result: {result}");
+        }
+        
+        return result;
     }
 
     /// <summary>
