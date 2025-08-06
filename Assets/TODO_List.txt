@@ -8,13 +8,7 @@ Make the camera skybox background black.
 
 Recruiting NPCs:
 
-Get chatGPT to generate more recruitment diologue options
-Test randomly assigning narrative elements to NPCs
-Check if recruitment and recruitment diologue works
-Check conversations in camp continue and make sense
-Check if having certain items in the inventory changes conversations
 Check if saving and loading works
-Maybe implement something so certain diologue options can only happen with one NPCs i.e. the diologue is unique for that playthrough
 
 
 
@@ -48,6 +42,7 @@ In game quit button doesn't exit the game
 Theres these small, medium and large enums for room sizes that need to be removed
 After returning the the camp theres an error originating front the dirt piles
 NPCs spawned into the roguelike section have nav errors
+When selecting the option to exit a narrative interaction the player attacks
 
 
 

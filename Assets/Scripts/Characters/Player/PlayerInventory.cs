@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using Managers;
@@ -418,6 +419,17 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         
         // Create and add the recruited NPC data
         var recruitedData = new RecruitedNPCData(settlerData, componentId, appearanceData);
+        
+        // Capture narrative flags from the original NPC if it has a SaveableObject component
+        if (settlerNPCReference.TryGetComponent<SaveableObject>(out var saveableObj))
+        {
+            var allFlags = saveableObj.GetAllNarrativeFlags();
+            foreach (var flag in allFlags)
+            {
+                recruitedData.AddNarrativeFlag(flag.Key, flag.Value);
+            }
+        }
+        
         recruitedNPCs.Add(recruitedData);
 
         
@@ -509,7 +521,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         foreach (var recruitedData in recruitedNPCs)
         {
             settlersToTransfer.Add(recruitedData.settlerData);
-            SpawnSettlerInCamp(recruitedData.settlerData, recruitedData.appearanceData);
+            SpawnSettlerInCamp(recruitedData.settlerData, recruitedData.appearanceData, recruitedData.componentId);
         }
 
         // Fire the event to notify other systems about the transfer
@@ -522,7 +534,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     /// <summary>
     /// Spawn a recruited settler in the camp
     /// </summary>
-    private void SpawnSettlerInCamp(Managers.SettlerData settlerData, NPCAppearanceData appearanceData = null)
+    private void SpawnSettlerInCamp(Managers.SettlerData settlerData, NPCAppearanceData appearanceData = null, string originalComponentId = null)
     {
         // Get the settler prefab from NPCManager
         if (NPCManager.Instance == null || !NPCManager.Instance.IsSettlerGenerationConfigured())
@@ -561,6 +573,24 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             else
             {
                 Debug.LogWarning($"[PlayerInventory] No appearance data available for recruited settler '{settlerData.name}' - will use random appearance");
+            }
+            
+            // Ensure SaveableObject is present on the new camp NPC
+            SaveableObject campNPCSaveable = settlerObject.GetComponent<SaveableObject>();
+            if (campNPCSaveable == null)
+            {
+                campNPCSaveable = settlerObject.AddComponent<SaveableObject>();
+            }
+
+            // Find the original recruited NPC data to get its flags
+            var recruitedData = recruitedNPCs.Find(data => data.componentId == originalComponentId);
+            if (recruitedData != null && recruitedData.narrativeFlags != null)
+            {
+                // Apply all captured narrative flags to the new camp NPC's SaveableObject
+                foreach (var flag in recruitedData.narrativeFlags)
+                {
+                    campNPCSaveable.SetNarrativeFlag(flag.flagName, flag.flagValue);
+                }
             }
             
         }
@@ -620,6 +650,8 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             recruitedNPCs.Remove(dataToRemove);
         }
     }
+    
+
 
     #endregion
 }
@@ -633,11 +665,24 @@ public class RecruitedNPCData
     public Managers.SettlerData settlerData;
     public string componentId;
     public NPCAppearanceData appearanceData;
+    public List<NarrativeFlagData> narrativeFlags; // Store narrative flags for persistence
     
     public RecruitedNPCData(Managers.SettlerData settler, string id, NPCAppearanceData appearance)
     {
         settlerData = settler;
         componentId = id;
         appearanceData = appearance;
+        narrativeFlags = new List<NarrativeFlagData>();
+    }
+    
+    /// <summary>
+    /// Add a narrative flag to this recruited NPC data
+    /// </summary>
+    public void AddNarrativeFlag(string flagName, string flagValue = "true")
+    {
+        // Remove existing flag if it exists
+        narrativeFlags.RemoveAll(flag => flag.flagName == flagName);
+        // Add the new flag
+        narrativeFlags.Add(new NarrativeFlagData(flagName, flagValue));
     }
 }

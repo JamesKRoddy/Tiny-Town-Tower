@@ -71,6 +71,9 @@ namespace Managers
                 return null;
             }
 
+            // Track building progression milestone
+            Managers.GameProgressionManager.Instance.OnBuildingTypeReached(buildingType);
+
             return currentBuilding;
         }
 
@@ -223,6 +226,12 @@ namespace Managers
 
         private void LeaveBuilding()
         {
+            // Track building completion milestone before clearing current building
+            if (currentBuilding != null)
+            {
+                Managers.GameProgressionManager.Instance.OnBuildingTypeCleared(currentBuilding.buildingType);
+            }
+
             currentBuilding = null;
             currentRoomParent = null;
             lastPlayerSpawnPoint = Vector3.zero;
