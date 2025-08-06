@@ -1,0 +1,135 @@
+{
+    "npcName": "Experienced Survivor",
+    "startingLineId": "Start",
+    "conditionalStarts": [
+        {
+            "lineId": "ReturningPlayer",
+            "requiredFlags": ["reached_shopping_mall"],
+            "priority": 10,
+            "description": "Player has reached shopping mall - show different greeting"
+        },
+        {
+            "lineId": "VeteranPlayer", 
+            "requiredFlags": ["cleared_hospital"],
+            "priority": 20,
+            "description": "Player has cleared hospital - show veteran greeting"
+        }
+    ],
+    "lines": [
+        {
+            "id": "Start",
+            "speaker": "Experienced Survivor",
+            "text": "Hey there, newcomer. I can tell you're just starting out. The wasteland is dangerous, but if you prove yourself, I might have some advice.",
+            "options": [
+                { "text": "What kind of proof do you need?", "nextLine": "ProofExplanation" },
+                { "text": "I'm ready for anything.", "nextLine": "ReadyResponse" },
+                { "text": "Not interested.", "nextLine": "Dismissal" }
+            ]
+        },
+        {
+            "id": "ReturningPlayer",
+            "speaker": "Experienced Survivor", 
+            "text": "Well, well! I heard you made it to the shopping mall. That's no small feat. You're starting to prove yourself out there.",
+            "options": [
+                { "text": "It was challenging, but I managed.", "nextLine": "MallResponse" },
+                { 
+                    "text": "I could use better gear for the next run.",
+                    "nextLine": "GearOffer",
+                    "requiredInventoryItems": [
+                        {
+                            "itemName": "Metal Scrap",
+                            "requiredQuantity": 10,
+                            "consumeOnUse": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "VeteranPlayer",
+            "speaker": "Experienced Survivor",
+            "text": "Incredible! You actually cleared the hospital? That place is a nightmare even for veterans like me. You've earned my complete respect.",
+            "options": [
+                { "text": "It wasn't easy, but the medical supplies were worth it.", "nextLine": "HospitalReward" },
+                { "text": "What other challenges await?", "nextLine": "AdvancedChallenges" }
+            ]
+        },
+        {
+            "id": "ProofExplanation",
+            "speaker": "Experienced Survivor",
+            "text": "Simple. Survive a few building raids. Start small - maybe an abandoned house or corner store. Come back when you've proven you can handle the infected.",
+            "options": [
+                { "text": "I'll be back.", "nextLine": "Dismissal" }
+            ]
+        },
+        {
+            "id": "MallResponse", 
+            "speaker": "Experienced Survivor",
+            "text": "The mall is where things get serious. Lots of valuable loot, but the infected are stronger there. You're ready for bigger challenges now.",
+            "options": [
+                { 
+                    "text": "Tell me about the hospital.",
+                    "nextLine": "HospitalInfo",
+                    "requiredFlags": ["reached_office_building"]
+                },
+                { "text": "What other buildings should I tackle?", "nextLine": "BuildingAdvice" }
+            ]
+        },
+        {
+            "id": "GearOffer",
+            "speaker": "Experienced Survivor", 
+            "text": "Smart thinking. Here, I can upgrade your gear with this metal scrap. This should help you survive the tougher buildings.",
+            "setFlags": ["received_gear_upgrade"],
+            "options": [
+                { "text": "Thanks, this will help a lot.", "nextLine": "Dismissal" }
+            ]
+        },
+        {
+            "id": "HospitalInfo",
+            "speaker": "Experienced Survivor",
+            "text": "The hospital... that's end-game territory. Medical supplies are incredible, but it's crawling with the worst infected you'll encounter. Only attempt it when you're fully prepared.",
+            "options": [
+                { "text": "I'll keep that in mind.", "nextLine": "Dismissal" }
+            ]
+        },
+        {
+            "id": "HospitalReward",
+            "speaker": "Experienced Survivor",
+            "text": "Those medical supplies will save lives back at camp. You've done something truly remarkable. Here, take this - you've earned it.",
+            "setFlags": ["hospital_hero"],
+            "options": [
+                { "text": "Thank you for the recognition.", "nextLine": "Dismissal" }
+            ]
+        },
+        {
+            "id": "AdvancedChallenges",
+            "speaker": "Experienced Survivor",
+            "text": "Well, there's always the military base or research facility, but those are in entirely different leagues. The hospital was just the beginning of true difficulty.",
+            "options": [
+                { "text": "I'll be ready when the time comes.", "nextLine": "Dismissal" }
+            ]
+        },
+        {
+            "id": "BuildingAdvice",
+            "speaker": "Experienced Survivor",
+            "text": "Work your way up gradually. Office buildings are good for intermediate practice. But remember - each building type teaches you something different about survival.",
+            "options": [
+                { "text": "Good advice. I'll take it slow.", "nextLine": "Dismissal" }
+            ]
+        },
+        {
+            "id": "ReadyResponse",
+            "speaker": "Experienced Survivor",
+            "text": "Confidence is good, but the wasteland will humble anyone. Prove yourself first, then we'll talk.",
+            "options": [
+                { "text": "Fair enough.", "nextLine": "Dismissal" }
+            ]
+        },
+        {
+            "id": "Dismissal",
+            "speaker": "Experienced Survivor",
+            "text": "Stay safe out there. The wasteland doesn't forgive mistakes.",
+            "isTerminal": true
+        }
+    ]
+}

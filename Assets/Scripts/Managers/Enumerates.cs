@@ -27,6 +27,21 @@ public enum RogueLikeBuildingType
 {
     // Category 0: None/Default
     NONE = 0,
+    
+    // Early Game Buildings
+    ABANDONED_HOUSE = 1,
+    SMALL_WAREHOUSE = 2,
+    CORNER_STORE = 3,
+    
+    // Mid Game Buildings  
+    SHOPPING_MALL = 10,
+    OFFICE_BUILDING = 11,
+    APARTMENT_COMPLEX = 12,
+    
+    // Late Game Buildings
+    HOSPITAL = 20,
+    MILITARY_BASE = 21,
+    RESEARCH_FACILITY = 22,
 }
 
 public enum RogueLikeRoomType

@@ -32,6 +32,7 @@ public class NarrativeManager : MonoBehaviour
 
     [Header("Narrative Configuration")]
     [SerializeField] private CharacterDialogueMapping[] characterDialogueMappings;
+    [SerializeField] private bool debugLogging = true;
 
     // Cache for loaded dialogues - now supports multiple dialogues per character type
     private Dictionary<CharacterType, List<DialogueData>> loadedDialogues = new Dictionary<CharacterType, List<DialogueData>>();
@@ -161,6 +162,9 @@ public class NarrativeManager : MonoBehaviour
             // Find the appropriate starting line based on component's progression flags
             DialogueLine startingLine = GetStartingDialogueLine();
             
+            // Process flags for the starting line
+            ProcessFlags(startingLine.setFlags, startingLine.removeFlags);
+            
             // Show the conversation UI
             if (PlayerUIManager.Instance.narrativeMenu != null)
             {
@@ -183,26 +187,88 @@ public class NarrativeManager : MonoBehaviour
     /// </summary>
     private DialogueLine GetStartingDialogueLine()
     {
+        if (debugLogging)
+            Debug.Log($"[NarrativeManager] GetStartingDialogueLine: Checking for conditional starts");
+        
         // Check for conditional starts first
         if (currentDialogue.conditionalStarts != null && currentDialogue.conditionalStarts.Count > 0)
         {
-            var validStarts = currentDialogue.conditionalStarts
-                .Where(cs => CheckConditions(cs.requiredFlags, cs.blockedByFlags))
-                .OrderByDescending(cs => cs.priority)
-                .ToList();
-
-            if (validStarts.Count > 0)
+            if (debugLogging)
+                Debug.Log($"[NarrativeManager] Found {currentDialogue.conditionalStarts.Count} conditional starts to check");
+            
+            var validStarts = new List<ConditionalStart>();
+            
+            foreach (var conditionalStart in currentDialogue.conditionalStarts)
             {
-                var chosenStart = validStarts.First();
+                if (debugLogging)
+                    Debug.Log($"[NarrativeManager] Checking conditional start: '{conditionalStart.lineId}' (priority: {conditionalStart.priority})");
+                
+                // Log required flags
+                if (conditionalStart.requiredFlags != null && conditionalStart.requiredFlags.Count > 0)
+                {
+                    if (debugLogging)
+                        Debug.Log($"[NarrativeManager] Required flags: {string.Join(", ", conditionalStart.requiredFlags)}");
+                    foreach (var flag in conditionalStart.requiredFlags)
+                    {
+                        bool hasFlag = HasFlag(flag);
+                        if (debugLogging)
+                            Debug.Log($"[NarrativeManager] Flag '{flag}': {(hasFlag ? "PRESENT" : "MISSING")}");
+                    }
+                }
+                
+                // Log blocked flags
+                if (conditionalStart.blockedByFlags != null && conditionalStart.blockedByFlags.Count > 0)
+                {
+                    if (debugLogging)
+                        Debug.Log($"[NarrativeManager] Blocked flags: {string.Join(", ", conditionalStart.blockedByFlags)}");
+                    foreach (var flag in conditionalStart.blockedByFlags)
+                    {
+                        bool hasFlag = HasFlag(flag);
+                        if (debugLogging)
+                            Debug.Log($"[NarrativeManager] Blocked flag '{flag}': {(hasFlag ? "PRESENT (BLOCKING)" : "ABSENT (OK)")}");
+                    }
+                }
+                
+                bool conditionsMet = CheckConditions(conditionalStart.requiredFlags, conditionalStart.blockedByFlags);
+                if (debugLogging)
+                    Debug.Log($"[NarrativeManager] Conditional start '{conditionalStart.lineId}': {(conditionsMet ? "CONDITIONS MET" : "CONDITIONS NOT MET")}");
+                
+                if (conditionsMet)
+                {
+                    validStarts.Add(conditionalStart);
+                }
+            }
+
+            var sortedStarts = validStarts.OrderByDescending(cs => cs.priority).ToList();
+            if (debugLogging)
+                Debug.Log($"[NarrativeManager] Valid conditional starts found: {sortedStarts.Count}");
+
+            if (sortedStarts.Count > 0)
+            {
+                var chosenStart = sortedStarts.First();
+                if (debugLogging)
+                    Debug.Log($"[NarrativeManager] Using conditional start: '{chosenStart.lineId}' (priority: {chosenStart.priority})");
+                
                 if (currentDialogueLinesMap.TryGetValue(chosenStart.lineId, out DialogueLine conditionalLine))
                 {
                     return conditionalLine;
                 }
+                else
+                {
+                    Debug.LogError($"[NarrativeManager] Could not find dialogue line with ID: {chosenStart.lineId}");
+                }
             }
+        }
+        else
+        {
+            if (debugLogging)
+                Debug.Log("[NarrativeManager] No conditional starts defined for this dialogue");
         }
 
         // Fall back to default starting line
         string startLineId = !string.IsNullOrEmpty(currentDialogue.startingLineId) ? currentDialogue.startingLineId : "Start";
+        if (debugLogging)
+            Debug.Log($"[NarrativeManager] Falling back to default starting line: '{startLineId}'");
         
         if (currentDialogueLinesMap.TryGetValue(startLineId, out DialogueLine defaultLine))
         {
@@ -210,6 +276,8 @@ public class NarrativeManager : MonoBehaviour
         }
 
         // Ultimate fallback: return first line
+        if (debugLogging)
+            Debug.Log("[NarrativeManager] Using ultimate fallback: first line in dialogue");
         return currentDialogue.lines[0];
     }
 
@@ -630,7 +698,8 @@ public class NarrativeManager : MonoBehaviour
             string componentId = currentNarrativeComponent?.GetInstanceID().ToString();
             PlayerInventory.Instance.RecruitNPC(settlerNPC, componentId);
             
-            Debug.Log($"[NarrativeManager] Successfully recruited NPC: {npcName}");
+            if (debugLogging)
+                Debug.Log($"[NarrativeManager] Successfully recruited NPC: {npcName}");
         }
         else
         {
@@ -702,7 +771,22 @@ public class NarrativeManager : MonoBehaviour
     private void ProcessFlags(List<string> setFlags, List<string> removeFlags)
     {
         if (currentNarrativeComponent == null)
+        {
+            Debug.LogWarning("[NarrativeManager] Cannot process flags - no current narrative component!");
             return;
+        }
+
+        if (setFlags != null && setFlags.Count > 0)
+        {
+            if (debugLogging)
+                Debug.Log($"[NarrativeManager] Setting flags: {string.Join(", ", setFlags)}");
+        }
+        
+        if (removeFlags != null && removeFlags.Count > 0)
+        {
+            if (debugLogging)
+                Debug.Log($"[NarrativeManager] Removing flags: {string.Join(", ", removeFlags)}");
+        }
 
         currentNarrativeComponent.ProcessFlags(setFlags, removeFlags);
     }
@@ -723,13 +807,21 @@ public class NarrativeManager : MonoBehaviour
 
     /// <summary>
     /// Check if the current narrative asset has a flag
+    /// Also checks global progression flags if local flag is not found
     /// </summary>
     public bool HasFlag(string flagName)
     {
-        if (currentNarrativeComponent == null)
+        if (string.IsNullOrEmpty(flagName))
             return false;
 
-        return currentNarrativeComponent.HasFlag(flagName);
+        // First check local narrative component flags
+        if (currentNarrativeComponent != null && currentNarrativeComponent.HasFlag(flagName))
+        {
+            return true;
+        }
+
+        // Fall back to global progression flags
+        return Managers.GameProgressionManager.Instance.HasGlobalFlag(flagName);
     }
 
     #endregion
@@ -779,7 +871,8 @@ public class NarrativeManager : MonoBehaviour
     {
         if (option == null)
         {
-            Debug.Log("[NarrativeManager] CheckInventoryRequirements: option is null, returning true");
+            if (debugLogging)
+                Debug.Log("[NarrativeManager] CheckInventoryRequirements: option is null, returning true");
             return true;
         }
 
@@ -788,7 +881,8 @@ public class NarrativeManager : MonoBehaviour
         {
             if (!PlayerInventory.Instance.HasItemByName(option.requiredItem))
             {
-                Debug.Log($"[NarrativeManager] Missing legacy item: {option.requiredItem}");
+                if (debugLogging)
+                    Debug.Log($"[NarrativeManager] Missing legacy item: {option.requiredItem}");
                 return false;
             }
         }
@@ -797,7 +891,7 @@ public class NarrativeManager : MonoBehaviour
         if (option.requiredInventoryItems != null && option.requiredInventoryItems.Count > 0)
         {
             bool result = CheckInventoryRequirementsList(option.requiredInventoryItems);
-            if (!result)
+            if (!result && debugLogging)
             {
                 Debug.Log($"[NarrativeManager] Failed inventory requirements check for option: '{option.text}'");
             }
@@ -818,7 +912,8 @@ public class NarrativeManager : MonoBehaviour
         }
 
         // Log current inventory state for debugging
-        LogCurrentInventory();
+        if (debugLogging)
+            LogCurrentInventory();
 
         foreach (var requirement in requirements)
         {
@@ -828,7 +923,8 @@ public class NarrativeManager : MonoBehaviour
             // Check if player has the item by name
             if (!PlayerInventory.Instance.HasItemByName(requirement.itemName))
             {
-                Debug.Log($"[NarrativeManager] Missing item: {requirement.itemName}");
+                if (debugLogging)
+                    Debug.Log($"[NarrativeManager] Missing item: {requirement.itemName}");
                 return false;
             }
 
@@ -842,7 +938,8 @@ public class NarrativeManager : MonoBehaviour
 
                 if (matchingItem == null || matchingItem.count < requirement.requiredQuantity)
                 {
-                    Debug.Log($"[NarrativeManager] Insufficient {requirement.itemName}: has {matchingItem?.count ?? 0}, needs {requirement.requiredQuantity}");
+                    if (debugLogging)
+                        Debug.Log($"[NarrativeManager] Insufficient {requirement.itemName}: has {matchingItem?.count ?? 0}, needs {requirement.requiredQuantity}");
                     return false;
                 }
             }
@@ -912,7 +1009,8 @@ public class NarrativeManager : MonoBehaviour
             {
                 // Remove the required quantity
                 PlayerInventory.Instance.RemoveItem(matchingItem.resourceScriptableObj, requirement.requiredQuantity);
-                Debug.Log($"[NarrativeManager] Consumed {requirement.requiredQuantity}x {requirement.itemName} from player inventory");
+                if (debugLogging)
+                    Debug.Log($"[NarrativeManager] Consumed {requirement.requiredQuantity}x {requirement.itemName} from player inventory");
             }
         }
     }
@@ -974,7 +1072,8 @@ public class NarrativeManager : MonoBehaviour
         if (metalScrap != null)
         {
             PlayerInventory.Instance.AddItem(metalScrap, 5);
-            Debug.Log("[NarrativeManager] Added 5 Metal Scrap to inventory for testing");
+            if (debugLogging)
+                Debug.Log("[NarrativeManager] Added 5 Metal Scrap to inventory for testing");
         }
         else
         {
@@ -984,7 +1083,8 @@ public class NarrativeManager : MonoBehaviour
         if (wood != null)
         {
             PlayerInventory.Instance.AddItem(wood, 10);
-            Debug.Log("[NarrativeManager] Added 10 Wood to inventory for testing");
+            if (debugLogging)
+                Debug.Log("[NarrativeManager] Added 10 Wood to inventory for testing");
         }
         else
         {

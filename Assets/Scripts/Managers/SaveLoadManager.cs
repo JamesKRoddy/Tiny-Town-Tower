@@ -31,6 +31,7 @@ public class GameData
     public PlayerData playerData = new PlayerData();
     public BuildingData buildingData = new BuildingData();
     public ManagerData managerData = new ManagerData();
+    public Managers.GameProgressionData progressionData = new Managers.GameProgressionData();
     
     // Metadata
     public string saveVersion = "1.0";
@@ -1178,6 +1179,59 @@ public class SaveLoadManager : MonoBehaviour
         };
     }
 
+    #endregion
+
+    #region Progression Data Save/Load
+
+    /// <summary>
+    /// Save game progression data
+    /// </summary>
+    private void SaveProgressionData(Managers.GameProgressionData progressionData)
+    {
+        if (Managers.GameProgressionManager.Instance == null)
+        {
+            Debug.LogWarning("[SaveLoadManager] GameProgressionManager not found for saving progression data");
+            return;
+        }
+
+        var currentProgressionData = Managers.GameProgressionManager.Instance.GetProgressionData();
+        
+        // Copy data to the save structure
+        progressionData.completedMilestones.Clear();
+        progressionData.completedMilestones.AddRange(currentProgressionData.completedMilestones);
+        
+        progressionData.globalFlags.Clear();
+        foreach (var flag in currentProgressionData.globalFlags)
+        {
+            progressionData.globalFlags[flag.Key] = flag.Value;
+        }
+
+        Debug.Log($"[SaveLoadManager] Saved progression data: {progressionData.completedMilestones.Count} milestones, {progressionData.globalFlags.Count} flags");
+    }
+
+    /// <summary>
+    /// Load game progression data
+    /// </summary>
+    private void LoadProgressionData(Managers.GameProgressionData progressionData)
+    {
+        if (Managers.GameProgressionManager.Instance == null)
+        {
+            Debug.LogWarning("[SaveLoadManager] GameProgressionManager not found for loading progression data");
+            return;
+        }
+
+        if (progressionData == null)
+        {
+            Debug.Log("[SaveLoadManager] No progression data to load");
+            return;
+        }
+
+        Managers.GameProgressionManager.Instance.LoadProgressionData(progressionData);
+        Debug.Log($"[SaveLoadManager] Loaded progression data: {progressionData.completedMilestones?.Count ?? 0} milestones, {progressionData.globalFlags?.Count ?? 0} flags");
+    }
+
+    #endregion
+
     /// <summary>
     /// Save only the data relevant to the current game mode
     /// </summary>
@@ -1194,6 +1248,7 @@ public class SaveLoadManager : MonoBehaviour
                 SaveManagerData(data.managerData);
         
                 SaveResearchData(data.researchData);
+                SaveProgressionData(data.progressionData);
                 // IMPORTANT: Also save player data in camp mode to capture any recruited NPCs 
                 // that may still be in PlayerInventory before transfer
                 SavePlayerData(data.playerData);
@@ -1202,6 +1257,7 @@ public class SaveLoadManager : MonoBehaviour
             case GameMode.ROGUE_LITE:
                 // Save roguelike-specific data (primarily player data)
                 SavePlayerData(data.playerData);
+                SaveProgressionData(data.progressionData);
                 // Save narrative data as it might be relevant for story progression
         
                 break;
@@ -1209,6 +1265,7 @@ public class SaveLoadManager : MonoBehaviour
             case GameMode.MAIN_MENU:
                 // For main menu, we might want to save global player data only
                 SavePlayerData(data.playerData);
+                SaveProgressionData(data.progressionData);
                 break;
 
             default:
@@ -1220,6 +1277,7 @@ public class SaveLoadManager : MonoBehaviour
                 SavePlayerData(data.playerData);
                 SaveBuildingData(data.buildingData);
                 SaveManagerData(data.managerData);
+                SaveProgressionData(data.progressionData);
         
                 break;
         }
@@ -1241,6 +1299,7 @@ public class SaveLoadManager : MonoBehaviour
                 LoadManagerData(data.managerData);
         
                 LoadResearchData(data.researchData);
+                LoadProgressionData(data.progressionData);
                 // IMPORTANT: Also load player data in camp mode to restore any recruited NPCs
                 // that need to be transferred to camp
                 LoadPlayerDataForCamp(data.playerData);
@@ -1249,12 +1308,14 @@ public class SaveLoadManager : MonoBehaviour
             case GameMode.ROGUE_LITE:
                 // Load roguelike-specific data
                 LoadPlayerData(data.playerData);
+                LoadProgressionData(data.progressionData);
         
                 break;
 
             case GameMode.MAIN_MENU:
                 // For main menu, load global player data only
                 LoadPlayerData(data.playerData);
+                LoadProgressionData(data.progressionData);
                 break;
 
             default:
@@ -1266,12 +1327,11 @@ public class SaveLoadManager : MonoBehaviour
                 LoadPlayerData(data.playerData);
                 LoadBuildingData(data.buildingData);
                 LoadManagerData(data.managerData);
+                LoadProgressionData(data.progressionData);
         
                 break;
         }
     }
-
-    #endregion
 
     #region Utility Methods
 
