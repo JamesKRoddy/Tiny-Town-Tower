@@ -531,6 +531,9 @@ public class NarrativeManager : MonoBehaviour
     /// </summary>
     public void HandleOptionSelected(DialogueOption option)
     {
+        // Process inventory consumption if specified
+        ConsumeInventoryItems(option);
+        
         // Process flags for the selected option
         ProcessFlags(option.setFlags, option.removeFlags);
 
@@ -766,6 +769,230 @@ public class NarrativeManager : MonoBehaviour
 
         return "Unknown NPC";
     }
+
+    #region Inventory Checking
+
+    /// <summary>
+    /// Check if the player has the required inventory items for a dialogue option
+    /// </summary>
+    public bool CheckInventoryRequirements(DialogueOption option)
+    {
+        if (option == null)
+        {
+            Debug.Log("[NarrativeManager] CheckInventoryRequirements: option is null, returning true");
+            return true;
+        }
+
+        // Check legacy requiredItem field for backwards compatibility
+        if (!string.IsNullOrEmpty(option.requiredItem))
+        {
+            if (!PlayerInventory.Instance.HasItemByName(option.requiredItem))
+            {
+                Debug.Log($"[NarrativeManager] Missing legacy item: {option.requiredItem}");
+                return false;
+            }
+        }
+
+        // Check new inventory requirements system
+        if (option.requiredInventoryItems != null && option.requiredInventoryItems.Count > 0)
+        {
+            bool result = CheckInventoryRequirementsList(option.requiredInventoryItems);
+            if (!result)
+            {
+                Debug.Log($"[NarrativeManager] Failed inventory requirements check for option: '{option.text}'");
+            }
+            return result;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Check if the player has all items in the requirements list
+    /// </summary>
+    private bool CheckInventoryRequirementsList(List<InventoryRequirement> requirements)
+    {
+        if (PlayerInventory.Instance == null)
+        {
+            Debug.LogWarning("[NarrativeManager] PlayerInventory not found for inventory check!");
+            return false;
+        }
+
+        // Log current inventory state for debugging
+        LogCurrentInventory();
+
+        foreach (var requirement in requirements)
+        {
+            if (string.IsNullOrEmpty(requirement.itemName))
+                continue;
+
+            // Check if player has the item by name
+            if (!PlayerInventory.Instance.HasItemByName(requirement.itemName))
+            {
+                Debug.Log($"[NarrativeManager] Missing item: {requirement.itemName}");
+                return false;
+            }
+
+            // Check quantity if specified
+            if (requirement.requiredQuantity > 1)
+            {
+                var playerInventory = PlayerInventory.Instance.GetFullInventory();
+                var matchingItem = playerInventory.Find(item => 
+                    item.resourceScriptableObj != null && 
+                    item.resourceScriptableObj.objectName == requirement.itemName);
+
+                if (matchingItem == null || matchingItem.count < requirement.requiredQuantity)
+                {
+                    Debug.Log($"[NarrativeManager] Insufficient {requirement.itemName}: has {matchingItem?.count ?? 0}, needs {requirement.requiredQuantity}");
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Log the current player inventory state for debugging
+    /// </summary>
+    private void LogCurrentInventory()
+    {
+        if (PlayerInventory.Instance == null)
+        {
+            Debug.LogWarning("[NarrativeManager] PlayerInventory is null, cannot log inventory");
+            return;
+        }
+
+        var inventory = PlayerInventory.Instance.GetFullInventory();
+        Debug.Log($"[NarrativeManager] Current inventory state ({inventory.Count} items):");
+        
+        if (inventory.Count == 0)
+        {
+            Debug.Log("[NarrativeManager] Inventory is empty");
+            return;
+        }
+
+        foreach (var item in inventory)
+        {
+            if (item.resourceScriptableObj != null)
+            {
+                Debug.Log($"[NarrativeManager]   - {item.resourceScriptableObj.objectName}: {item.count}");
+            }
+            else
+            {
+                Debug.Log($"[NarrativeManager]   - [NULL RESOURCE]: {item.count}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Consume inventory items when a dialogue option is selected (if specified)
+    /// </summary>
+    private void ConsumeInventoryItems(DialogueOption option)
+    {
+        if (option?.requiredInventoryItems == null || option.requiredInventoryItems.Count == 0)
+            return;
+
+        if (PlayerInventory.Instance == null)
+        {
+            Debug.LogWarning("[NarrativeManager] PlayerInventory not found for item consumption!");
+            return;
+        }
+
+        foreach (var requirement in option.requiredInventoryItems)
+        {
+            if (!requirement.consumeOnUse || string.IsNullOrEmpty(requirement.itemName))
+                continue;
+
+            // Find the item in player inventory
+            var playerInventory = PlayerInventory.Instance.GetFullInventory();
+            var matchingItem = playerInventory.Find(item => 
+                item.resourceScriptableObj != null && 
+                item.resourceScriptableObj.objectName == requirement.itemName);
+
+            if (matchingItem != null)
+            {
+                // Remove the required quantity
+                PlayerInventory.Instance.RemoveItem(matchingItem.resourceScriptableObj, requirement.requiredQuantity);
+                Debug.Log($"[NarrativeManager] Consumed {requirement.requiredQuantity}x {requirement.itemName} from player inventory");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Get a formatted display text for inventory requirements (for UI tooltips)
+    /// </summary>
+    public string GetInventoryRequirementDisplayText(DialogueOption option)
+    {
+        if (option?.requiredInventoryItems == null || option.requiredInventoryItems.Count == 0)
+        {
+            // Check legacy requiredItem field
+            if (!string.IsNullOrEmpty(option.requiredItem))
+            {
+                return $"Requires: {option.requiredItem}";
+            }
+            return string.Empty;
+        }
+
+        var requirements = new List<string>();
+        foreach (var requirement in option.requiredInventoryItems)
+        {
+            if (!string.IsNullOrEmpty(requirement.displayText))
+            {
+                requirements.Add(requirement.displayText);
+            }
+            else if (!string.IsNullOrEmpty(requirement.itemName))
+            {
+                if (requirement.requiredQuantity > 1)
+                {
+                    requirements.Add($"{requirement.requiredQuantity}x {requirement.itemName}");
+                }
+                else
+                {
+                    requirements.Add(requirement.itemName);
+                }
+            }
+        }
+
+        return requirements.Count > 0 ? $"Requires: {string.Join(", ", requirements)}" : string.Empty;
+    }
+
+    /// <summary>
+    /// Debug method to add test items to player inventory (for testing dialogue requirements)
+    /// </summary>
+    [System.Diagnostics.Conditional("UNITY_EDITOR")]
+    public void AddTestItemsForDialogue()
+    {
+        if (PlayerInventory.Instance == null)
+        {
+            Debug.LogWarning("[NarrativeManager] PlayerInventory not found for adding test items");
+            return;
+        }
+
+        // Load the test resources
+        var metalScrap = Resources.Load<ResourceScriptableObj>("Resources/MaterialResources/Metal Scrap");
+        var wood = Resources.Load<ResourceScriptableObj>("Resources/MaterialResources/Wood");
+
+        if (metalScrap != null)
+        {
+            PlayerInventory.Instance.AddItem(metalScrap, 5);
+            Debug.Log("[NarrativeManager] Added 5 Metal Scrap to inventory for testing");
+        }
+        else
+        {
+            Debug.LogError("[NarrativeManager] Could not load Metal Scrap resource");
+        }
+
+        if (wood != null)
+        {
+            PlayerInventory.Instance.AddItem(wood, 10);
+            Debug.Log("[NarrativeManager] Added 10 Wood to inventory for testing");
+        }
+        else
+        {
+            Debug.LogError("[NarrativeManager] Could not load Wood resource");
+        }
+    }
+
+    #endregion
 }
 
 /// <summary>

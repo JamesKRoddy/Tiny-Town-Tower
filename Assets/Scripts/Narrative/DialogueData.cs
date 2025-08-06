@@ -33,14 +33,29 @@ public class DialogueOption
 {
     public string text; // Text for the player option
     public string nextLine; // The ID of the next line to jump to
-    public string requiredItem; // (Optional) Item required to enable this option
+    public string requiredItem; // (Optional) Item required to enable this option (legacy - use requiredInventoryItems instead)
     public string recruitNPC; // (Optional) Name of NPC to recruit when this option is selected
+    
+    // Enhanced Inventory Requirements
+    public List<InventoryRequirement> requiredInventoryItems; // List of items and quantities required
     
     // Interaction Tracking
     public List<string> requiredFlags; // Flags required for this option to appear
     public List<string> blockedByFlags; // Flags that hide this option
     public List<string> setFlags; // Flags to set when this option is selected
     public List<string> removeFlags; // Flags to remove when this option is selected
+}
+
+/// <summary>
+/// Represents an inventory requirement for dialogue options
+/// </summary>
+[System.Serializable]
+public class InventoryRequirement
+{
+    public string itemName; // Name of the required item (matches ResourceScriptableObj.objectName)
+    public int requiredQuantity = 1; // Minimum quantity required (default: 1)
+    public bool consumeOnUse = false; // Whether to consume the items when this option is selected
+    public string displayText; // Optional custom text to show in tooltips (e.g., "Requires 5x Wood")
 }
 
 /// <summary>

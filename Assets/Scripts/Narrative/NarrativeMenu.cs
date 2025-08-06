@@ -45,11 +45,31 @@ public class NarrativeMenu : MenuBase
         // If the line has options, show them (filtered by flags)
         if (line.options != null && line.options.Count > 0)
         {
-            var filteredOptions = FilterOptionsByFlags(line.options);
-            if (filteredOptions.Count > 0)
+            Debug.Log($"[NarrativeMenu] DisplayDialogue: Line has {line.options.Count} options before filtering");
+            foreach (var option in line.options)
             {
-                ShowOptions(filteredOptions);
+                Debug.Log($"[NarrativeMenu] Option found: '{option.text}' -> '{option.nextLine}'");
+                if (option.requiredInventoryItems != null && option.requiredInventoryItems.Count > 0)
+                {
+                    Debug.Log($"[NarrativeMenu] Option has {option.requiredInventoryItems.Count} inventory requirements:");
+                    foreach (var req in option.requiredInventoryItems)
+                    {
+                        Debug.Log($"[NarrativeMenu]   - {req.itemName} x{req.requiredQuantity} (consume: {req.consumeOnUse})");
+                    }
+                }
+            }
+            
+            var optionsWithState = FilterOptionsByFlags(line.options);
+            Debug.Log($"[NarrativeMenu] After filtering: {optionsWithState.Count} options total, {optionsWithState.Count(o => o.IsEnabled)} enabled");
+            
+            if (optionsWithState.Count > 0)
+            {
+                ShowOptions(optionsWithState);
                 return;
+            }
+            else
+            {
+                Debug.LogWarning("[NarrativeMenu] No options available!");
             }
         }
 
@@ -73,15 +93,21 @@ public class NarrativeMenu : MenuBase
     }
 
     /// <summary>
-    /// Filter dialogue options based on component's progression flags
+    /// Filter dialogue options based on component's progression flags.
+    /// Returns all options but marks some as disabled based on requirements.
     /// </summary>
-    private List<DialogueOption> FilterOptionsByFlags(List<DialogueOption> options)
+    private List<DialogueOptionWithState> FilterOptionsByFlags(List<DialogueOption> options)
     {
         if (NarrativeManager.Instance == null)
-            return options;
+            return options.Select(opt => new DialogueOptionWithState(opt, true)).ToList();
 
-        return options.Where(option => 
+        Debug.Log($"[NarrativeMenu] FilterOptionsByFlags: Processing {options.Count} options");
+
+        var optionsWithState = options.Select(option => 
         {
+            bool isEnabled = true;
+            string disableReason = "";
+
             // Check required flags
             if (option.requiredFlags != null && option.requiredFlags.Count > 0)
             {
@@ -89,25 +115,48 @@ public class NarrativeMenu : MenuBase
                 {
                     if (!NarrativeManager.Instance.HasFlag(flag))
                     {
-                        return false;
+                        isEnabled = false;
+                        disableReason = $"Missing required flag: {flag}";
+                        break;
                     }
                 }
             }
 
-            // Check blocked flags
-            if (option.blockedByFlags != null && option.blockedByFlags.Count > 0)
+            // Check blocked flags (only if not already disabled)
+            if (isEnabled && option.blockedByFlags != null && option.blockedByFlags.Count > 0)
             {
                 foreach (string flag in option.blockedByFlags)
                 {
                     if (NarrativeManager.Instance.HasFlag(flag))
                     {
-                        return false;
+                        isEnabled = false;
+                        disableReason = $"Blocked by flag: {flag}";
+                        break;
                     }
                 }
             }
 
-            return true;
+            // Check inventory requirements (only if not already disabled)
+            if (isEnabled)
+            {
+                bool passesInventoryCheck = NarrativeManager.Instance.CheckInventoryRequirements(option);
+                if (!passesInventoryCheck)
+                {
+                    isEnabled = false;
+                    disableReason = "Insufficient resources";
+                }
+            }
+
+            if (!isEnabled)
+            {
+                Debug.Log($"[NarrativeMenu] Option DISABLED: '{option.text}' - {disableReason}");
+            }
+
+            return new DialogueOptionWithState(option, isEnabled, disableReason);
         }).ToList();
+
+        Debug.Log($"[NarrativeMenu] FilterOptionsByFlags: {optionsWithState.Count(o => o.IsEnabled)} out of {options.Count} options are enabled");
+        return optionsWithState;
     }
 
     /// <summary>
@@ -124,21 +173,43 @@ public class NarrativeMenu : MenuBase
     /// <summary>
     /// Show dialogue options to the player
     /// </summary>
-    private void ShowOptions(List<DialogueOption> options)
+    private void ShowOptions(List<DialogueOptionWithState> optionsWithState)
     {
-        GameObject firstOption = null;
+        GameObject firstEnabledOption = null;
         
-        foreach (var option in options)
+        foreach (var optionState in optionsWithState)
         {
-            GameObject optionObj = CreateOptionButton(option.text, () => HandleOptionSelected(option));
-
-            if (firstOption == null)
+            var option = optionState.Option;
+            bool isEnabled = optionState.IsEnabled;
+            
+            // Create the option text with potential inventory requirements
+            string displayText = option.text;
+            string inventoryRequirement = NarrativeManager.Instance.GetInventoryRequirementDisplayText(option);
+            if (!string.IsNullOrEmpty(inventoryRequirement))
             {
-                firstOption = optionObj;
+                displayText += $"\n<color=#888888><size=80%>{inventoryRequirement}</size></color>";
+            }
+
+            // Add visual indication if disabled
+            if (!isEnabled)
+            {
+                displayText = $"<color=#666666>{displayText}</color>";
+                if (!string.IsNullOrEmpty(optionState.DisableReason))
+                {
+                    displayText += $"\n<color=#AA4444><size=70%>({optionState.DisableReason})</size></color>";
+                }
+            }
+
+            GameObject optionObj = CreateOptionButton(displayText, () => HandleOptionSelected(option), isEnabled);
+
+            // Set first enabled option for selection
+            if (firstEnabledOption == null && isEnabled)
+            {
+                firstEnabledOption = optionObj;
             }
         }
 
-        SetSelectedButton(firstOption);
+        SetSelectedButton(firstEnabledOption);
     }
 
     /// <summary>
@@ -162,15 +233,20 @@ public class NarrativeMenu : MenuBase
     /// <summary>
     /// Create an option button with the specified text and click action
     /// </summary>
-    private GameObject CreateOptionButton(string text, System.Action onClickAction)
+    private GameObject CreateOptionButton(string text, System.Action onClickAction, bool isEnabled = true)
     {
         GameObject optionObj = Instantiate(optionPrefab, optionsContainer.transform);
         TextMeshProUGUI optionText = optionObj.GetComponentInChildren<TextMeshProUGUI>();
         optionText.text = text;
 
-        // Add click event
+        // Add click event and set enabled state
         Button optionButton = optionObj.GetComponent<Button>();
-        optionButton.onClick.AddListener(() => onClickAction?.Invoke());
+        optionButton.interactable = isEnabled;
+        
+        if (isEnabled)
+        {
+            optionButton.onClick.AddListener(() => onClickAction?.Invoke());
+        }
 
         return optionObj;
     }
@@ -206,5 +282,22 @@ public class NarrativeMenu : MenuBase
         {
             NarrativeManager.Instance.HandleOptionSelected(nextLine);
         }
+    }
+}
+
+/// <summary>
+/// Wrapper class to track dialogue options with their enabled state
+/// </summary>
+public class DialogueOptionWithState
+{
+    public DialogueOption Option { get; private set; }
+    public bool IsEnabled { get; private set; }
+    public string DisableReason { get; private set; }
+
+    public DialogueOptionWithState(DialogueOption option, bool isEnabled, string disableReason = "")
+    {
+        Option = option;
+        IsEnabled = isEnabled;
+        DisableReason = disableReason;
     }
 }

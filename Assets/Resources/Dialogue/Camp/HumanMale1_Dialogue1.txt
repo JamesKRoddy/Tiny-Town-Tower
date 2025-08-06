@@ -101,6 +101,23 @@
             "options": [
                 { "text": "Experience, skills, another pair of hands.", "nextLine": "AcceptRecruitment", "recruitNPC": "Gruff Survivor" },
                 { "text": "Everyone deserves a chance at survival.", "nextLine": "AcceptRecruitment", "recruitNPC": "Gruff Survivor" },
+                { 
+                    "text": "I can offer you supplies to sweeten the deal.", 
+                    "nextLine": "RecruitWithSupplies", 
+                    "recruitNPC": "Gruff Survivor",
+                    "requiredInventoryItems": [
+                        {
+                            "itemName": "Metal Scrap",
+                            "requiredQuantity": 2,
+                            "consumeOnUse": true
+                        },
+                        {
+                            "itemName": "Wood",
+                            "requiredQuantity": 5,
+                            "consumeOnUse": true
+                        }
+                    ]
+                },
                 { "text": "Actually, maybe this isn't a good fit.", "nextLine": "RecruitRefusal", "setFlags": ["recruitment_refused"] }
             ]
         },
@@ -128,6 +145,18 @@
             "text": "*leans against a broken fence post* Name's Marcus. Used to be a mechanic before all this hell broke loose. Now I fix what I can find and trade for what I can't. Know these wastelands like the back of my hand.",
             "options": [
                 { "text": "We could use someone with mechanical skills.", "nextLine": "RecruitOffer" },
+                { 
+                    "text": "I have some spare parts. Maybe we can make a trade?", 
+                    "nextLine": "TradeOffer",
+                    "requiredInventoryItems": [
+                        {
+                            "itemName": "Metal Scrap",
+                            "requiredQuantity": 3,
+                            "consumeOnUse": false,
+                            "displayText": "3x Metal Scrap"
+                        }
+                    ]
+                },
                 { "text": "How do you handle the zombies?", "nextLine": "ZombieStrategy" },
                 { "text": "Thanks for the info. I should get going.", "nextLine": "End" }
             ]
@@ -235,6 +264,75 @@
             "options": [
                 { "text": "That's exactly why we need experienced people like you.", "nextLine": "RecruitOffer" },
                 { "text": "That's... terrifying. Thanks for the warning.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "RecruitWithSupplies",
+            "speaker": "Gruff Survivor",
+            "text": "*eyes widen as you offer the supplies* Now that's generous! Metal scrap AND wood? You really know how to make an old mechanic happy. Consider it a deal - I'm in!",
+            "setFlags": ["recruited", "recruited_with_bonus"],
+            "options": [
+                { "text": "Welcome to the team, Marcus! Those supplies should help you get settled.", "nextLine": "End" }
+            ]
+        },
+        {
+            "id": "TradeOffer",
+            "speaker": "Gruff Survivor",
+            "text": "*eyes light up with interest* Metal scrap? Now you're talking my language! I could fix up some gear with that. Tell you what - I'll give you something useful in return.",
+            "options": [
+                { 
+                    "text": "Sounds good. Here's the metal scrap.", 
+                    "nextLine": "TradeAccepted",
+                    "requiredInventoryItems": [
+                        {
+                            "itemName": "Metal Scrap",
+                            "requiredQuantity": 3,
+                            "consumeOnUse": true,
+                            "displayText": "Give 3x Metal Scrap"
+                        }
+                    ]
+                },
+                { "text": "Actually, I think I'll hold onto these for now.", "nextLine": "TradeCancelled" },
+                { "text": "What would you give me in return first?", "nextLine": "TradeDetails" }
+            ]
+        },
+        {
+            "id": "TradeAccepted",
+            "speaker": "Gruff Survivor",
+            "text": "*grins and takes the metal scrap* Much obliged! Here, take this modified tool I've been working on. Should help you out there. *hands over a reinforced crowbar*",
+            "setFlags": ["traded_with_marcus"],
+            "options": [
+                { "text": "Thanks! This will definitely come in handy.", "nextLine": "AboutYourself" },
+                { "text": "Now, about joining our camp...", "nextLine": "RecruitOffer" }
+            ]
+        },
+        {
+            "id": "TradeCancelled",
+            "speaker": "Gruff Survivor",
+            "text": "*shrugs* Fair enough. Metal's hard to come by these days. Can't blame you for being cautious.",
+            "options": [
+                { "text": "Maybe another time.", "nextLine": "AboutYourself" },
+                { "text": "How do you survive out here?", "nextLine": "ZombieStrategy" }
+            ]
+        },
+        {
+            "id": "TradeDetails",
+            "speaker": "Gruff Survivor",
+            "text": "*pulls out a battered but sturdy-looking crowbar* This beauty here. Reinforced with salvaged steel, balanced for both prying and combat. Been my trusty companion for months.",
+            "options": [
+                { 
+                    "text": "Deal! Here's the metal scrap.", 
+                    "nextLine": "TradeAccepted",
+                    "requiredInventoryItems": [
+                        {
+                            "itemName": "Metal Scrap",
+                            "requiredQuantity": 3,
+                            "consumeOnUse": true,
+                            "displayText": "Give 3x Metal Scrap"
+                        }
+                    ]
+                },
+                { "text": "I'll think about it.", "nextLine": "TradeCancelled" }
             ]
         },
         {
