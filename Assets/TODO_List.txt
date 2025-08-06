@@ -39,7 +39,6 @@ Theres these small, medium and large enums for room sizes that need to be remove
 After returning the the camp theres an error originating from the dirt piles also trash spawning in camp should take up spaces on the grid
 NPCs spawned into the roguelike section have nav errors
 When selecting the option to exit a narrative interaction the player attacks
-Update the players camera to be at an angle, adjust players controls to help compensate
 Some of the narrative text uses the npcs name, the text doesn't match the random name given to the npc
 
 
