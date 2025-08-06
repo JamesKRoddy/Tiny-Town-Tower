@@ -29,7 +29,6 @@ Extras:
 Instead of spawning enemies from the same points, add in code to select random points on the nave mesh to spawn, spawn points!!!
 Implement a day/night cycle for the entire game.
 Figure out what happens in the camp while youre gone, does progress on stuff freeze? Does it keep going or does it progress but slower?
-Trash spawning in camp should take up spaces on the grid
 Goal at the start just says survive, recruit 10 survivors
 
 
@@ -37,7 +36,7 @@ Goal at the start just says survive, recruit 10 survivors
 Bugs and refactoring:
 In game quit button doesn't exit the game
 Theres these small, medium and large enums for room sizes that need to be removed
-After returning the the camp theres an error originating front the dirt piles
+After returning the the camp theres an error originating from the dirt piles also trash spawning in camp should take up spaces on the grid
 NPCs spawned into the roguelike section have nav errors
 When selecting the option to exit a narrative interaction the player attacks
 Update the players camera to be at an angle, adjust players controls to help compensate

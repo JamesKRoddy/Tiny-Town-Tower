@@ -5,9 +5,10 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
 {
     [Header("Follow Camera")]
     [SerializeField, ReadOnly] private Transform target; // The player or target to follow
-    [SerializeField] private Vector3 offset = new Vector3(0, 10, -10); // Default offset position
+    [SerializeField] private Vector3 offset = new Vector3(-8, 12, -8); // Side-angled offset position
     [SerializeField] private float followSpeed = 5f; // Speed at which the camera follows the target
     [SerializeField] private float rotationSpeed = 5f; // Speed at which the camera rotates to match the target
+    [SerializeField] private float cameraYAngle = 30f; // Y-axis rotation angle of the camera in degrees
 
     [Header("Panning Camera")]
     [SerializeField] private Transform defaultTarget; // The default target to follow for camera panning
@@ -79,18 +80,24 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
         if (target == null)
             return;
 
-        // Smoothly interpolate the camera's position to the target position + offset
-        Vector3 targetPosition = target.position + offset;
+        // Calculate the rotated offset based on the camera Y angle
+        Quaternion yRotation = Quaternion.Euler(0, cameraYAngle, 0);
+        Vector3 rotatedOffset = yRotation * offset;
+        
+        // Smoothly interpolate the camera's position to the target position + rotated offset
+        Vector3 targetPosition = target.position + rotatedOffset;
         transform.position = Vector3.Lerp(transform.position, targetPosition, followSpeed * Time.deltaTime);
 
-        // Smoothly rotate the camera to look at the target
-        Quaternion targetRotation = Quaternion.LookRotation(target.position - transform.position);
+        // Make the camera look at the target
+        Vector3 lookDirection = target.position - transform.position;
+        Quaternion targetRotation = Quaternion.LookRotation(lookDirection);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
     }
 
     private void HandleCameraPanning()
     {
-        Vector3 panMovement = new Vector3(joystickInput.x, 0, joystickInput.y) * panSpeed * Time.deltaTime;
+        // Transform input to world coordinates accounting for camera angle
+        Vector3 panMovement = TransformInputToWorldCoordinates(new Vector3(joystickInput.x, 0, joystickInput.y)) * panSpeed * Time.deltaTime;
 
         // Calculate new position for the default target
         Vector3 newPosition = defaultTarget.position + panMovement;
@@ -114,6 +121,29 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
     private void HandleLeftJoystickInput(Vector2 input)
     {
         joystickInput = input; // Update joystick input for panning
+    }
+
+    /// <summary>
+    /// Transforms input coordinates to world coordinates accounting for camera angle
+    /// </summary>
+    public Vector3 TransformInputToWorldCoordinates(Vector3 inputVector)
+    {
+        // Get the camera's forward and right directions relative to the ground plane
+        Vector3 cameraForward = transform.forward;
+        Vector3 cameraRight = transform.right;
+        
+        // Project these directions onto the ground plane (Y = 0)
+        cameraForward.y = 0;
+        cameraRight.y = 0;
+        cameraForward.Normalize();
+        cameraRight.Normalize();
+        
+        // Transform the input: 
+        // - inputVector.z (forward/back on stick) maps to camera forward direction
+        // - inputVector.x (left/right on stick) maps to camera right direction
+        Vector3 transformedInput = cameraRight * inputVector.x + cameraForward * inputVector.z;
+        
+        return transformedInput;
     }
 
     // Method to get the work detection point's position
