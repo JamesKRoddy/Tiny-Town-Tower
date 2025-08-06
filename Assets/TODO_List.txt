@@ -3,12 +3,9 @@
 
 Tomorrow work:
 
-Update the players camera to be at an angle!
-Make the camera skybox background black.
+
 
 Recruiting NPCs:
-
-Check if saving and loading works
 
 
 
@@ -22,7 +19,7 @@ Create more room/building prefabs
 
 Filling out sound and VFX
 
-Visual effects from elemental weapons eg. zombies get shocked by electrical wepon, they freeze and particles are emitted.
+Visual effects from elemental weapons eg. zombies get shocked by electrical weapon, they freeze and particles are emitted.
 
 Setup some new enemies: Boomer that runs towards you and explodes (elemental  variety too so the explosion leaves damage areas). Zombie that when its killed splits into smaller enemies.
 
@@ -43,6 +40,8 @@ Theres these small, medium and large enums for room sizes that need to be remove
 After returning the the camp theres an error originating front the dirt piles
 NPCs spawned into the roguelike section have nav errors
 When selecting the option to exit a narrative interaction the player attacks
+Update the players camera to be at an angle, adjust players controls to help compensate
+Some of the narrative text uses the npcs name, the text doesn't match the random name given to the npc
 
 
 
