@@ -61,6 +61,16 @@ public class DirtPileTask : WorkTask, IInteractive<DirtPileTask>
         Destroy(gameObject);
     }
 
+    private void OnDestroy()
+    {
+        // Safety check: ensure grid slot is freed if this object is destroyed for any reason
+        if (CampManager.Instance != null)
+        {
+            Vector2Int dirtPileSize = new Vector2Int(1, 1);
+            CampManager.Instance.MarkSharedGridSlotsUnoccupied(transform.position, dirtPileSize);
+        }
+    }
+
     public override string GetTooltipText()
     {
         if (!showTooltip) return string.Empty;

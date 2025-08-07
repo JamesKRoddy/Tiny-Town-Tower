@@ -146,40 +146,68 @@ namespace Managers
         {
             if (dirtPilePrefab == null) return;
 
-            // Find a random position on the NavMesh
-            Vector3 randomPosition = GetRandomNavMeshPosition();
-            GameObject dirtPileObj = Instantiate(dirtPilePrefab, randomPosition, Quaternion.identity);
+            // Check if CampManager is available
+            if (CampManager.Instance == null)
+            {
+                Debug.LogError("[CleanlinessManager] CampManager not found! Cannot spawn dirt pile with grid system.");
+                return;
+            }
+
+            // Find an available grid position instead of random NavMesh position
+            Vector3 gridPosition = GetAvailableGridPosition();
+            
+            if (gridPosition == Vector3.zero)
+            {
+                Debug.LogWarning("[CleanlinessManager] No available grid slots for dirt pile spawn!");
+                return;
+            }
+
+            GameObject dirtPileObj = Instantiate(dirtPilePrefab, gridPosition, Quaternion.identity);
             DirtPileTask dirtPile = dirtPileObj.GetComponent<DirtPileTask>();
             
             if (dirtPile != null)
             {
+                // Mark the grid slot as occupied (dirt piles take up 1x1 space)
+                Vector2Int dirtPileSize = new Vector2Int(1, 1);
+                CampManager.Instance.MarkSharedGridSlotsOccupied(gridPosition, dirtPileSize, dirtPileObj);
+                
                 activeDirtPiles.Add(dirtPile);
                 DecreaseCleanliness(dirtPileCleanlinessDecrease);
                 OnDirtPileSpawned?.Invoke(dirtPile);
             }
         }
 
-        private Vector3 GetRandomNavMeshPosition()
+        private Vector3 GetAvailableGridPosition()
         {
-            // Try up to 30 times to find a valid position
-            for (int i = 0; i < 30; i++)
+            // Check if CampManager is available
+            if (CampManager.Instance == null)
             {
-                // Get a random point within the camp bounds
+                Debug.LogError("[CleanlinessManager] CampManager not found! Cannot find available grid position.");
+                return Vector3.zero;
+            }
+
+            // Try up to 50 times to find an available grid slot
+            for (int i = 0; i < 50; i++)
+            {
+                // Get a random point within the camp grid bounds
                 Vector3 randomPoint = new Vector3(
-                    UnityEngine.Random.Range(-50f, 50f),
+                    UnityEngine.Random.Range(CampManager.Instance.SharedXBounds.x, CampManager.Instance.SharedXBounds.y),
                     0f,
-                    UnityEngine.Random.Range(-50f, 50f)
+                    UnityEngine.Random.Range(CampManager.Instance.SharedZBounds.x, CampManager.Instance.SharedZBounds.y)
                 );
 
-                // Sample the NavMesh at this point
-                UnityEngine.AI.NavMeshHit hit;
-                if (UnityEngine.AI.NavMesh.SamplePosition(randomPoint, out hit, 10f, UnityEngine.AI.NavMesh.AllAreas))
+                // Snap to grid
+                Vector3 gridPosition = CampManager.Instance.SnapToSharedGrid(randomPoint);
+                
+                // Check if the grid slot is available (dirt piles take up 1x1 space)
+                Vector2Int dirtPileSize = new Vector2Int(1, 1);
+                if (CampManager.Instance.AreSharedGridSlotsAvailable(gridPosition, dirtPileSize))
                 {
                     // Check if the position is far enough from other dirt piles
                     bool tooClose = false;
                     foreach (var dirtPile in activeDirtPiles)
                     {
-                        if (Vector3.Distance(hit.position, dirtPile.transform.position) < 5f)
+                        if (Vector3.Distance(gridPosition, dirtPile.transform.position) < 5f)
                         {
                             tooClose = true;
                             break;
@@ -188,12 +216,12 @@ namespace Managers
 
                     if (!tooClose)
                     {
-                        return hit.position;
+                        return gridPosition;
                     }
                 }
             }
 
-            Debug.LogWarning("[CleanlinessManager] Failed to find valid NavMesh position for dirt pile");
+            Debug.LogWarning("[CleanlinessManager] Failed to find available grid position for dirt pile");
             return Vector3.zero;
         }
 
@@ -245,6 +273,13 @@ namespace Managers
         {
             if (activeDirtPiles.Remove(dirtPile))
             {
+                // Free the grid slot before destroying the object
+                if (CampManager.Instance != null)
+                {
+                    Vector2Int dirtPileSize = new Vector2Int(1, 1);
+                    CampManager.Instance.MarkSharedGridSlotsUnoccupied(dirtPile.transform.position, dirtPileSize);
+                }
+                
                 OnDirtPileCleaned?.Invoke(dirtPile);
                 IncreaseCleanliness(10f); // Reward for cleaning
             }
