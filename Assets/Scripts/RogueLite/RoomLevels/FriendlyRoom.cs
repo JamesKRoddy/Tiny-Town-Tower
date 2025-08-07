@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AI;
 using Managers;
 
 /// <summary>
@@ -53,11 +54,62 @@ public class FriendlyRoom : RogueLiteRoom
         StartAmbientEffects();
         
         // Spawn NPCs if auto spawn is enabled (from building data)
+        // But delay until NavMesh is ready to prevent "Failed to create agent" errors
         if (GetAutoSpawnNPCs())
         {
-            SpawnNPCs();
+            StartCoroutine(SpawnNPCsAfterNavMeshReady());
         }
         
+    }
+    
+    /// <summary>
+    /// Coroutine to spawn NPCs after NavMesh has been baked
+    /// </summary>
+    private System.Collections.IEnumerator SpawnNPCsAfterNavMeshReady()
+    {
+        // Wait for NavMesh to be baked (this happens after room setup in RogueLiteRoomParent)
+        yield return new WaitForSeconds(0.2f); // Slightly longer than the 0.1s delay in DelayedBakeNavMesh
+        
+        // Additional safety check - wait until NavMesh is actually available
+        float timeout = 2f; // 2 second timeout
+        float elapsed = 0f;
+        
+        while (elapsed < timeout)
+        {
+            // Check if NavMesh is available at our spawn points
+            bool navMeshReady = true;
+            if (npcSpawnPoints != null)
+            {
+                foreach (var spawnPoint in npcSpawnPoints)
+                {
+                    if (spawnPoint != null)
+                    {
+                        NavMeshHit hit;
+                        if (!NavMesh.SamplePosition(spawnPoint.position, out hit, 2f, NavMesh.AllAreas))
+                        {
+                            navMeshReady = false;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (navMeshReady)
+            {
+                break;
+            }
+            
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        
+        if (elapsed >= timeout)
+        {
+            Debug.LogWarning($"[FriendlyRoom] NavMesh timeout reached for room {gameObject.name}, spawning NPCs anyway");
+        }
+        
+        // Now spawn the NPCs
+        SpawnNPCs();
     }
     
     /// <summary>
@@ -84,7 +136,20 @@ public class FriendlyRoom : RogueLiteRoom
                 GameObject npcPrefab = NPCManager.Instance.GetSettlerPrefab();
                 if (npcPrefab != null)
                 {
-                    GameObject spawnedNPC = Instantiate(npcPrefab, spawnPoint.position, spawnPoint.rotation, spawnPoint);
+                    // Ensure spawn position is on NavMesh
+                    Vector3 spawnPosition = spawnPoint.position;
+                    NavMeshHit hit;
+                    if (NavMesh.SamplePosition(spawnPosition, out hit, 2f, NavMesh.AllAreas))
+                    {
+                        spawnPosition = hit.position;
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[FriendlyRoom] Could not find valid NavMesh position near {spawnPosition} for NPC spawn in room {gameObject.name}");
+                        continue; // Skip this spawn point
+                    }
+                    
+                    GameObject spawnedNPC = Instantiate(npcPrefab, spawnPosition, spawnPoint.rotation, spawnPoint);
                     spawnedNPCs[i] = spawnedNPC;
                     
                     // Set up the procedural settler

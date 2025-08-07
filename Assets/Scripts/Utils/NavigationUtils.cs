@@ -165,6 +165,12 @@ public static class NavigationUtils
     {
         if (agent == null) return false;
 
+        // Check if agent is on NavMesh before accessing NavMeshAgent properties
+        if (!agent.isOnNavMesh)
+        {
+            return false; // Agent is not on NavMesh, cannot determine if destination is reached
+        }
+
         // Check if the agent has reached its destination using NavMeshAgent's built-in logic
         if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
         {
@@ -200,6 +206,7 @@ public static class NavigationUtils
     /// <returns>The effective stopping distance</returns>
     public static float GetEffectiveStoppingDistance(NavMeshAgent agent, Transform target, float baseStoppingDistance, float obstacleBoundsOffset = 1f)
     {
+        if (agent == null) return baseStoppingDistance;
         if (target == null) return baseStoppingDistance;
 
         return CalculateEffectiveReachDistance(agent.transform.position, target, baseStoppingDistance, obstacleBoundsOffset);
