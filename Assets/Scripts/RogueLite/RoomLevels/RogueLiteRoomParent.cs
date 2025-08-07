@@ -48,15 +48,13 @@ public class RogueLiteRoomParent : MonoBehaviour
     {
         public GameObject roomObject;
         public GameObject originalPrefab;
-        public RogueLikeRoomSize roomSize;
         public int spawnIndex;
         public string debugName;
         
-        public PlacedRoomData(GameObject room, GameObject prefab, RogueLikeRoomSize size, int spawnIdx, string name)
+        public PlacedRoomData(GameObject room, GameObject prefab, int spawnIdx, string name)
         {
             roomObject = room;
             originalPrefab = prefab;
-            roomSize = size;
             spawnIndex = spawnIdx;
             debugName = name;
         }
@@ -235,7 +233,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     }
 
     /// <summary>
-    /// Intelligently place rooms based on size, starting with large rooms at key positions
+    /// Intelligently place rooms at all spawn points
     /// GUARANTEES that every spawn point gets a room
     /// </summary>
     private void HierarchicalRoomPlacement(RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty)
@@ -246,44 +244,12 @@ public class RogueLiteRoomParent : MonoBehaviour
             return;
         }
 
-        // Phase 1: Place 1-2 large rooms at key spawn points (first spawn points get priority)
-        int largeRoomCount = Mathf.Min(2, roomTransforms.Length); // Place up to 2 large rooms
-        RogueLikeRoomSize[] largeRoomPreferences = { RogueLikeRoomSize.EXTRA_LARGE, RogueLikeRoomSize.LARGE, RogueLikeRoomSize.MEDIUM, RogueLikeRoomSize.SMALL };
-        
         List<int> availableSpawnPoints = new List<int>();
         for (int i = 0; i < roomTransforms.Length; i++)
         {
             availableSpawnPoints.Add(i);
         }
 
-        // Place large rooms first
-        for (int i = 0; i < largeRoomCount && availableSpawnPoints.Count > 0; i++)
-        {
-            int spawnIndex = availableSpawnPoints[0]; // Take the first available spawn point
-            GameObject roomPrefab = buildingScriptableObj.GetBestFittingRoom(currentDifficulty, largeRoomPreferences);
-            
-            if (GuaranteedRoomPlacement(roomTransforms[spawnIndex], roomPrefab, buildingScriptableObj, currentDifficulty, $"Large Room {i + 1}"))
-            {
-                availableSpawnPoints.RemoveAt(0);
-            }
-            else
-            {
-                // Force placement with fallback to prevent infinite loop
-                if (ForcePlaceAnyRoom(spawnIndex, buildingScriptableObj, currentDifficulty, $"Forced Large Room {i + 1}"))
-                {
-                    availableSpawnPoints.RemoveAt(0);
-                }
-                else
-                {
-                    Debug.LogError($"[HierarchicalPlacement] Cannot place any room at spawn {spawnIndex}!");
-                    availableSpawnPoints.RemoveAt(0); // Remove to prevent infinite loop
-                }
-            }
-        }
-
-        // Phase 2: Fill remaining spawn points with smaller rooms that fit
-        RogueLikeRoomSize[] smallRoomPreferences = { RogueLikeRoomSize.SMALL, RogueLikeRoomSize.MEDIUM };
-        
         // Add loop protection
         int maxIterations = availableSpawnPoints.Count * 2; // Safety limit
         int iterations = 0;
@@ -293,16 +259,16 @@ public class RogueLiteRoomParent : MonoBehaviour
             iterations++;
             
             int spawnIndex = availableSpawnPoints[0];
-            GameObject roomPrefab = buildingScriptableObj.GetBestFittingRoom(currentDifficulty, smallRoomPreferences);
+            GameObject roomPrefab = buildingScriptableObj.GetBuildingRoom(currentDifficulty);
             
-            if (GuaranteedRoomPlacement(roomTransforms[spawnIndex], roomPrefab, buildingScriptableObj, currentDifficulty, $"Small Room {spawnIndex}"))
+            if (GuaranteedRoomPlacement(roomTransforms[spawnIndex], roomPrefab, buildingScriptableObj, currentDifficulty, $"Room {spawnIndex}"))
             {
                 availableSpawnPoints.RemoveAt(0);
             }
             else
             {
                 // Force placement with fallback to prevent infinite loop
-                if (ForcePlaceAnyRoom(spawnIndex, buildingScriptableObj, currentDifficulty, $"Forced Small Room {spawnIndex}"))
+                if (ForcePlaceAnyRoom(spawnIndex, buildingScriptableObj, currentDifficulty, $"Forced Room {spawnIndex}"))
                 {
                     availableSpawnPoints.RemoveAt(0);
                 }
@@ -374,35 +340,23 @@ public class RogueLiteRoomParent : MonoBehaviour
         // Strategy 1: Try the preferred room first
         if (preferredRoomPrefab != null)
         {
-            if (TryPlaceWithConflictResolution(spawnIndex, preferredRoomPrefab, RogueLikeRoomSize.MEDIUM, buildingScriptableObj, currentDifficulty, debugName + " (Preferred)", retryCount))
+            if (TryPlaceWithConflictResolution(spawnIndex, preferredRoomPrefab, buildingScriptableObj, currentDifficulty, debugName + " (Preferred)", retryCount))
                 return true;
         }
 
         // Strategy 2: Try room with minimum overlap directly
-        GameObject bestRoom = FindRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty, out RogueLikeRoomSize bestSize, out float minOverlap);
+        GameObject bestRoom = FindRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty, out float minOverlap);
         if (bestRoom != null && minOverlap <= overlapTolerancePercent)
         {
-            if (TryPlaceWithConflictResolution(spawnIndex, bestRoom, bestSize, buildingScriptableObj, currentDifficulty, debugName + $" (Min Overlap {minOverlap:F1}%)", retryCount))
+            if (TryPlaceWithConflictResolution(spawnIndex, bestRoom, buildingScriptableObj, currentDifficulty, debugName + $" (Min Overlap {minOverlap:F1}%)", retryCount))
                 return true;
         }
 
-        // Strategy 3: Try all room sizes from smallest to largest
-        RogueLikeRoomSize[] fallbackSizes = { RogueLikeRoomSize.SMALL, RogueLikeRoomSize.MEDIUM, RogueLikeRoomSize.LARGE, RogueLikeRoomSize.EXTRA_LARGE };
-        foreach (var size in fallbackSizes)
-        {
-            GameObject roomPrefab = buildingScriptableObj.GetBuildingRoomBySize(currentDifficulty, size);
-            if (roomPrefab != null)
-            {
-                if (TryPlaceWithConflictResolution(spawnIndex, roomPrefab, size, buildingScriptableObj, currentDifficulty, debugName + $" ({size})", retryCount))
-                    return true;
-            }
-        }
-
-        // Strategy 4: Try any available room
+        // Strategy 3: Try any available room
         GameObject anyRoom = buildingScriptableObj.GetBuildingRoom(currentDifficulty);
         if (anyRoom != null)
         {
-            if (TryPlaceWithConflictResolution(spawnIndex, anyRoom, RogueLikeRoomSize.MEDIUM, buildingScriptableObj, currentDifficulty, debugName + " (Any)", retryCount))
+            if (TryPlaceWithConflictResolution(spawnIndex, anyRoom, buildingScriptableObj, currentDifficulty, debugName + " (Any)", retryCount))
                 return true;
         }
 
@@ -428,7 +382,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// <summary>
     /// Try to place a room with intelligent conflict resolution through room swapping
     /// </summary>
-    private bool TryPlaceWithConflictResolution(int spawnIndex, GameObject roomPrefab, RogueLikeRoomSize roomSize, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName, int retryCount)
+    private bool TryPlaceWithConflictResolution(int spawnIndex, GameObject roomPrefab, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName, int retryCount)
     {
         Transform targetTransform = roomTransforms[spawnIndex];
         
@@ -436,10 +390,8 @@ public class RogueLiteRoomParent : MonoBehaviour
         if (!WouldRoomOverlapAtPosition(roomPrefab.GetComponent<RogueLiteRoom>(), targetTransform.position))
         {
             // No conflicts - place the room directly
-            return PlaceRoomAtSpawn(spawnIndex, roomPrefab, roomSize, debugName);
+            return PlaceRoomAtSpawn(spawnIndex, roomPrefab, debugName);
         }
-
-
 
         // Find conflicting rooms
         var conflictingSpawns = FindConflictingRooms(roomPrefab, targetTransform.position);
@@ -469,7 +421,7 @@ public class RogueLiteRoomParent : MonoBehaviour
                 // Conflict resolved, try placing the original room again
                 if (!WouldRoomOverlapAtPosition(roomPrefab.GetComponent<RogueLiteRoom>(), targetTransform.position))
                 {
-                    return PlaceRoomAtSpawn(spawnIndex, roomPrefab, roomSize, debugName + " (After Swap)");
+                    return PlaceRoomAtSpawn(spawnIndex, roomPrefab, debugName + " (After Swap)");
                 }
             }
         }
@@ -485,14 +437,14 @@ public class RogueLiteRoomParent : MonoBehaviour
         Transform targetTransform = roomTransforms[spawnIndex];
         
         // First try: Find room with minimum overlap
-        GameObject bestRoom = FindRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty, out RogueLikeRoomSize bestSize, out float minOverlap);
+        GameObject bestRoom = FindRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty, out float minOverlap);
         
         if (bestRoom != null)
         {
             if (minOverlap <= overlapTolerancePercent)
             {
                 // Room fits within tolerance - place it normally
-                if (PlaceRoomAtSpawn(spawnIndex, bestRoom, bestSize, debugName + $" (Min Overlap {minOverlap:F1}%)"))
+                if (PlaceRoomAtSpawn(spawnIndex, bestRoom, debugName + $" (Min Overlap {minOverlap:F1}%)"))
                 {
                     return true;
                 }
@@ -501,7 +453,7 @@ public class RogueLiteRoomParent : MonoBehaviour
             {
                 // Room exceeds tolerance but is the best option available
                 Debug.LogWarning($"[SmartPlacement] Placing room with {minOverlap:F1}% overlap (exceeds {overlapTolerancePercent}% tolerance) at spawn {spawnIndex}");
-                if (PlaceRoomAtSpawn(spawnIndex, bestRoom, bestSize, debugName + $" (Best Option {minOverlap:F1}%)"))
+                if (PlaceRoomAtSpawn(spawnIndex, bestRoom, debugName + $" (Best Option {minOverlap:F1}%)"))
                 {
                     return true;
                 }
@@ -509,18 +461,13 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
         
         // Absolute last resort: try any room without collision checking
-        RogueLikeRoomSize[] allSizes = { RogueLikeRoomSize.SMALL, RogueLikeRoomSize.MEDIUM, RogueLikeRoomSize.LARGE, RogueLikeRoomSize.EXTRA_LARGE };
-        
-        foreach (var size in allSizes)
+        GameObject anyRoom = buildingScriptableObj.GetBuildingRoom(currentDifficulty);
+        if (anyRoom != null)
         {
-            GameObject roomPrefab = buildingScriptableObj.GetBuildingRoomBySize(currentDifficulty, size);
-            if (roomPrefab != null)
+            if (PlaceRoomAtSpawn(spawnIndex, anyRoom, debugName + " (Force Any)"))
             {
-                if (PlaceRoomAtSpawn(spawnIndex, roomPrefab, size, debugName + $" (Force {size})"))
-                {
-                    Debug.LogWarning($"[ForcePlacement] Used absolute force placement for {debugName} at spawn {spawnIndex}");
-                    return true;
-                }
+                Debug.LogWarning($"[ForcePlacement] Used absolute force placement for {debugName} at spawn {spawnIndex}");
+                return true;
             }
         }
         
@@ -529,22 +476,20 @@ public class RogueLiteRoomParent : MonoBehaviour
     }
 
     /// <summary>
-    /// Find the room size that produces the minimum overlap at a given spawn point
+    /// Find the room that produces the minimum overlap at a given spawn point
     /// </summary>
-    private GameObject FindRoomWithMinimumOverlap(int spawnIndex, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, out RogueLikeRoomSize bestSize, out float minOverlap)
+    private GameObject FindRoomWithMinimumOverlap(int spawnIndex, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, out float minOverlap)
     {
         Transform targetTransform = roomTransforms[spawnIndex];
         
         GameObject bestRoom = null;
-        bestSize = RogueLikeRoomSize.SMALL;
         minOverlap = float.MaxValue;
         
-        // Test all available room sizes
-        RogueLikeRoomSize[] allSizes = { RogueLikeRoomSize.SMALL, RogueLikeRoomSize.MEDIUM, RogueLikeRoomSize.LARGE, RogueLikeRoomSize.EXTRA_LARGE };
+        // Test all available rooms
+        GameObject[] allRooms = buildingScriptableObj.GetAllRooms(currentDifficulty);
         
-        foreach (var size in allSizes)
+        foreach (var roomPrefab in allRooms)
         {
-            GameObject roomPrefab = buildingScriptableObj.GetBuildingRoomBySize(currentDifficulty, size);
             if (roomPrefab == null) continue;
             
             float maxOverlap = CalculateMaxOverlapForRoom(roomPrefab, targetTransform.position);
@@ -553,7 +498,6 @@ public class RogueLiteRoomParent : MonoBehaviour
             {
                 minOverlap = maxOverlap;
                 bestRoom = roomPrefab;
-                bestSize = size;
             }
         }
         
@@ -607,7 +551,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// <summary>
     /// Place a room at a specific spawn index and track it properly
     /// </summary>
-    private bool PlaceRoomAtSpawn(int spawnIndex, GameObject roomPrefab, RogueLikeRoomSize roomSize, string debugName)
+    private bool PlaceRoomAtSpawn(int spawnIndex, GameObject roomPrefab, string debugName)
     {
         if (!roomPrefab.GetComponent<RogueLiteRoom>())
         {
@@ -634,7 +578,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         spawnedRooms[targetTransform.position] = room;
 
         // Track the placed room data
-        var roomData = new PlacedRoomData(room, roomPrefab, roomSize, spawnIndex, debugName);
+        var roomData = new PlacedRoomData(room, roomPrefab, spawnIndex, debugName);
         placedRoomsBySpawnIndex[spawnIndex] = roomData;
 
         RogueLiteRoom roomComponent = room.GetComponent<RogueLiteRoom>();
@@ -723,7 +667,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     }
 
     /// <summary>
-    /// Attempt to swap a room at the given spawn index with a smaller alternative
+    /// Attempt to swap a room at the given spawn index with a different alternative
     /// </summary>
     private bool AttemptRoomSwap(int spawnIndex, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, int retryCount)
     {
@@ -732,52 +676,26 @@ public class RogueLiteRoomParent : MonoBehaviour
             return false; // No room to swap
         }
 
-        var currentRoomData = placedRoomsBySpawnIndex[spawnIndex];
-        RogueLikeRoomSize currentSize = currentRoomData.roomSize;
+        // Try to find a different room that fits better
+        GameObject[] allRooms = buildingScriptableObj.GetAllRooms(currentDifficulty);
         
-
-
-        // Try smaller sizes
-        RogueLikeRoomSize[] smallerSizes = GetSmallerSizes(currentSize);
-        
-        foreach (var smallerSize in smallerSizes)
+        foreach (var alternativeRoom in allRooms)
         {
-            GameObject smallerRoomPrefab = buildingScriptableObj.GetBuildingRoomBySize(currentDifficulty, smallerSize);
-            if (smallerRoomPrefab != null)
+            if (alternativeRoom == null) continue;
+            
+            // Test if the alternative room would work at this position
+            Transform targetTransform = roomTransforms[spawnIndex];
+            if (!WouldRoomOverlapAtPosition(alternativeRoom.GetComponent<RogueLiteRoom>(), targetTransform.position))
             {
-                // Test if the smaller room would still work at this position
-                Transform targetTransform = roomTransforms[spawnIndex];
-                if (!WouldRoomOverlapAtPosition(smallerRoomPrefab.GetComponent<RogueLiteRoom>(), targetTransform.position))
+                // Swap successful
+                if (PlaceRoomAtSpawn(spawnIndex, alternativeRoom, $"Swapped to alternative"))
                 {
-                    // Swap successful
-                    if (PlaceRoomAtSpawn(spawnIndex, smallerRoomPrefab, smallerSize, $"Swapped to {smallerSize}"))
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
         }
 
         return false;
-    }
-
-    /// <summary>
-    /// Get room sizes smaller than the given size
-    /// </summary>
-    private RogueLikeRoomSize[] GetSmallerSizes(RogueLikeRoomSize currentSize)
-    {
-        switch (currentSize)
-        {
-            case RogueLikeRoomSize.EXTRA_LARGE:
-                return new RogueLikeRoomSize[] { RogueLikeRoomSize.LARGE, RogueLikeRoomSize.MEDIUM, RogueLikeRoomSize.SMALL };
-            case RogueLikeRoomSize.LARGE:
-                return new RogueLikeRoomSize[] { RogueLikeRoomSize.MEDIUM, RogueLikeRoomSize.SMALL };
-            case RogueLikeRoomSize.MEDIUM:
-                return new RogueLikeRoomSize[] { RogueLikeRoomSize.SMALL };
-            case RogueLikeRoomSize.SMALL:
-            default:
-                return new RogueLikeRoomSize[0]; // No smaller sizes available
-        }
     }
 
     /// <summary>
@@ -1035,3 +953,4 @@ public class RogueLiteRoomParent : MonoBehaviour
         #endif
     }
 }
+

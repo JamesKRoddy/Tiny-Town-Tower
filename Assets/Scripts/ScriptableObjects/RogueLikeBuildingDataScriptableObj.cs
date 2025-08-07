@@ -128,125 +128,7 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
         return suitableFriendlyRooms[randomIndex].buildingRoom;
     }
 
-    /// <summary>
-    /// Get a room of a specific size that fits the difficulty requirement
-    /// </summary>
-    public GameObject GetBuildingRoomBySize(int difficulty, RogueLikeRoomSize preferredSize)
-    {
-        // Randomly decide between friendly and hostile rooms based on spawn chance
-        float randomValue = Random.Range(0f, 100f);
-        
-        if (friendlyRooms.Count > 0 && randomValue < friendlyRoomSpawnChance)
-        {
-            return GetFriendlyRoomBySize(difficulty, preferredSize);
-        }
-        else
-        {
-            return GetHostileRoomBySize(difficulty, preferredSize);
-        }
-    }
 
-    /// <summary>
-    /// Get a hostile room of a specific size
-    /// </summary>
-    public GameObject GetHostileRoomBySize(int difficulty, RogueLikeRoomSize preferredSize)
-    {
-        // Find all suitable rooms based on difficulty and size
-        List<BuildingRooms> suitableRooms = new List<BuildingRooms>();
-        
-        foreach (var room in buildingRooms)
-        {
-            if (room.difficulty <= difficulty && room.roomSize == preferredSize)
-            {
-                suitableRooms.Add(room);
-            }
-        }
-
-        // If no rooms of preferred size found, return null to try different size
-        if (suitableRooms.Count == 0)
-        {
-            return null;
-        }
-
-        // Randomly select from suitable rooms
-        int randomIndex = Random.Range(0, suitableRooms.Count);
-        return suitableRooms[randomIndex].buildingRoom;
-    }
-
-    /// <summary>
-    /// Get a friendly room of a specific size
-    /// </summary>
-    public GameObject GetFriendlyRoomBySize(int difficulty, RogueLikeRoomSize preferredSize)
-    {
-        // Find all suitable friendly rooms based on difficulty and size
-        List<BuildingRooms> suitableFriendlyRooms = new List<BuildingRooms>();
-        
-        foreach (var room in friendlyRooms)
-        {
-            if (room.difficulty <= difficulty && room.roomSize == preferredSize)
-            {
-                suitableFriendlyRooms.Add(room);
-            }
-        }
-
-        // If no friendly rooms of preferred size found, fallback to hostile rooms
-        if (suitableFriendlyRooms.Count == 0)
-        {
-            return GetHostileRoomBySize(difficulty, preferredSize);
-        }
-
-        // Randomly select from suitable friendly rooms
-        int randomIndex = Random.Range(0, suitableFriendlyRooms.Count);
-        GameObject selectedRoom = suitableFriendlyRooms[randomIndex].buildingRoom;
-        return selectedRoom;
-    }
-
-    /// <summary>
-    /// Get the best fitting room for a spawn point, trying sizes in order of preference
-    /// </summary>
-    public GameObject GetBestFittingRoom(int difficulty, RogueLikeRoomSize[] sizePreferences)
-    {
-        // Try each size preference in order
-        foreach (var size in sizePreferences)
-        {
-            var room = GetBuildingRoomBySize(difficulty, size);
-            if (room != null)
-            {
-                return room;
-            }
-        }
-
-        // Fallback to any suitable room
-        return GetBuildingRoom(difficulty);
-    }
-
-    /// <summary>
-    /// Get all available room sizes for this building at the given difficulty
-    /// </summary>
-    public RogueLikeRoomSize[] GetAvailableRoomSizes(int difficulty)
-    {
-        List<RogueLikeRoomSize> availableSizes = new List<RogueLikeRoomSize>();
-        
-        // Check hostile rooms
-        foreach (var room in buildingRooms)
-        {
-            if (room.difficulty <= difficulty && !availableSizes.Contains(room.roomSize))
-            {
-                availableSizes.Add(room.roomSize);
-            }
-        }
-
-        // Check friendly rooms
-        foreach (var room in friendlyRooms)
-        {
-            if (room.difficulty <= difficulty && !availableSizes.Contains(room.roomSize))
-            {
-                availableSizes.Add(room.roomSize);
-            }
-        }
-
-        return availableSizes.ToArray();
-    }
 
     /// <summary>
     /// Set the friendly room spawn chance (0-100%)
@@ -295,6 +177,34 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     {
         npcSpawnChance = Mathf.Clamp(chance, 0f, 100f);
     }
+
+    /// <summary>
+    /// Get all available rooms for this building at the given difficulty
+    /// </summary>
+    public GameObject[] GetAllRooms(int difficulty)
+    {
+        List<GameObject> allRooms = new List<GameObject>();
+        
+        // Add hostile rooms
+        foreach (var room in buildingRooms)
+        {
+            if (room.difficulty <= difficulty)
+            {
+                allRooms.Add(room.buildingRoom);
+            }
+        }
+
+        // Add friendly rooms
+        foreach (var room in friendlyRooms)
+        {
+            if (room.difficulty <= difficulty)
+            {
+                allRooms.Add(room.buildingRoom);
+            }
+        }
+
+        return allRooms.ToArray();
+    }
 }
 
 [System.Serializable]
@@ -309,6 +219,5 @@ public struct BuildingRooms
 {
     public GameObject buildingRoom;
     public int difficulty;
-    public RogueLikeRoomSize roomSize;
 }
 
