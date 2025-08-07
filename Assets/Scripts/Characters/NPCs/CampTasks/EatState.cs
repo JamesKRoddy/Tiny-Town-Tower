@@ -116,9 +116,8 @@ public class EatState : _TaskState
         agent.isStopped = true;
         agent.velocity = Vector3.zero;
 
-        // Face the canteen
-        Vector3 directionToCanteen = (targetCanteen.transform.position - transform.position).normalized;
-        transform.rotation = Quaternion.LookRotation(directionToCanteen);
+        // Face the canteen using centralized rotation utility
+        NavigationUtils.RotateTowardsTarget(transform, targetCanteen.transform, npc.rotationSpeed, true);
 
         // Start eating animation
         if (animator != null)

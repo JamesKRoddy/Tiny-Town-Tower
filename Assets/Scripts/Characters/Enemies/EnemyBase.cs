@@ -493,16 +493,8 @@ namespace Enemies
         {
             if (navMeshTarget == null) return;
             
-            if (agent.velocity.magnitude > 0.1f)
-            {
-                Vector3 direction = (navMeshTarget.position - transform.position).normalized;
-                direction.y = 0;
-                if (direction != Vector3.zero)
-                {
-                    Quaternion targetRotation = Quaternion.LookRotation(direction);
-                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-                }
-            }
+            // Use centralized rotation utility
+            NavigationUtils.HandleMovementRotation(transform, navMeshTarget, agent.velocity, rotationSpeed, MOVEMENT_VELOCITY_THRESHOLD);
         }
 
         private void CheckIfStuck()
@@ -728,10 +720,7 @@ namespace Enemies
         {
             if (navMeshTarget == null) return false;
             
-            Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
-            float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
-            
-            return angleToTarget <= ATTACK_READY_ANGLE_THRESHOLD;
+            return NavigationUtils.IsFacingTarget(transform, navMeshTarget, ATTACK_READY_ANGLE_THRESHOLD, true);
         }
 
         /// <summary>
@@ -748,16 +737,7 @@ namespace Enemies
                 return false;
             }
 
-            Vector3 direction = (navMeshTarget.position - transform.position).normalized;
-            direction.y = 0;
-            if (direction == Vector3.zero) return true;
-
-            Quaternion targetRotation = Quaternion.LookRotation(direction);
-            float enhancedRotationSpeed = rotationSpeed * ROTATION_TOWARDS_TARGET_SPEED_MULTIPLIER;
-            
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, enhancedRotationSpeed * Time.deltaTime);
-            
-            return IsReadyToAttack();
+            return NavigationUtils.RotateTowardsTargetForAction(transform, navMeshTarget, rotationSpeed, ROTATION_TOWARDS_TARGET_SPEED_MULTIPLIER, ATTACK_READY_ANGLE_THRESHOLD, true);
         }
 
         #endregion

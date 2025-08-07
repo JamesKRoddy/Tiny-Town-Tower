@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using Managers;
 
-public class RobotCharacterController : HumanCharacterController
+public class RobotCharacterController : HumanCharacterController, INarrativeTarget
 {
     [Header("Robot Parameters")]
     [SerializeField] private float workSpeedMultiplier = 1.5f;
@@ -24,6 +24,9 @@ public class RobotCharacterController : HumanCharacterController
         {
             return;
         }
+        
+        // Update conversation rotation if in conversation
+        UpdateConversationRotation();
         
         if (!isWorking)
         {
@@ -63,15 +66,13 @@ public class RobotCharacterController : HumanCharacterController
             }
             else
             {
-                // We're close enough, just handle rotation
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 5f);
+                // We're close enough, just handle rotation using centralized utility
+                NavigationUtils.RotateTowardsWorkPoint(transform, workLocation, 5f);
             }
         }
         else{
-            // We're at the work location, just rotate to face it
-            Vector3 directionToWork = (currentWorkTask.transform.position - transform.position).normalized;
-            Quaternion lookRotation = Quaternion.LookRotation(directionToWork);
-            transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 5f);
+            // We're at the work location, just rotate to face it using centralized utility
+            NavigationUtils.RotateTowardsTarget(transform, currentWorkTask.transform, 5f, true);
         }
     }
 
@@ -103,6 +104,50 @@ public class RobotCharacterController : HumanCharacterController
             currentWorkTask = null;
             animator.Play("Empty", workLayerIndex);
         }
+    }
+
+    #region Conversation Control
+
+    private bool isInConversation = false;
+
+    /// <summary>
+    /// Pauses the robot's AI and movement during conversations
+    /// </summary>
+    public void PauseForConversation()
+    {
+        isInConversation = true;
+        
+        // Stop any current work
+        if (isWorking)
+        {
+            StopWork();
+        }
+    }
+
+    /// <summary>
+    /// Resumes the robot's AI and movement after conversations
+    /// </summary>
+    public void ResumeAfterConversation()
+    {
+        isInConversation = false;
+    }
+
+    /// <summary>
+    /// Update conversation rotation - called during conversation to face the player
+    /// </summary>
+    public void UpdateConversationRotation()
+    {
+        if (!isInConversation || PlayerController.Instance?._possessedNPC == null) return;
+
+        Transform playerTransform = PlayerController.Instance._possessedNPC.GetTransform();
+        NavigationUtils.RotateTowardsPlayerForConversation(transform, playerTransform, rotationSpeed);
+    }
+
+    #endregion
+
+    public new Transform GetTransform()
+    {
+        return transform;
     }
 
     private void HandleWorkCompleted()

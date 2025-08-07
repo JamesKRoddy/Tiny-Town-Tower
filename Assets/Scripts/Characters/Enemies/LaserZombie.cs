@@ -127,15 +127,8 @@ namespace Enemies
         {
             if (navMeshTarget == null) return;
             
-            // Calculate direction from body to target (not head)
-            Vector3 direction = (navMeshTarget.position - transform.position).normalized;
-            direction.y = 0;
-            if (direction == Vector3.zero) return;
-
-            Quaternion targetRotation = Quaternion.LookRotation(direction);
-            float enhancedRotationSpeed = rotationSpeed * 2f; // Faster rotation for ranged attacks
-            
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, enhancedRotationSpeed * Time.deltaTime);
+            // Use centralized rotation utility with enhanced speed for laser attacks
+            NavigationUtils.RotateTowardsTargetForAction(transform, navMeshTarget, rotationSpeed, 2f, LASER_ATTACK_ANGLE_THRESHOLD, true);
         }
         
         /// <summary>

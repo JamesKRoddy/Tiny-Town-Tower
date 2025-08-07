@@ -183,8 +183,9 @@ public class WorkState : _TaskState
             // Use lerping for precise positioning
             transform.position = Vector3.Lerp(transform.position, precisePosition.position, 
                 Time.deltaTime * 5f);
-            transform.rotation = Quaternion.Slerp(transform.rotation, precisePosition.rotation, 
-                Time.deltaTime * 5f);
+            
+            // Use centralized rotation utility
+            NavigationUtils.RotateTowardsWorkPoint(transform, precisePosition, 5f);
 
             // Check if we've reached the precise position
             float distanceToExactPosition = Vector3.Distance(transform.position, precisePosition.position);

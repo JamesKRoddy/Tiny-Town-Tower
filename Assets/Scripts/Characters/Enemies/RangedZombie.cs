@@ -139,13 +139,8 @@ namespace Enemies
                 return;
             }
             
-            // Simple rotation towards target during normal movement
-            Vector3 direction = (navMeshTarget.position - transform.position).normalized;
-            direction.y = 0;
-            if (direction == Vector3.zero) return;
-
-            Quaternion targetRotation = Quaternion.LookRotation(direction);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            // Use centralized rotation utility
+            NavigationUtils.RotateTowardsTarget(transform, navMeshTarget, rotationSpeed, true);
         }
 
 

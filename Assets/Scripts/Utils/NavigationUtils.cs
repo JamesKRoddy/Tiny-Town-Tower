@@ -211,4 +211,189 @@ public static class NavigationUtils
 
         return CalculateEffectiveReachDistance(agent.transform.position, target, baseStoppingDistance, obstacleBoundsOffset);
     }
+
+    #region Rotation Utilities
+
+    /// <summary>
+    /// Rotate a transform towards a target position with smooth interpolation
+    /// </summary>
+    /// <param name="transform">The transform to rotate</param>
+    /// <param name="targetPosition">The target position to face</param>
+    /// <param name="rotationSpeed">Rotation speed in degrees per second</param>
+    /// <param name="ignoreYAxis">Whether to ignore Y-axis differences (keep rotation horizontal)</param>
+    /// <returns>True if rotation is complete (within 1 degree)</returns>
+    public static bool RotateTowardsTarget(Transform transform, Vector3 targetPosition, float rotationSpeed, bool ignoreYAxis = true)
+    {
+        if (transform == null) return false;
+
+        Vector3 direction = (targetPosition - transform.position).normalized;
+        
+        if (ignoreYAxis)
+        {
+            direction.y = 0;
+        }
+        
+        if (direction == Vector3.zero) return true;
+
+        Quaternion targetRotation = Quaternion.LookRotation(direction);
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        
+        // Check if rotation is complete (within 1 degree)
+        float angleDifference = Quaternion.Angle(transform.rotation, targetRotation);
+        return angleDifference <= 1f;
+    }
+
+    /// <summary>
+    /// Rotate a transform towards a target transform with smooth interpolation
+    /// </summary>
+    /// <param name="transform">The transform to rotate</param>
+    /// <param name="target">The target transform to face</param>
+    /// <param name="rotationSpeed">Rotation speed in degrees per second</param>
+    /// <param name="ignoreYAxis">Whether to ignore Y-axis differences (keep rotation horizontal)</param>
+    /// <returns>True if rotation is complete (within 1 degree)</returns>
+    public static bool RotateTowardsTarget(Transform transform, Transform target, float rotationSpeed, bool ignoreYAxis = true)
+    {
+        if (target == null) return false;
+        return RotateTowardsTarget(transform, target.position, rotationSpeed, ignoreYAxis);
+    }
+
+    /// <summary>
+    /// Check if a transform is facing a target within a specified angle threshold
+    /// </summary>
+    /// <param name="transform">The transform to check</param>
+    /// <param name="targetPosition">The target position</param>
+    /// <param name="angleThreshold">Maximum angle difference in degrees</param>
+    /// <param name="ignoreYAxis">Whether to ignore Y-axis differences</param>
+    /// <returns>True if facing the target within the threshold</returns>
+    public static bool IsFacingTarget(Transform transform, Vector3 targetPosition, float angleThreshold = 5f, bool ignoreYAxis = true)
+    {
+        if (transform == null) return false;
+
+        Vector3 directionToTarget = (targetPosition - transform.position).normalized;
+        
+        if (ignoreYAxis)
+        {
+            directionToTarget.y = 0;
+            directionToTarget = directionToTarget.normalized;
+        }
+        
+        if (directionToTarget == Vector3.zero) return true;
+
+        float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
+        return angleToTarget <= angleThreshold;
+    }
+
+    /// <summary>
+    /// Check if a transform is facing a target transform within a specified angle threshold
+    /// </summary>
+    /// <param name="transform">The transform to check</param>
+    /// <param name="target">The target transform</param>
+    /// <param name="angleThreshold">Maximum angle difference in degrees</param>
+    /// <param name="ignoreYAxis">Whether to ignore Y-axis differences</param>
+    /// <returns>True if facing the target within the threshold</returns>
+    public static bool IsFacingTarget(Transform transform, Transform target, float angleThreshold = 5f, bool ignoreYAxis = true)
+    {
+        if (target == null) return false;
+        return IsFacingTarget(transform, target.position, angleThreshold, ignoreYAxis);
+    }
+
+    /// <summary>
+    /// Rotate towards target with enhanced speed for specific actions (like attack preparation)
+    /// </summary>
+    /// <param name="transform">The transform to rotate</param>
+    /// <param name="target">The target transform</param>
+    /// <param name="baseRotationSpeed">Base rotation speed in degrees per second</param>
+    /// <param name="speedMultiplier">Multiplier for enhanced rotation speed</param>
+    /// <param name="angleThreshold">Angle threshold to consider rotation complete</param>
+    /// <param name="ignoreYAxis">Whether to ignore Y-axis differences</param>
+    /// <returns>True if rotation is complete and ready for action</returns>
+    public static bool RotateTowardsTargetForAction(Transform transform, Transform target, float baseRotationSpeed, float speedMultiplier = 3f, float angleThreshold = 5f, bool ignoreYAxis = true)
+    {
+        if (target == null) return false;
+
+        Vector3 direction = (target.position - transform.position).normalized;
+        
+        if (ignoreYAxis)
+        {
+            direction.y = 0;
+        }
+        
+        if (direction == Vector3.zero) return true;
+
+        Quaternion targetRotation = Quaternion.LookRotation(direction);
+        float enhancedRotationSpeed = baseRotationSpeed * speedMultiplier;
+        
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, enhancedRotationSpeed * Time.deltaTime);
+        
+        return IsFacingTarget(transform, target, angleThreshold, ignoreYAxis);
+    }
+
+    /// <summary>
+    /// Rotate towards a work point (position and rotation)
+    /// </summary>
+    /// <param name="transform">The transform to rotate</param>
+    /// <param name="workPosition">The work position</param>
+    /// <param name="workRotation">The work rotation</param>
+    /// <param name="rotationSpeed">Rotation speed in degrees per second</param>
+    /// <returns>True if rotation is complete</returns>
+    public static bool RotateTowardsWorkPoint(Transform transform, Vector3 workPosition, Quaternion workRotation, float rotationSpeed)
+    {
+        if (transform == null) return false;
+
+        // Use the work rotation directly
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, workRotation, rotationSpeed * Time.deltaTime);
+        
+        // Check if rotation is complete (within 1 degree)
+        float angleDifference = Quaternion.Angle(transform.rotation, workRotation);
+        return angleDifference <= 1f;
+    }
+
+    /// <summary>
+    /// Rotate towards a work point using a transform
+    /// </summary>
+    /// <param name="transform">The transform to rotate</param>
+    /// <param name="workPoint">The work point transform</param>
+    /// <param name="rotationSpeed">Rotation speed in degrees per second</param>
+    /// <returns>True if rotation is complete</returns>
+    public static bool RotateTowardsWorkPoint(Transform transform, Transform workPoint, float rotationSpeed)
+    {
+        if (workPoint == null) return false;
+        return RotateTowardsWorkPoint(transform, workPoint.position, workPoint.rotation, rotationSpeed);
+    }
+
+    /// <summary>
+    /// Rotate towards the player for conversations
+    /// </summary>
+    /// <param name="npcTransform">The NPC's transform</param>
+    /// <param name="playerTransform">The player's transform</param>
+    /// <param name="rotationSpeed">Rotation speed in degrees per second</param>
+    /// <returns>True if rotation is complete</returns>
+    public static bool RotateTowardsPlayerForConversation(Transform npcTransform, Transform playerTransform, float rotationSpeed)
+    {
+        if (npcTransform == null || playerTransform == null) return false;
+        
+        // For conversations, we want to face the player directly
+        return RotateTowardsTarget(npcTransform, playerTransform, rotationSpeed, true);
+    }
+
+    /// <summary>
+    /// Handle rotation during movement (for NavMeshAgent-based characters)
+    /// </summary>
+    /// <param name="transform">The transform to rotate</param>
+    /// <param name="target">The target transform</param>
+    /// <param name="agentVelocity">The NavMeshAgent's velocity</param>
+    /// <param name="rotationSpeed">Rotation speed in degrees per second</param>
+    /// <param name="velocityThreshold">Minimum velocity to trigger rotation</param>
+    public static void HandleMovementRotation(Transform transform, Transform target, Vector3 agentVelocity, float rotationSpeed, float velocityThreshold = 0.1f)
+    {
+        if (transform == null || target == null) return;
+        
+        // Only rotate when moving
+        if (agentVelocity.magnitude > velocityThreshold)
+        {
+            RotateTowardsTarget(transform, target, rotationSpeed, true);
+        }
+    }
+
+    #endregion
 } 
