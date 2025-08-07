@@ -16,6 +16,10 @@ namespace Managers
         [Tooltip("Array of effect sets for different building types")]
         public BuildingEffects[] buildingEffects;
 
+        [Header("Generic Effects")]
+        [Tooltip("Generic spawn effect to use when no character-specific spawn effect is available")]
+        public EffectDefinition genericSpawnEffect;
+
         [Tooltip("Number of instances of each effect to keep in the object pool")]
         public int poolSize = 20;
 
@@ -54,6 +58,7 @@ namespace Managers
                 InitializeEffectPool(charEffect.deathEffects);
                 InitializeEffectPool(charEffect.destructionEffects);
                 InitializeEffectPool(charEffect.footstepEffects);
+                InitializeEffectPool(charEffect.spawnEffects);
                 InitializeEffectPool(charEffect.idleEffects);
             }
         }
@@ -198,6 +203,29 @@ namespace Managers
             if (effects == null || effects.footstepEffects == null || effects.footstepEffects.Length == 0) return;
 
             PlayEffect(position, normal, Quaternion.LookRotation(normal), null, effects.footstepEffects[Random.Range(0, effects.footstepEffects.Length)]);
+        }
+
+        public void PlaySpawnEffect(Vector3 position, Vector3 normal, CharacterType characterType)
+        {
+            var effects = GetCharacterEffects(characterType);
+            if (effects == null || effects.spawnEffects == null || effects.spawnEffects.Length == 0) return;
+
+            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, effects.spawnEffects[Random.Range(0, effects.spawnEffects.Length)]);
+        }
+
+        public void PlaySpawnEffect(Vector3 position, Vector3 normal, EffectDefinition spawnEffect)
+        {
+            if (spawnEffect == null) return;
+            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, spawnEffect);
+        }
+
+        public void PlaySpawnEffect(Vector3 position, Vector3 normal)
+        {
+            // Play a generic spawn effect (could be configured globally)
+            if (genericSpawnEffect != null)
+            {
+                PlayEffect(position, normal, Quaternion.LookRotation(normal), null, genericSpawnEffect);
+            }
         }
 
         private CharacterEffects GetCharacterEffects(CharacterType characterType)

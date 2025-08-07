@@ -28,9 +28,18 @@ namespace Managers
             }
         }
 
+        [Header("Spawn Settings")]
+        [Tooltip("Minimum distance from player's possessed NPC for enemy spawning")]
+        public float minDistanceFromPlayer = 10f;
+        [Tooltip("Minimum distance between enemy spawn positions")]
+        public float minDistanceBetweenSpawns = 3f;
+        [Tooltip("Maximum attempts to find a valid spawn position per enemy")]
+        public int maxSpawnAttempts = 30;
+        [Tooltip("Radius to sample around random points for NavMesh validation")]
+        public float spawnSampleRadius = 5f;
+
         private EnemyWaveConfig currentWaveConfig; // Current wave configuration //TODO use GetCurrentRoomDifficulty
 
-        private List<EnemySpawnPoint> spawnPoints;
         private int currentWave = 0;
         private int totalEnemiesInWave; // Total enemies for the current wave
         private int enemiesSpawned; // Number of enemies spawned so far
@@ -48,10 +57,7 @@ namespace Managers
             }
         }
 
-        private void Start()
-        {
-            spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
-        }
+
 
         public void ResetWaveCount()
         {
@@ -81,41 +87,6 @@ namespace Managers
                         return;
                     }
                 }
-                
-                spawnPoints = new List<EnemySpawnPoint>(RogueLiteManager.Instance.BuildingManager.CurrentRoomParent.GetComponent<RogueLiteRoomParent>().GetEnemySpawnPoints());
-
-            } else if(GameManager.Instance.CurrentGameMode == GameMode.CAMP_ATTACK)
-            {
-                // For camp attack mode, we can handle this directly or delegate to CampManager
-                Debug.LogWarning("No spawn points found for camp attack mode!");
-            } else if(GameManager.Instance.CurrentGameMode == GameMode.CAMP)
-            {
-                // Get all spawn points in the scene for camp
-                spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
-            }
-
-            
-            if (spawnPoints.Count == 0)
-            {
-                Debug.LogError("No spawn points found!");
-                switch (GameManager.Instance.CurrentGameMode)
-                {
-                    case GameMode.ROGUE_LITE:
-                        RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
-                        break;
-                    case GameMode.CAMP_ATTACK:
-                        // For camp attack mode, we can handle this directly or delegate to CampManager
-                        Debug.LogWarning("No spawn points found for camp attack mode!");
-                        break;
-                    case GameMode.CAMP:
-                        // For camp, we might want to handle this differently
-                        Debug.LogWarning("No spawn points found for camp enemies!");
-                        break;
-                    default:
-                        Debug.LogError("Shouldnt be spawning enemies here!!!");
-                        break;
-                }
-                return;
             }
 
             StartNextWave();
@@ -165,7 +136,7 @@ namespace Managers
 
         private void SpawnEnemy()
         {
-            if (spawnPoints.Count == 0 || currentWaveConfig.enemyPrefabs.Length == 0)
+            if (currentWaveConfig.enemyPrefabs.Length == 0)
                 return;
 
             StartCoroutine(SpawnEnemyWithRetry());
@@ -173,30 +144,35 @@ namespace Managers
 
         private IEnumerator SpawnEnemyWithRetry()
         {
-            EnemySpawnPoint spawnPoint = null;
+            // Find a valid spawn position using NavigationUtils
+            Vector3 spawnPosition = NavigationUtils.FindRandomSpawnPosition(
+                minDistanceFromPlayer, 
+                maxSpawnAttempts, 
+                spawnSampleRadius
+            );
 
-            // Wait until a spawn point becomes available
-            while (spawnPoint == null)
+            // Wait until we find a valid spawn position
+            while (spawnPosition == Vector3.zero)
             {
-                foreach (var potentialSpawnPoint in spawnPoints)
-                {
-                    if (potentialSpawnPoint != null && potentialSpawnPoint.IsAvailable())
-                    {
-                        spawnPoint = potentialSpawnPoint;
-                        break;
-                    }
-                }
-
-                if (spawnPoint == null)
-                {
-                    yield return new WaitForSeconds(0.1f); // Small delay before checking again
-                }
+                yield return new WaitForSeconds(0.1f); // Small delay before trying again
+                spawnPosition = NavigationUtils.FindRandomSpawnPosition(
+                    minDistanceFromPlayer, 
+                    maxSpawnAttempts, 
+                    spawnSampleRadius
+                );
             }
 
             GameObject enemyPrefab = currentWaveConfig.enemyPrefabs[Random.Range(0, currentWaveConfig.enemyPrefabs.Length)];
 
-            // Delegate spawning to the spawn point
-            GameObject enemy = spawnPoint.SpawnEnemy(enemyPrefab);
+            // Play spawn effect before spawning the enemy
+            Vector3 spawnNormal = Vector3.up;
+            EffectManager.Instance.PlaySpawnEffect(spawnPosition, spawnNormal);
+
+            // Small delay to let the spawn effect play
+            yield return new WaitForSeconds(0.2f);
+
+            // Spawn the enemy at the random position
+            GameObject enemy = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
 
             if (enemy != null)
             {

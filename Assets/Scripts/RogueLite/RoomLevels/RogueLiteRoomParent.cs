@@ -843,10 +843,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
     }
 
-    public List<EnemySpawnPoint> GetEnemySpawnPoints()
-    {
-        return new List<EnemySpawnPoint>(transform.GetComponentsInChildren<EnemySpawnPoint>());
-    }
+
     
     /// <summary>
     /// Get a summary of room types in this parent for debugging

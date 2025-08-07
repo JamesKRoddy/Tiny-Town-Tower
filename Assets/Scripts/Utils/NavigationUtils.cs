@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// Utility class for shared navigation logic used by enemies and NPCs
@@ -393,6 +394,199 @@ public static class NavigationUtils
         {
             RotateTowardsTarget(transform, target, rotationSpeed, true);
         }
+    }
+
+    #endregion
+
+    #region Enemy Spawning Utilities
+
+    /// <summary>
+    /// Find a random position on the NavMesh that is at least the specified distance away from the player's possessed NPC
+    /// </summary>
+    /// <param name="minDistanceFromPlayer">Minimum distance required from the player's possessed NPC</param>
+    /// <param name="maxAttempts">Maximum number of attempts to find a valid position</param>
+    /// <param name="sampleRadius">Radius to sample around random points</param>
+    /// <returns>A valid NavMesh position, or Vector3.zero if none found</returns>
+    public static Vector3 FindRandomSpawnPosition(float minDistanceFromPlayer = 10f, int maxAttempts = 50, float sampleRadius = 5f)
+    {
+        // Get the player's possessed NPC position
+        Vector3 playerPosition = GetPlayerPosition();
+        
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            // Generate a random position within a reasonable range
+            Vector3 randomPosition = GenerateRandomPosition();
+            
+            // Sample the NavMesh at this position
+            NavMeshHit hit;
+            if (NavMesh.SamplePosition(randomPosition, out hit, sampleRadius, NavMesh.AllAreas))
+            {
+                // Check if this position is far enough from the player
+                float distanceFromPlayer = Vector3.Distance(hit.position, playerPosition);
+                if (distanceFromPlayer >= minDistanceFromPlayer)
+                {
+                    return hit.position;
+                }
+            }
+        }
+        
+        Debug.LogWarning($"[NavigationUtils] Could not find valid spawn position after {maxAttempts} attempts");
+        return Vector3.zero;
+    }
+
+    /// <summary>
+    /// Find multiple random spawn positions on the NavMesh, ensuring they're all at least the specified distance from the player
+    /// </summary>
+    /// <param name="count">Number of spawn positions to find</param>
+    /// <param name="minDistanceFromPlayer">Minimum distance required from the player's possessed NPC</param>
+    /// <param name="minDistanceBetweenSpawns">Minimum distance between spawn positions</param>
+    /// <param name="maxAttemptsPerSpawn">Maximum attempts per spawn position</param>
+    /// <param name="sampleRadius">Radius to sample around random points</param>
+    /// <returns>Array of valid NavMesh positions</returns>
+    public static Vector3[] FindMultipleSpawnPositions(int count, float minDistanceFromPlayer = 10f, float minDistanceBetweenSpawns = 3f, int maxAttemptsPerSpawn = 30, float sampleRadius = 5f)
+    {
+        Vector3[] spawnPositions = new Vector3[count];
+        int foundCount = 0;
+        
+        for (int i = 0; i < count; i++)
+        {
+            Vector3 spawnPosition = FindValidSpawnPosition(spawnPositions, foundCount, minDistanceFromPlayer, minDistanceBetweenSpawns, maxAttemptsPerSpawn, sampleRadius);
+            
+            if (spawnPosition != Vector3.zero)
+            {
+                spawnPositions[foundCount] = spawnPosition;
+                foundCount++;
+            }
+            else
+            {
+                Debug.LogWarning($"[NavigationUtils] Could not find spawn position {i + 1} after {maxAttemptsPerSpawn} attempts");
+                break;
+            }
+        }
+        
+        // Resize array to actual found count
+        if (foundCount < count)
+        {
+            Vector3[] resizedArray = new Vector3[foundCount];
+            System.Array.Copy(spawnPositions, resizedArray, foundCount);
+            return resizedArray;
+        }
+        
+        return spawnPositions;
+    }
+
+    /// <summary>
+    /// Find a spawn position that's valid relative to existing spawn positions
+    /// </summary>
+    private static Vector3 FindValidSpawnPosition(Vector3[] existingPositions, int existingCount, float minDistanceFromPlayer, float minDistanceBetweenSpawns, int maxAttempts, float sampleRadius)
+    {
+        Vector3 playerPosition = GetPlayerPosition();
+        
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            Vector3 randomPosition = GenerateRandomPosition();
+            
+            NavMeshHit hit;
+            if (NavMesh.SamplePosition(randomPosition, out hit, sampleRadius, NavMesh.AllAreas))
+            {
+                // Check distance from player
+                float distanceFromPlayer = Vector3.Distance(hit.position, playerPosition);
+                if (distanceFromPlayer < minDistanceFromPlayer)
+                {
+                    continue;
+                }
+                
+                // Check distance from existing spawn positions
+                bool tooCloseToExisting = false;
+                for (int i = 0; i < existingCount; i++)
+                {
+                    float distanceFromExisting = Vector3.Distance(hit.position, existingPositions[i]);
+                    if (distanceFromExisting < minDistanceBetweenSpawns)
+                    {
+                        tooCloseToExisting = true;
+                        break;
+                    }
+                }
+                
+                if (!tooCloseToExisting)
+                {
+                    return hit.position;
+                }
+            }
+        }
+        
+        return Vector3.zero;
+    }
+
+    /// <summary>
+    /// Generate a random position within reasonable bounds
+    /// </summary>
+    private static Vector3 GenerateRandomPosition()
+    {
+        // Try to get bounds from CampManager first
+        if (Managers.CampManager.Instance != null)
+        {
+            Vector2 xBounds = Managers.CampManager.Instance.SharedXBounds;
+            Vector2 zBounds = Managers.CampManager.Instance.SharedZBounds;
+            
+            return new Vector3(
+                Random.Range(xBounds.x, xBounds.y),
+                0f,
+                Random.Range(zBounds.x, zBounds.y)
+            );
+        }
+        
+        // Fallback to a reasonable default range
+        return new Vector3(
+            Random.Range(-50f, 50f),
+            0f,
+            Random.Range(-50f, 50f)
+        );
+    }
+
+    /// <summary>
+    /// Get the current position of the player's possessed NPC
+    /// </summary>
+    private static Vector3 GetPlayerPosition()
+    {
+        if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null)
+        {
+            return PlayerController.Instance._possessedNPC.GetTransform().position;
+        }
+        
+        // Fallback to finding any player in the scene
+        var player = Object.FindFirstObjectByType<PlayerController>();
+        if (player != null && player._possessedNPC != null)
+        {
+            return player._possessedNPC.GetTransform().position;
+        }
+        
+        // Ultimate fallback
+        Debug.LogWarning("[NavigationUtils] Could not find player position, using origin");
+        return Vector3.zero;
+    }
+
+    /// <summary>
+    /// Check if a position is valid for enemy spawning (on NavMesh and far enough from player)
+    /// </summary>
+    /// <param name="position">Position to check</param>
+    /// <param name="minDistanceFromPlayer">Minimum distance required from player</param>
+    /// <param name="sampleRadius">Radius to sample for NavMesh validation</param>
+    /// <returns>True if the position is valid for spawning</returns>
+    public static bool IsValidSpawnPosition(Vector3 position, float minDistanceFromPlayer = 10f, float sampleRadius = 1f)
+    {
+        // Check if position is on NavMesh
+        NavMeshHit hit;
+        if (!NavMesh.SamplePosition(position, out hit, sampleRadius, NavMesh.AllAreas))
+        {
+            return false;
+        }
+        
+        // Check distance from player
+        Vector3 playerPosition = GetPlayerPosition();
+        float distanceFromPlayer = Vector3.Distance(hit.position, playerPosition);
+        
+        return distanceFromPlayer >= minDistanceFromPlayer;
     }
 
     #endregion
