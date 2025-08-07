@@ -34,9 +34,7 @@ Goal at the start just says survive, recruit 10 survivors
 
 
 Bugs and refactoring:
-Theres these small, medium and large enums for room sizes that need to be removed
 NPCs spawned into the roguelike section have nav errors
-When selecting the option to exit a narrative interaction the player attacks
 Some of the narrative text uses the npcs name, the text doesn't match the random name given to the npc
 
 

@@ -111,7 +111,7 @@ public class PlayerInput : MonoBehaviour
         {
             // Clear any lingering menu input
             PlayerUIManager.Instance.SetSelectedGameObject(null);
-            UpdateControlType(playerControlType);
+            UpdatePlayerControlsWithDelay(playerControlType, 1);
         }
     }
 
