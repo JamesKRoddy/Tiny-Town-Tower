@@ -40,6 +40,7 @@ After returning the the camp theres an error originating from the dirt piles als
 NPCs spawned into the roguelike section have nav errors
 When selecting the option to exit a narrative interaction the player attacks
 Some of the narrative text uses the npcs name, the text doesn't match the random name given to the npc
+Add camp cleanliness and electricity to save manager
 
 
 
@@ -48,7 +49,6 @@ Some of the narrative text uses the npcs name, the text doesn't match the random
 
 VFX for player
 Damage animation for player and cooldown to take more damage
-Start setting up the player progression manager. Use this to keep track of what the player has unlocked
 
 Have to do some refactoring on the npc animator and what has access to it
 
