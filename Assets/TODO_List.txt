@@ -2,12 +2,10 @@
 
 
 Tomorrow work:
-Zombie spawn vfx is too big and rotated weird
 
 
 Bugs and refactoring:
 Some of the narrative text uses the npcs name, the text doesn't match the random name given to the npc
-Instead of spawning enemies at fixed points, add in code to select random points on the nav mesh to spawn, also make sure they are at least 10 away from the players possessed npc . Then use the effect manager to do the vfx at the enemy spawn point
 Damage animation for player and cooldown to take more damage
 Have to do some refactoring on the npc animator and what has access to it
 Refactoring of managers, specifically the camp manager that yoke is doing a lot of stupid shit around the grid (might just need to check this could already be done)
