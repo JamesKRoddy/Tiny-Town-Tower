@@ -174,6 +174,40 @@ namespace Managers
 
         private Coroutine transitionCoroutine;
 
+        /// <summary>
+        /// Wait for NavMesh to be ready in the current room before spawning enemies
+        /// </summary>
+        private IEnumerator WaitForNavMeshReady()
+        {
+            Debug.Log("[RogueLiteManager] Waiting for NavMesh to be ready before enemy spawning...");
+            
+            // Wait a short delay for NavMesh baking to start
+            yield return new WaitForSeconds(0.2f);
+            
+            Vector3 playerPosition = PlayerController.Instance._possessedNPC.GetTransform().position;
+            float maxWaitTime = 10f;
+            float waitTime = 0f;
+            
+            // Check NavMesh readiness using NavigationUtils
+            while (waitTime < maxWaitTime)
+            {
+                if (NavigationUtils.IsNavMeshReady(playerPosition, 10f))
+                {
+                    Debug.Log($"[RogueLiteManager] NavMesh is ready after {waitTime:F1} seconds");
+                    break;
+                }
+                
+                Debug.Log($"[RogueLiteManager] NavMesh not ready yet, waiting... ({waitTime:F1}/{maxWaitTime}s)");
+                yield return new WaitForSeconds(0.5f);
+                waitTime += 0.5f;
+            }
+            
+            if (waitTime >= maxWaitTime)
+            {
+                Debug.LogWarning($"[RogueLiteManager] NavMesh readiness timeout after {maxWaitTime} seconds, proceeding anyway");
+            }
+        }
+
         private IEnumerator EnterRoomSequence(RogueLikeRoomDoor door)
         {
             // 1. Fade in
@@ -199,10 +233,10 @@ namespace Managers
             // 5. Fade out
             yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
 
-            // Wait before enemies are spawned
-            yield return new WaitForSeconds(1.0f);            
+            // 6. Wait for NavMesh to be ready before spawning enemies
+            yield return StartCoroutine(WaitForNavMeshReady());
 
-            // 6. Check if this is a friendly room - if so, skip enemy spawning entirely
+            // 7. Check if this is a friendly room - if so, skip enemy spawning entirely
             if (buildingManager.CurrentRoomParentComponent.RoomType == RogueLikeRoomType.FRIENDLY)
             {
                 SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
@@ -210,10 +244,10 @@ namespace Managers
                 yield break;
             }
 
-            // 7. Spawn enemies (only for hostile rooms)
+            // 8. Spawn enemies (only for hostile rooms)
             SetEnemySetupState(EnemySetupState.ENEMY_SPAWN_START);
 
-            // 8. Finish spawning enemies
+            // 9. Finish spawning enemies
             SetEnemySetupState(EnemySetupState.ENEMIES_SPAWNED);
 
             transitionCoroutine = null;

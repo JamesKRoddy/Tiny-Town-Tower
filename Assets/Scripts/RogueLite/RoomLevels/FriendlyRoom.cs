@@ -63,20 +63,21 @@ public class FriendlyRoom : RogueLiteRoom
     }
     
     /// <summary>
-    /// Coroutine to spawn NPCs after NavMesh has been baked
+    /// Wait for NavMesh to be ready before spawning NPCs
     /// </summary>
     private System.Collections.IEnumerator SpawnNPCsAfterNavMeshReady()
     {
-        // Wait for NavMesh to be baked (this happens after room setup in RogueLiteRoomParent)
-        yield return new WaitForSeconds(0.2f); // Slightly longer than the 0.1s delay in DelayedBakeNavMesh
+        Debug.Log($"[FriendlyRoom] Waiting for NavMesh to be ready for NPCs in room {gameObject.name}");
         
-        // Additional safety check - wait until NavMesh is actually available
-        float timeout = 2f; // 2 second timeout
+        // Wait a short delay for NavMesh baking to complete
+        yield return new WaitForSeconds(0.5f);
+        
+        // Check if NavMesh is available at our spawn points
+        float timeout = 10f;
         float elapsed = 0f;
         
         while (elapsed < timeout)
         {
-            // Check if NavMesh is available at our spawn points
             bool navMeshReady = true;
             if (npcSpawnPoints != null)
             {
@@ -96,6 +97,7 @@ public class FriendlyRoom : RogueLiteRoom
             
             if (navMeshReady)
             {
+                Debug.Log($"[FriendlyRoom] NavMesh ready for NPCs after {elapsed:F1} seconds");
                 break;
             }
             

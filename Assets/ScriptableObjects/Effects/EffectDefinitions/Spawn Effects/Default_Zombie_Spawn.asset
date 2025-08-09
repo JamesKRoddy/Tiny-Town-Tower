@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8ccf30521a69cb741ad56958e7173ea0, type: 3}
-  m_Name: ZombieDeath
-  m_EditorClassIdentifier: Assembly-CSharp:Managers:EffectDefinition
+  m_Name: Default_Zombie_Spawn
+  m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 1277154925287174, guid: 3b517eddec185dd4a830743a742ad00b, type: 3}
-  sounds:
-  - {fileID: 8300000, guid: 48213131877f5f54ca9e34324c75f030, type: 3}
-  - {fileID: 8300000, guid: 1d624cfddd15f7a469ed51e691d559a9, type: 3}
+  - {fileID: 1337195765195705423, guid: cd8aa3225c878c2409b5265e8737222f, type: 3}
+  sounds: []
   minPitch: 0.9
   maxPitch: 1.1
   volume: 1
   duration: 0
+  spatialBlend: 1
+  playMode: 1

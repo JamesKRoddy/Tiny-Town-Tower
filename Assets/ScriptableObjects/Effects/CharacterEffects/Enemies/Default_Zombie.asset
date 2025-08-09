@@ -10,15 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 30b97a306db20054c9836880f1ae9f49, type: 3}
-  m_Name: Zombie_Melee
+  m_Name: Default_Zombie
   m_EditorClassIdentifier: Assembly-CSharp:Managers:CharacterEffects
+  impactEffects: []
+  destructionEffects: []
   characterType: 201
   bloodEffects:
   - {fileID: 11400000, guid: eae0766bee71efd4393734407dda6009, type: 2}
-  impactEffects: []
   deathEffects:
   - {fileID: 11400000, guid: 43cd6af74bf79d346a6d5c96866bf83b, type: 2}
   footstepEffects: []
+  spawnEffects:
+  - {fileID: 11400000, guid: 7211516908f2f9045b8d2fa26d4ae6cc, type: 2}
   idleEffects: []
   minIdleInterval: 5
   maxIdleInterval: 15

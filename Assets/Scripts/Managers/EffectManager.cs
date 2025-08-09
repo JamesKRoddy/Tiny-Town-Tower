@@ -207,24 +207,46 @@ namespace Managers
 
         public void PlaySpawnEffect(Vector3 position, Vector3 normal, CharacterType characterType)
         {
+            Debug.Log($"[EffectManager] PlaySpawnEffect called for character type: {characterType} at position: {position}");
+            
             var effects = GetCharacterEffects(characterType);
-            if (effects == null || effects.spawnEffects == null || effects.spawnEffects.Length == 0) return;
+            if (effects == null || effects.spawnEffects == null || effects.spawnEffects.Length == 0) 
+            {
+                Debug.LogWarning($"[EffectManager] No spawn effects found for character type: {characterType}");
+                return;
+            }
 
-            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, effects.spawnEffects[Random.Range(0, effects.spawnEffects.Length)]);
+            var selectedEffect = effects.spawnEffects[Random.Range(0, effects.spawnEffects.Length)];
+            Debug.Log($"[EffectManager] Playing spawn effect: {selectedEffect.name} for character type: {characterType}");
+            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, selectedEffect);
         }
 
         public void PlaySpawnEffect(Vector3 position, Vector3 normal, EffectDefinition spawnEffect)
         {
-            if (spawnEffect == null) return;
+            Debug.Log($"[EffectManager] PlaySpawnEffect called with specific effect: {(spawnEffect != null ? spawnEffect.name : "null")} at position: {position}");
+            
+            if (spawnEffect == null) 
+            {
+                Debug.LogWarning("[EffectManager] Spawn effect is null");
+                return;
+            }
+            
             PlayEffect(position, normal, Quaternion.LookRotation(normal), null, spawnEffect);
         }
 
         public void PlaySpawnEffect(Vector3 position, Vector3 normal)
         {
+            Debug.Log($"[EffectManager] PlaySpawnEffect called with generic effect at position: {position}");
+            
             // Play a generic spawn effect (could be configured globally)
             if (genericSpawnEffect != null)
             {
+                Debug.Log($"[EffectManager] Playing generic spawn effect: {genericSpawnEffect.name}");
                 PlayEffect(position, normal, Quaternion.LookRotation(normal), null, genericSpawnEffect);
+            }
+            else
+            {
+                Debug.LogWarning("[EffectManager] No generic spawn effect configured");
             }
         }
 

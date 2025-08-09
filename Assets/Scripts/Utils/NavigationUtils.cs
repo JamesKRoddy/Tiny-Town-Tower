@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using System.Collections.Generic;
 using System.Linq;
+using Managers;
 
 /// <summary>
 /// Utility class for shared navigation logic used by enemies and NPCs
@@ -409,29 +410,79 @@ public static class NavigationUtils
     /// <returns>A valid NavMesh position, or Vector3.zero if none found</returns>
     public static Vector3 FindRandomSpawnPosition(float minDistanceFromPlayer = 10f, int maxAttempts = 50, float sampleRadius = 5f)
     {
+        Debug.Log($"[NavigationUtils] FindRandomSpawnPosition called with minDistance={minDistanceFromPlayer}, maxAttempts={maxAttempts}, sampleRadius={sampleRadius}");
+        
         // Get the player's possessed NPC position
         Vector3 playerPosition = GetPlayerPosition();
+        Debug.Log($"[NavigationUtils] Player position: {playerPosition}");
+        
+        // Get current room bounds for validation
+        Bounds? roomBounds = GetCurrentRoomBounds();
+        if (roomBounds.HasValue)
+        {
+            Debug.Log($"[NavigationUtils] Current room bounds: Center={roomBounds.Value.center}, Size={roomBounds.Value.size}");
+        }
         
         for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
             // Generate a random position within a reasonable range
             Vector3 randomPosition = GenerateRandomPosition();
+            Debug.Log($"[NavigationUtils] Attempt {attempt + 1}: Generated random position: {randomPosition}");
             
             // Sample the NavMesh at this position
             NavMeshHit hit;
             if (NavMesh.SamplePosition(randomPosition, out hit, sampleRadius, NavMesh.AllAreas))
             {
+                Debug.Log($"[NavigationUtils] Attempt {attempt + 1}: Found NavMesh position: {hit.position}");
+                
+                // Validate the position is within the current room bounds (for RogueLite mode)
+                if (roomBounds.HasValue && !roomBounds.Value.Contains(hit.position))
+                {
+                    Debug.Log($"[NavigationUtils] Attempt {attempt + 1}: Position outside room bounds, skipping");
+                    continue;
+                }
+                
                 // Check if this position is far enough from the player
                 float distanceFromPlayer = Vector3.Distance(hit.position, playerPosition);
+                Debug.Log($"[NavigationUtils] Attempt {attempt + 1}: Distance from player: {distanceFromPlayer} (required: {minDistanceFromPlayer})");
+                
                 if (distanceFromPlayer >= minDistanceFromPlayer)
                 {
+                    Debug.Log($"[NavigationUtils] SUCCESS: Found valid spawn position at {hit.position} after {attempt + 1} attempts");
                     return hit.position;
                 }
+                else
+                {
+                    Debug.Log($"[NavigationUtils] Attempt {attempt + 1}: Position too close to player ({distanceFromPlayer} < {minDistanceFromPlayer})");
+                }
+            }
+            else
+            {
+                Debug.Log($"[NavigationUtils] Attempt {attempt + 1}: Failed to sample NavMesh at position {randomPosition}");
             }
         }
         
-        Debug.LogWarning($"[NavigationUtils] Could not find valid spawn position after {maxAttempts} attempts");
+        Debug.LogWarning($"[NavigationUtils] FAILED: Could not find valid spawn position after {maxAttempts} attempts");
         return Vector3.zero;
+    }
+
+    /// <summary>
+    /// Get the bounds of the current room (for RogueLite mode) or null for other modes
+    /// </summary>
+    private static Bounds? GetCurrentRoomBounds()
+    {
+        if (GameManager.Instance.CurrentGameMode == GameMode.ROGUE_LITE)
+        {
+            if (RogueLiteManager.Instance != null && RogueLiteManager.Instance.BuildingManager != null)
+            {
+                var currentRoomParent = RogueLiteManager.Instance.BuildingManager.CurrentRoomParent;
+                if (currentRoomParent != null)
+                {
+                    return GetRoomBounds(currentRoomParent);
+                }
+            }
+        }
+        return null;
     }
 
     /// <summary>
@@ -523,11 +574,43 @@ public static class NavigationUtils
     /// </summary>
     private static Vector3 GenerateRandomPosition()
     {
-        // Try to get bounds from CampManager first
+        // For RogueLite mode, try to get bounds from the current room
+        if (GameManager.Instance.CurrentGameMode == GameMode.ROGUE_LITE)
+        {
+            if (RogueLiteManager.Instance != null && RogueLiteManager.Instance.BuildingManager != null)
+            {
+                var currentRoomParent = RogueLiteManager.Instance.BuildingManager.CurrentRoomParent;
+                if (currentRoomParent != null)
+                {
+                    // Get the bounds of the current room
+                    Bounds roomBounds = GetRoomBounds(currentRoomParent);
+                    
+                    Debug.Log($"[NavigationUtils] Using current room bounds - Center: {roomBounds.center}, Size: {roomBounds.size}");
+                    
+                    return new Vector3(
+                        Random.Range(roomBounds.min.x, roomBounds.max.x),
+                        roomBounds.center.y,
+                        Random.Range(roomBounds.min.z, roomBounds.max.z)
+                    );
+                }
+                else
+                {
+                    Debug.LogWarning("[NavigationUtils] No current room parent found in RogueLite mode");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[NavigationUtils] RogueLiteManager or BuildingManager not available");
+            }
+        }
+        
+        // Try to get bounds from CampManager for camp modes
         if (Managers.CampManager.Instance != null)
         {
             Vector2 xBounds = Managers.CampManager.Instance.SharedXBounds;
             Vector2 zBounds = Managers.CampManager.Instance.SharedZBounds;
+            
+            Debug.Log($"[NavigationUtils] Using CampManager bounds - X: [{xBounds.x}, {xBounds.y}], Z: [{zBounds.x}, {zBounds.y}]");
             
             return new Vector3(
                 Random.Range(xBounds.x, xBounds.y),
@@ -535,6 +618,8 @@ public static class NavigationUtils
                 Random.Range(zBounds.x, zBounds.y)
             );
         }
+        
+        Debug.Log($"[NavigationUtils] No bounds available, using fallback bounds [-50, 50]");
         
         // Fallback to a reasonable default range
         return new Vector3(
@@ -545,20 +630,79 @@ public static class NavigationUtils
     }
 
     /// <summary>
+    /// Get the bounds of a room parent by combining all its child colliders
+    /// </summary>
+    private static Bounds GetRoomBounds(GameObject roomParent)
+    {
+        Collider[] colliders = roomParent.GetComponentsInChildren<Collider>();
+        
+        if (colliders.Length == 0)
+        {
+            // If no colliders, use a default area around the room center
+            Vector3 center = roomParent.transform.position;
+            return new Bounds(center, new Vector3(100f, 10f, 100f));
+        }
+        
+        Bounds bounds = colliders[0].bounds;
+        for (int i = 1; i < colliders.Length; i++)
+        {
+            bounds.Encapsulate(colliders[i].bounds);
+        }
+        
+        // Add some padding to ensure we don't spawn too close to walls
+        bounds.Expand(5f);
+        
+        return bounds;
+    }
+
+    /// <summary>
     /// Get the current position of the player's possessed NPC
     /// </summary>
-    private static Vector3 GetPlayerPosition()
+    public static Vector3 GetPlayerPosition()
     {
-        if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null)
+        Debug.Log("[NavigationUtils] GetPlayerPosition called");
+        
+        if (PlayerController.Instance != null)
         {
-            return PlayerController.Instance._possessedNPC.GetTransform().position;
+            Debug.Log("[NavigationUtils] PlayerController.Instance found");
+            
+            if (PlayerController.Instance._possessedNPC != null)
+            {
+                Vector3 playerPos = PlayerController.Instance._possessedNPC.GetTransform().position;
+                Debug.Log($"[NavigationUtils] Player possessed NPC position: {playerPos}");
+                return playerPos;
+            }
+            else
+            {
+                Debug.LogWarning("[NavigationUtils] PlayerController.Instance._possessedNPC is null");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[NavigationUtils] PlayerController.Instance is null");
         }
         
         // Fallback to finding any player in the scene
+        Debug.Log("[NavigationUtils] Attempting fallback: searching for PlayerController in scene");
         var player = Object.FindFirstObjectByType<PlayerController>();
-        if (player != null && player._possessedNPC != null)
+        if (player != null)
         {
-            return player._possessedNPC.GetTransform().position;
+            Debug.Log("[NavigationUtils] Found PlayerController via FindFirstObjectByType");
+            
+            if (player._possessedNPC != null)
+            {
+                Vector3 playerPos = player._possessedNPC.GetTransform().position;
+                Debug.Log($"[NavigationUtils] Fallback player possessed NPC position: {playerPos}");
+                return playerPos;
+            }
+            else
+            {
+                Debug.LogWarning("[NavigationUtils] Fallback PlayerController._possessedNPC is null");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[NavigationUtils] No PlayerController found in scene via FindFirstObjectByType");
         }
         
         // Ultimate fallback
@@ -587,6 +731,47 @@ public static class NavigationUtils
         float distanceFromPlayer = Vector3.Distance(hit.position, playerPosition);
         
         return distanceFromPlayer >= minDistanceFromPlayer;
+    }
+
+    /// <summary>
+    /// Check if the NavMesh is ready and has been baked in the current area
+    /// </summary>
+    /// <param name="centerPosition">Center position to check around</param>
+    /// <param name="checkRadius">Radius to check for NavMesh availability</param>
+    /// <returns>True if NavMesh appears to be ready</returns>
+    public static bool IsNavMeshReady(Vector3 centerPosition, float checkRadius = 10f)
+    {
+        Debug.Log($"[NavigationUtils] Checking if NavMesh is ready around position: {centerPosition}");
+        
+        // Check multiple points around the center to ensure NavMesh coverage
+        Vector3[] testPositions = {
+            centerPosition,
+            centerPosition + Vector3.forward * checkRadius * 0.5f,
+            centerPosition + Vector3.back * checkRadius * 0.5f,
+            centerPosition + Vector3.left * checkRadius * 0.5f,
+            centerPosition + Vector3.right * checkRadius * 0.5f
+        };
+        
+        int validPositions = 0;
+        foreach (Vector3 testPos in testPositions)
+        {
+            NavMeshHit hit;
+            if (NavMesh.SamplePosition(testPos, out hit, checkRadius, NavMesh.AllAreas))
+            {
+                validPositions++;
+                Debug.Log($"[NavigationUtils] NavMesh found at test position: {testPos} -> {hit.position}");
+            }
+            else
+            {
+                Debug.Log($"[NavigationUtils] No NavMesh found at test position: {testPos}");
+            }
+        }
+        
+        // Consider NavMesh ready if at least 60% of test positions are valid
+        bool isReady = validPositions >= (testPositions.Length * 0.6f);
+        Debug.Log($"[NavigationUtils] NavMesh readiness check: {validPositions}/{testPositions.Length} positions valid. Ready: {isReady}");
+        
+        return isReady;
     }
 
     #endregion

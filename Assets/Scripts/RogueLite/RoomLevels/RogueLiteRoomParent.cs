@@ -745,9 +745,12 @@ public class RogueLiteRoomParent : MonoBehaviour
     {
         yield return new WaitForSeconds(0.1f);
 
+        Debug.Log("[RogueLiteRoomParent] Starting NavMesh baking...");
+
         if (navMeshSurface != null)
         {
-            navMeshSurface.BuildNavMesh();            
+            navMeshSurface.BuildNavMesh();
+            Debug.Log("[RogueLiteRoomParent] NavMesh baking complete");
         }
         else
         {
