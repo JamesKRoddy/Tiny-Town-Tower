@@ -33,7 +33,7 @@ MonoBehaviour:
   friendlyRooms:
   - buildingRoom: {fileID: 5318116250113263644, guid: 4dd61a44160145b448518cb32744f622, type: 3}
     difficulty: 0
-  friendlyRoomSpawnChance: 10
+  friendlyRoomSpawnChance: 0
   buildingNPCs:
   - {fileID: 11400000, guid: ff84a74ffbac90849b0eb152033e7ac8, type: 2}
   autoSpawnNPCs: 1

@@ -216,13 +216,24 @@ namespace Managers
             GameObject enemyPrefab = currentWaveConfig.enemyPrefabs[Random.Range(0, currentWaveConfig.enemyPrefabs.Length)];
             Debug.Log($"[EnemySpawnManager] Selected enemy prefab: {enemyPrefab.name}");
 
-            // Play spawn effect before spawning the enemy
+            // Play character-specific spawn effect before spawning the enemy
             Vector3 spawnNormal = Vector3.up;
             Debug.Log($"[EnemySpawnManager] Playing spawn effect at position: {spawnPosition}");
             
             if (EffectManager.Instance != null)
             {
-                EffectManager.Instance.PlaySpawnEffect(spawnPosition, spawnNormal);
+                // Try to get the character type from the enemy prefab
+                IDamageable damageableComponent = enemyPrefab.GetComponent<IDamageable>();
+                if (damageableComponent != null)
+                {
+                    CharacterType characterType = damageableComponent.CharacterType;
+                    Debug.Log($"[EnemySpawnManager] Using character-specific spawn effect for: {characterType}");
+                    EffectManager.Instance.PlaySpawnEffect(spawnPosition, spawnNormal, characterType);
+                }
+                else
+                {
+                    Debug.LogWarning($"[EnemySpawnManager] No IDamageable component found on {enemyPrefab.name}");
+                }
                 Debug.Log("[EnemySpawnManager] Spawn effect played successfully");
             }
             else

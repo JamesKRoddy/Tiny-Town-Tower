@@ -16,10 +16,6 @@ namespace Managers
         [Tooltip("Array of effect sets for different building types")]
         public BuildingEffects[] buildingEffects;
 
-        [Header("Generic Effects")]
-        [Tooltip("Generic spawn effect to use when no character-specific spawn effect is available")]
-        public EffectDefinition genericSpawnEffect;
-
         [Tooltip("Number of instances of each effect to keep in the object pool")]
         public int poolSize = 20;
 
@@ -234,22 +230,6 @@ namespace Managers
             PlayEffect(position, normal, Quaternion.LookRotation(normal), null, spawnEffect);
         }
 
-        public void PlaySpawnEffect(Vector3 position, Vector3 normal)
-        {
-            Debug.Log($"[EffectManager] PlaySpawnEffect called with generic effect at position: {position}");
-            
-            // Play a generic spawn effect (could be configured globally)
-            if (genericSpawnEffect != null)
-            {
-                Debug.Log($"[EffectManager] Playing generic spawn effect: {genericSpawnEffect.name}");
-                PlayEffect(position, normal, Quaternion.LookRotation(normal), null, genericSpawnEffect);
-            }
-            else
-            {
-                Debug.LogWarning("[EffectManager] No generic spawn effect configured");
-            }
-        }
-
         private CharacterEffects GetCharacterEffects(CharacterType characterType)
         {
             if (characterEffects == null) return null;
@@ -328,12 +308,8 @@ namespace Managers
             float particleDuration = 0f;
             float audioDuration = 0f;
 
-            var particleSystem = vfx.GetComponent<ParticleSystem>();
-            if (particleSystem != null)
-            {
-                particleSystem.Play();
-                particleDuration = particleSystem.main.duration;
-            }
+            // Find all particle systems in the effect (including children) and get the longest duration
+            particleDuration = PlayAllParticleSystemsAndGetMaxDuration(vfx);
 
             if (effect.sounds != null && effect.sounds.Length > 0)
             {
@@ -370,12 +346,9 @@ namespace Managers
                     additionalVfx.transform.rotation = rotation;
                     activeEffects[effect].Add(additionalVfx);
 
-                    var additionalPs = additionalVfx.GetComponent<ParticleSystem>();
-                    if (additionalPs != null)
-                    {
-                        additionalPs.Play();
-                        particleDuration = Mathf.Max(particleDuration, additionalPs.main.duration);
-                    }
+                    // Play all particle systems in this additional effect and get max duration
+                    float additionalDuration = PlayAllParticleSystemsAndGetMaxDuration(additionalVfx);
+                    particleDuration = Mathf.Max(particleDuration, additionalDuration);
                 }
             }
 
@@ -385,6 +358,38 @@ namespace Managers
             StartCoroutine(ReturnToPoolAfterDuration(vfx, effect, duration));
 
             return vfx;
+        }
+
+        /// <summary>
+        /// Play all particle systems in the GameObject and its children, returning the maximum duration
+        /// </summary>
+        private float PlayAllParticleSystemsAndGetMaxDuration(GameObject effectObject)
+        {
+            float maxDuration = 0f;
+            
+            // Get all particle systems including children
+            ParticleSystem[] particleSystems = effectObject.GetComponentsInChildren<ParticleSystem>();
+            
+            foreach (ParticleSystem ps in particleSystems)
+            {
+                if (ps != null)
+                {
+                    ps.Play();
+                    float duration = ps.main.duration;
+                    
+                    // Consider start lifetime if duration is very small (some particle systems use lifetime instead)
+                    if (duration < 0.1f)
+                    {
+                        duration = ps.main.startLifetime.constantMax;
+                    }
+                    
+                    maxDuration = Mathf.Max(maxDuration, duration);
+                    Debug.Log($"[EffectManager] ParticleSystem '{ps.name}' duration: {duration}s");
+                }
+            }
+            
+            Debug.Log($"[EffectManager] Maximum particle duration found: {maxDuration}s across {particleSystems.Length} particle systems");
+            return maxDuration;
         }
 
         private GameObject GetPooledObject(EffectDefinition effect)

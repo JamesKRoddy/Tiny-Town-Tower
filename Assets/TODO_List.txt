@@ -2,7 +2,7 @@
 
 
 Tomorrow work:
-Test enemy spawn refactor, assign spawn vfx stuff
+Zombie spawn vfx is too big and rotated weird
 
 
 Bugs and refactoring:
