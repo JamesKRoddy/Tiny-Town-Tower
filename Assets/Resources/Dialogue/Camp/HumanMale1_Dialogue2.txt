@@ -27,7 +27,7 @@
         {
             "id": "Start",
             "speaker": "Tech Specialist",
-            "text": "*looks up from tinkering with a small device* Oh! Sorry, didn't hear you approach. I was trying to modify this radio receiver. The name's Jake, and you are...? Wait, let me guess - you've got that 'survivor group leader' look about you.",
+            "text": "*looks up from tinkering with a small device* Oh! Sorry, didn't hear you approach. I was trying to modify this radio receiver. The name's {npcName}, and you are...? Wait, let me guess - you've got that 'survivor group leader' look about you.",
             "setFlags": ["first_meeting"],
             "options": [
                 { "text": "Good eye. I lead a survivor community. We could use tech skills.", "nextLine": "RecruitOffer" },
@@ -38,7 +38,7 @@
         {
             "id": "SecondMeeting",
             "speaker": "Tech Specialist",
-            "text": "*waves with a screwdriver in hand* Hey, you're back! Still working on that power grid problem I mentioned. Actually made some progress. How's your community doing?",
+            "text": "*waves with a screwdriver in hand* Hey, {playerName}! You're back! Still working on that power grid problem I mentioned. Actually made some progress. How's your community doing?",
             "options": [
                 { "text": "Good. That offer to join still stands.", "nextLine": "RecruitOffer" },
                 { "text": "What kind of progress have you made?", "nextLine": "TechProgress" },
@@ -58,7 +58,7 @@
         {
             "id": "AlreadyRecruited",
             "speaker": "Tech Specialist",
-            "text": "*grins and shows off a modified device* Hey there! Check this out - I managed to boost our radio range by 40%! Camp life's been great for having actual workspace and materials to experiment with.",
+            "text": "*grins and shows off a modified device* Hey there, {playerName}! Check this out - I managed to boost our radio range by 40%! Camp life's been great for having actual workspace and materials to experiment with.",
             "options": [
                 { "text": "Excellent work! Let's head back to camp.", "nextLine": "End" },
                 { "text": "Tell me more about this upgrade.", "nextLine": "RadioUpgrade" }
@@ -97,9 +97,9 @@
         {
             "id": "RecruitOffer",
             "speaker": "Tech Specialist",
-            "text": "*eyes light up* A real community with people to help and protect? That's... that's actually my dream scenario. I've got so many ideas for security systems, power generation, communication networks...",
+            "text": "*eyes light up* A real community with people to help and protect? That's... that's actually my dream scenario, {playerName}. I've got so many ideas for security systems, power generation, communication networks...",
             "options": [
-                { "text": "Perfect! We need all of that. Welcome aboard!", "nextLine": "AcceptRecruitment", "recruitNPC": "Jake" },
+                { "text": "Perfect! We need all of that. Welcome aboard!", "nextLine": "AcceptRecruitment", "recruitNPC": "{npcName}" },
                 { "text": "What kind of security systems?", "nextLine": "SecuritySystems" },
                 { "text": "Actually, those projects might be too ambitious.", "nextLine": "RecruitRefusal", "setFlags": ["recruitment_refused"] }
             ]
@@ -107,10 +107,10 @@
         {
             "id": "AcceptRecruitment",
             "speaker": "Tech Specialist",
-            "text": "*practically bouncing with excitement* This is fantastic! I'm Jake, by the way - Jake Morrison. I've got a whole workshop worth of equipment hidden nearby. We can set up proper tech infrastructure for your community!",
+            "text": "*practically bouncing with excitement* This is fantastic! I'm {npcName}, by the way - {npcName} Morrison. I've got a whole workshop worth of equipment hidden nearby. We can set up proper tech infrastructure for your community!",
             "setFlags": ["recruited"],
             "options": [
-                { "text": "Welcome to the team, Jake. Let's gather your equipment and head home.", "nextLine": "End" }
+                { "text": "Welcome to the team, {npcName}. Let's gather your equipment and head home.", "nextLine": "End" }
             ]
         },
         {
@@ -157,7 +157,7 @@
             "speaker": "Tech Specialist",
             "text": "*becomes animated* Motion sensors, automated alarms, electronic locks, even some defensive turret prototypes! All designed to be maintainable with scavenged parts.",
             "options": [
-                { "text": "That sounds incredible. You're definitely hired!", "nextLine": "AcceptRecruitment", "recruitNPC": "Jake" },
+                { "text": "That sounds incredible. You're definitely hired!", "nextLine": "AcceptRecruitment", "recruitNPC": "{npcName}" },
                 { "text": "How do you prevent them from being hacked or sabotaged?", "nextLine": "SecurityMeasures" },
                 { "text": "Those systems might draw unwanted attention.", "nextLine": "AttentionConcerns" }
             ]
@@ -215,7 +215,7 @@
             "speaker": "Tech Specialist",
             "text": "*taps temple* Isolated networks, manual override switches, and encrypted communications. Plus I design them with intentional vulnerabilities that only I know how to exploit - just in case.",
             "options": [
-                { "text": "Smart security practices. You're hired!", "nextLine": "AcceptRecruitment", "recruitNPC": "Jake" },
+                { "text": "Smart security practices. You're hired!", "nextLine": "AcceptRecruitment", "recruitNPC": "{npcName}" },
                 { "text": "What if something happens to you?", "nextLine": "BackupPlan" },
                 { "text": "Clever thinking.", "nextLine": "End" }
             ]
@@ -275,7 +275,7 @@
             "speaker": "Tech Specialist",
             "text": "*pulls out detailed documentation* Everything's documented with step-by-step guides and troubleshooting procedures. I believe in sharing knowledge, not hoarding it.",
             "options": [
-                { "text": "That kind of knowledge sharing is valuable. Welcome aboard!", "nextLine": "AcceptRecruitment", "recruitNPC": "Jake" },
+                { "text": "That kind of knowledge sharing is valuable. Welcome aboard!", "nextLine": "AcceptRecruitment", "recruitNPC": "{npcName}" },
                 { "text": "How detailed are these guides?", "nextLine": "GuideDetails" },
                 { "text": "Good philosophy to have.", "nextLine": "End" }
             ]

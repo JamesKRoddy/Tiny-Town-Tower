@@ -4,7 +4,7 @@
         {
             "id": "Start",
             "speaker": "Wizard",
-            "text": "Ah, a traveler! Do you seek knowledge or power?",
+            "text": "Ah, {playerName}! I am {npcName}, keeper of ancient wisdom. Do you seek knowledge or power?",
             "options": [
                 { "text": "I seek knowledge.", "nextLine": "KnowledgePath" },
                 { "text": "I seek power.", "nextLine": "PowerPath" },
@@ -15,10 +15,10 @@
         {
             "id": "KnowledgePath",
             "speaker": "Wizard",
-            "text": "Knowledge comes at a cost. Are you prepared to pay it?",
+            "text": "Knowledge comes at a cost, {playerName}. Are you prepared to pay it?",
             "options": [
-                { "text": "Yes, I’m ready.", "nextLine": "KnowledgeCost" },
-                { "text": "No, I’m not.", "nextLine": "KnowledgeRefusal" }
+                { "text": "Yes, I'm ready.", "nextLine": "KnowledgeCost" },
+                { "text": "No, I'm not.", "nextLine": "KnowledgeRefusal" }
             ]
         },
         {
@@ -45,7 +45,7 @@
             "text": "Power is dangerous. Do you wish to wield it responsibly?",
             "options": [
                 { "text": "Of course.", "nextLine": "ResponsiblePower" },
-                { "text": "I’ll use it as I see fit.", "nextLine": "RecklessPower" }
+                { "text": "I'll use it as I see fit.", "nextLine": "RecklessPower" }
             ]
         },
         {
@@ -81,7 +81,7 @@
         {
             "id": "ChainStep1",
             "speaker": "Guide",
-            "text": "Step 1: You’ve entered the labyrinth.",
+            "text": "Step 1: You've entered the labyrinth.",
             "nextLine": "ChainStep2"
         },
         {
@@ -96,13 +96,13 @@
         {
             "id": "LeftPath",
             "speaker": "Guide",
-            "text": "You’ve chosen the path of shadows.",
+            "text": "You've chosen the path of shadows.",
             "nextLine": "ShadowEnd"
         },
         {
             "id": "RightPath",
             "speaker": "Guide",
-            "text": "You’ve chosen the path of light.",
+            "text": "You've chosen the path of light.",
             "nextLine": "LightEnd"
         },
         {
