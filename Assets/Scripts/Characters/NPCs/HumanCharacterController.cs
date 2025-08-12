@@ -1401,11 +1401,38 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         health = Mathf.Max(0, health - amount);
         OnDamageTaken?.Invoke(amount, health);
 
+        // Calculate hit direction and trigger damaged animation
+        DamageUtils.TriggerDamagedAnimation(animator, DamageUtils.CalculateHitDirection(transform, damageSource));
+
         // Play hit VFX
-        Vector3 hitPoint = transform.position + Vector3.up * 1.5f; // Adjust height as needed
-        Vector3 hitNormal = damageSource != null 
-            ? (transform.position - damageSource.position).normalized 
-            : Vector3.up; // Use upward direction as fallback
+        var (hitPoint, hitNormal) = DamageUtils.CalculateHitPointAndNormal(transform, damageSource);
+        EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
+
+        if (health <= 0 && !isDead) Die();
+    }
+
+
+
+
+
+    /// <summary>
+    /// Overloaded TakeDamage method that allows explicit hit direction specification
+    /// </summary>
+    /// <param name="amount">Amount of damage to take</param>
+    /// <param name="hitDirection">Explicit hit direction value (-1 = back, 0 = side, 1 = front)</param>
+    /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
+    public void TakeDamage(float amount, float hitDirection, Transform damageSource = null)
+    {
+        float previousHealth = health;
+        health = Mathf.Max(0, health - amount);
+        OnDamageTaken?.Invoke(amount, health);
+
+        // Convert 1D hit direction to 2D for the blend tree
+        Vector2 hitDirection2D = new Vector2(0f, hitDirection); // X = 0 (center), Y = forward/back
+        DamageUtils.TriggerDamagedAnimation(animator, hitDirection2D);
+
+        // Play hit VFX
+        var (hitPoint, hitNormal) = DamageUtils.CalculateHitPointAndNormal(transform, damageSource);
         EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
 
         if (health <= 0 && !isDead) Die();

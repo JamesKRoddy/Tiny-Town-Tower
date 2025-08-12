@@ -70,6 +70,8 @@ namespace Enemies
         [SerializeField] private float health = 100f;
         [SerializeField] private float maxHealth = 100f;
 
+
+
         #endregion
 
         #region Protected Fields
@@ -824,6 +826,9 @@ namespace Enemies
             float previousHealth = Health;
             Health -= amount;
 
+            // Calculate hit direction and trigger damaged animation
+            DamageUtils.TriggerDamagedAnimation(animator, DamageUtils.CalculateHitDirection(transform, damageSource));
+
             if (animator != null)
             {
                 animator.ResetTrigger("Attack");
@@ -835,8 +840,49 @@ namespace Enemies
 
             if (damageSource != null)
             {
-                Vector3 hitPoint = transform.position + Vector3.up * 1.5f;
-                Vector3 hitNormal = (transform.position - damageSource.position).normalized;
+                var (hitPoint, hitNormal) = DamageUtils.CalculateHitPointAndNormal(transform, damageSource);
+                EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
+                
+                HandleDamageReaction(damageSource);
+            }
+
+            if (Health <= 0)
+            {
+                Die();
+            }
+        }
+
+
+
+
+
+            /// <summary>
+        /// Overloaded TakeDamage method that allows explicit hit direction specification
+        /// </summary>
+        /// <param name="amount">Amount of damage to take</param>
+        /// <param name="hitDirection">Explicit hit direction value (-1 = back, 0 = side, 1 = front)</param>
+        /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
+        public void TakeDamage(float amount, float hitDirection, Transform damageSource = null)
+        {
+            float previousHealth = Health;
+            Health -= amount;
+
+            // Convert 1D hit direction to 2D for the blend tree
+            Vector2 hitDirection2D = new Vector2(0f, hitDirection); // X = 0 (center), Y = forward/back
+            DamageUtils.TriggerDamagedAnimation(animator, hitDirection2D);
+
+            if (animator != null)
+            {
+                animator.ResetTrigger("Attack");
+                animator.Play("Default", 1, 0);
+                animator.SetTrigger("Damaged");
+            }
+
+            OnDamageTaken?.Invoke(amount, Health);
+
+            if (damageSource != null)
+            {
+                var (hitPoint, hitNormal) = DamageUtils.CalculateHitPointAndNormal(transform, damageSource);
                 EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
                 
                 HandleDamageReaction(damageSource);
