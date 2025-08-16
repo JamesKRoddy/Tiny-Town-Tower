@@ -207,12 +207,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             isAttacking = true;
             animator.SetBool("LightAttack", true);
-            
-            // Enable root motion for attack animations
-            if (animator != null)
-            {
-                animator.applyRootMotion = true;
-            }
         }
     }
 
@@ -289,12 +283,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         isAttacking = false;
         if(characterCombat != null)
             characterCombat.StopAttacking();
-        
-        // Disable root motion for attack animations
-        if (animator != null)
-        {
-            animator.applyRootMotion = false;
-        }
     }
 
     #endregion
@@ -819,8 +807,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     /// </summary>
     private void OnAnimatorMove()
     {
-        // Only handle root motion if we're attacking and the animator is applying root motion
-        if (!isAttacking || animator == null || !animator.applyRootMotion)
+        // Only handle root motion if the animator is applying root motion
+        if (animator == null || !animator.applyRootMotion)
         {
             return;
         }
