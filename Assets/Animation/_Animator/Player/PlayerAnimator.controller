@@ -230,6 +230,7 @@ AnimatorState:
   - {fileID: -3394065820005170822}
   - {fileID: -7244105830372115711}
   m_StateMachineBehaviours:
+  - {fileID: 6081880560244325508}
   - {fileID: -5269686712659304211}
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
@@ -508,7 +509,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3698afa84392388449eade7520b3e779, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isRootMotionEnabled: 1
+  isRootMotionEnabled: 0
 --- !u!114 &-5253922974659321581
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -643,7 +644,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3698afa84392388449eade7520b3e779, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isRootMotionEnabled: 0
+  isRootMotionEnabled: 1
 --- !u!1102 &-4736067637849298188
 AnimatorState:
   serializedVersion: 6
@@ -765,7 +766,7 @@ AnimatorStateTransition:
   serializedVersion: 3
   m_TransitionDuration: 0.25
   m_TransitionOffset: 0
-  m_ExitTime: 0.7435063
+  m_ExitTime: 0.5625102
   m_HasExitTime: 1
   m_HasFixedDuration: 1
   m_InterruptionSource: 0
@@ -2163,6 +2164,25 @@ AnimatorStateTransition:
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 1
+--- !u!114 &6081880560244325508
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33440e54b6d69df42b148162d1315857, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  functionCalls:
+  - componentTypeName: HumanCharacterController
+    functionName: StopDamage
+    callOnEnter: 1
+    callOnExit: 0
+    callOnUpdate: 0
+  parameterModifications: []
 --- !u!1107 &6206271126497889406
 AnimatorStateMachine:
   serializedVersion: 6

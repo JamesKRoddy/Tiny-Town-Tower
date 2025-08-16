@@ -24,6 +24,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public float vaultCooldown = 0.3f; // Short cooldown between vaults to prevent rapid firing
 
     protected bool isAttacking; // Whether the player is currently attacking
+    protected bool isDamaged; // Whether the player is currently playing damage animation
 
     protected Animator animator;
     public Animator Animator => animator;
@@ -300,6 +301,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     private void StartDash()
     {
+        // Prevent dashing while damaged
+        if (isDamaged) return;
+        
         isDashing = true;
         dashTime = Time.time + dashDuration;
         dashCooldownTime = Time.time + dashCooldown;
@@ -356,6 +360,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     private void StartVault()
     {
+        // Prevent vaulting while damaged
+        if (isDamaged) return;
+        
         isVaulting = true;
         isDashing = false; // Ensure dashing is stopped when starting a vault
         dashTime = 0f; // Reset dash timer
@@ -958,7 +965,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             float inputMagnitude = movementInput.magnitude;
             float speed = isDashing ? dashSpeed : moveMaxSpeed;
-            float currentRotationSpeed = isAttacking ? attackRotationSpeed : rotationSpeed;
+            float currentRotationSpeed = (isAttacking || isDamaged) ? attackRotationSpeed : rotationSpeed;
 
             // If dashing, smoothly change direction
             if (isDashing)
@@ -1105,7 +1112,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 // Check for traditional obstacles (non-vaultable) if we haven't handled it above
                 if (!IsObstacleInPath(targetMovement, out RaycastHit hitInfo))
                 {
-                    if (!isAttacking) // Only move position if not attacking
+                    if (!isAttacking && !isDamaged) // Only move position if not attacking or damaged
                     {
                         transform.position += targetMovement;
                     }
@@ -1389,6 +1396,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         health = Mathf.Max(0, health - amount);
         OnDamageTaken?.Invoke(amount, health);
 
+        // Set damaged state to prevent movement
+        isDamaged = true;
+
         // Calculate hit direction and trigger damaged animation
         DamageUtils.TriggerDamagedAnimation(animator, DamageUtils.CalculateHitDirection(transform, damageSource));
 
@@ -1399,31 +1409,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         if (health <= 0 && !isDead) Die();
     }
 
-
-
-
-
     /// <summary>
-    /// Overloaded TakeDamage method that allows explicit hit direction specification
+    /// Called when damage animation ends to re-enable movement
     /// </summary>
-    /// <param name="amount">Amount of damage to take</param>
-    /// <param name="hitDirection">Explicit hit direction value (-1 = back, 0 = side, 1 = front)</param>
-    /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
-    public void TakeDamage(float amount, float hitDirection, Transform damageSource = null)
+    public void StopDamage()
     {
-        float previousHealth = health;
-        health = Mathf.Max(0, health - amount);
-        OnDamageTaken?.Invoke(amount, health);
-
-        // Convert 1D hit direction to 2D for the blend tree
-        Vector2 hitDirection2D = new Vector2(0f, hitDirection); // X = 0 (center), Y = forward/back
-        DamageUtils.TriggerDamagedAnimation(animator, hitDirection2D);
-
-        // Play hit VFX
-        var (hitPoint, hitNormal) = DamageUtils.CalculateHitPointAndNormal(transform, damageSource);
-        EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
-
-        if (health <= 0 && !isDead) Die();
+        isDamaged = false;
     }
 
     public void Heal(float amount)
@@ -1450,6 +1441,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
         // Disable movement and AI components to prevent dead NPCs from moving
         isAttacking = false;
+        isDamaged = false;
         isDashing = false;
         isVaulting = false;
         isPushing = false;
