@@ -99,7 +99,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     [Header("Health")]
     [SerializeField] private float health = 100f;
     [SerializeField] private float maxHealth = 100f;
+    [SerializeField] private float damageCooldown = 0.5f; // Time before TakeDamage can be called again
     private bool isDead = false;
+    private float lastDamageTime = 0f; // Track when damage was last taken
 
     public event Action<float, float> OnDamageTaken;
     public event Action<float, float> OnHeal;
@@ -1392,15 +1394,30 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void TakeDamage(float amount, Transform damageSource = null)
     {
+        // Prevent taking damage if cooldown is active
+        if (Time.time - lastDamageTime < damageCooldown)
+        {
+            Debug.Log($"{gameObject.name} damage cooldown active. Damage not applied.");
+            return;
+        }
+
         float previousHealth = health;
         health = Mathf.Max(0, health - amount);
         OnDamageTaken?.Invoke(amount, health);
 
+        // Check if already damaged to prevent unnecessary animation calls
+        bool wasAlreadyDamaged = isDamaged;
+        
         // Set damaged state to prevent movement
         isDamaged = true;
+        lastDamageTime = Time.time; // Update last damage time
 
-        // Calculate hit direction and trigger damaged animation
-        DamageUtils.TriggerDamagedAnimation(animator, DamageUtils.CalculateHitDirection(transform, damageSource));
+        // Only trigger damaged animation if not already damaged to prevent unnecessary animation calls
+        if (!wasAlreadyDamaged)
+        {
+            // Calculate hit direction and trigger damaged animation
+            DamageUtils.TriggerDamagedAnimation(animator, DamageUtils.CalculateHitDirection(transform, damageSource));
+        }
 
         // Play hit VFX
         var (hitPoint, hitNormal) = DamageUtils.CalculateHitPointAndNormal(transform, damageSource);
@@ -1489,10 +1506,20 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         
     }
 
+    /// <summary>
+    /// Checks if the character can take damage (not on cooldown and not dead)
+    /// </summary>
+    /// <returns>True if damage can be applied, false otherwise</returns>
+    public bool CanTakeDamage()
+    {
+        return !isDead && (Time.time - lastDamageTime >= damageCooldown);
+    }
+
     #endregion
 
     public float Health { get => health; set => health = value; }
     public float MaxHealth { get => maxHealth; set => maxHealth = value; }
+    public float DamageCooldown { get => damageCooldown; set => damageCooldown = value; }
 
     protected virtual void OnDestroy()
     {
