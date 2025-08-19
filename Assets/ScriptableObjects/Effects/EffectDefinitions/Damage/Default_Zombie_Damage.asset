@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8ccf30521a69cb741ad56958e7173ea0, type: 3}
-  m_Name: Zombie_Damage
+  m_Name: Default_Zombie_Damage
   m_EditorClassIdentifier: Assembly-CSharp:Managers:EffectDefinition
   prefabs:
   - {fileID: 1362418652685942, guid: b369efb4abe69e044890b664115fab9e, type: 3}

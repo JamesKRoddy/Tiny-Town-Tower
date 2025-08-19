@@ -70,6 +70,8 @@ namespace Enemies
         [SerializeField] private float health = 100f;
         [SerializeField] private float maxHealth = 100f;
 
+
+
         #endregion
 
         #region Protected Fields
@@ -493,16 +495,8 @@ namespace Enemies
         {
             if (navMeshTarget == null) return;
             
-            if (agent.velocity.magnitude > 0.1f)
-            {
-                Vector3 direction = (navMeshTarget.position - transform.position).normalized;
-                direction.y = 0;
-                if (direction != Vector3.zero)
-                {
-                    Quaternion targetRotation = Quaternion.LookRotation(direction);
-                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-                }
-            }
+            // Use centralized rotation utility
+            NavigationUtils.HandleMovementRotation(transform, navMeshTarget, agent.velocity, rotationSpeed, MOVEMENT_VELOCITY_THRESHOLD);
         }
 
         private void CheckIfStuck()
@@ -728,10 +722,7 @@ namespace Enemies
         {
             if (navMeshTarget == null) return false;
             
-            Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
-            float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
-            
-            return angleToTarget <= ATTACK_READY_ANGLE_THRESHOLD;
+            return NavigationUtils.IsFacingTarget(transform, navMeshTarget, ATTACK_READY_ANGLE_THRESHOLD, true);
         }
 
         /// <summary>
@@ -748,16 +739,7 @@ namespace Enemies
                 return false;
             }
 
-            Vector3 direction = (navMeshTarget.position - transform.position).normalized;
-            direction.y = 0;
-            if (direction == Vector3.zero) return true;
-
-            Quaternion targetRotation = Quaternion.LookRotation(direction);
-            float enhancedRotationSpeed = rotationSpeed * ROTATION_TOWARDS_TARGET_SPEED_MULTIPLIER;
-            
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, enhancedRotationSpeed * Time.deltaTime);
-            
-            return IsReadyToAttack();
+            return NavigationUtils.RotateTowardsTargetForAction(transform, navMeshTarget, rotationSpeed, ROTATION_TOWARDS_TARGET_SPEED_MULTIPLIER, ATTACK_READY_ANGLE_THRESHOLD, true);
         }
 
         #endregion
@@ -844,6 +826,9 @@ namespace Enemies
             float previousHealth = Health;
             Health -= amount;
 
+            // Calculate hit direction and trigger damaged animation
+            DamageUtils.TriggerDamagedAnimation(animator, DamageUtils.CalculateHitDirection(transform, damageSource));
+
             if (animator != null)
             {
                 animator.ResetTrigger("Attack");
@@ -855,8 +840,49 @@ namespace Enemies
 
             if (damageSource != null)
             {
-                Vector3 hitPoint = transform.position + Vector3.up * 1.5f;
-                Vector3 hitNormal = (transform.position - damageSource.position).normalized;
+                var (hitPoint, hitNormal) = DamageUtils.CalculateHitPointAndNormal(transform, damageSource);
+                EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
+                
+                HandleDamageReaction(damageSource);
+            }
+
+            if (Health <= 0)
+            {
+                Die();
+            }
+        }
+
+
+
+
+
+            /// <summary>
+        /// Overloaded TakeDamage method that allows explicit hit direction specification
+        /// </summary>
+        /// <param name="amount">Amount of damage to take</param>
+        /// <param name="hitDirection">Explicit hit direction value (-1 = back, 0 = side, 1 = front)</param>
+        /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
+        public void TakeDamage(float amount, float hitDirection, Transform damageSource = null)
+        {
+            float previousHealth = Health;
+            Health -= amount;
+
+            // Convert 1D hit direction to 2D for the blend tree
+            Vector2 hitDirection2D = new Vector2(0f, hitDirection); // X = 0 (center), Y = forward/back
+            DamageUtils.TriggerDamagedAnimation(animator, hitDirection2D);
+
+            if (animator != null)
+            {
+                animator.ResetTrigger("Attack");
+                animator.Play("Default", 1, 0);
+                animator.SetTrigger("Damaged");
+            }
+
+            OnDamageTaken?.Invoke(amount, Health);
+
+            if (damageSource != null)
+            {
+                var (hitPoint, hitNormal) = DamageUtils.CalculateHitPointAndNormal(transform, damageSource);
                 EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
                 
                 HandleDamageReaction(damageSource);

@@ -15,12 +15,9 @@ public class RoomDebugMenu : BaseDebugMenu
     [SerializeField] private TMP_Dropdown buildingTypeDropdown;
     [SerializeField] private Slider difficultySlider;
     [SerializeField] private TMP_Text difficultyText;
-    [SerializeField] private TMP_Dropdown roomSizeDropdown;
-    [SerializeField] private TMP_Text roomSizeText;
     
     private RogueLikeBuildingType currentBuildingType = RogueLikeBuildingType.NONE;
     private int currentDifficulty = 1;
-    private RogueLikeRoomSize currentRoomSize = RogueLikeRoomSize.MEDIUM;
     private List<GameObject> spawnedTestRooms = new List<GameObject>();
     
     public override void RegisterMenu()
@@ -47,7 +44,6 @@ public class RoomDebugMenu : BaseDebugMenu
         // Setup configuration controls
         SetupBuildingTypeDropdown();
         SetupDifficultySlider();
-        SetupRoomSizeDropdown();
         
         UpdateStatusDisplay();
     }
@@ -80,25 +76,6 @@ public class RoomDebugMenu : BaseDebugMenu
         UpdateDifficultyText();
     }
     
-    private void SetupRoomSizeDropdown()
-    {
-        if (roomSizeDropdown == null) return;
-        
-        roomSizeDropdown.ClearOptions();
-        List<string> options = new List<string>();
-        
-        foreach (RogueLikeRoomSize roomSize in System.Enum.GetValues(typeof(RogueLikeRoomSize)))
-        {
-            options.Add(roomSize.ToString());
-        }
-        
-        roomSizeDropdown.AddOptions(options);
-        roomSizeDropdown.value = (int)currentRoomSize;
-        roomSizeDropdown.onValueChanged.AddListener(OnRoomSizeChanged);
-        
-        UpdateRoomSizeText();
-    }
-    
     private void OnBuildingTypeChanged(int index)
     {
         RogueLikeBuildingType[] buildingTypes = (RogueLikeBuildingType[])System.Enum.GetValues(typeof(RogueLikeBuildingType));
@@ -122,26 +99,6 @@ public class RoomDebugMenu : BaseDebugMenu
         if (difficultyText != null)
         {
             difficultyText.text = $"Difficulty: {currentDifficulty}";
-        }
-    }
-    
-    private void OnRoomSizeChanged(int index)
-    {
-        RogueLikeRoomSize[] roomSizes = (RogueLikeRoomSize[])System.Enum.GetValues(typeof(RogueLikeRoomSize));
-        if (index >= 0 && index < roomSizes.Length)
-        {
-            currentRoomSize = roomSizes[index];
-            Debug.Log($"[RoomDebugMenu] Room size changed to: {currentRoomSize}");
-            UpdateRoomSizeText();
-            UpdateStatusDisplay();
-        }
-    }
-    
-    private void UpdateRoomSizeText()
-    {
-        if (roomSizeText != null)
-        {
-            roomSizeText.text = $"Room Size: {currentRoomSize}";
         }
     }
     
@@ -233,7 +190,6 @@ public class RoomDebugMenu : BaseDebugMenu
         string status = $"Room Debug Menu\n";
         status += $"Building Type: {currentBuildingType}\n";
         status += $"Difficulty: {currentDifficulty}\n";
-        status += $"Preferred Room Size: {currentRoomSize}\n";
         status += $"Spawned Buildings: {spawnedTestRooms.Count}\n";
         
         if (RogueLiteManager.Instance.BuildingManager != null)
@@ -246,17 +202,6 @@ public class RoomDebugMenu : BaseDebugMenu
                 status += $"Current Building: {buildingManager.CurrentBuilding.buildingType}\n";
                 status += $"Building Difficulty: {buildingManager.RogueLikeBuildingDifficulty}\n";
                 status += $"Current Room: {buildingManager.CurrentRoom}\n";
-                
-                // Show available room sizes for this building
-                var availableSizes = buildingManager.CurrentBuilding.GetAvailableRoomSizes(currentDifficulty);
-                if (availableSizes.Length > 0)
-                {
-                    status += $"Available Room Sizes: {string.Join(", ", availableSizes)}\n";
-                }
-                else
-                {
-                    status += $"Available Room Sizes: None\n";
-                }
             }
             
             if (buildingManager.CurrentRoomParent != null)

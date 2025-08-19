@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEditor;
-using Enemies;
 
 [CustomEditor(typeof(HostileRoom))]
 public class HostileRoomEditor : RogueLiteRoomEditorBase
@@ -14,17 +13,10 @@ public class HostileRoomEditor : RogueLiteRoomEditorBase
         
         HostileRoom hostileRoom = (HostileRoom)target;
         
-        // Enemy spawn points info
-        var spawnPoints = hostileRoom.GetEnemySpawnPoints();
-        EditorGUILayout.LabelField($"Enemy Spawn Points: {spawnPoints.Length}");
+        // Enemy spawning info
+        EditorGUILayout.LabelField("Enemy Spawning System", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox("This hostile room uses random NavMesh-based enemy spawning. Enemies will spawn at random positions on the NavMesh that are at least 10 units away from the player.", MessageType.Info);
         
-        if (spawnPoints.Length == 0)
-        {
-            EditorGUILayout.HelpBox("No enemy spawn points found. Add EnemySpawnPoint components as children.", MessageType.Warning);
-        }
-        else
-        {
-            EditorGUILayout.LabelField($"Has Enemy Spawn Points: ✓", EditorStyles.helpBox);
-        }
+        EditorGUILayout.LabelField("Spawn System: Random NavMesh Positions ✓", EditorStyles.helpBox);
     }
 } 

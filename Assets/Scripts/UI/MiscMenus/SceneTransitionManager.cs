@@ -139,6 +139,9 @@ public class SceneTransitionManager : MonoBehaviour
 
     private IEnumerator LoadNextSceneAsync(Action<float> progressCallback)
     {
+        //0. Disable player input
+        PlayerInput.Instance.DisablePlayerInput(true);
+
         //1. Fade in and wait for it to complete
         if (PlayerUIManager.Instance.transitionMenu != null)
         {
@@ -184,6 +187,9 @@ public class SceneTransitionManager : MonoBehaviour
         {
             yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
         }
+
+        //9. Re-enable player input
+        PlayerInput.Instance.DisablePlayerInput(false);
     }
 
     #endregion

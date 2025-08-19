@@ -19,6 +19,10 @@ public class CharacterEffects : BaseEffects
     [Tooltip("Effects played when the character takes a step")]
     public EffectDefinition[] footstepEffects = new EffectDefinition[0];
 
+    [Header("Spawn Effects")]
+    [Tooltip("Effects played when the character spawns (for enemies)")]
+    public EffectDefinition[] spawnEffects = new EffectDefinition[0];
+
     [Header("Idle Effects")]
     [Tooltip("Random effects played while the character is idle")]
     public EffectDefinition[] idleEffects = new EffectDefinition[0];
@@ -37,6 +41,7 @@ public class CharacterEffects : BaseEffects
         if (bloodEffects == null) bloodEffects = new EffectDefinition[0];
         if (deathEffects == null) deathEffects = new EffectDefinition[0];
         if (footstepEffects == null) footstepEffects = new EffectDefinition[0];
+        if (spawnEffects == null) spawnEffects = new EffectDefinition[0];
         if (idleEffects == null) idleEffects = new EffectDefinition[0];
     }
 }

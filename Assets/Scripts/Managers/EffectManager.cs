@@ -54,6 +54,7 @@ namespace Managers
                 InitializeEffectPool(charEffect.deathEffects);
                 InitializeEffectPool(charEffect.destructionEffects);
                 InitializeEffectPool(charEffect.footstepEffects);
+                InitializeEffectPool(charEffect.spawnEffects);
                 InitializeEffectPool(charEffect.idleEffects);
             }
         }
@@ -200,6 +201,35 @@ namespace Managers
             PlayEffect(position, normal, Quaternion.LookRotation(normal), null, effects.footstepEffects[Random.Range(0, effects.footstepEffects.Length)]);
         }
 
+        public void PlaySpawnEffect(Vector3 position, Vector3 normal, CharacterType characterType)
+        {
+            Debug.Log($"[EffectManager] PlaySpawnEffect called for character type: {characterType} at position: {position}");
+            
+            var effects = GetCharacterEffects(characterType);
+            if (effects == null || effects.spawnEffects == null || effects.spawnEffects.Length == 0) 
+            {
+                Debug.LogWarning($"[EffectManager] No spawn effects found for character type: {characterType}");
+                return;
+            }
+
+            var selectedEffect = effects.spawnEffects[Random.Range(0, effects.spawnEffects.Length)];
+            Debug.Log($"[EffectManager] Playing spawn effect: {selectedEffect.name} for character type: {characterType}");
+            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, selectedEffect);
+        }
+
+        public void PlaySpawnEffect(Vector3 position, Vector3 normal, EffectDefinition spawnEffect)
+        {
+            Debug.Log($"[EffectManager] PlaySpawnEffect called with specific effect: {(spawnEffect != null ? spawnEffect.name : "null")} at position: {position}");
+            
+            if (spawnEffect == null) 
+            {
+                Debug.LogWarning("[EffectManager] Spawn effect is null");
+                return;
+            }
+            
+            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, spawnEffect);
+        }
+
         private CharacterEffects GetCharacterEffects(CharacterType characterType)
         {
             if (characterEffects == null) return null;
@@ -278,12 +308,8 @@ namespace Managers
             float particleDuration = 0f;
             float audioDuration = 0f;
 
-            var particleSystem = vfx.GetComponent<ParticleSystem>();
-            if (particleSystem != null)
-            {
-                particleSystem.Play();
-                particleDuration = particleSystem.main.duration;
-            }
+            // Find all particle systems in the effect (including children) and get the longest duration
+            particleDuration = PlayAllParticleSystemsAndGetMaxDuration(vfx);
 
             if (effect.sounds != null && effect.sounds.Length > 0)
             {
@@ -320,12 +346,9 @@ namespace Managers
                     additionalVfx.transform.rotation = rotation;
                     activeEffects[effect].Add(additionalVfx);
 
-                    var additionalPs = additionalVfx.GetComponent<ParticleSystem>();
-                    if (additionalPs != null)
-                    {
-                        additionalPs.Play();
-                        particleDuration = Mathf.Max(particleDuration, additionalPs.main.duration);
-                    }
+                    // Play all particle systems in this additional effect and get max duration
+                    float additionalDuration = PlayAllParticleSystemsAndGetMaxDuration(additionalVfx);
+                    particleDuration = Mathf.Max(particleDuration, additionalDuration);
                 }
             }
 
@@ -335,6 +358,38 @@ namespace Managers
             StartCoroutine(ReturnToPoolAfterDuration(vfx, effect, duration));
 
             return vfx;
+        }
+
+        /// <summary>
+        /// Play all particle systems in the GameObject and its children, returning the maximum duration
+        /// </summary>
+        private float PlayAllParticleSystemsAndGetMaxDuration(GameObject effectObject)
+        {
+            float maxDuration = 0f;
+            
+            // Get all particle systems including children
+            ParticleSystem[] particleSystems = effectObject.GetComponentsInChildren<ParticleSystem>();
+            
+            foreach (ParticleSystem ps in particleSystems)
+            {
+                if (ps != null)
+                {
+                    ps.Play();
+                    float duration = ps.main.duration;
+                    
+                    // Consider start lifetime if duration is very small (some particle systems use lifetime instead)
+                    if (duration < 0.1f)
+                    {
+                        duration = ps.main.startLifetime.constantMax;
+                    }
+                    
+                    maxDuration = Mathf.Max(maxDuration, duration);
+                    Debug.Log($"[EffectManager] ParticleSystem '{ps.name}' duration: {duration}s");
+                }
+            }
+            
+            Debug.Log($"[EffectManager] Maximum particle duration found: {maxDuration}s across {particleSystems.Length} particle systems");
+            return maxDuration;
         }
 
         private GameObject GetPooledObject(EffectDefinition effect)

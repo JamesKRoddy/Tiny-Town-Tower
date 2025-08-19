@@ -262,7 +262,10 @@ public class PlayerController : MonoBehaviour, IControllerInput
     {
         if(_possessedNPC != null && PlayerInput.Instance.CurrentControlType != PlayerControlType.IN_CONVERSATION)
         {
-            _possessedNPC.Movement(new Vector3(input.x, 0, input.y));
+            // Transform input coordinates to account for camera angle
+            Vector3 rawInput = new Vector3(input.x, 0, input.y);
+            Vector3 transformedInput = playerCamera.TransformInputToWorldCoordinates(rawInput);
+            _possessedNPC.Movement(transformedInput);
         }
     }
 

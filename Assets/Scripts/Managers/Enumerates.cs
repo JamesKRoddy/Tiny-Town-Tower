@@ -51,17 +51,7 @@ public enum RogueLikeRoomType
     FRIENDLY
 }
 
-/// <summary>
-/// Room size categories for intelligent room placement in roguelike buildings
-/// </summary>
-[System.Serializable]
-public enum RogueLikeRoomSize
-{
-    SMALL,      // Compact rooms that fit in tight spaces
-    MEDIUM,     // Standard-sized rooms
-    LARGE,      // Spacious rooms that need more room
-    EXTRA_LARGE // Massive rooms that require lots of space
-}
+
 
 public enum CampBuildingCategory
 {

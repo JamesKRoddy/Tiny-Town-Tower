@@ -28,9 +28,18 @@ namespace Managers
             }
         }
 
+        [Header("Spawn Settings")]
+        [Tooltip("Minimum distance from player's possessed NPC for enemy spawning")]
+        public float minDistanceFromPlayer = 10f;
+        [Tooltip("Minimum distance between enemy spawn positions")]
+        public float minDistanceBetweenSpawns = 3f;
+        [Tooltip("Maximum attempts to find a valid spawn position per enemy")]
+        public int maxSpawnAttempts = 30;
+        [Tooltip("Radius to sample around random points for NavMesh validation")]
+        public float spawnSampleRadius = 5f;
+
         private EnemyWaveConfig currentWaveConfig; // Current wave configuration //TODO use GetCurrentRoomDifficulty
 
-        private List<EnemySpawnPoint> spawnPoints;
         private int currentWave = 0;
         private int totalEnemiesInWave; // Total enemies for the current wave
         private int enemiesSpawned; // Number of enemies spawned so far
@@ -48,10 +57,9 @@ namespace Managers
             }
         }
 
-        private void Start()
-        {
-            spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
-        }
+
+
+
 
         public void ResetWaveCount()
         {
@@ -60,86 +68,75 @@ namespace Managers
 
         public void StartSpawningEnemies(EnemyWaveConfig waveConfig)
         {
+            Debug.Log("[EnemySpawnManager] StartSpawningEnemies called");
+            
             if (waveConfig == null)
             {
-                Debug.LogError("No waveConfig provided by RogueLiteManager!");
+                Debug.LogError("[EnemySpawnManager] No waveConfig provided by RogueLiteManager!");
                 return;
             }
 
+            Debug.Log($"[EnemySpawnManager] WaveConfig received: {waveConfig.name} with {waveConfig.enemyPrefabs.Length} enemy prefabs, {waveConfig.maxWaves} max waves");
             currentWaveConfig = waveConfig;
 
+            Debug.Log($"[EnemySpawnManager] Current game mode: {GameManager.Instance.CurrentGameMode}");
+            
             if(GameManager.Instance.CurrentGameMode == GameMode.ROGUE_LITE)
             {
+                Debug.Log("[EnemySpawnManager] In ROGUE_LITE mode, checking room type");
+                
                 // Check if the current room parent is friendly - if so, skip enemy spawning
                 if (RogueLiteManager.Instance.BuildingManager.CurrentRoomParentComponent != null)
                 {
                     var roomParentComponent = RogueLiteManager.Instance.BuildingManager.CurrentRoomParentComponent;
+                    Debug.Log($"[EnemySpawnManager] Room parent component found, room type: {roomParentComponent.RoomType}");
                     
                     if (roomParentComponent != null && roomParentComponent.RoomType == RogueLikeRoomType.FRIENDLY)
                     {
+                        Debug.Log("[EnemySpawnManager] Room is FRIENDLY, skipping enemy spawning");
                         RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                         return;
                     }
+                    else
+                    {
+                        Debug.Log("[EnemySpawnManager] Room is HOSTILE, proceeding with enemy spawning");
+                    }
                 }
-                
-                spawnPoints = new List<EnemySpawnPoint>(RogueLiteManager.Instance.BuildingManager.CurrentRoomParent.GetComponent<RogueLiteRoomParent>().GetEnemySpawnPoints());
-
-            } else if(GameManager.Instance.CurrentGameMode == GameMode.CAMP_ATTACK)
-            {
-                // For camp attack mode, we can handle this directly or delegate to CampManager
-                Debug.LogWarning("No spawn points found for camp attack mode!");
-            } else if(GameManager.Instance.CurrentGameMode == GameMode.CAMP)
-            {
-                // Get all spawn points in the scene for camp
-                spawnPoints = new List<EnemySpawnPoint>(FindObjectsByType<EnemySpawnPoint>(FindObjectsSortMode.None));
-            }
-
-            
-            if (spawnPoints.Count == 0)
-            {
-                Debug.LogError("No spawn points found!");
-                switch (GameManager.Instance.CurrentGameMode)
+                else
                 {
-                    case GameMode.ROGUE_LITE:
-                        RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
-                        break;
-                    case GameMode.CAMP_ATTACK:
-                        // For camp attack mode, we can handle this directly or delegate to CampManager
-                        Debug.LogWarning("No spawn points found for camp attack mode!");
-                        break;
-                    case GameMode.CAMP:
-                        // For camp, we might want to handle this differently
-                        Debug.LogWarning("No spawn points found for camp enemies!");
-                        break;
-                    default:
-                        Debug.LogError("Shouldnt be spawning enemies here!!!");
-                        break;
+                    Debug.LogWarning("[EnemySpawnManager] No room parent component found in ROGUE_LITE mode");
                 }
-                return;
             }
 
+            Debug.Log("[EnemySpawnManager] Starting enemy spawning process...");
+            
+            // NavMesh readiness is now handled by RogueLiteManager, so we can spawn immediately
             StartNextWave();
         }
 
         private void StartNextWave()
         {
+            Debug.Log($"[EnemySpawnManager] StartNextWave called - currentWave: {currentWave}, maxWaves: {currentWaveConfig.maxWaves}");
+            
             if (currentWave >= currentWaveConfig.maxWaves)
             {
+                Debug.Log("[EnemySpawnManager] All waves completed");
                 switch (GameManager.Instance.CurrentGameMode)
                 {
                     case GameMode.ROGUE_LITE:
+                        Debug.Log("[EnemySpawnManager] Setting ROGUE_LITE enemy setup state to ALL_WAVES_CLEARED");
                         RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
                         break;
                     case GameMode.CAMP_ATTACK:
                         // For camp attack mode, we can handle this directly or delegate to CampManager
-                        Debug.LogWarning("No spawn points found for camp attack mode!");
+                        Debug.LogWarning("[EnemySpawnManager] Camp attack wave completed!");
                         break;
                     case GameMode.CAMP:
                         // For camp, we might want to handle wave completion differently
-                        Debug.Log("Camp wave completed!");
+                        Debug.Log("[EnemySpawnManager] Camp wave completed!");
                         break;
                     default:
-                        Debug.LogError("Shouldnt be spawning enemies here!!!");
+                        Debug.LogError("[EnemySpawnManager] Shouldnt be spawning enemies here!!!");
                         break;
                 }
 
@@ -147,68 +144,137 @@ namespace Managers
             }
 
             currentWave++;
+            Debug.Log($"[EnemySpawnManager] Starting wave {currentWave} of {currentWaveConfig.maxWaves}");
 
             // Determine the number of enemies to spawn in this wave
             totalEnemiesInWave = Random.Range(currentWaveConfig.minEnemiesPerWave, currentWaveConfig.maxEnemiesPerWave + 1);
             enemiesSpawned = 0; // Reset for the new wave
+            
+            Debug.Log($"[EnemySpawnManager] Wave {currentWave} will spawn {totalEnemiesInWave} enemies (range: {currentWaveConfig.minEnemiesPerWave}-{currentWaveConfig.maxEnemiesPerWave})");
 
             SpawnWave(totalEnemiesInWave);
         }
 
         private void SpawnWave(int enemyCount)
         {
+            Debug.Log($"[EnemySpawnManager] SpawnWave called to spawn {enemyCount} enemies");
+            
             for (int i = 0; i < enemyCount; i++)
             {
+                Debug.Log($"[EnemySpawnManager] Spawning enemy {i + 1} of {enemyCount}");
                 SpawnEnemy();
             }
         }
 
         private void SpawnEnemy()
         {
-            if (spawnPoints.Count == 0 || currentWaveConfig.enemyPrefabs.Length == 0)
+            Debug.Log("[EnemySpawnManager] SpawnEnemy called");
+            
+            if (currentWaveConfig.enemyPrefabs.Length == 0)
+            {
+                Debug.LogError("[EnemySpawnManager] No enemy prefabs in wave config!");
                 return;
+            }
 
+            Debug.Log($"[EnemySpawnManager] Enemy prefabs available: {currentWaveConfig.enemyPrefabs.Length}");
             StartCoroutine(SpawnEnemyWithRetry());
         }
 
         private IEnumerator SpawnEnemyWithRetry()
         {
-            EnemySpawnPoint spawnPoint = null;
+            Debug.Log("[EnemySpawnManager] SpawnEnemyWithRetry coroutine started");
+            
+            // Find a valid spawn position using NavigationUtils
+            Debug.Log($"[EnemySpawnManager] Calling NavigationUtils.FindRandomSpawnPosition with params: minDistance={minDistanceFromPlayer}, maxAttempts={maxSpawnAttempts}, sampleRadius={spawnSampleRadius}");
+            Vector3 spawnPosition = NavigationUtils.FindRandomSpawnPosition(
+                minDistanceFromPlayer, 
+                maxSpawnAttempts, 
+                spawnSampleRadius
+            );
 
-            // Wait until a spawn point becomes available
-            while (spawnPoint == null)
+            Debug.Log($"[EnemySpawnManager] Initial spawn position result: {spawnPosition}");
+
+            // Wait until we find a valid spawn position
+            int retryCount = 0;
+            while (spawnPosition == Vector3.zero)
             {
-                foreach (var potentialSpawnPoint in spawnPoints)
-                {
-                    if (potentialSpawnPoint != null && potentialSpawnPoint.IsAvailable())
-                    {
-                        spawnPoint = potentialSpawnPoint;
-                        break;
-                    }
-                }
-
-                if (spawnPoint == null)
-                {
-                    yield return new WaitForSeconds(0.1f); // Small delay before checking again
-                }
+                retryCount++;
+                Debug.Log($"[EnemySpawnManager] Spawn position was Vector3.zero, retry #{retryCount}");
+                
+                yield return new WaitForSeconds(0.1f); // Small delay before trying again
+                spawnPosition = NavigationUtils.FindRandomSpawnPosition(
+                    minDistanceFromPlayer, 
+                    maxSpawnAttempts, 
+                    spawnSampleRadius
+                );
+                
+                Debug.Log($"[EnemySpawnManager] Retry #{retryCount} spawn position result: {spawnPosition}");
             }
 
-            GameObject enemyPrefab = currentWaveConfig.enemyPrefabs[Random.Range(0, currentWaveConfig.enemyPrefabs.Length)];
+            Debug.Log($"[EnemySpawnManager] Valid spawn position found: {spawnPosition} after {retryCount} retries");
 
-            // Delegate spawning to the spawn point
-            GameObject enemy = spawnPoint.SpawnEnemy(enemyPrefab);
+            GameObject enemyPrefab = currentWaveConfig.enemyPrefabs[Random.Range(0, currentWaveConfig.enemyPrefabs.Length)];
+            Debug.Log($"[EnemySpawnManager] Selected enemy prefab: {enemyPrefab.name}");
+
+            // Play character-specific spawn effect before spawning the enemy
+            Vector3 spawnNormal = Vector3.up;
+            Debug.Log($"[EnemySpawnManager] Playing spawn effect at position: {spawnPosition}");
+            
+            if (EffectManager.Instance != null)
+            {
+                // Try to get the character type from the enemy prefab
+                IDamageable damageableComponent = enemyPrefab.GetComponent<IDamageable>();
+                if (damageableComponent != null)
+                {
+                    CharacterType characterType = damageableComponent.CharacterType;
+                    Debug.Log($"[EnemySpawnManager] Using character-specific spawn effect for: {characterType}");
+                    EffectManager.Instance.PlaySpawnEffect(spawnPosition, spawnNormal, characterType);
+                }
+                else
+                {
+                    Debug.LogWarning($"[EnemySpawnManager] No IDamageable component found on {enemyPrefab.name}");
+                }
+                Debug.Log("[EnemySpawnManager] Spawn effect played successfully");
+            }
+            else
+            {
+                Debug.LogWarning("[EnemySpawnManager] EffectManager.Instance is null, skipping spawn effect");
+            }
+
+            // Small delay to let the spawn effect play
+            yield return new WaitForSeconds(0.2f);
+
+            // Spawn the enemy at the random position
+            Debug.Log($"[EnemySpawnManager] Instantiating enemy at position: {spawnPosition}");
+            GameObject enemy = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
 
             if (enemy != null)
             {
+                Debug.Log($"[EnemySpawnManager] Enemy spawned successfully: {enemy.name}");
                 activeEnemies.Add(enemy);
                 enemiesSpawned++; // Track the number of enemies spawned
+                Debug.Log($"[EnemySpawnManager] Enemies spawned: {enemiesSpawned}/{totalEnemiesInWave}, Active enemies: {activeEnemies.Count}");
 
                 // Add listener to remove the enemy when it's destroyed
-                enemy.GetComponent<EnemyBase>().OnDeath += () =>
+                var enemyBase = enemy.GetComponent<EnemyBase>();
+                if (enemyBase != null)
                 {
-                    activeEnemies.Remove(enemy);
-                    CheckForWaveCompletion();
-                };
+                    Debug.Log("[EnemySpawnManager] Adding death listener to enemy");
+                    enemyBase.OnDeath += () =>
+                    {
+                        Debug.Log($"[EnemySpawnManager] Enemy {enemy.name} died, removing from active list");
+                        activeEnemies.Remove(enemy);
+                        CheckForWaveCompletion();
+                    };
+                }
+                else
+                {
+                    Debug.LogError($"[EnemySpawnManager] Enemy {enemy.name} does not have EnemyBase component!");
+                }
+            }
+            else
+            {
+                Debug.LogError("[EnemySpawnManager] Failed to instantiate enemy!");
             }
         }
 

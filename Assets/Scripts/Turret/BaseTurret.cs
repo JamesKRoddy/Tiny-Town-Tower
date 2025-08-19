@@ -81,10 +81,10 @@ public abstract class BaseTurret : PlaceableStructure<TurretScriptableObject>
 
     private void RotateToTarget()
     {
-        Vector3 direction = target.transform.position - turretTop.position;
-        Quaternion lookRotation = Quaternion.LookRotation(direction);
-        Vector3 rotation = Quaternion.Lerp(turretTop.rotation, lookRotation, Time.deltaTime * turretTurnSpeed).eulerAngles;
-        turretTop.rotation = Quaternion.Euler(0f, rotation.y, 0f);
+        if (target == null || turretTop == null) return;
+        
+        // Use centralized rotation utility for turret rotation
+        NavigationUtils.RotateTowardsTarget(turretTop, target.transform, turretTurnSpeed, true);
     }
 
     private void HandleFiring()

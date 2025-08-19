@@ -162,6 +162,9 @@ public class NarrativeManager : MonoBehaviour
             // Find the appropriate starting line based on component's progression flags
             DialogueLine startingLine = GetStartingDialogueLine();
             
+            // Process variables in the dialogue text
+            startingLine = ProcessDialogueLineVariables(startingLine);
+            
             // Process flags for the starting line
             ProcessFlags(startingLine.setFlags, startingLine.removeFlags);
             
@@ -627,6 +630,9 @@ public class NarrativeManager : MonoBehaviour
             // Check if the line can be accessed based on component's flags
             if (CheckConditions(nextLine.requiredFlags, nextLine.blockedByFlags))
             {
+                // Process variables in the dialogue text
+                nextLine = ProcessDialogueLineVariables(nextLine);
+                
                 // Process flags for the line
                 ProcessFlags(nextLine.setFlags, nextLine.removeFlags);
                 
@@ -860,6 +866,188 @@ public class NarrativeManager : MonoBehaviour
         }
 
         return "Unknown NPC";
+    }
+
+    /// <summary>
+    /// Get the current conversation target as a SettlerNPC if possible
+    /// </summary>
+    private SettlerNPC GetCurrentConversationTargetAsSettler()
+    {
+        return currentConversationTarget as SettlerNPC;
+    }
+
+    /// <summary>
+    /// Substitute variables in dialogue text with actual NPC data
+    /// </summary>
+    public string SubstituteVariablesInText(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return text;
+
+        string result = text;
+
+        // Get the current NPC data
+        var settlerNPC = GetCurrentConversationTargetAsSettler();
+        
+        // Substitute {npcName} with the actual NPC name
+        if (result.Contains("{npcName}"))
+        {
+            string npcName = GetCurrentConversationTargetName();
+            result = result.Replace("{npcName}", npcName);
+        }
+
+        // Substitute {npcAge} with the actual NPC age (if it's a SettlerNPC)
+        if (settlerNPC != null && result.Contains("{npcAge}"))
+        {
+            int npcAge = settlerNPC.GetSettlerAge();
+            result = result.Replace("{npcAge}", npcAge.ToString());
+        }
+
+        // Substitute {npcDescription} with the actual NPC description (if it's a SettlerNPC)
+        if (settlerNPC != null && result.Contains("{npcDescription}"))
+        {
+            string npcDescription = settlerNPC.GetSettlerDescription();
+            result = result.Replace("{npcDescription}", npcDescription);
+        }
+
+        // Substitute {npcJob} with the current task/job (if it's a SettlerNPC)
+        if (settlerNPC != null && result.Contains("{npcJob}"))
+        {
+            string npcJob = GetNPCCurrentJob(settlerNPC);
+            result = result.Replace("{npcJob}", npcJob);
+        }
+
+        // Substitute {playerName} with the player's name (if available)
+        if (result.Contains("{playerName}"))
+        {
+            string playerName = GetPlayerName();
+            result = result.Replace("{playerName}", playerName);
+        }
+
+        // Substitute {campName} with the camp name (if available)
+        if (result.Contains("{campName}"))
+        {
+            string campName = GetCampName();
+            result = result.Replace("{campName}", campName);
+        }
+
+        // Substitute {totalNPCs} with the total number of NPCs in camp
+        if (result.Contains("{totalNPCs}"))
+        {
+            int totalNPCs = GetTotalNPCsInCamp();
+            result = result.Replace("{totalNPCs}", totalNPCs.ToString());
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Get the current job/task of an NPC
+    /// </summary>
+    private string GetNPCCurrentJob(SettlerNPC npc)
+    {
+        if (npc == null)
+            return "Unknown";
+
+        var currentTaskType = npc.GetCurrentTaskType();
+        switch (currentTaskType)
+        {
+            case TaskType.WANDER:
+                return "Wandering";
+            case TaskType.WORK:
+                return "Working";
+            case TaskType.ATTACK:
+                return "Attacking";
+            case TaskType.EAT:
+                return "Eating";
+            case TaskType.FLEE:
+                return "Fleeing";
+            case TaskType.SHELTERED:
+                return "Sheltered";
+            case TaskType.NONE:
+            default:
+                return "Idle";
+        }
+    }
+
+    /// <summary>
+    /// Get the player's name
+    /// </summary>
+    private string GetPlayerName()
+    {
+        // For now, return a default player name
+        // This could be expanded to read from player save data or settings
+        return "Player";
+    }
+
+    /// <summary>
+    /// Get the camp name
+    /// </summary>
+    private string GetCampName()
+    {
+        // For now, return a default camp name
+        // This could be expanded to read from camp save data or settings
+        return "Camp";
+    }
+
+    /// <summary>
+    /// Get the total number of NPCs in camp
+    /// </summary>
+    private int GetTotalNPCsInCamp()
+    {
+        if (NPCManager.Instance != null)
+        {
+            return NPCManager.Instance.TotalNPCs;
+        }
+        return 0;
+    }
+
+    /// <summary>
+    /// Process a dialogue line and substitute any variables in the text
+    /// </summary>
+    private DialogueLine ProcessDialogueLineVariables(DialogueLine line)
+    {
+        if (line == null)
+            return line;
+
+        // Create a copy of the line to avoid modifying the original
+        var processedLine = new DialogueLine
+        {
+            speaker = line.speaker,
+            text = SubstituteVariablesInText(line.text),
+            id = line.id,
+            nextLine = line.nextLine,
+            options = line.options,
+            isTerminal = line.isTerminal,
+            requiredFlags = line.requiredFlags,
+            blockedByFlags = line.blockedByFlags,
+            setFlags = line.setFlags,
+            removeFlags = line.removeFlags
+        };
+
+        // Process options if they exist
+        if (line.options != null && line.options.Count > 0)
+        {
+            processedLine.options = new List<DialogueOption>();
+            foreach (var option in line.options)
+            {
+                var processedOption = new DialogueOption
+                {
+                    text = SubstituteVariablesInText(option.text),
+                    nextLine = option.nextLine,
+                    requiredItem = option.requiredItem,
+                    recruitNPC = option.recruitNPC,
+                    requiredInventoryItems = option.requiredInventoryItems,
+                    requiredFlags = option.requiredFlags,
+                    blockedByFlags = option.blockedByFlags,
+                    setFlags = option.setFlags,
+                    removeFlags = option.removeFlags
+                };
+                processedLine.options.Add(processedOption);
+            }
+        }
+
+        return processedLine;
     }
 
     #region Inventory Checking

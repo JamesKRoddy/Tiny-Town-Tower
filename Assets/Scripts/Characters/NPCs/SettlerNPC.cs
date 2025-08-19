@@ -333,6 +333,9 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
             return;
         }
         
+        // Update conversation rotation if in conversation
+        UpdateConversationRotation();
+        
         if (currentState != null)
         {
             animator.SetFloat("Speed", agent.velocity.magnitude / 3.5f);
@@ -705,6 +708,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
 
     private _TaskState stateBeforeConversation;
     private bool wasAgentEnabledBeforeConversation;
+    private bool isInConversation = false;
 
     /// <summary>
     /// Pauses the NPC's AI and movement during conversations
@@ -727,6 +731,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         {
             currentState.enabled = false;
         }
+
+        isInConversation = true;
     }
 
     /// <summary>
@@ -748,6 +754,18 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
 
         // Clear stored data
         stateBeforeConversation = null;
+        isInConversation = false;
+    }
+
+    /// <summary>
+    /// Update conversation rotation - called during conversation to face the player
+    /// </summary>
+    public void UpdateConversationRotation()
+    {
+        if (!isInConversation || PlayerController.Instance?._possessedNPC == null) return;
+
+        Transform playerTransform = PlayerController.Instance._possessedNPC.GetTransform();
+        NavigationUtils.RotateTowardsPlayerForConversation(transform, playerTransform, rotationSpeed);
     }
 
     /// <summary>
