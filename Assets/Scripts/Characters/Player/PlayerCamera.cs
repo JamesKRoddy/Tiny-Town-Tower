@@ -170,26 +170,6 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
         return null;
     }
 
-    private void ClampPositionToBounds()
-    {
-        Vector3 newPosition = transform.position;
-
-        // Use PlacementManager bounds if available, otherwise use default bounds
-        Vector2 xBounds = new Vector2(-25f, 25f);
-        Vector2 zBounds = new Vector2(-25f, 25f);
-
-        if (Managers.PlacementManager.Instance != null)
-        {
-            xBounds = Managers.PlacementManager.Instance.GetXBounds();
-            zBounds = Managers.PlacementManager.Instance.GetZBounds();
-        }
-
-        newPosition.x = Mathf.Clamp(newPosition.x, xBounds.x, xBounds.y);
-        newPosition.z = Mathf.Clamp(newPosition.z, zBounds.x, zBounds.y);
-
-        transform.position = newPosition;
-    }
-
     /// <summary>
     /// Clamps the work detection point position to the camp's grid bounds
     /// </summary>
@@ -208,10 +188,10 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
             xBounds = CampManager.Instance.SharedXBounds;
             zBounds = CampManager.Instance.SharedZBounds;
         }
-        else if (Managers.PlacementManager.Instance != null)
+        else if (CampManager.Instance.PlacementManager != null)
         {
-            xBounds = Managers.PlacementManager.Instance.GetXBounds();
-            zBounds = Managers.PlacementManager.Instance.GetZBounds();
+            xBounds = CampManager.Instance.PlacementManager.GetXBounds();
+            zBounds = CampManager.Instance.PlacementManager.GetZBounds();
         }
 
         // Clamp the position to the bounds

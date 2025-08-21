@@ -23,24 +23,6 @@ namespace Managers
         [Header("Grid Settings")]
         public GameObject gridPrefab;
         public GameObject takenGridPrefab;
-
-        private static PlacementManager _instance;
-        public static PlacementManager Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<PlacementManager>();
-                    if (_instance == null)
-                    {
-                        Debug.LogError("PlacementManager instance not found in the scene!");
-                    }
-                }
-                return _instance;
-            }
-        }
-
         protected GameObject currentPreview;
         protected PlaceableObjectParent selectedObject;
         protected Vector3 currentGridPosition;

@@ -76,6 +76,7 @@ namespace Managers
         private ResearchManager researchManager;
         private CleanlinessManager cleanlinessManager;
         private WorkManager workManager;
+        private PlacementManager placementManager;
         private BuildManager buildManager;
         private CookingManager cookingManager;
         private ResourceUpgradeManager resourceUpgradeManager;
@@ -90,6 +91,7 @@ namespace Managers
         public ResearchManager ResearchManager => researchManager;
         public CleanlinessManager CleanlinessManager => cleanlinessManager;
         public WorkManager WorkManager => workManager;
+        public PlacementManager PlacementManager => placementManager;
         public BuildManager BuildManager => buildManager;
         public CookingManager CookingManager => cookingManager;
         public ResourceUpgradeManager ResourceUpgradeManager => resourceUpgradeManager;
@@ -198,6 +200,7 @@ namespace Managers
             cookingManager = GetComponentInChildren<CookingManager>();
             resourceUpgradeManager = GetComponentInChildren<ResourceUpgradeManager>();
             workManager = GetComponentInChildren<WorkManager>();
+            placementManager = GetComponentInChildren<PlacementManager>();
             buildManager = GetComponentInChildren<BuildManager>();
             electricityManager = GetComponentInChildren<ElectricityManager>();
             farmingManager = GetComponentInChildren<FarmingManager>();
@@ -210,6 +213,7 @@ namespace Managers
             if (cookingManager == null) Debug.LogWarning("CookingManager not found in scene!");
             if (resourceUpgradeManager == null) Debug.LogWarning("ResourceUpgradeManager not found in scene!");
             if (workManager == null) Debug.LogWarning("WorkManager not found in scene!");
+            if (placementManager == null) Debug.LogWarning("PlacementManager not found in scene!");
             if (buildManager == null) Debug.LogWarning("BuildManager not found in scene!");
             if (electricityManager == null) Debug.LogWarning("ElectricityManager not found in scene!");
             if (farmingManager == null) Debug.LogWarning("FarmingManager not found in scene!");
@@ -797,8 +801,8 @@ namespace Managers
 
         private void UpdateGridSlotVisualObject(GridSlot slot, Vector3 displayPosition, bool isOccupied)
         {
-            GameObject freePrefab = PlacementManager.Instance?.gridPrefab;
-            GameObject takenPrefab = PlacementManager.Instance?.takenGridPrefab;
+            GameObject freePrefab = placementManager?.gridPrefab;
+            GameObject takenPrefab = placementManager?.takenGridPrefab;
             
             if (freePrefab == null || takenPrefab == null) return;
 

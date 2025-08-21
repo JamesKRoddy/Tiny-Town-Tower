@@ -137,7 +137,7 @@ public class BuildMenu : PreviewListMenuBase<CampPlaceableObjectCategory, Placea
     public void StartBuildingPlacement(PlaceableObjectParent placeableObject)
     {
         SetScreenActive(false, 0.1f, () => {
-            Managers.PlacementManager.Instance.StartPlacement(placeableObject);
+            CampManager.Instance.PlacementManager.StartPlacement(placeableObject);
         });
     }
 }
