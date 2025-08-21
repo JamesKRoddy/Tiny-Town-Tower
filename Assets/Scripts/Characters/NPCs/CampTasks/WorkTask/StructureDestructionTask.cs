@@ -44,12 +44,6 @@ public class StructureDestructionTask : WorkTask, IInteractive<object>
         if (!isDestructionComplete && workCoroutine == null)
         {
             workCoroutine = StartCoroutine(WorkCoroutine());
-
-            // Register electricity consumption when the task starts
-            if (electricityRequired > 0)
-            {
-                CampManager.Instance.ElectricityManager.RegisterBuildingConsumption(this, electricityRequired);
-            }
         }
     }
 

@@ -96,12 +96,6 @@ public abstract class QueuedWorkTask : WorkTask
         {
             // Only unassign and notify completion if there are no more tasks
             UnassignNPC();
-
-            // Unregister electricity consumption when work is complete
-            if (electricityRequired > 0)
-            {
-                CampManager.Instance.ElectricityManager.UnregisterBuildingConsumption(this);
-            }
             
             // Notify completion and stop work
             base.CompleteWork();

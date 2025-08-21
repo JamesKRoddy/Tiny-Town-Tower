@@ -71,12 +71,6 @@ public abstract class WorkTask : MonoBehaviour
         if (currentWorker == npc)
         {
             workCoroutine = StartCoroutine(WorkCoroutine());
-
-            // Register electricity consumption when the task starts
-            if (electricityRequired > 0)
-            {
-                CampManager.Instance.ElectricityManager.RegisterBuildingConsumption(this, electricityRequired);
-            }
         }
     }
     
@@ -112,11 +106,15 @@ public abstract class WorkTask : MonoBehaviour
             return false;
         }
 
-        // Check if there is any electricity available
-        if (electricityRequired > 0 && CampManager.Instance.ElectricityManager.GetCurrentElectricity() <= 0)
+        // Check if there is enough electricity for the entire task duration
+        if (electricityRequired > 0)
         {
-            SetOperationalStatus(false);
-            return false;
+            float totalElectricityNeeded = electricityRequired;
+            if (!CampManager.Instance.ElectricityManager.HasEnoughElectricity(totalElectricityNeeded))
+            {
+                SetOperationalStatus(false);
+                return false;
+            }
         }
 
         return true;
@@ -169,11 +167,7 @@ public abstract class WorkTask : MonoBehaviour
 
     protected virtual void OnDestroy()
     {
-        // Unregister electricity consumption when the task is destroyed
-        if (electricityRequired > 0)
-        {
-            CampManager.Instance.ElectricityManager.UnregisterBuildingConsumption(this);
-        }
+        // No need to unregister electricity consumption anymore since it's handled during work
     }
 
     protected void AddWorkTask()
@@ -240,6 +234,18 @@ public abstract class WorkTask : MonoBehaviour
                 }
             }
 
+            // Consume electricity based on work progress if required
+            if (electricityRequired > 0)
+            {
+                float consumptionRate = electricityRequired / baseWorkTime; // Electricity per second
+                if (!CampManager.Instance.ElectricityManager.ConsumeElectricity(consumptionRate, Time.deltaTime))
+                {
+                    // Not enough electricity, stop working
+                    SetOperationalStatus(false);
+                    yield break;
+                }
+            }
+
             workProgress += Time.deltaTime * workSpeed;
             yield return null;
         }
@@ -273,12 +279,6 @@ public abstract class WorkTask : MonoBehaviour
         StopWorkCoroutine();
         
         UnassignNPC();
-
-        // Unregister electricity consumption when work is complete
-        if (electricityRequired > 0)
-        {
-            CampManager.Instance.ElectricityManager.UnregisterBuildingConsumption(this);
-        }
         
         // Notify completion
         OnTaskCompleted?.Invoke();
@@ -338,6 +338,14 @@ public abstract class WorkTask : MonoBehaviour
                 var previousWorker = CampManager.Instance.WorkManager.GetPreviousWorkerForTask(this);
                 if (previousWorker != null)
                 {
+                    // Check if we have enough electricity before reassigning
+                    if (electricityRequired > 0 && !CampManager.Instance.ElectricityManager.HasEnoughElectricity(electricityRequired))
+                    {
+                        // Still not enough electricity, keep as non-operational
+                        isOperational = false;
+                        return;
+                    }
+                    
                     CampManager.Instance.WorkManager.SetNPCForAssignment(previousWorker);
                     AssignNPC(previousWorker);
                     if (previousWorker is SettlerNPC settler)

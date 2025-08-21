@@ -47,11 +47,6 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
         if (!isConstructionComplete && workCoroutine == null)
         {
             workCoroutine = StartCoroutine(WorkCoroutine());
-
-            if (electricityRequired > 0)
-            {
-                CampManager.Instance.ElectricityManager.RegisterBuildingConsumption(this, electricityRequired);
-            }
         }
     }
 

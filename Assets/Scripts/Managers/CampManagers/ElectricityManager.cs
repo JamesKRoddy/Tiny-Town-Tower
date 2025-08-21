@@ -9,10 +9,6 @@ namespace Managers
         [Header("Electricity Settings")]
         [SerializeField] private float maxElectricity = 1000f;
         [SerializeField] private float currentElectricity = 0f;
-        private float totalBuildingConsumption = 0f;
-        private Dictionary<WorkTask, float> buildingConsumption = new Dictionary<WorkTask, float>();
-
-        private Coroutine electricityConsumptionCoroutine;
 
         // Events
         public event System.Action<float> OnElectricityChanged;
@@ -37,58 +33,36 @@ namespace Managers
 
         private void HandleSceneTransitionBegin(GameMode nextGameMode)
         {
-            if(electricityConsumptionCoroutine != null){
-                StopCoroutine(electricityConsumptionCoroutine);
-                electricityConsumptionCoroutine = null;
-            }
-
-            if(nextGameMode == GameMode.CAMP){
-                electricityConsumptionCoroutine = StartCoroutine(ElectricityConsumptionCoroutine());
-            }
+            // No need for consumption coroutine anymore since WorkTasks handle their own consumption
         }
 
-        private IEnumerator ElectricityConsumptionCoroutine()
+        /// <summary>
+        /// Consume electricity based on work progress. Called by WorkTask classes during work.
+        /// </summary>
+        /// <param name="consumptionRate">Electricity consumed per second</param>
+        /// <param name="deltaTime">Time since last frame</param>
+        /// <returns>True if enough electricity was available, false if not</returns>
+        public bool ConsumeElectricity(float consumptionRate, float deltaTime)
         {
-            WaitForSeconds wait = new WaitForSeconds(0.5f); // Check every 0.5 seconds
-
-            while (true)
+            if (consumptionRate <= 0) return true; // No consumption needed
+            
+            float consumption = consumptionRate * deltaTime;
+            
+            if (currentElectricity < consumption)
             {
-                if (totalBuildingConsumption > 0)
-                {
-                    float previousElectricity = currentElectricity;
-                    float consumption = totalBuildingConsumption;
-                    currentElectricity = Mathf.Max(0, currentElectricity - consumption);
-                    
-                    if (previousElectricity != currentElectricity)
-                    {
-                        OnElectricityChanged?.Invoke(GetElectricityPercentage());
-                    }
-                }
-
-                yield return wait;
+                // Not enough electricity
+                return false;
             }
-        }
-
-        public void RegisterBuildingConsumption(WorkTask building, float consumption)
-        {
-            if (building == null) return;
-
-            if (buildingConsumption.ContainsKey(building))
+            
+            float previousElectricity = currentElectricity;
+            currentElectricity -= consumption;
+            
+            if (previousElectricity != currentElectricity)
             {
-                totalBuildingConsumption -= buildingConsumption[building];
+                OnElectricityChanged?.Invoke(GetElectricityPercentage());
             }
-
-            buildingConsumption[building] = consumption;
-            totalBuildingConsumption += consumption;
-        }
-
-        public void UnregisterBuildingConsumption(WorkTask building)
-        {
-            if (building == null || !buildingConsumption.ContainsKey(building)) return;
-
-            float consumption = buildingConsumption[building];
-            totalBuildingConsumption -= consumption;
-            buildingConsumption.Remove(building);
+            
+            return true;
         }
 
         public void AddElectricity(float amount)
@@ -120,11 +94,6 @@ namespace Managers
         public bool HasEnoughElectricity(float requiredAmount)
         {
             return currentElectricity >= requiredAmount;
-        }
-
-        public float GetTotalBuildingConsumption()
-        {
-            return totalBuildingConsumption;
         }
     }
 }
