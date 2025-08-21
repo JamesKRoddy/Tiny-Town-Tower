@@ -1,5 +1,30 @@
 *****Current Work*****
 
+Finalizing game loops:
+
+Camp management:
+
+Electrical system:
+Tasks consume electricity
+If there is not enough electricity tasks stop
+Generators supply electricity
+
+Clean system:
+As ppl work camp gets dirtier
+If camp gets progressively dirty different repercussions
+First productivity goes down
+Next ppl get sick, stop working completely
+Buildings to work on:
+Check cleaning station still works
+Toilet
+
+Health system for settlers:
+The dirtier the camp is the more likely settlers will get sick
+Settlers not treated will die, recover or turn to zombies eventually (this is just based on their age and luck)
+They can increase chances of recovery by not working or even better receiving treatment.
+Buildings to work on:
+Medical
+
 
 Tomorrow work:
 
@@ -35,7 +60,14 @@ Setup some new enemies: Zombie that when its killed splits into smaller enemies.
 Implement a day/night cycle for the entire game. Figure out what happens in the camp while youre gone, does progress on stuff freeze? Does it keep going or does it progress but slower?
 
 
+*****Ideas*****
 
+Enemies
+
+Mutations
+
+Research
+Strength that allows you to push heavier objects to open new areas
 
 
 
