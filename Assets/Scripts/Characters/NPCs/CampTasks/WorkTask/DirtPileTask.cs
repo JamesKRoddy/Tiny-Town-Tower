@@ -20,12 +20,12 @@ public class DirtPileTask : WorkTask, IInteractive<DirtPileTask>
 
     protected override IEnumerator WorkCoroutine()
     {
-        if (currentWorker == null) yield break;
+        if (currentWorkers.Count == 0) yield break;
 
         // Wait until the NPC is close enough to the dirt pile
         while (workProgress == 0f)
         {
-            float distanceToDirtPile = Vector3.Distance(currentWorker.transform.position, transform.position);
+            float distanceToDirtPile = Vector3.Distance(currentWorkers[0].transform.position, transform.position);
             if (distanceToDirtPile <= CLEANING_DISTANCE)
             {
                 break;

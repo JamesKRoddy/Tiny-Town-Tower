@@ -43,7 +43,7 @@ public abstract class ManagerTask : WorkTask
         }
 
         currentSubtask = subtask;
-        currentWorker = npc;
+        AssignNPC(npc);
 
         if (currentSubtask != null)
         {

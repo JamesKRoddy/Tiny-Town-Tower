@@ -7,8 +7,8 @@ using UnityEngine.AI;
 public class StructureDestructionTask : WorkTask, IInteractive<object>
 {
     private PlaceableObjectParent structureScriptableObj;
-    private List<HumanCharacterController> workers = new List<HumanCharacterController>();
     private bool isDestructionComplete = false;
+
     protected override void Start()
     {
         base.Start();
@@ -34,25 +34,14 @@ public class StructureDestructionTask : WorkTask, IInteractive<object>
 
     public override void PerformTask(HumanCharacterController npc)
     {
-        // Add worker to the task
-        if (!workers.Contains(npc))
-        {
-            workers.Add(npc);
-        }
-
-        // Start the destruction process if not already started
-        if (!isDestructionComplete && workCoroutine == null)
-        {
-            workCoroutine = StartCoroutine(WorkCoroutine());
-        }
+        base.PerformTask(npc);
     }
 
     protected override IEnumerator WorkCoroutine()
     {
-        while (workProgress < baseWorkTime && workers.Count > 0)
+        while (workProgress < baseWorkTime && currentWorkers.Count > 0)
         {
-            float workSpeed = Mathf.Sqrt(workers.Count);
-            workProgress += Time.deltaTime * workSpeed;
+            workProgress += Time.deltaTime * GetTotalWorkSpeed();
 
             if (workProgress >= baseWorkTime)
             {
@@ -86,10 +75,7 @@ public class StructureDestructionTask : WorkTask, IInteractive<object>
 
     public void RemoveWorker(SettlerNPC npc)
     {
-        if (workers.Contains(npc))
-        {
-            workers.Remove(npc);
-        }
+        RemoveWorker(npc as HumanCharacterController);
     }
 
     public bool CanInteract()

@@ -194,10 +194,10 @@ public class FarmingTask : WorkTask
             yield break;
         }
 
-        if (currentWorker != null)
+        if (currentWorkers.Count > 0)
         {
             taskAnimation = TaskAnimation.PLANTING_SEEDS;
-            currentWorker.PlayWorkAnimation(taskAnimation.ToString());
+            currentWorkers[0].PlayWorkAnimation(taskAnimation.ToString());
         }
         
         // Plant the crop
@@ -214,10 +214,10 @@ public class FarmingTask : WorkTask
 
     private IEnumerator TendingCoroutine()
     {
-        if (currentWorker != null)
+        if (currentWorkers.Count > 0)
         {
             taskAnimation = TaskAnimation.WATERING_PLANTS;
-            currentWorker.PlayWorkAnimation(taskAnimation.ToString());
+            currentWorkers[0].PlayWorkAnimation(taskAnimation.ToString());
         }
         
         while (workProgress < baseWorkTime)
@@ -246,10 +246,10 @@ public class FarmingTask : WorkTask
             if (Time.time - animationSwitchTime >= 2f)
             {
                 isKneeling = !isKneeling;
-                if (currentWorker != null)
+                if (currentWorkers.Count > 0)
                 {
                     taskAnimation = isKneeling ? TaskAnimation.HARVEST_PLANT_KNEELING : TaskAnimation.HARVEST_PLANT_STANDING;
-                    currentWorker.PlayWorkAnimation(taskAnimation.ToString());
+                    currentWorkers[0].PlayWorkAnimation(taskAnimation.ToString());
                 }
                 animationSwitchTime = Time.time;
             }
@@ -276,10 +276,10 @@ public class FarmingTask : WorkTask
 
     private IEnumerator ClearingCoroutine()
     {
-        if (currentWorker != null)
+        if (currentWorkers.Count > 0)
         {
             taskAnimation = TaskAnimation.CLEARING_PLOT;
-            currentWorker.PlayWorkAnimation(taskAnimation.ToString());
+            currentWorkers[0].PlayWorkAnimation(taskAnimation.ToString());
         }
         
         while (workProgress < baseWorkTime)
