@@ -203,9 +203,21 @@ public class WorkState : _TaskState
         timeAtTaskLocation += Time.deltaTime;
         if (timeAtTaskLocation >= movementSettings.taskStartDelay && !isTaskBeingPerformed && !needsPrecisePositioning)
         {
-            assignedTask.PerformTask(npc);
+            // Start work animation and begin working
             npc.PlayWorkAnimation(assignedTask.GetAnimationClipName());
+            assignedTask.PerformTask(npc); // Ensure worker is in task's worker list
             isTaskBeingPerformed = true;
+        }
+        
+        // If we're performing the task, do the work each frame
+        if (isTaskBeingPerformed)
+        {
+            bool canContinue = assignedTask.DoWork(npc, Time.deltaTime);
+            if (!canContinue)
+            {
+                // Work is complete or stopped, let StopWork handle the transition
+                isTaskBeingPerformed = false;
+            }
         }
     }
 

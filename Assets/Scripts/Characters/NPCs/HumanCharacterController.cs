@@ -1501,9 +1501,22 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         EffectManager.Instance.PlayDeathEffect(deathPoint, deathNormal, this);
     }
 
+    // Simple work tracking - WorkState handles the actual work execution
+    private WorkTask currentWorkTask;
+    
     public virtual void StartWork(WorkTask newTask)
     {
-        
+        currentWorkTask = newTask;
+    }
+    
+    public virtual void StopWork()
+    {
+        currentWorkTask = null;
+    }
+    
+    public WorkTask GetCurrentWorkTask()
+    {
+        return currentWorkTask;
     }
 
     /// <summary>

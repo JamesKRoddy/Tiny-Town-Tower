@@ -15,25 +15,45 @@ public class ElectricityGeneratorTask : WorkTask
         baseWorkTime = float.MaxValue; // Set to max value so it never completes automatically
     }
 
-    protected override IEnumerator WorkCoroutine()
+    public override bool DoWork(HumanCharacterController worker, float deltaTime)
     {
-        workProgress = 0f;
-        generationTimer = 0f;
-
-        while (true) // Continue indefinitely until stopped
+        if (!isOperational || !currentWorkers.Contains(worker))
         {
-            workProgress += Time.deltaTime;
-            generationTimer += Time.deltaTime;
-
-            // Generate electricity at regular intervals
-            if (generationTimer >= generationInterval)
-            {
-                CampManager.Instance.ElectricityManager.AddElectricity(electricityGeneratedPerCycle);
-                generationTimer = 0f;
-            }
-
-            yield return null;
+            return false;
         }
+
+        // Get worker speed multiplier
+        float workSpeed = 1f;
+        if (worker is SettlerNPC settler)
+        {
+            workSpeed = settler.GetWorkSpeedMultiplier();
+            // If settler is starving, they can't work
+            if (workSpeed <= 0)
+            {
+                return false;
+            }
+        }
+        
+        // Update generation timer (affected by work speed)
+        generationTimer += deltaTime * workSpeed;
+        
+        // Generate electricity at regular intervals
+        if (generationTimer >= generationInterval)
+        {
+            CampManager.Instance.ElectricityManager.AddElectricity(electricityGeneratedPerCycle);
+            generationTimer = 0f;
+        }
+        
+        // Call base DoWork for electricity consumption
+        base.DoWork(worker, deltaTime);
+        
+        // Keep progress below max to prevent completion (this task runs indefinitely)
+        if (workProgress >= baseWorkTime - 1f)
+        {
+            workProgress = baseWorkTime - 1f;
+        }
+        
+        return true; // Always continue (generator never completes)
     }
 
     public override string GetTooltipText()

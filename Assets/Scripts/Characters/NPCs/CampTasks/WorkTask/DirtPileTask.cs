@@ -18,29 +18,26 @@ public class DirtPileTask : WorkTask, IInteractive<DirtPileTask>
         workProgress = 0f;
     }
 
-    protected override IEnumerator WorkCoroutine()
+    public override bool DoWork(HumanCharacterController worker, float deltaTime)
     {
-        if (currentWorkers.Count == 0) yield break;
-
-        // Wait until the NPC is close enough to the dirt pile
-        while (workProgress == 0f)
+        // Check if worker is close enough to the dirt pile
+        float distanceToDirtPile = Vector3.Distance(worker.transform.position, transform.position);
+        if (distanceToDirtPile > CLEANING_DISTANCE)
         {
-            float distanceToDirtPile = Vector3.Distance(currentWorkers[0].transform.position, transform.position);
-            if (distanceToDirtPile <= CLEANING_DISTANCE)
-            {
-                break;
-            }
-            yield return null;
+            // Worker needs to get closer, don't advance work yet but continue trying
+            return true;
         }
 
-        // Now start the actual cleaning process
-        while (workProgress < baseWorkTime)
+        // Call base DoWork to handle electricity and progress
+        bool canContinue = base.DoWork(worker, deltaTime);
+        
+        // Check if cleaning is complete (base DoWork will handle completion)
+        if (!canContinue && workProgress >= baseWorkTime)
         {
-            workProgress += Time.deltaTime;
-            yield return null;
+            CompleteCleaning();
         }
-
-        CompleteCleaning();
+        
+        return canContinue;
     }
 
     private void CompleteCleaning()
@@ -61,8 +58,10 @@ public class DirtPileTask : WorkTask, IInteractive<DirtPileTask>
         Destroy(gameObject);
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
+        base.OnDestroy(); // Call base class cleanup
+        
         // Safety check: ensure grid slot is freed if this object is destroyed for any reason
         if (CampManager.Instance != null)
         {

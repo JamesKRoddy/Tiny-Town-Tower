@@ -434,10 +434,13 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         assignedWorkTask = newTask; // Store the assigned task
         workState.AssignTask(newTask);
         
+        // Call the base class StartWork to handle the work coroutine
+        base.StartWork(newTask);
+        
         // If we're not already in work state, change to it
         if (GetCurrentTaskType() != TaskType.WORK)
         {
-        ChangeTask(TaskType.WORK);
+            ChangeTask(TaskType.WORK);
         }
         else
         {
@@ -489,12 +492,10 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
 
     public void StopWork()
     {
-        
         if (assignedWorkTask != null)
         {
-            // Stop the current work
-            assignedWorkTask.StopWorkCoroutine();
-            assignedWorkTask.UnassignNPC();
+            // Call the base class StopWork to handle the work coroutine
+            base.StopWork();
             
             // Clear the assigned work and change task
             ClearAssignedWork();
@@ -518,7 +519,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
             }
             else
             {
-            ChangeTask(TaskType.WANDER);
+                ChangeTask(TaskType.WANDER);
             }
         }
     }

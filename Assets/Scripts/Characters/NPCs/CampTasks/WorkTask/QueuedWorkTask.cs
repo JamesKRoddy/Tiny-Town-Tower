@@ -10,7 +10,7 @@ public abstract class QueuedWorkTask : WorkTask
     protected object currentTaskData;
 
     // Properties
-    public bool HasQueuedTasks => taskQueue.Count > 0;
+    public override bool HasQueuedTasks => taskQueue.Count > 0;
     public override bool IsTaskCompleted => currentTaskData == null && !HasQueuedTasks;
 
     protected override void Start()
@@ -81,8 +81,6 @@ public abstract class QueuedWorkTask : WorkTask
         // Reset state
         workProgress = 0f;
         
-        StopWorkCoroutine();
-        
         // Process next task in queue if available
         if (taskQueue.Count > 0)
         {
@@ -92,11 +90,8 @@ public abstract class QueuedWorkTask : WorkTask
             currentTaskData = taskQueue.Dequeue();
             SetupNextTask();
             
-            // Start the next task immediately if we have workers
-            if (currentWorkers.Count > 0)
-            {
-                workCoroutine = StartCoroutine(WorkCoroutine());
-            }
+            // Workers will automatically continue working on the next task
+            // since they're still assigned to this task
         }
         else
         {

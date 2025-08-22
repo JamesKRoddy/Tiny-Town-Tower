@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using Managers;
 
 public class ToiletCleaningTask : WorkTask
 {
@@ -23,21 +24,38 @@ public class ToiletCleaningTask : WorkTask
         base.CompleteWork();
     }
 
-    protected override IEnumerator WorkCoroutine()
+    public override bool DoWork(HumanCharacterController worker, float deltaTime)
     {
-        if (targetToilet == null) yield break;
-
-        targetToilet.StartEmptying();
-        emptyProgress = 0f;
-
-        while (emptyProgress < baseWorkTime)
+        if (targetToilet == null)
         {
-            emptyProgress += Time.deltaTime * emptySpeed;
-            targetToilet.AddEmptyProgress(Time.deltaTime * emptySpeed);
-            yield return null;
+            return false;
         }
 
-        CompleteWork();
+        // Start emptying if not already started
+        if (emptyProgress == 0f)
+        {
+            targetToilet.StartEmptying();
+        }
+
+        // Call base DoWork to handle electricity and progress
+        bool canContinue = base.DoWork(worker, deltaTime);
+        
+        if (canContinue)
+        {
+            // Get worker speed
+            float workSpeed = 1f;
+            if (worker is SettlerNPC settler)
+            {
+                workSpeed = settler.GetWorkSpeedMultiplier();
+            }
+            
+            // Process emptying (affected by work speed)
+            float emptyDelta = deltaTime * emptySpeed * workSpeed;
+            emptyProgress += emptyDelta;
+            targetToilet.AddEmptyProgress(emptyDelta);
+        }
+        
+        return canContinue;
     }
 
     public override string GetTooltipText()

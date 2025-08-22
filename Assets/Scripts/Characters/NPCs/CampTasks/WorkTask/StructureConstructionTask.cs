@@ -36,28 +36,10 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
         obstacle.size = new Vector3(buildingScriptableObj.size.x, 1.0f, buildingScriptableObj.size.y);
     }
 
-    public override void PerformTask(HumanCharacterController npc)
-    {
-        base.PerformTask(npc);
-    }
+    // No need to override PerformTask - base implementation handles worker list management
 
-    protected override IEnumerator WorkCoroutine()
-    {
-        while (workProgress < baseWorkTime && currentWorkers.Count > 0)
-        {
-            workProgress += Time.deltaTime * GetTotalWorkSpeed();
-
-            if (workProgress >= baseWorkTime)
-            {
-                workProgress = baseWorkTime;
-                break;
-            }
-
-            yield return null;
-        }
-
-        CompleteWork();
-    }
+    // Remove the custom WorkCoroutine since workers now manage their own work
+    // The base class ProcessWork method will handle the work logic
 
     public void SetupConstruction(PlaceableObjectParent scriptableObj, bool isUpgrade = false)
     {

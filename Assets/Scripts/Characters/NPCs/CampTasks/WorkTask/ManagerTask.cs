@@ -19,7 +19,7 @@ public abstract class ManagerTask : WorkTask
         base.OnDestroy();
         if (currentSubtask != null)
         {
-            currentSubtask.StopWorkCoroutine();
+            // Workers now manage their own coroutines, no need to stop them here
         }
     }
 
@@ -39,7 +39,7 @@ public abstract class ManagerTask : WorkTask
     {
         if (currentSubtask != null)
         {
-            currentSubtask.StopWorkCoroutine();
+            // Workers now manage their own coroutines, no need to stop them here
         }
 
         currentSubtask = subtask;
@@ -58,15 +58,6 @@ public abstract class ManagerTask : WorkTask
         {
             currentSubtask.UnassignNPC();
             currentSubtask = null;
-        }
-    }
-
-    public override void StopWorkCoroutine()
-    {
-        base.StopWorkCoroutine();
-        if (currentSubtask != null)
-        {
-            currentSubtask.StopWorkCoroutine();
         }
     }
 

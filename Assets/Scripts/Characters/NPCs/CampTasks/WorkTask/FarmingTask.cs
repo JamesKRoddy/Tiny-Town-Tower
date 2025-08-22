@@ -16,7 +16,6 @@ public class FarmingTask : WorkTask
     private FarmBuilding farmBuilding;
     private FarmingAction currentAction = FarmingAction.None;
     private float lastTendingTime = 0f;
-    private Coroutine currentActionCoroutine;
 
     private enum FarmingAction
     {
@@ -109,102 +108,112 @@ public class FarmingTask : WorkTask
         currentAction = FarmingAction.None;
     }
 
-    protected override IEnumerator WorkCoroutine()
+    public override bool DoWork(HumanCharacterController worker, float deltaTime)
     {
-        while (true)
+        // If no current action or action is complete, determine next action
+        if (currentAction == FarmingAction.None || workProgress >= baseWorkTime)
         {
-            workProgress = 0f; // Reset work progress at the start of each cycle
+            // Complete current action first if we have one
+            if (currentAction != FarmingAction.None && workProgress >= baseWorkTime)
+            {
+                CompleteCurrentAction();
+            }
+            
+            // Reset progress and determine next action
+            workProgress = 0f;
             DetermineNextAction();
             
-            // If no action is needed, wait a bit and check again
+            // If still no action needed, no more work
             if (currentAction == FarmingAction.None)
             {
-                yield return new WaitForSeconds(5f); // Longer wait time when no action needed
-                continue;
+                return false; // Farm doesn't need attention right now
             }
-
-            Debug.Log($"<color=cyan>[FarmingTask] Starting {currentAction} action</color>");
-
-            // Stop any existing action coroutine
-            if (currentActionCoroutine != null)
-            {
-                StopCoroutine(currentActionCoroutine);
-                currentActionCoroutine = null;
-            }
-
-            // Start and wait for the current action to complete
-            switch (currentAction)
-            {                
-                case FarmingAction.Planting:
-                    Debug.Log($"<color=cyan>[FarmingTask] Starting Planting action</color>");
-                    currentActionCoroutine = StartCoroutine(PlantingCoroutine());
-                    yield return currentActionCoroutine;
-                    currentActionCoroutine = null;
-                    break;
-                case FarmingAction.Tending:
-                    Debug.Log($"<color=cyan>[FarmingTask] Starting Tending action</color>");
-                    currentActionCoroutine = StartCoroutine(TendingCoroutine());
-                    yield return currentActionCoroutine;
-                    currentActionCoroutine = null;
-                    break;
-                case FarmingAction.Harvesting:
-                    Debug.Log($"<color=cyan>[FarmingTask] Starting Harvesting action</color>");
-                    currentActionCoroutine = StartCoroutine(HarvestingCoroutine());
-                    yield return currentActionCoroutine;
-                    currentActionCoroutine = null;
-                    break;
-                case FarmingAction.Clearing:
-                    Debug.Log($"<color=cyan>[FarmingTask] Starting Clearing action</color>");
-                    currentActionCoroutine = StartCoroutine(ClearingCoroutine());
-                    yield return currentActionCoroutine;
-                    currentActionCoroutine = null;
-                    break;
-            }
-
-            currentAction = FarmingAction.None;
-
-            // If the farm is empty and we don't have seeds, stop farming
-            if (!farmBuilding.IsOccupied && !HasRequiredResources())
-            {
-                CompleteWork();
-                yield break;
-            }
-
-            // Small delay between actions
-            yield return new WaitForSeconds(0.5f);
-        }
-    }
-
-    protected override void OnDisable()
-    {
-        base.OnDisable();
-        if (currentActionCoroutine != null)
-        {
-            StopCoroutine(currentActionCoroutine);
-            currentActionCoroutine = null;
-        }
-    }
-
-    private IEnumerator PlantingCoroutine()
-    {
-        // Check if we have seeds
-        if (!HasRequiredResources())
-        {
-            CompleteWork();
-            yield break;
+            
+            // Start the animation for the new action
+            StartActionAnimation(worker);
         }
 
-        if (currentWorkers.Count > 0)
+        // Call base DoWork to handle electricity and progress
+        bool canContinue = base.DoWork(worker, deltaTime);
+        
+        // For harvesting, alternate animations
+        if (canContinue && currentAction == FarmingAction.Harvesting)
         {
-            taskAnimation = TaskAnimation.PLANTING_SEEDS;
-            currentWorkers[0].PlayWorkAnimation(taskAnimation.ToString());
+            HandleHarvestingAnimation(worker);
         }
         
-        // Plant the crop
-        while (workProgress < baseWorkTime)
+        return canContinue;
+    }
+
+    private void StartActionAnimation(HumanCharacterController worker)
+    {
+        if (worker == null) return;
+        
+        switch (currentAction)
         {
-            workProgress += Time.deltaTime;
-            yield return null;
+            case FarmingAction.Planting:
+                taskAnimation = TaskAnimation.PLANTING_SEEDS;
+                worker.PlayWorkAnimation(taskAnimation.ToString());
+                break;
+            case FarmingAction.Tending:
+                taskAnimation = TaskAnimation.WATERING_PLANTS;
+                worker.PlayWorkAnimation(taskAnimation.ToString());
+                break;
+            case FarmingAction.Harvesting:
+                // Start with standing animation, will alternate in ProcessWork
+                taskAnimation = TaskAnimation.HARVEST_PLANT_STANDING;
+                worker.PlayWorkAnimation(taskAnimation.ToString());
+                farmBuilding.StartHarvesting(); // Stop growth when harvesting starts
+                break;
+            case FarmingAction.Clearing:
+                taskAnimation = TaskAnimation.CLEARING_PLOT;
+                worker.PlayWorkAnimation(taskAnimation.ToString());
+                break;
+        }
+    }
+
+    private float lastAnimationSwitch = 0f;
+    private bool isKneelingAnimation = false;
+
+    private void HandleHarvestingAnimation(HumanCharacterController worker)
+    {
+        // Switch animation every 2 seconds during harvesting
+        if (Time.time - lastAnimationSwitch >= 2f)
+        {
+            isKneelingAnimation = !isKneelingAnimation;
+            taskAnimation = isKneelingAnimation ? TaskAnimation.HARVEST_PLANT_KNEELING : TaskAnimation.HARVEST_PLANT_STANDING;
+            worker.PlayWorkAnimation(taskAnimation.ToString());
+            lastAnimationSwitch = Time.time;
+        }
+    }
+
+    private void CompleteCurrentAction()
+    {
+        switch (currentAction)
+        {
+            case FarmingAction.Planting:
+                CompletePlanting();
+                break;
+            case FarmingAction.Tending:
+                CompleteTending();
+                break;
+            case FarmingAction.Harvesting:
+                CompleteHarvesting();
+                break;
+            case FarmingAction.Clearing:
+                CompleteClearing();
+                break;
+        }
+        
+        currentAction = FarmingAction.None;
+    }
+
+    private void CompletePlanting()
+    {
+        // Check if we still have seeds
+        if (!HasRequiredResources())
+        {
+            return;
         }
 
         // Consume seeds and plant crop
@@ -212,51 +221,14 @@ public class FarmingTask : WorkTask
         farmBuilding.PlantCrop(requiredResources[0].resourceScriptableObj);
     }
 
-    private IEnumerator TendingCoroutine()
+    private void CompleteTending()
     {
-        if (currentWorkers.Count > 0)
-        {
-            taskAnimation = TaskAnimation.WATERING_PLANTS;
-            currentWorkers[0].PlayWorkAnimation(taskAnimation.ToString());
-        }
-        
-        while (workProgress < baseWorkTime)
-        {
-            workProgress += Time.deltaTime;
-            yield return null;
-        }
-
         farmBuilding.TendPlot();
+        lastTendingTime = Time.time;
     }
 
-    private IEnumerator HarvestingCoroutine()
+    private void CompleteHarvesting()
     {
-        // Stop growth when harvesting starts
-        farmBuilding.StartHarvesting();
-        
-        // Alternate between standing and kneeling animations during harvest
-        bool isKneeling = false;
-        float animationSwitchTime = 0f;
-        
-        while (workProgress < baseWorkTime)
-        {
-            workProgress += Time.deltaTime;
-            
-            // Switch animation every 2 seconds
-            if (Time.time - animationSwitchTime >= 2f)
-            {
-                isKneeling = !isKneeling;
-                if (currentWorkers.Count > 0)
-                {
-                    taskAnimation = isKneeling ? TaskAnimation.HARVEST_PLANT_KNEELING : TaskAnimation.HARVEST_PLANT_STANDING;
-                    currentWorkers[0].PlayWorkAnimation(taskAnimation.ToString());
-                }
-                animationSwitchTime = Time.time;
-            }
-            
-            yield return null;
-        }
-
         // Add harvested resources to player's inventory
         ResourceScriptableObj harvestedCrop = farmBuilding.PlantedCrop;
         if (harvestedCrop != null)
@@ -274,21 +246,15 @@ public class FarmingTask : WorkTask
         farmBuilding.ClearPlot();
     }
 
-    private IEnumerator ClearingCoroutine()
+    private void CompleteClearing()
     {
-        if (currentWorkers.Count > 0)
-        {
-            taskAnimation = TaskAnimation.CLEARING_PLOT;
-            currentWorkers[0].PlayWorkAnimation(taskAnimation.ToString());
-        }
-        
-        while (workProgress < baseWorkTime)
-        {
-            workProgress += Time.deltaTime;
-            yield return null;
-        }
-
         farmBuilding.ClearPlot();
+    }
+
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+        // No longer need to manage action coroutines since workers handle their own work
     }
 
     public override string GetTooltipText()

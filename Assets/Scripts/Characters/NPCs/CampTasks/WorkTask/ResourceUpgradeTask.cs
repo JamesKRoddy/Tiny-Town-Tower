@@ -26,19 +26,16 @@ public class ResourceUpgradeTask : QueuedWorkTask
         }
     }
 
-    protected override IEnumerator WorkCoroutine()
+    public override bool DoWork(HumanCharacterController worker, float deltaTime)
     {
-        // Consume input resources
-        ConsumeResources();
-
-        // Process the upgrade
-        while (workProgress < baseWorkTime)
+        // Start by consuming resources if we haven't started work yet
+        if (workProgress == 0f && currentUpgrade != null)
         {
-            workProgress += Time.deltaTime;
-            yield return null;
+            ConsumeResources();
         }
-
-        CompleteWork();
+        
+        // Call base DoWork to handle electricity and progress
+        return base.DoWork(worker, deltaTime);
     }
 
     protected override void CompleteWork()

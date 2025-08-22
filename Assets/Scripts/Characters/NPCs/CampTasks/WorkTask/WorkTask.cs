@@ -25,7 +25,6 @@ public abstract class WorkTask : MonoBehaviour
     protected float workProgress = 0f;
     protected float baseWorkTime = 5f;
     protected int resourceAmount = 1;
-    protected Coroutine workCoroutine;
 
     // Properties to access the assigned NPCs
     public List<HumanCharacterController> AssignedNPCs => currentWorkers;
@@ -73,19 +72,18 @@ public abstract class WorkTask : MonoBehaviour
         return tooltip;
     }
 
-    // Virtual method for NPC to perform the work task
+    // Virtual method called by WorkState when NPC reaches work position
+    // This is now primarily for animation/positioning setup since work execution is handled by worker coroutines
     public virtual void PerformTask(HumanCharacterController npc)
     {
+        // Ensure worker is in the list (in case this is called before AssignNPC)
         if (!currentWorkers.Contains(npc) && currentWorkers.Count < maxWorkers)
         {
             currentWorkers.Add(npc);
-            
-            // Start work coroutine if this is the first worker and we're not already working
-            if (currentWorkers.Count == 1 && workCoroutine == null)
-            {
-                workCoroutine = StartCoroutine(WorkCoroutine());
-            }
         }
+        
+        // Work execution is now handled by the worker's coroutine started in AssignNPC
+        // This method is mainly for WorkState coordination and animation
     }
     
     // Virtual method that can be overridden by specific tasks
@@ -215,11 +213,8 @@ public abstract class WorkTask : MonoBehaviour
             taskStructure.SetCurrentWorkTask(this);
         }
         
-        // Start work coroutine if this is the first worker and we're not already working
-        if (currentWorkers.Count == 1 && workCoroutine == null)
-        {
-            workCoroutine = StartCoroutine(WorkCoroutine());
-        }
+        // Notify the worker that they can start working
+        npc.StartWork(this);
         
         return true;
     }
@@ -258,87 +253,64 @@ public abstract class WorkTask : MonoBehaviour
         return currentWorkers.Count > 0;
     }
 
-    // Helper method to calculate total work speed from all workers
-    protected float GetTotalWorkSpeed()
+    /// <summary>
+    /// Simple method called by WorkState to advance work progress
+    /// </summary>
+    /// <param name="worker">The worker performing the work</param>
+    /// <param name="deltaTime">Time since last frame</param>
+    /// <returns>True if work can continue, false if should stop</returns>
+    public virtual bool DoWork(HumanCharacterController worker, float deltaTime)
     {
-        if (currentWorkers.Count == 0) return 0f;
-        
-        float totalSpeed = 0f;
-        foreach (var worker in currentWorkers)
+        if (!isOperational || !currentWorkers.Contains(worker))
         {
-            if (worker is SettlerNPC settler)
-            {
-                totalSpeed += settler.GetWorkSpeedMultiplier();
-            }
-            else
-            {
-                totalSpeed += 1f; // Default speed for non-settler workers
-            }
+            return false;
         }
-        
-        // For multi-worker tasks, apply a bonus (diminishing returns)
-        if (currentWorkers.Count > 1)
-        {
-            totalSpeed = Mathf.Sqrt(currentWorkers.Count) * (totalSpeed / currentWorkers.Count);
-        }
-        
-        return totalSpeed;
-    }
 
-    // Virtual work coroutine that can be overridden by specific tasks
-    protected virtual IEnumerator WorkCoroutine()
-    {
-        // Reset work progress at the start of each task
-        workProgress = 0f;
-        
-        while (workProgress < baseWorkTime)
+        // Get worker speed multiplier
+        float workSpeed = 1f;
+        if (worker is SettlerNPC settler)
         {
-            // Get total work speed from all workers
-            float workSpeed = GetTotalWorkSpeed();
-            
-            // If no work speed (all workers starving), stop working
+            workSpeed = settler.GetWorkSpeedMultiplier();
+            // If settler is starving, they can't work
             if (workSpeed <= 0)
             {
-                // Take breaks for all starving workers
-                foreach (var worker in currentWorkers)
-                {
-                    if (worker is SettlerNPC settler)
-                    {
-                        settler.TakeBreak(); // Take a break instead of stopping work completely
-                    }
-                }
-                StopWorkCoroutine();
-                yield break;
+                return false;
             }
-
-            // Consume electricity based on work progress if required
-            if (electricityRequired > 0)
-            {
-                float consumptionRate = electricityRequired / baseWorkTime; // Electricity per second
-                if (!CampManager.Instance.ElectricityManager.ConsumeElectricity(consumptionRate, Time.deltaTime))
-                {
-                    // Not enough electricity, stop working
-                    SetOperationalStatus(false);
-                    yield break;
-                }
-            }
-
-            workProgress += Time.deltaTime * workSpeed;
-            yield return null;
         }
 
-        // Ensure we don't exceed the base work time
-        workProgress = baseWorkTime;
-        CompleteWork();
-    }
-
-    public virtual void StopWorkCoroutine()
-    {
-        if (workCoroutine != null)
+        // Calculate work progress for this frame
+        float workDelta = deltaTime * workSpeed;
+        
+        // All tasks consume electricity while working (default 1 unit per baseWorkTime)
+        // Distribute electricity consumption across all current workers
+        float electricityConsumption = electricityRequired > 0 ? electricityRequired : 1f;
+        float electricityRate = electricityConsumption / baseWorkTime;
+        float electricityPerWorker = electricityRate / Mathf.Max(1, currentWorkers.Count);
+        float electricityNeeded = electricityPerWorker * workDelta;
+        
+        // Check and consume electricity
+        if (electricityNeeded > 0)
         {
-            StopCoroutine(workCoroutine);
-            workCoroutine = null;
+            if (!CampManager.Instance.ElectricityManager.ConsumeElectricity(electricityNeeded, 1f))
+            {
+                // Not enough electricity, task becomes non-operational
+                SetOperationalStatus(false);
+                return false;
+            }
         }
+        
+        // Advance work progress
+        workProgress += workDelta;
+        
+        // Check if work is complete
+        if (workProgress >= baseWorkTime)
+        {
+            workProgress = baseWorkTime;
+            CompleteWork();
+            return false; // Work is done
+        }
+        
+        return true; // Continue working
     }
 
     // Virtual method for completing work that can be overridden
@@ -353,7 +325,12 @@ public abstract class WorkTask : MonoBehaviour
         // Reset state
         workProgress = 0f;
         
-        StopWorkCoroutine();
+        // Stop all workers from working on this task
+        var workersToStop = new List<HumanCharacterController>(currentWorkers);
+        foreach (var worker in workersToStop)
+        {
+            worker.StopWork();
+        }
         
         // Clear all workers
         currentWorkers.Clear();
@@ -394,7 +371,7 @@ public abstract class WorkTask : MonoBehaviour
 
     protected virtual void OnDisable()
     {
-        StopWorkCoroutine();
+        // No need to stop coroutine here, workers manage their own
     }
 
     public void SetOperationalStatus(bool operational)
@@ -405,10 +382,7 @@ public abstract class WorkTask : MonoBehaviour
             
             if (!isOperational)
             {
-                // Stop current work if any
-                StopWorkCoroutine();
-                
-                // Unassign all current workers
+                // Stop all current workers
                 if (currentWorkers.Count > 0)
                 {
                     var workersToUnassign = new List<HumanCharacterController>(currentWorkers);
@@ -479,15 +453,12 @@ public abstract class WorkTask : MonoBehaviour
         {
             currentWorkers.Remove(npc);
             
-            // If no more workers, stop the work coroutine
-            if (currentWorkers.Count == 0)
+            // Stop the worker from working on this task
+            npc.StopWork();
+            
+            if (currentWorkers.Count == 0 && taskStructure != null)
             {
-                StopWorkCoroutine();
-                
-                if (taskStructure != null)
-                {
-                    taskStructure.SetCurrentWorkTask(null);
-                }
+                taskStructure.SetCurrentWorkTask(null);
             }
             
             return true;
