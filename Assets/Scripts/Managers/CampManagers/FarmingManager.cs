@@ -9,6 +9,6 @@ public class FarmingManager : MonoBehaviour
 
     public List<ResourceScriptableObj> GetAllCrops(){
         //This should get all player inventory items that are crop seeds
-        return PlayerInventory.Instance.GetAllItemsOfCategory(ResourceCategory.CROP_SEED);
+        return PlayerInventory.Instance.GetAllItemsOfCategory(ItemCategory.CROP_SEED);
     }
 }

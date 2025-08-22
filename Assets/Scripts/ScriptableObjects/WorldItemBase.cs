@@ -8,4 +8,9 @@ public class WorldItemBase : ScriptableObject
     [TextArea(3, 5)] // Allows for multi-line text in the Inspector
     public string description; // Description of the resource
     public Sprite sprite; // Sprite for the UI representation
+
+    [Header("Item Information")]
+    public ItemCategory category;
+    public ItemRarity rarity;
+    public bool isUnlocked = true;
 }

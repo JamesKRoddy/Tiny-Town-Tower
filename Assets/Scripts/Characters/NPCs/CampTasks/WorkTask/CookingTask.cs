@@ -28,8 +28,8 @@ public class CookingTask : QueuedWorkTask
         if (currentTaskData is CookingRecipeScriptableObj nextRecipe)
         {
             currentRecipe = nextRecipe;
-            baseWorkTime = nextRecipe.cookingTime;
-            requiredResources = nextRecipe.requiredIngredients;
+            baseWorkTime = nextRecipe.craftTime;
+            requiredResources = nextRecipe.requiredResources;
         }
     }
 
@@ -47,7 +47,7 @@ public class CookingTask : QueuedWorkTask
                 else
                 {
                     // If canteen is full, store in player inventory as backup
-                    AddResourceToInventory(currentRecipe.outputFood);
+                    AddResourceToInventory(currentRecipe.outputResources);
                 }
             }
         }

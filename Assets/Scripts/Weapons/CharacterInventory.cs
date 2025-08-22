@@ -99,7 +99,7 @@ public class CharacterInventory : MonoBehaviour
         return inventoryList;
     }
 
-    public List<ResourceScriptableObj> GetAllItemsOfCategory(ResourceCategory resourceCategory){
+    public List<ResourceScriptableObj> GetAllItemsOfCategory(ItemCategory resourceCategory){
         return inventoryList.Where(i => i.resourceScriptableObj.category == resourceCategory).Select(i => i.resourceScriptableObj).ToList();
     }
 

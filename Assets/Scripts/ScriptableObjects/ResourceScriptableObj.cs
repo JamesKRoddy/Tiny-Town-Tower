@@ -4,8 +4,6 @@ using UnityEngine;
 public class ResourceScriptableObj : WorldItemBase
 {
     [Header("Resource Information")]
-    public ResourceCategory category;
-    public ResourceRarity rarity;
     public GameObject prefab;
 }
 

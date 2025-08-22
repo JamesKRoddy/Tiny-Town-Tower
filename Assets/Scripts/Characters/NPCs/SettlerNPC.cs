@@ -1289,7 +1289,7 @@ namespace Characters.NPC
                 NPCCharacteristicScriptableObj characteristic = allCharacteristic[characteristicIndex];
 
                 // Check rarity
-                if (characteristic.rarity == ResourceRarity.RARE || characteristic.rarity == ResourceRarity.LEGENDARY)
+                if (characteristic.rarity == ItemRarity.RARE || characteristic.rarity == ItemRarity.LEGENDARY)
                 {
                     if (UnityEngine.Random.value > rareCharacteristicChance)
                     {

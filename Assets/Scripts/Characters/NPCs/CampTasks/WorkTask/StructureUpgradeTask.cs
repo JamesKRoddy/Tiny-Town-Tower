@@ -29,7 +29,7 @@ public class StructureUpgradeTask : WorkTask
 
 
 
-        private void CreateConstructionSite()
+    private void CreateConstructionSite()
     {
         Vector3 position = transform.position;
         Quaternion rotation = transform.rotation;

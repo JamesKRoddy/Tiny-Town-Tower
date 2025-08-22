@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerInventoryMenu : PreviewListMenuBase<ResourceCategory, ResourceScriptableObj>, IControllerInput
+public class PlayerInventoryMenu : PreviewListMenuBase<ItemCategory, ResourceScriptableObj>, IControllerInput
 {
     [Header("Inventory Preview UI")]
     [SerializeField] private GameObject previewResourceCostPrefab;
@@ -20,7 +20,7 @@ public class PlayerInventoryMenu : PreviewListMenuBase<ResourceCategory, Resourc
         }
     }
 
-    public override ResourceCategory GetItemCategory(ResourceScriptableObj item)
+    public override ItemCategory GetItemCategory(ResourceScriptableObj item)
     {
         return item.category;
     }

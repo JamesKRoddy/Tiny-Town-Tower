@@ -104,9 +104,9 @@ namespace Managers
             }
 
             // Check if player has required ingredients
-            if (recipe.requiredIngredients != null)
+            if (recipe.requiredResources != null)
             {
-                foreach (var ingredient in recipe.requiredIngredients)
+                foreach (var ingredient in recipe.requiredResources)
                 {
                     if (PlayerInventory.Instance.GetItemCount(ingredient.resourceScriptableObj) < ingredient.count)
                     {

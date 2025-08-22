@@ -384,6 +384,14 @@ public abstract class WorkTask : MonoBehaviour
         PlayerInventory.Instance.AddItem(resourceItemCount.resourceScriptableObj, resourceItemCount.count);
     }
 
+    protected void AddResourceToInventory(ResourceItemCount[] resourceItemCounts)
+    {
+        foreach (var resourceItemCount in resourceItemCounts)
+        {
+            PlayerInventory.Instance.AddItem(resourceItemCount.resourceScriptableObj, resourceItemCount.count);
+        }
+    }
+
     protected virtual void OnDisable()
     {
         StopWorkCoroutine();

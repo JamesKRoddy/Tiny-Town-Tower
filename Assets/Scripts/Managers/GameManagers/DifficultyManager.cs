@@ -137,18 +137,18 @@ namespace Managers
         /// </summary>
         /// <param name="difficulty">Optional difficulty override, uses current wave difficulty if null</param>
         /// <returns>Resource rarity based on difficulty thresholds</returns>
-        public ResourceRarity GetResourceRarity(int? difficulty = null)
+        public ItemRarity GetResourceRarity(int? difficulty = null)
         {
             int currentDifficulty = difficulty ?? GetCurrentWaveDifficulty();
             
             if (currentDifficulty < commonRarityThreshold)
-                return ResourceRarity.COMMON;
+                return ItemRarity.COMMON;
             if (currentDifficulty < rareRarityThreshold)
-                return ResourceRarity.RARE;
+                return ItemRarity.RARE;
             if (currentDifficulty < epicRarityThreshold)
-                return ResourceRarity.EPIC;
+                return ItemRarity.EPIC;
 
-            return ResourceRarity.LEGENDARY;
+            return ItemRarity.LEGENDARY;
         }
 
         /// <summary>

@@ -232,7 +232,7 @@ public enum DoorStatus
 // =========================
 
 [System.Serializable]
-public enum ResourceCategory //TODO: Use enum for resource categories for inventory menus
+public enum ItemCategory //TODO: Use enum for resource categories for inventory menus
 {
     GENERAL,
     FOOD,
@@ -245,7 +245,7 @@ public enum ResourceCategory //TODO: Use enum for resource categories for invent
     QUEST_ITEM
 }
 
-public enum ResourceRarity
+public enum ItemRarity
 {
     COMMON,
     RARE,

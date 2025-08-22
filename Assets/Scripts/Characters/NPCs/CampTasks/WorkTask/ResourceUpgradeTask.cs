@@ -21,7 +21,7 @@ public class ResourceUpgradeTask : QueuedWorkTask
         if (currentTaskData is ResourceUpgradeScriptableObj nextUpgrade)
         {
             currentUpgrade = nextUpgrade;
-            baseWorkTime = nextUpgrade.upgradeTime;
+            baseWorkTime = nextUpgrade.craftTime;
             requiredResources = nextUpgrade.requiredResources;
         }
     }
@@ -48,7 +48,7 @@ public class ResourceUpgradeTask : QueuedWorkTask
             // Create the upgraded resources
             for (int i = 0; i < currentUpgrade.outputAmount; i++)
             {
-                AddResourceToInventory(currentUpgrade.outputResource);
+                AddResourceToInventory(currentUpgrade.outputResources);
             }
         }
         

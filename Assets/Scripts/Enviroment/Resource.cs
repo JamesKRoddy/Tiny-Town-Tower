@@ -22,7 +22,7 @@ public class Resource : MonoBehaviour, IPickupableItem, IInteractive<ResourceIte
     public string GetItemDescription() => resourceData.description;
     public Sprite GetItemImage() => resourceData.sprite;
     public string GetItemName() => resourceData.objectName;
-    public ResourceCategory GetResourceType() => resourceData.category;
+    public ItemCategory GetResourceType() => resourceData.category;
 
     public int GetResourceCount() => resourceCount; // Return the count if needed
 
