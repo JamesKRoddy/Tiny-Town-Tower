@@ -16,6 +16,8 @@ public class FarmingTask : WorkTask
     private FarmBuilding farmBuilding;
     private FarmingAction currentAction = FarmingAction.None;
     private float lastTendingTime = 0f;
+    private float lastMonitoringCheck = 0f;
+    private const float MONITORING_CHECK_INTERVAL = 5f; // Check every 5 seconds when monitoring
 
     private enum FarmingAction
     {
@@ -25,6 +27,10 @@ public class FarmingTask : WorkTask
         Harvesting,
         Clearing
     }
+
+    // Override to ensure task is only complete when no work is needed and no crop to monitor
+    public override bool IsTaskCompleted => currentAction == FarmingAction.None && 
+                                           (!farmBuilding.IsOccupied || farmBuilding.IsDead);
 
     protected override void Start()
     {
@@ -123,26 +129,113 @@ public class FarmingTask : WorkTask
             workProgress = 0f;
             DetermineNextAction();
             
-            // If still no action needed, no more work
+            // If still no action needed, check if we should keep the NPC assigned
             if (currentAction == FarmingAction.None)
             {
-                return false; // Farm doesn't need attention right now
+                // If farm is occupied with a growing crop, keep NPC assigned for future tending
+                if (farmBuilding.IsOccupied && !farmBuilding.IsDead)
+                {
+                    Debug.Log($"<color=yellow>[FarmingTask] No immediate action needed, but keeping {worker.name} assigned to monitor growing crop</color>");
+                    lastMonitoringCheck = Time.time;
+                    return true; // Keep NPC assigned but not actively working
+                }
+                else
+                {
+                    Debug.Log($"<color=yellow>[FarmingTask] No work needed and no crop to monitor, releasing {worker.name}</color>");
+                    return false; // Farm doesn't need attention right now
+                }
             }
             
             // Start the animation for the new action
             StartActionAnimation(worker);
         }
 
-        // Call base DoWork to handle electricity and progress
-        bool canContinue = base.DoWork(worker, deltaTime);
-        
-        // For harvesting, alternate animations
-        if (canContinue && currentAction == FarmingAction.Harvesting)
+        // Handle electricity and work progress manually (don't call base.DoWork to avoid auto-completion)
+        if (!isOperational)
         {
-            HandleHarvestingAnimation(worker);
+            Debug.LogError($"[FarmingTask] Task is not operational for {worker.name}");
+            return false;
         }
         
-        return canContinue;
+        if (!currentWorkers.Contains(worker))
+        {
+            Debug.LogError($"[FarmingTask] Worker {worker.name} is not in currentWorkers list. Current workers: {currentWorkers.Count}");
+            return false;
+        }
+
+        // Validate work task data
+        if (baseWorkTime <= 0)
+        {
+            Debug.LogError($"[FarmingTask] Invalid baseWorkTime ({baseWorkTime}) for {GetType().Name}. Work task cannot be performed. NPC {worker.name} will return to wander state.");
+            SetOperationalStatus(false);
+            return false;
+        }
+
+        // Get worker speed multiplier
+        float workSpeed = 1f;
+        if (worker is SettlerNPC settler)
+        {
+            workSpeed = settler.GetWorkSpeedMultiplier();
+            if (workSpeed <= 0)
+            {
+                Debug.LogError($"[FarmingTask] Worker {worker.name} has invalid work speed: {workSpeed}");
+                return false;
+            }
+        }
+
+        // Calculate work progress for this frame
+        float workDelta = deltaTime * workSpeed;
+        
+        // Handle electricity consumption
+        float electricityConsumption = electricityRequired > 0 ? electricityRequired : 1f;
+        float electricityRate = electricityConsumption / baseWorkTime;
+        float electricityPerWorker = electricityRate / Mathf.Max(1, currentWorkers.Count);
+        float electricityNeeded = electricityPerWorker * workDelta;
+        
+        Debug.Log($"[FarmingTask] Electricity check for {worker.name} - Action: {currentAction}, BaseWorkTime: {baseWorkTime}, ElectricityNeeded: {electricityNeeded}, WorkDelta: {workDelta}");
+        
+        if (electricityNeeded > 0)
+        {
+            if (!CampManager.Instance.ElectricityManager.ConsumeElectricity(electricityNeeded, 1f))
+            {
+                Debug.LogError($"[FarmingTask] Not enough electricity for {worker.name} - needed: {electricityNeeded}");
+                SetOperationalStatus(false);
+                return false;
+            }
+        }
+        
+        // If we're actively working on an action, advance work progress
+        if (currentAction != FarmingAction.None)
+        {
+            workProgress += workDelta;
+            
+            // For harvesting, alternate animations
+            if (currentAction == FarmingAction.Harvesting)
+            {
+                HandleHarvestingAnimation(worker);
+            }
+        }
+        else
+        {
+            // We're in monitoring mode - periodically check for new actions
+            if (Time.time - lastMonitoringCheck >= MONITORING_CHECK_INTERVAL)
+            {
+                Debug.Log($"<color=cyan>[FarmingTask] Monitoring check for {worker.name} - checking farm status</color>");
+                lastMonitoringCheck = Time.time;
+                
+                // Check if farm needs attention now
+                DetermineNextAction();
+                if (currentAction != FarmingAction.None)
+                {
+                    Debug.Log($"<color=green>[FarmingTask] New action needed during monitoring: {currentAction}</color>");
+                    StartActionAnimation(worker);
+                    workProgress = 0f; // Reset progress for new action
+                }
+            }
+        }
+        
+        Debug.Log($"[FarmingTask] DoWork completed successfully for {worker.name} - Action: {currentAction}, Progress: {workProgress}/{baseWorkTime}");
+        return true; // Continue working/monitoring
     }
 
     private void StartActionAnimation(HumanCharacterController worker)

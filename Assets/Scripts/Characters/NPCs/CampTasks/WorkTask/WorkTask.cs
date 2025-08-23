@@ -98,15 +98,25 @@ public abstract class WorkTask : MonoBehaviour
         // If we have a specific work location, use that
         if (workLocationTransform != null)
         {
+            Debug.Log($"[WorkTask] GetNavMeshDestination for {GetType().Name} - Using workLocationTransform: {workLocationTransform.position}");
             return workLocationTransform;
         }
         // Otherwise use the task's position
+        Debug.Log($"[WorkTask] GetNavMeshDestination for {GetType().Name} - Using transform (no workLocationTransform): {transform.position}");
         return transform;
     }
 
     // Method for precise positioning - can return null if no precise position needed
     public virtual Transform GetPrecisePosition()
     {
+        if (workLocationTransform != null)
+        {
+            Debug.Log($"[WorkTask] GetPrecisePosition for {GetType().Name} - Returning workLocationTransform: {workLocationTransform.position}");
+        }
+        else
+        {
+            Debug.Log($"[WorkTask] GetPrecisePosition for {GetType().Name} - workLocationTransform is null, returning null");
+        }
         return workLocationTransform;
     }
 
@@ -301,8 +311,7 @@ public abstract class WorkTask : MonoBehaviour
         float electricityRate = electricityConsumption / baseWorkTime;
         float electricityPerWorker = electricityRate / Mathf.Max(1, currentWorkers.Count);
         float electricityNeeded = electricityPerWorker * workDelta;
-        
-        Debug.Log($"[WorkTask] DoWork for {worker.name} - baseWorkTime: {baseWorkTime}, electricityNeeded: {electricityNeeded}, workProgress: {workProgress}");
+    
         
         // Check and consume electricity
         if (electricityNeeded > 0)

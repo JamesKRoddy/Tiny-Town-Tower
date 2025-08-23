@@ -49,8 +49,13 @@ public class WorkState : _TaskState
     private void SetupNavMeshPath()
     {
         Vector3 taskPosition = assignedTask.GetNavMeshDestination().position;
+        var precisePosition = assignedTask.GetPrecisePosition();
         
-        Debug.Log($"[WorkState] Setting up NavMesh path for {npc.name} from {transform.position} to {taskPosition}");
+        Debug.Log($"[WorkState] Setting up NavMesh path for {npc.name}:");
+        Debug.Log($"  - Current position: {transform.position}");
+        Debug.Log($"  - NavMesh destination: {taskPosition}");
+        Debug.Log($"  - Precise position: {(precisePosition != null ? precisePosition.position.ToString() : "null")}");
+        Debug.Log($"  - workLocationTransform assigned: {(precisePosition != null ? "YES" : "NO")}");
         
         // Use base class helper for stopping distance
         agent.stoppingDistance = GetEffectiveStoppingDistance(assignedTask.GetNavMeshDestination(), 0.5f);
@@ -154,21 +159,18 @@ public class WorkState : _TaskState
             var precisePosition = assignedTask.GetPrecisePosition();
             if (precisePosition != null)
             {
-                float distanceToExactPosition = Vector3.Distance(transform.position, precisePosition.position);
-                needsPrecisePositioning = distanceToExactPosition > movementSettings.precisePositioningThreshold;
+                // Always move to precise position if workLocationTransform is assigned
+                // This ensures NPCs are positioned correctly for work animations
+                needsPrecisePositioning = true;
+                agent.updatePosition = false;
+                agent.updateRotation = false;
                 
-                Debug.Log($"[WorkState] {npc.name} needs precise positioning: {needsPrecisePositioning} (distance: {distanceToExactPosition:F2})");
-                
-                if (needsPrecisePositioning)
-                {
-                    agent.updatePosition = false;
-                    agent.updateRotation = false;
-                }
+                Debug.Log($"[WorkState] {npc.name} will move to precise work position - Current pos: {transform.position}, Target pos: {precisePosition.position}");
             }
             else
             {
                 needsPrecisePositioning = false;
-                Debug.Log($"[WorkState] {npc.name} no precise positioning needed");
+                Debug.Log($"[WorkState] {npc.name} no precise positioning needed - precisePosition is null");
             }
         }
 
@@ -185,20 +187,33 @@ public class WorkState : _TaskState
         var precisePosition = assignedTask.GetPrecisePosition();
         if (needsPrecisePositioning && precisePosition != null)
         {
-            // Use lerping for precise positioning
+            Vector3 oldPosition = transform.position;
+            float distanceToTarget = Vector3.Distance(transform.position, precisePosition.position);
+            
+            // Use faster lerping for precise positioning (8f for quicker movement)
+            float lerpSpeed = 8f;
             transform.position = Vector3.Lerp(transform.position, precisePosition.position, 
-                Time.deltaTime * 5f);
+                Time.deltaTime * lerpSpeed);
             
             // Use centralized rotation utility
-            NavigationUtils.RotateTowardsWorkPoint(transform, precisePosition, 5f);
+            NavigationUtils.RotateTowardsWorkPoint(transform, precisePosition, lerpSpeed);
 
             // Check if we've reached the precise position
-            float distanceToExactPosition = Vector3.Distance(transform.position, precisePosition.position);
-            if (distanceToExactPosition <= movementSettings.precisePositioningThreshold)
+            float newDistance = Vector3.Distance(transform.position, precisePosition.position);
+            
+            // Debug every few frames to avoid spam
+            if (Time.frameCount % 30 == 0)
+            {
+                Debug.Log($"[WorkState] {npc.name} precise positioning update - From: {oldPosition}, To: {transform.position}, Target: {precisePosition.position}, Distance remaining: {newDistance:F3}");
+            }
+            
+            // Use a more generous threshold (0.05f) or if we're very close, snap to position
+            if (newDistance <= 0.05f || newDistance >= distanceToTarget) // If we're very close or not getting closer
             {
                 needsPrecisePositioning = false;
                 transform.position = precisePosition.position;
                 transform.rotation = precisePosition.rotation;
+                Debug.Log($"[WorkState] {npc.name} reached precise position - Final pos: {transform.position}");
             }
         }
     }

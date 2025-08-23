@@ -15,10 +15,12 @@ MonoBehaviour:
   objectName: _TestCookingRecipeScriptableObj
   description: _TestCookingRecipeScriptableObj Desc
   sprite: {fileID: 0}
+  category: 0
+  rarity: 0
   isUnlocked: 0
-  requiredIngredients: []
-  cookingTime: 5
-  outputFood:
-    resource: {fileID: 0}
-    count: 0
+  requiredResources: []
+  requiredResearch: []
+  craftTime: 1
+  outputResources: []
   outputAmount: 1
+  hungerRestoreAmount: 50

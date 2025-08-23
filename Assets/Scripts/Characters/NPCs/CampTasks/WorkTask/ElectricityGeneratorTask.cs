@@ -9,6 +9,8 @@ public class ElectricityGeneratorTask : WorkTask
     [SerializeField] private float generationInterval = 5f;
     private float generationTimer = 0f;
 
+
+
     protected override void Start()
     {
         base.Start();

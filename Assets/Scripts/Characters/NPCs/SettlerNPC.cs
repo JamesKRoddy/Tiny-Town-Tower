@@ -355,6 +355,15 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
             if (currentHunger <= starvationThreshold)
             {
                 workSpeedMultiplier = 0f;
+                
+                // If we're currently working but too hungry, stop work and go eat
+                if (GetCurrentTaskType() == TaskType.WORK)
+                {
+                    Debug.LogWarning($"[SettlerNPC] {name} is too hungry to work (hunger: {currentHunger}). Stopping work and going to eat.");
+                    StopWork();
+                    ChangeTask(TaskType.EAT);
+                }
+                
                 if (currentHunger == 0)
                 {
                     OnStarving?.Invoke();

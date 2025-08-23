@@ -27,11 +27,11 @@ Medical
 
 
 Tomorrow work:
-Cooking task is broken, npc moves away from it straight away after starting
+
 
 
 Bugs and refactoring:
-
+Add a visual queue for when a settler is starving
 
 
 
