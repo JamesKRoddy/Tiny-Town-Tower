@@ -136,7 +136,8 @@ namespace Managers
 
         public void ClearNPCForAssignment()
         {
-            Debug.Log($"Clearing NPC for assignment. Was: {npcForAssignment?.name ?? "null"}");
+            Debug.Log($"[WorkManager] Clearing NPC for assignment. Was: {npcForAssignment?.name ?? "null"}");
+            Debug.Log($"[WorkManager] Clearing buildingForAssignment. Was: {buildingForAssignment?.ToString() ?? "null"}");
             npcForAssignment = null;
             buildingForAssignment = null; // Also clear building assignment
         }

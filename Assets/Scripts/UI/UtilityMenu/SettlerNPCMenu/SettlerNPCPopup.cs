@@ -53,6 +53,10 @@ public class SettlerNPCPopup : PreviewPopupBase<HumanCharacterController, string
         {
             PlayerController.Instance.PossessNPC(null);
             PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false, 0.05f);
+            
+            // Store the NPC we're assigning work to FIRST
+            CampManager.Instance.WorkManager.SetNPCForAssignment(currentItem as SettlerNPC);
+            
             // If there is no building for assignment, we are assigning work to the NPC. Happens by selecting an npc first then a building.
             if(CampManager.Instance.WorkManager.buildingForAssignment == null){
                 PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_WORK_ASSIGNMENT);
@@ -73,8 +77,6 @@ public class SettlerNPCPopup : PreviewPopupBase<HumanCharacterController, string
                     });
                 }
             }
-            // Store the NPC we're assigning work to
-            CampManager.Instance.WorkManager.SetNPCForAssignment(currentItem as SettlerNPC);
         }
         OnCloseClicked();
     }

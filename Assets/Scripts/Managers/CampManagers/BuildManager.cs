@@ -79,7 +79,9 @@ namespace Managers
             {
                 optionName = "Assign Worker",
                 onSelected = () => {
+                    Debug.Log($"[BuildManager] Setting buildingForAssignment to: {building.name}");
                     CampManager.Instance.WorkManager.buildingForAssignment = building;
+                    Debug.Log("[BuildManager] Opening settlerNPCMenu");
                     PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(true);
                 },
             });
@@ -98,8 +100,8 @@ namespace Managers
                 }
             }
 
-            // Show the selection popup
-            PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
+            // Show the selection popup in assignment mode (so "Assign Worker" doesn't clear assignments)
+            PlayerUIManager.Instance.selectionPopup.Setup(options, null, null, true);
         }
 
         public void TurretSelectionOptions(BaseTurret turret){
@@ -120,7 +122,9 @@ namespace Managers
             {
                 optionName = "Assign Worker",
                 onSelected = () => {
+                    Debug.Log($"[BuildManager] Setting buildingForAssignment to turret: {turret.name}");
                     CampManager.Instance.WorkManager.buildingForAssignment = turret;
+                    Debug.Log("[BuildManager] Opening settlerNPCMenu for turret");
                     PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(true);
                 },
             });
@@ -140,9 +144,9 @@ namespace Managers
             }
 
             Debug.Log($"Created {options.Count} options for turret selection");
-            // Show the selection popup
+            // Show the selection popup in assignment mode
             Debug.Log($"Setting up selection popup with {options.Count} options");
-            PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
+            PlayerUIManager.Instance.selectionPopup.Setup(options, null, null, true);
         }
 
         public void ShowConstructionSiteSelectionOptions(StructureConstructionTask constructionTask)
@@ -165,14 +169,16 @@ namespace Managers
             {
                 optionName = "Assign Worker",
                 onSelected = () => {
+                    Debug.Log($"[BuildManager] Setting buildingForAssignment to construction site: {constructionTask.name}");
                     CampManager.Instance.WorkManager.buildingForAssignment = constructionTask;
+                    Debug.Log("[BuildManager] Opening settlerNPCMenu for construction site");
                     PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(true);
                 },
             });
 
             Debug.Log($"Created {options.Count} options for construction site selection");
-            // Show the selection popup
-            PlayerUIManager.Instance.selectionPopup.Setup(options, null, null);
+            // Show the selection popup in assignment mode
+            PlayerUIManager.Instance.selectionPopup.Setup(options, null, null, true);
         }
 
         private string GetConstructionSiteInfoText(StructureConstructionTask constructionTask)
