@@ -171,20 +171,24 @@ public class FarmingTask : WorkTask
             return false;
         }
 
-        // Get worker speed multiplier
-        float workSpeed = 1f;
-        if (worker is SettlerNPC settler)
+        // Get final work speed (including cleanliness modifier) from base class
+        float finalWorkSpeed = GetFinalWorkSpeed(worker);
+        
+        // If worker can't work (starving, etc.), stop
+        if (finalWorkSpeed <= 0)
         {
-            workSpeed = settler.GetWorkSpeedMultiplier();
-            if (workSpeed <= 0)
-            {
-                Debug.LogError($"[FarmingTask] Worker {worker.name} has invalid work speed: {workSpeed}");
-                return false;
-            }
+            Debug.LogError($"[FarmingTask] Worker {worker.name} has invalid work speed: {finalWorkSpeed}");
+            return false;
         }
 
         // Calculate work progress for this frame
-        float workDelta = deltaTime * workSpeed;
+        float workDelta = deltaTime * finalWorkSpeed;
+        
+        // Generate dirt from work activity
+        if (CampManager.Instance?.CleanlinessManager != null)
+        {
+            CampManager.Instance.CleanlinessManager.GenerateDirtFromWork(workDelta);
+        }
         
         // Handle electricity consumption
         float electricityConsumption = electricityRequired > 0 ? electricityRequired : 1f;

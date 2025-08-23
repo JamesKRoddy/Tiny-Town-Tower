@@ -268,6 +268,36 @@ public abstract class WorkTask : MonoBehaviour
     {
         return currentWorkers.Count > 0;
     }
+    
+    /// <summary>
+    /// Get the final work speed including all modifiers (hunger, cleanliness, etc.)
+    /// </summary>
+    /// <param name="worker">The worker performing the work</param>
+    /// <returns>Final work speed multiplier</returns>
+    protected float GetFinalWorkSpeed(HumanCharacterController worker)
+    {
+        // Get worker speed multiplier (hunger, etc.)
+        float workSpeed = 1f;
+        if (worker is SettlerNPC settler)
+        {
+            workSpeed = settler.GetWorkSpeedMultiplier();
+            // If settler is starving, they can't work
+            if (workSpeed <= 0)
+            {
+                return 0f;
+            }
+        }
+        
+        // Apply cleanliness productivity modifier
+        float cleanlinessMultiplier = 1f;
+        if (CampManager.Instance?.CleanlinessManager != null)
+        {
+            cleanlinessMultiplier = CampManager.Instance.CleanlinessManager.GetProductivityMultiplier();
+        }
+        
+        // Combine all speed modifiers
+        return workSpeed * cleanlinessMultiplier;
+    }
 
     /// <summary>
     /// Simple method called by WorkState to advance work progress
@@ -282,20 +312,23 @@ public abstract class WorkTask : MonoBehaviour
             return false;
         }
 
-        // Get worker speed multiplier
-        float workSpeed = 1f;
-        if (worker is SettlerNPC settler)
+        // Get final work speed (including cleanliness modifier)
+        float finalWorkSpeed = GetFinalWorkSpeed(worker);
+        
+        // If worker can't work (starving, etc.), stop
+        if (finalWorkSpeed <= 0)
         {
-            workSpeed = settler.GetWorkSpeedMultiplier();
-            // If settler is starving, they can't work
-            if (workSpeed <= 0)
-            {
-                return false;
-            }
+            return false;
         }
 
         // Calculate work progress for this frame
-        float workDelta = deltaTime * workSpeed;
+        float workDelta = deltaTime * finalWorkSpeed;
+        
+        // Generate dirt from work activity (only for non-cleaning tasks)
+        if (CampManager.Instance?.CleanlinessManager != null && !(this is DirtPileTask))
+        {
+            CampManager.Instance.CleanlinessManager.GenerateDirtFromWork(workDelta);
+        }
         
         // Validate work task data
         if (baseWorkTime <= 0)

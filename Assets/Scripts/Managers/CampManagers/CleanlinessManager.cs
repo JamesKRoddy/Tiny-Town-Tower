@@ -6,13 +6,29 @@ namespace Managers
 {
     public class CleanlinessManager : MonoBehaviour
     {
-        [Header("Cleanliness Settings")]
-        [SerializeField] private float maxCleanliness = 100f;
-        [ReadOnly, SerializeField] private float currentCleanliness = 100f;
-        [SerializeField] private float dirtPileSpawnInterval = 60f;
-        [SerializeField] private float npcDirtinessMultiplier = 0.05f; // How much each NPC increases dirt pile spawn chance
-        [SerializeField] private int maxDirtPiles = 10; // Maximum number of dirt piles allowed
-        private float lastDirtPileSpawnTime;
+            [Header("Cleanliness Settings")]
+    [SerializeField] private float maxCleanliness = 100f;
+    [ReadOnly, SerializeField] private float currentCleanliness = 100f;
+    [SerializeField] private float dirtPileSpawnInterval = 60f;
+    [SerializeField] private float npcDirtinessMultiplier = 0.05f; // How much each NPC increases dirt pile spawn chance
+    [SerializeField] private int maxDirtPiles = 10; // Maximum number of dirt piles allowed
+    private float lastDirtPileSpawnTime;
+    
+    [Header("Work-Based Dirt Generation")]
+    [SerializeField] private float workDirtGenerationRate = 0.1f; // Dirt generated per second of work
+    [SerializeField] private float dirtAccumulationThreshold = 5f; // Amount of dirt needed to spawn a pile
+    private float accumulatedDirt = 0f;
+    
+    [Header("Productivity Impact")]
+    [SerializeField] private float cleanProductivityBonus = 0.1f; // 10% bonus when very clean (90%+)
+    [SerializeField] private float dirtyProductivityPenalty = 0.3f; // 30% penalty when dirty (30% or less)
+    [SerializeField] private float veryDirtyProductivityPenalty = 0.6f; // 60% penalty when very dirty (10% or less)
+    
+    [Header("Health Impact")]
+    [SerializeField] private float healthDrainRate = 2f; // Health lost per second when very dirty
+    [SerializeField] private float sicknessProbability = 0.1f; // Chance per second of getting sick when filthy
+    private float lastHealthDrainTime;
+    private float lastSicknessCheckTime;
 
         [Header("Dirt Pile Settings")]
         [SerializeField] private GameObject dirtPilePrefab;
@@ -29,6 +45,7 @@ namespace Managers
         public event System.Action<DirtPileTask> OnDirtPileSpawned;
         public event System.Action<DirtPileTask> OnDirtPileCleaned;
         public event System.Action<WasteBin> OnWasteBinFull;
+        public event System.Action<float> OnProductivityMultiplierChanged; // New event for productivity changes
 
         public void NotifyWasteBinFull(WasteBin bin)
         {
@@ -74,7 +91,10 @@ namespace Managers
 
             if(nextGameMode == GameMode.CAMP){
                 lastDirtPileSpawnTime = Time.time;
+                lastHealthDrainTime = Time.time;
+                lastSicknessCheckTime = Time.time;
                 dirtPileSpawnCheckCoroutine = StartCoroutine(DirtPileSpawnCheckCoroutine());
+                StartCoroutine(HealthEffectsCoroutine());
             }
         }
 
@@ -107,9 +127,10 @@ namespace Managers
                 return;
             }
 
-            // Calculate spawn chance based on NPC count
+            // Calculate spawn chance based on NPC count (reduced since work now generates dirt)
             float npcCount = NPCManager.Instance.TotalNPCs;
-            float spawnChance = 1f + (npcCount * npcDirtinessMultiplier);
+            float baseSpawnChance = 0.3f; // Reduced from 1f since work generates most dirt now
+            float spawnChance = baseSpawnChance + (npcCount * npcDirtinessMultiplier * 0.5f); // Reduced multiplier effect
 
             // Only proceed if random roll succeeds
             if (Random.value <= spawnChance)
@@ -120,11 +141,11 @@ namespace Managers
                 if (availableBin != null)
                 {
                     // Add waste to the bin instead of spawning a dirt pile
-                    availableBin.AddWaste(dirtPileCleanlinessDecrease);
+                    availableBin.AddWaste(dirtPileCleanlinessDecrease * 0.5f); // Reduced impact from passive generation
                 }
                 else
                 {
-                    // No available bins, spawn a dirt pile
+                    // No available bins, spawn a dirt pile (but smaller impact)
                     SpawnDirtPile();
                 }
             }
@@ -288,22 +309,40 @@ namespace Managers
         private void DecreaseCleanliness(float amount)
         {
             float previousCleanliness = currentCleanliness;
+            float previousMultiplier = GetProductivityMultiplier();
+            
             currentCleanliness = Mathf.Max(0, currentCleanliness - amount);
             
             if (previousCleanliness != currentCleanliness)
             {
                 OnCleanlinessChanged?.Invoke(GetCleanlinessPercentage());
+                
+                // Check if productivity multiplier changed
+                float newMultiplier = GetProductivityMultiplier();
+                if (Mathf.Abs(previousMultiplier - newMultiplier) > 0.01f)
+                {
+                    OnProductivityMultiplierChanged?.Invoke(newMultiplier);
+                }
             }
         }
 
         public void IncreaseCleanliness(float amount)
         {
             float previousCleanliness = currentCleanliness;
+            float previousMultiplier = GetProductivityMultiplier();
+            
             currentCleanliness = Mathf.Min(maxCleanliness, currentCleanliness + amount);
             
             if (previousCleanliness != currentCleanliness)
             {
                 OnCleanlinessChanged?.Invoke(GetCleanlinessPercentage());
+                
+                // Check if productivity multiplier changed
+                float newMultiplier = GetProductivityMultiplier();
+                if (Mathf.Abs(previousMultiplier - newMultiplier) > 0.01f)
+                {
+                    OnProductivityMultiplierChanged?.Invoke(newMultiplier);
+                }
             }
         }
 
@@ -330,6 +369,201 @@ namespace Managers
         public List<WasteBin> GetFullWasteBins()
         {
             return wasteBins.FindAll(b => b.IsFull());
+        }
+        
+        /// <summary>
+        /// Called when NPCs perform work to generate dirt based on activity
+        /// </summary>
+        /// <param name="workDelta">Amount of work performed this frame</param>
+        public void GenerateDirtFromWork(float workDelta)
+        {
+            // Generate dirt based on work activity
+            float dirtGenerated = workDelta * workDirtGenerationRate;
+            accumulatedDirt += dirtGenerated;
+            
+            // Check if we've accumulated enough dirt to spawn a pile
+            if (accumulatedDirt >= dirtAccumulationThreshold)
+            {
+                // Try to spawn dirt pile or add to waste bin
+                if (activeDirtPiles.Count < maxDirtPiles)
+                {
+                    WasteBin availableBin = FindAvailableWasteBin();
+                    
+                    if (availableBin != null)
+                    {
+                        // Add waste to the bin instead of spawning a dirt pile
+                        availableBin.AddWaste(dirtPileCleanlinessDecrease);
+                    }
+                    else
+                    {
+                        // No available bins, spawn a dirt pile
+                        SpawnDirtPile();
+                    }
+                    
+                    // Reset accumulated dirt
+                    accumulatedDirt = 0f;
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Get the current productivity multiplier based on cleanliness level
+        /// </summary>
+        /// <returns>Multiplier to apply to work speed (0.4 to 1.1)</returns>
+        public float GetProductivityMultiplier()
+        {
+            float cleanlinessPercentage = GetCleanlinessPercentage();
+            
+            if (cleanlinessPercentage >= 90f)
+            {
+                // Very clean: bonus productivity
+                return 1f + cleanProductivityBonus;
+            }
+            else if (cleanlinessPercentage >= 70f)
+            {
+                // Clean: normal productivity
+                return 1f;
+            }
+            else if (cleanlinessPercentage >= 30f)
+            {
+                // Somewhat dirty: slight penalty
+                float penalty = Mathf.Lerp(0f, dirtyProductivityPenalty * 0.5f, (70f - cleanlinessPercentage) / 40f);
+                return 1f - penalty;
+            }
+            else if (cleanlinessPercentage >= 10f)
+            {
+                // Dirty: significant penalty
+                float penalty = Mathf.Lerp(dirtyProductivityPenalty * 0.5f, dirtyProductivityPenalty, (30f - cleanlinessPercentage) / 20f);
+                return 1f - penalty;
+            }
+            else
+            {
+                // Very dirty: severe penalty
+                return 1f - veryDirtyProductivityPenalty;
+            }
+        }
+        
+        /// <summary>
+        /// Get a description of the current cleanliness impact on productivity
+        /// </summary>
+        public string GetProductivityImpactDescription()
+        {
+            float cleanlinessPercentage = GetCleanlinessPercentage();
+            float multiplier = GetProductivityMultiplier();
+            
+            if (cleanlinessPercentage >= 90f)
+            {
+                return $"Pristine conditions boost productivity by {(multiplier - 1f) * 100f:F0}%";
+            }
+            else if (cleanlinessPercentage >= 70f)
+            {
+                return "Clean conditions maintain normal productivity";
+            }
+            else if (cleanlinessPercentage >= 30f)
+            {
+                return $"Messy conditions reduce productivity by {(1f - multiplier) * 100f:F0}%";
+            }
+            else if (cleanlinessPercentage >= 10f)
+            {
+                return $"Dirty conditions significantly reduce productivity by {(1f - multiplier) * 100f:F0}%";
+            }
+            else
+            {
+                return $"Filthy conditions severely hamper productivity by {(1f - multiplier) * 100f:F0}%";
+            }
+        }
+        
+        /// <summary>
+        /// Coroutine to handle health effects from poor cleanliness
+        /// </summary>
+        private IEnumerator HealthEffectsCoroutine()
+        {
+            WaitForSeconds wait = new WaitForSeconds(1f); // Check every second
+            
+            while (true)
+            {
+                float cleanlinessPercentage = GetCleanlinessPercentage();
+                
+                // Apply health drain when very dirty
+                if (cleanlinessPercentage <= 20f)
+                {
+                    ApplyHealthDrain();
+                }
+                
+                // Check for sickness when filthy
+                if (cleanlinessPercentage <= 10f)
+                {
+                    CheckForSickness();
+                }
+                
+                yield return wait;
+            }
+        }
+        
+        /// <summary>
+        /// Apply health drain to all NPCs when camp is very dirty
+        /// </summary>
+        private void ApplyHealthDrain()
+        {
+            if (NPCManager.Instance == null) return;
+            
+            float healthDrain = healthDrainRate * Time.deltaTime;
+            
+            foreach (var npc in NPCManager.Instance.GetAllNPCs())
+            {
+                if (npc is SettlerNPC settler && settler.Health > 0)
+                {
+                    settler.TakeDamage(healthDrain);
+                    
+                    // Log occasionally for feedback
+                    if (Time.time - lastHealthDrainTime >= 10f)
+                    {
+                        Debug.LogWarning($"[CleanlinessManager] Filthy conditions are affecting {settler.name}'s health!");
+                        lastHealthDrainTime = Time.time;
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Check for random sickness events when camp is filthy
+        /// </summary>
+        private void CheckForSickness()
+        {
+            if (NPCManager.Instance == null) return;
+            if (Time.time - lastSicknessCheckTime < 1f) return; // Only check once per second
+            
+            lastSicknessCheckTime = Time.time;
+            
+            foreach (var npc in NPCManager.Instance.GetAllNPCs())
+            {
+                if (npc is SettlerNPC settler && settler.Health > 0)
+                {
+                    // Random chance of getting sick
+                    if (Random.value < sicknessProbability * Time.deltaTime)
+                    {
+                        // Apply sickness effect (reduce work speed temporarily)
+                        StartCoroutine(ApplySicknessEffect(settler));
+                        Debug.LogWarning($"[CleanlinessManager] {settler.name} has fallen ill due to filthy conditions!");
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Apply temporary sickness effect to an NPC
+        /// </summary>
+        private IEnumerator ApplySicknessEffect(SettlerNPC settler)
+        {
+            // Reduce work speed for 30 seconds
+            float sicknessDuration = 30f;
+            
+            // Note: This is a simplified implementation. In a full system, you'd want
+            // a proper status effect system to handle temporary modifiers
+            
+            yield return new WaitForSeconds(sicknessDuration);
+            
+            Debug.Log($"[CleanlinessManager] {settler.name} has recovered from illness.");
         }
     }
 }

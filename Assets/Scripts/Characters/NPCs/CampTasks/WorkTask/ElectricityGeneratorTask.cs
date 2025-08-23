@@ -24,20 +24,17 @@ public class ElectricityGeneratorTask : WorkTask
             return false;
         }
 
-        // Get worker speed multiplier
-        float workSpeed = 1f;
-        if (worker is SettlerNPC settler)
+        // Get final work speed (including cleanliness modifier) from base class
+        float finalWorkSpeed = GetFinalWorkSpeed(worker);
+        
+        // If worker can't work (starving, etc.), stop
+        if (finalWorkSpeed <= 0)
         {
-            workSpeed = settler.GetWorkSpeedMultiplier();
-            // If settler is starving, they can't work
-            if (workSpeed <= 0)
-            {
-                return false;
-            }
+            return false;
         }
         
-        // Update generation timer (affected by work speed)
-        generationTimer += deltaTime * workSpeed;
+        // Update generation timer (affected by work speed and cleanliness)
+        generationTimer += deltaTime * finalWorkSpeed;
         
         // Generate electricity at regular intervals
         if (generationTimer >= generationInterval)
@@ -46,7 +43,7 @@ public class ElectricityGeneratorTask : WorkTask
             generationTimer = 0f;
         }
         
-        // Call base DoWork for electricity consumption
+        // Call base DoWork for electricity consumption and dirt generation
         base.DoWork(worker, deltaTime);
         
         // Keep progress below max to prevent completion (this task runs indefinitely)

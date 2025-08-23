@@ -107,6 +107,14 @@ namespace Managers
         {
             return allCharacteristics;
         }
+        
+        /// <summary>
+        /// Get all active NPCs in the camp
+        /// </summary>
+        public List<SettlerNPC> GetAllNPCs()
+        {
+            return new List<SettlerNPC>(activeNPCs);
+        }
 
         /// <summary>
         /// Get a characteristic by its name/ID (used for save/load)
