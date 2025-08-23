@@ -153,16 +153,22 @@ public abstract class _TaskState : MonoBehaviour
     /// </summary>
     protected void TryAssignWorkOrWander()
     {
+        Debug.Log($"[TaskState] TryAssignWorkOrWander called for {npc.name} from {GetTaskType()} state");
+        
         if (CampManager.Instance?.WorkManager != null)
         {
             bool taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(npc);
+            Debug.Log($"[TaskState] AssignNextAvailableTask result for {npc.name}: {taskAssigned}");
+            
             if (!taskAssigned)
             {
+                Debug.Log($"[TaskState] No task assigned, changing {npc.name} to WANDER");
                 npc.ChangeTask(TaskType.WANDER);
             }
         }
         else
         {
+            Debug.Log($"[TaskState] WorkManager not available, changing {npc.name} to WANDER");
             npc.ChangeTask(TaskType.WANDER);
         }
     }

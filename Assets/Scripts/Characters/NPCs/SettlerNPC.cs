@@ -413,12 +413,23 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
 
     public override void PlayWorkAnimation(string animationName)
     {
+        Debug.Log($"[SettlerNPC] PlayWorkAnimation called for {name} - Animation: {animationName}");
+        
+        // Set layer weight to 1 to ensure work animation plays
+        animator.SetLayerWeight(workLayerIndex, 1f);
         animator.Play(animationName, workLayerIndex);
+        
+        Debug.Log($"[SettlerNPC] Work animation started for {name} - Layer weight set to 1");
     }
 
     public void StopWorkAnimation()
     {
+        Debug.Log($"[SettlerNPC] StopWorkAnimation called for {name} - Setting work layer to Empty state");
         animator.Play("Empty", workLayerIndex);
+        
+        // Also set the layer weight to 0 to ensure it doesn't interfere
+        animator.SetLayerWeight(workLayerIndex, 0f);
+        Debug.Log($"[SettlerNPC] Work animation stopped for {name} - Layer weight set to 0");
     }
 
     public override void StartWork(WorkTask newTask)
@@ -490,7 +501,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         return assignedWorkTask;
     }
 
-    public void StopWork()
+    public override void StopWork()
     {
         if (assignedWorkTask != null)
         {
@@ -533,12 +544,16 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     // Method to change task and update state
     public void ChangeTask(TaskType newTask)
     {
+        TaskType currentTaskType = currentState != null ? currentState.GetTaskType() : TaskType.WANDER;
+        Debug.Log($"[SettlerNPC] ChangeTask called for {name} - From: {currentTaskType} To: {newTask}, AssignedWork: {(assignedWorkTask != null ? assignedWorkTask.GetType().Name : "null")}");
+        
         if (taskStates.ContainsKey(newTask))
         {
             // If we're changing from work to eat, set isOnBreak
             if (currentState != null && currentState.GetTaskType() == TaskType.WORK && newTask == TaskType.EAT)
             {
                 isOnBreak = true;
+                Debug.Log($"[SettlerNPC] {name} taking break - changing from work to eat");
             }
             
             ChangeState(taskStates[newTask]);

@@ -143,6 +143,8 @@ public class WorkState : _TaskState
     {
         if (!hasReachedTask)
         {
+            Debug.Log($"[WorkState] {npc.name} reached task destination - Task: {assignedTask.GetType().Name}");
+            
             hasReachedTask = true;
             agent.isStopped = true;
             agent.velocity = Vector3.zero;
@@ -155,6 +157,8 @@ public class WorkState : _TaskState
                 float distanceToExactPosition = Vector3.Distance(transform.position, precisePosition.position);
                 needsPrecisePositioning = distanceToExactPosition > movementSettings.precisePositioningThreshold;
                 
+                Debug.Log($"[WorkState] {npc.name} needs precise positioning: {needsPrecisePositioning} (distance: {distanceToExactPosition:F2})");
+                
                 if (needsPrecisePositioning)
                 {
                     agent.updatePosition = false;
@@ -164,6 +168,7 @@ public class WorkState : _TaskState
             else
             {
                 needsPrecisePositioning = false;
+                Debug.Log($"[WorkState] {npc.name} no precise positioning needed");
             }
         }
 
@@ -203,10 +208,14 @@ public class WorkState : _TaskState
         timeAtTaskLocation += Time.deltaTime;
         if (timeAtTaskLocation >= movementSettings.taskStartDelay && !isTaskBeingPerformed && !needsPrecisePositioning)
         {
+            Debug.Log($"[WorkState] Starting task for {npc.name} - Task: {assignedTask.GetType().Name}, Animation: {assignedTask.GetAnimationClipName()}");
+            
             // Start work animation and begin working
             npc.PlayWorkAnimation(assignedTask.GetAnimationClipName());
             assignedTask.PerformTask(npc); // Ensure worker is in task's worker list
             isTaskBeingPerformed = true;
+            
+            Debug.Log($"[WorkState] Task started for {npc.name} - isTaskBeingPerformed: {isTaskBeingPerformed}");
         }
         
         // If we're performing the task, do the work each frame
@@ -215,6 +224,7 @@ public class WorkState : _TaskState
             bool canContinue = assignedTask.DoWork(npc, Time.deltaTime);
             if (!canContinue)
             {
+                Debug.Log($"[WorkState] DoWork returned false for {npc.name} - stopping task performance");
                 // Work is complete or stopped, let StopWork handle the transition
                 isTaskBeingPerformed = false;
             }
@@ -252,10 +262,13 @@ public class WorkState : _TaskState
 
     public void AssignTask(WorkTask task)
     {
+        Debug.Log($"[WorkState] AssignTask called for {npc.name} - Previous task: {(assignedTask != null ? assignedTask.GetType().Name : "null")}, New task: {(task != null ? task.GetType().Name : "null")}");
+        
         // Unsubscribe from the previous task's StopWork event if there was one
         if (assignedTask != null)
         {
             assignedTask.StopWork -= StopWork;
+            Debug.Log($"[WorkState] Unsubscribed from StopWork event for previous task: {assignedTask.GetType().Name}");
         }
         
         assignedTask = task;
@@ -264,15 +277,36 @@ public class WorkState : _TaskState
         if (assignedTask != null)
         {
             assignedTask.StopWork += StopWork;
+            Debug.Log($"[WorkState] Subscribed to StopWork event for new task: {assignedTask.GetType().Name}");
         }
     }
 
     public void StopWork()
     {
-        if (assignedTask != null && (assignedTask.HasQueuedTasks || assignedTask.IsOccupied))
+        // Don't stop work if:
+        // 1. Task has queued tasks waiting
+        // 2. Task is currently occupied by workers
+        // 3. Task is a QueuedWorkTask with current work in progress
+        if (assignedTask != null)
         {
-            return;
+            bool hasQueuedTasks = assignedTask.HasQueuedTasks;
+            bool isOccupied = assignedTask.IsOccupied;
+            bool hasCurrentWork = false;
+            
+            // Check if it's a QueuedWorkTask with current work
+            if (assignedTask is QueuedWorkTask queuedTask)
+            {
+                hasCurrentWork = queuedTask.HasCurrentWork;
+            }
+            
+            if (hasQueuedTasks || isOccupied || hasCurrentWork)
+            {
+                Debug.Log($"[WorkState] Not stopping work for {npc.name} - HasQueuedTasks: {hasQueuedTasks}, IsOccupied: {isOccupied}, HasCurrentWork: {hasCurrentWork}");
+                return;
+            }
         }
+
+        Debug.Log($"[WorkState] Stopping work for {npc.name} - task completed");
 
         // Stop the work animation since the current task is complete
         if (npc is SettlerNPC settler)

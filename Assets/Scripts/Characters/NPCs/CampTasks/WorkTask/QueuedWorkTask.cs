@@ -12,6 +12,7 @@ public abstract class QueuedWorkTask : WorkTask
     // Properties
     public override bool HasQueuedTasks => taskQueue.Count > 0;
     public override bool IsTaskCompleted => currentTaskData == null && !HasQueuedTasks;
+    public bool HasCurrentWork => currentTaskData != null;
 
     protected override void Start()
     {
@@ -72,6 +73,8 @@ public abstract class QueuedWorkTask : WorkTask
 
     protected override void CompleteWork()
     {
+        Debug.Log($"[QueuedWorkTask] CompleteWork called for {GetType().Name} - Queue count: {taskQueue.Count}, Current workers: {currentWorkers.Count}");
+        
         // Store the first current worker as previous worker before clearing (for backward compatibility)
         if (currentWorkers.Count > 0)
         {
@@ -84,6 +87,8 @@ public abstract class QueuedWorkTask : WorkTask
         // Process next task in queue if available
         if (taskQueue.Count > 0)
         {
+            Debug.Log($"[QueuedWorkTask] More tasks in queue ({taskQueue.Count}), continuing work");
+            
             // Notify completion of current task without stopping work
             NotifyTaskCompletion();
             
@@ -95,8 +100,13 @@ public abstract class QueuedWorkTask : WorkTask
         }
         else
         {
+            Debug.Log($"[QueuedWorkTask] No more tasks in queue, stopping work and clearing current task data");
+            
             // Only unassign and notify completion if there are no more tasks
             UnassignNPC();
+            
+            // Clear current task data since there are no more tasks
+            currentTaskData = null;
             
             // Notify completion and stop work
             base.CompleteWork();

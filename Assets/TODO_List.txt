@@ -27,7 +27,6 @@ Medical
 
 
 Tomorrow work:
-Assigning work menus are broken, selecting a building then assign work then selecting an npc should bring up the work options not the npc selecting menu (not working just figure out what should happen and do it yourself)
 Cooking task is broken, npc moves away from it straight away after starting
 
 

@@ -190,23 +190,29 @@ public abstract class WorkTask : MonoBehaviour
     // Helper method to trigger the event safely (other classes can call this to invoke StopWork)
     protected void InvokeStopWork()
     {
+        Debug.Log($"[WorkTask] InvokeStopWork called for {GetType().Name} - Current workers: {currentWorkers.Count}");
         StopWork?.Invoke();
     }
 
     // Method to assign an NPC to this task
     public bool AssignNPC(HumanCharacterController npc)
     {
+        Debug.Log($"[WorkTask] AssignNPC called for {GetType().Name} - NPC: {npc.name}, Current workers: {currentWorkers.Count}/{maxWorkers}");
+        
         if (currentWorkers.Contains(npc))
         {
+            Debug.Log($"[WorkTask] NPC {npc.name} already assigned to {GetType().Name}");
             return false; // Already assigned
         }
         
         if (currentWorkers.Count >= maxWorkers)
         {
+            Debug.Log($"[WorkTask] Task {GetType().Name} is full ({currentWorkers.Count}/{maxWorkers})");
             return false; // Task is full
         }
         
         currentWorkers.Add(npc);
+        Debug.Log($"[WorkTask] Successfully assigned {npc.name} to {GetType().Name} - Workers now: {currentWorkers.Count}/{maxWorkers}");
         
         if (taskStructure != null)
         {
@@ -281,12 +287,22 @@ public abstract class WorkTask : MonoBehaviour
         // Calculate work progress for this frame
         float workDelta = deltaTime * workSpeed;
         
+        // Validate work task data
+        if (baseWorkTime <= 0)
+        {
+            Debug.LogError($"[WorkTask] Invalid baseWorkTime ({baseWorkTime}) for {GetType().Name}. Work task cannot be performed. NPC {worker.name} will return to wander state.");
+            SetOperationalStatus(false);
+            return false;
+        }
+        
         // All tasks consume electricity while working (default 1 unit per baseWorkTime)
         // Distribute electricity consumption across all current workers
         float electricityConsumption = electricityRequired > 0 ? electricityRequired : 1f;
         float electricityRate = electricityConsumption / baseWorkTime;
         float electricityPerWorker = electricityRate / Mathf.Max(1, currentWorkers.Count);
         float electricityNeeded = electricityPerWorker * workDelta;
+        
+        Debug.Log($"[WorkTask] DoWork for {worker.name} - baseWorkTime: {baseWorkTime}, electricityNeeded: {electricityNeeded}, workProgress: {workProgress}");
         
         // Check and consume electricity
         if (electricityNeeded > 0)
@@ -382,12 +398,16 @@ public abstract class WorkTask : MonoBehaviour
             
             if (!isOperational)
             {
+                Debug.Log($"[WorkTask] {GetType().Name} became non-operational. Stopping all workers and returning them to wander state.");
+                
                 // Stop all current workers
                 if (currentWorkers.Count > 0)
                 {
                     var workersToUnassign = new List<HumanCharacterController>(currentWorkers);
                     foreach (var worker in workersToUnassign)
                     {
+                        Debug.Log($"[WorkTask] Unassigning worker {worker.name} from non-operational task {GetType().Name}");
+                        
                         if (worker is SettlerNPC settler)
                         {
                             settler.ClearAssignedWork(); // Clear the assigned work
@@ -443,6 +463,11 @@ public abstract class WorkTask : MonoBehaviour
 
     public float GetProgress()
     {
+        if (baseWorkTime <= 0)
+        {
+            Debug.LogWarning($"[WorkTask] GetProgress called with invalid baseWorkTime ({baseWorkTime}) for {GetType().Name}");
+            return 0f;
+        }
         return workProgress / baseWorkTime;
     }
 
