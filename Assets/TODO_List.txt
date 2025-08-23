@@ -4,15 +4,7 @@ Finalizing game loops:
 
 Camp management:
 
-Electrical system:
-Tasks consume electricity
-If there is not enough electricity tasks stop
-Generators supply electricity
-
 Clean system:
-As ppl work camp gets dirtier
-If camp gets progressively dirty different repercussions
-First productivity goes down
 Next ppl get sick, stop working completely
 Buildings to work on:
 Check cleaning station still works
@@ -27,6 +19,10 @@ Medical
 
 
 Tomorrow work:
+Dirt piles are still just randomly spawning, should be happening with work
+Then just look at how the camp behaves after a longer period of time
+Day/Night cycle and npcs getting tired
+
 
 
 
