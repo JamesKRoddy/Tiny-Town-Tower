@@ -3254,7 +3254,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   timeOfDayText: {fileID: 4991125662187830896}
-  timeRemainingText: {fileID: 4375768102202897849}
+  timePeriodText: {fileID: 4375768102202897849}
   timeProgressBar: {fileID: 2144969245282952117}
   timeOfDayIcon: {fileID: 7725754156730220237}
   canvasGroup: {fileID: 3303211676481141363}
@@ -3262,8 +3262,10 @@ MonoBehaviour:
   dayIcon: {fileID: 0}
   duskIcon: {fileID: 0}
   nightIcon: {fileID: 0}
-  showTimeRemaining: 1
+  showCurrentTime: 1
+  showTimePeriod: 1
   showProgressBar: 1
+  use24HourFormat: 0
 --- !u!225 &3303211676481141363
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -12482,7 +12484,7 @@ GameObject:
   - component: {fileID: 5138213163538462067}
   - component: {fileID: 4375768102202897849}
   m_Layer: 5
-  m_Name: TimeRemainingText
+  m_Name: TimeOfDayText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -13342,7 +13344,7 @@ MonoBehaviour:
   rogueLikeGameUI: {fileID: 132560972929078240}
   campUI: {fileID: 7957405063769124335}
   waveUI: {fileID: 590653716714484773}
-  timeDisplayUI: {fileID: 0}
+  timeDisplayUI: {fileID: 7705830910676661071}
 --- !u!1 &4196626637578071975
 GameObject:
   m_ObjectHideFlags: 0

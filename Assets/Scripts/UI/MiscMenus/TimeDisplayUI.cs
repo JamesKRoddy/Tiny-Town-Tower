@@ -11,8 +11,8 @@ public class TimeDisplayUI : MonoBehaviour
     #region UI References
     
     [Header("UI Components")]
-    [SerializeField] private TextMeshProUGUI timeOfDayText;
-    [SerializeField] private TextMeshProUGUI timeRemainingText;
+    [SerializeField] private TextMeshProUGUI timeOfDayText;      // Shows current time (e.g., "2:30 PM")
+    [SerializeField] private TextMeshProUGUI timePeriodText;     // Shows time period (e.g., "Afternoon")
     [SerializeField] private Scrollbar timeProgressBar;
     [SerializeField] private Image timeOfDayIcon;
     [SerializeField] private CanvasGroup canvasGroup;
@@ -24,8 +24,10 @@ public class TimeDisplayUI : MonoBehaviour
     [SerializeField] private Sprite nightIcon;
     
     [Header("Display Settings")]
-    [SerializeField] private bool showTimeRemaining = true;
+    [SerializeField] private bool showCurrentTime = true;
+    [SerializeField] private bool showTimePeriod = true;
     [SerializeField] private bool showProgressBar = true;
+    [SerializeField] private bool use24HourFormat = false;
     
     #endregion
     
@@ -87,6 +89,7 @@ public class TimeDisplayUI : MonoBehaviour
 
     private void OnGameModeChanged(GameMode newGameMode)
     {
+        Debug.Log("OnGameModeChanged: " + newGameMode);
         // Show the UI in CAMP and ROGUE_LITE modes
         bool shouldShow = newGameMode == GameMode.CAMP || newGameMode == GameMode.ROGUE_LITE;
         gameObject.SetActive(shouldShow);
@@ -107,10 +110,11 @@ public class TimeDisplayUI : MonoBehaviour
     
     private void Update()
     {
-        // Update time remaining text every frame for smooth countdown
-        if (showTimeRemaining && timeRemainingText != null && timeManager != null)
+        // Update time display every frame for smooth time progression
+        if (timeManager != null)
         {
-            UpdateTimeRemainingText();
+            UpdateTimeOfDayText();
+            UpdateTimePeriodText();
         }
     }
     
@@ -146,9 +150,9 @@ public class TimeDisplayUI : MonoBehaviour
         if (timeManager == null) return;
         
         UpdateTimeOfDayText();
+        UpdateTimePeriodText();
         UpdateTimeOfDayIcon();
-        UpdateProgressBar(timeManager.CurrentTimeProgress);
-        UpdateTimeRemainingText();
+        UpdateProgressBar(timeManager.TotalDayProgress);
     }
     
     /// <summary>
@@ -158,54 +162,82 @@ public class TimeDisplayUI : MonoBehaviour
     {
         if (timeOfDayText == null || timeManager == null) return;
         
-        string timeString = timeManager.GetTimeOfDayString();
-        timeOfDayText.text = timeString;
+        if (showCurrentTime)
+        {
+            string timeString = use24HourFormat ? 
+                timeManager.GetFormattedTime24Hour() : 
+                timeManager.GetFormattedTime12Hour();
+            timeOfDayText.text = timeString;
+            timeOfDayText.gameObject.SetActive(true);
+        }
+        else
+        {
+            timeOfDayText.gameObject.SetActive(false);
+        }
         
         // Change text color based on time of day
-        Color textColor = timeManager.CurrentTimeOfDay switch
-        {
-            TimeOfDay.Dawn => new Color(1f, 0.8f, 0.6f), // Light orange
-            TimeOfDay.Day => Color.yellow,
-            TimeOfDay.Dusk => new Color(1f, 0.5f, 0.2f), // Orange
-            TimeOfDay.Night => new Color(0.6f, 0.6f, 1f), // Light blue
-            _ => Color.white
-        };
-        
+        Color textColor = GetTimeBasedColor();
         timeOfDayText.color = textColor;
     }
     
     /// <summary>
-    /// Update the time remaining text
+    /// Update the time period text
     /// </summary>
-    private void UpdateTimeRemainingText()
+    private void UpdateTimePeriodText()
     {
-        if (timeRemainingText == null || timeManager == null) return;
+        if (timePeriodText == null || timeManager == null) return;
         
-        if (showTimeRemaining)
+        if (showTimePeriod)
         {
-            timeRemainingText.text = timeManager.GetFormattedTimeString();
-            timeRemainingText.gameObject.SetActive(true);
+            string periodString = timeManager.GetTimePeriodDescription();
+            timePeriodText.text = periodString;
+            timePeriodText.gameObject.SetActive(true);
         }
         else
         {
-            timeRemainingText.gameObject.SetActive(false);
+            timePeriodText.gameObject.SetActive(false);
         }
+        
+        // Change text color based on time of day
+        Color textColor = GetTimeBasedColor();
+        timePeriodText.color = textColor;
     }
     
     /// <summary>
-    /// Update the time of day icon
+    /// Get color based on current time of day
+    /// </summary>
+    private Color GetTimeBasedColor()
+    {
+        float timeHours = timeManager.GetCurrentTimeHours();
+        
+        return timeHours switch
+        {
+            >= 5f and < 7f => new Color(1f, 0.8f, 0.6f),   // Early morning - light orange
+            >= 7f and < 12f => new Color(1f, 1f, 0.7f),    // Morning - light yellow
+            >= 12f and < 17f => new Color(1f, 1f, 0.5f),   // Afternoon - bright yellow
+            >= 17f and < 19f => new Color(1f, 0.7f, 0.4f), // Evening - orange
+            >= 19f and < 22f => new Color(0.8f, 0.6f, 1f), // Night - light purple
+            _ => new Color(0.6f, 0.6f, 1f)                  // Late night - light blue
+        };
+    }
+    
+
+    
+    /// <summary>
+    /// Update the time of day icon based on actual time
     /// </summary>
     private void UpdateTimeOfDayIcon()
     {
         if (timeOfDayIcon == null || timeManager == null) return;
         
-        Sprite iconToShow = timeManager.CurrentTimeOfDay switch
+        float timeHours = timeManager.GetCurrentTimeHours();
+        
+        Sprite iconToShow = timeHours switch
         {
-            TimeOfDay.Dawn => dawnIcon,
-            TimeOfDay.Day => dayIcon,
-            TimeOfDay.Dusk => duskIcon,
-            TimeOfDay.Night => nightIcon,
-            _ => dayIcon
+            >= 5f and < 7f => dawnIcon,     // Dawn/Early Morning
+            >= 7f and < 17f => dayIcon,    // Day (7 AM to 5 PM)
+            >= 17f and < 19f => duskIcon,  // Dusk/Evening
+            _ => nightIcon                  // Night (7 PM to 5 AM)
         };
         
         if (iconToShow != null)
@@ -215,7 +247,6 @@ public class TimeDisplayUI : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("No icon to show for time of day: " + timeManager.CurrentTimeOfDay);
             timeOfDayIcon.gameObject.SetActive(false);
         }
     }
@@ -303,10 +334,12 @@ public class TimeDisplayUI : MonoBehaviour
     /// <summary>
     /// Configure display options
     /// </summary>
-    public void ConfigureDisplay(bool showRemaining, bool showProgress)
+    public void ConfigureDisplay(bool showTime, bool showPeriod, bool showProgress, bool use24Hour = false)
     {
-        showTimeRemaining = showRemaining;
+        showCurrentTime = showTime;
+        showTimePeriod = showPeriod;
         showProgressBar = showProgress;
+        use24HourFormat = use24Hour;
         
         UpdateDisplay();
     }

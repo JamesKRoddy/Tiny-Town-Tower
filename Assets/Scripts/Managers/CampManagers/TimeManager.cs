@@ -473,6 +473,73 @@ namespace Managers
         
         #endregion
         
+        #region Time Calculation Methods
+        
+        /// <summary>
+        /// Get current time of day as hours (0-24)
+        /// Based on sun position: 6 AM = sunrise, 12 PM = noon, 6 PM = sunset, 12 AM = midnight
+        /// </summary>
+        public float GetCurrentTimeHours()
+        {
+            // Map totalDayProgress (0-1) to 24-hour time
+            // 0.0 = 6 AM (sunrise), 0.25 = 12 PM (noon), 0.5 = 6 PM (sunset), 0.75 = 12 AM (midnight)
+            float timeHours = (totalDayProgress * 24f + 6f) % 24f;
+            return timeHours;
+        }
+        
+        /// <summary>
+        /// Get current time as hours and minutes
+        /// </summary>
+        public (int hours, int minutes) GetCurrentTime()
+        {
+            float timeHours = GetCurrentTimeHours();
+            int hours = Mathf.FloorToInt(timeHours);
+            int minutes = Mathf.FloorToInt((timeHours - hours) * 60f);
+            return (hours, minutes);
+        }
+        
+        /// <summary>
+        /// Get formatted time string (12-hour format with AM/PM)
+        /// </summary>
+        public string GetFormattedTime12Hour()
+        {
+            var (hours, minutes) = GetCurrentTime();
+            
+            string period = hours >= 12 ? "PM" : "AM";
+            int displayHours = hours == 0 ? 12 : (hours > 12 ? hours - 12 : hours);
+            
+            return $"{displayHours}:{minutes:D2} {period}";
+        }
+        
+        /// <summary>
+        /// Get formatted time string (24-hour format)
+        /// </summary>
+        public string GetFormattedTime24Hour()
+        {
+            var (hours, minutes) = GetCurrentTime();
+            return $"{hours:D2}:{minutes:D2}";
+        }
+        
+        /// <summary>
+        /// Get time period description based on actual time
+        /// </summary>
+        public string GetTimePeriodDescription()
+        {
+            float timeHours = GetCurrentTimeHours();
+            
+            return timeHours switch
+            {
+                >= 5f and < 7f => "Early Morning",
+                >= 7f and < 12f => "Morning", 
+                >= 12f and < 17f => "Afternoon",
+                >= 17f and < 19f => "Evening",
+                >= 19f and < 22f => "Night",
+                _ => "Late Night"
+            };
+        }
+        
+        #endregion
+        
         #region Public Utility Methods
         
         /// <summary>
@@ -514,15 +581,11 @@ namespace Managers
         }
         
         /// <summary>
-        /// Get formatted time string with progress
+        /// Get formatted time string with progress (legacy method for compatibility)
         /// </summary>
         public string GetFormattedTimeString()
         {
-            float remainingTime = (1f - currentTimeProgress) * GetCurrentPeriodDuration();
-            int minutes = Mathf.FloorToInt(remainingTime / 60f);
-            int seconds = Mathf.FloorToInt(remainingTime % 60f);
-            
-            return $"{GetTimeOfDayString()} - {minutes:00}:{seconds:00}";
+            return GetFormattedTime12Hour();
         }
         
         #endregion
