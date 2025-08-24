@@ -20,22 +20,16 @@ public class CookingTask : QueuedWorkTask
 
     public void SetRecipe(CookingRecipeScriptableObj recipe)
     {
-        Debug.Log($"[CookingTask] SetRecipe called - Recipe: {(recipe != null ? recipe.name : "null")}, Current workers: {currentWorkers.Count}");
         SetupTask(recipe);
-        Debug.Log($"[CookingTask] After SetupTask - HasQueuedTasks: {HasQueuedTasks}, HasCurrentWork: {HasCurrentWork}, IsOccupied: {IsOccupied}");
     }
 
     protected override void SetupNextTask()
     {
-        Debug.Log($"[CookingTask] SetupNextTask called - currentTaskData: {(currentTaskData != null ? currentTaskData.GetType().Name : "null")}");
-        
         if (currentTaskData is CookingRecipeScriptableObj nextRecipe)
         {
             currentRecipe = nextRecipe;
             baseWorkTime = nextRecipe.craftTime;
             requiredResources = nextRecipe.requiredResources;
-            
-            Debug.Log($"[CookingTask] Recipe setup complete - Recipe: {nextRecipe.name}, WorkTime: {baseWorkTime}, Resources: {(requiredResources != null ? requiredResources.Length : 0)}");
         }
         else
         {

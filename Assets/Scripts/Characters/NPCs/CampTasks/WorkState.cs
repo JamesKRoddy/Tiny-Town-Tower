@@ -51,12 +51,6 @@ public class WorkState : _TaskState
         Vector3 taskPosition = assignedTask.GetNavMeshDestination().position;
         var precisePosition = assignedTask.GetPrecisePosition();
         
-        Debug.Log($"[WorkState] Setting up NavMesh path for {npc.name}:");
-        Debug.Log($"  - Current position: {transform.position}");
-        Debug.Log($"  - NavMesh destination: {taskPosition}");
-        Debug.Log($"  - Precise position: {(precisePosition != null ? precisePosition.position.ToString() : "null")}");
-        Debug.Log($"  - workLocationTransform assigned: {(precisePosition != null ? "YES" : "NO")}");
-        
         // Use base class helper for stopping distance
         agent.stoppingDistance = GetEffectiveStoppingDistance(assignedTask.GetNavMeshDestination(), 0.5f);
         agent.SetDestination(taskPosition);
@@ -76,24 +70,22 @@ public class WorkState : _TaskState
         {
             Debug.LogWarning($"[WorkState] NavMesh path is partial for {npc.name} to {taskPosition}");
         }
-        
-        Debug.Log($"[WorkState] NavMesh setup complete for {npc.name}. Agent destination: {agent.destination}, isStopped: {agent.isStopped}, pathStatus: {agent.pathStatus}");
     }
 
     public void UpdateTaskDestination()
     {
         if (assignedTask != null)
         {
-            Debug.Log($"[WorkState] Updating task destination for {npc.name} to {assignedTask.GetType().Name} at {assignedTask.GetNavMeshDestination().position}");
+            // Stop work animation when changing to a new task destination
+            if (npc is SettlerNPC settler)
+            {
+                settler.StopWorkAnimation();
+            }
             
             hasReachedTask = false;
             isTaskBeingPerformed = false;
             timeAtTaskLocation = 0f;
             SetupNavMeshPath();
-        }
-        else
-        {
-            Debug.LogWarning($"[WorkState] UpdateTaskDestination called but assignedTask is null for {npc.name}");
         }
     }
 
@@ -122,15 +114,7 @@ public class WorkState : _TaskState
         // Use base class helper for destination reached checking
         bool hasReachedDestination = HasReachedDestination(taskDestination, 0.5f);
 
-        // Debug logging for movement issues
-        if (Time.frameCount % 60 == 0) // Log every 60 frames to avoid spam
-        {            
-            // Check if agent is stuck
-            if (agent.velocity.magnitude < 0.1f && !agent.isStopped && !hasReachedDestination)
-            {
-                Debug.LogWarning($"[WorkState] {npc.name} appears to be stuck! Distance: {Vector3.Distance(transform.position, taskDestination.position):F2}");
-            }
-        }
+
 
         if (hasReachedDestination)
         {
@@ -148,8 +132,6 @@ public class WorkState : _TaskState
     {
         if (!hasReachedTask)
         {
-            Debug.Log($"[WorkState] {npc.name} reached task destination - Task: {assignedTask.GetType().Name}");
-            
             hasReachedTask = true;
             agent.isStopped = true;
             agent.velocity = Vector3.zero;
@@ -164,13 +146,10 @@ public class WorkState : _TaskState
                 needsPrecisePositioning = true;
                 agent.updatePosition = false;
                 agent.updateRotation = false;
-                
-                Debug.Log($"[WorkState] {npc.name} will move to precise work position - Current pos: {transform.position}, Target pos: {precisePosition.position}");
             }
             else
             {
                 needsPrecisePositioning = false;
-                Debug.Log($"[WorkState] {npc.name} no precise positioning needed - precisePosition is null");
             }
         }
 
@@ -201,11 +180,7 @@ public class WorkState : _TaskState
             // Check if we've reached the precise position
             float newDistance = Vector3.Distance(transform.position, precisePosition.position);
             
-            // Debug every few frames to avoid spam
-            if (Time.frameCount % 30 == 0)
-            {
-                Debug.Log($"[WorkState] {npc.name} precise positioning update - From: {oldPosition}, To: {transform.position}, Target: {precisePosition.position}, Distance remaining: {newDistance:F3}");
-            }
+
             
             // Use a more generous threshold (0.05f) or if we're very close, snap to position
             if (newDistance <= 0.05f || newDistance >= distanceToTarget) // If we're very close or not getting closer
@@ -213,7 +188,6 @@ public class WorkState : _TaskState
                 needsPrecisePositioning = false;
                 transform.position = precisePosition.position;
                 transform.rotation = precisePosition.rotation;
-                Debug.Log($"[WorkState] {npc.name} reached precise position - Final pos: {transform.position}");
             }
         }
     }
@@ -223,14 +197,10 @@ public class WorkState : _TaskState
         timeAtTaskLocation += Time.deltaTime;
         if (timeAtTaskLocation >= movementSettings.taskStartDelay && !isTaskBeingPerformed && !needsPrecisePositioning)
         {
-            Debug.Log($"[WorkState] Starting task for {npc.name} - Task: {assignedTask.GetType().Name}, Animation: {assignedTask.GetAnimationClipName()}");
-            
             // Start work animation and begin working
             npc.PlayWorkAnimation(assignedTask.GetAnimationClipName());
             assignedTask.PerformTask(npc); // Ensure worker is in task's worker list
             isTaskBeingPerformed = true;
-            
-            Debug.Log($"[WorkState] Task started for {npc.name} - isTaskBeingPerformed: {isTaskBeingPerformed}");
         }
         
         // If we're performing the task, do the work each frame
@@ -239,7 +209,6 @@ public class WorkState : _TaskState
             bool canContinue = assignedTask.DoWork(npc, Time.deltaTime);
             if (!canContinue)
             {
-                Debug.Log($"[WorkState] DoWork returned false for {npc.name} - stopping task performance");
                 // Work is complete or stopped, let StopWork handle the transition
                 isTaskBeingPerformed = false;
             }
@@ -277,13 +246,10 @@ public class WorkState : _TaskState
 
     public void AssignTask(WorkTask task)
     {
-        Debug.Log($"[WorkState] AssignTask called for {npc.name} - Previous task: {(assignedTask != null ? assignedTask.GetType().Name : "null")}, New task: {(task != null ? task.GetType().Name : "null")}");
-        
         // Unsubscribe from the previous task's StopWork event if there was one
         if (assignedTask != null)
         {
             assignedTask.StopWork -= StopWork;
-            Debug.Log($"[WorkState] Unsubscribed from StopWork event for previous task: {assignedTask.GetType().Name}");
         }
         
         assignedTask = task;
@@ -292,7 +258,6 @@ public class WorkState : _TaskState
         if (assignedTask != null)
         {
             assignedTask.StopWork += StopWork;
-            Debug.Log($"[WorkState] Subscribed to StopWork event for new task: {assignedTask.GetType().Name}");
         }
     }
 
@@ -316,12 +281,11 @@ public class WorkState : _TaskState
             
             if (hasQueuedTasks || isOccupied || hasCurrentWork)
             {
-                Debug.Log($"[WorkState] Not stopping work for {npc.name} - HasQueuedTasks: {hasQueuedTasks}, IsOccupied: {isOccupied}, HasCurrentWork: {hasCurrentWork}");
                 return;
             }
         }
 
-        Debug.Log($"[WorkState] Stopping work for {npc.name} - task completed");
+
 
         // Stop the work animation since the current task is complete
         if (npc is SettlerNPC settler)

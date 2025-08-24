@@ -31,15 +31,6 @@ public class CampDebugMenu : BaseDebugMenu
         }
     }
     
-    private void Start()
-    {
-        // The DebugMenuManager automatically finds and registers all BaseDebugMenu components
-        // No need to manually register
-        
-        // Hide by default
-        gameObject.SetActive(false);
-    }
-    
     private void Update()
     {
         // Only update if menu is active and enough time has passed

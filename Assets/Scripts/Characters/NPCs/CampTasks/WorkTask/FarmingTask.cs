@@ -54,7 +54,6 @@ public class FarmingTask : WorkTask
         if (farmBuilding.IsDead)
         {
             currentAction = FarmingAction.Clearing;
-            Debug.Log($"<color=cyan>[FarmingTask] Starting Clearing action</color>");
             baseWorkTime = clearingTime;
             return;
         }
@@ -62,7 +61,6 @@ public class FarmingTask : WorkTask
         if (farmBuilding.IsReadyForHarvest)
         {
             currentAction = FarmingAction.Harvesting;
-            Debug.Log($"<color=cyan>[FarmingTask] Starting Harvesting action</color>");
             baseWorkTime = harvestingTime;
             return;
         }
@@ -73,7 +71,6 @@ public class FarmingTask : WorkTask
             if (HasRequiredResources())
             {
                 currentAction = FarmingAction.Planting;
-                Debug.Log($"<color=cyan>[FarmingTask] Starting Planting action</color>");
                 baseWorkTime = plantingTime;
             }
             else
@@ -91,7 +88,6 @@ public class FarmingTask : WorkTask
             if (farmBuilding.NeedsTending)
             {
                 currentAction = FarmingAction.Tending;
-                Debug.Log($"<color=cyan>[FarmingTask] Starting Tending action</color>");
                 baseWorkTime = tendingTime;
                 return;
             }
@@ -100,7 +96,6 @@ public class FarmingTask : WorkTask
             if (Time.time - lastTendingTime >= tendingInterval)
             {
                 currentAction = FarmingAction.Tending;
-                Debug.Log($"<color=cyan>[FarmingTask] Starting Tending action</color>");
                 baseWorkTime = tendingTime;
                 lastTendingTime = Time.time;
                 return;
@@ -135,13 +130,11 @@ public class FarmingTask : WorkTask
                 // If farm is occupied with a growing crop, keep NPC assigned for future tending
                 if (farmBuilding.IsOccupied && !farmBuilding.IsDead)
                 {
-                    Debug.Log($"<color=yellow>[FarmingTask] No immediate action needed, but keeping {worker.name} assigned to monitor growing crop</color>");
                     lastMonitoringCheck = Time.time;
                     return true; // Keep NPC assigned but not actively working
                 }
                 else
                 {
-                    Debug.Log($"<color=yellow>[FarmingTask] No work needed and no crop to monitor, releasing {worker.name}</color>");
                     return false; // Farm doesn't need attention right now
                 }
             }
@@ -196,8 +189,6 @@ public class FarmingTask : WorkTask
         float electricityPerWorker = electricityRate / Mathf.Max(1, currentWorkers.Count);
         float electricityNeeded = electricityPerWorker * workDelta;
         
-        Debug.Log($"[FarmingTask] Electricity check for {worker.name} - Action: {currentAction}, BaseWorkTime: {baseWorkTime}, ElectricityNeeded: {electricityNeeded}, WorkDelta: {workDelta}");
-        
         if (electricityNeeded > 0)
         {
             if (!CampManager.Instance.ElectricityManager.ConsumeElectricity(electricityNeeded, 1f))
@@ -224,21 +215,18 @@ public class FarmingTask : WorkTask
             // We're in monitoring mode - periodically check for new actions
             if (Time.time - lastMonitoringCheck >= MONITORING_CHECK_INTERVAL)
             {
-                Debug.Log($"<color=cyan>[FarmingTask] Monitoring check for {worker.name} - checking farm status</color>");
                 lastMonitoringCheck = Time.time;
                 
                 // Check if farm needs attention now
                 DetermineNextAction();
                 if (currentAction != FarmingAction.None)
                 {
-                    Debug.Log($"<color=green>[FarmingTask] New action needed during monitoring: {currentAction}</color>");
                     StartActionAnimation(worker);
                     workProgress = 0f; // Reset progress for new action
                 }
             }
         }
         
-        Debug.Log($"[FarmingTask] DoWork completed successfully for {worker.name} - Action: {currentAction}, Progress: {workProgress}/{baseWorkTime}");
         return true; // Continue working/monitoring
     }
 

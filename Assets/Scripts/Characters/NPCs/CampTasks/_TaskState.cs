@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 using Managers;
+using System.Collections;
 
 public abstract class _TaskState : MonoBehaviour
 {
@@ -162,13 +163,38 @@ public abstract class _TaskState : MonoBehaviour
             
             if (!taskAssigned)
             {
-                Debug.Log($"[TaskState] No task assigned, changing {npc.name} to WANDER");
-                npc.ChangeTask(TaskType.WANDER);
+                // Try again with a small delay in case new tasks are being added
+                StartCoroutine(RetryWorkAssignment());
             }
         }
         else
         {
             Debug.Log($"[TaskState] WorkManager not available, changing {npc.name} to WANDER");
+            npc.ChangeTask(TaskType.WANDER);
+        }
+    }
+    
+    /// <summary>
+    /// Retry work assignment after a short delay
+    /// </summary>
+    private IEnumerator RetryWorkAssignment()
+    {
+        // Wait a short time for new tasks to potentially be added to the queue
+        yield return new WaitForSeconds(0.1f);
+        
+        if (CampManager.Instance?.WorkManager != null)
+        {
+            bool taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(npc);
+            Debug.Log($"[TaskState] Retry AssignNextAvailableTask result for {npc.name}: {taskAssigned}");
+            
+            if (!taskAssigned)
+            {
+                Debug.Log($"[TaskState] No task assigned after retry, changing {npc.name} to WANDER");
+                npc.ChangeTask(TaskType.WANDER);
+            }
+        }
+        else
+        {
             npc.ChangeTask(TaskType.WANDER);
         }
     }

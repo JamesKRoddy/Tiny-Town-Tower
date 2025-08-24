@@ -98,25 +98,15 @@ public abstract class WorkTask : MonoBehaviour
         // If we have a specific work location, use that
         if (workLocationTransform != null)
         {
-            Debug.Log($"[WorkTask] GetNavMeshDestination for {GetType().Name} - Using workLocationTransform: {workLocationTransform.position}");
             return workLocationTransform;
         }
         // Otherwise use the task's position
-        Debug.Log($"[WorkTask] GetNavMeshDestination for {GetType().Name} - Using transform (no workLocationTransform): {transform.position}");
         return transform;
     }
 
     // Method for precise positioning - can return null if no precise position needed
     public virtual Transform GetPrecisePosition()
     {
-        if (workLocationTransform != null)
-        {
-            Debug.Log($"[WorkTask] GetPrecisePosition for {GetType().Name} - Returning workLocationTransform: {workLocationTransform.position}");
-        }
-        else
-        {
-            Debug.Log($"[WorkTask] GetPrecisePosition for {GetType().Name} - workLocationTransform is null, returning null");
-        }
         return workLocationTransform;
     }
 
@@ -200,29 +190,23 @@ public abstract class WorkTask : MonoBehaviour
     // Helper method to trigger the event safely (other classes can call this to invoke StopWork)
     protected void InvokeStopWork()
     {
-        Debug.Log($"[WorkTask] InvokeStopWork called for {GetType().Name} - Current workers: {currentWorkers.Count}");
         StopWork?.Invoke();
     }
 
     // Method to assign an NPC to this task
     public bool AssignNPC(HumanCharacterController npc)
     {
-        Debug.Log($"[WorkTask] AssignNPC called for {GetType().Name} - NPC: {npc.name}, Current workers: {currentWorkers.Count}/{maxWorkers}");
-        
         if (currentWorkers.Contains(npc))
         {
-            Debug.Log($"[WorkTask] NPC {npc.name} already assigned to {GetType().Name}");
             return false; // Already assigned
         }
         
         if (currentWorkers.Count >= maxWorkers)
         {
-            Debug.Log($"[WorkTask] Task {GetType().Name} is full ({currentWorkers.Count}/{maxWorkers})");
             return false; // Task is full
         }
         
         currentWorkers.Add(npc);
-        Debug.Log($"[WorkTask] Successfully assigned {npc.name} to {GetType().Name} - Workers now: {currentWorkers.Count}/{maxWorkers}");
         
         if (taskStructure != null)
         {
@@ -440,15 +424,12 @@ public abstract class WorkTask : MonoBehaviour
             
             if (!isOperational)
             {
-                Debug.Log($"[WorkTask] {GetType().Name} became non-operational. Stopping all workers and returning them to wander state.");
-                
                 // Stop all current workers
                 if (currentWorkers.Count > 0)
                 {
                     var workersToUnassign = new List<HumanCharacterController>(currentWorkers);
                     foreach (var worker in workersToUnassign)
                     {
-                        Debug.Log($"[WorkTask] Unassigning worker {worker.name} from non-operational task {GetType().Name}");
                         
                         if (worker is SettlerNPC settler)
                         {
@@ -507,7 +488,6 @@ public abstract class WorkTask : MonoBehaviour
     {
         if (baseWorkTime <= 0)
         {
-            Debug.LogWarning($"[WorkTask] GetProgress called with invalid baseWorkTime ({baseWorkTime}) for {GetType().Name}");
             return 0f;
         }
         return workProgress / baseWorkTime;
