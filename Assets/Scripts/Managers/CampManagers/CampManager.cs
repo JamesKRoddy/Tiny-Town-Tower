@@ -714,6 +714,15 @@ namespace Managers
             {
                 if (npc is SettlerNPC settler)
                 {
+                    // Check if it's night time and NPC should sleep
+                    if (GameManager.Instance?.TimeManager != null && 
+                        GameManager.Instance.TimeManager.IsNight && 
+                        GameManager.Instance.TimeManager.ShouldNPCSleep())
+                    {
+                        settler.ChangeTask(TaskType.SLEEP);
+                        continue;
+                    }
+                    
                     // Check for available work before going to wander
                     if (WorkManager != null)
                     {
@@ -721,7 +730,7 @@ namespace Managers
                         if (!taskAssigned)
                         {
                             // No tasks available, go to wander state
-                    settler.ChangeTask(TaskType.WANDER);
+                            settler.ChangeTask(TaskType.WANDER);
                         }
                     }
                     else

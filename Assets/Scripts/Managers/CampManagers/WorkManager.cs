@@ -36,9 +36,21 @@ namespace Managers
         }
 
             // Method to automatically assign the next available task to an NPC
-    public bool AssignNextAvailableTask(HumanCharacterController npc)
+            public bool AssignNextAvailableTask(HumanCharacterController npc)
     {
         if (npc == null) return false;
+
+        // Check if it's night time and NPC should sleep instead of work
+        if (GameManager.Instance?.TimeManager != null && 
+            GameManager.Instance.TimeManager.IsNight && 
+            GameManager.Instance.TimeManager.ShouldNPCSleep())
+        {
+            if (npc is SettlerNPC settler)
+            {
+                settler.ChangeTask(TaskType.SLEEP);
+                return true; // Task "assigned" (sleep)
+            }
+        }
 
         WorkTask nextTask = GetNextTask();
         if (nextTask != null)

@@ -1565,6 +1565,7 @@ GameObject:
   - component: {fileID: 5759801616001992186}
   - component: {fileID: -6588995584392839030}
   - component: {fileID: 4085220502539234452}
+  - component: {fileID: -8929434300327028580}
   m_Layer: 0
   m_Name: Test_Character_Player_NPC
   m_TagString: Untagged
@@ -1689,7 +1690,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b50e09eed254cf439e89561fdf9ab98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  npcNarrativeType: 1
+  characterType: 101
   narrativeAsset:
     dialogueFile: {fileID: 0}
     flags: []
@@ -1771,7 +1772,10 @@ MonoBehaviour:
   autoNavigateObstacles: 1
   health: 100
   maxHealth: 100
-  nPCDataObj: {fileID: 11400000, guid: ff84a74ffbac90849b0eb152033e7ac8, type: 2}
+  damageCooldown: 0.5
+  settlerName: 
+  settlerAge: 0
+  settlerDescription: 
   characteristicSystem:
     equippedCcharacteristics: []
   appearanceSystem:
@@ -1908,6 +1912,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bfb4472fd6e741f41b326f9d70272506, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &-8929434300327028580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2985604360754162274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7f3e89c702523e41b4596e800be3663, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sleepSearchRadius: 20
+  sleepLocationCheckRadius: 2
+  sleepLocationLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  sleepAnimationTrigger: Sleep
 --- !u!1 &3466425493041804734
 GameObject:
   m_ObjectHideFlags: 0

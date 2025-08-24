@@ -71,6 +71,9 @@ public class PlayerUIManager : MonoBehaviour
     public CampUI campUI;
     public CampWaveUI waveUI;
 
+    [Header("Time Display References")]
+    public TimeDisplayUI timeDisplayUI;
+
     private Coroutine openingMenuCoroutine;
     private Coroutine notificationCoroutine; // For managing notification text timing
 
@@ -93,6 +96,7 @@ public class PlayerUIManager : MonoBehaviour
         rogueLikeGameUI.Setup();
         campUI.Setup();
         waveUI.Setup();
+        timeDisplayUI.Setup();
     }
 
     private void Update()

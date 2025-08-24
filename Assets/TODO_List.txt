@@ -19,19 +19,26 @@ Medical
 
 
 Tomorrow work:
-Dirt piles are still just randomly spawning, should be happening with work
-Then just look at how the camp behaves after a longer period of time
 Day/Night cycle and npcs getting tired
+NPC sleep state and beds
+
 
 
 
 
 Bugs and refactoring:
 Add a visual queue for when a settler is starving
+The TimeDisplayUI has a CanvasGroup used to affect ui elements as a group maybe use in other places? Can be used to make elements not interactable use this on the building, cooking etc menus!!
+The game manager should have references to the managers childed to it, they shouldn't be singletons
 
+Add to save load manager:
+Construction, repair and destruction sites
+Time of day
 
 
 ******Stuff for later******
+
+
 
 VFX for player
 

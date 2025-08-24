@@ -28,6 +28,9 @@ namespace Managers
 
         [SerializeField] private ResourceManager _resourceManager;
         public ResourceManager ResourceManager => _resourceManager;
+        
+        [SerializeField] private TimeManager _timeManager;
+        public TimeManager TimeManager => _timeManager;
 
         // Public event to notify when the game mode changes
         public event Action<GameMode> OnGameModeChanged;

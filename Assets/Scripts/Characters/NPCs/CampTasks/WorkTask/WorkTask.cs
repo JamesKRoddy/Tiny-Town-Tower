@@ -254,7 +254,7 @@ public abstract class WorkTask : MonoBehaviour
     }
     
     /// <summary>
-    /// Get the final work speed including all modifiers (hunger, cleanliness, etc.)
+    /// Get the final work speed including all modifiers (hunger, cleanliness, time of day, etc.)
     /// </summary>
     /// <param name="worker">The worker performing the work</param>
     /// <returns>Final work speed multiplier</returns>
@@ -279,8 +279,15 @@ public abstract class WorkTask : MonoBehaviour
             cleanlinessMultiplier = CampManager.Instance.CleanlinessManager.GetProductivityMultiplier();
         }
         
+        // Apply time of day modifier
+        float timeMultiplier = 1f;
+        if (GameManager.Instance?.TimeManager != null)
+        {
+            timeMultiplier = GameManager.Instance.TimeManager.GetWorkEfficiencyMultiplier(this);
+        }
+        
         // Combine all speed modifiers
-        return workSpeed * cleanlinessMultiplier;
+        return workSpeed * cleanlinessMultiplier * timeMultiplier;
     }
 
     /// <summary>

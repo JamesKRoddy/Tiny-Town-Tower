@@ -87,7 +87,8 @@ public enum TaskType
     ATTACK,
     EAT,
     FLEE,
-    SHELTERED // Added for NPCs in bunkers
+    SHELTERED, // Added for NPCs in bunkers
+    SLEEP // Added for night time behavior
 }
 
 [System.Serializable]

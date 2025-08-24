@@ -394,6 +394,17 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         currentStamina = Mathf.Max(0, currentStamina - amount);
     }
 
+    public void RestoreStamina(float amount)
+    {
+        currentStamina = Mathf.Min(maxStamina, currentStamina + amount);
+    }
+
+    public void RestoreStaminaAtRate(float multiplier = 1f)
+    {
+        float staminaRestore = staminaRegenRate * multiplier * Time.deltaTime;
+        RestoreStamina(staminaRestore);
+    }
+
     // Method to change states
     public void ChangeState(_TaskState newState)
     {
