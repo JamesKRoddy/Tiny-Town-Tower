@@ -79,9 +79,7 @@ namespace Managers
             {
                 optionName = "Assign Worker",
                 onSelected = () => {
-                    Debug.Log($"[BuildManager] Setting buildingForAssignment to: {building.name}");
                     CampManager.Instance.WorkManager.buildingForAssignment = building;
-                    Debug.Log("[BuildManager] Opening settlerNPCMenu");
                     
                     // Clear any filters and show all settlers for regular work assignment
                     var settlerMenu = PlayerUIManager.Instance.settlerNPCMenu;
@@ -96,12 +94,9 @@ namespace Managers
                     options.Add(new SelectionPopup.SelectionOption
                     {
                         optionName = "Assign Settler to Bed",
-                        onSelected = () => {
-                            Debug.Log("[BuildManager] Assign Settler to Bed option selected directly");
-                            
+                        onSelected = () => {                            
                             // Set the building for assignment and open settler menu with filter
                             CampManager.Instance.WorkManager.buildingForAssignment = building;
-                            Debug.Log($"[BuildManager] Set buildingForAssignment to: {building.name}");
                             
                             // Set filter to only show settlers without bed assignments
                             var settlerMenu = PlayerUIManager.Instance.settlerNPCMenu;
@@ -111,17 +106,14 @@ namespace Managers
                                 return;
                             }
                             
-                            Debug.Log("[BuildManager] Setting settler filter and opening menu");
                             // Temporarily show all settlers for debugging
                             settlerMenu.SetSettlerFilter(settler => {
                                 bool hasBed = settler.HasAssignedBed();
-                                Debug.Log($"[BuildManager] Filter check for {settler.SettlerName}: HasAssignedBed = {hasBed}");
                                 return !hasBed; // Show settlers without beds
                             });
                             
                             // Set custom click handler for bed assignment
                             settlerMenu.SetCustomClickHandler(selectedCharacter => {
-                                Debug.Log($"[BuildManager] Custom click handler called for bed assignment: {selectedCharacter.name}");
                                 
                                 if (selectedCharacter is SettlerNPC selectedSettler)
                                 {
@@ -129,7 +121,6 @@ namespace Managers
                                     var sleepTask = building.GetComponent<SleepTask>();
                                     if (sleepTask != null)
                                     {
-                                        Debug.Log($"[BuildManager] Assigning {selectedSettler.SettlerName} to bed: {building.name}");
                                         sleepTask.AssignSettlerToBed(selectedSettler);
                                         
                                         // Close the menu
@@ -141,7 +132,6 @@ namespace Managers
                                         // Return to game control type
                                         PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
                                         
-                                        Debug.Log($"[BuildManager] Bed assignment completed!");
                                     }
                                     else
                                     {
@@ -156,7 +146,6 @@ namespace Managers
                             
                             // Open the settler menu directly using the menu's SetScreenActive method
                             settlerMenu.SetScreenActive(true);
-                            Debug.Log("[BuildManager] settlerMenu.SetScreenActive(true) called");
                         },
                         workTask = workTask
                     });
@@ -179,7 +168,6 @@ namespace Managers
         }
 
         public void TurretSelectionOptions(BaseTurret turret){
-            Debug.Log($"TurretSelectionOptions called for turret: {turret.name}");
             var options = new List<SelectionPopup.SelectionOption>();
 
             // Add Turret Stats option (now shows as tooltip)
@@ -196,9 +184,7 @@ namespace Managers
             {
                 optionName = "Assign Worker",
                 onSelected = () => {
-                    Debug.Log($"[BuildManager] Setting buildingForAssignment to turret: {turret.name}");
                     CampManager.Instance.WorkManager.buildingForAssignment = turret;
-                    Debug.Log("[BuildManager] Opening settlerNPCMenu for turret");
                     
                     // Clear any filters and show all settlers for regular work assignment
                     var settlerMenu = PlayerUIManager.Instance.settlerNPCMenu;
@@ -221,15 +207,12 @@ namespace Managers
                 }
             }
 
-            Debug.Log($"Created {options.Count} options for turret selection");
             // Show the selection popup in assignment mode
-            Debug.Log($"Setting up selection popup with {options.Count} options");
             PlayerUIManager.Instance.selectionPopup.Setup(options, null, null, true);
         }
 
         public void ShowConstructionSiteSelectionOptions(StructureConstructionTask constructionTask)
         {
-            Debug.Log($"ShowConstructionSiteSelectionOptions called for construction site: {constructionTask.name}");
             var options = new List<SelectionPopup.SelectionOption>();
 
             // Add Construction Stats option
@@ -247,9 +230,7 @@ namespace Managers
             {
                 optionName = "Assign Worker",
                 onSelected = () => {
-                    Debug.Log($"[BuildManager] Setting buildingForAssignment to construction site: {constructionTask.name}");
                     CampManager.Instance.WorkManager.buildingForAssignment = constructionTask;
-                    Debug.Log("[BuildManager] Opening settlerNPCMenu for construction site");
                     
                     // Clear any filters and show all settlers for regular work assignment
                     var settlerMenu = PlayerUIManager.Instance.settlerNPCMenu;
@@ -258,7 +239,6 @@ namespace Managers
                 },
             });
 
-            Debug.Log($"Created {options.Count} options for construction site selection");
             // Show the selection popup in assignment mode
             PlayerUIManager.Instance.selectionPopup.Setup(options, null, null, true);
         }
@@ -304,11 +284,8 @@ namespace Managers
                 {
                     optionName = "Assign Settler to Bed",
                     onSelected = () => {
-                        Debug.Log("[BuildManager] Assign Settler to Bed option selected directly");
-                        
                         // Set the building for assignment and open settler menu with filter
                         CampManager.Instance.WorkManager.buildingForAssignment = building;
-                        Debug.Log($"[BuildManager] Set buildingForAssignment to: {building.name}");
                         
                         // Set filter to only show settlers without bed assignments
                         var settlerMenu = PlayerUIManager.Instance.settlerNPCMenu;
@@ -318,17 +295,14 @@ namespace Managers
                             return;
                         }
                         
-                        Debug.Log("[BuildManager] Setting settler filter and opening menu");
                         // Temporarily show all settlers for debugging
                         settlerMenu.SetSettlerFilter(settler => {
                             bool hasBed = settler.HasAssignedBed();
-                            Debug.Log($"[BuildManager] Filter check for {settler.SettlerName}: HasAssignedBed = {hasBed}");
                             return !hasBed; // Show settlers without beds
                         });
                         
                         // Open the settler menu directly using the menu's SetScreenActive method
                         settlerMenu.SetScreenActive(true);
-                        Debug.Log("[BuildManager] settlerMenu.SetScreenActive(true) called");
                     },
                     customTooltip = "Select a settler to assign to this bed"
                 });
@@ -353,7 +327,6 @@ namespace Managers
                 onSelected = () => {
                     // Unassign the settler
                     sleepTask.UnassignSettlerFromBed();
-                    Debug.Log($"[BuildManager] Unassigned {assignedSettler.name} from bed");
                     
                     // Close the popup
                     PlayerUIManager.Instance.selectionPopup.OnCloseClicked();
