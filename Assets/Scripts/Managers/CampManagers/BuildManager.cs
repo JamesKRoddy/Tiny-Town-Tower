@@ -137,6 +137,9 @@ namespace Managers
                                         
                                         // Clear the building assignment
                                         CampManager.Instance.WorkManager.buildingForAssignment = null;
+
+                                        // Return to game control type
+                                        PlayerInput.Instance.UpdatePlayerControls(GameManager.Instance.PlayerGameControlType());
                                         
                                         Debug.Log($"[BuildManager] Bed assignment completed!");
                                     }
