@@ -39,9 +39,12 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
 
     public override void SetScreenActive(bool active, float delay = 0.0f, Action onDone = null)
     {
+        Debug.Log($"[PreviewListMenuBase] SetScreenActive called with active: {active}");
         base.SetScreenActive(active, delay, () => {
+            Debug.Log($"[PreviewListMenuBase] Base SetScreenActive callback executed, active: {active}");
             if (active)
             {
+                Debug.Log($"[PreviewListMenuBase] Calling RefreshUIAndSelectFirst");
                 RefreshUIAndSelectFirst();
                 SetupScreenButtons();
             }
@@ -132,10 +135,19 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
 
     protected void SetupScreens()
     {
+        Debug.Log($"[PreviewListMenuBase] SetupScreens called");
         CleanupScreens();
 
-        foreach (var item in GetItems())
+        Debug.Log($"[PreviewListMenuBase] About to call GetItems()");
+        var items = GetItems();
+        Debug.Log($"[PreviewListMenuBase] GetItems() returned, processing items");
+        
+        int itemCount = 0;
+        foreach (var item in items)
         {
+            itemCount++;
+            Debug.Log($"[PreviewListMenuBase] Processing item {itemCount}: {item}");
+            
             TCategory category = GetItemCategory(item);
             if (!screens.ContainsKey(category))
             {
@@ -150,6 +162,8 @@ public abstract class PreviewListMenuBase<TCategory, TItem> : MenuBase
 
             SetupItemButtonEvents(itemButton, item);
         }
+        
+        Debug.Log($"[PreviewListMenuBase] SetupScreens completed, processed {itemCount} items");
     }
 
     protected virtual void SetupItemButtonEvents(GameObject itemButton, TItem item)

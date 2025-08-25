@@ -526,6 +526,41 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     {
         return assignedWorkTask;
     }
+    
+    /// <summary>
+    /// Check if this settler has been assigned to a bed
+    /// </summary>
+    /// <returns>True if the settler has a bed assignment, false otherwise</returns>
+    public bool HasAssignedBed()
+    {
+        Debug.Log($"[SettlerNPC] HasAssignedBed called for {name}");
+        
+        // Check if we have a SleepTask assigned as work
+        if (assignedWorkTask is SleepTask currentSleepTask)
+        {
+            bool result = currentSleepTask.IsBedAssigned && currentSleepTask.AssignedSettler == this;
+            Debug.Log($"[SettlerNPC] {name} has SleepTask as assignedWorkTask: {result}");
+            return result;
+        }
+        
+        Debug.Log($"[SettlerNPC] {name} assignedWorkTask is: {assignedWorkTask?.GetType().Name ?? "null"}");
+        
+        // Also check if any SleepTask in the scene has us assigned
+        var allSleepTasks = FindObjectsByType<SleepTask>(FindObjectsSortMode.None);
+        Debug.Log($"[SettlerNPC] {name} found {allSleepTasks.Length} SleepTasks in scene");
+        
+        foreach (var sceneSleepTask in allSleepTasks)
+        {
+            if (sceneSleepTask.IsBedAssigned && sceneSleepTask.AssignedSettler == this)
+            {
+                Debug.Log($"[SettlerNPC] {name} found assigned to scene SleepTask: {sceneSleepTask.name}");
+                return true;
+            }
+        }
+        
+        Debug.Log($"[SettlerNPC] {name} HasAssignedBed returning false");
+        return false;
+    }
 
     public override void StopWork()
     {

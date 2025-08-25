@@ -477,7 +477,11 @@ namespace Managers
                 
                 // Close any open popups
                 CloseSelectionPopup();
-                PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false);
+                
+                // Clear the settler filter and close the menu
+                var settlerMenu = PlayerUIManager.Instance.settlerNPCMenu;
+                settlerMenu.ClearSettlerFilter();
+                settlerMenu.SetScreenActive(false);
                 
                 // Clear assignments
                 ClearNPCForAssignment();

@@ -6,9 +6,9 @@ using Managers;
 
 public class SettlerPreviewBtn : PreviewButtonBase<HumanCharacterController>
 {
-    protected override void OnButtonClicked()
+    protected override void OnDefaultButtonClicked()
     {
-        Debug.Log($"[SettlerPreviewBtn] OnButtonClicked called for: {data?.name}");
+        Debug.Log($"[SettlerPreviewBtn] OnDefaultButtonClicked called for: {data?.name}");
         
         if (data is RobotCharacterController robot)
         {
