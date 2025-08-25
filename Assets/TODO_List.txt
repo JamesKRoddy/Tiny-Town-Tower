@@ -22,7 +22,10 @@ Tomorrow work:
 Day/Night cycle and npcs getting tired
 NPC sleep state and beds
 
-Moving to beds at night
+Moving to beds at night:
+NPCs are not moving to bed at night CampManager.cs Line 711
+
+
 Using beds
 Waking in the morning
 
@@ -34,6 +37,7 @@ Bugs and refactoring:
 Add a visual queue for when a settler is starving
 The TimeDisplayUI has a CanvasGroup used to affect ui elements as a group maybe use in other places? Can be used to make elements not interactable use this on the building, cooking etc menus!!
 The game manager should have references to the managers childed to it, they shouldn't be singletons
+If you create a second construction site not all npcs move onto the second one after completing the first
 
 Add to save load manager:
 Construction, repair and destruction sites

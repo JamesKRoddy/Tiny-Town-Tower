@@ -44,9 +44,6 @@ public class SleepTask : WorkTask
         {
             workLocationTransform = transform;
         }
-        
-        // Add this task to the work manager
-        AddWorkTask();
     }
     
     /// <summary>
@@ -116,6 +113,26 @@ public class SleepTask : WorkTask
     }
     
     /// <summary>
+    /// Override to prevent unassigned beds from being added to work queue
+    /// </summary>
+    public override bool CanPerformTask()
+    {
+        if (!base.CanPerformTask()) return false;
+        
+        // Unassigned beds should NOT be available as general work tasks
+        // They should only be accessed through the sleep system
+        if (!isBedAssigned)
+        {
+            Debug.Log($"[SleepTask] Bed {name} is unassigned - not available as work task");
+            return false;
+        }
+        
+        // Only assigned beds can be used as work tasks
+        // (When an NPC is assigned to a bed, they can work/sleep in it)
+        return true;
+    }
+
+    /// <summary>
     /// Check if a specific settler can use this bed
     /// </summary>
     /// <param name="settler">The settler to check</param>
@@ -124,11 +141,52 @@ public class SleepTask : WorkTask
     {
         if (settler == null) return false;
         
-        // If bed is unassigned, anyone can use it
-        if (!isBedAssigned) return true;
+        // If bed is assigned to this specific settler, they can use it
+        if (isBedAssigned && assignedSettler == settler) return true;
         
-        // If bed is assigned to this settler, they can use it
-        return assignedSettler == settler;
+        // If bed is assigned to someone else, they can't use it
+        if (isBedAssigned && assignedSettler != settler) return false;
+        
+        // If bed is unassigned, check if another NPC is currently using it
+        if (!isBedAssigned)
+        {
+            // Check if there's already an NPC sleeping at this bed location
+            if (IsAnotherNPCUsing(settler)) return false;
+            
+            return true; // Bed is unassigned and not currently in use
+        }
+        
+        return false;
+    }
+    
+    /// <summary>
+    /// Check if another NPC is currently using this bed
+    /// </summary>
+    /// <param name="excludeSettler">The settler to exclude from the check</param>
+    /// <returns>True if another NPC is currently using this bed</returns>
+    private bool IsAnotherNPCUsing(SettlerNPC excludeSettler)
+    {
+        // Check for any workers currently assigned to this sleep task
+        foreach (var worker in currentWorkers)
+        {
+            if (worker != excludeSettler && worker is SettlerNPC)
+            {
+                return true; // Another NPC is currently using this bed
+            }
+        }
+        
+        // Also check for NPCs in sleep state near this bed location
+        var nearbyColliders = Physics.OverlapSphere(workLocationTransform.position, 2f);
+        foreach (var collider in nearbyColliders)
+        {
+            var npc = collider.GetComponent<SettlerNPC>();
+            if (npc != null && npc != excludeSettler && npc.GetCurrentTaskType() == TaskType.SLEEP)
+            {
+                return true; // Another NPC is sleeping nearby
+            }
+        }
+        
+        return false;
     }
     
     /// <summary>

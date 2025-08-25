@@ -438,14 +438,10 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     }
 
     public override void PlayWorkAnimation(string animationName)
-    {
-        Debug.Log($"[SettlerNPC] PlayWorkAnimation called for {name} - Animation: {animationName}");
-        
+    {        
         // Set layer weight to 1 to ensure work animation plays
         animator.SetLayerWeight(workLayerIndex, 1f);
         animator.Play(animationName, workLayerIndex);
-        
-        Debug.Log($"[SettlerNPC] Work animation started for {name} - Layer weight set to 1");
     }
 
     public void StopWorkAnimation()

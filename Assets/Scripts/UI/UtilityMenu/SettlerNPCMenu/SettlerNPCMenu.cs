@@ -14,7 +14,6 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
     // Set a filter for which settlers to show (e.g., only available settlers for bed assignment)
     public void SetSettlerFilter(Func<SettlerNPC, bool> filter)
     {
-        Debug.Log("[SettlerNPCMenu] SetSettlerFilter called");
         settlerFilter = filter;
     }
     
@@ -27,7 +26,6 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
     // Set a custom click handler for special modes (like bed assignment)
     public void SetCustomClickHandler(Action<HumanCharacterController> handler)
     {
-        Debug.Log("[SettlerNPCMenu] SetCustomClickHandler called");
         customClickHandler = handler;
     }
     
@@ -40,7 +38,6 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
     // Clear filter and custom click handler when menu is disabled
     private void OnDisable()
     {
-        Debug.Log("[SettlerNPCMenu] OnDisable called");
         ClearSettlerFilter();
         ClearCustomClickHandler();
     }
@@ -48,7 +45,6 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
     // Retrieve all NPCs in the scene that inherit from HumanCharacterController
     public override IEnumerable<HumanCharacterController> GetItems()
     {
-        Debug.Log("[SettlerNPCMenu] GetItems called");
         
         // First, get the robot if it exists
         var robot = FindFirstObjectByType<RobotCharacterController>();
@@ -59,19 +55,13 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
 
         // Then get all settler NPCs (filtered if a filter is set)
         var npcs = FindObjectsByType<SettlerNPC>(FindObjectsSortMode.None);
-        Debug.Log($"[SettlerNPCMenu] Found {npcs.Length} settler NPCs, filter is {(settlerFilter == null ? "null" : "set")}");
 
         foreach (var npc in npcs)
         {
             // Apply filter if one is set
             if (settlerFilter == null || settlerFilter(npc))
             {
-                Debug.Log($"[SettlerNPCMenu] Yielding NPC: {npc.SettlerName}");
                 yield return npc;
-            }
-            else
-            {
-                Debug.Log($"[SettlerNPCMenu] Filtered out NPC: {npc.SettlerName}");
             }
         }
     }
@@ -87,7 +77,6 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
         
         if (customClickHandler != null)
         {
-            Debug.Log($"[SettlerNPCMenu] Setting up button with custom click handler for: {item.name}");
             if (item is RobotCharacterController robot)
             {
                 buttonComponent.SetupButton(robot, customClickHandler, null, "Robot");
@@ -99,7 +88,6 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
         }
         else
         {
-            Debug.Log($"[SettlerNPCMenu] Setting up button with default behavior for: {item.name}");
             if (item is RobotCharacterController robot)
             {
                 // Special setup for robot
