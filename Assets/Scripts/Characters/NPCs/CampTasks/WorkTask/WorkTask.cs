@@ -365,10 +365,14 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual method for completing work that can be overridden
     protected virtual void CompleteWork()
     {
+        Debug.Log($"[WorkTask] CompleteWork called for {GetType().Name}");
+        Debug.Log($"[WorkTask] Current workers count: {currentWorkers.Count}");
+        
         // Store the first worker as previous worker before clearing (for backward compatibility)
         if (currentWorkers.Count > 0)
         {
             CampManager.Instance.WorkManager.StorePreviousWorker(this, currentWorkers[0]);
+            Debug.Log($"[WorkTask] Stored previous worker: {currentWorkers[0].name}");
         }
         
         // Reset state
@@ -376,22 +380,29 @@ public abstract class WorkTask : MonoBehaviour
         
         // Stop all workers from working on this task
         var workersToStop = new List<HumanCharacterController>(currentWorkers);
+        Debug.Log($"[WorkTask] About to stop {workersToStop.Count} workers");
+        
         foreach (var worker in workersToStop)
         {
+            Debug.Log($"[WorkTask] Stopping work for {worker.name} (Type: {worker.GetType().Name})");
             worker.StopWork();
+            Debug.Log($"[WorkTask] StopWork() called for {worker.name}");
         }
         
         // Clear all workers
         currentWorkers.Clear();
+        Debug.Log($"[WorkTask] Cleared all workers, count now: {currentWorkers.Count}");
         
         if (taskStructure != null)
         {
             taskStructure.SetCurrentWorkTask(null);
+            Debug.Log($"[WorkTask] Set task structure current work task to null");
         }
         
         // Notify completion
         OnTaskCompleted?.Invoke();
         InvokeStopWork();
+        Debug.Log($"[WorkTask] Work completion notifications sent");
     }
 
     // New method to notify task completion without stopping work
@@ -498,6 +509,15 @@ public abstract class WorkTask : MonoBehaviour
             return 0f;
         }
         return workProgress / baseWorkTime;
+    }
+
+    /// <summary>
+    /// Set the work location transform for this task
+    /// </summary>
+    /// <param name="location">The transform to set as the work location</param>
+    public void SetWorkLocation(Transform location)
+    {
+        workLocationTransform = location;
     }
 
     // Method to remove a specific worker from the task

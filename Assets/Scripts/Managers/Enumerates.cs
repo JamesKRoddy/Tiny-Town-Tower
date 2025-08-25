@@ -105,7 +105,9 @@ public enum TaskAnimation
     WATERING_PLANTS,
     HARVEST_PLANT_STANDING,
     HARVEST_PLANT_KNEELING,
-    CLEARING_PLOT
+    CLEARING_PLOT,
+    //Sleep animation
+    SLEEPING
 }
 
 // =========================

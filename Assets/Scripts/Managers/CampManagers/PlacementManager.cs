@@ -49,6 +49,10 @@ namespace Managers
         private void StartPlacement()
         {
             currentPreview = Instantiate(selectedObject.prefab);
+            
+            // Disable work task components on preview objects to prevent interference
+            DisableWorkTaskComponents(currentPreview);
+            
             SetPreviewMaterial(validPlacementMaterial);
             currentGridPosition = SnapToGrid(transform.position);
             currentPreview.transform.position = currentGridPosition;
@@ -176,6 +180,55 @@ namespace Managers
                     }
                 }
             }
+        }
+        
+        /// <summary>
+        /// Disable all work task components on preview objects to prevent them from interfering with the work system
+        /// </summary>
+        /// <param name="previewObject">The preview object to disable components on</param>
+        private void DisableWorkTaskComponents(GameObject previewObject)
+        {
+            if (previewObject == null) return;
+            
+            // Disable all WorkTask components (including SleepTask, CookingTask, etc.)
+            var workTasks = previewObject.GetComponentsInChildren<WorkTask>();
+            foreach (var workTask in workTasks)
+            {
+                workTask.enabled = false;
+                Debug.Log($"[PlacementManager] Disabled WorkTask component: {workTask.GetType().Name} on preview object");
+            }
+            
+            // Disable building-specific components that might interfere
+            var buildings = previewObject.GetComponentsInChildren<Building>();
+            foreach (var building in buildings)
+            {
+                building.enabled = false;
+                Debug.Log($"[PlacementManager] Disabled Building component: {building.GetType().Name} on preview object");
+            }
+            
+            // Disable turret components if any
+            var turrets = previewObject.GetComponentsInChildren<BaseTurret>();
+            foreach (var turret in turrets)
+            {
+                turret.enabled = false;
+                Debug.Log($"[PlacementManager] Disabled BaseTurret component: {turret.GetType().Name} on preview object");
+            }
+            
+            // Disable colliders to prevent interaction
+            var colliders = previewObject.GetComponentsInChildren<Collider>();
+            foreach (var collider in colliders)
+            {
+                collider.enabled = false;
+            }
+            
+            // Disable NavMesh obstacles
+            var obstacles = previewObject.GetComponentsInChildren<UnityEngine.AI.NavMeshObstacle>();
+            foreach (var obstacle in obstacles)
+            {
+                obstacle.enabled = false;
+            }
+            
+            Debug.Log($"[PlacementManager] Disabled {workTasks.Length} WorkTasks, {buildings.Length} Buildings, {turrets.Length} Turrets, {colliders.Length} Colliders, and {obstacles.Length} NavMesh Obstacles on preview object");
         }
 
         private void HandleControlTypeUpdate(PlayerControlType controlType)

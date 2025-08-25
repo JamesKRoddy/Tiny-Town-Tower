@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
+using System.Linq;
 using Managers;
 
 /// <summary>
@@ -112,7 +113,7 @@ public class SleepState : _TaskState
     #region Sleep Location Management
     
     /// <summary>
-    /// Find the nearest suitable sleep location
+    /// Find the nearest suitable sleep location (assigned bed or available bed)
     /// </summary>
     private Transform FindNearestSleepLocation()
     {
@@ -133,7 +134,7 @@ public class SleepState : _TaskState
             
             float distance = Vector3.Distance(npc.transform.position, location.position);
             
-            // Check if location is within search radius and not occupied
+            // Check if location is within search radius and available
             if (distance <= sleepSearchRadius && distance < nearestDistance && IsLocationAvailable(location))
             {
                 nearestDistance = distance;
@@ -145,7 +146,7 @@ public class SleepState : _TaskState
     }
     
     /// <summary>
-    /// Refresh the cache of available sleep locations
+    /// Refresh the cache of available sleep locations (SleepTasks)
     /// </summary>
     private void RefreshSleepLocationCache()
     {
@@ -154,37 +155,54 @@ public class SleepState : _TaskState
             return; // Cache is still fresh
         }
         
-        // Find sleep locations (beds, houses, or designated sleep areas)
+        // Find SleepTask components (beds)
+        var sleepTasks = FindObjectsByType<SleepTask>(FindObjectsSortMode.None);
         var sleepLocationObjects = new System.Collections.Generic.List<Transform>();
         
-        // Look for buildings that can serve as sleep locations
-        var buildings = FindObjectsByType<Building>(FindObjectsSortMode.None);
-        foreach (var building in buildings)
+        foreach (var sleepTask in sleepTasks)
         {
-            // Houses and barracks can serve as sleep locations
-            if (building.name.ToLower().Contains("house") || 
-                building.name.ToLower().Contains("barracks") || 
-                building.name.ToLower().Contains("shelter"))
+            if (sleepTask != null && sleepTask.IsOperational())
             {
-                sleepLocationObjects.Add(building.transform);
+                Transform bedTransform = sleepTask.WorkTaskTransform();
+                if (bedTransform != null)
+                {
+                    sleepLocationObjects.Add(bedTransform);
+                }
             }
         }
         
-        // Look for specific sleep objects (beds, sleeping bags, etc.)
-        var sleepObjects = GameObject.FindGameObjectsWithTag("SleepLocation");
-        foreach (var obj in sleepObjects)
-        {
-            sleepLocationObjects.Add(obj.transform);
-        }
-        
-        // If no specific sleep locations found, use any building
+        // If no SleepTasks found, fall back to old system for backward compatibility
         if (sleepLocationObjects.Count == 0)
         {
+            // Look for buildings that can serve as sleep locations
+            var buildings = FindObjectsByType<Building>(FindObjectsSortMode.None);
             foreach (var building in buildings)
             {
-                if (building.IsOperational())
+                // Houses and barracks can serve as sleep locations
+                if (building.name.ToLower().Contains("house") || 
+                    building.name.ToLower().Contains("barracks") || 
+                    building.name.ToLower().Contains("shelter"))
                 {
                     sleepLocationObjects.Add(building.transform);
+                }
+            }
+            
+            // Look for specific sleep objects (beds, sleeping bags, etc.)
+            var sleepObjects = GameObject.FindGameObjectsWithTag("SleepLocation");
+            foreach (var obj in sleepObjects)
+            {
+                sleepLocationObjects.Add(obj.transform);
+            }
+            
+            // If still no specific sleep locations found, use any building
+            if (sleepLocationObjects.Count == 0)
+            {
+                foreach (var building in buildings)
+                {
+                    if (building.IsOperational())
+                    {
+                        sleepLocationObjects.Add(building.transform);
+                    }
                 }
             }
         }
@@ -196,11 +214,23 @@ public class SleepState : _TaskState
     }
     
     /// <summary>
-    /// Check if a sleep location is available (not occupied by another NPC)
+    /// Check if a sleep location is available
     /// </summary>
     private bool IsLocationAvailable(Transform location)
     {
-        // Check for other NPCs in sleep state near this location
+        // First check if this is a SleepTask (bed)
+        var sleepTask = location.GetComponent<SleepTask>();
+        if (sleepTask != null)
+        {
+            // Check if this settler can use this bed
+            if (npc is SettlerNPC settler)
+            {
+                return sleepTask.CanSettlerUseBed(settler);
+            }
+            return false;
+        }
+        
+        // Fallback: Check for other NPCs in sleep state near this location
         var nearbyNPCs = Physics.OverlapSphere(location.position, sleepLocationCheckRadius, sleepLocationLayerMask);
         
         foreach (var collider in nearbyNPCs)

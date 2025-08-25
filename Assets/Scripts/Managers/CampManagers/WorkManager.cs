@@ -171,6 +171,15 @@ namespace Managers
                 return;
             }
 
+
+
+            // Special handling for SleepTask (bed assignment)
+            if (workTask is SleepTask sleepTask)
+            {
+                AssignBedToSettler(sleepTask);
+                return;
+            }
+
             // Check if the task can be performed
             if (!workTask.CanPerformTask())
             {
@@ -179,6 +188,7 @@ namespace Managers
                     StructureRepairTask => "Structure is already at full health",
                     StructureUpgradeTask => "Structure cannot be upgraded further",
                     CleaningTask => "Camp is already clean",
+                    StructureConstructionTask => "Construction task cannot be performed",
                     _ => "Task cannot be performed at this time"
                 };
                 PlayerUIManager.Instance.DisplayUIErrorMessage(errorMessage);
@@ -389,6 +399,13 @@ namespace Managers
                         previewListAction();
                     }
                 }),
+                // Handle SleepTask specially - show bed assignment options
+                SleepTask sleepTask => ("Assign Bed", () => {
+                    // For SleepTask, we want to show bed assignment options
+                    // This will be handled by the building selection popup
+                    onTaskSelected(task);
+                    ClearNPCForAssignment(); // Clear assignment after work is started
+                }),
                 _ => (task.GetType().Name.Replace("Task", ""), () => {
                     onTaskSelected(task);
                     ClearNPCForAssignment(); // Clear assignment after work is started
@@ -429,6 +446,47 @@ namespace Managers
         public int GetWorkQueueCount()
         {
             return workQueue.Count;
+        }
+        
+        /// <summary>
+        /// Assign a bed to a settler for sleeping
+        /// </summary>
+        /// <param name="sleepTask">The SleepTask component representing the bed</param>
+        private void AssignBedToSettler(SleepTask sleepTask)
+        {
+            if (npcForAssignment == null)
+            {
+                Debug.LogWarning("[WorkManager] No NPC set for bed assignment");
+                PlayerUIManager.Instance.DisplayUIErrorMessage("No NPC selected for bed assignment");
+                return;
+            }
+            
+            if (npcForAssignment is not SettlerNPC settler)
+            {
+                Debug.LogWarning("[WorkManager] Only settlers can be assigned to beds");
+                PlayerUIManager.Instance.DisplayUIErrorMessage("Only settlers can be assigned to beds");
+                return;
+            }
+            
+            // Assign the settler to the bed
+            bool success = sleepTask.AssignSettlerToBed(settler);
+            if (success)
+            {
+                Debug.Log($"[WorkManager] Successfully assigned {settler.name} to bed {sleepTask.name}");
+                PlayerUIManager.Instance.DisplayUIErrorMessage($"{settler.name} assigned to bed");
+                
+                // Close any open popups
+                CloseSelectionPopup();
+                PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false);
+                
+                // Clear assignments
+                ClearNPCForAssignment();
+            }
+            else
+            {
+                Debug.LogWarning($"[WorkManager] Failed to assign {settler.name} to bed {sleepTask.name}");
+                PlayerUIManager.Instance.DisplayUIErrorMessage("Failed to assign settler to bed");
+            }
         }
     }
 }

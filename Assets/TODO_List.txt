@@ -22,6 +22,11 @@ Tomorrow work:
 Day/Night cycle and npcs getting tired
 NPC sleep state and beds
 
+Assigning beds
+Moving to beds at night
+Using beds
+Waking in the morning
+
 
 
 

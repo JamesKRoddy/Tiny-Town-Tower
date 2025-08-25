@@ -141,7 +141,7 @@ public class Building : PlaceableStructure<BuildingScriptableObj>, IInteractive<
 
     #region Utility Methods
 
-    internal string GetBuildingStatsText()
+    public virtual string GetBuildingStatsText()
     {
         string upgradeTimeText = StructureScriptableObj.upgradeTarget != null 
             ? $"{StructureScriptableObj.upgradeTarget.constructionTime} seconds" 

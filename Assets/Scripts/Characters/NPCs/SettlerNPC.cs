@@ -408,15 +408,19 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     // Method to change states
     public void ChangeState(_TaskState newState)
     {
+        Debug.Log($"[SettlerNPC] ChangeState called for {name} - Changing from {currentState?.GetTaskType()} to {newState?.GetTaskType()}");
         
         StopWorkAnimation();
+        Debug.Log($"[SettlerNPC] StopWorkAnimation called during state change for {name}");
 
         if(currentState == newState){
+            Debug.Log($"[SettlerNPC] Same state for {name}, returning early");
             return;
         }
 
         if (currentState != null)
         {
+            Debug.Log($"[SettlerNPC] Exiting state {currentState.GetTaskType()} for {name}");
             currentState.OnExitState(); // Exit the old state
         }
 
@@ -424,10 +428,12 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
 
         if (newState != null)
         {
+            Debug.Log($"[SettlerNPC] Entering state {newState.GetTaskType()} for {name}");
             currentState.OnEnterState(); // Enter the new state
 
             // Adjust the agent's speed according to the new state's requirements
             agent.speed = currentState.MaxSpeed();
+            Debug.Log($"[SettlerNPC] State change complete for {name} - Now in {newState.GetTaskType()}");
         }
     }
 
@@ -523,35 +529,55 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
 
     public override void StopWork()
     {
+        Debug.Log($"[SettlerNPC] StopWork called for {name}");
+        Debug.Log($"[SettlerNPC] - Current assigned work task: {assignedWorkTask?.GetType().Name ?? "null"}");
+        Debug.Log($"[SettlerNPC] - Current task type: {GetCurrentTaskType()}");
+        
         if (assignedWorkTask != null)
         {
+            Debug.Log($"[SettlerNPC] {name} stopping work on {assignedWorkTask.GetType().Name}");
+            
             // Call the base class StopWork to handle the work coroutine
             base.StopWork();
+            Debug.Log($"[SettlerNPC] Called base.StopWork() for {name}");
             
             // Clear the assigned work and change task
             ClearAssignedWork();
+            Debug.Log($"[SettlerNPC] Cleared assigned work for {name}");
             
             // Clear the WorkState's assigned task
             var workState = taskStates[TaskType.WORK] as WorkState;
             if (workState != null)
             {
                 workState.AssignTask(null);
+                Debug.Log($"[SettlerNPC] Cleared WorkState assigned task for {name}");
             }
             
             // Check for available work before going to wander
             if (CampManager.Instance?.WorkManager != null)
             {
+                Debug.Log($"[SettlerNPC] {name} checking for next available task");
                 bool taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(this);
                 if (!taskAssigned)
                 {
                     // No tasks available, go to wander state
+                    Debug.Log($"[SettlerNPC] No tasks available, {name} changing to WANDER");
                     ChangeTask(TaskType.WANDER);
+                }
+                else
+                {
+                    Debug.Log($"[SettlerNPC] {name} assigned to new task");
                 }
             }
             else
             {
+                Debug.Log($"[SettlerNPC] WorkManager null, {name} changing to WANDER");
                 ChangeTask(TaskType.WANDER);
             }
+        }
+        else
+        {
+            Debug.Log($"[SettlerNPC] {name} StopWork called but no assigned work task");
         }
     }
 

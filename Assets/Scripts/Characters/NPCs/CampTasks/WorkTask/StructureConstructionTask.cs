@@ -52,6 +52,21 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
 
     protected override void CompleteWork()
     {
+        Debug.Log($"[StructureConstructionTask] CompleteWork called for {buildingScriptableObj?.objectName ?? "Unknown"}");
+        Debug.Log($"[StructureConstructionTask] Current workers count: {currentWorkers.Count}");
+        
+        // Log all current workers before completion
+        for (int i = 0; i < currentWorkers.Count; i++)
+        {
+            var worker = currentWorkers[i];
+            Debug.Log($"[StructureConstructionTask] Worker {i}: {worker.name} - Type: {worker.GetType().Name}");
+            if (worker is SettlerNPC settler)
+            {
+                Debug.Log($"[StructureConstructionTask] - Settler current task: {settler.GetCurrentTaskType()}");
+                Debug.Log($"[StructureConstructionTask] - Settler assigned work: {settler.GetAssignedWork()?.GetType().Name ?? "null"}");
+            }
+        }
+        
         // Free grid slots from construction site
         if (CampManager.Instance != null)
         {
@@ -107,16 +122,24 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
             CampManager.Instance.MarkSharedGridSlotsOccupied(transform.position, buildingScriptableObj.size, structureObj);
         }
 
+        Debug.Log($"[StructureConstructionTask] About to destroy construction site and call base.CompleteWork()");
+        Debug.Log($"[StructureConstructionTask] Workers before base.CompleteWork(): {currentWorkers.Count}");
+        
         Destroy(gameObject);
         isConstructionComplete = true;
         
+        Debug.Log($"[StructureConstructionTask] Calling base.CompleteWork() to notify workers");
         base.CompleteWork();
+        
+        Debug.Log($"[StructureConstructionTask] Construction completed successfully for {buildingScriptableObj?.objectName ?? "Unknown"}");
     }
 
     public void RemoveWorker(SettlerNPC npc)
     {
         RemoveWorker(npc as HumanCharacterController);
     }
+
+
 
     public bool CanInteract()
     {
@@ -125,7 +148,7 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
 
     public string GetInteractionText()
     {
-        return $"Build {buildingScriptableObj.objectName}";
+        return $"Build {buildingScriptableObj?.objectName ?? "Unknown"}";
     }
 
     public object Interact()
