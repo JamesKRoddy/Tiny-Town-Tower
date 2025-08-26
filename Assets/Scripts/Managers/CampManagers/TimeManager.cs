@@ -33,9 +33,12 @@ namespace Managers
         [SerializeField] private Vector3 moonOffset = new Vector3(180f, 0f, 0f); // Moon is opposite the sun
         
         [Header("Camp Effects")]
+        [Range(0f, 1f)]
         [SerializeField] private float nightWorkEfficiencyMultiplier = 0.7f;
+        [Range(0f, 1f)]
         [SerializeField] private float nightMovementSpeedMultiplier = 0.8f;
         [SerializeField] private bool enableNightSleepBehavior = true;
+        [Range(0f, 1f)]
         [SerializeField] private float sleepChance = 0.6f; // 60% chance NPCs will sleep at night
         
         #endregion

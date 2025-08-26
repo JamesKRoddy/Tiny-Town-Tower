@@ -81,5 +81,6 @@ Mutations
 Research
 Strength that allows you to push heavier objects to open new areas
 
-
+Buildings:
+An alarm that will alert NPCs of an incoming zombie attack
 

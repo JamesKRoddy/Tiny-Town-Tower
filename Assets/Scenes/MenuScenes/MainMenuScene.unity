@@ -1812,16 +1812,20 @@ PrefabInstance:
       value: GameManager
       objectReference: {fileID: 0}
     - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: sleepChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: startingTimeOfDay
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: dayDurationInSeconds
-      value: 60
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: nightDurationInSeconds
-      value: 36
+      value: 18
       objectReference: {fileID: 0}
     - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: sunLightingGradient.ctime0
@@ -1877,7 +1881,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: transitionDurationInSeconds
-      value: 6
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 3415585928227201123, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_Shadows.m_Type
