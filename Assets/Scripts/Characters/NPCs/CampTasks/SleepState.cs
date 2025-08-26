@@ -25,6 +25,7 @@ public class SleepState : _TaskState
     private Transform sleepLocation;
     private bool isAtSleepLocation = false;
     private bool isSleeping = false;
+    private bool needsPrecisePositioning = false;
     private Coroutine sleepCoroutine;
     
     // Cached sleep locations for performance
@@ -40,6 +41,7 @@ public class SleepState : _TaskState
     {
         base.Awake();
         stoppingDistance = 1f; // Closer stopping distance for sleep locations
+        Debug.Log($"[SleepState] {name} Awake - base stoppingDistance set to: {stoppingDistance}");
     }
     
     #endregion
@@ -56,6 +58,9 @@ public class SleepState : _TaskState
         Debug.Log($"[SleepState] {npc.name} entering sleep state");
         
         ResetAgentState();
+        
+        // Reset precise positioning flag
+        needsPrecisePositioning = false;
         
         // Find a suitable sleep location
         sleepLocation = FindNearestSleepLocation();
@@ -84,30 +89,105 @@ public class SleepState : _TaskState
         // Unsubscribe from time events
         TimeManager.OnDayStarted -= WakeUp;
         
+        // Reset precise positioning flag
+        needsPrecisePositioning = false;
+        
         ResetAgentState();
     }
     
     public override void UpdateState()
     {
-        if (sleepLocation != null && !isAtSleepLocation)
+        if (sleepLocation == null) return;
+
+        // Use base class helper for destination reached checking (exactly like WorkState)
+        bool hasReachedDestination = HasReachedDestination(sleepLocation, 0.5f);
+
+        if (hasReachedDestination)
         {
-            // Check if we've reached the sleep location
-            if (HasReachedDestination(sleepLocation))
+            HandleReachedSleepLocation();
+        }
+        else
+        {
+            HandleMovingToSleepLocation();
+        }
+
+        UpdateAnimations();
+    }
+    
+    #endregion
+    
+    #region Sleep Handling (Like WorkState's Task Handling)
+    
+    private void HandleReachedSleepLocation()
+    {
+        if (!isAtSleepLocation)
+        {
+            isAtSleepLocation = true;
+            agent.isStopped = true;
+            agent.velocity = Vector3.zero;
+
+            // Check if we need precise positioning (exactly like WorkState)
+            var sleepTask = sleepLocation?.GetComponent<SleepTask>();
+            if (sleepTask != null)
             {
-                Debug.Log($"[SleepState] {npc.name} reached sleep location");
-                isAtSleepLocation = true;
-                agent.isStopped = true;
-                StartSleeping();
+                var precisePosition = sleepTask.GetPrecisePosition();
+                if (precisePosition != null)
+                {
+                    // Always move to precise position if workLocationTransform is assigned
+                    // This ensures NPCs are positioned correctly for sleep animations
+                    needsPrecisePositioning = true;
+                    agent.updatePosition = false;
+                    agent.updateRotation = false;
+                }
+                else
+                {
+                    needsPrecisePositioning = false;
+                }
+            }
+            else
+            {
+                needsPrecisePositioning = false;
             }
         }
-        
-        // Update movement animation if moving
-        if (!isSleeping && agent != null)
+
+        if (needsPrecisePositioning)
         {
-            UpdateMovementAnimation();
+            UpdatePositionAndRotation();
+        }
+
+        StartSleepingIfReady();
+    }
+    
+    private void HandleMovingToSleepLocation()
+    {
+        if (isAtSleepLocation)
+        {
+            isAtSleepLocation = false;
+            agent.isStopped = false;
+            agent.updatePosition = true;
+            agent.updateRotation = true;
+            needsPrecisePositioning = false;
         }
     }
     
+    private void StartSleepingIfReady()
+    {
+        if (!isSleeping && !needsPrecisePositioning)
+        {
+            StartSleeping();
+        }
+    }
+    
+    private void UpdateAnimations()
+    {
+        if (!isSleeping && agent != null)
+        {
+            float maxSpeed = MaxSpeed();
+            float currentSpeedNormalized = agent.velocity.magnitude / maxSpeed;
+            animator.SetFloat("Speed", currentSpeedNormalized);
+        }
+    }
+
     #endregion
     
     #region Sleep Location Management
@@ -119,6 +199,8 @@ public class SleepState : _TaskState
     {
         RefreshSleepLocationCache();
         
+        Debug.Log($"[SleepState] {npc.name} FindNearestSleepLocation - Found {cachedSleepLocations?.Length ?? 0} cached locations");
+        
         if (cachedSleepLocations == null || cachedSleepLocations.Length == 0)
         {
             Debug.Log($"[SleepState] No sleep locations found, {npc.name} will sleep in place");
@@ -128,18 +210,88 @@ public class SleepState : _TaskState
         Transform nearestLocation = null;
         float nearestDistance = float.MaxValue;
         
+        // First priority: Find assigned beds for this NPC
+        if (npc is SettlerNPC currentSettler)
+        {
+            Debug.Log($"[SleepState] {npc.name} Checking for assigned beds...");
+            foreach (var location in cachedSleepLocations)
+            {
+                if (location == null) continue;
+                
+                var sleepTask = location.GetComponent<SleepTask>();
+                if (sleepTask != null && sleepTask.IsBedAssigned && sleepTask.AssignedSettler == currentSettler)
+                {
+                    // This is our assigned bed!
+                    Debug.Log($"[SleepState] {npc.name} found their assigned bed at {location.position}");
+                    return location;
+                }
+            }
+            Debug.Log($"[SleepState] {npc.name} No assigned beds found");
+        }
+        
+        // Second priority: Find unassigned beds that can be used
+        Debug.Log($"[SleepState] {npc.name} Checking for available beds...");
         foreach (var location in cachedSleepLocations)
         {
             if (location == null) continue;
             
             float distance = Vector3.Distance(npc.transform.position, location.position);
+            Debug.Log($"[SleepState] {npc.name} Checking location {location.name} at {location.position}, distance: {distance:F2}");
             
             // Check if location is within search radius and available
             if (distance <= sleepSearchRadius && distance < nearestDistance && IsLocationAvailable(location))
             {
-                nearestDistance = distance;
-                nearestLocation = location;
+                Debug.Log($"[SleepState] {npc.name} Location {location.name} is available and within range");
+                
+                // If this is a SleepTask, try to assign it to this NPC
+                var sleepTask = location.GetComponent<SleepTask>();
+                if (sleepTask != null && !sleepTask.IsBedAssigned && npc is SettlerNPC currentSettler2)
+                {
+                    Debug.Log($"[SleepState] {npc.name} Attempting to assign to unassigned bed {location.name}");
+                    if (sleepTask.AssignSettlerToBed(currentSettler2))
+                    {
+                        Debug.Log($"[SleepState] {npc.name} Successfully assigned to bed at {location.position}");
+                        nearestDistance = distance;
+                        nearestLocation = location;
+                        break; // Found a bed, use it immediately
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[SleepState] {npc.name} Failed to assign to bed {location.name}");
+                    }
+                }
+                else if (sleepTask == null || sleepTask.IsBedAssigned)
+                {
+                    Debug.Log($"[SleepState] {npc.name} Location {location.name} is not a SleepTask or already assigned");
+                    // Not a SleepTask or already assigned, check general availability
+                    nearestDistance = distance;
+                    nearestLocation = location;
+                }
             }
+            else
+            {
+                if (distance > sleepSearchRadius)
+                {
+                    Debug.Log($"[SleepState] {npc.name} Location {location.name} is too far: {distance:F2} > {sleepSearchRadius}");
+                }
+                else if (distance >= nearestDistance)
+                {
+                    Debug.Log($"[SleepState] {npc.name} Location {location.name} is not closer than current best: {distance:F2} >= {nearestDistance}");
+                }
+                else
+                {
+                    Debug.Log($"[SleepState] {npc.name} Location {location.name} is not available");
+                }
+            }
+        }
+        
+        if (nearestLocation != null)
+        {
+            Debug.Log($"[SleepState] {npc.name} Selected sleep location: {nearestLocation.name} at {nearestLocation.position}");
+        }
+        else
+        {
+            Debug.Log($"[SleepState] {npc.name} No suitable sleep location found");
         }
         
         return nearestLocation;
@@ -256,9 +408,50 @@ public class SleepState : _TaskState
     {
         if (sleepLocation == null || agent == null) return;
         
-        agent.stoppingDistance = GetEffectiveStoppingDistance(sleepLocation);
-        agent.SetDestination(sleepLocation.position);
-        agent.isStopped = false;
+        Debug.Log($"[SleepState] {npc.name} NavigateToSleepLocation - sleepLocation: {sleepLocation.name}");
+        
+        // Check if this is a SleepTask (bed) and use its positioning system
+        var sleepTask = sleepLocation.GetComponent<SleepTask>();
+        if (sleepTask != null)
+        {
+            Debug.Log($"[SleepState] {npc.name} Found SleepTask component on {sleepLocation.name}");
+            
+            // Use the WorkTask positioning system - navigate to the work location
+            Transform workDestination = sleepTask.GetNavMeshDestination();
+            Transform precisePosition = sleepTask.GetPrecisePosition();
+            
+            Debug.Log($"[SleepState] {npc.name} WorkTask positioning - NavMeshDestination: {workDestination?.name ?? "null"}, PrecisePosition: {precisePosition?.name ?? "null"}");
+            Debug.Log($"[SleepState] {npc.name} WorkTask positioning - NavMeshDestination pos: {workDestination?.position}, PrecisePosition pos: {precisePosition?.position}");
+            
+            // Set destination using WorkState pattern
+            agent.stoppingDistance = GetEffectiveStoppingDistance(workDestination, 0.5f);
+            agent.SetDestination(workDestination.position);
+            agent.speed = MaxSpeed();
+            agent.angularSpeed = npc.rotationSpeed;
+            agent.isStopped = false;
+            agent.updatePosition = true;
+            agent.updateRotation = true;
+            needsPrecisePositioning = false; // Will be set in HandleReachedSleepLocation()
+            
+            Debug.Log($"[SleepState] {npc.name} Set NavMesh destination to: {workDestination.position}, stoppingDistance: {agent.stoppingDistance}");
+            Debug.Log($"[SleepState] {npc.name} GetEffectiveStoppingDistance returned: {GetEffectiveStoppingDistance(workDestination, 0.5f)}");
+        }
+        else
+        {
+            Debug.Log($"[SleepState] {npc.name} No SleepTask component found, using fallback positioning");
+            
+            // Fallback to general positioning for non-SleepTask locations (using WorkState pattern)
+            agent.stoppingDistance = GetEffectiveStoppingDistance(sleepLocation, 0.5f);
+            agent.SetDestination(sleepLocation.position);
+            agent.speed = MaxSpeed();
+            agent.angularSpeed = npc.rotationSpeed;
+            agent.isStopped = false;
+            agent.updatePosition = true;
+            agent.updateRotation = true;
+            needsPrecisePositioning = false;
+            
+            Debug.Log($"[SleepState] {npc.name} Set fallback destination to: {sleepLocation.position}, stoppingDistance: {agent.stoppingDistance}");
+        }
         
         isAtSleepLocation = false;
         isSleeping = false;
@@ -275,18 +468,32 @@ public class SleepState : _TaskState
         
         isSleeping = true;
         
-        // Stop movement
-        if (agent != null)
-        {
-            agent.isStopped = true;
-            agent.velocity = Vector3.zero;
-        }
+        // Note: Movement stopping and precise positioning is handled by HandleReachedSleepLocation() (like WorkState)
         
-        // Play sleep animation
-        if (animator != null && !string.IsNullOrEmpty(sleepAnimationTrigger))
+        // Play sleep animation - prioritize WorkTask animation system
+        if (animator != null)
         {
-            animator.SetTrigger(sleepAnimationTrigger);
-            animator.SetFloat("Speed", 0f);
+            // Check if we have a SleepTask assigned (bed)
+            var sleepTask = sleepLocation?.GetComponent<SleepTask>();
+            if (sleepTask != null && sleepTask.IsBedAssigned)
+            {
+                // Use the WorkTask animation system - this is the preferred method
+                if (npc is SettlerNPC settler)
+                {
+                    Debug.Log($"[SleepState] {npc.name} using WorkTask animation system for sleep");
+                    settler.PlayWorkAnimation(sleepTask.GetAnimationClipName());
+                }
+            }
+            else
+            {
+                // Fallback to trigger-based animation if no bed assignment
+                if (!string.IsNullOrEmpty(sleepAnimationTrigger))
+                {
+                    Debug.Log($"[SleepState] {npc.name} using fallback trigger animation for sleep");
+                    animator.SetTrigger(sleepAnimationTrigger);
+                }
+                animator.SetFloat("Speed", 0f);
+            }
         }
         
         // Start sleep coroutine for periodic checks
@@ -314,10 +521,20 @@ public class SleepState : _TaskState
             sleepCoroutine = null;
         }
         
-        // Reset animation
+        // Stop sleep animation - check if we were using WorkTask or trigger system
         if (animator != null)
         {
-            animator.ResetTrigger(sleepAnimationTrigger);
+            var sleepTask = sleepLocation?.GetComponent<SleepTask>();
+            if (sleepTask != null && sleepTask.IsBedAssigned && npc is SettlerNPC settler)
+            {
+                // Stop WorkTask animation
+                settler.StopWorkAnimation();
+            }
+            else
+            {
+                // Stop trigger-based animation
+                animator.ResetTrigger(sleepAnimationTrigger);
+            }
         }
     }
     
@@ -390,6 +607,48 @@ public class SleepState : _TaskState
     {
         // Move slower when going to sleep
         return npc.moveMaxSpeed * 0.6f;
+    }
+    
+    #endregion
+    
+    #region Precise Positioning (like WorkState)
+    
+    /// <summary>
+    /// Continuously update position and rotation to reach precise positioning (like WorkState)
+    /// </summary>
+    private void UpdatePositionAndRotation()
+    {
+        var sleepTask = sleepLocation?.GetComponent<SleepTask>();
+        if (sleepTask != null)
+        {
+            var precisePosition = sleepTask.GetPrecisePosition();
+            if (needsPrecisePositioning && precisePosition != null)
+            {
+                Vector3 oldPosition = transform.position;
+                float distanceToTarget = Vector3.Distance(transform.position, precisePosition.position);
+                
+                // Use faster lerping for precise positioning (8f for quicker movement)
+                float lerpSpeed = 8f;
+                transform.position = Vector3.Lerp(transform.position, precisePosition.position, 
+                    Time.deltaTime * lerpSpeed);
+                
+                // Use centralized rotation utility
+                NavigationUtils.RotateTowardsWorkPoint(transform, precisePosition, lerpSpeed);
+
+                // Check if we've reached the precise position
+                float newDistance = Vector3.Distance(transform.position, precisePosition.position);
+                
+                // Use a more generous threshold (0.05f) or if we're very close, snap to position
+                if (newDistance <= 0.05f || newDistance >= distanceToTarget) // If we're very close or not getting closer
+                {
+                    needsPrecisePositioning = false;
+                    transform.position = precisePosition.position;
+                    transform.rotation = precisePosition.rotation;
+                    
+                    Debug.Log($"[SleepState] {npc.name} Precise positioning complete - final position: {transform.position}");
+                }
+            }
+        }
     }
     
     #endregion

@@ -36,75 +36,63 @@ namespace Managers
         }
 
             // Method to automatically assign the next available task to an NPC
-            public bool AssignNextAvailableTask(HumanCharacterController npc)
-    {
-        if (npc == null) return false;
-
-        // Check if it's night time and NPC should sleep instead of work
-        if (GameManager.Instance?.TimeManager != null && 
-            GameManager.Instance.TimeManager.IsNight && 
-            GameManager.Instance.TimeManager.ShouldNPCSleep())
+        public bool AssignNextAvailableTask(HumanCharacterController npc)
         {
-            if (npc is SettlerNPC settler)
-            {
-                settler.ChangeTask(TaskType.SLEEP);
-                return true; // Task "assigned" (sleep)
-            }
-        }
+            if (npc == null) return false;
 
-        WorkTask nextTask = GetNextTask();
-        if (nextTask != null)
-        {
-            // Check if the task can be performed
-            if (!nextTask.CanPerformTask())
+            WorkTask nextTask = GetNextTask();
+            if (nextTask != null)
             {
-                // Put the task back in the queue if it can't be performed
-                workQueue.Enqueue(nextTask);
-                return false;
-            }
-
-            // Check if the player has required resources
-            if (!nextTask.HasRequiredResources())
-            {
-                // Put the task back in the queue if resources are missing
-                workQueue.Enqueue(nextTask);
-                return false;
-            }
-
-            // Check if task is already fully occupied
-            if (nextTask.IsFullyOccupied)
-            {
-                // Put the task back in the queue if it's full
-                workQueue.Enqueue(nextTask);
-                return false;
-            }
-
-            // Assign the task to the NPC
-            if (npc is RobotCharacterController robot)
-            {
-                nextTask.AssignNPC(robot);
-                robot.StartWork(nextTask);
-            }
-            else if (npc is SettlerNPC settler)
-            {
-                nextTask.AssignNPC(settler);
-                
-                Debug.Log($"[WorkManager] Assigning task {nextTask.GetType().Name} to {settler.name}. Current task type: {settler.GetCurrentTaskType()}");
-                
-                // If the NPC is already in work state, we need to update the work state directly
-                if (settler.GetCurrentTaskType() == TaskType.WORK)
+                // Check if the task can be performed
+                if (!nextTask.CanPerformTask())
                 {
-                    var workState = settler.GetComponent<WorkState>();
-                    if (workState != null)
-                    {
-                        workState.AssignTask(nextTask);
-                        workState.UpdateTaskDestination(); // Force update the destination
-                        Debug.Log($"[WorkManager] Updated work state for {settler.name} to task {nextTask.GetType().Name}");
-                    }
+                    // Put the task back in the queue if it can't be performed
+                    workQueue.Enqueue(nextTask);
+                    return false;
                 }
-                else
+
+                // Check if the player has required resources
+                if (!nextTask.HasRequiredResources())
                 {
-                    settler.StartWork(nextTask);
+                    // Put the task back in the queue if resources are missing
+                    workQueue.Enqueue(nextTask);
+                    return false;
+                }
+
+                // Check if task is already fully occupied
+                if (nextTask.IsFullyOccupied)
+                {
+                    // Put the task back in the queue if it's full
+                    workQueue.Enqueue(nextTask);
+                    return false;
+                }
+
+                // Assign the task to the NPC
+                if (npc is RobotCharacterController robot)
+                {
+                    nextTask.AssignNPC(robot);
+                    robot.StartWork(nextTask);
+                }
+                else if (npc is SettlerNPC settler)
+                {
+                    nextTask.AssignNPC(settler);
+                    
+                    Debug.Log($"[WorkManager] Assigning task {nextTask.GetType().Name} to {settler.name}. Current task type: {settler.GetCurrentTaskType()}");
+                    
+                    // If the NPC is already in work state, we need to update the work state directly
+                    if (settler.GetCurrentTaskType() == TaskType.WORK)
+                    {
+                        var workState = settler.GetComponent<WorkState>();
+                        if (workState != null)
+                        {
+                            workState.AssignTask(nextTask);
+                            workState.UpdateTaskDestination(); // Force update the destination
+                            Debug.Log($"[WorkManager] Updated work state for {settler.name} to task {nextTask.GetType().Name}");
+                        }
+                    }
+                    else
+                    {
+                        settler.StartWork(nextTask);
                         Debug.Log($"[WorkManager] Started work for {settler.name} on task {nextTask.GetType().Name}");
                     }
                 }

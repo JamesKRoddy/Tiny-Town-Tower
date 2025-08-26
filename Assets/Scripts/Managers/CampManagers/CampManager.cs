@@ -710,19 +710,11 @@ namespace Managers
 
         private void ReturnNPCsToNormal()
         {
+            Debug.Log("Returning NPCs to normal");
             foreach (var npc in campNPCs)
             {
                 if (npc is SettlerNPC settler)
                 {
-                    // Check if it's night time and NPC should sleep
-                    if (GameManager.Instance?.TimeManager != null && 
-                        GameManager.Instance.TimeManager.IsNight && 
-                        GameManager.Instance.TimeManager.ShouldNPCSleep())
-                    {
-                        settler.ChangeTask(TaskType.SLEEP);
-                        continue;
-                    }
-                    
                     // Check for available work before going to wander
                     if (WorkManager != null)
                     {

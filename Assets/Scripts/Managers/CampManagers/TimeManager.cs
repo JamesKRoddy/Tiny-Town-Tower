@@ -41,6 +41,10 @@ namespace Managers
         [Range(0f, 1f)]
         [SerializeField] private float sleepChance = 0.6f; // 60% chance NPCs will sleep at night
         
+        // Public properties for NPC access
+        public bool EnableNightSleepBehavior => enableNightSleepBehavior;
+        public float SleepChance => sleepChance;
+        
         #endregion
         
         #region Events

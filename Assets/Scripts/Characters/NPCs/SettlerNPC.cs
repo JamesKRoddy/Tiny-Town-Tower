@@ -105,6 +105,44 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         {
             InitializeForContext(initializationContext);
         }
+        
+        // Subscribe to time events for automatic sleep behavior
+        if (GameManager.Instance?.TimeManager != null)
+        {
+            TimeManager.OnNightStarted += OnNightStarted;
+        }
+    }
+    
+    /// <summary>
+    /// Handle night started event - transition to sleep if appropriate
+    /// </summary>
+    private void OnNightStarted()
+    {
+        // Only handle sleep if night sleep behavior is enabled and it's night time
+        if (GameManager.Instance?.TimeManager == null || 
+            !GameManager.Instance.TimeManager.EnableNightSleepBehavior ||
+            !GameManager.Instance.TimeManager.IsNight)
+        {
+            return;
+        }
+        
+        // Check if NPC should sleep based on sleep chance
+        if (UnityEngine.Random.value < GameManager.Instance.TimeManager.SleepChance)
+        {
+            // Only transition if not already sleeping and not in critical states
+            var currentTask = GetCurrentTaskType();
+            if (currentTask != TaskType.SLEEP && 
+                currentTask != TaskType.FLEE && 
+                currentTask != TaskType.ATTACK)
+            {
+                Debug.Log($"[SettlerNPC] {name} transitioning to sleep for the night (current task: {currentTask})");
+                ChangeTask(TaskType.SLEEP);
+            }
+        }
+        else
+        {
+            Debug.Log($"[SettlerNPC] {name} will continue working through the night");
+        }
     }
 
     /// <summary>
@@ -306,6 +344,12 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         if (CampManager.Instance != null)
         {
             CampManager.Instance.RemoveNPC(this);
+        }
+        
+        // Unsubscribe from time events
+        if (GameManager.Instance?.TimeManager != null)
+        {
+            TimeManager.OnNightStarted -= OnNightStarted;
         }
         
         // Call base class cleanup
