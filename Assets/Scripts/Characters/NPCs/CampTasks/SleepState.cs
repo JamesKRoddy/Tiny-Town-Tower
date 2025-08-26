@@ -120,39 +120,14 @@ public class SleepState : _TaskState
     
     private void HandleReachedSleepLocation()
     {
-        if (!isAtSleepLocation)
-        {
-            isAtSleepLocation = true;
-            agent.isStopped = true;
-            agent.velocity = Vector3.zero;
-
-            // Check if we need precise positioning (exactly like WorkState)
-            var sleepTask = sleepLocation?.GetComponent<SleepTask>();
-            if (sleepTask != null)
-            {
-                var precisePosition = sleepTask.GetPrecisePosition();
-                if (precisePosition != null)
-                {
-                    // Always move to precise position if workLocationTransform is assigned
-                    // This ensures NPCs are positioned correctly for sleep animations
-                    needsPrecisePositioning = true;
-                    agent.updatePosition = false;
-                    agent.updateRotation = false;
-                }
-                else
-                {
-                    needsPrecisePositioning = false;
-                }
-            }
-            else
-            {
-                needsPrecisePositioning = false;
-            }
-        }
+        var sleepTask = sleepLocation?.GetComponent<SleepTask>();
+        var precisePosition = sleepTask?.GetPrecisePosition();
+        
+        bool justReached = HandleReachedDestination(ref isAtSleepLocation, ref needsPrecisePositioning, precisePosition);
 
         if (needsPrecisePositioning)
         {
-            UpdatePositionAndRotation();
+            UpdatePrecisePositioning(precisePosition, ref needsPrecisePositioning);
         }
 
         StartSleepingIfReady();
@@ -160,14 +135,7 @@ public class SleepState : _TaskState
     
     private void HandleMovingToSleepLocation()
     {
-        if (isAtSleepLocation)
-        {
-            isAtSleepLocation = false;
-            agent.isStopped = false;
-            agent.updatePosition = true;
-            agent.updateRotation = true;
-            needsPrecisePositioning = false;
-        }
+        HandleMovingFromDestination(ref isAtSleepLocation, ref needsPrecisePositioning);
     }
     
     private void StartSleepingIfReady()
@@ -180,11 +148,10 @@ public class SleepState : _TaskState
     
     private void UpdateAnimations()
     {
-        if (!isSleeping && agent != null)
+        if (!isSleeping)
         {
-            float maxSpeed = MaxSpeed();
-            float currentSpeedNormalized = agent.velocity.magnitude / maxSpeed;
-            animator.SetFloat("Speed", currentSpeedNormalized);
+            // Use base class method for consistent animation updates
+            UpdateMovementAnimation();
         }
     }
 
@@ -423,14 +390,8 @@ public class SleepState : _TaskState
             Debug.Log($"[SleepState] {npc.name} WorkTask positioning - NavMeshDestination: {workDestination?.name ?? "null"}, PrecisePosition: {precisePosition?.name ?? "null"}");
             Debug.Log($"[SleepState] {npc.name} WorkTask positioning - NavMeshDestination pos: {workDestination?.position}, PrecisePosition pos: {precisePosition?.position}");
             
-            // Set destination using WorkState pattern
-            agent.stoppingDistance = GetEffectiveStoppingDistance(workDestination, 0.5f);
-            agent.SetDestination(workDestination.position);
-            agent.speed = MaxSpeed();
-            agent.angularSpeed = npc.rotationSpeed;
-            agent.isStopped = false;
-            agent.updatePosition = true;
-            agent.updateRotation = true;
+            // Use base class method for consistent NavMesh setup
+            SetupNavMeshForWorkTask(workDestination, 0.5f);
             needsPrecisePositioning = false; // Will be set in HandleReachedSleepLocation()
             
             Debug.Log($"[SleepState] {npc.name} Set NavMesh destination to: {workDestination.position}, stoppingDistance: {agent.stoppingDistance}");
@@ -440,14 +401,8 @@ public class SleepState : _TaskState
         {
             Debug.Log($"[SleepState] {npc.name} No SleepTask component found, using fallback positioning");
             
-            // Fallback to general positioning for non-SleepTask locations (using WorkState pattern)
-            agent.stoppingDistance = GetEffectiveStoppingDistance(sleepLocation, 0.5f);
-            agent.SetDestination(sleepLocation.position);
-            agent.speed = MaxSpeed();
-            agent.angularSpeed = npc.rotationSpeed;
-            agent.isStopped = false;
-            agent.updatePosition = true;
-            agent.updateRotation = true;
+            // Use base class method for consistent NavMesh setup
+            SetupNavMeshForWorkTask(sleepLocation, 0.5f);
             needsPrecisePositioning = false;
             
             Debug.Log($"[SleepState] {npc.name} Set fallback destination to: {sleepLocation.position}, stoppingDistance: {agent.stoppingDistance}");
@@ -591,17 +546,7 @@ public class SleepState : _TaskState
     
     #region Animation and Movement
     
-    /// <summary>
-    /// Update movement animation while walking to sleep location
-    /// </summary>
-    private void UpdateMovementAnimation()
-    {
-        if (agent == null || animator == null) return;
-        
-        float maxSpeed = MaxSpeed();
-        float currentSpeedNormalized = agent.velocity.magnitude / maxSpeed;
-        animator.SetFloat("Speed", currentSpeedNormalized);
-    }
+
     
     public override float MaxSpeed()
     {
@@ -611,45 +556,5 @@ public class SleepState : _TaskState
     
     #endregion
     
-    #region Precise Positioning (like WorkState)
-    
-    /// <summary>
-    /// Continuously update position and rotation to reach precise positioning (like WorkState)
-    /// </summary>
-    private void UpdatePositionAndRotation()
-    {
-        var sleepTask = sleepLocation?.GetComponent<SleepTask>();
-        if (sleepTask != null)
-        {
-            var precisePosition = sleepTask.GetPrecisePosition();
-            if (needsPrecisePositioning && precisePosition != null)
-            {
-                Vector3 oldPosition = transform.position;
-                float distanceToTarget = Vector3.Distance(transform.position, precisePosition.position);
-                
-                // Use faster lerping for precise positioning (8f for quicker movement)
-                float lerpSpeed = 8f;
-                transform.position = Vector3.Lerp(transform.position, precisePosition.position, 
-                    Time.deltaTime * lerpSpeed);
-                
-                // Use centralized rotation utility
-                NavigationUtils.RotateTowardsWorkPoint(transform, precisePosition, lerpSpeed);
 
-                // Check if we've reached the precise position
-                float newDistance = Vector3.Distance(transform.position, precisePosition.position);
-                
-                // Use a more generous threshold (0.05f) or if we're very close, snap to position
-                if (newDistance <= 0.05f || newDistance >= distanceToTarget) // If we're very close or not getting closer
-                {
-                    needsPrecisePositioning = false;
-                    transform.position = precisePosition.position;
-                    transform.rotation = precisePosition.rotation;
-                    
-                    Debug.Log($"[SleepState] {npc.name} Precise positioning complete - final position: {transform.position}");
-                }
-            }
-        }
-    }
-    
-    #endregion
 }

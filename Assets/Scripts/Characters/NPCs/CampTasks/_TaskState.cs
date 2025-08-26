@@ -173,6 +173,130 @@ public abstract class _TaskState : MonoBehaviour
             npc.ChangeTask(TaskType.WANDER);
         }
     }
+
+    /// <summary>
+    /// Shared method to handle precise positioning using WorkTask system
+    /// Used by both WorkState and SleepState for consistent positioning behavior
+    /// </summary>
+    /// <param name="precisePosition">The precise position transform to move to</param>
+    /// <param name="needsPrecisePositioning">Reference to the precise positioning flag</param>
+    /// <returns>True if precise positioning is complete, false if still in progress</returns>
+    protected bool UpdatePrecisePositioning(Transform precisePosition, ref bool needsPrecisePositioning)
+    {
+        if (!needsPrecisePositioning || precisePosition == null)
+        {
+            return true; // No precise positioning needed or already complete
+        }
+
+        Vector3 oldPosition = transform.position;
+        float distanceToTarget = Vector3.Distance(transform.position, precisePosition.position);
+        
+        // Use faster lerping for precise positioning (8f for quicker movement)
+        float lerpSpeed = 8f;
+        transform.position = Vector3.Lerp(transform.position, precisePosition.position, 
+            Time.deltaTime * lerpSpeed);
+        
+        // Use centralized rotation utility
+        NavigationUtils.RotateTowardsWorkPoint(transform, precisePosition, lerpSpeed);
+
+        // Check if we've reached the precise position
+        float newDistance = Vector3.Distance(transform.position, precisePosition.position);
+        
+        // Use a more generous threshold (0.05f) or if we're very close, snap to position
+        if (newDistance <= 0.05f || newDistance >= distanceToTarget) // If we're very close or not getting closer
+        {
+            needsPrecisePositioning = false;
+            transform.position = precisePosition.position;
+            transform.rotation = precisePosition.rotation;
+            
+            Debug.Log($"[{GetType().Name}] {npc.name} Precise positioning complete - final position: {transform.position}");
+            return true; // Positioning complete
+        }
+        
+        return false; // Still positioning
+    }
+
+    /// <summary>
+    /// Shared method to update movement animations
+    /// </summary>
+    protected void UpdateMovementAnimation()
+    {
+        if (agent == null || animator == null) return;
+        
+        float maxSpeed = MaxSpeed();
+        float currentSpeedNormalized = agent.velocity.magnitude / maxSpeed;
+        animator.SetFloat("Speed", currentSpeedNormalized);
+    }
+
+    /// <summary>
+    /// Shared method to setup NavMesh agent for WorkTask navigation
+    /// Used by both WorkState and SleepState for consistent navigation behavior
+    /// </summary>
+    /// <param name="destination">The destination transform</param>
+    /// <param name="obstacleBoundsOffset">Offset for obstacle bounds calculation</param>
+    protected void SetupNavMeshForWorkTask(Transform destination, float obstacleBoundsOffset = 0.5f)
+    {
+        if (agent == null || destination == null) return;
+
+        agent.stoppingDistance = GetEffectiveStoppingDistance(destination, obstacleBoundsOffset);
+        agent.SetDestination(destination.position);
+        agent.speed = MaxSpeed();
+        agent.angularSpeed = npc.rotationSpeed;
+        agent.isStopped = false;
+        agent.updatePosition = true;
+        agent.updateRotation = true;
+    }
+
+    /// <summary>
+    /// Shared method to handle reaching a destination with precise positioning setup
+    /// Returns true if the state has just reached the destination (first time)
+    /// </summary>
+    /// <param name="isAtDestination">Reference to the "at destination" flag</param>
+    /// <param name="needsPrecisePositioning">Reference to the precise positioning flag</param>
+    /// <param name="precisePosition">The precise position transform (can be null)</param>
+    /// <returns>True if just reached destination (first time), false if already there</returns>
+    protected bool HandleReachedDestination(ref bool isAtDestination, ref bool needsPrecisePositioning, Transform precisePosition)
+    {
+        if (!isAtDestination)
+        {
+            isAtDestination = true;
+            agent.isStopped = true;
+            agent.velocity = Vector3.zero;
+
+            // Check if we need precise positioning
+            if (precisePosition != null)
+            {
+                needsPrecisePositioning = true;
+                agent.updatePosition = false;
+                agent.updateRotation = false;
+            }
+            else
+            {
+                needsPrecisePositioning = false;
+            }
+            
+            return true; // Just reached destination
+        }
+        
+        return false; // Already at destination
+    }
+
+    /// <summary>
+    /// Shared method to handle moving away from destination
+    /// </summary>
+    /// <param name="isAtDestination">Reference to the "at destination" flag</param>
+    /// <param name="needsPrecisePositioning">Reference to the precise positioning flag</param>
+    protected void HandleMovingFromDestination(ref bool isAtDestination, ref bool needsPrecisePositioning)
+    {
+        if (isAtDestination)
+        {
+            isAtDestination = false;
+            agent.isStopped = false;
+            agent.updatePosition = true;
+            agent.updateRotation = true;
+            needsPrecisePositioning = false;
+        }
+    }
     
     /// <summary>
     /// Retry work assignment after a short delay

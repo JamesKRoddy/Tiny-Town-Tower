@@ -49,16 +49,9 @@ public class WorkState : _TaskState
     private void SetupNavMeshPath()
     {
         Vector3 taskPosition = assignedTask.GetNavMeshDestination().position;
-        var precisePosition = assignedTask.GetPrecisePosition();
         
-        // Use base class helper for stopping distance
-        agent.stoppingDistance = GetEffectiveStoppingDistance(assignedTask.GetNavMeshDestination(), 0.5f);
-        agent.SetDestination(taskPosition);
-        agent.speed = MaxSpeed();
-        agent.angularSpeed = npc.rotationSpeed;
-        agent.isStopped = false;
-        agent.updatePosition = true;
-        agent.updateRotation = true;
+        // Use base class method for consistent NavMesh setup
+        SetupNavMeshForWorkTask(assignedTask.GetNavMeshDestination(), 0.5f);
         needsPrecisePositioning = false;
         
         // Check if the path is valid
@@ -130,67 +123,23 @@ public class WorkState : _TaskState
 
     private void HandleReachedTask()
     {
-        if (!hasReachedTask)
+        var precisePosition = assignedTask.GetPrecisePosition();
+        bool justReached = HandleReachedDestination(ref hasReachedTask, ref needsPrecisePositioning, precisePosition);
+        
+        if (justReached)
         {
-            hasReachedTask = true;
-            agent.isStopped = true;
-            agent.velocity = Vector3.zero;
             timeAtTaskLocation = 0f;
-
-            // Check if we need precise positioning
-            var precisePosition = assignedTask.GetPrecisePosition();
-            if (precisePosition != null)
-            {
-                // Always move to precise position if workLocationTransform is assigned
-                // This ensures NPCs are positioned correctly for work animations
-                needsPrecisePositioning = true;
-                agent.updatePosition = false;
-                agent.updateRotation = false;
-            }
-            else
-            {
-                needsPrecisePositioning = false;
-            }
         }
 
         if (needsPrecisePositioning)
         {
-            UpdatePositionAndRotation();
+            UpdatePrecisePositioning(precisePosition, ref needsPrecisePositioning);
         }
 
         StartTaskIfReady();
     }
 
-    private void UpdatePositionAndRotation()
-    {
-        var precisePosition = assignedTask.GetPrecisePosition();
-        if (needsPrecisePositioning && precisePosition != null)
-        {
-            Vector3 oldPosition = transform.position;
-            float distanceToTarget = Vector3.Distance(transform.position, precisePosition.position);
-            
-            // Use faster lerping for precise positioning (8f for quicker movement)
-            float lerpSpeed = 8f;
-            transform.position = Vector3.Lerp(transform.position, precisePosition.position, 
-                Time.deltaTime * lerpSpeed);
-            
-            // Use centralized rotation utility
-            NavigationUtils.RotateTowardsWorkPoint(transform, precisePosition, lerpSpeed);
 
-            // Check if we've reached the precise position
-            float newDistance = Vector3.Distance(transform.position, precisePosition.position);
-            
-
-            
-            // Use a more generous threshold (0.05f) or if we're very close, snap to position
-            if (newDistance <= 0.05f || newDistance >= distanceToTarget) // If we're very close or not getting closer
-            {
-                needsPrecisePositioning = false;
-                transform.position = precisePosition.position;
-                transform.rotation = precisePosition.rotation;
-            }
-        }
-    }
 
     private void StartTaskIfReady()
     {
@@ -217,21 +166,13 @@ public class WorkState : _TaskState
 
     private void HandleMovingToTask()
     {
-        if (hasReachedTask)
-        {
-            hasReachedTask = false;
-            agent.isStopped = false;
-            agent.updatePosition = true;
-            agent.updateRotation = true;
-            needsPrecisePositioning = false;
-        }
+        HandleMovingFromDestination(ref hasReachedTask, ref needsPrecisePositioning);
     }
 
     private void UpdateAnimations()
     {
-        float maxSpeed = MaxSpeed();
-        float currentSpeedNormalized = agent.velocity.magnitude / maxSpeed;
-        animator.SetFloat("Speed", currentSpeedNormalized);
+        // Use base class method for consistent animation updates
+        UpdateMovementAnimation();
     }
 
     public override float MaxSpeed()
