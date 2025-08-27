@@ -8,6 +8,9 @@ namespace Managers
     {
         private Queue<WorkTask> workQueue = new Queue<WorkTask>(); // Queue to hold available tasks
         
+        // Centralized list of all SleepTasks (beds) for efficient access
+        private List<SleepTask> availableSleepTasks = new List<SleepTask>();
+        
         // Event to notify NPCs when a task is available
         public delegate void TaskAvailable(WorkTask task);
         public event TaskAvailable OnTaskAvailable;
@@ -434,6 +437,51 @@ namespace Managers
         public int GetWorkQueueCount()
         {
             return workQueue.Count;
+        }
+        
+        /// <summary>
+        /// Register a SleepTask (bed) with the WorkManager
+        /// </summary>
+        /// <param name="sleepTask">The SleepTask to register</param>
+        public void RegisterSleepTask(SleepTask sleepTask)
+        {
+            if (sleepTask != null && !availableSleepTasks.Contains(sleepTask))
+            {
+                availableSleepTasks.Add(sleepTask);
+                Debug.Log($"[WorkManager] Registered sleep task: {sleepTask.name}");
+            }
+        }
+        
+        /// <summary>
+        /// Unregister a SleepTask (bed) from the WorkManager
+        /// </summary>
+        /// <param name="sleepTask">The SleepTask to unregister</param>
+        public void UnregisterSleepTask(SleepTask sleepTask)
+        {
+            if (sleepTask != null && availableSleepTasks.Contains(sleepTask))
+            {
+                availableSleepTasks.Remove(sleepTask);
+                Debug.Log($"[WorkManager] Unregistered sleep task: {sleepTask.name}");
+            }
+        }
+        
+        /// <summary>
+        /// Get all available SleepTasks (beds) for NPCs to use
+        /// </summary>
+        /// <returns>List of available SleepTasks</returns>
+        public List<SleepTask> GetAvailableSleepTasks()
+        {
+            // Return a copy to prevent external modification
+            return new List<SleepTask>(availableSleepTasks);
+        }
+        
+        /// <summary>
+        /// Get the count of available SleepTasks
+        /// </summary>
+        /// <returns>Number of available SleepTasks</returns>
+        public int GetSleepTaskCount()
+        {
+            return availableSleepTasks.Count;
         }
         
         /// <summary>

@@ -12,10 +12,6 @@ public class SleepState : _TaskState
 {
     #region Sleep Configuration
     
-    [Header("Sleep Settings")]
-    [SerializeField] private float sleepSearchRadius = 20f;
-    [SerializeField] private float sleepLocationCheckRadius = 2f;
-    [SerializeField] private LayerMask sleepLocationLayerMask = -1;
     
     #endregion
     
@@ -27,10 +23,7 @@ public class SleepState : _TaskState
     private bool needsPrecisePositioning = false;
     private Coroutine sleepCoroutine;
     
-    // Cached sleep locations for performance
-    private static Transform[] cachedSleepLocations;
-    private static float lastCacheTime = 0f;
-    private const float CACHE_REFRESH_INTERVAL = 30f; // Refresh cache every 30 seconds
+
     
     #endregion
     
@@ -163,11 +156,12 @@ public class SleepState : _TaskState
     /// </summary>
     private Transform FindNearestSleepLocation()
     {
-        RefreshSleepLocationCache();
+        // Get SleepTasks from WorkManager's centralized list
+        var sleepTasks = CampManager.Instance?.WorkManager?.GetAvailableSleepTasks();
         
-        Debug.Log($"[SleepState] {npc.name} FindNearestSleepLocation - Found {cachedSleepLocations?.Length ?? 0} cached locations");
+        Debug.Log($"[SleepState] {npc.name} FindNearestSleepLocation - Found {sleepTasks?.Count ?? 0} sleep tasks");
         
-        if (cachedSleepLocations == null || cachedSleepLocations.Length == 0)
+        if (sleepTasks == null || sleepTasks.Count == 0)
         {
             Debug.Log($"[SleepState] No sleep locations found, {npc.name} will sleep in place");
             return null;
@@ -180,16 +174,15 @@ public class SleepState : _TaskState
         if (npc is SettlerNPC currentSettler)
         {
             Debug.Log($"[SleepState] {npc.name} Checking for assigned beds...");
-            foreach (var location in cachedSleepLocations)
+            foreach (var sleepTask in sleepTasks)
             {
-                if (location == null) continue;
+                if (sleepTask == null) continue;
                 
-                var sleepTask = location.GetComponent<SleepTask>();
-                if (sleepTask != null && sleepTask.IsBedAssigned && sleepTask.AssignedSettler == currentSettler)
+                if (sleepTask.IsBedAssigned && sleepTask.AssignedSettler == currentSettler)
                 {
                     // This is our assigned bed!
-                    Debug.Log($"[SleepState] {npc.name} found their assigned bed at {location.position}");
-                    return location;
+                    Debug.Log($"[SleepState] {npc.name} found their assigned bed at {sleepTask.transform.position}");
+                    return sleepTask.transform;
                 }
             }
             Debug.Log($"[SleepState] {npc.name} No assigned beds found");
@@ -197,56 +190,50 @@ public class SleepState : _TaskState
         
         // Second priority: Find unassigned beds that can be used
         Debug.Log($"[SleepState] {npc.name} Checking for available beds...");
-        foreach (var location in cachedSleepLocations)
+        foreach (var sleepTask in sleepTasks)
         {
-            if (location == null) continue;
+            if (sleepTask == null) continue;
             
-            float distance = Vector3.Distance(npc.transform.position, location.position);
-            Debug.Log($"[SleepState] {npc.name} Checking location {location.name} at {location.position}, distance: {distance:F2}");
+            float distance = Vector3.Distance(npc.transform.position, sleepTask.transform.position);
+            Debug.Log($"[SleepState] {npc.name} Checking location {sleepTask.name} at {sleepTask.transform.position}, distance: {distance:F2}");
             
-            // Check if location is within search radius and available
-            if (distance <= sleepSearchRadius && distance < nearestDistance && IsLocationAvailable(location))
+            // Check if location is available and closer than current best
+            if (distance < nearestDistance && IsLocationAvailable(sleepTask.transform))
             {
-                Debug.Log($"[SleepState] {npc.name} Location {location.name} is available and within range");
+                Debug.Log($"[SleepState] {npc.name} Location {sleepTask.name} is available and within range");
                 
                 // If this is a SleepTask, try to assign it to this NPC
-                var sleepTask = location.GetComponent<SleepTask>();
-                if (sleepTask != null && !sleepTask.IsBedAssigned && npc is SettlerNPC currentSettler2)
+                if (!sleepTask.IsBedAssigned && npc is SettlerNPC currentSettler2)
                 {
-                    Debug.Log($"[SleepState] {npc.name} Attempting to assign to unassigned bed {location.name}");
+                    Debug.Log($"[SleepState] {npc.name} Attempting to assign to unassigned bed {sleepTask.name}");
                     if (sleepTask.AssignSettlerToBed(currentSettler2))
                     {
-                        Debug.Log($"[SleepState] {npc.name} Successfully assigned to bed at {location.position}");
+                        Debug.Log($"[SleepState] {npc.name} Successfully assigned to bed at {sleepTask.transform.position}");
                         nearestDistance = distance;
-                        nearestLocation = location;
+                        nearestLocation = sleepTask.transform;
                         break; // Found a bed, use it immediately
                     }
                     else
                     {
-                        Debug.LogWarning($"[SleepState] {npc.name} Failed to assign to bed {location.name}");
+                        Debug.LogWarning($"[SleepState] {npc.name} Failed to assign to bed {sleepTask.name}");
                     }
                 }
-                else if (sleepTask == null || sleepTask.IsBedAssigned)
+                else if (sleepTask.IsBedAssigned)
                 {
-                    Debug.Log($"[SleepState] {npc.name} Location {location.name} is not a SleepTask or already assigned");
-                    // Not a SleepTask or already assigned, check general availability
-                    nearestDistance = distance;
-                    nearestLocation = location;
+                    Debug.Log($"[SleepState] {npc.name} Location {sleepTask.name} is already assigned to someone else");
+                    // Already assigned to someone else, skip
+                    continue;
                 }
             }
             else
             {
-                if (distance > sleepSearchRadius)
+                if (distance >= nearestDistance)
                 {
-                    Debug.Log($"[SleepState] {npc.name} Location {location.name} is too far: {distance:F2} > {sleepSearchRadius}");
-                }
-                else if (distance >= nearestDistance)
-                {
-                    Debug.Log($"[SleepState] {npc.name} Location {location.name} is not closer than current best: {distance:F2} >= {nearestDistance}");
+                    Debug.Log($"[SleepState] {npc.name} Location {sleepTask.name} is not closer than current best: {distance:F2} >= {nearestDistance}");
                 }
                 else
                 {
-                    Debug.Log($"[SleepState] {npc.name} Location {location.name} is not available");
+                    Debug.Log($"[SleepState] {npc.name} Location {sleepTask.name} is not available");
                 }
             }
         }
@@ -263,69 +250,21 @@ public class SleepState : _TaskState
         return nearestLocation;
     }
     
-    /// <summary>
-    /// Refresh the cache of available sleep locations (SleepTasks)
-    /// </summary>
-    private void RefreshSleepLocationCache()
-    {
-        if (Time.time - lastCacheTime < CACHE_REFRESH_INTERVAL && cachedSleepLocations != null)
-        {
-            return; // Cache is still fresh
-        }
-        
-        // Find SleepTask components (beds)
-        var sleepTasks = FindObjectsByType<SleepTask>(FindObjectsSortMode.None);
-        var sleepLocationObjects = new System.Collections.Generic.List<Transform>();
-        
-        foreach (var sleepTask in sleepTasks)
-        {
-            if (sleepTask != null && sleepTask.IsOperational())
-            {
-                Transform bedTransform = sleepTask.WorkTaskTransform();
-                if (bedTransform != null)
-                {
-                    sleepLocationObjects.Add(bedTransform);
-                }
-            }
-        }      
-        
-        
-        cachedSleepLocations = sleepLocationObjects.ToArray();
-        lastCacheTime = Time.time;
-        
-        Debug.Log($"[SleepState] Refreshed sleep location cache, found {cachedSleepLocations.Length} locations");
-    }
+
     
     /// <summary>
     /// Check if a sleep location is available
     /// </summary>
     private bool IsLocationAvailable(Transform location)
     {
-        // First check if this is a SleepTask (bed)
+        // Since we're now working directly with SleepTask components,
+        // availability is handled by the SleepTask's CanSettlerUseBed method
         var sleepTask = location.GetComponent<SleepTask>();
-        if (sleepTask != null)
+        if (sleepTask != null && npc is SettlerNPC settler)
         {
-            // Check if this settler can use this bed
-            if (npc is SettlerNPC settler)
-            {
-                return sleepTask.CanSettlerUseBed(settler);
-            }
-            return false;
+            return sleepTask.CanSettlerUseBed(settler);
         }
-        
-        // Fallback: Check for other NPCs in sleep state near this location
-        var nearbyNPCs = Physics.OverlapSphere(location.position, sleepLocationCheckRadius, sleepLocationLayerMask);
-        
-        foreach (var collider in nearbyNPCs)
-        {
-            var otherNPC = collider.GetComponent<SettlerNPC>();
-            if (otherNPC != null && otherNPC != npc && otherNPC.GetCurrentTaskType() == TaskType.SLEEP)
-            {
-                return false; // Location is occupied
-            }
-        }
-        
-        return true;
+        return false; // Only SleepTasks are valid sleep locations
     }
     
     #endregion

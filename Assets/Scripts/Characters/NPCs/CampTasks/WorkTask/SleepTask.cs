@@ -44,6 +44,12 @@ public class SleepTask : WorkTask
         {
             workLocationTransform = transform;
         }
+        
+        // Register this SleepTask with the WorkManager
+        if (CampManager.Instance?.WorkManager != null)
+        {
+            CampManager.Instance.WorkManager.RegisterSleepTask(this);
+        }
     }
     
     /// <summary>
@@ -301,6 +307,12 @@ public class SleepTask : WorkTask
         if (assignedSettler != null)
         {
             UnassignSettlerFromBed();
+        }
+        
+        // Unregister this SleepTask from the WorkManager
+        if (CampManager.Instance?.WorkManager != null)
+        {
+            CampManager.Instance.WorkManager.UnregisterSleepTask(this);
         }
         
         base.OnDestroy();
