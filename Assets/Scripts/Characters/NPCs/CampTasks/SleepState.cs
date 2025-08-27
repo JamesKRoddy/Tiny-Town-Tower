@@ -288,43 +288,8 @@ public class SleepState : _TaskState
                     sleepLocationObjects.Add(bedTransform);
                 }
             }
-        }
+        }      
         
-        // If no SleepTasks found, fall back to old system for backward compatibility
-        if (sleepLocationObjects.Count == 0)
-        {
-            // Look for buildings that can serve as sleep locations
-            var buildings = FindObjectsByType<Building>(FindObjectsSortMode.None);
-            foreach (var building in buildings)
-            {
-                // Houses and barracks can serve as sleep locations
-                if (building.name.ToLower().Contains("house") || 
-                    building.name.ToLower().Contains("barracks") || 
-                    building.name.ToLower().Contains("shelter"))
-                {
-                    sleepLocationObjects.Add(building.transform);
-                }
-            }
-            
-            // Look for specific sleep objects (beds, sleeping bags, etc.)
-            var sleepObjects = GameObject.FindGameObjectsWithTag("SleepLocation");
-            foreach (var obj in sleepObjects)
-            {
-                sleepLocationObjects.Add(obj.transform);
-            }
-            
-            // If still no specific sleep locations found, use any building
-            if (sleepLocationObjects.Count == 0)
-            {
-                foreach (var building in buildings)
-                {
-                    if (building.IsOperational())
-                    {
-                        sleepLocationObjects.Add(building.transform);
-                    }
-                }
-            }
-        }
         
         cachedSleepLocations = sleepLocationObjects.ToArray();
         lastCacheTime = Time.time;

@@ -19,14 +19,6 @@ Medical
 
 
 Tomorrow work:
-Day/Night cycle and npcs getting tired
-NPC sleep state and beds
-
-Moving to beds at night:
-NPCs are not moving to bed at night CampManager.cs Line 711
-
-
-Using beds
 Waking in the morning
 
 
@@ -39,6 +31,7 @@ The TimeDisplayUI has a CanvasGroup used to affect ui elements as a group maybe 
 The game manager should have references to the managers childed to it, they shouldn't be singletons
 If you create a second construction site not all npcs move onto the second one after completing the first
 Pressing b after selecting a bed locks the controls
+Refactor the rest of the _TaskState to reduce repetition of code
 
 Add to save load manager:
 Construction, repair and destruction sites

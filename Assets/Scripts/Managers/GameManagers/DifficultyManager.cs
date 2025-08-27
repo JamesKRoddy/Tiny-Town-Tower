@@ -84,18 +84,6 @@ namespace Managers
         }
 
         /// <summary>
-        /// Set the difficulty for entering a specific room (for backward compatibility)
-        /// </summary>
-        /// <param name="roomDifficulty">The room's specific difficulty modifier</param>
-        public void SetRoomDifficulty(int roomDifficulty)
-        {
-            currentRoomDifficulty = roomDifficulty;
-            currentRoomNumber++;
-            
-            Debug.Log($"<color=cyan>DifficultyManager: Room {currentRoomNumber} difficulty set to {roomDifficulty}</color>");
-        }
-
-        /// <summary>
         /// Get the current wave difficulty for enemy spawning
         /// </summary>
         /// <returns>Calculated difficulty for enemy waves</returns>

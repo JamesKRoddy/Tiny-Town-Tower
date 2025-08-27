@@ -27,6 +27,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     private _TaskState currentState;
     private WorkTask assignedWorkTask; // Track the assigned work task
     private bool isOnBreak = false; // Track if NPC is on break
+    private WorkTask workTaskBeforeSleep; // Store work task before going to sleep
 
     [Header("Initialization Control")]
     [SerializeField] private NPCInitializationContext initializationContext = NPCInitializationContext.FRESH_SPAWN; //Set this to the context of the NPC when it is spawned, override to loaded for NPCs in scene already
@@ -106,10 +107,11 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
             InitializeForContext(initializationContext);
         }
         
-        // Subscribe to time events for automatic sleep behavior
+        // Subscribe to time events for automatic sleep/wake behavior
         if (GameManager.Instance?.TimeManager != null)
         {
             TimeManager.OnNightStarted += OnNightStarted;
+            TimeManager.OnDayStarted += OnDayStarted;
         }
     }
     
@@ -135,6 +137,18 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
                 currentTask != TaskType.FLEE && 
                 currentTask != TaskType.ATTACK)
             {
+                // Store current work task before going to sleep
+                if (currentTask == TaskType.WORK && assignedWorkTask != null)
+                {
+                    workTaskBeforeSleep = assignedWorkTask;
+                    Debug.Log($"[SettlerNPC] {name} storing work task {workTaskBeforeSleep.GetType().Name} before sleep");
+                }
+                else
+                {
+                    workTaskBeforeSleep = null;
+                    Debug.Log($"[SettlerNPC] {name} had no work task to store before sleep (current task: {currentTask})");
+                }
+                
                 Debug.Log($"[SettlerNPC] {name} transitioning to sleep for the night (current task: {currentTask})");
                 ChangeTask(TaskType.SLEEP);
             }
@@ -142,6 +156,67 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         else
         {
             Debug.Log($"[SettlerNPC] {name} will continue working through the night");
+        }
+    }
+    
+    /// <summary>
+    /// Handle day started event - wake up if sleeping
+    /// </summary>
+    private void OnDayStarted()
+    {
+        // Only handle wake up if day sleep behavior is enabled and it's day time
+        if (GameManager.Instance?.TimeManager == null || 
+            !GameManager.Instance.TimeManager.EnableNightSleepBehavior ||
+            !GameManager.Instance.TimeManager.IsDay)
+        {
+            return;
+        }
+        
+        // Wake up if currently sleeping
+        var currentTask = GetCurrentTaskType();
+        if (currentTask == TaskType.SLEEP)
+        {
+            Debug.Log($"[SettlerNPC] {name} waking up for the day");
+            
+            // First priority: Return to previous work task if available and valid
+            if (workTaskBeforeSleep != null)
+            {
+                Debug.Log($"[SettlerNPC] {name} attempting to return to previous work task: {workTaskBeforeSleep.GetType().Name}");
+                
+                // Check if the work task is still valid and available
+                if (workTaskBeforeSleep.CanPerformTask() && !workTaskBeforeSleep.IsTaskCompleted)
+                {
+                    Debug.Log($"[SettlerNPC] {name} returning to previous work task: {workTaskBeforeSleep.GetType().Name}");
+                    StartWork(workTaskBeforeSleep);
+                    workTaskBeforeSleep = null; // Clear the stored task
+                    return;
+                }
+                else
+                {
+                    Debug.Log($"[SettlerNPC] {name} cannot return to previous work task (completed or unavailable): {workTaskBeforeSleep.GetType().Name}");
+                    workTaskBeforeSleep = null; // Clear invalid task
+                }
+            }
+            
+            // Second priority: Try to assign new work
+            if (CampManager.Instance?.WorkManager != null)
+            {
+                bool taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(this);
+                if (!taskAssigned)
+                {
+                    Debug.Log($"[SettlerNPC] No work available for {name}, changing to WANDER");
+                    ChangeTask(TaskType.WANDER);
+                }
+                else
+                {
+                    Debug.Log($"[SettlerNPC] {name} assigned to new work task upon waking");
+                }
+            }
+            else
+            {
+                Debug.Log($"[SettlerNPC] WorkManager not available, {name} changing to WANDER");
+                ChangeTask(TaskType.WANDER);
+            }
         }
     }
 
@@ -350,6 +425,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         if (GameManager.Instance?.TimeManager != null)
         {
             TimeManager.OnNightStarted -= OnNightStarted;
+            TimeManager.OnDayStarted -= OnDayStarted;
         }
         
         // Call base class cleanup
@@ -658,6 +734,13 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
 
     public void ClearAssignedWork()
     {
+        // Clear the stored work task before sleep if it matches the assigned task
+        if (workTaskBeforeSleep == assignedWorkTask)
+        {
+            workTaskBeforeSleep = null;
+            Debug.Log($"[SettlerNPC] {name} cleared stored work task before sleep");
+        }
+        
         assignedWorkTask = null;
         isOnBreak = false;
     }
