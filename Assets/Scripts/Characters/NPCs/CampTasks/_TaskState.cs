@@ -156,6 +156,31 @@ public abstract class _TaskState : MonoBehaviour
     {
         Debug.Log($"[TaskState] TryAssignWorkOrWander called for {npc.name} from {GetTaskType()} state");
         
+        // First check if NPC has an assigned work task they should return to
+        if(npc.HasAssignedWorkTask)
+        {
+            var assignedWork = npc.GetAssignedWork();
+            Debug.Log($"[TaskState] {npc.name} has assigned work task: {assignedWork.GetType().Name}");
+            
+            // Validate the assigned task is still available
+            bool canPerform = assignedWork.CanPerformTask();
+            bool isCompleted = assignedWork.IsTaskCompleted;
+            Debug.Log($"[TaskState] {npc.name} assigned task validation - CanPerform: {canPerform}, IsCompleted: {isCompleted}");
+            
+            if (canPerform)
+            {
+                Debug.Log($"[TaskState] {npc.name} returning to assigned work task: {assignedWork.GetType().Name}");
+                npc.StartWork(assignedWork);
+                return;
+            }
+            else
+            {
+                Debug.Log($"[TaskState] {npc.name} assigned work task cannot be performed, clearing it");
+                npc.ClearAssignedWork();
+            }
+        }
+        
+        // If no assigned work or it was invalid, try to find new work
         if (CampManager.Instance?.WorkManager != null)
         {
             bool taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(npc);

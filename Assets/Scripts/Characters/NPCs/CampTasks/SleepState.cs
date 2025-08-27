@@ -16,7 +16,6 @@ public class SleepState : _TaskState
     [SerializeField] private float sleepSearchRadius = 20f;
     [SerializeField] private float sleepLocationCheckRadius = 2f;
     [SerializeField] private LayerMask sleepLocationLayerMask = -1;
-    [SerializeField] private string sleepAnimationTrigger = "Sleep";
     
     #endregion
     
@@ -404,16 +403,6 @@ public class SleepState : _TaskState
                     settler.PlayWorkAnimation(sleepTask.GetAnimationClipName());
                 }
             }
-            else
-            {
-                // Fallback to trigger-based animation if no bed assignment
-                if (!string.IsNullOrEmpty(sleepAnimationTrigger))
-                {
-                    Debug.Log($"[SleepState] {npc.name} using fallback trigger animation for sleep");
-                    animator.SetTrigger(sleepAnimationTrigger);
-                }
-                animator.SetFloat("Speed", 0f);
-            }
         }
         
         // Start sleep coroutine for periodic checks
@@ -449,11 +438,6 @@ public class SleepState : _TaskState
             {
                 // Stop WorkTask animation
                 settler.StopWorkAnimation();
-            }
-            else
-            {
-                // Stop trigger-based animation
-                animator.ResetTrigger(sleepAnimationTrigger);
             }
         }
     }
@@ -502,7 +486,7 @@ public class SleepState : _TaskState
         {
             Debug.Log($"[SleepState] {npc.name} waking up for the day");
             
-            // Try to assign work, otherwise wander
+            // Simple wake-up logic: return to assigned work or find new work
             TryAssignWorkOrWander();
         }
     }

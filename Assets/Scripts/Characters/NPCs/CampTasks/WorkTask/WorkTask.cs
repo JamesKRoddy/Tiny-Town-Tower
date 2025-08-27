@@ -113,8 +113,11 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual method to check if the task can be performed
     public virtual bool CanPerformTask()
     {
+        Debug.Log($"[WorkTask] CanPerformTask check for {GetType().Name} - isOperational: {isOperational}, electricityRequired: {electricityRequired}");
+        
         if (!isOperational)
         {
+            Debug.Log($"[WorkTask] {GetType().Name} cannot be performed - not operational");
             return false;
         }
 
@@ -122,13 +125,18 @@ public abstract class WorkTask : MonoBehaviour
         if (electricityRequired > 0)
         {
             float totalElectricityNeeded = electricityRequired;
-            if (!CampManager.Instance.ElectricityManager.HasEnoughElectricity(totalElectricityNeeded))
+            bool hasElectricity = CampManager.Instance.ElectricityManager.HasEnoughElectricity(totalElectricityNeeded);
+            Debug.Log($"[WorkTask] {GetType().Name} electricity check - needed: {totalElectricityNeeded}, available: {hasElectricity}");
+            
+            if (!hasElectricity)
             {
+                Debug.Log($"[WorkTask] {GetType().Name} cannot be performed - insufficient electricity");
                 SetOperationalStatus(false);
                 return false;
             }
         }
 
+        Debug.Log($"[WorkTask] {GetType().Name} can be performed");
         return true;
     }
 
@@ -438,10 +446,12 @@ public abstract class WorkTask : MonoBehaviour
     {
         if (isOperational != operational)
         {
+            Debug.Log($"[WorkTask] {GetType().Name} operational status changed from {isOperational} to {operational}");
             isOperational = operational;
             
             if (!isOperational)
             {
+                Debug.Log($"[WorkTask] {GetType().Name} becoming non-operational, stopping all workers");
                 // Stop all current workers
                 if (currentWorkers.Count > 0)
                 {
