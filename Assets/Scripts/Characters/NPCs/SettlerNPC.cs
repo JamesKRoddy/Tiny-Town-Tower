@@ -189,8 +189,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     
     /// <summary>
     /// Calculate stamina rates based on TimeManager day/night cycle
-    /// Goal: NPCs should naturally get tired by end of day and recover during night sleep
-    /// Uses the FULL day cycle including transitions for proper stamina drain timing
+    /// Goal: NPCs should reach 0% stamina after 36 hours of continuous wandering
+    /// Sleep should fully restore stamina during night periods
     /// </summary>
     private void CalculateStaminaRates()
     {
@@ -206,12 +206,17 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         // Get day and night durations from TimeManager (now simplified to 2:1 ratio)
         float dayDurationInSeconds = timeManager.DayDurationInSeconds;
         float nightDurationInSeconds = timeManager.NightDurationInSeconds;
+        float totalCycleDuration = dayDurationInSeconds + nightDurationInSeconds;
         
-        // Goal: NPCs should lose about 70% of stamina during the day period
-        float targetStaminaLossPerDay = 70f;
+        // NEW REQUIREMENT: NPCs should reach 0% stamina after 36 game hours of wandering
+        // 1 full day/night cycle = 24 game hours, so 36 game hours = 1.5 cycles
+        float targetGameHoursToExhaustion = 36f;
+        float gameHoursPerCycle = 24f; // Each full day/night cycle represents 24 game hours
+        float cyclesNeededForExhaustion = targetGameHoursToExhaustion / gameHoursPerCycle;
+        float targetSecondsToExhaustion = cyclesNeededForExhaustion * totalCycleDuration;
         
-        // Calculate base drain rate using day duration (clean and simple)
-        staminaDrainRate = targetStaminaLossPerDay / dayDurationInSeconds;
+        // Calculate base drain rate: 100% stamina lost over the calculated time period
+        staminaDrainRate = 100f / targetSecondsToExhaustion;
         
         // Calculate sleep regen multiplier so NPCs can fully recover during night sleep
         float targetStaminaRestorePerNight = 100f;
@@ -224,7 +229,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         // Ensure minimum multiplier
         sleepStaminaRegenMultiplier = Mathf.Max(sleepStaminaRegenMultiplier, 2f);
         
-        Debug.Log($"[SettlerNPC] Calculated rates for {name} - Drain: {staminaDrainRate:F3}/s (day: {dayDurationInSeconds}s), Base Regen: {staminaRegenRate}/s, Fatigue: {fatigueRate}, Sleep Regen Multiplier: {sleepStaminaRegenMultiplier:F2}x (night: {nightDurationInSeconds}s)");
+        Debug.Log($"[SettlerNPC] Calculated rates for {name} - Drain: {staminaDrainRate:F4}/s (36 game hrs = {targetSecondsToExhaustion}s), Sleep Regen Multiplier: {sleepStaminaRegenMultiplier:F2}x (night: {nightDurationInSeconds}s), Cycle: {totalCycleDuration}s");
     }
     
     /// <summary>
