@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
-using System.Diagnostics;
 using Managers;
 
 public class WanderState : _TaskState
@@ -82,14 +81,28 @@ public class WanderState : _TaskState
             }
             
             // 4. If no higher priority tasks, start wandering
+            Debug.Log($"[WanderState] {npc.name} starting to wander");
+            
+            // Reset agent state properly
+            ResetAgentState();
+            
             isWandering = true;
             isWaiting = false;
             agent.speed = MaxSpeed();
             agent.angularSpeed = npc.rotationSpeed / 2f;
+            agent.isStopped = false; // Make sure agent is not stopped
+            agent.updatePosition = true;
+            agent.updateRotation = true;
+            
             // Use base class helper for stopping distance
             agent.stoppingDistance = GetEffectiveStoppingDistance(null, 0.5f);
+            
             if (wanderCoroutine == null)
+            {
                 wanderCoroutine = npc.StartCoroutine(WanderCoroutine());
+                Debug.Log($"[WanderState] {npc.name} started wander coroutine");
+            }
+            
             CampManager.Instance.WorkManager.OnTaskAvailable += WorkAvalible;
             lastPosition = npc.transform.position;
             lastPositionCheckTime = Time.time;
@@ -182,19 +195,32 @@ public class WanderState : _TaskState
         if (NavMesh.SamplePosition(newPosition, out hit, wanderRadius, NavMesh.AllAreas))
         {
             agent.SetDestination(hit.position);
+            Debug.Log($"[WanderState] {npc.name} set new wander destination: {hit.position}");
+        }
+        else
+        {
+            Debug.LogWarning($"[WanderState] {npc.name} couldn't find valid wander position near {newPosition}");
         }
     }
 
     private IEnumerator WanderCoroutine()
     {
+        Debug.Log($"[WanderState] {npc.name} WanderCoroutine started");
+        
         while (isWandering)
         {
             if (!isWaiting)
             {
+                Debug.Log($"[WanderState] {npc.name} WanderCoroutine calling SetNewWanderPoint");
                 SetNewWanderPoint();
             }
-            yield return new WaitForSeconds(Random.Range(wanderIntervalMin, wanderIntervalMax));
+            
+            float waitTime = Random.Range(wanderIntervalMin, wanderIntervalMax);
+            Debug.Log($"[WanderState] {npc.name} WanderCoroutine waiting {waitTime}s");
+            yield return new WaitForSeconds(waitTime);
         }
+        
+        Debug.Log($"[WanderState] {npc.name} WanderCoroutine ended");
     }
 
     private void WorkAvalible(WorkTask newTask)
