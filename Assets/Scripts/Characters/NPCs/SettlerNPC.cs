@@ -210,9 +210,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         
         // NEW REQUIREMENT: NPCs should reach 0% stamina after 36 game hours of wandering
         // 1 full day/night cycle = 24 game hours, so 36 game hours = 1.5 cycles
-        float targetGameHoursToExhaustion = 36f;
-        float gameHoursPerCycle = 24f; // Each full day/night cycle represents 24 game hours
-        float cyclesNeededForExhaustion = targetGameHoursToExhaustion / gameHoursPerCycle;
+        float cyclesNeededForExhaustion = 1.5f;
         float targetSecondsToExhaustion = cyclesNeededForExhaustion * totalCycleDuration;
         
         // Calculate base drain rate: 100% stamina lost over the calculated time period
