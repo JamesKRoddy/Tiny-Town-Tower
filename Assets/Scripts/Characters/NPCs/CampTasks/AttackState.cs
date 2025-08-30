@@ -29,6 +29,17 @@ public class AttackState : _TaskState
         Debug.Log("Attacking...");
         // Attack logic can be added here, like moving towards enemy or dealing damage
     }
+    
+    /// <summary>
+    /// Override stamina update for combat-specific enhanced drain
+    /// Combat is very exhausting and drains stamina 2x faster than normal
+    /// </summary>
+    public override void UpdateStamina()
+    {
+        // Combat drains stamina 2x faster than normal activities (more than work)
+        float combatDrain = npc.GetBaseStaminaDrainRate() * 2.0f * Time.deltaTime;
+        npc.ApplyStaminaChange(-combatDrain, "Combat drain");
+    }
 
     public override float MaxSpeed()
     {

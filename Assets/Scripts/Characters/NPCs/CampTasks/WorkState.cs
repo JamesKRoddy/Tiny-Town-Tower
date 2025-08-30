@@ -120,6 +120,16 @@ public class WorkState : _TaskState
 
         UpdateAnimations();
     }
+    
+    /// <summary>
+    /// Override stamina update for work-specific enhanced drain
+    /// </summary>
+    public override void UpdateStamina()
+    {
+        // Work drains stamina 1.5x faster than normal activities
+        float workDrain = npc.GetBaseStaminaDrainRate() * 1.5f * Time.deltaTime;
+        npc.ApplyStaminaChange(-workDrain, "Work drain");
+    }
 
     private void HandleReachedTask()
     {

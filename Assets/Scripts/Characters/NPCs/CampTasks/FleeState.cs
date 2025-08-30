@@ -75,6 +75,32 @@ public class FleeState : _TaskState
         }
     }
     
+    /// <summary>
+    /// Override stamina update for flee-specific panic drain
+    /// Fear and running drain stamina heavily, especially when actively fleeing
+    /// </summary>
+    public override void UpdateStamina()
+    {
+        if (isFleeing)
+        {
+            // Active fleeing drains stamina heavily (panic + running at full speed)
+            float panicDrain = npc.GetBaseStaminaDrainRate() * 2.5f * Time.deltaTime;
+            npc.ApplyStaminaChange(-panicDrain, "Panic fleeing");
+        }
+        else if (isSeekingBunker)
+        {
+            // Seeking bunker is still stressful but slightly less than fleeing
+            float seekingDrain = npc.GetBaseStaminaDrainRate() * 1.8f * Time.deltaTime;
+            npc.ApplyStaminaChange(-seekingDrain, "Seeking shelter");
+        }
+        else
+        {
+            // Just being in flee state (threat detection) has elevated drain
+            float alertDrain = npc.GetBaseStaminaDrainRate() * 1.2f * Time.deltaTime;
+            npc.ApplyStaminaChange(-alertDrain, "Alert/threatened");
+        }
+    }
+    
     private void CheckForThreats()
     {
         // Check for nearby enemies using FindObjectsByType instead of layer-based detection

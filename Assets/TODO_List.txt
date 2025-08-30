@@ -19,7 +19,7 @@ Medical
 
 
 Tomorrow work:
-cachedSleepLocations in Sleep state is a fucking terrible way of doing that
+Check sick system and debug menu
 
 
 

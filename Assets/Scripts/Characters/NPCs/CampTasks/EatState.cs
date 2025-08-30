@@ -109,6 +109,26 @@ public class EatState : _TaskState
             }
         }
     }
+    
+    /// <summary>
+    /// Override stamina update for eating-specific behavior
+    /// Walking to food has normal drain, eating has reduced drain (but still drains)
+    /// </summary>
+    public override void UpdateStamina()
+    {
+        if (isEating)
+        {
+            // While actively eating, reduced stamina drain (but still drain - no regen while awake)
+            float reducedDrain = npc.GetBaseStaminaDrainRate() * 0.3f * Time.deltaTime;
+            npc.ApplyStaminaChange(-reducedDrain, "Eating (reduced drain)");
+        }
+        else
+        {
+            // While walking to food, normal stamina drain
+            float walkingDrain = npc.GetBaseStaminaDrainRate() * Time.deltaTime;
+            npc.ApplyStaminaChange(-walkingDrain, "Walking to food");
+        }
+    }
 
     private void StartEating()
     {

@@ -118,6 +118,9 @@ public class CampDebugMenu : BaseDebugMenu
             int workingNPCs = 0;
             int hungryNPCs = 0;
             int starvingNPCs = 0;
+            int sickNPCs = 0;
+            int tiredNPCs = 0;
+            int exhaustedNPCs = 0;
             
             foreach (var npc in npcs)
             {
@@ -129,22 +132,72 @@ public class CampDebugMenu : BaseDebugMenu
                     
                 if (npc.IsStarving())
                     starvingNPCs++;
+                
+                if (npc.IsSick)
+                    sickNPCs++;
+                
+                if (npc.IsVeryTired())
+                    exhaustedNPCs++;
+                else if (npc.IsTired())
+                    tiredNPCs++;
             }
             
             stringBuilder.AppendLine($"Working NPCs: {workingNPCs}");
             stringBuilder.AppendLine($"Hungry NPCs: {hungryNPCs}");
             stringBuilder.AppendLine($"Starving NPCs: {starvingNPCs}");
+            stringBuilder.AppendLine($"Sick NPCs: {sickNPCs}");
+            stringBuilder.AppendLine($"Tired NPCs: {tiredNPCs}");
+            stringBuilder.AppendLine($"Exhausted NPCs: {exhaustedNPCs}");
             
-            // Show average hunger percentage
+            // Show averages if we have NPCs
             if (npcs.Count > 0)
             {
                 float totalHunger = 0f;
+                float totalStamina = 0f;
+                
                 foreach (var npc in npcs)
                 {
                     totalHunger += npc.GetHungerPercentage();
+                    totalStamina += npc.GetStaminaPercentage();
                 }
+                
                 float avgHunger = (totalHunger / npcs.Count) * 100f;
+                float avgStamina = totalStamina / npcs.Count;
+                
                 stringBuilder.AppendLine($"Average Hunger: {avgHunger:F1}%");
+                stringBuilder.AppendLine($"Average Stamina: {avgStamina:F1}%");
+            }
+            
+            // Show individual NPC details for first few NPCs
+            stringBuilder.AppendLine();
+            stringBuilder.AppendLine("--- INDIVIDUAL NPCs ---");
+            
+            int maxNPCsToShow = Mathf.Min(5, npcs.Count); // Show max 5 NPCs to avoid clutter
+            for (int i = 0; i < maxNPCsToShow; i++)
+            {
+                var npc = npcs[i];
+                string npcName = npc.GetSettlerName();
+                if (string.IsNullOrEmpty(npcName) || npcName == "Unknown Settler")
+                {
+                    npcName = npc.name; // Fallback to GameObject name
+                }
+                
+                HealthStatus healthStatus = npc.GetHealthStatus();
+                TaskType currentTask = npc.GetCurrentTaskType();
+                float workSpeed = npc.GetWorkSpeedMultiplier();
+                
+                stringBuilder.AppendLine($"{npcName}:");
+                stringBuilder.AppendLine($"  Status: {healthStatus}");
+                stringBuilder.AppendLine($"  Task: {currentTask}");
+                stringBuilder.AppendLine($"  Health: {npc.GetSicknessStatusDescription()}");
+                stringBuilder.AppendLine($"  Hunger: {(npc.GetHungerPercentage() * 100f):F0}%");
+                stringBuilder.AppendLine($"  Stamina: {npc.GetStaminaPercentage():F0}%");
+                stringBuilder.AppendLine($"  Work Speed: {(workSpeed * 100f):F0}%");
+            }
+            
+            if (npcs.Count > maxNPCsToShow)
+            {
+                stringBuilder.AppendLine($"... and {npcs.Count - maxNPCsToShow} more NPCs");
             }
         }
         else

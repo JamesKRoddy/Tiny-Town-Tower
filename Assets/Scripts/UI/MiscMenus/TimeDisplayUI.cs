@@ -268,9 +268,7 @@ public class TimeDisplayUI : MonoBehaviour
             {
                 Color barColor = timeManager.CurrentTimeOfDay switch
                 {
-                    TimeOfDay.Dawn => new Color(1f, 0.8f, 0.4f, 0.8f),
                     TimeOfDay.Day => new Color(1f, 1f, 0.4f, 0.8f),
-                    TimeOfDay.Dusk => new Color(1f, 0.6f, 0.2f, 0.8f),
                     TimeOfDay.Night => new Color(0.4f, 0.4f, 1f, 0.8f),
                     _ => new Color(1f, 1f, 1f, 0.8f)
                 };

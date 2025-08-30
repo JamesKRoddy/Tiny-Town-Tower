@@ -361,4 +361,16 @@ public abstract class _TaskState : MonoBehaviour
 
     // Max speed for the NPC in this state
     public virtual float MaxSpeed() { return npc.moveMaxSpeed; }
+    
+    /// <summary>
+    /// Update stamina for this specific task state
+    /// Override this in specific states to implement their stamina behavior
+    /// Called automatically by SettlerNPC.Update()
+    /// </summary>
+    public virtual void UpdateStamina()
+    {
+        // Default behavior: apply base stamina drain
+        float staminaDrain = npc.GetBaseStaminaDrainRate() * Time.deltaTime;
+        npc.ApplyStaminaChange(-staminaDrain, $"{GetTaskType()} drain");
+    }
 }

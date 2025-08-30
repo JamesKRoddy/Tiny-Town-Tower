@@ -43,8 +43,13 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     [Header("Stamina")]
     public float maxStamina = 100f;
     public float currentStamina = 100f;
-    public float staminaRegenRate = 5f;
-    public float fatigueRate = 2f;
+    public float staminaRegenRate = 5f; // Base regeneration rate (can be modified by characteristics)
+    public float fatigueRate = 2f; // Base fatigue rate (can be modified by characteristics)
+    public float sleepStaminaRegenMultiplier = 3f; // Multiplier for stamina regen while sleeping
+    [SerializeField] private float baseFatigueRate = 2f; // Base fatigue rate before characteristics
+    [SerializeField] private float baseStaminaRegenRate = 5f; // Base regen rate before characteristics
+    [SerializeField] private float staminaDrainRate = 1f; // How fast stamina drains during activity (calculated from day length)
+    [SerializeField] private float nightFatigueMultiplier = 1.5f; // Extra fatigue at night
 
     [Header("Hunger System")]
     [SerializeField] private float maxHunger = 100f;
@@ -59,6 +64,21 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     public event Action<float, float> OnHungerChanged; // Current hunger, max hunger
     public event Action OnStarving;
     public event Action OnNoLongerStarving;
+
+    [Header("Sickness System")]
+    [SerializeField] private bool isSick = false;
+    [SerializeField] private float baseSicknessChance = 0.001f; // Base chance per second (very low)
+    [SerializeField] private float sicknessCheckInterval = 5f; // Check every 5 seconds
+    [SerializeField] private float sicknessDuration = 30f; // How long being sick lasts (seconds)
+    [SerializeField] private float sickWorkSpeedPenalty = 0.5f; // 50% work speed when sick
+    [SerializeField] private float lowStaminaThreshold = 30f; // Stamina level below which NPCs are considered tired
+    [SerializeField] private float veryLowStaminaThreshold = 10f; // Stamina level for severe tiredness
+    private float lastSicknessCheck = 0f;
+    private float sicknessStartTime = 0f;
+
+    public event Action OnBecameSick;
+    public event Action OnRecoveredFromSickness;
+    public bool IsSick => isSick;
 
     private int workLayerIndex;
 
@@ -108,11 +128,17 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
             InitializeForContext(initializationContext);
         }
         
+        // Initialize stamina rates (before characteristics are applied)
+        InitializeStaminaRates();
+        
         // Subscribe to time events for automatic sleep/wake behavior
         if (GameManager.Instance?.TimeManager != null)
         {
             TimeManager.OnNightStarted += OnNightStarted;
             // Removed OnDayStarted - wake-up is handled by SleepState
+            
+            // Calculate stamina rates based on day/night length
+            CalculateStaminaRates();
         }
     }
     
@@ -151,6 +177,63 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     }
     
     // Removed OnDayStarted method - wake-up logic is handled by SleepState
+    
+    /// <summary>
+    /// Initialize stamina rates from base values (before characteristics modify them)
+    /// </summary>
+    private void InitializeStaminaRates()
+    {
+        staminaRegenRate = baseStaminaRegenRate;
+        fatigueRate = baseFatigueRate;
+    }
+    
+    /// <summary>
+    /// Calculate stamina rates based on TimeManager day/night cycle
+    /// Goal: NPCs should naturally get tired by end of day and recover during night sleep
+    /// Uses the FULL day cycle including transitions for proper stamina drain timing
+    /// </summary>
+    private void CalculateStaminaRates()
+    {
+        var timeManager = GameManager.Instance?.TimeManager;
+        if (timeManager == null) 
+        {
+            // Fallback if no TimeManager
+            staminaDrainRate = 1f;
+            sleepStaminaRegenMultiplier = 3f;
+            return;
+        }
+        
+        // Get day and night durations from TimeManager (now simplified to 2:1 ratio)
+        float dayDurationInSeconds = timeManager.DayDurationInSeconds;
+        float nightDurationInSeconds = timeManager.NightDurationInSeconds;
+        
+        // Goal: NPCs should lose about 70% of stamina during the day period
+        float targetStaminaLossPerDay = 70f;
+        
+        // Calculate base drain rate using day duration (clean and simple)
+        staminaDrainRate = targetStaminaLossPerDay / dayDurationInSeconds;
+        
+        // Calculate sleep regen multiplier so NPCs can fully recover during night sleep
+        float targetStaminaRestorePerNight = 100f;
+        float baseSleepRegenRate = staminaRegenRate;
+        
+        // Calculate required multiplier for night recovery
+        float requiredRegenPerSecond = targetStaminaRestorePerNight / nightDurationInSeconds;
+        sleepStaminaRegenMultiplier = requiredRegenPerSecond / baseSleepRegenRate;
+        
+        // Ensure minimum multiplier
+        sleepStaminaRegenMultiplier = Mathf.Max(sleepStaminaRegenMultiplier, 2f);
+        
+        Debug.Log($"[SettlerNPC] Calculated rates for {name} - Drain: {staminaDrainRate:F3}/s (day: {dayDurationInSeconds}s), Base Regen: {staminaRegenRate}/s, Fatigue: {fatigueRate}, Sleep Regen Multiplier: {sleepStaminaRegenMultiplier:F2}x (night: {nightDurationInSeconds}s)");
+    }
+    
+    /// <summary>
+    /// Recalculate stamina rates - call this when characteristics modify stamina properties
+    /// </summary>
+    public void RecalculateStaminaRates()
+    {
+        CalculateStaminaRates();
+    }
 
     /// <summary>
     /// Register this NPC with the relevant managers
@@ -377,6 +460,128 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         return false;
     }
 
+    /// <summary>
+    /// Update sickness chance based on hunger, sleep deprivation, and camp cleanliness
+    /// </summary>
+    private void UpdateSicknessChance()
+    {
+        // Only check periodically
+        if (Time.time - lastSicknessCheck < sicknessCheckInterval)
+            return;
+        
+        lastSicknessCheck = Time.time;
+        
+        // If already sick, check for recovery
+        if (isSick)
+        {
+            if (Time.time - sicknessStartTime >= sicknessDuration)
+            {
+                RecoverFromSickness();
+            }
+            return;
+        }
+        
+        // Calculate sickness chance based on multiple factors
+        float sicknessChance = baseSicknessChance;
+        
+        // Hunger factor - higher chance if hungry or starving
+        if (currentHunger <= starvationThreshold)
+        {
+            sicknessChance *= 8f; // Very high multiplier for starving
+        }
+        else if (currentHunger <= hungerThreshold)
+        {
+            sicknessChance *= 3f; // Moderate multiplier for hungry
+        }
+        
+        // Tiredness factor based on stamina
+        if (currentStamina <= veryLowStaminaThreshold)
+        {
+            sicknessChance *= 4f; // Very tired = high sickness chance
+        }
+        else if (currentStamina <= lowStaminaThreshold)
+        {
+            sicknessChance *= 2f; // Tired = moderate sickness chance
+        }
+        
+        // Camp cleanliness factor
+        if (CampManager.Instance?.CleanlinessManager != null)
+        {
+            float cleanlinessPercentage = CampManager.Instance.CleanlinessManager.GetCleanlinessPercentage();
+            
+            if (cleanlinessPercentage < 20f) // Very dirty camp
+            {
+                sicknessChance *= 5f;
+            }
+            else if (cleanlinessPercentage < 50f) // Moderately dirty camp
+            {
+                sicknessChance *= 2f;
+            }
+            // Clean camps don't increase sickness chance
+        }
+        
+        // Roll for sickness
+        float adjustedChance = sicknessChance * sicknessCheckInterval; // Adjust for check interval
+        if (UnityEngine.Random.value < adjustedChance)
+        {
+            BecomeSick();
+        }
+    }
+    
+    /// <summary>
+    /// Check if the NPC is tired based on current stamina levels
+    /// </summary>
+    public bool IsTired()
+    {
+        return currentStamina <= lowStaminaThreshold;
+    }
+    
+    /// <summary>
+    /// Check if the NPC is very tired based on current stamina levels
+    /// </summary>
+    public bool IsVeryTired()
+    {
+        return currentStamina <= veryLowStaminaThreshold;
+    }
+    
+    /// <summary>
+    /// Get stamina percentage for UI display
+    /// </summary>
+    public float GetStaminaPercentage()
+    {
+        return (currentStamina / maxStamina) * 100f;
+    }
+    
+    /// <summary>
+    /// Make the NPC become sick
+    /// </summary>
+    private void BecomeSick()
+    {
+        if (isSick) return;
+        
+        isSick = true;
+        sicknessStartTime = Time.time;
+        
+        Debug.Log($"[SettlerNPC] {name} has become sick!");
+        OnBecameSick?.Invoke();
+    }
+    
+    /// <summary>
+    /// Make the NPC recover from sickness
+    /// </summary>
+    private void RecoverFromSickness()
+    {
+        if (!isSick) return;
+        
+        isSick = false;
+        sicknessStartTime = 0f;
+        
+        Debug.Log($"[SettlerNPC] {name} has recovered from sickness!");
+        OnRecoveredFromSickness?.Invoke();
+    }
+    
+
+
     private void Update()
     {
         // Don't do anything if dead
@@ -394,8 +599,17 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
             currentState.UpdateState(); // Call UpdateState on the current state
         }
 
-        // Regenerate stamina
-        currentStamina = Mathf.Min(maxStamina, currentStamina + staminaRegenRate * Time.deltaTime);
+        // Update stamina through current state
+        if (currentState != null)
+        {
+            currentState.UpdateStamina();
+        }
+
+        // Check for automatic sleep when stamina is critically low
+        CheckForExhaustionSleep();
+
+        // Update sickness system
+        UpdateSicknessChance();
 
         // Update hunger
         if (currentHunger > 0)
@@ -403,7 +617,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
             currentHunger = Mathf.Max(0, currentHunger - (hungerDecreaseRate * Time.deltaTime));
             OnHungerChanged?.Invoke(currentHunger, maxHunger);
 
-            // Update work speed multiplier based on hunger
+            // Update work speed multiplier based on hunger and sickness
             if (currentHunger <= starvationThreshold)
             {
                 workSpeedMultiplier = 0f;
@@ -423,7 +637,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
             }
             else if (currentHunger <= hungerThreshold)
             {
-                workSpeedMultiplier = 0.5f;
+                workSpeedMultiplier = isSick ? (0.5f * sickWorkSpeedPenalty) : 0.5f;
                 
                 // If we're hungry and not already eating, and not in cooldown, and food is available, change to eat state
                 if (GetCurrentTaskType() != TaskType.EAT && 
@@ -435,7 +649,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
             }
             else
             {
-                workSpeedMultiplier = 1f;
+                workSpeedMultiplier = isSick ? sickWorkSpeedPenalty : 1f;
                 OnNoLongerStarving?.Invoke();
             }
         }
@@ -453,8 +667,73 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
 
     public void RestoreStaminaAtRate(float multiplier = 1f)
     {
-        float staminaRestore = staminaRegenRate * multiplier * Time.deltaTime;
+        float staminaRestore = baseStaminaRegenRate * multiplier * Time.deltaTime;
         RestoreStamina(staminaRestore);
+    }
+
+    /// <summary>
+    /// Apply stamina change from the current task state
+    /// Called by task states to modify stamina based on their specific behavior
+    /// </summary>
+    public void ApplyStaminaChange(float staminaChange, string reason = "")
+    {
+        float oldStamina = currentStamina;
+        currentStamina = Mathf.Clamp(currentStamina + staminaChange, 0f, maxStamina);
+        
+        // Debug log for stamina changes
+        if (Time.frameCount % 300 == 0 && !string.IsNullOrEmpty(reason)) // Log every 5 seconds at 60fps
+        {
+            Debug.Log($"[SettlerNPC] {name} Stamina - {reason}: {oldStamina:F1} -> {currentStamina:F1} (change: {staminaChange:F3})");
+        }
+    }
+    
+    /// <summary>
+    /// Get base stamina drain rate for current conditions
+    /// Used by task states to calculate their specific stamina effects
+    /// </summary>
+    public float GetBaseStaminaDrainRate()
+    {
+        bool isNight = GameManager.Instance?.TimeManager?.IsNight ?? false;
+        float baseDrain = staminaDrainRate * fatigueRate;
+        
+        // Night activities are more tiring
+        if (isNight)
+        {
+            baseDrain *= nightFatigueMultiplier;
+        }
+        
+        return baseDrain;
+    }
+    
+    /// <summary>
+    /// Get stamina regeneration rate for sleeping
+    /// Used by SleepState to calculate sleep regeneration
+    /// </summary>
+    public float GetSleepStaminaRegenRate(bool hasProperBed = false)
+    {
+        float sleepRegenMultiplier = hasProperBed ? sleepStaminaRegenMultiplier : sleepStaminaRegenMultiplier * 0.7f;
+        return staminaRegenRate * sleepRegenMultiplier;
+    }
+
+    /// <summary>
+    /// Check if NPC should automatically fall asleep due to exhaustion
+    /// </summary>
+    private void CheckForExhaustionSleep()
+    {
+        // Don't interrupt sleep or important states
+        if (GetCurrentTaskType() == TaskType.SLEEP || 
+            GetCurrentTaskType() == TaskType.FLEE || 
+            GetCurrentTaskType() == TaskType.ATTACK)
+        {
+            return;
+        }
+        
+        // Fall asleep if stamina is critically low (below 10%)
+        if (GetStaminaPercentage() <= 10f)
+        {
+            Debug.Log($"[SettlerNPC] {name} is exhausted (stamina: {GetStaminaPercentage():F1}%), falling asleep");
+            ChangeTask(TaskType.SLEEP);
+        }
     }
 
     // Method to change states
@@ -687,6 +966,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
                 Debug.Log($"[SettlerNPC] {name} taking break - changing from work to eat");
             }
             
+
+            
             ChangeState(taskStates[newTask]);
         }
         else
@@ -753,6 +1034,43 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     public void SetNoFoodCooldown()
     {
         lastNoFoodTime = Time.time;
+    }
+
+    /// <summary>
+    /// Get the current sickness status description for UI or debugging
+    /// </summary>
+    public string GetSicknessStatusDescription()
+    {
+        if (isSick)
+        {
+            float remainingTime = sicknessDuration - (Time.time - sicknessStartTime);
+            return $"Sick (recovering in {remainingTime:F0}s)";
+        }
+        
+        if (IsVeryTired())
+        {
+            return $"Exhausted (stamina: {currentStamina:F0}/{maxStamina:F0})";
+        }
+        
+        if (IsTired())
+        {
+            return $"Tired (stamina: {currentStamina:F0}/{maxStamina:F0})";
+        }
+        
+        return "Healthy";
+    }
+
+    /// <summary>
+    /// Get a simple health status for UI purposes
+    /// </summary>
+    public HealthStatus GetHealthStatus()
+    {
+        if (isSick) return HealthStatus.Sick;
+        if (IsStarving()) return HealthStatus.Starving;
+        if (IsHungry()) return HealthStatus.Hungry;
+        if (IsVeryTired()) return HealthStatus.Exhausted;
+        if (IsTired()) return HealthStatus.Tired;
+        return HealthStatus.Healthy;
     }
 
     /// <summary>
@@ -922,6 +1240,159 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     {
         return transform;
     }
+
+    #endregion
+
+    #region Debug Visualization
+
+    /// <summary>
+    /// Draw debug information in the scene view
+    /// </summary>
+    private void OnDrawGizmos()
+    {
+        // Only draw in editor and if the NPC is initialized
+        #if UNITY_EDITOR
+        if (!hasBeenInitialized && Application.isPlaying) return;
+        
+        // Position the text above the NPC
+        Vector3 textPosition = transform.position + Vector3.up * 2.5f;
+        
+        // Build status text
+        string statusText = BuildDebugStatusText();
+        
+        // Draw the debug text
+        UnityEditor.Handles.Label(textPosition, statusText, GetDebugTextStyle());
+        
+        // Draw health status indicator gizmo
+        DrawHealthStatusGizmo();
+        #endif
+    }
+    
+    #if UNITY_EDITOR
+    /// <summary>
+    /// Build the debug status text for scene view display
+    /// </summary>
+    private string BuildDebugStatusText()
+    {
+        if (!Application.isPlaying)
+        {
+            return $"{GetSettlerName()}\n[Not Playing]";
+        }
+        
+        var status = GetHealthStatus();
+        var task = GetCurrentTaskType();
+        var hungerPercent = GetHungerPercentage() * 100f;
+        var staminaPercent = GetStaminaPercentage();
+        var workSpeed = GetWorkSpeedMultiplier() * 100f;
+        
+        string statusText = $"{GetSettlerName()}\n";
+        statusText += $"Status: {status}\n";
+        statusText += $"Task: {task}\n";
+        statusText += $"Hunger:{hungerPercent:F0}% Stamina:{staminaPercent:F0}%\n";
+        statusText += $"Work: {workSpeed:F0}%";
+        
+        if (isSick)
+        {
+            float remainingTime = sicknessDuration - (Time.time - sicknessStartTime);
+            statusText += $"\nSick: {remainingTime:F0}s";
+        }
+        
+        return statusText;
+    }
+    
+    /// <summary>
+    /// Get the appropriate text style based on health status
+    /// </summary>
+    private UnityEngine.GUIStyle GetDebugTextStyle()
+    {
+        var style = new UnityEngine.GUIStyle();
+        style.normal.textColor = GetHealthStatusColor();
+        style.fontSize = 10;
+        style.fontStyle = FontStyle.Bold;
+        style.alignment = TextAnchor.MiddleCenter;
+        
+        // Add background for better readability
+        var bgTexture = new Texture2D(1, 1);
+        bgTexture.SetPixel(0, 0, new Color(0, 0, 0, 0.7f));
+        bgTexture.Apply();
+        style.normal.background = bgTexture;
+        style.padding = new RectOffset(4, 4, 2, 2);
+        
+        return style;
+    }
+    
+    /// <summary>
+    /// Get color based on health status
+    /// </summary>
+    private Color GetHealthStatusColor()
+    {
+        var status = GetHealthStatus();
+        return status switch
+        {
+            HealthStatus.Healthy => Color.green,
+            HealthStatus.Hungry => Color.yellow,
+            HealthStatus.Starving => new Color(1f, 0.5f, 0f), // Orange
+            HealthStatus.Tired => Color.cyan,
+            HealthStatus.Exhausted => Color.blue,
+            HealthStatus.Sick => Color.red,
+            _ => Color.white
+        };
+    }
+    
+    /// <summary>
+    /// Draw a colored gizmo to indicate health status
+    /// </summary>
+    private void DrawHealthStatusGizmo()
+    {
+        Vector3 gizmoPosition = transform.position + Vector3.up * 2.2f;
+        
+        // Set gizmo color based on health status
+        Gizmos.color = GetHealthStatusColor();
+        
+        // Draw a small sphere indicator
+        Gizmos.DrawSphere(gizmoPosition, 0.1f);
+        
+        // Draw additional indicators for specific conditions
+        if (isSick)
+        {
+            // Draw a red cross for sick NPCs
+            Gizmos.color = Color.red;
+            Vector3 crossPos = gizmoPosition + Vector3.right * 0.2f;
+            Gizmos.DrawLine(crossPos + Vector3.up * 0.05f, crossPos + Vector3.down * 0.05f);
+            Gizmos.DrawLine(crossPos + Vector3.right * 0.05f, crossPos + Vector3.left * 0.05f);
+        }
+        
+        if (IsStarving())
+        {
+            // Draw hunger indicator (triangle)
+            Gizmos.color = Color.red;
+            Vector3 hungerPos = gizmoPosition + Vector3.left * 0.2f;
+            Vector3[] trianglePoints = {
+                hungerPos + Vector3.up * 0.05f,
+                hungerPos + Vector3.down * 0.05f + Vector3.left * 0.05f,
+                hungerPos + Vector3.down * 0.05f + Vector3.right * 0.05f
+            };
+            
+            for (int i = 0; i < trianglePoints.Length; i++)
+            {
+                Gizmos.DrawLine(trianglePoints[i], trianglePoints[(i + 1) % trianglePoints.Length]);
+            }
+        }
+        
+        if (IsVeryTired())
+        {
+            // Draw sleep indicator (Z)
+            Gizmos.color = Color.blue;
+            Vector3 sleepPos = gizmoPosition + Vector3.forward * 0.2f;
+            Gizmos.DrawLine(sleepPos + Vector3.up * 0.05f + Vector3.left * 0.05f, 
+                          sleepPos + Vector3.up * 0.05f + Vector3.right * 0.05f);
+            Gizmos.DrawLine(sleepPos + Vector3.up * 0.05f + Vector3.right * 0.05f, 
+                          sleepPos + Vector3.down * 0.05f + Vector3.left * 0.05f);
+            Gizmos.DrawLine(sleepPos + Vector3.down * 0.05f + Vector3.left * 0.05f, 
+                          sleepPos + Vector3.down * 0.05f + Vector3.right * 0.05f);
+        }
+    }
+    #endif
 
     #endregion
 }
@@ -1548,4 +2019,17 @@ namespace Characters.NPC
             return effects;
         }
     }
-} 
+}
+
+/// <summary>
+/// Enum for NPC health status including sickness and other conditions
+/// </summary>
+public enum HealthStatus
+{
+    Healthy,
+    Hungry,
+    Starving,
+    Tired,
+    Exhausted,
+    Sick
+}

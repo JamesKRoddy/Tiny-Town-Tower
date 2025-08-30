@@ -13,11 +13,13 @@ namespace Managers
         #region Time Configuration
         
         [Header("Time Settings")]
-        [SerializeField] private float dayDurationInSeconds = 300f; // 5 minutes real time = 1 day
-        [SerializeField] private float nightDurationInSeconds = 180f; // 3 minutes real time = 1 night
-        [SerializeField] private float transitionDurationInSeconds = 30f; // 30 seconds for dawn/dusk
+        [SerializeField] private float totalCycleDurationInSeconds = 360f; // 6 minutes total cycle
         [SerializeField] private bool autoStartCycle = true;
-        [SerializeField] private TimeOfDay startingTimeOfDay = TimeOfDay.Dawn;
+        [SerializeField] private TimeOfDay startingTimeOfDay = TimeOfDay.Day;
+        
+        // Calculated durations (2:1 ratio - day is twice as long as night)
+        public float DayDurationInSeconds => totalCycleDurationInSeconds * (2f / 3f); // 2/3 of total = 4 minutes
+        public float NightDurationInSeconds => totalCycleDurationInSeconds * (1f / 3f); // 1/3 of total = 2 minutes
         
         [Header("Visual Settings")]
         [SerializeField] private Light sunLight;
@@ -82,9 +84,8 @@ namespace Managers
         public TimeOfDay CurrentTimeOfDay => currentTimeOfDay;
         public float CurrentTimeProgress => currentTimeProgress;
         public float TotalDayProgress => totalDayProgress;
-        public bool IsDay => currentTimeOfDay == TimeOfDay.Day || currentTimeOfDay == TimeOfDay.Dawn;
-        public bool IsNight => currentTimeOfDay == TimeOfDay.Night || currentTimeOfDay == TimeOfDay.Dusk;
-        public bool IsTransition => currentTimeOfDay == TimeOfDay.Dawn || currentTimeOfDay == TimeOfDay.Dusk;
+        public bool IsDay => currentTimeOfDay == TimeOfDay.Day;
+        public bool IsNight => currentTimeOfDay == TimeOfDay.Night;
         public float CurrentWorkEfficiencyMultiplier => IsNight ? nightWorkEfficiencyMultiplier : 1f;
         public float CurrentMovementSpeedMultiplier => IsNight ? nightMovementSpeedMultiplier : 1f;
         
@@ -133,7 +134,7 @@ namespace Managers
             isPaused = false;
             
             // Calculate total cycle duration and rotation speed
-            totalCycleDuration = dayDurationInSeconds + nightDurationInSeconds + (transitionDurationInSeconds * 2);
+            totalCycleDuration = totalCycleDurationInSeconds;
             rotationSpeed = 360f / totalCycleDuration; // Degrees per second for complete rotation
             
             Debug.Log($"[TimeManager] Starting cycle - Total duration: {totalCycleDuration}s, Rotation speed: {rotationSpeed}°/s");
@@ -180,10 +181,9 @@ namespace Managers
         {
             return currentTimeOfDay switch
             {
-                TimeOfDay.Day => dayDurationInSeconds,
-                TimeOfDay.Night => nightDurationInSeconds,
-                TimeOfDay.Dawn or TimeOfDay.Dusk => transitionDurationInSeconds,
-                _ => dayDurationInSeconds
+                TimeOfDay.Day => DayDurationInSeconds,
+                TimeOfDay.Night => NightDurationInSeconds,
+                _ => DayDurationInSeconds
             };
         }
         
@@ -236,10 +236,8 @@ namespace Managers
             
             TimeOfDay nextTimeOfDay = currentTimeOfDay switch
             {
-                TimeOfDay.Dawn => TimeOfDay.Day,
-                TimeOfDay.Day => TimeOfDay.Dusk,
-                TimeOfDay.Dusk => TimeOfDay.Night,
-                TimeOfDay.Night => TimeOfDay.Dawn,
+                TimeOfDay.Day => TimeOfDay.Night,
+                TimeOfDay.Night => TimeOfDay.Day,
                 _ => TimeOfDay.Day
             };
             
@@ -442,9 +440,7 @@ namespace Managers
         {
             return currentTimeOfDay switch
             {
-                TimeOfDay.Dawn => 1f - currentTimeProgress, // Start dark, get brighter
                 TimeOfDay.Day => 0f, // Full daylight
-                TimeOfDay.Dusk => currentTimeProgress, // Start bright, get darker
                 TimeOfDay.Night => 1f, // Full night
                 _ => 0f
             };
@@ -456,22 +452,15 @@ namespace Managers
         /// </summary>
         public float GetDayCycleProgress()
         {
-            float totalCycleDuration = dayDurationInSeconds + nightDurationInSeconds + (transitionDurationInSeconds * 2);
             float currentCycleTime = 0f;
             
             switch (currentTimeOfDay)
             {
-                case TimeOfDay.Dawn:
-                    currentCycleTime = currentTimeProgress * transitionDurationInSeconds;
-                    break;
                 case TimeOfDay.Day:
-                    currentCycleTime = transitionDurationInSeconds + (currentTimeProgress * dayDurationInSeconds);
-                    break;
-                case TimeOfDay.Dusk:
-                    currentCycleTime = transitionDurationInSeconds + dayDurationInSeconds + (currentTimeProgress * transitionDurationInSeconds);
+                    currentCycleTime = currentTimeProgress * DayDurationInSeconds;
                     break;
                 case TimeOfDay.Night:
-                    currentCycleTime = (transitionDurationInSeconds * 2) + dayDurationInSeconds + (currentTimeProgress * nightDurationInSeconds);
+                    currentCycleTime = DayDurationInSeconds + (currentTimeProgress * NightDurationInSeconds);
                     break;
             }
             
@@ -579,9 +568,7 @@ namespace Managers
         {
             return currentTimeOfDay switch
             {
-                TimeOfDay.Dawn => "Dawn",
                 TimeOfDay.Day => "Day",
-                TimeOfDay.Dusk => "Dusk",
                 TimeOfDay.Night => "Night",
                 _ => "Unknown"
             };
@@ -599,13 +586,11 @@ namespace Managers
     }
     
     /// <summary>
-    /// Enum representing different times of day
+    /// Enum representing different times of day (simplified to just Day/Night)
     /// </summary>
     public enum TimeOfDay
     {
-        Dawn,    // Transition from night to day
-        Day,     // Full daylight
-        Dusk,    // Transition from day to night
-        Night    // Full night
+        Day,     // Daytime (2/3 of cycle)
+        Night    // Nighttime (1/3 of cycle)
     }
 }
