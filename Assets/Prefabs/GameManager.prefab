@@ -151,7 +151,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5773833906eb94c4dbfe3dd4dc852daf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debugLogging: 1
+  debugLogging: 0
   milestones: []
 --- !u!1 &1370869420154002683
 GameObject:
@@ -618,7 +618,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   characterDialogueMappings: []
-  debugLogging: 1
+  debugLogging: 0
 --- !u!1 &4251001446058714194
 GameObject:
   m_ObjectHideFlags: 0
@@ -669,7 +669,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 0
+    m_Type: 2
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -790,7 +790,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 0
+    m_Type: 2
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -1242,14 +1242,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 831c36fbc29390a49b3f94f8fbc75439, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  totalCycleDurationInSeconds: 360
+  totalCycleDurationInSeconds: 24
   autoStartCycle: 1
   startingTimeOfDay: 0
   sunLight: {fileID: 1747299553855566350}
   moonLight: {fileID: 3415585928227201123}
   sunLightingGradient:
     serializedVersion: 2
-    key0: {r: 1, g: 1, b: 1, a: 1}
+    key0: {r: 1, g: 0.5423229, b: 0, a: 1}
     key1: {r: 1, g: 1, b: 1, a: 1}
     key2: {r: 0, g: 0, b: 0, a: 0}
     key3: {r: 0, g: 0, b: 0, a: 0}
@@ -1279,8 +1279,8 @@ MonoBehaviour:
     m_NumAlphaKeys: 2
   moonLightingGradient:
     serializedVersion: 2
-    key0: {r: 1, g: 1, b: 1, a: 1}
-    key1: {r: 1, g: 1, b: 1, a: 1}
+    key0: {r: 0.4433962, g: 0.4433962, b: 0.4433962, a: 1}
+    key1: {r: 0.6556604, g: 0.9637537, b: 1, a: 1}
     key2: {r: 0, g: 0, b: 0, a: 0}
     key3: {r: 0, g: 0, b: 0, a: 0}
     key4: {r: 0, g: 0, b: 0, a: 0}
@@ -1373,7 +1373,7 @@ MonoBehaviour:
   nightWorkEfficiencyMultiplier: 0.7
   nightMovementSpeedMultiplier: 0.8
   enableNightSleepBehavior: 1
-  sleepChance: 0.6
+  sleepChance: 1
 --- !u!1 &5711646058787768948
 GameObject:
   m_ObjectHideFlags: 0
@@ -1418,7 +1418,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f38d5454ed299714a975a9bc08d0281e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  autoSaveEnabled: 1
+  autoSaveEnabled: 0
   autoSaveInterval: 30
 --- !u!1 &6054493739826329417
 GameObject:
@@ -1729,6 +1729,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e4d284cd3c502834ba8775cf60430499, type: 2}
   - {fileID: 11400000, guid: c840ac2f3395a094ea4caf317d1c34a3, type: 2}
   - {fileID: 11400000, guid: b07b1e4cd868230488fd0ac28d951247, type: 2}
+  - {fileID: 11400000, guid: 6d48670bd26ffa141ab488a31d2ed45f, type: 2}
   turretScriptableObjs:
   - {fileID: 11400000, guid: 391b823efa03ef347a229805acbb73fe, type: 2}
   constructionSiteMappings:

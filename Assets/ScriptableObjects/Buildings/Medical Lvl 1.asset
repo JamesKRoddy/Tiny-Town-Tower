@@ -19,7 +19,7 @@ MonoBehaviour:
   rarity: 0
   isUnlocked: 1
   _resourceCost: []
-  prefab: {fileID: 1305933842384340, guid: ccb79d2f691e98548a17e09e7c6f22c3, type: 3}
+  prefab: {fileID: 2083316838295057655, guid: 7a91f6592fb69eb4f92e8247ed8d71db, type: 3}
   size: {x: 3, y: 3}
   placeableObjectCategory: 0
   maxHealth: 100

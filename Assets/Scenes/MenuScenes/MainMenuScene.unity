@@ -1816,44 +1816,12 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: startingTimeOfDay
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: dayDurationInSeconds
-      value: 30
-      objectReference: {fileID: 0}
-    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: nightDurationInSeconds
-      value: 18
-      objectReference: {fileID: 0}
-    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: sunLightingGradient.ctime0
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: sunLightingGradient.key0.b
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: sunLightingGradient.key0.g
       value: 0.5423229
-      objectReference: {fileID: 0}
-    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: sunLightingGradient.key1.b
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: sunLightingGradient.key1.g
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: sunLightingGradient.key1.r
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: sunLightingGradient.m_Mode
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: moonLightingGradient.key0.b
@@ -1868,10 +1836,6 @@ PrefabInstance:
       value: 0.4433962
       objectReference: {fileID: 0}
     - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: moonLightingGradient.key1.b
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: moonLightingGradient.key1.g
       value: 0.9637537
       objectReference: {fileID: 0}
@@ -1882,10 +1846,6 @@ PrefabInstance:
     - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: totalCycleDurationInSeconds
       value: 24
-      objectReference: {fileID: 0}
-    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: transitionDurationInSeconds
-      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 3415585928227201123, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_Shadows.m_Type
@@ -1931,24 +1891,16 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: buildingScriptableObjs.Array.size
+      value: 14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: 'buildingScriptableObjs.Array.data[13]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 6d48670bd26ffa141ab488a31d2ed45f, type: 2}
     - target: {fileID: 5397687326794407557, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: autoSaveEnabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8102012326405835519, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: rogueLikeBuildingDataScriptableObjs.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8102012326405835519, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: 'rogueLikeBuildingDataScriptableObjs.Array.data[0]'
-      value: 
-      objectReference: {fileID: 11400000, guid: cabb675861ade9446b9fd0936ab40689, type: 2}
-    - target: {fileID: 8507678153877644282, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: enableDebugMenus
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8507678153877644282, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: registeredMenus.Array.size
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
