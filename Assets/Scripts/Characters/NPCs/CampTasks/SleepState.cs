@@ -40,8 +40,18 @@ public class SleepState : _TaskState
         }
         else
         {
-            Debug.Log($"[SleepState] {npc.name} no bed available, wandering before sleeping on ground");
-            StartWandering();
+            // No bed available - check if we should sleep on ground
+            if (npc is SettlerNPC settler && settler.IsVeryTired())
+            {
+                Debug.Log($"[SleepState] {npc.name} no bed available but very tired (stamina: {npc.GetStaminaPercentage():F1}%), wandering before sleeping on ground");
+                StartWandering();
+            }
+            else
+            {
+                Debug.Log($"[SleepState] {npc.name} no bed available and not very tired (stamina: {npc.GetStaminaPercentage():F1}%), returning to previous activity");
+                // Exit sleep state and return to wandering
+                ExitSleepAndReturnToActivity();
+            }
         }
     }
     
@@ -270,6 +280,17 @@ public class SleepState : _TaskState
         Debug.Log($"[SleepState] {npc.name} waking up (stamina: {npc.GetStaminaPercentage():F1}%)");
         
         StopSleeping();
+        
+        // Return to work or wander
+        TryAssignWorkOrWander();
+    }
+    
+    /// <summary>
+    /// Exit sleep state and return to normal activities (used when no bed available and not tired)
+    /// </summary>
+    private void ExitSleepAndReturnToActivity()
+    {
+        Debug.Log($"[SleepState] {npc.name} exiting sleep state, returning to normal activities");
         
         // Return to work or wander
         TryAssignWorkOrWander();

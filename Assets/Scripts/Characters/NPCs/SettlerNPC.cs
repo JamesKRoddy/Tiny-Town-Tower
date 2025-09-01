@@ -164,10 +164,20 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
                 currentTask != TaskType.FLEE && 
                 currentTask != TaskType.ATTACK)
             {
-                // No need to store work task - assignedWorkTask persists through sleep
+                // Check if we have a bed or can find one
+                bool hasBedAccess = HasBedAccess();
                 
-                Debug.Log($"[SettlerNPC] {name} transitioning to sleep for the night (current task: {currentTask})");
-                ChangeTask(TaskType.SLEEP);
+                // If we have bed access, sleep normally
+                // If we don't have bed access, only sleep if very tired
+                if (hasBedAccess || IsVeryTired())
+                {
+                    Debug.Log($"[SettlerNPC] {name} transitioning to sleep for the night (current task: {currentTask}, bed access: {hasBedAccess}, very tired: {IsVeryTired()})");
+                    ChangeTask(TaskType.SLEEP);
+                }
+                else
+                {
+                    Debug.Log($"[SettlerNPC] {name} has no bed and is not very tired, continuing current activity through the night");
+                }
             }
         }
         else
@@ -949,6 +959,37 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         }
         
         Debug.Log($"[SettlerNPC] {name} HasAssignedBed returning false");
+        return false;
+    }
+
+    /// <summary>
+    /// Check if this settler can access a bed (has assigned bed or can find an available one)
+    /// </summary>
+    /// <returns>True if the settler has bed access, false otherwise</returns>
+    public bool HasBedAccess()
+    {
+        // First check if we already have an assigned bed
+        if (HasAssignedBed())
+        {
+            return true;
+        }
+        
+        // Check if there are any available beds we could use
+        var sleepTasks = CampManager.Instance?.WorkManager?.GetAvailableSleepTasks();
+        if (sleepTasks == null || sleepTasks.Count == 0)
+        {
+            return false;
+        }
+        
+        // Look for available beds
+        foreach (var sleepTask in sleepTasks)
+        {
+            if (!sleepTask.IsBedAssigned && sleepTask.CanSettlerUseBed(this))
+            {
+                return true;
+            }
+        }
+        
         return false;
     }
 
