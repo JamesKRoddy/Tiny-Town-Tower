@@ -1822,9 +1822,9 @@ MonoBehaviour:
   maxStamina: 100
   currentStamina: 100
   staminaRegenRate: 5
-  fatigueRate: 2
+  fatigueRate: 1
   sleepStaminaRegenMultiplier: 3
-  baseFatigueRate: 2
+  baseFatigueRate: 1
   baseStaminaRegenRate: 5
   staminaDrainRate: 1
   nightFatigueMultiplier: 1.5

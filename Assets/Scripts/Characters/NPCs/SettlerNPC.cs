@@ -42,12 +42,12 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
 
     [Header("Stamina")]
     public float maxStamina = 100f;
-    public float currentStamina = 100f;
-    public float staminaRegenRate = 5f; // Base regeneration rate (can be modified by characteristics)
-    public float fatigueRate = 2f; // Base fatigue rate (can be modified by characteristics)
-    public float sleepStaminaRegenMultiplier = 3f; // Multiplier for stamina regen while sleeping
-    [SerializeField] private float baseFatigueRate = 2f; // Base fatigue rate before characteristics
+    [ReadOnly] public float currentStamina = 100f;
     [SerializeField] private float baseStaminaRegenRate = 5f; // Base regen rate before characteristics
+    [ReadOnly] public float staminaRegenRate = 5f; // Base regeneration rate (can be modified by characteristics)
+    [SerializeField] private float baseFatigueRate = 1f; // Base fatigue rate before characteristics
+    [ReadOnly] public float fatigueRate = 1f; // Base fatigue rate (can be modified by characteristics)
+    public float sleepStaminaRegenMultiplier = 3f; // Multiplier for stamina regen while sleeping
     [SerializeField] private float staminaDrainRate = 1f; // How fast stamina drains during activity (calculated from day length)
     [SerializeField] private float nightFatigueMultiplier = 1.5f; // Extra fatigue at night
 
@@ -200,6 +200,9 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
             // Fallback if no TimeManager
             staminaDrainRate = 1f;
             sleepStaminaRegenMultiplier = 3f;
+            Debug.LogWarning($"[SettlerNPC] {name} - No TimeManager found! Using fallback rates:");
+            Debug.LogWarning($"  staminaDrainRate: {staminaDrainRate}/s");
+            Debug.LogWarning($"  sleepStaminaRegenMultiplier: {sleepStaminaRegenMultiplier}x");
             return;
         }
         
@@ -227,7 +230,13 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         // Ensure minimum multiplier
         sleepStaminaRegenMultiplier = Mathf.Max(sleepStaminaRegenMultiplier, 2f);
         
-        Debug.Log($"[SettlerNPC] Calculated rates for {name} - Drain: {staminaDrainRate:F4}/s (36 game hrs = {targetSecondsToExhaustion}s), Sleep Regen Multiplier: {sleepStaminaRegenMultiplier:F2}x (night: {nightDurationInSeconds}s), Cycle: {totalCycleDuration}s");
+        Debug.Log($"[SettlerNPC] {name} STAMINA RATES CALCULATED:");
+        Debug.Log($"  TimeManager Values - Day: {dayDurationInSeconds}s, Night: {nightDurationInSeconds}s, Total Cycle: {totalCycleDuration}s");
+        Debug.Log($"  Target: 36 game hours = {cyclesNeededForExhaustion} cycles = {targetSecondsToExhaustion}s real time");
+        Debug.Log($"  Calculated staminaDrainRate: {staminaDrainRate:F6}/s (100 stamina / {targetSecondsToExhaustion}s)");
+        Debug.Log($"  Current fatigueRate: {fatigueRate}");
+        Debug.Log($"  Current nightFatigueMultiplier: {nightFatigueMultiplier}");
+        Debug.Log($"  Sleep Regen Multiplier: {sleepStaminaRegenMultiplier:F2}x");
     }
     
     /// <summary>
@@ -728,10 +737,16 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         float oldStamina = currentStamina;
         currentStamina = Mathf.Clamp(currentStamina + staminaChange, 0f, maxStamina);
         
-        // Debug log for stamina changes
-        if (Time.frameCount % 300 == 0 && !string.IsNullOrEmpty(reason)) // Log every 5 seconds at 60fps
+        // Enhanced debug logging for stamina changes
+        if (Time.frameCount % 120 == 0 && !string.IsNullOrEmpty(reason)) // Log every 2 seconds at 60fps
         {
-            Debug.Log($"[SettlerNPC] {name} Stamina - {reason}: {oldStamina:F1} -> {currentStamina:F1} (change: {staminaChange:F3})");
+            float drainRatePerSecond = -staminaChange / Time.deltaTime;
+            float timeToZeroAtCurrentRate = currentStamina / drainRatePerSecond;
+            Debug.Log($"[SettlerNPC] {name} STAMINA CHANGE - {reason}:");
+            Debug.Log($"  Change: {oldStamina:F1} -> {currentStamina:F1} (delta: {staminaChange:F4})");
+            Debug.Log($"  Current drain rate: {drainRatePerSecond:F4}/s");
+            Debug.Log($"  Time to zero at current rate: {timeToZeroAtCurrentRate:F1}s");
+            Debug.Log($"  Time.deltaTime: {Time.deltaTime:F4}");
         }
     }
     
@@ -777,7 +792,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         }
         
         // Fall asleep if stamina is critically low (below 10%)
-        if (GetStaminaPercentage() <= 10f)
+        if (GetStaminaPercentage() <= 20f)
         {
             Debug.Log($"[SettlerNPC] {name} is exhausted (stamina: {GetStaminaPercentage():F1}%), falling asleep");
             ChangeTask(TaskType.SLEEP);

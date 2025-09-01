@@ -127,7 +127,20 @@ public class WorkState : _TaskState
     public override void UpdateStamina()
     {
         // Work drains stamina 1.5x faster than normal activities
-        float workDrain = npc.GetBaseStaminaDrainRate() * 1.5f * Time.deltaTime;
+        float baseDrain = npc.GetBaseStaminaDrainRate();
+        float workDrain = baseDrain * 1.5f * Time.deltaTime;
+        
+        // Log work drain details every 5 seconds
+        if (Time.frameCount % 300 == 0)
+        {
+            Debug.Log($"[WorkState] {npc.name} WORK STAMINA DRAIN:");
+            Debug.Log($"  Base drain rate: {baseDrain:F6}/s");
+            Debug.Log($"  Work multiplier: 1.5x");
+            Debug.Log($"  Time.deltaTime: {Time.deltaTime:F4}");
+            Debug.Log($"  Work drain this frame: {workDrain:F6}");
+            Debug.Log($"  Effective drain rate: {workDrain / Time.deltaTime:F6}/s");
+        }
+        
         npc.ApplyStaminaChange(-workDrain, "Work drain");
     }
 
