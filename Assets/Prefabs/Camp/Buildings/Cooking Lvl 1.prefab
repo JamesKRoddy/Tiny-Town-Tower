@@ -53,6 +53,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   workLocationTransform: {fileID: 0}
+  maxWorkers: 1
   requiredResources: []
   showTooltip: 0
   electricityRequired: 0
@@ -70,6 +71,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   workLocationTransform: {fileID: 0}
+  maxWorkers: 1
   requiredResources: []
   showTooltip: 0
   electricityRequired: 0
@@ -86,12 +88,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7e6a307944ac1f42868f797475b407f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buildingScriptableObj: {fileID: 11400000, guid: b1d8c0aa446ef7e44be90aa0e9daf3a5, type: 2}
+  structureScriptableObj: {fileID: 11400000, guid: b1d8c0aa446ef7e44be90aa0e9daf3a5, type: 2}
+  buildingCategory: 1
   isOperational: 0
   isUnderConstruction: 1
   currentHealth: 0
+  currentWorkTask: {fileID: 0}
   repairTask: {fileID: 0}
   upgradeTask: {fileID: 0}
+  shakeIntensity: 0.1
+  shakeDuration: 0.3
+  shakeDecay:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   maxStoredMeals: 10
   foodStoragePoint: {fileID: 0}
 --- !u!114 &-2747996953383978377
@@ -107,6 +137,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   workLocationTransform: {fileID: 6070360099067448806}
+  maxWorkers: 1
   requiredResources: []
   showTooltip: 0
   electricityRequired: 0

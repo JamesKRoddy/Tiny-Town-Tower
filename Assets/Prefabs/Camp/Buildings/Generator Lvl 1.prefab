@@ -97,7 +97,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efc1c87e71385d5499cb35389a7f7a07, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  structureScriptableObj: {fileID: 0}
+  structureScriptableObj: {fileID: 11400000, guid: 605bb9e705d6b544b99ea27637527091, type: 2}
   buildingCategory: 1
   isOperational: 0
   isUnderConstruction: 1

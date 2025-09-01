@@ -88,7 +88,8 @@ public enum TaskType
     EAT,
     FLEE,
     SHELTERED, // Added for NPCs in bunkers
-    SLEEP // Added for night time behavior
+    SLEEP, // Added for night time behavior
+    MEDICAL_TREATMENT // Added for sick NPCs to receive medical treatment
 }
 
 [System.Serializable]

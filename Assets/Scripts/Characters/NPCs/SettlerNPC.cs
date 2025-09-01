@@ -567,6 +567,9 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         
         Debug.Log($"[SettlerNPC] {name} has become sick!");
         OnBecameSick?.Invoke();
+        
+        // Check for available medical treatment
+        CheckForMedicalTreatment();
     }
     
     /// <summary>
@@ -581,6 +584,42 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         
         Debug.Log($"[SettlerNPC] {name} has recovered from sickness!");
         OnRecoveredFromSickness?.Invoke();
+    }
+    
+    /// <summary>
+    /// Force recovery from sickness (called by medical treatment)
+    /// </summary>
+    public void ForceRecoveryFromSickness()
+    {
+        RecoverFromSickness();
+    }
+    
+    /// <summary>
+    /// Check if medical treatment is available and transition to it if possible
+    /// </summary>
+    private void CheckForMedicalTreatment()
+    {
+        if (!isSick) return;
+        
+        // Don't interrupt critical states
+        if (GetCurrentTaskType() == TaskType.FLEE || 
+            GetCurrentTaskType() == TaskType.ATTACK ||
+            GetCurrentTaskType() == TaskType.MEDICAL_TREATMENT)
+        {
+            return;
+        }
+        
+        // Check if there are available medical buildings
+        if (CampManager.Instance?.MedicalManager != null && 
+            CampManager.Instance.MedicalManager.HasAvailableMedicalBuildings())
+        {
+            Debug.Log($"[SettlerNPC] {name} is sick and medical treatment is available - seeking treatment");
+            ChangeTask(TaskType.MEDICAL_TREATMENT);
+        }
+        else
+        {
+            Debug.Log($"[SettlerNPC] {name} is sick but no medical treatment available");
+        }
     }
     
 
@@ -613,6 +652,12 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
 
         // Update sickness system
         UpdateSicknessChance();
+        
+        // Check for medical treatment if sick (periodically)
+        if (isSick && Time.frameCount % 300 == 0) // Check every 5 seconds at 60fps
+        {
+            CheckForMedicalTreatment();
+        }
 
         // Update hunger
         if (currentHunger > 0)

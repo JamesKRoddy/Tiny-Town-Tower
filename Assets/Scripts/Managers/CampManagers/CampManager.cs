@@ -82,6 +82,7 @@ namespace Managers
         private ResourceUpgradeManager resourceUpgradeManager;
         private ElectricityManager electricityManager;
         private FarmingManager farmingManager;
+        private MedicalManager medicalManager;
 
         #endregion
 
@@ -97,6 +98,7 @@ namespace Managers
         public ResourceUpgradeManager ResourceUpgradeManager => resourceUpgradeManager;
         public ElectricityManager ElectricityManager => electricityManager;
         public FarmingManager FarmingManager => farmingManager;
+        public MedicalManager MedicalManager => medicalManager;
 
         // Shared placement settings
         public Vector2 SharedXBounds => sharedXBounds;
@@ -204,6 +206,7 @@ namespace Managers
             buildManager = GetComponentInChildren<BuildManager>();
             electricityManager = GetComponentInChildren<ElectricityManager>();
             farmingManager = GetComponentInChildren<FarmingManager>();
+            medicalManager = GetComponentInChildren<MedicalManager>();
         }
 
         private void LogMissingManagers()
@@ -217,6 +220,7 @@ namespace Managers
             if (buildManager == null) Debug.LogWarning("BuildManager not found in scene!");
             if (electricityManager == null) Debug.LogWarning("ElectricityManager not found in scene!");
             if (farmingManager == null) Debug.LogWarning("FarmingManager not found in scene!");
+            if (medicalManager == null) Debug.LogWarning("MedicalManager not found in scene!");
         }
 
         private void InitializeAllManagers()
@@ -227,6 +231,7 @@ namespace Managers
             electricityManager?.Initialize();
             cleanlinessManager?.Initialize();
             farmingManager?.Initialize();
+            medicalManager?.Initialize();
         }
 
         private void InitializeSharedGrid()
@@ -1063,6 +1068,42 @@ namespace Managers
             return new Vector3(x, 0f, z);
         }
 
+        #endregion
+        
+        #region Medical Building Management
+        
+        /// <summary>
+        /// Register a medical building with the medical system
+        /// </summary>
+        /// <param name="medicalBuilding">The medical building to register</param>
+        public void RegisterMedicalBuilding(MedicalBuilding medicalBuilding)
+        {
+            if (medicalManager != null)
+            {
+                medicalManager.RegisterMedicalBuilding(medicalBuilding);
+            }
+            else
+            {
+                Debug.LogWarning($"[CampManager] Cannot register medical building {medicalBuilding.name} - MedicalManager is null");
+            }
+        }
+        
+        /// <summary>
+        /// Unregister a medical building from the medical system
+        /// </summary>
+        /// <param name="medicalBuilding">The medical building to unregister</param>
+        public void UnregisterMedicalBuilding(MedicalBuilding medicalBuilding)
+        {
+            if (medicalManager != null)
+            {
+                medicalManager.UnregisterMedicalBuilding(medicalBuilding);
+            }
+            else
+            {
+                Debug.LogWarning($"[CampManager] Cannot unregister medical building {medicalBuilding.name} - MedicalManager is null");
+            }
+        }
+        
         #endregion
     }
 }

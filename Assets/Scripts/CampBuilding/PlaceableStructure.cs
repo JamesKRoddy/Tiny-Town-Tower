@@ -72,6 +72,78 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
 
     #endregion
 
+    #region Gizmos for Development
+
+    private void OnDrawGizmos()
+    {
+        if (structureScriptableObj == null) return;
+        
+        // Draw the structure size boundary
+        DrawStructureSizeGizmo(false);
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (structureScriptableObj == null) return;
+        
+        // Draw the structure size boundary with more prominent colors when selected
+        DrawStructureSizeGizmo(true);
+    }
+
+    private void DrawStructureSizeGizmo(bool isSelected)
+    {
+        Vector2Int size = structureScriptableObj.size;
+        Vector3 center = transform.position;
+        
+        // Get the actual grid unit size from CampManager
+        float gridUnitSize = 2f; // Default fallback
+        if (CampManager.Instance != null)
+        {
+            gridUnitSize = CampManager.Instance.SharedGridSize;
+        }
+        
+        // Calculate the actual world space size based on grid units
+        Vector3 worldSize = new Vector3(size.x * gridUnitSize, 0, size.y * gridUnitSize);
+        Vector3 halfWorldSize = worldSize * 0.5f;
+        
+        // Calculate the corners of the structure based on actual world size
+        Vector3 topLeft = center + new Vector3(-halfWorldSize.x, 0, halfWorldSize.z);
+        Vector3 topRight = center + new Vector3(halfWorldSize.x, 0, halfWorldSize.z);
+        Vector3 bottomLeft = center + new Vector3(-halfWorldSize.x, 0, -halfWorldSize.z);
+        Vector3 bottomRight = center + new Vector3(halfWorldSize.x, 0, -halfWorldSize.z);
+        
+        // Set gizmo color based on selection state
+        if (isSelected)
+        {
+            Gizmos.color = Color.yellow;
+        }
+        else
+        {
+            Gizmos.color = new Color(1f, 1f, 0f, 0.3f); // Semi-transparent yellow
+        }
+        
+        // Draw the boundary rectangle
+        Gizmos.DrawLine(topLeft, topRight);
+        Gizmos.DrawLine(topRight, bottomRight);
+        Gizmos.DrawLine(bottomRight, bottomLeft);
+        Gizmos.DrawLine(bottomLeft, topLeft);
+        
+        // Draw center point
+        Gizmos.color = isSelected ? Color.red : new Color(1f, 0f, 0f, 0.5f);
+        Gizmos.DrawWireSphere(center, 0.1f);
+        
+        // Draw size labels if selected
+        if (isSelected)
+        {
+            #if UNITY_EDITOR
+            UnityEditor.Handles.color = Color.white;
+            UnityEditor.Handles.Label(center + Vector3.up * 0.5f, $"Grid: {size.x}x{size.y} | World: {worldSize.x:F1}x{worldSize.z:F1}");
+            #endif
+        }
+    }
+
+    #endregion
+
     #region Unity Lifecycle
 
     protected virtual void Start()
