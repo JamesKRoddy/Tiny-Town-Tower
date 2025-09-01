@@ -801,8 +801,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
             return;
         }
         
-        // Fall asleep if stamina is critically low (below 10%)
-        if (GetStaminaPercentage() <= 20f)
+        // Fall asleep if stamina is critically low (very tired threshold)
+        if (IsVeryTired())
         {
             Debug.Log($"[SettlerNPC] {name} is exhausted (stamina: {GetStaminaPercentage():F1}%), falling asleep");
             ChangeTask(TaskType.SLEEP);
