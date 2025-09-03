@@ -19,8 +19,8 @@ Medical
 
 
 Tomorrow work:
-Check medical system
-Build medical building and test if NPCs react to it
+Check if impact for being sick works ie slowed or stopped work
+Convert to in game hours, building times, research times, cooking times etc.
 
 
 

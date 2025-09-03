@@ -62,7 +62,7 @@ MonoBehaviour:
   requiredResources: []
   showTooltip: 0
   electricityRequired: 0
-  taskAnimation: 0
+  taskAnimation: 11
   baseTreatmentTime: 30
 --- !u!114 &1751135757740414010
 MonoBehaviour:

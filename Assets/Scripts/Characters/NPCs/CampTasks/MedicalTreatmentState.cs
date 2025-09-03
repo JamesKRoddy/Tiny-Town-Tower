@@ -10,6 +10,9 @@ public class MedicalTreatmentState : _TaskState
 {
     private MedicalBuilding assignedMedicalBuilding;
     private MedicalTask assignedMedicalTask;
+    private bool hasReachedTreatment = false;
+    private bool needsPrecisePositioning = false;
+    private bool isPlayingTreatmentAnimation = false;
 
     public override TaskType GetTaskType()
     {
@@ -21,6 +24,11 @@ public class MedicalTreatmentState : _TaskState
         Debug.Log($"[MedicalTreatmentState] {npc.name} entered medical treatment state");
         
         ResetAgentState();
+        
+        // Initialize positioning variables
+        hasReachedTreatment = false;
+        needsPrecisePositioning = false;
+        isPlayingTreatmentAnimation = false;
         
         // Check if NPC is actually sick
         if (!npc.IsSick)
@@ -37,11 +45,20 @@ public class MedicalTreatmentState : _TaskState
             TryAssignWorkOrWander();
             return;
         }
+        
+        // Set up navigation immediately after assignment (like WorkState does)
+        SetupNavigationToTreatment();
     }
 
     public override void OnExitState()
     {
         Debug.Log($"[MedicalTreatmentState] {npc.name} exited medical treatment state");
+        
+        // Stop treatment animation if playing
+        if (isPlayingTreatmentAnimation)
+        {
+            StopTreatmentAnimation();
+        }
         
         // Remove patient from medical building if assigned
         if (assignedMedicalBuilding != null)
@@ -52,6 +69,7 @@ public class MedicalTreatmentState : _TaskState
         // Reset state variables
         assignedMedicalBuilding = null;
         assignedMedicalTask = null;
+        isPlayingTreatmentAnimation = false;
     }
 
     public override void UpdateState()
@@ -72,38 +90,13 @@ public class MedicalTreatmentState : _TaskState
                 TryAssignWorkOrWander();
                 return;
             }
+            // Note: Navigation setup happens in OnEnterState, not here
         }
         
-        // Check if we're at the medical building
+        // Handle navigation and positioning
         if (assignedMedicalBuilding != null && assignedMedicalTask != null)
         {
-            Transform treatmentPoint = assignedMedicalBuilding.GetAvailableTreatmentPoint();
-            float distanceToTreatment = Vector3.Distance(npc.transform.position, treatmentPoint.position);
-            
-            // If we're close enough to the treatment point, receive treatment
-            if (distanceToTreatment <= 2f)
-            {
-                // Set destination to treatment point and stop moving
-                if (agent != null)
-                {
-                    agent.SetDestination(treatmentPoint.position);
-                    agent.isStopped = true;
-                    agent.velocity = Vector3.zero;
-                }
-                
-                // Apply accelerated healing while at medical building
-                ApplyMedicalTreatment();
-            }
-            else
-            {
-                // Move towards the medical building
-                if (agent != null)
-                {
-                    agent.SetDestination(treatmentPoint.position);
-                    agent.isStopped = false;
-                    agent.speed = npc.moveMaxSpeed * 0.8f; // Slightly slower movement when sick
-                }
-            }
+            HandleTreatmentNavigation();
         }
     }
 
@@ -179,6 +172,120 @@ public class MedicalTreatmentState : _TaskState
     }
 
     /// <summary>
+    /// Setup navigation to the treatment point
+    /// </summary>
+    private void SetupNavigationToTreatment()
+    {
+        if (assignedMedicalBuilding == null)
+            return;
+            
+        Transform treatmentPoint = assignedMedicalBuilding.GetAvailableTreatmentPoint();
+        
+        // Use base class method for consistent NavMesh setup
+        SetupNavMeshForWorkTask(treatmentPoint, 0.5f);
+        
+        // Set slower movement speed when sick
+        if (agent != null)
+        {
+            agent.speed = npc.moveMaxSpeed * 0.8f;
+        }
+        
+        // Reset positioning flags
+        hasReachedTreatment = false;
+        needsPrecisePositioning = false;
+        
+        Debug.Log($"[MedicalTreatmentState] {npc.name} navigating to treatment point at {treatmentPoint.position}");
+    }
+    
+    /// <summary>
+    /// Handle navigation to treatment point and precise positioning
+    /// </summary>
+    private void HandleTreatmentNavigation()
+    {
+        Transform treatmentPoint = assignedMedicalBuilding.GetAvailableTreatmentPoint();
+        
+        // Use the same two-phase approach as WorkState:
+        // Phase 1: Use NavMesh to get close to the treatment area
+        // Phase 2: Use precise positioning to lerp to exact position
+        
+        // Check if we've reached the treatment area using NavigationUtils (Phase 1)
+        bool hasReachedDestination = NavigationUtils.HasReachedDestination(agent, treatmentPoint, 0.5f, 1f);
+        
+        if (hasReachedDestination)
+        {
+            HandleReachedTreatment(treatmentPoint);
+        }
+        else
+        {
+            HandleMovingToTreatment();
+        }
+    }
+    
+    /// <summary>
+    /// Handle reaching the treatment point (Phase 2)
+    /// </summary>
+    private void HandleReachedTreatment(Transform treatmentPoint)
+    {
+        // Use the same logic as WorkState for precise positioning
+        bool justReached = HandleReachedDestination(ref hasReachedTreatment, ref needsPrecisePositioning, treatmentPoint);
+        
+        if (justReached)
+        {
+            Debug.Log($"[MedicalTreatmentState] {npc.name} reached treatment point, starting precise positioning");
+        }
+        
+        // Handle precise positioning if needed (Phase 2)
+        if (needsPrecisePositioning)
+        {
+            bool positioningComplete = UpdatePrecisePositioning(treatmentPoint, ref needsPrecisePositioning);
+            if (positioningComplete)
+            {
+                Debug.Log($"[MedicalTreatmentState] {npc.name} precise positioning complete, starting treatment");
+                StartTreatmentAnimation();
+            }
+        }
+        
+        // Apply treatment once positioned (or if no precise positioning needed)
+        if (!needsPrecisePositioning)
+        {
+            // Start animation if not already playing and we're positioned
+            if (!isPlayingTreatmentAnimation && hasReachedTreatment)
+            {
+                StartTreatmentAnimation();
+            }
+            
+            ApplyMedicalTreatment();
+        }
+    }
+    
+    /// <summary>
+    /// Handle moving towards the treatment point (Phase 1)
+    /// </summary>
+    private void HandleMovingToTreatment()
+    {
+        // Reset the reached flag if we're moving away from destination
+        if (hasReachedTreatment)
+        {
+            hasReachedTreatment = false;
+            needsPrecisePositioning = false;
+            
+            // Stop treatment animation if we're moving away
+            if (isPlayingTreatmentAnimation)
+            {
+                StopTreatmentAnimation();
+            }
+            
+            // Re-enable NavMesh control
+            if (agent != null)
+            {
+                agent.isStopped = false;
+                agent.updatePosition = true;
+                agent.updateRotation = true;
+            }
+        }
+    }
+    
+    /// <summary>
     /// Apply medical treatment to accelerate healing
     /// </summary>
     private void ApplyMedicalTreatment()
@@ -192,7 +299,12 @@ public class MedicalTreatmentState : _TaskState
         // The medical treatment accelerates the natural recovery process
         // We don't directly heal here, but the medical building's presence 
         // speeds up the natural sickness recovery time
-        Debug.Log($"[MedicalTreatmentState] {npc.name} receiving medical treatment (speed: {treatmentSpeedMultiplier}x)");
+        
+        // Only log every few seconds to avoid spam
+        if (Time.frameCount % 300 == 0) // Every 5 seconds at 60fps
+        {
+            Debug.Log($"[MedicalTreatmentState] {npc.name} receiving medical treatment (speed: {treatmentSpeedMultiplier}x)");
+        }
     }
 
     /// <summary>
@@ -213,5 +325,36 @@ public class MedicalTreatmentState : _TaskState
         }
         
         return false;
+    }
+    
+    /// <summary>
+    /// Start the medical treatment animation (NPC lying in bed)
+    /// </summary>
+    private void StartTreatmentAnimation()
+    {
+        if (isPlayingTreatmentAnimation || assignedMedicalTask == null)
+            return;
+            
+        // Play the treatment animation using the task's animation
+        string animationName = assignedMedicalTask.GetAnimationClipName();
+        npc.PlayWorkAnimation(animationName);
+        isPlayingTreatmentAnimation = true;
+        
+        Debug.Log($"[MedicalTreatmentState] {npc.name} started medical treatment animation: {animationName}");
+    }
+    
+    /// <summary>
+    /// Stop the medical treatment animation
+    /// </summary>
+    private void StopTreatmentAnimation()
+    {
+        if (!isPlayingTreatmentAnimation)
+            return;
+            
+        // Stop the treatment animation
+        npc.StopWorkAnimation();
+        isPlayingTreatmentAnimation = false;
+        
+        Debug.Log($"[MedicalTreatmentState] {npc.name} stopped medical treatment animation");
     }
 }
