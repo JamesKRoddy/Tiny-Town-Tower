@@ -17,6 +17,12 @@ public class SleepState : _TaskState
     private float wanderStartTime;
     private float wanderDuration = 2f; // Wander for 2 seconds before sleeping on ground
     
+    // Precise positioning for beds (similar to WorkState)
+    private bool hasReachedBed = false;
+    private bool needsPrecisePositioning = false;
+    private float timeAtBedLocation = 0f;
+    private float bedStartDelay = 0.5f; // Delay before starting to sleep
+    
     #endregion
     
     #region Task State Implementation
@@ -64,8 +70,19 @@ public class SleepState : _TaskState
             StopSleeping();
         }
         
+        // Reset all state variables
         isWanderingForSleep = false;
         isSleeping = false;
+        hasReachedBed = false;
+        needsPrecisePositioning = false;
+        timeAtBedLocation = 0f;
+        
+        // Re-enable NavMeshAgent updates if they were disabled for precise positioning
+        if (agent != null)
+        {
+            agent.updatePosition = true;
+            agent.updateRotation = true;
+        }
     }
     
     public override void UpdateState()
@@ -84,15 +101,16 @@ public class SleepState : _TaskState
             return;
         }
         
-        // Handle moving to bed
+        // Handle moving to bed with precise positioning
         if (sleepLocation != null && !isSleeping)
         {
             if (HasReachedDestination(sleepLocation, 1f))
             {
-                StartSleeping();
+                HandleReachedBed();
             }
             else
             {
+                HandleMovingToBed();
                 UpdateMovementAnimation();
             }
         }
@@ -121,7 +139,7 @@ public class SleepState : _TaskState
                 if (sleepTask.IsBedAssigned && sleepTask.AssignedSettler == settler)
                 {
                     Debug.Log($"[SleepState] {npc.name} found assigned bed");
-                    return sleepTask.transform;
+                    return sleepTask.GetPrecisePosition() ?? sleepTask.transform;
                 }
             }
             
@@ -133,7 +151,7 @@ public class SleepState : _TaskState
                     if (sleepTask.AssignSettlerToBed(settler))
                     {
                         Debug.Log($"[SleepState] {npc.name} assigned to available bed");
-                        return sleepTask.transform;
+                        return sleepTask.GetPrecisePosition() ?? sleepTask.transform;
                     }
                 }
             }
@@ -153,6 +171,62 @@ public class SleepState : _TaskState
         agent.speed = npc.moveMaxSpeed * 0.6f; // Slow, tired movement
         agent.stoppingDistance = 1f;
         agent.isStopped = false;
+        
+        // Reset bed positioning state
+        hasReachedBed = false;
+        needsPrecisePositioning = false;
+        timeAtBedLocation = 0f;
+    }
+    
+    /// <summary>
+    /// Handle reaching the bed area (similar to WorkState.HandleReachedTask)
+    /// </summary>
+    private void HandleReachedBed()
+    {
+        // Get the precise bed position from the sleep task
+        Transform precisePosition = null;
+        
+        // Try to get the precise position from the SleepTask
+        var sleepTask = sleepLocation.GetComponent<SleepTask>();
+        if (sleepTask != null)
+        {
+            precisePosition = sleepTask.GetPrecisePosition();
+        }
+        
+        bool justReached = HandleReachedDestination(ref hasReachedBed, ref needsPrecisePositioning, precisePosition);
+        
+        if (justReached)
+        {
+            timeAtBedLocation = 0f;
+        }
+
+        if (needsPrecisePositioning)
+        {
+            UpdatePrecisePositioning(precisePosition, ref needsPrecisePositioning);
+        }
+
+        StartSleepIfReady();
+    }
+    
+    /// <summary>
+    /// Handle moving away from bed (similar to WorkState.HandleMovingToTask)
+    /// </summary>
+    private void HandleMovingToBed()
+    {
+        HandleMovingFromDestination(ref hasReachedBed, ref needsPrecisePositioning);
+    }
+    
+    /// <summary>
+    /// Start sleeping if ready (similar to WorkState.StartTaskIfReady)
+    /// </summary>
+    private void StartSleepIfReady()
+    {
+        timeAtBedLocation += Time.deltaTime;
+        
+        if (timeAtBedLocation >= bedStartDelay && !isSleeping && !needsPrecisePositioning)
+        {
+            StartSleeping();
+        }
     }
     
     /// <summary>

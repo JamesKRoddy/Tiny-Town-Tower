@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 2174286213606600846}
   - component: {fileID: -5586315449989636300}
   m_Layer: 0
-  m_Name: SM_Prop_BedMatress_01
+  m_Name: Bed Lvl 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -161,7 +161,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15c6143a497f8e04fa106df6f7e353ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  workLocationTransform: {fileID: 0}
+  workLocationTransform: {fileID: 4214353630943454}
   maxWorkers: 1
   requiredResources: []
   showTooltip: 0
