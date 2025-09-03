@@ -54,7 +54,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     [Header("Hunger System")]
     [SerializeField] private float maxHunger = 100f;
     [SerializeField] private float currentHunger = 100f;
-    [SerializeField] private float hungerDecreaseRate = 1f; // Hunger points per second
+    [SerializeField] private float baseHungerDecreaseInGameHours = 24f; // How many game hours to go from full to starving (default: 24 game hours)
+    [ReadOnly] public float hungerDecreaseRate = 1f; // Calculated hunger decrease rate per second
     [SerializeField] private float hungerThreshold = 30f; // When to start looking for food
     [SerializeField] private float starvationThreshold = 10f; // When to stop working
     [SerializeField] private float workSpeedMultiplier = 1f; // Current work speed multiplier based on hunger
@@ -69,7 +70,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     [SerializeField] private bool isSick = false;
     [SerializeField] private float baseSicknessChance = 0.001f; // Base chance per second (very low)
     [SerializeField] private float sicknessCheckInterval = 5f; // Check every 5 seconds
-    [SerializeField] private float sicknessDuration = 30f; // How long being sick lasts (seconds)
+    [SerializeField] private float baseSicknessDurationInGameHours = 6f; // How long being sick lasts in game hours (default: 6 game hours)
+    [ReadOnly] public float sicknessDuration = 30f; // Calculated sickness duration in real seconds
     [SerializeField] private float sickWorkSpeedPenalty = 0.5f; // 50% work speed when sick
     [SerializeField] private float lowStaminaThreshold = 30f; // Stamina level below which NPCs are considered tired
     [SerializeField] private float veryLowStaminaThreshold = 10f; // Stamina level for severe tiredness
@@ -139,6 +141,12 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
             
             // Calculate stamina rates based on day/night length
             CalculateStaminaRates();
+            
+            // Calculate sickness duration based on day/night length
+            CalculateSicknessDuration();
+            
+            // Calculate hunger rate based on day/night length
+            CalculateHungerRate();
         }
     }
     
@@ -255,6 +263,94 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     public void RecalculateStaminaRates()
     {
         CalculateStaminaRates();
+    }
+    
+    /// <summary>
+    /// Calculate sickness duration based on TimeManager day/night cycle
+    /// Goal: Sickness should last for a realistic amount of game time relative to day length
+    /// </summary>
+    private void CalculateSicknessDuration()
+    {
+        var timeManager = GameManager.Instance?.TimeManager;
+        if (timeManager == null) 
+        {
+            // Fallback if no TimeManager
+            sicknessDuration = 30f; // 30 seconds fallback
+            Debug.LogWarning($"[SettlerNPC] {name} - No TimeManager found! Using fallback sickness duration: {sicknessDuration}s");
+            return;
+        }
+        
+        // Get day and night durations from TimeManager
+        float dayDurationInSeconds = timeManager.DayDurationInSeconds;
+        float nightDurationInSeconds = timeManager.NightDurationInSeconds;
+        float totalCycleDuration = dayDurationInSeconds + nightDurationInSeconds;
+        
+        // 1 full day/night cycle = 24 game hours
+        // Calculate how many seconds represent the desired game hours
+        float gameHoursPerCycle = 24f;
+        float secondsPerGameHour = totalCycleDuration / gameHoursPerCycle;
+        
+        // Calculate sickness duration in real seconds
+        sicknessDuration = baseSicknessDurationInGameHours * secondsPerGameHour;
+        
+        Debug.Log($"[SettlerNPC] {name} SICKNESS DURATION CALCULATED:");
+        Debug.Log($"  TimeManager Values - Day: {dayDurationInSeconds}s, Night: {nightDurationInSeconds}s, Total Cycle: {totalCycleDuration}s");
+        Debug.Log($"  Target: {baseSicknessDurationInGameHours} game hours = {sicknessDuration:F1}s real time");
+        Debug.Log($"  Seconds per game hour: {secondsPerGameHour:F2}s");
+    }
+    
+    /// <summary>
+    /// Recalculate sickness duration - call this when characteristics or game settings change
+    /// </summary>
+    public void RecalculateSicknessDuration()
+    {
+        CalculateSicknessDuration();
+    }
+    
+    /// <summary>
+    /// Calculate hunger decrease rate based on TimeManager day/night cycle
+    /// Goal: NPCs should go from full hunger to starvation over a realistic game time period
+    /// </summary>
+    private void CalculateHungerRate()
+    {
+        var timeManager = GameManager.Instance?.TimeManager;
+        if (timeManager == null) 
+        {
+            // Fallback if no TimeManager
+            hungerDecreaseRate = 1f; // 1 hunger point per second fallback
+            Debug.LogWarning($"[SettlerNPC] {name} - No TimeManager found! Using fallback hunger rate: {hungerDecreaseRate}/s");
+            return;
+        }
+        
+        // Get day and night durations from TimeManager
+        float dayDurationInSeconds = timeManager.DayDurationInSeconds;
+        float nightDurationInSeconds = timeManager.NightDurationInSeconds;
+        float totalCycleDuration = dayDurationInSeconds + nightDurationInSeconds;
+        
+        // 1 full day/night cycle = 24 game hours
+        // Calculate how many seconds represent the desired game hours
+        float gameHoursPerCycle = 24f;
+        float secondsPerGameHour = totalCycleDuration / gameHoursPerCycle;
+        
+        // Calculate how many real seconds it should take to go from full hunger to 0
+        float targetSecondsToStarvation = baseHungerDecreaseInGameHours * secondsPerGameHour;
+        
+        // Calculate hunger decrease rate: 100 hunger points lost over the calculated time period
+        hungerDecreaseRate = maxHunger / targetSecondsToStarvation;
+        
+        Debug.Log($"[SettlerNPC] {name} HUNGER RATE CALCULATED:");
+        Debug.Log($"  TimeManager Values - Day: {dayDurationInSeconds}s, Night: {nightDurationInSeconds}s, Total Cycle: {totalCycleDuration}s");
+        Debug.Log($"  Target: {baseHungerDecreaseInGameHours} game hours = {targetSecondsToStarvation:F1}s real time");
+        Debug.Log($"  Calculated hungerDecreaseRate: {hungerDecreaseRate:F6}/s ({maxHunger} hunger / {targetSecondsToStarvation}s)");
+        Debug.Log($"  Seconds per game hour: {secondsPerGameHour:F2}s");
+    }
+    
+    /// <summary>
+    /// Recalculate hunger rate - call this when characteristics or game settings change
+    /// </summary>
+    public void RecalculateHungerRate()
+    {
+        CalculateHungerRate();
     }
 
     /// <summary>
