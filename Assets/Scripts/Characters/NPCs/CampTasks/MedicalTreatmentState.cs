@@ -43,12 +43,10 @@ public class MedicalTreatmentState : _TaskState
     {
         Debug.Log($"[MedicalTreatmentState] {npc.name} exited medical treatment state");
         
-        // Stop working on medical task if assigned
-        if (assignedMedicalTask != null && assignedMedicalBuilding != null)
+        // Remove patient from medical building if assigned
+        if (assignedMedicalBuilding != null)
         {
-            npc.StopWork();
-            assignedMedicalTask = null;
-            assignedMedicalBuilding = null;
+            assignedMedicalBuilding.RemovePatient(npc);
         }
         
         // Reset state variables
@@ -66,15 +64,47 @@ public class MedicalTreatmentState : _TaskState
             return;
         }
         
-        // Try to find a medical building and start work on it
-        if (!FindAndAssignMedicalBuilding())
+        // If we don't have an assigned medical building, try to find one
+        if (assignedMedicalBuilding == null || assignedMedicalTask == null)
         {
-            TryAssignWorkOrWander();
-            return;
+            if (!FindAndAssignMedicalBuilding())
+            {
+                TryAssignWorkOrWander();
+                return;
+            }
         }
         
-        // If we successfully assigned to a medical building, we're done
-        // The NPC will now be in WORK state working on the MedicalTask
+        // Check if we're at the medical building
+        if (assignedMedicalBuilding != null && assignedMedicalTask != null)
+        {
+            Transform treatmentPoint = assignedMedicalBuilding.GetAvailableTreatmentPoint();
+            float distanceToTreatment = Vector3.Distance(npc.transform.position, treatmentPoint.position);
+            
+            // If we're close enough to the treatment point, receive treatment
+            if (distanceToTreatment <= 2f)
+            {
+                // Set destination to treatment point and stop moving
+                if (agent != null)
+                {
+                    agent.SetDestination(treatmentPoint.position);
+                    agent.isStopped = true;
+                    agent.velocity = Vector3.zero;
+                }
+                
+                // Apply accelerated healing while at medical building
+                ApplyMedicalTreatment();
+            }
+            else
+            {
+                // Move towards the medical building
+                if (agent != null)
+                {
+                    agent.SetDestination(treatmentPoint.position);
+                    agent.isStopped = false;
+                    agent.speed = npc.moveMaxSpeed * 0.8f; // Slightly slower movement when sick
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -123,10 +153,19 @@ public class MedicalTreatmentState : _TaskState
             
             if (assignedMedicalTask != null)
             {
-                // Start working on the medical task (like SleepState does with beds)
-                npc.StartWork(assignedMedicalTask);
-                Debug.Log($"[MedicalTreatmentState] {npc.name} assigned to medical building: {closestBuilding.name}");
-                return true;
+                // Add patient to the medical building without starting work task
+                if (assignedMedicalBuilding.AddPatient(npc))
+                {
+                    Debug.Log($"[MedicalTreatmentState] {npc.name} assigned to medical building: {closestBuilding.name}");
+                    return true;
+                }
+                else
+                {
+                    Debug.LogWarning($"[MedicalTreatmentState] Failed to add {npc.name} as patient to {closestBuilding.name}");
+                    assignedMedicalBuilding = null;
+                    assignedMedicalTask = null;
+                    return false;
+                }
             }
             else
             {
@@ -139,7 +178,22 @@ public class MedicalTreatmentState : _TaskState
         return false;
     }
 
-
+    /// <summary>
+    /// Apply medical treatment to accelerate healing
+    /// </summary>
+    private void ApplyMedicalTreatment()
+    {
+        if (assignedMedicalBuilding == null || !npc.IsSick)
+            return;
+            
+        // Apply accelerated healing based on medical building's treatment speed multiplier
+        float treatmentSpeedMultiplier = assignedMedicalBuilding.TreatmentSpeedMultiplier;
+        
+        // The medical treatment accelerates the natural recovery process
+        // We don't directly heal here, but the medical building's presence 
+        // speeds up the natural sickness recovery time
+        Debug.Log($"[MedicalTreatmentState] {npc.name} receiving medical treatment (speed: {treatmentSpeedMultiplier}x)");
+    }
 
     /// <summary>
     /// Check if there are any available medical buildings

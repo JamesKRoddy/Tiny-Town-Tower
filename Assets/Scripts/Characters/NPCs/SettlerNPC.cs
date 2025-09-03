@@ -592,7 +592,26 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         // If already sick, check for recovery
         if (isSick)
         {
-            if (Time.time - sicknessStartTime >= sicknessDuration)
+            float effectiveSicknessDuration = sicknessDuration;
+            
+            // Check if receiving medical treatment for accelerated recovery
+            if (GetCurrentTaskType() == TaskType.MEDICAL_TREATMENT)
+            {
+                // Find the medical building we're being treated at
+                var medicalBuildings = FindObjectsByType<MedicalBuilding>(FindObjectsSortMode.None);
+                foreach (var medicalBuilding in medicalBuildings)
+                {
+                    if (medicalBuilding.IsPatient(this))
+                    {
+                        // Apply treatment speed multiplier to reduce effective sickness duration
+                        effectiveSicknessDuration = sicknessDuration / medicalBuilding.TreatmentSpeedMultiplier;
+                        Debug.Log($"[SettlerNPC] {name} receiving medical treatment - recovery time reduced to {effectiveSicknessDuration:F1}s (was {sicknessDuration:F1}s)");
+                        break;
+                    }
+                }
+            }
+            
+            if (Time.time - sicknessStartTime >= effectiveSicknessDuration)
             {
                 RecoverFromSickness();
             }
@@ -705,6 +724,24 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     /// Force recovery from sickness (called by medical treatment)
     /// </summary>
     public void ForceRecoveryFromSickness()
+    {
+        RecoverFromSickness();
+    }
+    
+    /// <summary>
+    /// Manually make the NPC sick for testing purposes
+    /// </summary>
+    [ContextMenu("Make Sick (Testing)")]
+    public void MakeSickForTesting()
+    {
+        BecomeSick();
+    }
+    
+    /// <summary>
+    /// Manually cure the NPC for testing purposes
+    /// </summary>
+    [ContextMenu("Cure Sickness (Testing)")]
+    public void CureSicknessForTesting()
     {
         RecoverFromSickness();
     }
