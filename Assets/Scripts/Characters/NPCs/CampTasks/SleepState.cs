@@ -257,19 +257,42 @@ public class SleepState : _TaskState
     /// </summary>
     private bool ShouldWakeUp()
     {
-        // Wake up if stamina is 80+ 
-        if (npc.GetStaminaPercentage() >= 80f)
-        {
-            return true;
-        }
+        bool isDay = GameManager.Instance?.TimeManager?.IsDay == true;
+        bool hasProperBed = sleepLocation != null && npc.HasAssignedBed();
+        float staminaPercentage = npc.GetStaminaPercentage();
         
-        // Wake up if day started and stamina is decent (50+)
-        if (GameManager.Instance?.TimeManager?.IsDay == true && npc.GetStaminaPercentage() >= 50f)
+        // If in a proper bed, sleep until morning unless stamina is completely full
+        if (hasProperBed)
         {
-            return true;
+            // Only wake up if it's day and stamina is at least 50%, or if stamina is completely full
+            if (staminaPercentage >= 100f)
+            {
+                return true; // Fully rested, can wake up anytime
+            }
+            
+            if (isDay && staminaPercentage >= 50f)
+            {
+                return true; // It's morning and we have decent stamina
+            }
+            
+            return false; // Stay in bed during night
         }
-        
-        return false;
+        else
+        {
+            // Sleeping on ground - wake up when stamina is restored (80+) regardless of time
+            if (staminaPercentage >= 80f)
+            {
+                return true;
+            }
+            
+            // Also wake up if day started and stamina is decent (50+)
+            if (isDay && staminaPercentage >= 50f)
+            {
+                return true;
+            }
+            
+            return false;
+        }
     }
     
     /// <summary>
