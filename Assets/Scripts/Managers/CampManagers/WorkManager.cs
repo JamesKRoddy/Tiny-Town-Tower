@@ -397,17 +397,33 @@ namespace Managers
                     onTaskSelected(task);
                     ClearNPCForAssignment(); // Clear assignment after work is started
                 }),
+                MedicalTask => ("Medical Treatment", () => {
+                    onTaskSelected(task);
+                    ClearNPCForAssignment(); // Clear assignment after work is started
+                }),
                 _ => (task.GetType().Name.Replace("Task", ""), () => {
                     onTaskSelected(task);
                     ClearNPCForAssignment(); // Clear assignment after work is started
                 })
             };
 
+            // Custom canSelect logic for specific task types
+            Func<bool> canSelectTask = task switch
+            {
+                MedicalTask medicalTask => () => {
+                    // Medical tasks can only be selected if the task can be performed AND the NPC is sick
+                    return medicalTask.CanPerformTask() && 
+                           characterToAssign is SettlerNPC settler && 
+                           settler.IsSick;
+                },
+                _ => () => task.CanPerformTask()
+            };
+
             return new SelectionPopup.SelectionOption
             {
                 optionName = name,
                 onSelected = action,
-                canSelect = () => task.CanPerformTask(),
+                canSelect = canSelectTask,
                 workTask = task
             };
         }
