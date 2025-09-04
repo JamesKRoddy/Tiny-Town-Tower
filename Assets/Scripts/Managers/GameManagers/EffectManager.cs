@@ -21,6 +21,10 @@ namespace Managers
 
         private Dictionary<EffectDefinition, Queue<GameObject>> effectPools = new Dictionary<EffectDefinition, Queue<GameObject>>();
         private Dictionary<EffectDefinition, List<GameObject>> activeEffects = new Dictionary<EffectDefinition, List<GameObject>>();
+        
+        // Status effect tracking
+        private Dictionary<IStatusEffectTarget, Dictionary<StatusEffectType, ActiveStatusEffect>> activeStatusEffects = 
+            new Dictionary<IStatusEffectTarget, Dictionary<StatusEffectType, ActiveStatusEffect>>();
 
         private void Awake()
         {
@@ -448,6 +452,406 @@ namespace Managers
                 }
             }
         }
+        
+        #region Status Effect Management
+        
+        /// <summary>
+        /// Apply a status effect to a character
+        /// </summary>
+        public void ApplyStatusEffect(IStatusEffectTarget target, StatusEffectType statusType, float duration = 0f)
+        {
+            if (target == null)
+            {
+                Debug.LogWarning("[EffectManager] Cannot apply status effect to null target");
+                return;
+            }
+            
+            var statusDefinition = GetStatusEffectDefinition(target.GetCharacterType(), statusType);
+            if (statusDefinition == null)
+            {
+                Debug.LogWarning($"[EffectManager] No status effect definition found for {statusType} on {target.GetCharacterType()}");
+                return;
+            }
+            
+            // Initialize status effects dictionary for this target if needed
+            if (!activeStatusEffects.ContainsKey(target))
+            {
+                activeStatusEffects[target] = new Dictionary<StatusEffectType, ActiveStatusEffect>();
+            }
+            
+            var targetEffects = activeStatusEffects[target];
+            
+            // Handle existing effect based on behavior
+            if (targetEffects.ContainsKey(statusType))
+            {
+                var existingEffect = targetEffects[statusType];
+                
+                switch (statusDefinition.behavior)
+                {
+                    case StatusEffectBehavior.IGNORE_IF_EXISTS:
+                        return;
+                        
+                    case StatusEffectBehavior.REFRESH_DURATION:
+                        if (statusDefinition.canRefreshDuration)
+                        {
+                            existingEffect.duration = duration > 0 ? duration : statusDefinition.defaultDuration;
+                            existingEffect.startTime = Time.time;
+                            return;
+                        }
+                        break;
+                        
+                    case StatusEffectBehavior.REPLACE_EXISTING:
+                    case StatusEffectBehavior.STACK:
+                    default:
+                        RemoveStatusEffect(target, statusType);
+                        break;
+                }
+            }
+            
+            // Create new status effect
+            var activeEffect = new ActiveStatusEffect
+            {
+                statusType = statusType,
+                definition = statusDefinition,
+                startTime = Time.time,
+                duration = duration > 0 ? duration : statusDefinition.defaultDuration,
+                isActive = true
+            };
+            
+            // Apply visual effect
+            ApplyStatusVisualEffect(target, activeEffect);
+            
+            // Apply gameplay effects
+            ApplyStatusGameplayEffects(target, activeEffect);
+            
+            // Set up duration handling
+            if (activeEffect.duration > 0)
+            {
+                activeEffect.durationCoroutine = StartCoroutine(RemoveStatusEffectAfterDuration(target, statusType, activeEffect.duration));
+            }
+            
+            // Set up damage/healing over time
+            if (statusDefinition.damagePerSecond != 0f || statusDefinition.healingPerSecond != 0f)
+            {
+                activeEffect.damageCoroutine = StartCoroutine(HandleStatusDamageOverTime(target, activeEffect));
+            }
+            
+            targetEffects[statusType] = activeEffect;
+            
+            // Notify target
+            target.OnStatusEffectApplied(statusType, activeEffect.duration);
+            
+            Debug.Log($"[EffectManager] Applied status effect {statusType} to {target.GetCharacterType()} for {activeEffect.duration}s");
+        }
+        
+        /// <summary>
+        /// Remove a status effect from a character
+        /// </summary>
+        public void RemoveStatusEffect(IStatusEffectTarget target, StatusEffectType statusType)
+        {
+            if (target == null || !activeStatusEffects.ContainsKey(target)) return;
+            
+            var targetEffects = activeStatusEffects[target];
+            if (!targetEffects.ContainsKey(statusType)) return;
+            
+            var activeEffect = targetEffects[statusType];
+            
+            // Remove visual effects
+            RemoveStatusVisualEffect(target, activeEffect);
+            
+            // Remove gameplay effects
+            RemoveStatusGameplayEffects(target, activeEffect);
+            
+            // Cleanup
+            activeEffect.Cleanup();
+            targetEffects.Remove(statusType);
+            
+            // Notify target
+            target.OnStatusEffectRemoved(statusType);
+            
+            Debug.Log($"[EffectManager] Removed status effect {statusType} from {target.GetCharacterType()}");
+        }
+        
+        /// <summary>
+        /// Remove all status effects from a character
+        /// </summary>
+        public void RemoveAllStatusEffects(IStatusEffectTarget target)
+        {
+            if (target == null || !activeStatusEffects.ContainsKey(target)) return;
+            
+            var targetEffects = activeStatusEffects[target];
+            var effectTypes = new StatusEffectType[targetEffects.Count];
+            targetEffects.Keys.CopyTo(effectTypes, 0);
+            
+            foreach (var effectType in effectTypes)
+            {
+                RemoveStatusEffect(target, effectType);
+            }
+            
+            activeStatusEffects.Remove(target);
+        }
+        
+        /// <summary>
+        /// Check if a character has a specific status effect
+        /// </summary>
+        public bool HasStatusEffect(IStatusEffectTarget target, StatusEffectType statusType)
+        {
+            return activeStatusEffects.ContainsKey(target) && 
+                   activeStatusEffects[target].ContainsKey(statusType);
+        }
+        
+        /// <summary>
+        /// Get the status effect definition for a character type and status type
+        /// </summary>
+        private StatusEffectDefinition GetStatusEffectDefinition(CharacterType characterType, StatusEffectType statusType)
+        {
+            var characterEffects = GetCharacterEffects(characterType);
+            if (characterEffects?.statusEffects == null) return null;
+            
+            foreach (var statusEffect in characterEffects.statusEffects)
+            {
+                if (statusEffect.statusType == statusType)
+                {
+                    return statusEffect;
+                }
+            }
+            
+            return null;
+        }
+        
+        /// <summary>
+        /// Apply visual effects for a status effect
+        /// </summary>
+        private void ApplyStatusVisualEffect(IStatusEffectTarget target, ActiveStatusEffect activeEffect)
+        {
+            var definition = activeEffect.definition;
+            var targetTransform = (target as Component)?.transform;
+            if (targetTransform == null) return;
+            
+            // Play visual effect
+            if (definition.HasVisualEffect())
+            {
+                Vector3 position = targetTransform.position + Vector3.up * definition.heightOffset;
+                activeEffect.visualEffectInstance = PlayEffect(
+                    position, 
+                    Vector3.up, 
+                    Quaternion.identity, 
+                    targetTransform, 
+                    definition.GetVisualEffect(), 
+                    activeEffect.duration
+                );
+            }
+            
+            // Show floating text
+            if (definition.HasFloatingText())
+            {
+                // TODO: Implement floating text system or integrate with UI system
+                Debug.Log($"[EffectManager] Status text: {definition.floatingText}");
+            }
+            
+            // Apply material modifications
+            if (definition.ModifiesAppearance())
+            {
+                ApplyMaterialEffects(targetTransform, definition);
+            }
+        }
+        
+        /// <summary>
+        /// Remove visual effects for a status effect
+        /// </summary>
+        private void RemoveStatusVisualEffect(IStatusEffectTarget target, ActiveStatusEffect activeEffect)
+        {
+            var targetTransform = (target as Component)?.transform;
+            if (targetTransform == null) return;
+            
+            // Restore materials if modified
+            if (activeEffect.definition.ModifiesAppearance())
+            {
+                RestoreMaterialEffects(targetTransform, activeEffect);
+            }
+        }
+        
+        /// <summary>
+        /// Apply gameplay effects for a status effect
+        /// </summary>
+        private void ApplyStatusGameplayEffects(IStatusEffectTarget target, ActiveStatusEffect activeEffect)
+        {
+            var definition = activeEffect.definition;
+            var targetTransform = (target as Component)?.transform;
+            if (targetTransform == null) return;
+            
+            // Apply movement speed modifier
+            if (definition.movementSpeedMultiplier != 1f)
+            {
+                var navAgent = targetTransform.GetComponent<UnityEngine.AI.NavMeshAgent>();
+                if (navAgent != null)
+                {
+                    activeEffect.originalMovementSpeed = navAgent.speed;
+                    navAgent.speed *= definition.movementSpeedMultiplier;
+                }
+            }
+            
+            // Apply animation speed modifier
+            if (definition.modifyAnimations && definition.animationSpeedMultiplier != 1f)
+            {
+                var animator = targetTransform.GetComponent<Animator>();
+                if (animator != null)
+                {
+                    activeEffect.originalAnimationSpeed = animator.speed;
+                    animator.speed *= definition.animationSpeedMultiplier;
+                }
+            }
+            
+            // Set animation trigger
+            if (definition.modifyAnimations && !string.IsNullOrEmpty(definition.animationTrigger))
+            {
+                var animator = targetTransform.GetComponent<Animator>();
+                animator?.SetTrigger(definition.animationTrigger);
+            }
+            
+            // Handle action prevention
+            if (definition.preventActions)
+            {
+                var navAgent = targetTransform.GetComponent<UnityEngine.AI.NavMeshAgent>();
+                if (navAgent != null)
+                {
+                    navAgent.isStopped = true;
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Remove gameplay effects for a status effect
+        /// </summary>
+        private void RemoveStatusGameplayEffects(IStatusEffectTarget target, ActiveStatusEffect activeEffect)
+        {
+            var definition = activeEffect.definition;
+            var targetTransform = (target as Component)?.transform;
+            if (targetTransform == null) return;
+            
+            // Restore movement speed
+            if (definition.movementSpeedMultiplier != 1f && activeEffect.originalMovementSpeed > 0)
+            {
+                var navAgent = targetTransform.GetComponent<UnityEngine.AI.NavMeshAgent>();
+                if (navAgent != null)
+                {
+                    navAgent.speed = activeEffect.originalMovementSpeed;
+                }
+            }
+            
+            // Restore animation speed
+            if (definition.modifyAnimations && definition.animationSpeedMultiplier != 1f && activeEffect.originalAnimationSpeed > 0)
+            {
+                var animator = targetTransform.GetComponent<Animator>();
+                if (animator != null)
+                {
+                    animator.speed = activeEffect.originalAnimationSpeed;
+                }
+            }
+            
+            // Remove action prevention
+            if (definition.preventActions)
+            {
+                var navAgent = targetTransform.GetComponent<UnityEngine.AI.NavMeshAgent>();
+                if (navAgent != null)
+                {
+                    navAgent.isStopped = false;
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Apply material effects for status effects
+        /// </summary>
+        private void ApplyMaterialEffects(Transform target, StatusEffectDefinition definition)
+        {
+            var renderers = target.GetComponentsInChildren<Renderer>();
+            foreach (var renderer in renderers)
+            {
+                var materials = renderer.materials;
+                for (int i = 0; i < materials.Length; i++)
+                {
+                    if (definition.characterTint != Color.white)
+                    {
+                        materials[i].color = Color.Lerp(materials[i].color, definition.characterTint, 0.5f);
+                    }
+                    
+                    if (definition.alphaValue != 1f)
+                    {
+                        var color = materials[i].color;
+                        color.a = definition.alphaValue;
+                        materials[i].color = color;
+                    }
+                    
+                    if (definition.emissionIntensity > 0f)
+                    {
+                        materials[i].SetColor("_EmissionColor", definition.emissionColor * definition.emissionIntensity);
+                        materials[i].EnableKeyword("_EMISSION");
+                    }
+                }
+                renderer.materials = materials;
+            }
+        }
+        
+        /// <summary>
+        /// Restore material effects for status effects
+        /// </summary>
+        private void RestoreMaterialEffects(Transform target, ActiveStatusEffect activeEffect)
+        {
+            // This would require storing original materials - simplified for now
+            var renderers = target.GetComponentsInChildren<Renderer>();
+            foreach (var renderer in renderers)
+            {
+                var materials = renderer.materials;
+                for (int i = 0; i < materials.Length; i++)
+                {
+                    // Reset to default values - in a real implementation, we'd restore original values
+                    if (activeEffect.definition.emissionIntensity > 0f)
+                    {
+                        materials[i].SetColor("_EmissionColor", Color.black);
+                        materials[i].DisableKeyword("_EMISSION");
+                    }
+                }
+                renderer.materials = materials;
+            }
+        }
+        
+        /// <summary>
+        /// Handle damage or healing over time for status effects
+        /// </summary>
+        private IEnumerator HandleStatusDamageOverTime(IStatusEffectTarget target, ActiveStatusEffect activeEffect)
+        {
+            var definition = activeEffect.definition;
+            var targetComponent = target as Component;
+            
+            while (activeEffect.isActive && targetComponent != null)
+            {
+                if (definition.damagePerSecond > 0f)
+                {
+                    var damageable = targetComponent.GetComponent<IDamageable>();
+                    damageable?.TakeDamage(definition.damagePerSecond);
+                }
+                
+                if (definition.healingPerSecond > 0f)
+                {
+                    // TODO: Implement healing interface or system
+                    Debug.Log($"[EffectManager] Healing {target.GetCharacterType()} for {definition.healingPerSecond}");
+                }
+                
+                yield return new WaitForSeconds(1f);
+            }
+        }
+        
+        /// <summary>
+        /// Remove status effect after duration expires
+        /// </summary>
+        private IEnumerator RemoveStatusEffectAfterDuration(IStatusEffectTarget target, StatusEffectType statusType, float duration)
+        {
+            yield return new WaitForSeconds(duration);
+            RemoveStatusEffect(target, statusType);
+        }
+        
+        #endregion
     }
     
     /// <summary>
@@ -510,4 +914,45 @@ namespace Managers
             EffectManager.Instance.PlayEffect(position, normal, rotation, parent, effect);
         }
     }
-} 
+    
+    /// <summary>
+    /// Internal class to track active status effects on characters
+    /// </summary>
+    public class ActiveStatusEffect
+    {
+        public StatusEffectType statusType;
+        public StatusEffectDefinition definition;
+        public GameObject visualEffectInstance;
+        public float startTime;
+        public float duration;
+        public Coroutine durationCoroutine;
+        public Coroutine damageCoroutine;
+        public bool isActive;
+        
+        // Store original values for restoration
+        public Color[] originalColors;
+        public float originalMovementSpeed;
+        public float originalAnimationSpeed;
+        
+        public void Cleanup()
+        {
+            if (visualEffectInstance != null)
+            {
+                Object.Destroy(visualEffectInstance);
+                visualEffectInstance = null;
+            }
+            
+            if (durationCoroutine != null)
+            {
+                EffectManager.Instance.StopCoroutine(durationCoroutine);
+                durationCoroutine = null;
+            }
+            
+            if (damageCoroutine != null)
+            {
+                EffectManager.Instance.StopCoroutine(damageCoroutine);
+                damageCoroutine = null;
+            }
+        }
+    }
+}

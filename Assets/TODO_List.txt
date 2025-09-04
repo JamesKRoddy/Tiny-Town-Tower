@@ -11,16 +11,13 @@ Check cleaning station still works
 Toilet
 
 Health system for settlers:
-The dirtier the camp is the more likely settlers will get sick
 Settlers not treated will die, recover or turn to zombies eventually (this is just based on their age and luck)
 They can increase chances of recovery by not working or even better receiving treatment.
-Buildings to work on:
-Medical
 
 
 Tomorrow work:
-Convert to in game hours, building times, research times, cooking times etc.
-
+Status effects, adding sleep, work etc effects to npcs
+Also damage ones like fire electric, poison etc.
 
 
 
@@ -32,6 +29,7 @@ The game manager should have references to the managers childed to it, they shou
 If you create a second construction site not all npcs move onto the second one after completing the first, think its because the task has been marked as occupied
 Pressing b after selecting a bed locks the controls
 Refactor the rest of the _TaskState to reduce repetition of code
+Still some issue with the melee zombie bugging out between hits while being close to the player
 
 Add to save load manager:
 Construction, repair and destruction sites

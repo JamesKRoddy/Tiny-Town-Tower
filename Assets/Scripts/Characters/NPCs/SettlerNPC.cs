@@ -9,7 +9,7 @@ using Mono.Cecil.Cil;
 
 
 [RequireComponent(typeof(NavMeshAgent))]
-public class SettlerNPC : HumanCharacterController, INarrativeTarget
+public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEffectTarget
 {
     [Header("Procedural Settler Data")]
     [SerializeField, ReadOnly] private string settlerName;
@@ -104,6 +104,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         {
             Debug.LogError($"[SettlerNPC] {gameObject.name} - appearanceSystem is null! Make sure it's assigned in the prefab inspector.");
         }
+
+        // Status effects are now handled by EffectManager
 
         // Get all TaskState components attached to the SettlerNPC GameObject
         _TaskState[] states = GetComponents<_TaskState>();
@@ -695,6 +697,9 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         Debug.Log($"[SettlerNPC] {name} has become sick!");
         OnBecameSick?.Invoke();
         
+        // Update visual status
+        UpdateSicknessVisualStatus();
+        
         // Check for available medical treatment
         CheckForMedicalTreatment();
     }
@@ -711,6 +716,9 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         
         Debug.Log($"[SettlerNPC] {name} has recovered from sickness!");
         OnRecoveredFromSickness?.Invoke();
+        
+        // Update visual status
+        UpdateSicknessVisualStatus();
     }
     
     /// <summary>
@@ -807,8 +815,12 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         // Update hunger
         if (currentHunger > 0)
         {
+            float previousHunger = currentHunger;
             currentHunger = Mathf.Max(0, currentHunger - (hungerDecreaseRate * Time.deltaTime));
             OnHungerChanged?.Invoke(currentHunger, maxHunger);
+
+            // Update visual status based on hunger changes
+            UpdateHungerVisualStatus(previousHunger);
 
             // Update work speed multiplier based on hunger and sickness
             if (currentHunger <= starvationThreshold)
@@ -872,6 +884,15 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     {
         float oldStamina = currentStamina;
         currentStamina = Mathf.Clamp(currentStamina + staminaChange, 0f, maxStamina);
+        
+        // Update visual status if stamina thresholds were crossed
+        if ((oldStamina > lowStaminaThreshold && currentStamina <= lowStaminaThreshold) ||
+            (oldStamina <= lowStaminaThreshold && currentStamina > lowStaminaThreshold) ||
+            (oldStamina > veryLowStaminaThreshold && currentStamina <= veryLowStaminaThreshold) ||
+            (oldStamina <= veryLowStaminaThreshold && currentStamina > veryLowStaminaThreshold))
+        {
+            UpdateStaminaVisualStatus();
+        }
         
         // Enhanced debug logging for stamina changes
         if (Time.frameCount % 120 == 0 && !string.IsNullOrEmpty(reason)) // Log every 2 seconds at 60fps
@@ -1199,6 +1220,9 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
 
             
             ChangeState(taskStates[newTask]);
+            
+            // Update visual status based on new task
+            UpdateTaskVisualStatus(newTask);
         }
         else
         {
@@ -1471,6 +1495,246 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         return transform;
     }
 
+    #endregion
+
+    #region Visual Status Management (Integrated with EffectManager)
+    
+    /// <summary>
+    /// Update visual status based on hunger changes
+    /// </summary>
+    private void UpdateHungerVisualStatus(float previousHunger)
+    {
+        if (EffectManager.Instance == null) return;
+        
+        // Check for hunger state changes
+        bool wasHungry = previousHunger <= hungerThreshold;
+        bool wasStarving = previousHunger <= starvationThreshold;
+        bool isHungryNow = currentHunger <= hungerThreshold;
+        bool isStarvingNow = currentHunger <= starvationThreshold;
+        
+        // Remove old hunger statuses
+        if (wasStarving && !isStarvingNow)
+        {
+            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.STARVING);
+        }
+        if (wasHungry && !isHungryNow)
+        {
+            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.HUNGRY);
+        }
+        
+        // Apply new hunger statuses
+        if (isStarvingNow && !wasStarving)
+        {
+            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.HUNGRY); // Remove less severe status
+            EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.STARVING);
+        }
+        else if (isHungryNow && !wasHungry && !isStarvingNow)
+        {
+            EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.HUNGRY);
+        }
+        
+        // Update healthy status
+        if (!isHungryNow && !IsTired() && !isSick)
+        {
+            EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.HEALTHY);
+        }
+        else
+        {
+            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.HEALTHY);
+        }
+    }
+    
+    /// <summary>
+    /// Update visual status based on stamina changes
+    /// </summary>
+    private void UpdateStaminaVisualStatus()
+    {
+        if (EffectManager.Instance == null) return;
+        
+        // Remove old stamina statuses
+        EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.TIRED);
+        EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.EXHAUSTED);
+        
+        // Apply current stamina status
+        if (IsVeryTired())
+        {
+            EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.EXHAUSTED);
+        }
+        else if (IsTired())
+        {
+            EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.TIRED);
+        }
+        
+        // Update healthy status
+        UpdateHealthyStatus();
+    }
+    
+    /// <summary>
+    /// Update visual status based on sickness changes
+    /// </summary>
+    private void UpdateSicknessVisualStatus()
+    {
+        if (EffectManager.Instance == null) return;
+        
+        if (isSick)
+        {
+            EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.SICK);
+            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.HEALTHY);
+        }
+        else
+        {
+            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.SICK);
+            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.RECEIVING_MEDICAL_TREATMENT);
+            UpdateHealthyStatus();
+        }
+    }
+    
+    /// <summary>
+    /// Update visual status based on task changes
+    /// </summary>
+    private void UpdateTaskVisualStatus(TaskType newTask)
+    {
+        if (EffectManager.Instance == null) return;
+        
+        // Remove old task-related statuses
+        EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.SLEEPING);
+        EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.WORKING);
+        EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.EATING);
+        EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.FIGHTING);
+        EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.FLEEING);
+        EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.RECEIVING_MEDICAL_TREATMENT);
+        
+        // Apply new task status
+        switch (newTask)
+        {
+            case TaskType.SLEEP:
+                EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.SLEEPING);
+                break;
+            case TaskType.WORK:
+                EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.WORKING);
+                break;
+            case TaskType.EAT:
+                EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.EATING);
+                break;
+            case TaskType.ATTACK:
+                EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.FIGHTING);
+                break;
+            case TaskType.FLEE:
+                EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.FLEEING);
+                break;
+            case TaskType.MEDICAL_TREATMENT:
+                EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.RECEIVING_MEDICAL_TREATMENT);
+                break;
+        }
+    }
+    
+    /// <summary>
+    /// Update healthy status based on all current conditions
+    /// </summary>
+    private void UpdateHealthyStatus()
+    {
+        if (EffectManager.Instance == null) return;
+        
+        bool isHealthy = !IsHungry() && !IsTired() && !isSick;
+        
+        if (isHealthy)
+        {
+            EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.HEALTHY);
+        }
+        else
+        {
+            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.HEALTHY);
+        }
+    }
+    
+    
+    #endregion
+    
+    #region IStatusEffectTarget Implementation
+    
+    /// <summary>
+    /// Get the character type for status effect lookups
+    /// </summary>
+    public CharacterType GetCharacterType()
+    {
+        return CharacterType.HUMAN_MALE_1; // Settlers are human characters - using existing enum value
+    }
+    
+    /// <summary>
+    /// Called when a status effect is applied to this NPC
+    /// </summary>
+    public void OnStatusEffectApplied(StatusEffectType effectType, float duration)
+    {
+        Debug.Log($"[SettlerNPC] {name} status effect applied: {effectType} for {duration}s");
+        
+        // Handle specific effects that might need additional logic
+        switch (effectType)
+        {
+            case StatusEffectType.ON_FIRE:
+                Debug.Log($"[SettlerNPC] {name} is on fire! Taking damage over time.");
+                break;
+            case StatusEffectType.FROZEN:
+                Debug.Log($"[SettlerNPC] {name} is frozen! Movement slowed.");
+                break;
+            case StatusEffectType.STUNNED:
+                Debug.Log($"[SettlerNPC] {name} is stunned! Actions prevented.");
+                break;
+            case StatusEffectType.SICK:
+                Debug.Log($"[SettlerNPC] {name} is sick! Seeking medical treatment.");
+                CheckForMedicalTreatment();
+                break;
+        }
+    }
+    
+    /// <summary>
+    /// Called when a status effect is removed from this NPC
+    /// </summary>
+    public void OnStatusEffectRemoved(StatusEffectType effectType)
+    {
+        Debug.Log($"[SettlerNPC] {name} status effect removed: {effectType}");
+        
+        // Handle specific effects that might need cleanup logic
+        switch (effectType)
+        {
+            case StatusEffectType.SICK:
+                Debug.Log($"[SettlerNPC] {name} has recovered from sickness.");
+                break;
+            case StatusEffectType.STUNNED:
+                Debug.Log($"[SettlerNPC] {name} is no longer stunned.");
+                break;
+        }
+    }
+    
+    /// <summary>
+    /// Apply a status effect using the EffectManager (utility method for external systems)
+    /// </summary>
+    public void ApplyStatusEffect(StatusEffectType effectType, float duration = 0f)
+    {
+        if (EffectManager.Instance != null)
+        {
+            EffectManager.Instance.ApplyStatusEffect(this, effectType, duration);
+        }
+    }
+    
+    /// <summary>
+    /// Remove a status effect using the EffectManager (utility method for external systems)
+    /// </summary>
+    public void RemoveStatusEffect(StatusEffectType effectType)
+    {
+        if (EffectManager.Instance != null)
+        {
+            EffectManager.Instance.RemoveStatusEffect(this, effectType);
+        }
+    }
+    
+    /// <summary>
+    /// Check if this settler has a specific status effect
+    /// </summary>
+    public bool HasStatusEffect(StatusEffectType effectType)
+    {
+        return EffectManager.Instance != null && EffectManager.Instance.HasStatusEffect(this, effectType);
+    }
+    
     #endregion
 
     #region Debug Visualization

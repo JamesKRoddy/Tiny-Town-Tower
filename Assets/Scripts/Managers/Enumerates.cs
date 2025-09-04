@@ -346,6 +346,126 @@ public enum NPCInitializationContext
 }
 
 // =========================
+// STATUS EFFECT ENUMS
+// =========================
+
+/// <summary>
+/// Enum defining all possible status effects that can affect NPCs and enemies
+/// Organized by category for better management and integration with EffectManager
+/// </summary>
+[System.Serializable]
+public enum StatusEffectType
+{
+    // Health-related effects
+    HEALTHY,
+    HUNGRY,
+    STARVING,
+    TIRED,
+    EXHAUSTED,
+    SICK,
+    POISONED,
+    BLEEDING,
+    HEALING,
+    REGENERATING,
+    
+    // Physical state effects
+    SLEEPING,
+    WORKING,
+    EATING,
+    FIGHTING,
+    FLEEING,
+    RESTING,
+    
+    // Environmental effects
+    ON_FIRE,
+    FROZEN,
+    ELECTROCUTED,
+    WET,
+    BURNING,
+    SHOCKED,
+    CORRODED,
+    
+    // Buff/Debuff effects
+    BUFFED,
+    DEBUFFED,
+    SLOWED,
+    HASTENED,
+    STRENGTHENED,
+    WEAKENED,
+    PROTECTED,
+    VULNERABLE,
+    
+    // Special status effects
+    INVISIBLE,
+    SHIELDED,
+    STUNNED,
+    CONFUSED,
+    MIND_CONTROLLED,
+    CHARMED,
+    FEARED,
+    
+    // Work-related effects
+    HIGHLY_MOTIVATED,
+    DEPRESSED,
+    FOCUSED,
+    DISTRACTED,
+    INSPIRED,
+    
+    // Social effects
+    HAPPY,
+    SAD,
+    ANGRY,
+    FEARFUL,
+    CALM,
+    
+    // Medical/Treatment effects
+    RECEIVING_MEDICAL_TREATMENT,
+    QUARANTINED,
+    RECOVERING,
+    
+    // Combat effects
+    COMBAT_READY,
+    RETREATING,
+    DEFENDING,
+    ATTACKING,
+    
+    // Magical/Special effects (for future expansion)
+    CURSED,
+    BLESSED,
+    ENCHANTED,
+    DISPELLED,
+    
+    // Custom effects (for modding/future expansion)
+    CUSTOM_EFFECT_1,
+    CUSTOM_EFFECT_2,
+    CUSTOM_EFFECT_3
+}
+
+/// <summary>
+/// Priority levels for status effects when multiple effects are active
+/// Higher priority effects will be displayed more prominently
+/// </summary>
+public enum StatusEffectPriority
+{
+    LOW = 0,
+    NORMAL = 1,
+    HIGH = 2,
+    CRITICAL = 3,
+    EMERGENCY = 4
+}
+
+/// <summary>
+/// How status effects should behave when applied
+/// </summary>
+public enum StatusEffectBehavior
+{
+    REPLACE_EXISTING,    // Remove any existing effect of same type and apply new one
+    STACK,              // Allow multiple instances of the same effect
+    REFRESH_DURATION,   // Reset duration if effect already exists
+    IGNORE_IF_EXISTS    // Don't apply if effect already active
+}
+
+// =========================
 // MISCELLANEOUS ENUMS
 // =========================
 

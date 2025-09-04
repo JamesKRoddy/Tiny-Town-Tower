@@ -129,6 +129,32 @@ public interface INarrativeTarget
     Transform GetTransform();
 }
 
+/// <summary>
+/// Interface for objects that can receive status effect notifications
+/// Used by EffectManager to apply and remove visual/gameplay status effects
+/// </summary>
+public interface IStatusEffectTarget
+{
+    /// <summary>
+    /// Called when a status effect is applied to this target
+    /// </summary>
+    /// <param name="effectType">The type of status effect being applied</param>
+    /// <param name="duration">Duration of the effect in seconds (0 = permanent until removed)</param>
+    void OnStatusEffectApplied(StatusEffectType effectType, float duration);
+    
+    /// <summary>
+    /// Called when a status effect is removed from this target
+    /// </summary>
+    /// <param name="effectType">The type of status effect being removed</param>
+    void OnStatusEffectRemoved(StatusEffectType effectType);
+    
+    /// <summary>
+    /// Gets the character type for status effect configuration lookups
+    /// </summary>
+    /// <returns>The CharacterType for this target</returns>
+    CharacterType GetCharacterType();
+}
+
 
 /*
  * Known bugs:
