@@ -18,7 +18,8 @@ public class StructureDestructionTask : WorkTask, IInteractive<object>
     public void SetupDestructionTask<T>(PlaceableStructure<T> structure) where T : PlaceableObjectParent
     {
         this.structureScriptableObj = structure.GetStructureScriptableObj();
-        baseWorkTime = structureScriptableObj.destructionTime;
+        // Convert game hours to real seconds using TimeManager
+        baseWorkTime = Managers.TimeManager.ConvertGameHoursToSecondsStatic(structureScriptableObj.destructionTimeInGameHours);
         requiredResources = new ResourceItemCount[0]; // No resources required for destruction
         AddWorkTask();
 

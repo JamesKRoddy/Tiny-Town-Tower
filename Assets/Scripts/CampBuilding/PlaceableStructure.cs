@@ -242,8 +242,11 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
         }
         repairTask.transform.position = transform.position;
         
+        // Convert game hours to real seconds using TimeManager
+        float repairTimeInSeconds = Managers.TimeManager.ConvertGameHoursToSecondsStatic(StructureScriptableObj.repairTimeInGameHours);
+        
         repairTask.SetupRepairTask(
-            StructureScriptableObj.repairTime,
+            repairTimeInSeconds,
             StructureScriptableObj.healthRestoredPerRepair
         );
     }

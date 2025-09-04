@@ -37,7 +37,8 @@ public class ResearchTask : QueuedWorkTask
         if (currentTaskData is ResearchScriptableObj nextResearch)
         {
             currentResearch = nextResearch;
-            baseWorkTime = nextResearch.craftTime;
+            // Convert game hours to real seconds using TimeManager
+            baseWorkTime = Managers.TimeManager.ConvertGameHoursToSecondsStatic(nextResearch.craftTimeInGameHours);
             requiredResources = nextResearch.requiredResources;
         }
     }

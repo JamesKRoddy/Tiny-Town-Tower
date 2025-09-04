@@ -16,7 +16,9 @@ public class StructureUpgradeTask : WorkTask
     public void SetupUpgradeTask(PlaceableObjectParent upgradeTarget)
     {
         this.upgradeTarget = upgradeTarget;
-        baseWorkTime = upgradeTarget?.constructionTime ?? 1f;
+        // Convert game hours to real seconds using TimeManager
+        float constructionTimeInGameHours = upgradeTarget?.constructionTimeInGameHours ?? 1f;
+        baseWorkTime = Managers.TimeManager.ConvertGameHoursToSecondsStatic(constructionTimeInGameHours);
         requiredResources = upgradeTarget?.upgradeResources;
     }
 
@@ -142,7 +144,7 @@ public class StructureUpgradeTask : WorkTask
             tooltip += "\n";
             
             // Construction time
-            tooltip += $"\nConstruction Time: {upgradeTurret.constructionTime:F1} seconds\n";
+            tooltip += $"\nConstruction Time: {upgradeTurret.constructionTimeInGameHours:F1} game hours\n";
         }
         // Check if this is a building upgrade
         else if (GetComponent<Building>() != null && upgradeTarget is BuildingScriptableObj upgradeBuilding)
@@ -155,7 +157,7 @@ public class StructureUpgradeTask : WorkTask
             tooltip += "Current Building:\n";
             tooltip += $"- Health: {currentBuilding.GetCurrentHealth():F0}/{currentBuilding.GetMaxHealth():F0}\n";
             tooltip += $"- Max Health: {currentBuilding.GetMaxHealth():F0}\n";
-            tooltip += $"- Repair Time: {currentBuilding.GetStructureScriptableObj().repairTime:F1} seconds\n";
+            tooltip += $"- Repair Time: {currentBuilding.GetStructureScriptableObj().repairTimeInGameHours:F1} game hours\n";
             tooltip += $"- Health Restored Per Repair: {currentBuilding.GetStructureScriptableObj().healthRestoredPerRepair:F0}\n";
             
             // Add building-specific stats
@@ -169,11 +171,11 @@ public class StructureUpgradeTask : WorkTask
                 tooltip += $"({upgradeBuilding.maxHealth - currentBuilding.GetMaxHealth():F0})";
             tooltip += "\n";
             
-            tooltip += $"- Repair Time: {upgradeBuilding.repairTime:F1} seconds ";
-            if (upgradeBuilding.repairTime < currentBuilding.GetStructureScriptableObj().repairTime)
-                tooltip += $"(-{currentBuilding.GetStructureScriptableObj().repairTime - upgradeBuilding.repairTime:F1})";
-            else if (upgradeBuilding.repairTime > currentBuilding.GetStructureScriptableObj().repairTime)
-                tooltip += $"(+{upgradeBuilding.repairTime - currentBuilding.GetStructureScriptableObj().repairTime:F1})";
+            tooltip += $"- Repair Time: {upgradeBuilding.repairTimeInGameHours:F1} game hours ";
+            if (upgradeBuilding.repairTimeInGameHours < currentBuilding.GetStructureScriptableObj().repairTimeInGameHours)
+                tooltip += $"(-{currentBuilding.GetStructureScriptableObj().repairTimeInGameHours - upgradeBuilding.repairTimeInGameHours:F1})";
+            else if (upgradeBuilding.repairTimeInGameHours > currentBuilding.GetStructureScriptableObj().repairTimeInGameHours)
+                tooltip += $"(+{upgradeBuilding.repairTimeInGameHours - currentBuilding.GetStructureScriptableObj().repairTimeInGameHours:F1})";
             tooltip += "\n";
             
             tooltip += $"- Health Restored Per Repair: {upgradeBuilding.healthRestoredPerRepair:F0} ";
@@ -187,12 +189,12 @@ public class StructureUpgradeTask : WorkTask
             AddUpgradeTargetBuildingStats(tooltip, upgradeBuilding);
             
             // Construction time
-            tooltip += $"\nConstruction Time: {upgradeBuilding.constructionTime:F1} seconds\n";
+            tooltip += $"\nConstruction Time: {upgradeBuilding.constructionTimeInGameHours:F1} game hours\n";
         }
         else
         {
             // For non-turret/non-building upgrades, show basic info
-            tooltip += $"\nConstruction Time: {upgradeTarget.constructionTime:F1} seconds\n";
+            tooltip += $"\nConstruction Time: {upgradeTarget.constructionTimeInGameHours:F1} game hours\n";
             if (upgradeTarget.maxHealth > 0)
             {
                 tooltip += $"Max Health: {upgradeTarget.maxHealth:F0}\n";

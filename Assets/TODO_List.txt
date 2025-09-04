@@ -19,7 +19,6 @@ Medical
 
 
 Tomorrow work:
-Check if impact for being sick works ie slowed or stopped work
 Convert to in game hours, building times, research times, cooking times etc.
 
 

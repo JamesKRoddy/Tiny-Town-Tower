@@ -43,12 +43,13 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     [Header("Stamina")]
     public float maxStamina = 100f;
     [ReadOnly] public float currentStamina = 100f;
-    [SerializeField] private float baseStaminaRegenRate = 5f; // Base regen rate before characteristics
-    [ReadOnly] public float staminaRegenRate = 5f; // Base regeneration rate (can be modified by characteristics)
+    [SerializeField] private float baseStaminaDrainInGameHours = 36f; // How many game hours to go from full to exhausted (default: 36 game hours)
+    [SerializeField] private float baseStaminaRegenInGameHours = 8f; // How many game hours to go from exhausted to full while resting (default: 8 game hours)
+    [ReadOnly] public float staminaDrainRate = 1f; // Calculated stamina drain rate per second
+    [ReadOnly] public float staminaRegenRate = 5f; // Calculated stamina regeneration rate per second (can be modified by characteristics)
     [SerializeField] private float baseFatigueRate = 1f; // Base fatigue rate before characteristics
     [ReadOnly] public float fatigueRate = 1f; // Base fatigue rate (can be modified by characteristics)
     public float sleepStaminaRegenMultiplier = 3f; // Multiplier for stamina regen while sleeping
-    [SerializeField] private float staminaDrainRate = 1f; // How fast stamina drains during activity (calculated from day length)
     [SerializeField] private float nightFatigueMultiplier = 1.5f; // Extra fatigue at night
 
     [Header("Hunger System")]
@@ -198,17 +199,18 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
     
     /// <summary>
     /// Initialize stamina rates from base values (before characteristics modify them)
+    /// Note: staminaDrainRate and staminaRegenRate are now calculated in CalculateStaminaRates()
     /// </summary>
     private void InitializeStaminaRates()
     {
-        staminaRegenRate = baseStaminaRegenRate;
         fatigueRate = baseFatigueRate;
+        // staminaDrainRate and staminaRegenRate will be calculated based on day length
     }
     
     /// <summary>
     /// Calculate stamina rates based on TimeManager day/night cycle
-    /// Goal: NPCs should reach 0% stamina after 36 hours of continuous wandering
-    /// Sleep should fully restore stamina during night periods
+    /// Goal: NPCs should reach 0% stamina after the specified game hours of activity
+    /// NPCs should regenerate stamina over the specified resting game hours
     /// </summary>
     private void CalculateStaminaRates()
     {
@@ -216,49 +218,50 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         if (timeManager == null) 
         {
             // Fallback if no TimeManager
-            staminaDrainRate = 1f;
-            sleepStaminaRegenMultiplier = 3f;
-            Debug.LogWarning($"[SettlerNPC] {name} - No TimeManager found! Using fallback rates:");
+            staminaDrainRate = 1f; // 1 stamina point per second fallback
+            staminaRegenRate = 5f; // 5 stamina points per second fallback
+            Debug.LogWarning($"[SettlerNPC] {name} - No TimeManager found! Using fallback stamina rates:");
             Debug.LogWarning($"  staminaDrainRate: {staminaDrainRate}/s");
-            Debug.LogWarning($"  sleepStaminaRegenMultiplier: {sleepStaminaRegenMultiplier}x");
+            Debug.LogWarning($"  staminaRegenRate: {staminaRegenRate}/s");
             return;
         }
         
-        // Get day and night durations from TimeManager (now simplified to 2:1 ratio)
+        // Get day and night durations from TimeManager
         float dayDurationInSeconds = timeManager.DayDurationInSeconds;
         float nightDurationInSeconds = timeManager.NightDurationInSeconds;
         float totalCycleDuration = dayDurationInSeconds + nightDurationInSeconds;
         
-        // NEW REQUIREMENT: NPCs should reach 0% stamina after 36 game hours of wandering
-        // 1 full day/night cycle = 24 game hours, so 36 game hours = 1.5 cycles
-        float cyclesNeededForExhaustion = 1.5f;
-        float targetSecondsToExhaustion = cyclesNeededForExhaustion * totalCycleDuration;
+        // Use TimeManager's centralized conversion methods
+        float targetSecondsToDrain = timeManager.ConvertGameHoursToSeconds(baseStaminaDrainInGameHours);
+        float targetSecondsToRegen = timeManager.ConvertGameHoursToSeconds(baseStaminaRegenInGameHours);
         
-        // Calculate base drain rate: 100% stamina lost over the calculated time period
-        staminaDrainRate = 100f / targetSecondsToExhaustion;
+        // Calculate stamina drain rate: 100 stamina points lost over the calculated time period
+        staminaDrainRate = maxStamina / targetSecondsToDrain;
+        
+        // Calculate stamina regen rate: 100 stamina points gained over the calculated time period
+        staminaRegenRate = maxStamina / targetSecondsToRegen;
         
         // Calculate sleep regen multiplier so NPCs can fully recover during night sleep
-        float targetStaminaRestorePerNight = 100f;
-        float baseSleepRegenRate = staminaRegenRate;
-        
-        // Calculate required multiplier for night recovery
+        // This ensures that sleeping is more effective than regular resting
+        float targetStaminaRestorePerNight = maxStamina;
         float requiredRegenPerSecond = targetStaminaRestorePerNight / nightDurationInSeconds;
-        sleepStaminaRegenMultiplier = requiredRegenPerSecond / baseSleepRegenRate;
+        sleepStaminaRegenMultiplier = requiredRegenPerSecond / staminaRegenRate;
         
-        // Ensure minimum multiplier
+        // Ensure minimum multiplier for effective sleep
         sleepStaminaRegenMultiplier = Mathf.Max(sleepStaminaRegenMultiplier, 2f);
         
         Debug.Log($"[SettlerNPC] {name} STAMINA RATES CALCULATED:");
         Debug.Log($"  TimeManager Values - Day: {dayDurationInSeconds}s, Night: {nightDurationInSeconds}s, Total Cycle: {totalCycleDuration}s");
-        Debug.Log($"  Target: 36 game hours = {cyclesNeededForExhaustion} cycles = {targetSecondsToExhaustion}s real time");
-        Debug.Log($"  Calculated staminaDrainRate: {staminaDrainRate:F6}/s (100 stamina / {targetSecondsToExhaustion}s)");
-        Debug.Log($"  Current fatigueRate: {fatigueRate}");
-        Debug.Log($"  Current nightFatigueMultiplier: {nightFatigueMultiplier}");
+        Debug.Log($"  Target drain: {baseStaminaDrainInGameHours} game hours = {targetSecondsToDrain:F1}s real time");
+        Debug.Log($"  Target regen: {baseStaminaRegenInGameHours} game hours = {targetSecondsToRegen:F1}s real time");
+        Debug.Log($"  Calculated staminaDrainRate: {staminaDrainRate:F6}/s ({maxStamina} stamina / {targetSecondsToDrain}s)");
+        Debug.Log($"  Calculated staminaRegenRate: {staminaRegenRate:F6}/s ({maxStamina} stamina / {targetSecondsToRegen}s)");
         Debug.Log($"  Sleep Regen Multiplier: {sleepStaminaRegenMultiplier:F2}x");
+        Debug.Log($"  Seconds per game hour: {timeManager.GetSecondsPerGameHour():F2}s");
     }
     
     /// <summary>
-    /// Recalculate stamina rates - call this when characteristics modify stamina properties
+    /// Recalculate stamina rates - call this when characteristics or game settings change
     /// </summary>
     public void RecalculateStaminaRates()
     {
@@ -285,18 +288,13 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         float nightDurationInSeconds = timeManager.NightDurationInSeconds;
         float totalCycleDuration = dayDurationInSeconds + nightDurationInSeconds;
         
-        // 1 full day/night cycle = 24 game hours
-        // Calculate how many seconds represent the desired game hours
-        float gameHoursPerCycle = 24f;
-        float secondsPerGameHour = totalCycleDuration / gameHoursPerCycle;
-        
-        // Calculate sickness duration in real seconds
-        sicknessDuration = baseSicknessDurationInGameHours * secondsPerGameHour;
+        // Use TimeManager's centralized conversion method
+        sicknessDuration = timeManager.ConvertGameHoursToSeconds(baseSicknessDurationInGameHours);
         
         Debug.Log($"[SettlerNPC] {name} SICKNESS DURATION CALCULATED:");
         Debug.Log($"  TimeManager Values - Day: {dayDurationInSeconds}s, Night: {nightDurationInSeconds}s, Total Cycle: {totalCycleDuration}s");
         Debug.Log($"  Target: {baseSicknessDurationInGameHours} game hours = {sicknessDuration:F1}s real time");
-        Debug.Log($"  Seconds per game hour: {secondsPerGameHour:F2}s");
+        Debug.Log($"  Seconds per game hour: {timeManager.GetSecondsPerGameHour():F2}s");
     }
     
     /// <summary>
@@ -327,13 +325,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         float nightDurationInSeconds = timeManager.NightDurationInSeconds;
         float totalCycleDuration = dayDurationInSeconds + nightDurationInSeconds;
         
-        // 1 full day/night cycle = 24 game hours
-        // Calculate how many seconds represent the desired game hours
-        float gameHoursPerCycle = 24f;
-        float secondsPerGameHour = totalCycleDuration / gameHoursPerCycle;
-        
-        // Calculate how many real seconds it should take to go from full hunger to 0
-        float targetSecondsToStarvation = baseHungerDecreaseInGameHours * secondsPerGameHour;
+        // Use TimeManager's centralized conversion method
+        float targetSecondsToStarvation = timeManager.ConvertGameHoursToSeconds(baseHungerDecreaseInGameHours);
         
         // Calculate hunger decrease rate: 100 hunger points lost over the calculated time period
         hungerDecreaseRate = maxHunger / targetSecondsToStarvation;
@@ -342,7 +335,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
         Debug.Log($"  TimeManager Values - Day: {dayDurationInSeconds}s, Night: {nightDurationInSeconds}s, Total Cycle: {totalCycleDuration}s");
         Debug.Log($"  Target: {baseHungerDecreaseInGameHours} game hours = {targetSecondsToStarvation:F1}s real time");
         Debug.Log($"  Calculated hungerDecreaseRate: {hungerDecreaseRate:F6}/s ({maxHunger} hunger / {targetSecondsToStarvation}s)");
-        Debug.Log($"  Seconds per game hour: {secondsPerGameHour:F2}s");
+        Debug.Log($"  Seconds per game hour: {timeManager.GetSecondsPerGameHour():F2}s");
     }
     
     /// <summary>
@@ -867,7 +860,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget
 
     public void RestoreStaminaAtRate(float multiplier = 1f)
     {
-        float staminaRestore = baseStaminaRegenRate * multiplier * Time.deltaTime;
+        float staminaRestore = staminaRegenRate * multiplier * Time.deltaTime;
         RestoreStamina(staminaRestore);
     }
 

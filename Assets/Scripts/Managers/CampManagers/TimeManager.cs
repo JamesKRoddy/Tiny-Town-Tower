@@ -583,6 +583,70 @@ namespace Managers
         }
         
         #endregion
+        
+        #region Time Conversion Utilities
+        
+        /// <summary>
+        /// Convert game hours to real-world seconds based on current day/night cycle length
+        /// </summary>
+        /// <param name="gameHours">Number of game hours to convert</param>
+        /// <returns>Real-world seconds equivalent</returns>
+        public float ConvertGameHoursToSeconds(float gameHours)
+        {
+            // 1 full day/night cycle = 24 game hours
+            float gameHoursPerCycle = 24f;
+            float secondsPerGameHour = totalCycleDurationInSeconds / gameHoursPerCycle;
+            return gameHours * secondsPerGameHour;
+        }
+        
+        /// <summary>
+        /// Convert real-world seconds to game hours based on current day/night cycle length
+        /// </summary>
+        /// <param name="realSeconds">Number of real-world seconds to convert</param>
+        /// <returns>Game hours equivalent</returns>
+        public float ConvertSecondsToGameHours(float realSeconds)
+        {
+            // 1 full day/night cycle = 24 game hours
+            float gameHoursPerCycle = 24f;
+            float secondsPerGameHour = totalCycleDurationInSeconds / gameHoursPerCycle;
+            return realSeconds / secondsPerGameHour;
+        }
+        
+        /// <summary>
+        /// Get seconds per game hour for current cycle settings
+        /// </summary>
+        /// <returns>How many real seconds equal one game hour</returns>
+        public float GetSecondsPerGameHour()
+        {
+            float gameHoursPerCycle = 24f;
+            return totalCycleDurationInSeconds / gameHoursPerCycle;
+        }
+        
+        /// <summary>
+        /// Static method to get time conversion from any TimeManager instance
+        /// Fallback to default values if no TimeManager is available
+        /// </summary>
+        /// <param name="gameHours">Game hours to convert</param>
+        /// <returns>Real seconds</returns>
+        public static float ConvertGameHoursToSecondsStatic(float gameHours)
+        {
+            // Try to find TimeManager instance
+            TimeManager timeManager = FindFirstObjectByType<TimeManager>();
+            if (timeManager != null)
+            {
+                return timeManager.ConvertGameHoursToSeconds(gameHours);
+            }
+            
+            // Fallback: assume standard 6-minute cycle (360 seconds total)
+            float fallbackCycleDuration = 360f;
+            float gameHoursPerCycle = 24f;
+            float secondsPerGameHour = fallbackCycleDuration / gameHoursPerCycle;
+            
+            Debug.LogWarning($"[TimeManager] No TimeManager instance found! Using fallback conversion: {gameHours} game hours = {gameHours * secondsPerGameHour} seconds");
+            return gameHours * secondsPerGameHour;
+        }
+        
+        #endregion
     }
     
     /// <summary>

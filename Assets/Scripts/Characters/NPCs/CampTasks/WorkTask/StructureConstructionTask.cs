@@ -45,7 +45,8 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
     {
         this.buildingScriptableObj = scriptableObj;
         finalBuildingPrefab = scriptableObj.prefab;
-        baseWorkTime = scriptableObj.constructionTime;
+        // Convert game hours to real seconds using TimeManager
+        baseWorkTime = Managers.TimeManager.ConvertGameHoursToSecondsStatic(scriptableObj.constructionTimeInGameHours);
         
         SetupNavMeshObstacle();
     }

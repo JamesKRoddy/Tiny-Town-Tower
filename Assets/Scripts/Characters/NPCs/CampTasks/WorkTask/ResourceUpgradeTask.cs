@@ -21,7 +21,8 @@ public class ResourceUpgradeTask : QueuedWorkTask
         if (currentTaskData is ResourceUpgradeScriptableObj nextUpgrade)
         {
             currentUpgrade = nextUpgrade;
-            baseWorkTime = nextUpgrade.craftTime;
+            // Convert game hours to real seconds using TimeManager
+            baseWorkTime = Managers.TimeManager.ConvertGameHoursToSecondsStatic(nextUpgrade.craftTimeInGameHours);
             requiredResources = nextUpgrade.requiredResources;
         }
     }

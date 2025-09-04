@@ -28,7 +28,8 @@ public class CookingTask : QueuedWorkTask
         if (currentTaskData is CookingRecipeScriptableObj nextRecipe)
         {
             currentRecipe = nextRecipe;
-            baseWorkTime = nextRecipe.craftTime;
+            // Convert game hours to real seconds using TimeManager
+            baseWorkTime = Managers.TimeManager.ConvertGameHoursToSecondsStatic(nextRecipe.craftTimeInGameHours);
             requiredResources = nextRecipe.requiredResources;
         }
         else

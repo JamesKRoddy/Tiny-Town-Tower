@@ -63,7 +63,7 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
                         description += $"- {resource.resourceScriptableObj.objectName}\n";
                     }
                 }
-                description += $"\nResearch Time: {research.craftTime} seconds";
+                description += $"\nResearch Time: {research.craftTimeInGameHours} game hours";
                 if (research.unlockedItems != null && research.unlockedItems.Length > 0)
                 {
                     description += $"\n\nUnlocks:";
@@ -89,7 +89,7 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
                         description += $"- {ingredient.resourceScriptableObj.objectName}\n";
                     }
                 }
-                description += $"\nCooking Time: {recipe.craftTime} seconds";
+                description += $"\nCooking Time: {recipe.craftTimeInGameHours} game hours";
                 return description;
             }
         }
@@ -107,7 +107,7 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
                         description += $"- {resource.resourceScriptableObj.objectName}\n";
                     }
                 }
-                description += $"\nUpgrade Time: {upgrade.craftTime} seconds";
+                description += $"\nUpgrade Time: {upgrade.craftTimeInGameHours} game hours";
                 return description;
             }
         } else if (currentTask is FarmingTask){
