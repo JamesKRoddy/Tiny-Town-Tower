@@ -1708,7 +1708,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8cdfbceb3c91a894d88c2ce9d8d2e34b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  taskEffects: []
+  taskEffects:
+  - taskAnimation: 6
+    effect: {fileID: 11400000, guid: 42781ed0b7fd7e942adea3ed0df0a09e, type: 2}
+    ikPoint: 2
+    parentToIK: 0
+  - taskAnimation: 7
+    effect: {fileID: 11400000, guid: 039aff3216736a04283b756edaf67064, type: 2}
+    ikPoint: 2
+    parentToIK: 1
 --- !u!114 &8320294776751182447
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1821,15 +1829,17 @@ MonoBehaviour:
   additionalMutationSlots: 3
   maxStamina: 100
   currentStamina: 100
+  baseStaminaDrainInGameHours: 36
+  baseStaminaRegenInGameHours: 8
+  staminaDrainRate: 1
   staminaRegenRate: 5
+  baseFatigueRate: 1
   fatigueRate: 1
   sleepStaminaRegenMultiplier: 3
-  baseFatigueRate: 1
-  baseStaminaRegenRate: 5
-  staminaDrainRate: 1
   nightFatigueMultiplier: 1.5
   maxHunger: 100
   currentHunger: 100
+  baseHungerDecreaseInGameHours: 24
   hungerDecreaseRate: 1
   hungerThreshold: 30
   starvationThreshold: 10
@@ -1838,6 +1848,7 @@ MonoBehaviour:
   isSick: 0
   baseSicknessChance: 0.001
   sicknessCheckInterval: 5
+  baseSicknessDurationInGameHours: 6
   sicknessDuration: 30
   sickWorkSpeedPenalty: 0.5
   lowStaminaThreshold: 30

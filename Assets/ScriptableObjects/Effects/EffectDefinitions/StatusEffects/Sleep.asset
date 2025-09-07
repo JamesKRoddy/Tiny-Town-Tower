@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Sleep
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 5812081752390845428, guid: dad46346e9e02e849a9b6f9093716b5b, type: 3}
+  - {fileID: 5812081752390845428, guid: 44a44d3197df38b459404ee54ebebd0f, type: 3}
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1
