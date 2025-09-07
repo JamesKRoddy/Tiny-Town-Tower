@@ -4,15 +4,12 @@ using UnityEngine;
 /// Defines a status effect with its visual representation and behavior
 /// Extends the existing effect system to include status-specific configuration
 /// </summary>
-[System.Serializable]
-public class StatusEffectDefinition
+[CreateAssetMenu(fileName = "New Status Effect Definition", menuName = "Scriptable Objects/Effects/Status Effect Definition")]
+public class StatusEffectDefinition : ScriptableObject
 {
     [Header("Status Configuration")]
     [Tooltip("The type of status effect this represents")]
     public StatusEffectType statusType;
-    
-    [Tooltip("Priority level for displaying this effect when multiple are active")]
-    public StatusEffectPriority priority = StatusEffectPriority.NORMAL;
     
     [Tooltip("How this effect behaves when applied to a character that already has it")]
     public StatusEffectBehavior behavior = StatusEffectBehavior.REPLACE_EXISTING;
@@ -28,10 +25,6 @@ public class StatusEffectDefinition
     [Tooltip("Color tint to apply to the character")]
     public Color characterTint = Color.white;
     
-    [Tooltip("Scale multiplier for the icon")]
-    [Range(0.1f, 3f)]
-    public float iconScale = 1f;
-    
     [Tooltip("Height offset above character for effects/icons")]
     [Range(0f, 5f)]
     public float heightOffset = 2f;
@@ -39,13 +32,6 @@ public class StatusEffectDefinition
     [Header("Floating Text")]
     [Tooltip("Text to display when effect is applied")]
     public string floatingText = "";
-    
-    [Tooltip("Color for floating text")]
-    public Color textColor = Color.white;
-    
-    [Tooltip("Font size for floating text")]
-    [Range(8, 32)]
-    public int fontSize = 14;
     
     [Header("Material Effects")]
     [Tooltip("Should this effect modify character materials?")]

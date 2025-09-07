@@ -30,6 +30,9 @@ If you create a second construction site not all npcs move onto the second one a
 Pressing b after selecting a bed locks the controls
 Refactor the rest of the _TaskState to reduce repetition of code
 Still some issue with the melee zombie bugging out between hits while being close to the player
+Sometimes 2 npcs can sleep in the same bed unassigned bed
+Time manager is running in the maiun menu
+
 
 Add to save load manager:
 Construction, repair and destruction sites

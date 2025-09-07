@@ -12,12 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30b97a306db20054c9836880f1ae9f49, type: 3}
   m_Name: Human_Male_NPC
   m_EditorClassIdentifier: Assembly-CSharp:Managers:CharacterEffects
+  impactEffects: []
+  destructionEffects: []
   characterType: 101
   bloodEffects:
   - {fileID: 11400000, guid: 72ada4b74a4b1c04fa1401dee6cb2cc4, type: 2}
-  impactEffects: []
   deathEffects: []
   footstepEffects: []
+  spawnEffects: []
   idleEffects: []
   minIdleInterval: 5
   maxIdleInterval: 15
+  statusEffects:
+  - {fileID: 11400000, guid: 2c012f144f2c04a48bb8399843f48081, type: 2}

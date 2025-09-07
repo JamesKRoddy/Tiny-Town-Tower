@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d88e393bf18414e4c84f2980563364ba, type: 3}
+  m_Name: NPC Sleeping
+  m_EditorClassIdentifier: 
+  statusType: 10
+  behavior: 3
+  visualEffect: {fileID: 11400000, guid: 69e732d2dbb915449ae4ca903844c621, type: 2}
+  iconSprite: {fileID: 0}
+  characterTint: {r: 1, g: 1, b: 1, a: 1}
+  heightOffset: 2
+  floatingText: 
+  modifyMaterials: 0
+  alphaValue: 1
+  emissionColor: {r: 0, g: 0, b: 0, a: 1}
+  emissionIntensity: 0
+  modifyAnimations: 0
+  animationSpeedMultiplier: 1
+  animationTrigger: 
+  movementSpeedMultiplier: 1
+  preventActions: 0
+  damagePerSecond: 0
+  healingPerSecond: 0
+  defaultDuration: 0
+  canRefreshDuration: 1

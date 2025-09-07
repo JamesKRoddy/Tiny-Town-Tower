@@ -83,6 +83,13 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     public event Action OnRecoveredFromSickness;
     public bool IsSick => isSick;
 
+    // Status effect state tracking to prevent redundant updates
+    private StatusEffectType currentHungerStatus = StatusEffectType.HEALTHY;
+    private StatusEffectType currentStaminaStatus = StatusEffectType.HEALTHY;
+    private bool currentSickStatus = false;
+    private bool currentHealthyStatus = false;
+    private TaskType lastTaskStatus = TaskType.WANDER;
+
     private int workLayerIndex;
 
     // Dictionary that maps TaskType to TaskState
@@ -251,15 +258,6 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         
         // Ensure minimum multiplier for effective sleep
         sleepStaminaRegenMultiplier = Mathf.Max(sleepStaminaRegenMultiplier, 2f);
-        
-        Debug.Log($"[SettlerNPC] {name} STAMINA RATES CALCULATED:");
-        Debug.Log($"  TimeManager Values - Day: {dayDurationInSeconds}s, Night: {nightDurationInSeconds}s, Total Cycle: {totalCycleDuration}s");
-        Debug.Log($"  Target drain: {baseStaminaDrainInGameHours} game hours = {targetSecondsToDrain:F1}s real time");
-        Debug.Log($"  Target regen: {baseStaminaRegenInGameHours} game hours = {targetSecondsToRegen:F1}s real time");
-        Debug.Log($"  Calculated staminaDrainRate: {staminaDrainRate:F6}/s ({maxStamina} stamina / {targetSecondsToDrain}s)");
-        Debug.Log($"  Calculated staminaRegenRate: {staminaRegenRate:F6}/s ({maxStamina} stamina / {targetSecondsToRegen}s)");
-        Debug.Log($"  Sleep Regen Multiplier: {sleepStaminaRegenMultiplier:F2}x");
-        Debug.Log($"  Seconds per game hour: {timeManager.GetSecondsPerGameHour():F2}s");
     }
     
     /// <summary>
@@ -292,11 +290,6 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         
         // Use TimeManager's centralized conversion method
         sicknessDuration = timeManager.ConvertGameHoursToSeconds(baseSicknessDurationInGameHours);
-        
-        Debug.Log($"[SettlerNPC] {name} SICKNESS DURATION CALCULATED:");
-        Debug.Log($"  TimeManager Values - Day: {dayDurationInSeconds}s, Night: {nightDurationInSeconds}s, Total Cycle: {totalCycleDuration}s");
-        Debug.Log($"  Target: {baseSicknessDurationInGameHours} game hours = {sicknessDuration:F1}s real time");
-        Debug.Log($"  Seconds per game hour: {timeManager.GetSecondsPerGameHour():F2}s");
     }
     
     /// <summary>
@@ -332,12 +325,6 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         
         // Calculate hunger decrease rate: 100 hunger points lost over the calculated time period
         hungerDecreaseRate = maxHunger / targetSecondsToStarvation;
-        
-        Debug.Log($"[SettlerNPC] {name} HUNGER RATE CALCULATED:");
-        Debug.Log($"  TimeManager Values - Day: {dayDurationInSeconds}s, Night: {nightDurationInSeconds}s, Total Cycle: {totalCycleDuration}s");
-        Debug.Log($"  Target: {baseHungerDecreaseInGameHours} game hours = {targetSecondsToStarvation:F1}s real time");
-        Debug.Log($"  Calculated hungerDecreaseRate: {hungerDecreaseRate:F6}/s ({maxHunger} hunger / {targetSecondsToStarvation}s)");
-        Debug.Log($"  Seconds per game hour: {timeManager.GetSecondsPerGameHour():F2}s");
     }
     
     /// <summary>
@@ -862,12 +849,32 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
 
     public void UseStamina(float amount)
     {
+        float oldStamina = currentStamina;
         currentStamina = Mathf.Max(0, currentStamina - amount);
+        
+        // Update visual status if stamina thresholds were crossed
+        if ((oldStamina > lowStaminaThreshold && currentStamina <= lowStaminaThreshold) ||
+            (oldStamina <= lowStaminaThreshold && currentStamina > lowStaminaThreshold) ||
+            (oldStamina > veryLowStaminaThreshold && currentStamina <= veryLowStaminaThreshold) ||
+            (oldStamina <= veryLowStaminaThreshold && currentStamina > veryLowStaminaThreshold))
+        {
+            UpdateStaminaVisualStatus();
+        }
     }
 
     public void RestoreStamina(float amount)
     {
+        float oldStamina = currentStamina;
         currentStamina = Mathf.Min(maxStamina, currentStamina + amount);
+        
+        // Update visual status if stamina thresholds were crossed
+        if ((oldStamina > lowStaminaThreshold && currentStamina <= lowStaminaThreshold) ||
+            (oldStamina <= lowStaminaThreshold && currentStamina > lowStaminaThreshold) ||
+            (oldStamina > veryLowStaminaThreshold && currentStamina <= veryLowStaminaThreshold) ||
+            (oldStamina <= veryLowStaminaThreshold && currentStamina > veryLowStaminaThreshold))
+        {
+            UpdateStaminaVisualStatus();
+        }
     }
 
     public void RestoreStaminaAtRate(float multiplier = 1f)
@@ -899,11 +906,6 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         {
             float drainRatePerSecond = -staminaChange / Time.deltaTime;
             float timeToZeroAtCurrentRate = currentStamina / drainRatePerSecond;
-            Debug.Log($"[SettlerNPC] {name} STAMINA CHANGE - {reason}:");
-            Debug.Log($"  Change: {oldStamina:F1} -> {currentStamina:F1} (delta: {staminaChange:F4})");
-            Debug.Log($"  Current drain rate: {drainRatePerSecond:F4}/s");
-            Debug.Log($"  Time to zero at current rate: {timeToZeroAtCurrentRate:F1}s");
-            Debug.Log($"  Time.deltaTime: {Time.deltaTime:F4}");
         }
     }
     
@@ -959,19 +961,14 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     // Method to change states
     public void ChangeState(_TaskState newState)
     {
-        Debug.Log($"[SettlerNPC] ChangeState called for {name} - Changing from {currentState?.GetTaskType()} to {newState?.GetTaskType()}");
-        
         StopWorkAnimation();
-        Debug.Log($"[SettlerNPC] StopWorkAnimation called during state change for {name}");
 
         if(currentState == newState){
-            Debug.Log($"[SettlerNPC] Same state for {name}, returning early");
             return;
         }
 
         if (currentState != null)
         {
-            Debug.Log($"[SettlerNPC] Exiting state {currentState.GetTaskType()} for {name}");
             currentState.OnExitState(); // Exit the old state
         }
 
@@ -979,12 +976,10 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
 
         if (newState != null)
         {
-            Debug.Log($"[SettlerNPC] Entering state {newState.GetTaskType()} for {name}");
             currentState.OnEnterState(); // Enter the new state
 
             // Adjust the agent's speed according to the new state's requirements
             agent.speed = currentState.MaxSpeed();
-            Debug.Log($"[SettlerNPC] State change complete for {name} - Now in {newState.GetTaskType()}");
         }
     }
 
@@ -997,12 +992,10 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
 
     public void StopWorkAnimation()
     {
-        Debug.Log($"[SettlerNPC] StopWorkAnimation called for {name} - Setting work layer to Empty state");
         animator.Play("Empty", workLayerIndex);
         
         // Also set the layer weight to 0 to ensure it doesn't interfere
         animator.SetLayerWeight(workLayerIndex, 0f);
-        Debug.Log($"[SettlerNPC] Work animation stopped for {name} - Layer weight set to 0");
     }
 
     public override void StartWork(WorkTask newTask)
@@ -1080,32 +1073,26 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     /// <returns>True if the settler has a bed assignment, false otherwise</returns>
     public bool HasAssignedBed()
     {
-        Debug.Log($"[SettlerNPC] HasAssignedBed called for {name}");
         
         // Check if we have a SleepTask assigned as work
         if (assignedWorkTask is SleepTask currentSleepTask)
         {
             bool result = currentSleepTask.IsBedAssigned && currentSleepTask.AssignedSettler == this;
-            Debug.Log($"[SettlerNPC] {name} has SleepTask as assignedWorkTask: {result}");
             return result;
         }
         
-        Debug.Log($"[SettlerNPC] {name} assignedWorkTask is: {assignedWorkTask?.GetType().Name ?? "null"}");
         
         // Also check if any SleepTask in the scene has us assigned
         var allSleepTasks = FindObjectsByType<SleepTask>(FindObjectsSortMode.None);
-        Debug.Log($"[SettlerNPC] {name} found {allSleepTasks.Length} SleepTasks in scene");
         
         foreach (var sceneSleepTask in allSleepTasks)
         {
             if (sceneSleepTask.IsBedAssigned && sceneSleepTask.AssignedSettler == this)
             {
-                Debug.Log($"[SettlerNPC] {name} found assigned to scene SleepTask: {sceneSleepTask.name}");
                 return true;
             }
         }
         
-        Debug.Log($"[SettlerNPC] {name} HasAssignedBed returning false");
         return false;
     }
 
@@ -1142,62 +1129,42 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
 
     public override void StopWork()
     {
-        Debug.Log($"[SettlerNPC] StopWork called for {name}");
-        Debug.Log($"[SettlerNPC] - Current assigned work task: {assignedWorkTask?.GetType().Name ?? "null"}");
-        Debug.Log($"[SettlerNPC] - Current task type: {GetCurrentTaskType()}");
         
         if (assignedWorkTask != null)
         {
-            Debug.Log($"[SettlerNPC] {name} stopping work on {assignedWorkTask.GetType().Name}");
             
             // Call the base class StopWork to handle the work coroutine
             base.StopWork();
-            Debug.Log($"[SettlerNPC] Called base.StopWork() for {name}");
             
             // Clear the assigned work and change task
             ClearAssignedWork();
-            Debug.Log($"[SettlerNPC] Cleared assigned work for {name}");
             
             // Clear the WorkState's assigned task
             var workState = taskStates[TaskType.WORK] as WorkState;
             if (workState != null)
             {
                 workState.AssignTask(null);
-                Debug.Log($"[SettlerNPC] Cleared WorkState assigned task for {name}");
             }
             
             // Check for available work before going to wander
             if (CampManager.Instance?.WorkManager != null)
             {
-                Debug.Log($"[SettlerNPC] {name} checking for next available task");
                 bool taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(this);
                 if (!taskAssigned)
                 {
                     // No tasks available, go to wander state
-                    Debug.Log($"[SettlerNPC] No tasks available, {name} changing to WANDER");
                     ChangeTask(TaskType.WANDER);
-                }
-                else
-                {
-                    Debug.Log($"[SettlerNPC] {name} assigned to new task");
                 }
             }
             else
             {
-                Debug.Log($"[SettlerNPC] WorkManager null, {name} changing to WANDER");
                 ChangeTask(TaskType.WANDER);
             }
-        }
-        else
-        {
-            Debug.Log($"[SettlerNPC] {name} StopWork called but no assigned work task");
         }
     }
 
     public void ClearAssignedWork()
-    {
-        Debug.Log($"[SettlerNPC] ClearAssignedWork called for {name} - Previous assigned work: {assignedWorkTask?.GetType().Name ?? "null"}");
-        
+    {        
         assignedWorkTask = null;
         isOnBreak = false;
     }
@@ -1206,7 +1173,6 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     public void ChangeTask(TaskType newTask)
     {
         TaskType currentTaskType = currentState != null ? currentState.GetTaskType() : TaskType.WANDER;
-        Debug.Log($"[SettlerNPC] ChangeTask called for {name} - From: {currentTaskType} To: {newTask}, AssignedWork: {(assignedWorkTask != null ? assignedWorkTask.GetType().Name : "null")}");
         
         if (taskStates.ContainsKey(newTask))
         {
@@ -1214,7 +1180,6 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
             if (currentState != null && currentState.GetTaskType() == TaskType.WORK && newTask == TaskType.EAT)
             {
                 isOnBreak = true;
-                Debug.Log($"[SettlerNPC] {name} taking break - changing from work to eat");
             }
             
 
@@ -1506,41 +1471,40 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     {
         if (EffectManager.Instance == null) return;
         
-        // Check for hunger state changes
-        bool wasHungry = previousHunger <= hungerThreshold;
-        bool wasStarving = previousHunger <= starvationThreshold;
-        bool isHungryNow = currentHunger <= hungerThreshold;
-        bool isStarvingNow = currentHunger <= starvationThreshold;
-        
-        // Remove old hunger statuses
-        if (wasStarving && !isStarvingNow)
+        // Determine current hunger status
+        StatusEffectType newHungerStatus;
+        if (currentHunger <= starvationThreshold)
         {
-            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.STARVING);
+            newHungerStatus = StatusEffectType.STARVING;
         }
-        if (wasHungry && !isHungryNow)
+        else if (currentHunger <= hungerThreshold)
         {
-            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.HUNGRY);
-        }
-        
-        // Apply new hunger statuses
-        if (isStarvingNow && !wasStarving)
-        {
-            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.HUNGRY); // Remove less severe status
-            EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.STARVING);
-        }
-        else if (isHungryNow && !wasHungry && !isStarvingNow)
-        {
-            EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.HUNGRY);
-        }
-        
-        // Update healthy status
-        if (!isHungryNow && !IsTired() && !isSick)
-        {
-            EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.HEALTHY);
+            newHungerStatus = StatusEffectType.HUNGRY;
         }
         else
         {
-            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.HEALTHY);
+            newHungerStatus = StatusEffectType.HEALTHY;
+        }
+        
+        // Only update if hunger status changed
+        if (newHungerStatus != currentHungerStatus)
+        {
+            // Remove old hunger status
+            if (currentHungerStatus != StatusEffectType.HEALTHY)
+            {
+                EffectManager.Instance.RemoveStatusEffect(this, currentHungerStatus);
+            }
+            
+            // Apply new hunger status (but not HEALTHY here, we'll handle that in UpdateOverallHealthyStatus)
+            if (newHungerStatus != StatusEffectType.HEALTHY)
+            {
+                EffectManager.Instance.ApplyStatusEffect(this, newHungerStatus);
+            }
+            
+            currentHungerStatus = newHungerStatus;
+            
+            // Check if overall healthy status needs updating
+            UpdateOverallHealthyStatus();
         }
     }
     
@@ -1551,22 +1515,41 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     {
         if (EffectManager.Instance == null) return;
         
-        // Remove old stamina statuses
-        EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.TIRED);
-        EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.EXHAUSTED);
-        
-        // Apply current stamina status
+        // Determine current stamina status
+        StatusEffectType newStaminaStatus;
         if (IsVeryTired())
         {
-            EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.EXHAUSTED);
+            newStaminaStatus = StatusEffectType.EXHAUSTED;
         }
         else if (IsTired())
         {
-            EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.TIRED);
+            newStaminaStatus = StatusEffectType.TIRED;
+        }
+        else
+        {
+            newStaminaStatus = StatusEffectType.HEALTHY;
         }
         
-        // Update healthy status
-        UpdateHealthyStatus();
+        // Only update if stamina status changed
+        if (newStaminaStatus != currentStaminaStatus)
+        {
+            // Remove old stamina status
+            if (currentStaminaStatus != StatusEffectType.HEALTHY)
+            {
+                EffectManager.Instance.RemoveStatusEffect(this, currentStaminaStatus);
+            }
+            
+            // Apply new stamina status (but not HEALTHY here, we'll handle that in UpdateOverallHealthyStatus)
+            if (newStaminaStatus != StatusEffectType.HEALTHY)
+            {
+                EffectManager.Instance.ApplyStatusEffect(this, newStaminaStatus);
+            }
+            
+            currentStaminaStatus = newStaminaStatus;
+            
+            // Check if overall healthy status needs updating
+            UpdateOverallHealthyStatus();
+        }
     }
     
     /// <summary>
@@ -1576,16 +1559,23 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     {
         if (EffectManager.Instance == null) return;
         
-        if (isSick)
+        // Only update if sickness status changed
+        if (isSick != currentSickStatus)
         {
-            EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.SICK);
-            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.HEALTHY);
-        }
-        else
-        {
-            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.SICK);
-            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.RECEIVING_MEDICAL_TREATMENT);
-            UpdateHealthyStatus();
+            if (isSick)
+            {
+                EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.SICK);
+            }
+            else
+            {
+                EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.SICK);
+                EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.RECEIVING_MEDICAL_TREATMENT);
+            }
+            
+            currentSickStatus = isSick;
+            
+            // Check if overall healthy status needs updating
+            UpdateOverallHealthyStatus();
         }
     }
     
@@ -1596,54 +1586,85 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     {
         if (EffectManager.Instance == null) return;
         
-        // Remove old task-related statuses
-        EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.SLEEPING);
-        EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.WORKING);
-        EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.EATING);
-        EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.FIGHTING);
-        EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.FLEEING);
-        EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.RECEIVING_MEDICAL_TREATMENT);
-        
-        // Apply new task status
-        switch (newTask)
+        // Only update if task status changed
+        if (newTask != lastTaskStatus)
         {
-            case TaskType.SLEEP:
-                EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.SLEEPING);
-                break;
-            case TaskType.WORK:
-                EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.WORKING);
-                break;
-            case TaskType.EAT:
-                EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.EATING);
-                break;
-            case TaskType.ATTACK:
-                EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.FIGHTING);
-                break;
-            case TaskType.FLEE:
-                EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.FLEEING);
-                break;
-            case TaskType.MEDICAL_TREATMENT:
-                EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.RECEIVING_MEDICAL_TREATMENT);
-                break;
+            // Remove old task-related status
+            switch (lastTaskStatus)
+            {
+                case TaskType.SLEEP:
+                    EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.SLEEPING);
+                    break;
+                case TaskType.WORK:
+                    EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.WORKING);
+                    break;
+                case TaskType.EAT:
+                    EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.EATING);
+                    break;
+                case TaskType.ATTACK:
+                    EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.FIGHTING);
+                    break;
+                case TaskType.FLEE:
+                    EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.FLEEING);
+                    break;
+                case TaskType.MEDICAL_TREATMENT:
+                    EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.RECEIVING_MEDICAL_TREATMENT);
+                    break;
+            }
+            
+            // Apply new task status
+            switch (newTask)
+            {
+                case TaskType.SLEEP:
+                    EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.SLEEPING);
+                    break;
+                case TaskType.WORK:
+                    EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.WORKING);
+                    break;
+                case TaskType.EAT:
+                    EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.EATING);
+                    break;
+                case TaskType.ATTACK:
+                    EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.FIGHTING);
+                    break;
+                case TaskType.FLEE:
+                    EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.FLEEING);
+                    break;
+                case TaskType.MEDICAL_TREATMENT:
+                    EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.RECEIVING_MEDICAL_TREATMENT);
+                    break;
+            }
+            
+            lastTaskStatus = newTask;
         }
     }
     
     /// <summary>
-    /// Update healthy status based on all current conditions
+    /// Update overall healthy status based on all health conditions
+    /// Only applies HEALTHY when no other status effects are active
     /// </summary>
-    private void UpdateHealthyStatus()
+    private void UpdateOverallHealthyStatus()
     {
         if (EffectManager.Instance == null) return;
         
-        bool isHealthy = !IsHungry() && !IsTired() && !isSick;
+        // Calculate if settler should be considered healthy
+        bool shouldBeHealthy = (currentHungerStatus == StatusEffectType.HEALTHY) && 
+                              (currentStaminaStatus == StatusEffectType.HEALTHY) && 
+                              !currentSickStatus;
         
-        if (isHealthy)
+        // Only update if healthy status changed
+        if (shouldBeHealthy != currentHealthyStatus)
         {
-            EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.HEALTHY);
-        }
-        else
-        {
-            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.HEALTHY);
+            if (shouldBeHealthy)
+            {
+                EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.HEALTHY);
+            }
+            else
+            {
+                EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.HEALTHY);
+            }
+            
+            currentHealthyStatus = shouldBeHealthy;
         }
     }
     

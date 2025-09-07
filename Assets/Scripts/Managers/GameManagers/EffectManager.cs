@@ -471,6 +471,8 @@ namespace Managers
             {
                 Debug.LogWarning($"[EffectManager] No status effect definition found for {statusType} on {target.GetCharacterType()}");
                 return;
+            } else{
+                Debug.Log($"[EffectManager] Status effect definition found for {statusType} on {target.GetCharacterType()}");
             }
             
             // Initialize status effects dictionary for this target if needed
@@ -631,15 +633,28 @@ namespace Managers
             // Play visual effect
             if (definition.HasVisualEffect())
             {
+                var visualEffect = definition.GetVisualEffect();
                 Vector3 position = targetTransform.position + Vector3.up * definition.heightOffset;
-                activeEffect.visualEffectInstance = PlayEffect(
-                    position, 
-                    Vector3.up, 
-                    Quaternion.identity, 
-                    targetTransform, 
-                    definition.GetVisualEffect(), 
-                    activeEffect.duration
-                );
+                
+                // Check if this is a looping effect
+                if (visualEffect != null && visualEffect.looping)
+                {
+                    Debug.Log($"[EffectManager] Starting looping visual effect for {activeEffect.statusType}");
+                    // For looping effects, start the looping coroutine
+                    activeEffect.loopingCoroutine = StartCoroutine(HandleLoopingVisualEffect(target, activeEffect));
+                }
+                else
+                {
+                    // For non-looping effects, play normally
+                    activeEffect.visualEffectInstance = PlayEffect(
+                        position, 
+                        Vector3.up, 
+                        Quaternion.identity, 
+                        targetTransform, 
+                        visualEffect, 
+                        activeEffect.duration
+                    );
+                }
             }
             
             // Show floating text
@@ -851,6 +866,93 @@ namespace Managers
             RemoveStatusEffect(target, statusType);
         }
         
+        /// <summary>
+        /// Handle looping visual effects for persistent status effects
+        /// </summary>
+        private IEnumerator HandleLoopingVisualEffect(IStatusEffectTarget target, ActiveStatusEffect activeEffect)
+        {
+            var definition = activeEffect.definition;
+            var visualEffect = definition.GetVisualEffect();
+            var targetTransform = (target as Component)?.transform;
+            
+            if (targetTransform == null)
+            {
+                Debug.LogWarning($"[EffectManager] Target transform is null for {activeEffect.statusType}");
+                yield break;
+            }
+            
+            if (visualEffect == null)
+            {
+                Debug.LogWarning($"[EffectManager] Visual effect is null for {activeEffect.statusType}");
+                yield break;
+            }
+            
+            while (activeEffect.isActive && targetTransform != null)
+            {
+                // Clean up previous instance properly (return to pool instead of destroying)
+                if (activeEffect.visualEffectInstance != null)
+                {
+                    ReturnEffectToPool(activeEffect.visualEffectInstance, visualEffect);
+                    activeEffect.visualEffectInstance = null;
+                }
+                
+                // Play the effect with proper duration for pooling
+                Vector3 position = targetTransform.position + Vector3.up * definition.heightOffset;
+                
+                // Calculate proper duration: use the loop interval so effect auto-returns to pool
+                float effectDuration = visualEffect.loopInterval;
+                
+                GameObject effectInstance = PlayEffect(
+                    position, 
+                    Vector3.up, 
+                    Quaternion.identity, 
+                    targetTransform, 
+                    visualEffect,
+                    effectDuration // Use loop interval as duration for proper pooling
+                );
+                
+                // Store the current instance
+                activeEffect.visualEffectInstance = effectInstance;
+                
+                // Wait for the loop interval before playing again
+                yield return new WaitForSeconds(visualEffect.loopInterval);
+            }
+            
+            // Final cleanup when loop ends
+            if (activeEffect.visualEffectInstance != null)
+            {
+                ReturnEffectToPool(activeEffect.visualEffectInstance, visualEffect);
+                activeEffect.visualEffectInstance = null;
+            }
+        }
+        
+        /// <summary>
+        /// Manually return an effect to the pool (used for looping effects management)
+        /// </summary>
+        public void ReturnEffectToPool(GameObject effectInstance, EffectDefinition effect)
+        {
+            if (effectInstance == null || effect == null) return;
+            
+            if (activeEffects.ContainsKey(effect) && activeEffects[effect].Contains(effectInstance))
+            {
+                // Reset parent back to EffectManager before disabling
+                effectInstance.transform.SetParent(transform, false);
+                effectInstance.SetActive(false);
+                activeEffects[effect].Remove(effectInstance);
+                
+                if (effectPools.ContainsKey(effect))
+                {
+                    effectPools[effect].Enqueue(effectInstance);
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[EffectManager] Could not return effect to pool - not tracked or effect definition mismatch");
+                // If we can't return to pool, destroy it to prevent memory leaks
+                Destroy(effectInstance);
+            }
+        }
+        
         #endregion
     }
     
@@ -927,6 +1029,7 @@ namespace Managers
         public float duration;
         public Coroutine durationCoroutine;
         public Coroutine damageCoroutine;
+        public Coroutine loopingCoroutine;
         public bool isActive;
         
         // Store original values for restoration
@@ -936,9 +1039,32 @@ namespace Managers
         
         public void Cleanup()
         {
-            if (visualEffectInstance != null)
+            // Mark as inactive first to stop any ongoing loops
+            isActive = false;
+            
+            // If we have a looping coroutine, stop it first
+            if (loopingCoroutine != null)
             {
-                Object.Destroy(visualEffectInstance);
+                EffectManager.Instance.StopCoroutine(loopingCoroutine);
+                loopingCoroutine = null;
+            }
+            
+            // Now handle the visual effect instance
+            // For looping effects, we need to return it to pool manually
+            if (visualEffectInstance != null && definition != null)
+            {
+                var visualEffect = definition.GetVisualEffect();
+                if (visualEffect != null && visualEffect.looping)
+                {
+                    // This was a looping effect - return to pool instead of destroying
+                    Debug.Log($"[ActiveStatusEffect] Cleanup - returning looping effect {visualEffectInstance.name} to pool");
+                    EffectManager.Instance.ReturnEffectToPool(visualEffectInstance, visualEffect);
+                }
+                else
+                {
+                    Debug.Log($"[ActiveStatusEffect] Cleanup - non-looping effect {visualEffectInstance.name}, letting auto-cleanup handle it");
+                }
+                // For non-looping effects, let ReturnToPoolAfterDuration handle it
                 visualEffectInstance = null;
             }
             
