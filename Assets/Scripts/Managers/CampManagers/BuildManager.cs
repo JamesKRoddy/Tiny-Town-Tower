@@ -18,6 +18,13 @@ namespace Managers
         public GameObject destructionPrefab;
     }
 
+	[System.Serializable]
+	public class ConstructionCompleteEffectMapping
+	{
+		public Vector2Int gridSize;
+		public EffectDefinition effect;
+	}
+
     public class BuildManager : MonoBehaviour
     {
         [Header("Full list of Building Scriptable Objs")]
@@ -31,6 +38,9 @@ namespace Managers
 
         [Header("Destruction Prefabs")]
         [SerializeField] private List<DestructionPrefabMapping> destructionPrefabMappings = new List<DestructionPrefabMapping>();
+
+		[Header("Construction Complete Effects (by size)")]
+		[SerializeField] private List<ConstructionCompleteEffectMapping> constructionCompleteEffectMappings = new List<ConstructionCompleteEffectMapping>();
 
         public GameObject GetConstructionSitePrefab(Vector2Int size)
         {
@@ -59,6 +69,31 @@ namespace Managers
             Debug.LogError($"No destruction prefab found for size {size.x}x{size.y}");
             return destructionPrefabMappings.Count > 0 ? destructionPrefabMappings[0].destructionPrefab : null;
         }
+
+		public EffectDefinition GetConstructionCompleteEffect(Vector2Int size)
+		{
+			foreach (var mapping in constructionCompleteEffectMappings)
+			{
+				if (mapping.gridSize == size)
+				{
+					return mapping.effect;
+				}
+			}
+
+			Debug.LogWarning($"[BuildManager] No construction complete effect found for size {size.x}x{size.y}");
+			return null;
+		}
+
+		public void PlayConstructionCompleteEffect(Vector3 position, Vector3 normal, Vector2Int size)
+		{
+			var effect = GetConstructionCompleteEffect(size);
+			if (effect == null)
+			{
+				return;
+			}
+
+			EffectManager.Instance?.PlayEffect(position, normal, Quaternion.LookRotation(normal), null, effect);
+		}
 
 
 

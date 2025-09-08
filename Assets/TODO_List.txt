@@ -31,7 +31,22 @@ Pressing b after selecting a bed locks the controls
 Refactor the rest of the _TaskState to reduce repetition of code
 Still some issue with the melee zombie bugging out between hits while being close to the player
 Sometimes 2 npcs can sleep in the same bed unassigned bed
-Time manager is running in the maiun menu
+Time manager is running in the main menu
+Research upgrade, cooking and research not progressing correctly (add a progress bar or something to see how its progressing)
+NPCs not returning to work after sleeping
+
+
+Errors:
+Building prefab AI_Prop_Makeshift_Tent_02 must have a Building component!
+UnityEngine.Debug:LogError (object)
+StructureConstructionTask:CompleteWork () (at Assets/Scripts/Characters/NPCs/CampTasks/WorkTask/StructureConstructionTask.cs:86)
+WorkTask:DoWork (HumanCharacterController,single) (at Assets/Scripts/Characters/NPCs/CampTasks/WorkTask/WorkTask.cs:366)
+WorkState:StartTaskIfReady () (at Assets/Scripts/Characters/NPCs/CampTasks/WorkState.cs:181)
+WorkState:HandleReachedTask () (at Assets/Scripts/Characters/NPCs/CampTasks/WorkState.cs:162)
+WorkState:UpdateState () (at Assets/Scripts/Characters/NPCs/CampTasks/WorkState.cs:114)
+SettlerNPC:Update () (at Assets/Scripts/Characters/NPCs/SettlerNPC.cs:781)
+
+
 
 
 Add to save load manager:

@@ -282,10 +282,11 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
             CampManager.Instance.RegisterTarget(this);
         }
         
-        // Play construction complete effect
+        // Play construction complete effect (size-based via BuildManager)
         Vector3 effectPosition = transform.position + Vector3.up * 1.5f;
         Vector3 effectNormal = Vector3.up;
-        EffectManager.Instance?.PlayConstructionCompleteEffect(effectPosition, effectNormal, buildingCategory);
+        Vector2Int structureSize = StructureScriptableObj != null ? StructureScriptableObj.size : new Vector2Int(1, 1);
+        CampManager.Instance?.BuildManager?.PlayConstructionCompleteEffect(effectPosition, effectNormal, structureSize);
     }
 
     public bool IsOperational() => isOperational;

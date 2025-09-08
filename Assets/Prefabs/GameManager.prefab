@@ -1746,6 +1746,13 @@ MonoBehaviour:
     destructionPrefab: {fileID: 7583506354027141791, guid: 8ba32c953c58fe44eb8f98f0cb0816df, type: 3}
   - gridSize: {x: 3, y: 3}
     destructionPrefab: {fileID: 4148604766521998765, guid: 261d26f2b8cdf6f40834bbd12dc1a6e2, type: 3}
+  constructionCompleteEffectMappings:
+  - gridSize: {x: 1, y: 1}
+    effect: {fileID: 11400000, guid: cff6230d63ddada449c2cb94a12f9a3e, type: 2}
+  - gridSize: {x: 1, y: 1}
+    effect: {fileID: 11400000, guid: 5ae9b375b149ee34f8e519df46e6d5b4, type: 2}
+  - gridSize: {x: 1, y: 1}
+    effect: {fileID: 11400000, guid: ce47b9855e546c446aa73e7717588dcb, type: 2}
 --- !u!1 &8937295529231746835
 GameObject:
   m_ObjectHideFlags: 0

@@ -1717,6 +1717,14 @@ MonoBehaviour:
     effect: {fileID: 11400000, guid: 039aff3216736a04283b756edaf67064, type: 2}
     ikPoint: 2
     parentToIK: 1
+  - taskAnimation: 3
+    effect: {fileID: 11400000, guid: 2bcde8c9636bd174d9d2960b0ea2977d, type: 2}
+    ikPoint: 2
+    parentToIK: 0
+  - taskAnimation: 4
+    effect: {fileID: 11400000, guid: 2bcde8c9636bd174d9d2960b0ea2977d, type: 2}
+    ikPoint: 2
+    parentToIK: 0
 --- !u!114 &8320294776751182447
 MonoBehaviour:
   m_ObjectHideFlags: 0
