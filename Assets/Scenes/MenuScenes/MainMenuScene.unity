@@ -1899,6 +1899,38 @@ PrefabInstance:
       propertyPath: 'buildingScriptableObjs.Array.data[13]'
       value: 
       objectReference: {fileID: 11400000, guid: 6d48670bd26ffa141ab488a31d2ed45f, type: 2}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: constructionCompleteEffectMappings.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: constructionCompleteEffectMappings.Array.data[0].effect
+      value: 
+      objectReference: {fileID: 11400000, guid: cff6230d63ddada449c2cb94a12f9a3e, type: 2}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: constructionCompleteEffectMappings.Array.data[0].gridSize.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: constructionCompleteEffectMappings.Array.data[0].gridSize.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: constructionCompleteEffectMappings.Array.data[1].gridSize.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: constructionCompleteEffectMappings.Array.data[1].gridSize.y
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: constructionCompleteEffectMappings.Array.data[2].gridSize.x
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: constructionCompleteEffectMappings.Array.data[2].gridSize.y
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 5397687326794407557, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: autoSaveEnabled
       value: 0
