@@ -16,10 +16,7 @@ They can increase chances of recovery by not working or even better receiving tr
 
 
 Tomorrow work:
-Status effects, adding sleep, work etc effects to npcs
-Also damage ones like fire electric, poison etc.
-Effects for work task buildings (camp fire smoke etc.)
-Test upgrade and destruction effects
+
 
 Create debug menu that controls the in game time to fast forward game time
 
@@ -84,7 +81,10 @@ Visual effects from elemental weapons eg. zombies get shocked by electrical weap
 
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
 
-Implement a day/night cycle for the entire game. Figure out what happens in the camp while youre gone, does progress on stuff freeze? Does it keep going or does it progress but slower?
+Figure out what happens time wise in the camp while youre gone, does progress on stuff freeze? Does it keep going or does it progress but slower?
+
+Status effects, adding sleep, work etc effects to npcs Also damage ones like fire electric, poison etc. Effects for work task buildings (camp fire smoke etc.)
+Test upgrade and destruction effects for buildings
 
 
 *****Ideas*****
