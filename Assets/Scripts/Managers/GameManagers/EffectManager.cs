@@ -3,7 +3,16 @@ using System.Collections.Generic;
 using System.Collections;
 
 namespace Managers
-{  
+{
+    [System.Serializable]
+    public class BuildingHitEffects
+    {
+        [Tooltip("The category of building these effects are for")]
+        public CampBuildingCategory buildingCategory;
+        
+        [Tooltip("Effects played when the building is hit")]
+        public EffectDefinition[] impactEffects = new EffectDefinition[0];
+    }  
     public class EffectManager : MonoBehaviour
     {
         public static EffectManager Instance { get; private set; }
@@ -13,8 +22,8 @@ namespace Managers
         public CharacterEffects[] characterEffects;
 
         [Header("Building Effects")]
-        [Tooltip("Array of effect sets for different building types")]
-        public BuildingEffects[] buildingEffects;
+        [Tooltip("Hit effects for different building categories")]
+        public BuildingHitEffects[] buildingHitEffects;
 
         [Tooltip("Number of instances of each effect to keep in the object pool")]
         public int poolSize = 20;
@@ -65,19 +74,13 @@ namespace Managers
 
         private void InitializeBuildingEffectPools()
         {
-            if (buildingEffects == null) return;
+            if (buildingHitEffects == null) return;
 
-            foreach (var buildingEffect in buildingEffects)
+            foreach (var buildingEffect in buildingHitEffects)
             {
                 if (buildingEffect == null) continue;
 
                 InitializeEffectPool(buildingEffect.impactEffects);
-                InitializeEffectPool(buildingEffect.destructionEffects);
-                InitializeEffectPool(buildingEffect.constructionEffects);
-                InitializeEffectPool(buildingEffect.constructionCompleteEffects);
-                InitializeEffectPool(buildingEffect.repairEffects);
-                InitializeEffectPool(buildingEffect.upgradeEffects);
-                InitializeEffectPool(buildingEffect.ambientEffects);
             }
         }
 
@@ -130,14 +133,14 @@ namespace Managers
 
         public void PlayHitEffect(Vector3 position, Vector3 normal, CampBuildingCategory buildingCategory)
         {
-            var buildingEffects = GetBuildingEffects(buildingCategory);
-            if (buildingEffects == null || buildingEffects.impactEffects == null || buildingEffects.impactEffects.Length == 0) 
+            var buildingHitEffects = GetBuildingHitEffects(buildingCategory);
+            if (buildingHitEffects == null || buildingHitEffects.impactEffects == null || buildingHitEffects.impactEffects.Length == 0) 
             {
                 Debug.LogWarning($"No hit effects found for building category: {buildingCategory}");
                 return;
             }
 
-            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, buildingEffects.impactEffects[Random.Range(0, buildingEffects.impactEffects.Length)]);
+            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, buildingHitEffects.impactEffects[Random.Range(0, buildingHitEffects.impactEffects.Length)]);
         }
 
         public void PlayDeathEffect(Vector3 position, Vector3 normal, IDamageable damageable)
@@ -153,48 +156,70 @@ namespace Managers
             PlayEffect(position, normal, Quaternion.LookRotation(normal), null, effects.deathEffects[Random.Range(0, effects.deathEffects.Length)]);
         }
 
-        public void PlayDestructionEffect(Vector3 position, Vector3 normal, CampBuildingCategory buildingCategory)
+        public void PlayDestructionEffect(Vector3 position, Vector3 normal, Vector2Int buildingSize)
         {
-            var buildingEffects = GetBuildingEffects(buildingCategory);
-            if (buildingEffects == null || buildingEffects.destructionEffects == null || buildingEffects.destructionEffects.Length == 0)
+            // Use BuildManager for destruction effects
+            if (Managers.CampManager.Instance?.BuildManager != null)
             {
-                Debug.LogWarning($"No destruction effects found for building category: {buildingCategory}");
-                return;
+                Managers.CampManager.Instance.BuildManager.PlayDestructionEffect(position, normal, buildingSize);
             }
-
-            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, buildingEffects.destructionEffects[Random.Range(0, buildingEffects.destructionEffects.Length)]);
+            else
+            {
+                Debug.LogWarning($"[EffectManager] BuildManager not available for destruction effect at size {buildingSize}");
+            }
         }
 
-        public void PlayConstructionEffect(Vector3 position, Vector3 normal, CampBuildingCategory buildingCategory)
+        public void PlayConstructionEffect(Vector3 position, Vector3 normal, Vector2Int buildingSize)
         {
-            var buildingEffects = GetBuildingEffects(buildingCategory);
-            if (buildingEffects == null || buildingEffects.constructionEffects == null || buildingEffects.constructionEffects.Length == 0) return;
-
-            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, buildingEffects.constructionEffects[Random.Range(0, buildingEffects.constructionEffects.Length)]);
+            // Construction effects during building process - for now we can use the construction complete effect
+            // In the future, this could be extended to have separate construction-in-progress effects
+            if (Managers.CampManager.Instance?.BuildManager != null)
+            {
+                Managers.CampManager.Instance.BuildManager.PlayConstructionCompleteEffect(position, normal, buildingSize);
+            }
+            else
+            {
+                Debug.LogWarning($"[EffectManager] BuildManager not available for construction effect at size {buildingSize}");
+            }
         }
 
-        public void PlayConstructionCompleteEffect(Vector3 position, Vector3 normal, CampBuildingCategory buildingCategory)
+        public void PlayConstructionCompleteEffect(Vector3 position, Vector3 normal, Vector2Int buildingSize)
         {
-            var buildingEffects = GetBuildingEffects(buildingCategory);
-            if (buildingEffects == null || buildingEffects.constructionCompleteEffects == null || buildingEffects.constructionCompleteEffects.Length == 0) return;
-
-            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, buildingEffects.constructionCompleteEffects[Random.Range(0, buildingEffects.constructionCompleteEffects.Length)]);
+            // Use BuildManager for construction complete effects
+            if (Managers.CampManager.Instance?.BuildManager != null)
+            {
+                Managers.CampManager.Instance.BuildManager.PlayConstructionCompleteEffect(position, normal, buildingSize);
+            }
+            else
+            {
+                Debug.LogWarning($"[EffectManager] BuildManager not available for construction complete effect at size {buildingSize}");
+            }
         }
 
-        public void PlayRepairEffect(Vector3 position, Vector3 normal, CampBuildingCategory buildingCategory)
+        public void PlayRepairEffect(Vector3 position, Vector3 normal, Vector2Int buildingSize)
         {
-            var buildingEffects = GetBuildingEffects(buildingCategory);
-            if (buildingEffects == null || buildingEffects.repairEffects == null || buildingEffects.repairEffects.Length == 0) return;
-
-            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, buildingEffects.repairEffects[Random.Range(0, buildingEffects.repairEffects.Length)]);
+            // Use BuildManager for repair effects
+            if (Managers.CampManager.Instance?.BuildManager != null)
+            {
+                Managers.CampManager.Instance.BuildManager.PlayRepairEffect(position, normal, buildingSize);
+            }
+            else
+            {
+                Debug.LogWarning($"[EffectManager] BuildManager not available for repair effect at size {buildingSize}");
+            }
         }
 
-        public void PlayUpgradeEffect(Vector3 position, Vector3 normal, CampBuildingCategory buildingCategory)
+        public void PlayUpgradeEffect(Vector3 position, Vector3 normal, Vector2Int buildingSize)
         {
-            var buildingEffects = GetBuildingEffects(buildingCategory);
-            if (buildingEffects == null || buildingEffects.upgradeEffects == null || buildingEffects.upgradeEffects.Length == 0) return;
-
-            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, buildingEffects.upgradeEffects[Random.Range(0, buildingEffects.upgradeEffects.Length)]);
+            // For upgrade effects, we can reuse repair effects since they're conceptually similar
+            if (Managers.CampManager.Instance?.BuildManager != null)
+            {
+                Managers.CampManager.Instance.BuildManager.PlayRepairEffect(position, normal, buildingSize);
+            }
+            else
+            {
+                Debug.LogWarning($"[EffectManager] BuildManager not available for upgrade effect at size {buildingSize}");
+            }
         }
 
         public void PlayFootstepEffect(Vector3 position, Vector3 normal, CharacterType characterType)
@@ -249,18 +274,18 @@ namespace Managers
             return null;
         }
 
-        private BuildingEffects GetBuildingEffects(CampBuildingCategory buildingCategory)
+        private BuildingHitEffects GetBuildingHitEffects(CampBuildingCategory buildingCategory)
         {
-            if (buildingEffects == null) return null;
+            if (buildingHitEffects == null) return null;
 
-            foreach (var effect in buildingEffects)
+            foreach (var effect in buildingHitEffects)
             {
                 if (effect != null && effect.buildingCategory == buildingCategory)
                 {
                     return effect;
                 }
             }
-            Debug.LogWarning($"No effects found for building category: {buildingCategory}");
+            Debug.LogWarning($"No hit effects found for building category: {buildingCategory}");
             return null;
         }
 

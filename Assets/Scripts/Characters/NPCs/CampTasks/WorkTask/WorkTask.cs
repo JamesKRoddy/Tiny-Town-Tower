@@ -21,6 +21,21 @@ public abstract class WorkTask : MonoBehaviour
     [Header("Task Animation")]
     public TaskAnimation taskAnimation;
 
+    [Header("Ambient Effects")]
+    [Tooltip("Particle systems that play when the task is in use")]
+    [SerializeField] protected ParticleSystem[] inUseParticleSystems = new ParticleSystem[0];
+    
+    [Tooltip("Particle systems that play when the task is idle/not in use")]
+    [SerializeField] protected ParticleSystem[] idleParticleSystems = new ParticleSystem[0];
+    
+    [Tooltip("Audio sources that play when the task is in use")]
+    [SerializeField] protected AudioSource[] inUseAudioSources = new AudioSource[0];
+    
+    [Tooltip("Audio sources that play when the task is idle/not in use")]
+    [SerializeField] protected AudioSource[] idleAudioSources = new AudioSource[0];
+    
+    private bool currentlyInUse = false;
+
     // Work progress tracking
     protected float workProgress = 0f;
     protected float baseWorkTime = 5f;
@@ -42,6 +57,18 @@ public abstract class WorkTask : MonoBehaviour
     protected virtual void Start()
     {
         taskStructure = GetComponent<IPlaceableStructure>();
+        
+        // Initialize ambient effects arrays if they're null
+        if (inUseParticleSystems == null) inUseParticleSystems = new ParticleSystem[0];
+        if (idleParticleSystems == null) idleParticleSystems = new ParticleSystem[0];
+        if (inUseAudioSources == null) inUseAudioSources = new AudioSource[0];
+        if (idleAudioSources == null) idleAudioSources = new AudioSource[0];
+        
+        // Start with idle effects if operational
+        if (isOperational)
+        {
+            SetAmbientEffectsState(false); // Start in idle state (looping effects)
+        }
     }
 
     // Virtual method for tooltip text
@@ -80,6 +107,12 @@ public abstract class WorkTask : MonoBehaviour
         if (!currentWorkers.Contains(npc) && currentWorkers.Count < maxWorkers)
         {
             currentWorkers.Add(npc);
+        }
+        
+        // Start in-use ambient effects when work actually begins (NPC has arrived and is starting work)
+        if (currentWorkers.Count == 1) // First worker starting work
+        {
+            SetAmbientEffectsState(true);
         }
         
         // Work execution is now handled by the worker's coroutine started in AssignNPC
@@ -221,6 +254,9 @@ public abstract class WorkTask : MonoBehaviour
             taskStructure.SetCurrentWorkTask(this);
         }
         
+        // Don't start effects here - they should start when work actually begins
+        // Effects will be managed in PerformTask() and CompleteWork()
+        
         // Notify the worker that they can start working
         npc.StartWork(this);
         
@@ -235,6 +271,7 @@ public abstract class WorkTask : MonoBehaviour
             currentWorkers.RemoveAt(currentWorkers.Count - 1); // Remove the last assigned NPC
         }
         
+        // Effects will be managed by work lifecycle, not assignment
         if (currentWorkers.Count == 0 && taskStructure != null)
         {
             taskStructure.SetCurrentWorkTask(null);
@@ -249,6 +286,7 @@ public abstract class WorkTask : MonoBehaviour
             currentWorkers.Remove(npc);
         }
         
+        // Effects will be managed by work lifecycle, not assignment
         if (currentWorkers.Count == 0 && taskStructure != null)
         {
             taskStructure.SetCurrentWorkTask(null);
@@ -401,6 +439,12 @@ public abstract class WorkTask : MonoBehaviour
         currentWorkers.Clear();
         Debug.Log($"[WorkTask] Cleared all workers, count now: {currentWorkers.Count}");
         
+        // Switch back to idle effects when work is complete
+        if (isOperational)
+        {
+            SetAmbientEffectsState(false); // Back to idle state
+        }
+        
         if (taskStructure != null)
         {
             taskStructure.SetCurrentWorkTask(null);
@@ -452,6 +496,12 @@ public abstract class WorkTask : MonoBehaviour
             if (!isOperational)
             {
                 Debug.Log($"[WorkTask] {GetType().Name} becoming non-operational, stopping all workers");
+                
+                // Stop all ambient effects when becoming non-operational
+                StopAmbientEffects(inUseParticleSystems, inUseAudioSources);
+                StopAmbientEffects(idleParticleSystems, idleAudioSources);
+                currentlyInUse = false; // Reset the state tracker
+                
                 // Stop all current workers
                 if (currentWorkers.Count > 0)
                 {
@@ -479,6 +529,9 @@ public abstract class WorkTask : MonoBehaviour
             }
             else
             {
+                // Start idle ambient effects when becoming operational
+                SetAmbientEffectsState(false);
+                
                 // If we become operational again and have a previous worker, try to reassign them
                 var previousWorker = CampManager.Instance.WorkManager.GetPreviousWorkerForTask(this);
                 if (previousWorker != null)
@@ -540,6 +593,7 @@ public abstract class WorkTask : MonoBehaviour
             // Stop the worker from working on this task
             npc.StopWork();
             
+            // Effects will be managed by work lifecycle, not worker management
             if (currentWorkers.Count == 0 && taskStructure != null)
             {
                 taskStructure.SetCurrentWorkTask(null);
@@ -549,4 +603,110 @@ public abstract class WorkTask : MonoBehaviour
         }
         return false;
     }
+
+    /// <summary>
+    /// Set the ambient effects state based on whether the task is in use
+    /// </summary>
+    /// <param name="inUse">True if task is being used, false if idle</param>
+    protected virtual void SetAmbientEffectsState(bool inUse)
+    {
+        if (currentlyInUse == inUse) return; // No change needed
+        
+        currentlyInUse = inUse;
+        
+        if (inUse)
+        {
+            // Stop idle effects
+            StopAmbientEffects(idleParticleSystems, idleAudioSources);
+            
+            // Start in-use effects
+            StartAmbientEffects(inUseParticleSystems, inUseAudioSources);
+        }
+        else
+        {
+            // Stop in-use effects
+            StopAmbientEffects(inUseParticleSystems, inUseAudioSources);
+            
+            // Start idle effects
+            StartAmbientEffects(idleParticleSystems, idleAudioSources);
+        }
+    }
+
+    /// <summary>
+    /// Start ambient effects (particle systems and audio) - all effects should be set to loop
+    /// </summary>
+    /// <param name="particles">Particle systems to start</param>
+    /// <param name="audioSources">Audio sources to start</param>
+    protected virtual void StartAmbientEffects(ParticleSystem[] particles, AudioSource[] audioSources)
+    {
+        if (particles != null)
+        {
+            foreach (var ps in particles)
+            {
+                if (ps != null)
+                {
+                    ps.gameObject.SetActive(true);
+                    if (!ps.isPlaying)
+                    {
+                        ps.Play();
+                    }
+                }
+            }
+        }
+        
+        if (audioSources != null)
+        {
+            foreach (var audio in audioSources)
+            {
+                if (audio != null)
+                {
+                    audio.gameObject.SetActive(true);
+                    if (!audio.isPlaying)
+                    {
+                        audio.loop = true; // Ensure audio loops
+                        audio.Play();
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Stop ambient effects (particle systems and audio)
+    /// </summary>
+    /// <param name="particles">Particle systems to stop</param>
+    /// <param name="audioSources">Audio sources to stop</param>
+    protected virtual void StopAmbientEffects(ParticleSystem[] particles, AudioSource[] audioSources)
+    {
+        if (particles != null)
+        {
+            foreach (var ps in particles)
+            {
+                if (ps != null)
+                {
+                    if (ps.isPlaying)
+                    {
+                        ps.Stop();
+                    }
+                    ps.gameObject.SetActive(false);
+                }
+            }
+        }
+        
+        if (audioSources != null)
+        {
+            foreach (var audio in audioSources)
+            {
+                if (audio != null)
+                {
+                    if (audio.isPlaying)
+                    {
+                        audio.Stop();
+                    }
+                    audio.gameObject.SetActive(false);
+                }
+            }
+        }
+    }
+
 }

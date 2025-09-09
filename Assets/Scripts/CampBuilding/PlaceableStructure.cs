@@ -619,7 +619,7 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
         // Play repair effect
         Vector3 repairPoint = transform.position + Vector3.up * 1.5f;
         Vector3 repairNormal = Vector3.up;
-        EffectManager.Instance?.PlayRepairEffect(repairPoint, repairNormal, buildingCategory);
+        EffectManager.Instance?.PlayRepairEffect(repairPoint, repairNormal, structureScriptableObj.size);
     }
 
     public virtual void Die()
@@ -635,7 +635,7 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
         // Play destruction VFX using building effects
         Vector3 destructionPoint = transform.position + Vector3.up * 1.5f;
         Vector3 destructionNormal = Vector3.up;
-        EffectManager.Instance?.PlayDestructionEffect(destructionPoint, destructionNormal, buildingCategory);
+        EffectManager.Instance?.PlayDestructionEffect(destructionPoint, destructionNormal, structureScriptableObj.size);
         
         // Destroy the structure
         Destroy(gameObject);
@@ -685,7 +685,7 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
         // Play upgrade effect
         Vector3 upgradePoint = transform.position + Vector3.up * 1.5f;
         Vector3 upgradeNormal = Vector3.up;
-        EffectManager.Instance?.PlayUpgradeEffect(upgradePoint, upgradeNormal, buildingCategory);
+        EffectManager.Instance?.PlayUpgradeEffect(upgradePoint, upgradeNormal, structureScriptableObj.size);
     }
 
     public void TriggerRepairEvent()

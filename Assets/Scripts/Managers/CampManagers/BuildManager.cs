@@ -25,6 +25,20 @@ namespace Managers
 		public EffectDefinition effect;
 	}
 
+	[System.Serializable]
+	public class RepairEffectMapping
+	{
+		public Vector2Int gridSize;
+		public EffectDefinition effect;
+	}
+
+	[System.Serializable]
+	public class DestructionEffectMapping
+	{
+		public Vector2Int gridSize;
+		public EffectDefinition effect;
+	}
+
     public class BuildManager : MonoBehaviour
     {
         [Header("Full list of Building Scriptable Objs")]
@@ -41,6 +55,12 @@ namespace Managers
 
 		[Header("Construction Complete Effects (by size)")]
 		[SerializeField] private List<ConstructionCompleteEffectMapping> constructionCompleteEffectMappings = new List<ConstructionCompleteEffectMapping>();
+
+		[Header("Repair Effects (by size)")]
+		[SerializeField] private List<RepairEffectMapping> repairEffectMappings = new List<RepairEffectMapping>();
+
+		[Header("Destruction Effects (by size)")]
+		[SerializeField] private List<DestructionEffectMapping> destructionEffectMappings = new List<DestructionEffectMapping>();
 
         public GameObject GetConstructionSitePrefab(Vector2Int size)
         {
@@ -87,6 +107,56 @@ namespace Managers
 		public void PlayConstructionCompleteEffect(Vector3 position, Vector3 normal, Vector2Int size)
 		{
 			var effect = GetConstructionCompleteEffect(size);
+			if (effect == null)
+			{
+				return;
+			}
+
+			EffectManager.Instance?.PlayEffect(position, normal, Quaternion.LookRotation(normal), null, effect);
+		}
+
+		public EffectDefinition GetRepairEffect(Vector2Int size)
+		{
+			foreach (var mapping in repairEffectMappings)
+			{
+				if (mapping.gridSize == size)
+				{
+					return mapping.effect;
+				}
+			}
+
+			Debug.LogWarning($"[BuildManager] No repair effect found for size {size.x}x{size.y}");
+			return null;
+		}
+
+		public void PlayRepairEffect(Vector3 position, Vector3 normal, Vector2Int size)
+		{
+			var effect = GetRepairEffect(size);
+			if (effect == null)
+			{
+				return;
+			}
+
+			EffectManager.Instance?.PlayEffect(position, normal, Quaternion.LookRotation(normal), null, effect);
+		}
+
+		public EffectDefinition GetDestructionEffect(Vector2Int size)
+		{
+			foreach (var mapping in destructionEffectMappings)
+			{
+				if (mapping.gridSize == size)
+				{
+					return mapping.effect;
+				}
+			}
+
+			Debug.LogWarning($"[BuildManager] No destruction effect found for size {size.x}x{size.y}");
+			return null;
+		}
+
+		public void PlayDestructionEffect(Vector3 position, Vector3 normal, Vector2Int size)
+		{
+			var effect = GetDestructionEffect(size);
 			if (effect == null)
 			{
 				return;

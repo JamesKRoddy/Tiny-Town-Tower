@@ -19,6 +19,8 @@ Tomorrow work:
 Status effects, adding sleep, work etc effects to npcs
 Also damage ones like fire electric, poison etc.
 Effects for work task buildings (camp fire smoke etc.)
+Test upgrade and destruction effects
+
 Create debug menu that controls the in game time to fast forward game time
 
 
@@ -37,6 +39,7 @@ Time manager is running in the main menu
 Research upgrade, cooking and research not progressing correctly (add a progress bar or something to see how its progressing)
 NPCs not returning to work after sleeping
 Switching between mouse and controller controls on the fly
+Destroying a building freezes the npcs and they just keep working for some reason
 
 
 Errors:
