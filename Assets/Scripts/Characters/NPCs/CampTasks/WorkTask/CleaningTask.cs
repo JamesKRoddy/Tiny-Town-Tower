@@ -33,7 +33,7 @@ public class CleaningTask : ManagerTask
     private void HandleDirtPileSpawned(DirtPileTask dirtPile)
     {
         // If we have a worker but no current target, start cleaning the new dirt pile
-        if (currentWorker != null && targetDirtPile == null && targetWasteBin == null)
+        if (currentWorkers.Count > 0 && targetDirtPile == null && targetWasteBin == null)
         {
             SetupDirtPileTask(dirtPile);
         }
@@ -42,7 +42,7 @@ public class CleaningTask : ManagerTask
     private void HandleWasteBinFull(WasteBin bin)
     {
         // If we have a worker but no current target, start emptying the full bin
-        if (currentWorker != null && targetDirtPile == null && targetWasteBin == null)
+        if (currentWorkers.Count > 0 && targetDirtPile == null && targetWasteBin == null)
         {
             SetupWasteBinTask(bin);
         }
@@ -61,9 +61,9 @@ public class CleaningTask : ManagerTask
         dirtPile.OnTaskCompleted += HandleSubtaskCompleted;
         
         // Notify the worker's WorkState to update its path
-        if (currentWorker != null)
+        if (currentWorkers.Count > 0)
         {
-            var workState = currentWorker.GetComponent<WorkState>();
+            var workState = currentWorkers[0].GetComponent<WorkState>();
             workState?.UpdateTaskDestination();
         }
     }
@@ -84,16 +84,16 @@ public class CleaningTask : ManagerTask
         }
         
         // Notify the worker's WorkState to update its path
-        if (currentWorker != null)
+        if (currentWorkers.Count > 0)
         {
-            var workState = currentWorker.GetComponent<WorkState>();
+            var workState = currentWorkers[0].GetComponent<WorkState>();
             workState?.UpdateTaskDestination();
         }
     }
 
     private void FindNextCleaningTask()
     {
-        if (!isOperational || currentWorker == null)
+        if (!isOperational || currentWorkers.Count == 0)
         {
             return;
         }
@@ -171,7 +171,7 @@ public class CleaningTask : ManagerTask
         base.HandleSubtaskCompleted();
         
         // Look for the next task
-        if (currentWorker != null)
+        if (currentWorkers.Count > 0)
         {
             FindNextCleaningTask();
         }

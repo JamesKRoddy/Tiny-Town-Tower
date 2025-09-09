@@ -33,6 +33,10 @@ public class CharacterEffects : BaseEffects
     [Tooltip("Maximum time between idle effects")]
     public float maxIdleInterval = 15f;
 
+    [Header("Status Effects")]
+    [Tooltip("Visual effects for various status conditions")]
+    public StatusEffectDefinition[] statusEffects = new StatusEffectDefinition[0];
+
     protected override void OnEnable()
     {
         base.OnEnable();
@@ -43,5 +47,6 @@ public class CharacterEffects : BaseEffects
         if (footstepEffects == null) footstepEffects = new EffectDefinition[0];
         if (spawnEffects == null) spawnEffects = new EffectDefinition[0];
         if (idleEffects == null) idleEffects = new EffectDefinition[0];
+        if (statusEffects == null) statusEffects = new StatusEffectDefinition[0];
     }
 }

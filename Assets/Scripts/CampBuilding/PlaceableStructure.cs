@@ -72,6 +72,78 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
 
     #endregion
 
+    #region Gizmos for Development
+
+    private void OnDrawGizmos()
+    {
+        if (structureScriptableObj == null) return;
+        
+        // Draw the structure size boundary
+        DrawStructureSizeGizmo(false);
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (structureScriptableObj == null) return;
+        
+        // Draw the structure size boundary with more prominent colors when selected
+        DrawStructureSizeGizmo(true);
+    }
+
+    private void DrawStructureSizeGizmo(bool isSelected)
+    {
+        Vector2Int size = structureScriptableObj.size;
+        Vector3 center = transform.position;
+        
+        // Get the actual grid unit size from CampManager
+        float gridUnitSize = 2f; // Default fallback
+        if (CampManager.Instance != null)
+        {
+            gridUnitSize = CampManager.Instance.SharedGridSize;
+        }
+        
+        // Calculate the actual world space size based on grid units
+        Vector3 worldSize = new Vector3(size.x * gridUnitSize, 0, size.y * gridUnitSize);
+        Vector3 halfWorldSize = worldSize * 0.5f;
+        
+        // Calculate the corners of the structure based on actual world size
+        Vector3 topLeft = center + new Vector3(-halfWorldSize.x, 0, halfWorldSize.z);
+        Vector3 topRight = center + new Vector3(halfWorldSize.x, 0, halfWorldSize.z);
+        Vector3 bottomLeft = center + new Vector3(-halfWorldSize.x, 0, -halfWorldSize.z);
+        Vector3 bottomRight = center + new Vector3(halfWorldSize.x, 0, -halfWorldSize.z);
+        
+        // Set gizmo color based on selection state
+        if (isSelected)
+        {
+            Gizmos.color = Color.yellow;
+        }
+        else
+        {
+            Gizmos.color = new Color(1f, 1f, 0f, 0.3f); // Semi-transparent yellow
+        }
+        
+        // Draw the boundary rectangle
+        Gizmos.DrawLine(topLeft, topRight);
+        Gizmos.DrawLine(topRight, bottomRight);
+        Gizmos.DrawLine(bottomRight, bottomLeft);
+        Gizmos.DrawLine(bottomLeft, topLeft);
+        
+        // Draw center point
+        Gizmos.color = isSelected ? Color.red : new Color(1f, 0f, 0f, 0.5f);
+        Gizmos.DrawWireSphere(center, 0.1f);
+        
+        // Draw size labels if selected
+        if (isSelected)
+        {
+            #if UNITY_EDITOR
+            UnityEditor.Handles.color = Color.white;
+            UnityEditor.Handles.Label(center + Vector3.up * 0.5f, $"Grid: {size.x}x{size.y} | World: {worldSize.x:F1}x{worldSize.z:F1}");
+            #endif
+        }
+    }
+
+    #endregion
+
     #region Unity Lifecycle
 
     protected virtual void Start()
@@ -170,8 +242,11 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
         }
         repairTask.transform.position = transform.position;
         
+        // Convert game hours to real seconds using TimeManager
+        float repairTimeInSeconds = Managers.TimeManager.ConvertGameHoursToSecondsStatic(StructureScriptableObj.repairTimeInGameHours);
+        
         repairTask.SetupRepairTask(
-            StructureScriptableObj.repairTime,
+            repairTimeInSeconds,
             StructureScriptableObj.healthRestoredPerRepair
         );
     }
@@ -207,10 +282,11 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
             CampManager.Instance.RegisterTarget(this);
         }
         
-        // Play construction complete effect
+        // Play construction complete effect (size-based via BuildManager)
         Vector3 effectPosition = transform.position + Vector3.up * 1.5f;
         Vector3 effectNormal = Vector3.up;
-        EffectManager.Instance?.PlayConstructionCompleteEffect(effectPosition, effectNormal, buildingCategory);
+        Vector2Int structureSize = StructureScriptableObj != null ? StructureScriptableObj.size : new Vector2Int(1, 1);
+        CampManager.Instance?.BuildManager?.PlayConstructionCompleteEffect(effectPosition, effectNormal, structureSize);
     }
 
     public bool IsOperational() => isOperational;
@@ -543,7 +619,7 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
         // Play repair effect
         Vector3 repairPoint = transform.position + Vector3.up * 1.5f;
         Vector3 repairNormal = Vector3.up;
-        EffectManager.Instance?.PlayRepairEffect(repairPoint, repairNormal, buildingCategory);
+        EffectManager.Instance?.PlayRepairEffect(repairPoint, repairNormal, structureScriptableObj.size);
     }
 
     public virtual void Die()
@@ -559,7 +635,7 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
         // Play destruction VFX using building effects
         Vector3 destructionPoint = transform.position + Vector3.up * 1.5f;
         Vector3 destructionNormal = Vector3.up;
-        EffectManager.Instance?.PlayDestructionEffect(destructionPoint, destructionNormal, buildingCategory);
+        EffectManager.Instance?.PlayDestructionEffect(destructionPoint, destructionNormal, structureScriptableObj.size);
         
         // Destroy the structure
         Destroy(gameObject);
@@ -609,7 +685,7 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
         // Play upgrade effect
         Vector3 upgradePoint = transform.position + Vector3.up * 1.5f;
         Vector3 upgradeNormal = Vector3.up;
-        EffectManager.Instance?.PlayUpgradeEffect(upgradePoint, upgradeNormal, buildingCategory);
+        EffectManager.Instance?.PlayUpgradeEffect(upgradePoint, upgradeNormal, structureScriptableObj.size);
     }
 
     public void TriggerRepairEvent()

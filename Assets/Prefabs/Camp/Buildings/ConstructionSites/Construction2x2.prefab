@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8171662360353329725}
   - component: {fileID: 1183997595646398480}
+  - component: {fileID: -2147928411201118999}
   m_Layer: 0
   m_Name: Construction2x2
   m_TagString: Untagged
@@ -60,6 +61,24 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 4.5, y: 2.5, z: 4.5}
   m_Center: {x: 0, y: 1.25, z: 0}
+--- !u!114 &-2147928411201118999
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7583506354027141791}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a3093411159b324a958b63d26152e6f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  workLocationTransform: {fileID: 0}
+  maxWorkers: 3
+  requiredResources: []
+  showTooltip: 0
+  electricityRequired: 0
+  taskAnimation: 0
 --- !u!1001 &2245419572005448791
 PrefabInstance:
   m_ObjectHideFlags: 0

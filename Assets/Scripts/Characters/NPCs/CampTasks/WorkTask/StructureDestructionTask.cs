@@ -7,8 +7,8 @@ using UnityEngine.AI;
 public class StructureDestructionTask : WorkTask, IInteractive<object>
 {
     private PlaceableObjectParent structureScriptableObj;
-    private List<HumanCharacterController> workers = new List<HumanCharacterController>();
     private bool isDestructionComplete = false;
+
     protected override void Start()
     {
         base.Start();
@@ -18,7 +18,8 @@ public class StructureDestructionTask : WorkTask, IInteractive<object>
     public void SetupDestructionTask<T>(PlaceableStructure<T> structure) where T : PlaceableObjectParent
     {
         this.structureScriptableObj = structure.GetStructureScriptableObj();
-        baseWorkTime = structureScriptableObj.destructionTime;
+        // Convert game hours to real seconds using TimeManager
+        baseWorkTime = Managers.TimeManager.ConvertGameHoursToSecondsStatic(structureScriptableObj.destructionTimeInGameHours);
         requiredResources = new ResourceItemCount[0]; // No resources required for destruction
         AddWorkTask();
 
@@ -32,45 +33,10 @@ public class StructureDestructionTask : WorkTask, IInteractive<object>
         obstacle.size = new Vector3(structureScriptableObj.size.x, 1.0f, structureScriptableObj.size.y);
     }
 
-    public override void PerformTask(HumanCharacterController npc)
-    {
-        // Add worker to the task
-        if (!workers.Contains(npc))
-        {
-            workers.Add(npc);
-        }
+    // No need to override PerformTask - base implementation handles worker list management
 
-        // Start the destruction process if not already started
-        if (!isDestructionComplete && workCoroutine == null)
-        {
-            workCoroutine = StartCoroutine(WorkCoroutine());
-
-            // Register electricity consumption when the task starts
-            if (electricityRequired > 0)
-            {
-                CampManager.Instance.ElectricityManager.RegisterBuildingConsumption(this, electricityRequired);
-            }
-        }
-    }
-
-    protected override IEnumerator WorkCoroutine()
-    {
-        while (workProgress < baseWorkTime && workers.Count > 0)
-        {
-            float workSpeed = Mathf.Sqrt(workers.Count);
-            workProgress += Time.deltaTime * workSpeed;
-
-            if (workProgress >= baseWorkTime)
-            {
-                workProgress = baseWorkTime;
-                break;
-            }
-
-            yield return null;
-        }
-
-        CompleteWork();
-    }
+    // Remove the custom WorkCoroutine since workers now manage their own work
+    // The base class ProcessWork method will handle the work logic
 
     protected override void CompleteWork()
     {
@@ -92,10 +58,7 @@ public class StructureDestructionTask : WorkTask, IInteractive<object>
 
     public void RemoveWorker(SettlerNPC npc)
     {
-        if (workers.Contains(npc))
-        {
-            workers.Remove(npc);
-        }
+        RemoveWorker(npc as HumanCharacterController);
     }
 
     public bool CanInteract()

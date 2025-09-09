@@ -50,16 +50,8 @@ public class WorkState : _TaskState
     {
         Vector3 taskPosition = assignedTask.GetNavMeshDestination().position;
         
-        Debug.Log($"[WorkState] Setting up NavMesh path for {npc.name} from {transform.position} to {taskPosition}");
-        
-        // Use base class helper for stopping distance
-        agent.stoppingDistance = GetEffectiveStoppingDistance(assignedTask.GetNavMeshDestination(), 0.5f);
-        agent.SetDestination(taskPosition);
-        agent.speed = MaxSpeed();
-        agent.angularSpeed = npc.rotationSpeed;
-        agent.isStopped = false;
-        agent.updatePosition = true;
-        agent.updateRotation = true;
+        // Use base class method for consistent NavMesh setup
+        SetupNavMeshForWorkTask(assignedTask.GetNavMeshDestination(), 0.5f);
         needsPrecisePositioning = false;
         
         // Check if the path is valid
@@ -71,24 +63,22 @@ public class WorkState : _TaskState
         {
             Debug.LogWarning($"[WorkState] NavMesh path is partial for {npc.name} to {taskPosition}");
         }
-        
-        Debug.Log($"[WorkState] NavMesh setup complete for {npc.name}. Agent destination: {agent.destination}, isStopped: {agent.isStopped}, pathStatus: {agent.pathStatus}");
     }
 
     public void UpdateTaskDestination()
     {
         if (assignedTask != null)
         {
-            Debug.Log($"[WorkState] Updating task destination for {npc.name} to {assignedTask.GetType().Name} at {assignedTask.GetNavMeshDestination().position}");
+            // Stop work animation when changing to a new task destination
+            if (npc is SettlerNPC settler)
+            {
+                settler.StopWorkAnimation();
+            }
             
             hasReachedTask = false;
             isTaskBeingPerformed = false;
             timeAtTaskLocation = 0f;
             SetupNavMeshPath();
-        }
-        else
-        {
-            Debug.LogWarning($"[WorkState] UpdateTaskDestination called but assignedTask is null for {npc.name}");
         }
     }
 
@@ -117,15 +107,7 @@ public class WorkState : _TaskState
         // Use base class helper for destination reached checking
         bool hasReachedDestination = HasReachedDestination(taskDestination, 0.5f);
 
-        // Debug logging for movement issues
-        if (Time.frameCount % 60 == 0) // Log every 60 frames to avoid spam
-        {            
-            // Check if agent is stuck
-            if (agent.velocity.magnitude < 0.1f && !agent.isStopped && !hasReachedDestination)
-            {
-                Debug.LogWarning($"[WorkState] {npc.name} appears to be stuck! Distance: {Vector3.Distance(transform.position, taskDestination.position):F2}");
-            }
-        }
+
 
         if (hasReachedDestination)
         {
@@ -138,94 +120,82 @@ public class WorkState : _TaskState
 
         UpdateAnimations();
     }
+    
+    /// <summary>
+    /// Override stamina update for work-specific enhanced drain
+    /// </summary>
+    public override void UpdateStamina()
+    {
+        // Work drains stamina 1.5x faster than normal activities
+        float baseDrain = npc.GetBaseStaminaDrainRate();
+        float workDrain = baseDrain * 1.5f * Time.deltaTime;
+        
+        // Log work drain details every 5 seconds
+        if (Time.frameCount % 300 == 0)
+        {
+            Debug.Log($"[WorkState] {npc.name} WORK STAMINA DRAIN:");
+            Debug.Log($"  Base drain rate: {baseDrain:F6}/s");
+            Debug.Log($"  Work multiplier: 1.5x");
+            Debug.Log($"  Time.deltaTime: {Time.deltaTime:F4}");
+            Debug.Log($"  Work drain this frame: {workDrain:F6}");
+            Debug.Log($"  Effective drain rate: {workDrain / Time.deltaTime:F6}/s");
+        }
+        
+        npc.ApplyStaminaChange(-workDrain, "Work drain");
+    }
 
     private void HandleReachedTask()
     {
-        if (!hasReachedTask)
+        var precisePosition = assignedTask.GetPrecisePosition();
+        bool justReached = HandleReachedDestination(ref hasReachedTask, ref needsPrecisePositioning, precisePosition);
+        
+        if (justReached)
         {
-            hasReachedTask = true;
-            agent.isStopped = true;
-            agent.velocity = Vector3.zero;
             timeAtTaskLocation = 0f;
-
-            // Check if we need precise positioning
-            var precisePosition = assignedTask.GetPrecisePosition();
-            if (precisePosition != null)
-            {
-                float distanceToExactPosition = Vector3.Distance(transform.position, precisePosition.position);
-                needsPrecisePositioning = distanceToExactPosition > movementSettings.precisePositioningThreshold;
-                
-                if (needsPrecisePositioning)
-                {
-                    agent.updatePosition = false;
-                    agent.updateRotation = false;
-                }
-            }
-            else
-            {
-                needsPrecisePositioning = false;
-            }
         }
 
         if (needsPrecisePositioning)
         {
-            UpdatePositionAndRotation();
+            UpdatePrecisePositioning(precisePosition, ref needsPrecisePositioning);
         }
 
         StartTaskIfReady();
     }
 
-    private void UpdatePositionAndRotation()
-    {
-        var precisePosition = assignedTask.GetPrecisePosition();
-        if (needsPrecisePositioning && precisePosition != null)
-        {
-            // Use lerping for precise positioning
-            transform.position = Vector3.Lerp(transform.position, precisePosition.position, 
-                Time.deltaTime * 5f);
-            
-            // Use centralized rotation utility
-            NavigationUtils.RotateTowardsWorkPoint(transform, precisePosition, 5f);
 
-            // Check if we've reached the precise position
-            float distanceToExactPosition = Vector3.Distance(transform.position, precisePosition.position);
-            if (distanceToExactPosition <= movementSettings.precisePositioningThreshold)
-            {
-                needsPrecisePositioning = false;
-                transform.position = precisePosition.position;
-                transform.rotation = precisePosition.rotation;
-            }
-        }
-    }
 
     private void StartTaskIfReady()
     {
         timeAtTaskLocation += Time.deltaTime;
         if (timeAtTaskLocation >= movementSettings.taskStartDelay && !isTaskBeingPerformed && !needsPrecisePositioning)
         {
-            assignedTask.PerformTask(npc);
+            // Start work animation and begin working
             npc.PlayWorkAnimation(assignedTask.GetAnimationClipName());
+            assignedTask.PerformTask(npc); // Ensure worker is in task's worker list
             isTaskBeingPerformed = true;
+        }
+        
+        // If we're performing the task, do the work each frame
+        if (isTaskBeingPerformed)
+        {
+            bool canContinue = assignedTask.DoWork(npc, Time.deltaTime);
+            if (!canContinue)
+            {
+                // Work is complete or stopped, let StopWork handle the transition
+                isTaskBeingPerformed = false;
+            }
         }
     }
 
     private void HandleMovingToTask()
     {
-        if (hasReachedTask)
-        {
-            hasReachedTask = false;
-            agent.isStopped = false;
-            agent.updatePosition = true;
-            agent.updateRotation = true;
-            needsPrecisePositioning = false;
-        }
+        HandleMovingFromDestination(ref hasReachedTask, ref needsPrecisePositioning);
     }
 
     private void UpdateAnimations()
     {
-        float maxSpeed = MaxSpeed();
-        float currentSpeedNormalized = agent.velocity.magnitude / maxSpeed;
-        animator.SetFloat("Speed", currentSpeedNormalized);
+        // Use base class method for consistent animation updates
+        UpdateMovementAnimation();
     }
 
     public override float MaxSpeed()
@@ -257,10 +227,29 @@ public class WorkState : _TaskState
 
     public void StopWork()
     {
-        if (assignedTask != null && (assignedTask.HasQueuedTasks || assignedTask.IsOccupied))
+        // Don't stop work if:
+        // 1. Task has queued tasks waiting
+        // 2. Task is currently occupied by workers
+        // 3. Task is a QueuedWorkTask with current work in progress
+        if (assignedTask != null)
         {
-            return;
+            bool hasQueuedTasks = assignedTask.HasQueuedTasks;
+            bool isOccupied = assignedTask.IsOccupied;
+            bool hasCurrentWork = false;
+            
+            // Check if it's a QueuedWorkTask with current work
+            if (assignedTask is QueuedWorkTask queuedTask)
+            {
+                hasCurrentWork = queuedTask.HasCurrentWork;
+            }
+            
+            if (hasQueuedTasks || isOccupied || hasCurrentWork)
+            {
+                return;
+            }
         }
+
+
 
         // Stop the work animation since the current task is complete
         if (npc is SettlerNPC settler)

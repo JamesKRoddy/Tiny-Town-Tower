@@ -11,18 +11,18 @@ public class PlaceableObjectParent : WorldItemBase
 
     [Header("Health Parameters")]
     public float maxHealth = 100f;
-    public float repairTime = 20f;
+    public float repairTimeInGameHours = 2f; // Time to repair in game hours (default: 2 game hours)
     public float healthRestoredPerRepair = 50f;
     public ResourceItemCount[] repairResources;
 
     [Header("Construction Parameters")]
-    public float constructionTime = 10.0f;
+    public float constructionTimeInGameHours = 1f; // Time to construct in game hours (default: 1 game hour)
     
     [Header("Upgrade Parameters")]
     public PlaceableObjectParent upgradeTarget;
     public ResourceItemCount[] upgradeResources;    
 
     [Header("Destruction Parameters")]
-    public float destructionTime = 15f;
+    public float destructionTimeInGameHours = 0.5f; // Time to destroy in game hours (default: 0.5 game hours)
     public ResourceItemCount[] reclaimedResources;
 }

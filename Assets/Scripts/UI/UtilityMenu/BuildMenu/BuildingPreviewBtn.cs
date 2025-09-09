@@ -5,7 +5,7 @@ using TMPro;
 
 public class BuildingPreviewBtn : PreviewButtonBase<PlaceableObjectParent>
 {
-    protected override void OnButtonClicked()
+    protected override void OnDefaultButtonClicked()
     {
         bool canBuild = true;
 

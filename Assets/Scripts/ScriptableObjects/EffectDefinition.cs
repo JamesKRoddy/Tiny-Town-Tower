@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-[CreateAssetMenu(fileName = "NewEffect", menuName = "Scriptable Objects/Effects/Effect Definition")]
+[CreateAssetMenu(fileName = "New Effect Definition", menuName = "Scriptable Objects/Effects/Effect Definition")]
 public class EffectDefinition : ScriptableObject
 {
     public enum PlayMode
@@ -28,6 +28,12 @@ public class EffectDefinition : ScriptableObject
 
     [Tooltip("Duration of the effect in seconds. If 0, uses the particle system duration")]
     public float duration = 0f;
+    
+    [Tooltip("Should this effect loop indefinitely? Useful for persistent status effects like sleeping, working, etc.")]
+    public bool looping = false;
+    
+    [Tooltip("Loop interval in seconds. How long to wait between loop cycles (only used if looping is true)")]
+    public float loopInterval = 5f;
 
     [Tooltip("Controls how much the sound is affected by 3D positioning (0 = 2D, 1 = 3D)")]
     [Range(0f, 1f)]

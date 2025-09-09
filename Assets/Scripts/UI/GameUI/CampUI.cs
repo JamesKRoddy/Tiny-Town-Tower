@@ -55,6 +55,7 @@ public class CampUI : MonoBehaviour
 
     private void OnGameModeChanged(GameMode newGameMode)
     {
+        Debug.Log("OnGameModeChanged: " + newGameMode);
         // Only show the UI in CAMP mode
         gameObject.SetActive(newGameMode == GameMode.CAMP);
     }

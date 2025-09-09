@@ -594,15 +594,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2119277817041921988, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: m_BackGroundColor.b
-      value: 0
+      value: 0.5622641
       objectReference: {fileID: 0}
     - target: {fileID: 2119277817041921988, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: m_BackGroundColor.g
-      value: 0
+      value: 0.5622641
       objectReference: {fileID: 0}
     - target: {fileID: 2119277817041921988, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: m_BackGroundColor.r
-      value: 0
+      value: 0.5622641
       objectReference: {fileID: 0}
     - target: {fileID: 3801556061967502168, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1366,6 +1366,14 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4114278650288092188, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4114278650288092188, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4190609362008320532, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
       propertyPath: m_Name
       value: PlayerUI
@@ -1795,9 +1803,53 @@ PrefabInstance:
       propertyPath: debugLogging
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1747299553855566350, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: m_Shadows.m_Type
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 1833866665787503918, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_Name
       value: GameManager
+      objectReference: {fileID: 0}
+    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: sleepChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: sunLightingGradient.key0.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: sunLightingGradient.key0.g
+      value: 0.5423229
+      objectReference: {fileID: 0}
+    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: moonLightingGradient.key0.b
+      value: 0.4433962
+      objectReference: {fileID: 0}
+    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: moonLightingGradient.key0.g
+      value: 0.4433962
+      objectReference: {fileID: 0}
+    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: moonLightingGradient.key0.r
+      value: 0.4433962
+      objectReference: {fileID: 0}
+    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: moonLightingGradient.key1.g
+      value: 0.9637537
+      objectReference: {fileID: 0}
+    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: moonLightingGradient.key1.r
+      value: 0.6556604
+      objectReference: {fileID: 0}
+    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: totalCycleDurationInSeconds
+      value: 240
+      objectReference: {fileID: 0}
+    - target: {fileID: 3415585928227201123, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: m_Shadows.m_Type
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 4686915863895893509, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1839,24 +1891,48 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: buildingScriptableObjs.Array.size
+      value: 14
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: 'buildingScriptableObjs.Array.data[13]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 6d48670bd26ffa141ab488a31d2ed45f, type: 2}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: constructionCompleteEffectMappings.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: constructionCompleteEffectMappings.Array.data[0].effect
+      value: 
+      objectReference: {fileID: 11400000, guid: cff6230d63ddada449c2cb94a12f9a3e, type: 2}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: constructionCompleteEffectMappings.Array.data[0].gridSize.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: constructionCompleteEffectMappings.Array.data[0].gridSize.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: constructionCompleteEffectMappings.Array.data[1].gridSize.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: constructionCompleteEffectMappings.Array.data[1].gridSize.y
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: constructionCompleteEffectMappings.Array.data[2].gridSize.x
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: constructionCompleteEffectMappings.Array.data[2].gridSize.y
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 5397687326794407557, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: autoSaveEnabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8102012326405835519, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: rogueLikeBuildingDataScriptableObjs.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8102012326405835519, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: 'rogueLikeBuildingDataScriptableObjs.Array.data[0]'
-      value: 
-      objectReference: {fileID: 11400000, guid: cabb675861ade9446b9fd0936ab40689, type: 2}
-    - target: {fileID: 8507678153877644282, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: enableDebugMenus
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8507678153877644282, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
-      propertyPath: registeredMenus.Array.size
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

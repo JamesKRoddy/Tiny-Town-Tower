@@ -15,19 +15,19 @@ MonoBehaviour:
   objectName: Cooking Lvl 1
   description: Cooking Lvl 1 desc
   sprite: {fileID: 0}
+  category: 0
+  rarity: 0
+  isUnlocked: 0
   _resourceCost: []
   prefab: {fileID: 6492940899744704284, guid: 1324b0cd31a9b784795088129e98fcea, type: 3}
   size: {x: 3, y: 3}
-  buildingCategory: 1
-  constructionTime: 1
+  placeableObjectCategory: 0
   maxHealth: 100
   repairTime: 5
   healthRestoredPerRepair: 50
   repairResources: []
+  constructionTime: 3
   upgradeTarget: {fileID: 0}
-  upgradeTime: 30
   upgradeResources: []
-  destructionPrefab: {fileID: 0}
   destructionTime: 5
   reclaimedResources: []
-  taskRadius: 2

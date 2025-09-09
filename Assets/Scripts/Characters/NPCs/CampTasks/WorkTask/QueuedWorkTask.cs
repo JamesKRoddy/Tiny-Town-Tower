@@ -10,8 +10,15 @@ public abstract class QueuedWorkTask : WorkTask
     protected object currentTaskData;
 
     // Properties
-    public bool HasQueuedTasks => taskQueue.Count > 0;
+    public override bool HasQueuedTasks => taskQueue.Count > 0;
     public override bool IsTaskCompleted => currentTaskData == null && !HasQueuedTasks;
+    public bool HasCurrentWork => currentTaskData != null;
+
+    protected override void Start()
+    {
+        base.Start();
+        maxWorkers = 1; // Queued tasks like cooking and researching are single-worker tasks
+    }
 
     // Helper method for derived classes to set up tasks
     protected void SetupTask(object taskData)
@@ -34,8 +41,8 @@ public abstract class QueuedWorkTask : WorkTask
     {
         taskQueue.Enqueue(taskData);
         
-        // If we have a previous worker and no current worker, assign them to the new task
-        if (currentWorker == null && taskQueue.Count == 1)
+        // If we have a previous worker and no current workers, assign them to the new task
+        if (currentWorkers.Count == 0 && taskQueue.Count == 1)
         {
             // Find the previous worker through the WorkManager
             var previousWorker = CampManager.Instance.WorkManager.GetPreviousWorkerForTask(this);
@@ -66,16 +73,14 @@ public abstract class QueuedWorkTask : WorkTask
 
     protected override void CompleteWork()
     {
-        // Store the current worker as previous worker before clearing
-        if (currentWorker != null)
+        // Store the first current worker as previous worker before clearing (for backward compatibility)
+        if (currentWorkers.Count > 0)
         {
-            CampManager.Instance.WorkManager.StorePreviousWorker(this, currentWorker);
+            CampManager.Instance.WorkManager.StorePreviousWorker(this, currentWorkers[0]);
         }
         
         // Reset state
         workProgress = 0f;
-        
-        StopWorkCoroutine();
         
         // Process next task in queue if available
         if (taskQueue.Count > 0)
@@ -86,22 +91,16 @@ public abstract class QueuedWorkTask : WorkTask
             currentTaskData = taskQueue.Dequeue();
             SetupNextTask();
             
-            // Start the next task immediately if we have a worker
-            if (currentWorker != null)
-            {
-                workCoroutine = StartCoroutine(WorkCoroutine());
-            }
+            // Workers will automatically continue working on the next task
+            // since they're still assigned to this task
         }
         else
         {
             // Only unassign and notify completion if there are no more tasks
             UnassignNPC();
-
-            // Unregister electricity consumption when work is complete
-            if (electricityRequired > 0)
-            {
-                CampManager.Instance.ElectricityManager.UnregisterBuildingConsumption(this);
-            }
+            
+            // Clear current task data since there are no more tasks
+            currentTaskData = null;
             
             // Notify completion and stop work
             base.CompleteWork();

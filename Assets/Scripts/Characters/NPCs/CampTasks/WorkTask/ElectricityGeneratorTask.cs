@@ -9,31 +9,50 @@ public class ElectricityGeneratorTask : WorkTask
     [SerializeField] private float generationInterval = 5f;
     private float generationTimer = 0f;
 
+
+
     protected override void Start()
     {
         base.Start();
         baseWorkTime = float.MaxValue; // Set to max value so it never completes automatically
     }
 
-    protected override IEnumerator WorkCoroutine()
+    public override bool DoWork(HumanCharacterController worker, float deltaTime)
     {
-        workProgress = 0f;
-        generationTimer = 0f;
-
-        while (true) // Continue indefinitely until stopped
+        if (!isOperational || !currentWorkers.Contains(worker))
         {
-            workProgress += Time.deltaTime;
-            generationTimer += Time.deltaTime;
-
-            // Generate electricity at regular intervals
-            if (generationTimer >= generationInterval)
-            {
-                CampManager.Instance.ElectricityManager.AddElectricity(electricityGeneratedPerCycle);
-                generationTimer = 0f;
-            }
-
-            yield return null;
+            return false;
         }
+
+        // Get final work speed (including cleanliness modifier) from base class
+        float finalWorkSpeed = GetFinalWorkSpeed(worker);
+        
+        // If worker can't work (starving, etc.), stop
+        if (finalWorkSpeed <= 0)
+        {
+            return false;
+        }
+        
+        // Update generation timer (affected by work speed and cleanliness)
+        generationTimer += deltaTime * finalWorkSpeed;
+        
+        // Generate electricity at regular intervals
+        if (generationTimer >= generationInterval)
+        {
+            CampManager.Instance.ElectricityManager.AddElectricity(electricityGeneratedPerCycle);
+            generationTimer = 0f;
+        }
+        
+        // Call base DoWork for electricity consumption and dirt generation
+        base.DoWork(worker, deltaTime);
+        
+        // Keep progress below max to prevent completion (this task runs indefinitely)
+        if (workProgress >= baseWorkTime - 1f)
+        {
+            workProgress = baseWorkTime - 1f;
+        }
+        
+        return true; // Always continue (generator never completes)
     }
 
     public override string GetTooltipText()

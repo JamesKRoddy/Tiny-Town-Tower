@@ -1,0 +1,660 @@
+using UnityEngine;
+using System;
+using System.Collections;
+
+namespace Managers
+{
+    /// <summary>
+    /// Manages the day/night cycle for the camp system.
+    /// Integrates with existing camp managers to affect NPC behavior, lighting, and operations.
+    /// </summary>
+    public class TimeManager : MonoBehaviour
+    {
+        #region Time Configuration
+        
+        [Header("Time Settings")]
+        [SerializeField] private float totalCycleDurationInSeconds = 360f; // 6 minutes total cycle
+        [SerializeField] private bool autoStartCycle = true;
+        [SerializeField] private TimeOfDay startingTimeOfDay = TimeOfDay.Day;
+        
+        // Calculated durations (2:1 ratio - day is twice as long as night)
+        public float DayDurationInSeconds => totalCycleDurationInSeconds * (2f / 3f); // 2/3 of total = 4 minutes
+        public float NightDurationInSeconds => totalCycleDurationInSeconds * (1f / 3f); // 1/3 of total = 2 minutes
+        
+        [Header("Visual Settings")]
+        [SerializeField] private Light sunLight;
+        [SerializeField] private Light moonLight;
+        [SerializeField] private Gradient sunLightingGradient; // Sunrise to Midday (color + intensity via alpha)
+        [SerializeField] private Gradient moonLightingGradient; // Moon lighting throughout night
+        [SerializeField] private Gradient fogGradient; // Fog color transitions
+        [SerializeField] private Gradient ambientColorGradient; // Ambient lighting color
+        
+        [Header("Directional Light Rotation")]
+        [SerializeField] private bool rotateLights = true;
+        [SerializeField] private Vector3 sunStartRotation = new Vector3(-90f, 0f, 0f); // Sun starts below horizon
+        [SerializeField] private Vector3 moonOffset = new Vector3(180f, 0f, 0f); // Moon is opposite the sun
+        
+        [Header("Camp Effects")]
+        [Range(0f, 1f)]
+        [SerializeField] private float nightWorkEfficiencyMultiplier = 0.7f;
+        [Range(0f, 1f)]
+        [SerializeField] private float nightMovementSpeedMultiplier = 0.8f;
+        [SerializeField] private bool enableNightSleepBehavior = true;
+        [Range(0f, 1f)]
+        [SerializeField] private float sleepChance = 0.6f; // 60% chance NPCs will sleep at night
+        
+        // Public properties for NPC access
+        public bool EnableNightSleepBehavior => enableNightSleepBehavior;
+        public float SleepChance => sleepChance;
+        
+        #endregion
+        
+        #region Events
+        
+        public static event Action<TimeOfDay> OnTimeOfDayChanged;
+        public static event Action<float> OnTimeProgressChanged; // 0-1 progress through current time period
+        public static event Action OnDayStarted;
+        public static event Action OnNightStarted;
+        public static event Action<float> OnNightWorkEfficiencyChanged;
+        
+        #endregion
+        
+        #region Private Fields
+        
+        private TimeOfDay currentTimeOfDay;
+        private float currentTimeProgress = 0f; // 0-1 progress through current time period
+        private float totalDayProgress = 0f; // 0-1 progress through entire day/night cycle
+        private Coroutine timeCoroutine;
+        private bool isPaused = false;
+        
+        // Calculated values
+        private float totalCycleDuration; // Total time for complete day/night cycle
+        private float rotationSpeed; // Degrees per second for 360° rotation
+        
+        // Original light settings for restoration
+        private Color originalSunColor;
+        private Color originalMoonColor;
+        private float originalSunIntensity;
+        private float originalMoonIntensity;
+        
+        #endregion
+        
+        #region Public Properties
+        
+        public TimeOfDay CurrentTimeOfDay => currentTimeOfDay;
+        public float CurrentTimeProgress => currentTimeProgress;
+        public float TotalDayProgress => totalDayProgress;
+        public bool IsDay => currentTimeOfDay == TimeOfDay.Day;
+        public bool IsNight => currentTimeOfDay == TimeOfDay.Night;
+        public float CurrentWorkEfficiencyMultiplier => IsNight ? nightWorkEfficiencyMultiplier : 1f;
+        public float CurrentMovementSpeedMultiplier => IsNight ? nightMovementSpeedMultiplier : 1f;
+        
+        #endregion
+        
+        #region Unity Lifecycle
+        
+        private void Awake()
+        {
+            InitializeLightSettings();
+        }
+        
+        private void Start()
+        {
+            if (autoStartCycle)
+            {
+                StartTimeCycle();
+            }
+        }
+        
+        private void OnDestroy()
+        {
+            if (timeCoroutine != null)
+            {
+                StopCoroutine(timeCoroutine);
+            }
+        }
+        
+        #endregion
+        
+        #region Time Management
+        
+        /// <summary>
+        /// Start the time cycle
+        /// </summary>
+        public void StartTimeCycle()
+        {
+            if (timeCoroutine != null)
+            {
+                StopCoroutine(timeCoroutine);
+            }
+            
+            currentTimeOfDay = startingTimeOfDay;
+            currentTimeProgress = 0f;
+            totalDayProgress = 0f;
+            isPaused = false;
+            
+            // Calculate total cycle duration and rotation speed
+            totalCycleDuration = totalCycleDurationInSeconds;
+            rotationSpeed = 360f / totalCycleDuration; // Degrees per second for complete rotation
+            
+            Debug.Log($"[TimeManager] Starting cycle - Total duration: {totalCycleDuration}s, Rotation speed: {rotationSpeed}°/s");
+            
+            timeCoroutine = StartCoroutine(TimeCycleCoroutine());
+            OnTimeOfDayChanged?.Invoke(currentTimeOfDay);
+        }
+        
+        /// <summary>
+        /// Stop the time cycle
+        /// </summary>
+        public void StopTimeCycle()
+        {
+            if (timeCoroutine != null)
+            {
+                StopCoroutine(timeCoroutine);
+                timeCoroutine = null;
+            }
+        }
+        
+        /// <summary>
+        /// Pause/unpause the time cycle
+        /// </summary>
+        public void PauseTimeCycle(bool pause)
+        {
+            isPaused = pause;
+        }
+        
+        /// <summary>
+        /// Force set the time of day
+        /// </summary>
+        public void SetTimeOfDay(TimeOfDay timeOfDay)
+        {
+            currentTimeOfDay = timeOfDay;
+            currentTimeProgress = 0f;
+            OnTimeOfDayChanged?.Invoke(currentTimeOfDay);
+            UpdateVisuals();
+        }
+        
+        /// <summary>
+        /// Get current time duration for the active time period
+        /// </summary>
+        private float GetCurrentPeriodDuration()
+        {
+            return currentTimeOfDay switch
+            {
+                TimeOfDay.Day => DayDurationInSeconds,
+                TimeOfDay.Night => NightDurationInSeconds,
+                _ => DayDurationInSeconds
+            };
+        }
+        
+        #endregion
+        
+        #region Coroutines
+        
+        /// <summary>
+        /// Main time cycle coroutine
+        /// </summary>
+        private IEnumerator TimeCycleCoroutine()
+        {
+            while (true)
+            {
+                if (!isPaused)
+                {
+                    float deltaTime = Time.deltaTime;
+                    float periodDuration = GetCurrentPeriodDuration();
+                    
+                    // Update current period progress
+                    currentTimeProgress += deltaTime / periodDuration;
+                    
+                    // Update total day progress (0-1 through complete cycle)
+                    totalDayProgress = (totalDayProgress + (deltaTime / totalCycleDuration)) % 1f;
+                    
+                    OnTimeProgressChanged?.Invoke(currentTimeProgress);
+                    UpdateVisuals();
+                    
+                    // Check if current period is complete
+                    if (currentTimeProgress >= 1f)
+                    {
+                        TransitionToNextTimeOfDay();
+                    }
+                }
+                
+                yield return null;
+            }
+        }
+        
+        #endregion
+        
+        #region Time Transitions
+        
+        /// <summary>
+        /// Transition to the next time of day
+        /// </summary>
+        private void TransitionToNextTimeOfDay()
+        {
+            currentTimeProgress = 0f;
+            
+            TimeOfDay nextTimeOfDay = currentTimeOfDay switch
+            {
+                TimeOfDay.Day => TimeOfDay.Night,
+                TimeOfDay.Night => TimeOfDay.Day,
+                _ => TimeOfDay.Day
+            };
+            
+            currentTimeOfDay = nextTimeOfDay;
+            OnTimeOfDayChanged?.Invoke(currentTimeOfDay);
+            
+            // Trigger specific events
+            if (currentTimeOfDay == TimeOfDay.Day)
+            {
+                OnDayStarted?.Invoke();
+                Debug.Log("[TimeManager] Day has started!");
+            }
+            else if (currentTimeOfDay == TimeOfDay.Night)
+            {
+                OnNightStarted?.Invoke();
+                OnNightWorkEfficiencyChanged?.Invoke(nightWorkEfficiencyMultiplier);
+                Debug.Log("[TimeManager] Night has started!");
+            }
+        }
+        
+        #endregion
+        
+        #region Visual Updates
+        
+        /// <summary>
+        /// Initialize light settings
+        /// </summary>
+        private void InitializeLightSettings()
+        {
+            if (sunLight != null)
+            {
+                originalSunColor = sunLight.color;
+                originalSunIntensity = sunLight.intensity;
+            }
+            
+            if (moonLight != null)
+            {
+                originalMoonColor = moonLight.color;
+                originalMoonIntensity = moonLight.intensity;
+                moonLight.gameObject.SetActive(false); // Start with moon light off
+            }
+        }
+        
+        /// <summary>
+        /// Update visual elements based on current time
+        /// </summary>
+        private void UpdateVisuals()
+        {
+            UpdateLighting();
+            UpdateFog();
+        }
+        
+        /// <summary>
+        /// Update lighting based on time of day
+        /// </summary>
+        private void UpdateLighting()
+        {
+            UpdateSunLighting();
+            UpdateMoonLighting();
+            UpdateAmbientLighting();
+            
+            // Rotate lights based on total day progress
+            if (rotateLights)
+            {
+                UpdateLightRotation();
+            }
+        }
+        
+        /// <summary>
+        /// Update sun lighting using gradient based on sun position
+        /// </summary>
+        private void UpdateSunLighting()
+        {
+            if (sunLight == null || sunLightingGradient == null) return;
+            
+            // Calculate sun angle (0° = horizon, 90° = overhead, 180° = opposite horizon)
+            float sunAngle = (totalDayProgress * 360f + sunStartRotation.x) % 360f;
+            if (sunAngle < 0f) sunAngle += 360f;
+            
+            // Map sun angle to gradient time
+            // When sun is above horizon (0° to 180°), use gradient
+            // When sun is below horizon (180° to 360°), use minimum values
+            float gradientTime = 0f;
+            
+            if (sunAngle >= 0f && sunAngle <= 180f)
+            {
+                // Sun is above horizon - map 0°→180° to gradient 0→1→0
+                if (sunAngle <= 90f)
+                {
+                    gradientTime = sunAngle / 90f; // 0° to 90° = 0.0 to 1.0
+                }
+                else
+                {
+                    gradientTime = 1f - ((sunAngle - 90f) / 90f); // 90° to 180° = 1.0 to 0.0
+                }
+            }
+            else
+            {
+                // Sun is below horizon - use minimum lighting
+                gradientTime = 0f;
+            }
+            
+            Color sunColor = sunLightingGradient.Evaluate(gradientTime);
+            
+            // Use alpha channel for intensity
+            sunLight.color = new Color(sunColor.r, sunColor.g, sunColor.b, 1f);
+            sunLight.intensity = sunColor.a * originalSunIntensity;
+            
+            sunLight.gameObject.SetActive(true);
+        }
+        
+        /// <summary>
+        /// Update moon lighting
+        /// </summary>
+        private void UpdateMoonLighting()
+        {
+            if (moonLight == null) return;
+            
+            // Calculate moon angle (opposite the sun)
+            float moonAngle = (totalDayProgress * 360f + sunStartRotation.x + moonOffset.x) % 360f;
+            if (moonAngle < 0f) moonAngle += 360f;
+            
+            // Moon should be visible when it's above horizon
+            bool shouldShowMoon = moonAngle >= 0f && moonAngle <= 180f;
+            moonLight.gameObject.SetActive(shouldShowMoon);
+            
+            if (shouldShowMoon && moonLightingGradient != null)
+            {
+                // Map moon angle to gradient (similar to sun but for night time)
+                float gradientTime = 0f;
+                if (moonAngle <= 90f)
+                {
+                    gradientTime = moonAngle / 90f; // 0° to 90° = 0.0 to 1.0
+                }
+                else
+                {
+                    gradientTime = 1f - ((moonAngle - 90f) / 90f); // 90° to 180° = 1.0 to 0.0
+                }
+                
+                Color moonColor = moonLightingGradient.Evaluate(gradientTime);
+                
+                moonLight.color = new Color(moonColor.r, moonColor.g, moonColor.b, 1f);
+                moonLight.intensity = moonColor.a * originalMoonIntensity;
+            }
+        }
+        
+        /// <summary>
+        /// Update ambient lighting color
+        /// </summary>
+        private void UpdateAmbientLighting()
+        {
+            if (ambientColorGradient != null)
+            {
+                float timeNormalized = GetNormalizedTimeForLighting();
+                Color ambientColor = ambientColorGradient.Evaluate(timeNormalized);
+                RenderSettings.ambientLight = ambientColor;
+            }
+        }
+        
+
+        
+        /// <summary>
+        /// Update both sun and moon rotation based on total day progress
+        /// </summary>
+        private void UpdateLightRotation()
+        {
+            // Calculate current rotation angle based on total day progress
+            float currentAngle = totalDayProgress * 360f + sunStartRotation.x;
+            
+            // Update sun rotation
+            if (sunLight != null)
+            {
+                sunLight.transform.rotation = Quaternion.Euler(currentAngle, sunStartRotation.y, sunStartRotation.z);
+            }
+            
+            // Update moon rotation (opposite the sun)
+            if (moonLight != null)
+            {
+                float moonAngle = currentAngle + moonOffset.x;
+                moonLight.transform.rotation = Quaternion.Euler(moonAngle, sunStartRotation.y, sunStartRotation.z);
+            }
+        }
+        
+        /// <summary>
+        /// Update fog based on time of day
+        /// </summary>
+        private void UpdateFog()
+        {
+            if (!RenderSettings.fog || fogGradient == null) return;
+            
+            float timeNormalized = GetNormalizedTimeForLighting();
+            RenderSettings.fogColor = fogGradient.Evaluate(timeNormalized);
+        }
+        
+        /// <summary>
+        /// Get normalized time value (0-1) for lighting calculations
+        /// 0 = full day lighting, 1 = full night lighting
+        /// </summary>
+        private float GetNormalizedTimeForLighting()
+        {
+            return currentTimeOfDay switch
+            {
+                TimeOfDay.Day => 0f, // Full daylight
+                TimeOfDay.Night => 1f, // Full night
+                _ => 0f
+            };
+        }
+        
+        /// <summary>
+        /// Get the total progress through the entire day cycle (0-1)
+        /// Useful for smooth transitions and effects
+        /// </summary>
+        public float GetDayCycleProgress()
+        {
+            float currentCycleTime = 0f;
+            
+            switch (currentTimeOfDay)
+            {
+                case TimeOfDay.Day:
+                    currentCycleTime = currentTimeProgress * DayDurationInSeconds;
+                    break;
+                case TimeOfDay.Night:
+                    currentCycleTime = DayDurationInSeconds + (currentTimeProgress * NightDurationInSeconds);
+                    break;
+            }
+            
+            return currentCycleTime / totalCycleDuration;
+        }
+        
+        #endregion
+        
+        #region Time Calculation Methods
+        
+        /// <summary>
+        /// Get current time of day as hours (0-24)
+        /// Based on sun position: 6 AM = sunrise, 12 PM = noon, 6 PM = sunset, 12 AM = midnight
+        /// </summary>
+        public float GetCurrentTimeHours()
+        {
+            // Map totalDayProgress (0-1) to 24-hour time
+            // 0.0 = 6 AM (sunrise), 0.25 = 12 PM (noon), 0.5 = 6 PM (sunset), 0.75 = 12 AM (midnight)
+            float timeHours = (totalDayProgress * 24f + 6f) % 24f;
+            return timeHours;
+        }
+        
+        /// <summary>
+        /// Get current time as hours and minutes
+        /// </summary>
+        public (int hours, int minutes) GetCurrentTime()
+        {
+            float timeHours = GetCurrentTimeHours();
+            int hours = Mathf.FloorToInt(timeHours);
+            int minutes = Mathf.FloorToInt((timeHours - hours) * 60f);
+            return (hours, minutes);
+        }
+        
+        /// <summary>
+        /// Get formatted time string (12-hour format with AM/PM)
+        /// </summary>
+        public string GetFormattedTime12Hour()
+        {
+            var (hours, minutes) = GetCurrentTime();
+            
+            string period = hours >= 12 ? "PM" : "AM";
+            int displayHours = hours == 0 ? 12 : (hours > 12 ? hours - 12 : hours);
+            
+            return $"{displayHours}:{minutes:D2} {period}";
+        }
+        
+        /// <summary>
+        /// Get formatted time string (24-hour format)
+        /// </summary>
+        public string GetFormattedTime24Hour()
+        {
+            var (hours, minutes) = GetCurrentTime();
+            return $"{hours:D2}:{minutes:D2}";
+        }
+        
+        /// <summary>
+        /// Get time period description based on actual time
+        /// </summary>
+        public string GetTimePeriodDescription()
+        {
+            float timeHours = GetCurrentTimeHours();
+            
+            return timeHours switch
+            {
+                >= 5f and < 7f => "Early Morning",
+                >= 7f and < 12f => "Morning", 
+                >= 12f and < 17f => "Afternoon",
+                >= 17f and < 19f => "Evening",
+                >= 19f and < 22f => "Night",
+                _ => "Late Night"
+            };
+        }
+        
+        #endregion
+        
+        #region Public Utility Methods
+        
+        /// <summary>
+        /// Check if NPCs should sleep during current time
+        /// </summary>
+        public bool ShouldNPCSleep()
+        {
+            return enableNightSleepBehavior && IsNight && UnityEngine.Random.value < sleepChance;
+        }
+        
+        /// <summary>
+        /// Get time-modified work efficiency for tasks
+        /// </summary>
+        public float GetWorkEfficiencyMultiplier(WorkTask workTask = null)
+        {
+            // Some tasks might not be affected by time of day
+            if (workTask != null)
+            {
+                // Add specific task logic here if needed
+                // For example, security tasks might be more efficient at night
+            }
+            
+            return CurrentWorkEfficiencyMultiplier;
+        }
+        
+        /// <summary>
+        /// Get time of day as a readable string
+        /// </summary>
+        public string GetTimeOfDayString()
+        {
+            return currentTimeOfDay switch
+            {
+                TimeOfDay.Day => "Day",
+                TimeOfDay.Night => "Night",
+                _ => "Unknown"
+            };
+        }
+        
+        /// <summary>
+        /// Get formatted time string with progress (legacy method for compatibility)
+        /// </summary>
+        public string GetFormattedTimeString()
+        {
+            return GetFormattedTime12Hour();
+        }
+        
+        #endregion
+        
+        #region Time Conversion Utilities
+        
+        /// <summary>
+        /// Convert game hours to real-world seconds based on current day/night cycle length
+        /// </summary>
+        /// <param name="gameHours">Number of game hours to convert</param>
+        /// <returns>Real-world seconds equivalent</returns>
+        public float ConvertGameHoursToSeconds(float gameHours)
+        {
+            // 1 full day/night cycle = 24 game hours
+            float gameHoursPerCycle = 24f;
+            float secondsPerGameHour = totalCycleDurationInSeconds / gameHoursPerCycle;
+            return gameHours * secondsPerGameHour;
+        }
+        
+        /// <summary>
+        /// Convert real-world seconds to game hours based on current day/night cycle length
+        /// </summary>
+        /// <param name="realSeconds">Number of real-world seconds to convert</param>
+        /// <returns>Game hours equivalent</returns>
+        public float ConvertSecondsToGameHours(float realSeconds)
+        {
+            // 1 full day/night cycle = 24 game hours
+            float gameHoursPerCycle = 24f;
+            float secondsPerGameHour = totalCycleDurationInSeconds / gameHoursPerCycle;
+            return realSeconds / secondsPerGameHour;
+        }
+        
+        /// <summary>
+        /// Get seconds per game hour for current cycle settings
+        /// </summary>
+        /// <returns>How many real seconds equal one game hour</returns>
+        public float GetSecondsPerGameHour()
+        {
+            float gameHoursPerCycle = 24f;
+            return totalCycleDurationInSeconds / gameHoursPerCycle;
+        }
+        
+        /// <summary>
+        /// Static method to get time conversion from any TimeManager instance
+        /// Fallback to default values if no TimeManager is available
+        /// </summary>
+        /// <param name="gameHours">Game hours to convert</param>
+        /// <returns>Real seconds</returns>
+        public static float ConvertGameHoursToSecondsStatic(float gameHours)
+        {
+            // Try to find TimeManager instance
+            TimeManager timeManager = FindFirstObjectByType<TimeManager>();
+            if (timeManager != null)
+            {
+                return timeManager.ConvertGameHoursToSeconds(gameHours);
+            }
+            
+            // Fallback: assume standard 6-minute cycle (360 seconds total)
+            float fallbackCycleDuration = 360f;
+            float gameHoursPerCycle = 24f;
+            float secondsPerGameHour = fallbackCycleDuration / gameHoursPerCycle;
+            
+            Debug.LogWarning($"[TimeManager] No TimeManager instance found! Using fallback conversion: {gameHours} game hours = {gameHours * secondsPerGameHour} seconds");
+            return gameHours * secondsPerGameHour;
+        }
+        
+        #endregion
+    }
+    
+    /// <summary>
+    /// Enum representing different times of day (simplified to just Day/Night)
+    /// </summary>
+    public enum TimeOfDay
+    {
+        Day,     // Daytime (2/3 of cycle)
+        Night    // Nighttime (1/3 of cycle)
+    }
+}

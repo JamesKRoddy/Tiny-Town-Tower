@@ -10,7 +10,7 @@ public class InventoryPreviewBtn : PreviewButtonBase<ResourceScriptableObj>
         base.SetupButton(resourceObjRef, resourceObjRef.sprite, resourceObjRef.objectName);
     }
 
-    protected override void OnButtonClicked()
+    protected override void OnDefaultButtonClicked()
     {
         // Open inventory submenu (if needed)
     }

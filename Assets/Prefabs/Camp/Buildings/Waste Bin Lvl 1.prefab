@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 2023559838207138218}
   - component: {fileID: 57490220868501922}
   - component: {fileID: 1570260883221937390}
+  - component: {fileID: 7365266153739528466}
   m_Layer: 0
   m_Name: Waste Bin Lvl 1
   m_TagString: Untagged
@@ -48,6 +49,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   workLocationTransform: {fileID: 0}
+  maxWorkers: 1
   requiredResources: []
   showTooltip: 0
   electricityRequired: 0
@@ -65,6 +67,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   workLocationTransform: {fileID: 0}
+  maxWorkers: 1
   requiredResources: []
   showTooltip: 0
   electricityRequired: 0
@@ -81,16 +84,61 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64dd0ffb0b844ae479053b57c07077ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buildingScriptableObj: {fileID: 11400000, guid: 7bbd785e8bc86ee428ebb8c9a7126145, type: 2}
+  structureScriptableObj: {fileID: 11400000, guid: 7bbd785e8bc86ee428ebb8c9a7126145, type: 2}
+  buildingCategory: 1
   isOperational: 0
   isUnderConstruction: 1
   currentHealth: 0
+  currentWorkTask: {fileID: 0}
   repairTask: {fileID: 0}
   upgradeTask: {fileID: 0}
+  shakeIntensity: 0.1
+  shakeDuration: 0.3
+  shakeDecay:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   maxCapacity: 100
   currentCapacity: 0
-  fillRate: 0.5
   emptyTime: 5
+--- !u!114 &7365266153739528466
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5537019113398064311}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 479a22adfcc450c44980c1523bca61f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  workLocationTransform: {fileID: 0}
+  maxWorkers: 1
+  requiredResources: []
+  showTooltip: 0
+  electricityRequired: 0
+  taskAnimation: 0
 --- !u!1001 &7370598143079649261
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -55,7 +55,19 @@ public class ShelteredState : _TaskState
 
     public override void UpdateState()
     {
-        // Do nothing while sheltered
+        // Do nothing while sheltered - stamina is handled by SettlerNPC.Update()
+    }
+    
+    /// <summary>
+    /// Override stamina update for sheltered-specific behavior
+    /// Being sheltered in a bunker provides safety with no stamina change (not sleep, just safety)
+    /// </summary>
+    public override void UpdateStamina()
+    {
+        // Sheltered NPCs have no stamina drain (safe, but not sleeping)
+        // They don't lose stamina while hidden, but they don't gain any either
+        // This represents being safe and resting, but not actual sleep
+        npc.ApplyStaminaChange(0f, "Sheltered (no change)");
     }
 
     public override float MaxSpeed() { return 0f; }

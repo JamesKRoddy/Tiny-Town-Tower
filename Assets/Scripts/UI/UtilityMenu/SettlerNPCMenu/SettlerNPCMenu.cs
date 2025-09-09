@@ -5,9 +5,47 @@ using System.Linq;
 
 public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterController>, IControllerInput
 {
+    // Filter function to determine which settlers should be shown
+    private Func<SettlerNPC, bool> settlerFilter = null;
+    
+    // Custom click handler for special modes (like bed assignment)
+    private Action<HumanCharacterController> customClickHandler = null;
+    
+    // Set a filter for which settlers to show (e.g., only available settlers for bed assignment)
+    public void SetSettlerFilter(Func<SettlerNPC, bool> filter)
+    {
+        settlerFilter = filter;
+    }
+    
+    // Clear the filter to show all settlers
+    public void ClearSettlerFilter()
+    {
+        settlerFilter = null;
+    }
+    
+    // Set a custom click handler for special modes (like bed assignment)
+    public void SetCustomClickHandler(Action<HumanCharacterController> handler)
+    {
+        customClickHandler = handler;
+    }
+    
+    // Clear the custom click handler to return to normal behavior
+    public void ClearCustomClickHandler()
+    {
+        customClickHandler = null;
+    }
+    
+    // Clear filter and custom click handler when menu is disabled
+    private void OnDisable()
+    {
+        ClearSettlerFilter();
+        ClearCustomClickHandler();
+    }
+    
     // Retrieve all NPCs in the scene that inherit from HumanCharacterController
     public override IEnumerable<HumanCharacterController> GetItems()
     {
+        
         // First, get the robot if it exists
         var robot = FindFirstObjectByType<RobotCharacterController>();
         if (robot != null)
@@ -15,12 +53,16 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
             yield return robot;
         }
 
-        // Then get all settler NPCs
+        // Then get all settler NPCs (filtered if a filter is set)
         var npcs = FindObjectsByType<SettlerNPC>(FindObjectsSortMode.None);
 
         foreach (var npc in npcs)
+        {
+            // Apply filter if one is set
+            if (settlerFilter == null || settlerFilter(npc))
             {
                 yield return npc;
+            }
         }
     }
 
@@ -32,14 +74,29 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
     public override void SetupItemButton(HumanCharacterController item, GameObject button)
     {
         var buttonComponent = button.GetComponent<SettlerPreviewBtn>();
-        if (item is RobotCharacterController robot)
+        
+        if (customClickHandler != null)
         {
-            // Special setup for robot
-            buttonComponent.SetupButton(robot);
+            if (item is RobotCharacterController robot)
+            {
+                buttonComponent.SetupButton(robot, customClickHandler, null, "Robot");
+            }
+            else if (item is SettlerNPC settler)
+            {
+                buttonComponent.SetupButton(settler, customClickHandler, null, settler.SettlerName);
+            }
         }
-        else if (item is SettlerNPC settler)
+        else
         {
-            buttonComponent.SetupButton(settler);
+            if (item is RobotCharacterController robot)
+            {
+                // Special setup for robot
+                buttonComponent.SetupButton(robot);
+            }
+            else if (item is SettlerNPC settler)
+            {
+                buttonComponent.SetupButton(settler);
+            }
         }
     }
 

@@ -63,7 +63,7 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
                         description += $"- {resource.resourceScriptableObj.objectName}\n";
                     }
                 }
-                description += $"\nResearch Time: {research.researchTime} seconds";
+                description += $"\nResearch Time: {research.craftTimeInGameHours} game hours";
                 if (research.unlockedItems != null && research.unlockedItems.Length > 0)
                 {
                     description += $"\n\nUnlocks:";
@@ -81,15 +81,15 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
             if (recipe != null)
             {
                 string description = recipe.description + "\n\n";
-                if (recipe.requiredIngredients != null && recipe.requiredIngredients.Length > 0)
+                if (recipe.requiredResources != null && recipe.requiredResources.Length > 0)
                 {
                     description += "Required Ingredients:\n";
-                    foreach (var ingredient in recipe.requiredIngredients)
+                    foreach (var ingredient in recipe.requiredResources)
                     {
                         description += $"- {ingredient.resourceScriptableObj.objectName}\n";
                     }
                 }
-                description += $"\nCooking Time: {recipe.cookingTime} seconds";
+                description += $"\nCooking Time: {recipe.craftTimeInGameHours} game hours";
                 return description;
             }
         }
@@ -107,7 +107,7 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
                         description += $"- {resource.resourceScriptableObj.objectName}\n";
                     }
                 }
-                description += $"\nUpgrade Time: {upgrade.upgradeTime} seconds";
+                description += $"\nUpgrade Time: {upgrade.craftTimeInGameHours} game hours";
                 return description;
             }
         } else if (currentTask is FarmingTask){
@@ -135,7 +135,7 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
         }
         else if (currentTask is CookingTask)
         {
-            requiredResources = (item as CookingRecipeScriptableObj)?.requiredIngredients;
+            requiredResources = (item as CookingRecipeScriptableObj)?.requiredResources;
         }
         else if (currentTask is ResourceUpgradeTask)
         {

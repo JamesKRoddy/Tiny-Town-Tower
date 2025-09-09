@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using Managers;
 
 public class BinCleaningTask : WorkTask
 {
@@ -23,21 +24,38 @@ public class BinCleaningTask : WorkTask
         base.CompleteWork();
     }
 
-    protected override IEnumerator WorkCoroutine()
+    public override bool DoWork(HumanCharacterController worker, float deltaTime)
     {
-        if (targetBin == null) yield break;
-
-        targetBin.StartEmptying();
-        emptyProgress = 0f;
-
-        while (emptyProgress < baseWorkTime)
+        if (targetBin == null)
         {
-            emptyProgress += Time.deltaTime * emptySpeed;
-            targetBin.AddEmptyProgress(Time.deltaTime * emptySpeed);
-            yield return null;
+            return false;
         }
 
-        CompleteWork();
+        // Start emptying if not already started
+        if (emptyProgress == 0f)
+        {
+            targetBin.StartEmptying();
+        }
+
+        // Call base DoWork to handle electricity and progress
+        bool canContinue = base.DoWork(worker, deltaTime);
+        
+        if (canContinue)
+        {
+            // Get worker speed
+            float workSpeed = 1f;
+            if (worker is SettlerNPC settler)
+            {
+                workSpeed = settler.GetWorkSpeedMultiplier();
+            }
+            
+            // Process emptying (affected by work speed)
+            float emptyDelta = deltaTime * emptySpeed * workSpeed;
+            emptyProgress += emptyDelta;
+            targetBin.AddEmptyProgress(emptyDelta);
+        }
+        
+        return canContinue;
     }
 
     public override string GetTooltipText()

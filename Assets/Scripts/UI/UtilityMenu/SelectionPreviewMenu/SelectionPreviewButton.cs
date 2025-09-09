@@ -63,7 +63,7 @@ public class SelectionPreviewButton : PreviewButtonBase<ScriptableObject>
         UpdateCount();
     }
     
-    protected override void OnButtonClicked()
+    protected override void OnDefaultButtonClicked()
     {
         if (workTask == null)
         {

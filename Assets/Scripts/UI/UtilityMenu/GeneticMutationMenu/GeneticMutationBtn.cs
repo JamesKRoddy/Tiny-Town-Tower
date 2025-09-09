@@ -5,7 +5,7 @@ public class GeneticMutationBtn : PreviewButtonBase<GeneticMutationObj>
 {
     [SerializeField] private TextMeshProUGUI quantityText;
 
-    protected override void OnButtonClicked()
+    protected override void OnDefaultButtonClicked()
     {
         if (data == null)
         {

@@ -28,8 +28,13 @@ public class CookingTask : QueuedWorkTask
         if (currentTaskData is CookingRecipeScriptableObj nextRecipe)
         {
             currentRecipe = nextRecipe;
-            baseWorkTime = nextRecipe.cookingTime;
-            requiredResources = nextRecipe.requiredIngredients;
+            // Convert game hours to real seconds using TimeManager
+            baseWorkTime = Managers.TimeManager.ConvertGameHoursToSecondsStatic(nextRecipe.craftTimeInGameHours);
+            requiredResources = nextRecipe.requiredResources;
+        }
+        else
+        {
+            Debug.LogWarning($"[CookingTask] SetupNextTask called but currentTaskData is not a CookingRecipeScriptableObj: {currentTaskData}");
         }
     }
 
@@ -47,7 +52,7 @@ public class CookingTask : QueuedWorkTask
                 else
                 {
                     // If canteen is full, store in player inventory as backup
-                    AddResourceToInventory(currentRecipe.outputFood);
+                    AddResourceToInventory(currentRecipe.outputResources);
                 }
             }
         }

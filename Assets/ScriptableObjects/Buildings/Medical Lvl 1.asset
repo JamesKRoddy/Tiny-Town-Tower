@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d7f097ca34a0eb45a8b2d5ba0c3d616, type: 3}
+  m_Name: Medical Lvl 1
+  m_EditorClassIdentifier: 
+  objectName: Medical Lvl 1
+  description: Medical Lvl 1 desc
+  sprite: {fileID: 0}
+  category: 0
+  rarity: 0
+  isUnlocked: 1
+  _resourceCost: []
+  prefab: {fileID: 2083316838295057655, guid: 7a91f6592fb69eb4f92e8247ed8d71db, type: 3}
+  size: {x: 3, y: 3}
+  placeableObjectCategory: 0
+  maxHealth: 100
+  repairTime: 2
+  healthRestoredPerRepair: 50
+  repairResources: []
+  constructionTime: 2
+  upgradeTarget: {fileID: 11400000, guid: 72ed54a28fe47144c9800c512bad508f, type: 2}
+  upgradeResources: []
+  destructionTime: 2
+  reclaimedResources: []

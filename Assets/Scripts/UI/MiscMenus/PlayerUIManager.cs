@@ -71,6 +71,9 @@ public class PlayerUIManager : MonoBehaviour
     public CampUI campUI;
     public CampWaveUI waveUI;
 
+    [Header("Time Display References")]
+    public TimeDisplayUI timeDisplayUI;
+
     private Coroutine openingMenuCoroutine;
     private Coroutine notificationCoroutine; // For managing notification text timing
 
@@ -93,6 +96,7 @@ public class PlayerUIManager : MonoBehaviour
         rogueLikeGameUI.Setup();
         campUI.Setup();
         waveUI.Setup();
+        timeDisplayUI.Setup();
     }
 
     private void Update()
@@ -145,6 +149,8 @@ public class PlayerUIManager : MonoBehaviour
     /// <param name="delay"></param>
     public void SetScreenActive(MenuBase menu, bool active, float delay = 0.0f, Action callback = null)
     {
+        Debug.Log($"[PlayerUIManager] SetScreenActive called for menu: {menu?.name}, active: {active}, delay: {delay}");
+        
         if (delay > 0.0f)
         {
             if (openingMenuCoroutine == null)
@@ -152,6 +158,7 @@ public class PlayerUIManager : MonoBehaviour
         }
         else
         {
+            Debug.Log($"[PlayerUIManager] Setting menu active immediately: {menu?.name} -> {active}");
             previousMenu = currentMenu;
             currentMenu = menu;
             menu.gameObject.SetActive(active);

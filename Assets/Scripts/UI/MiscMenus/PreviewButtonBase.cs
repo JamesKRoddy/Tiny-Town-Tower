@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,6 +10,7 @@ public abstract class PreviewButtonBase<T> : MonoBehaviour
     [SerializeField] protected TMP_Text nameText;
 
     protected T data;
+    protected Action<T> customClickHandler = null;
 
     void OnDestroy()
     {
@@ -29,5 +31,25 @@ public abstract class PreviewButtonBase<T> : MonoBehaviour
         button.onClick.AddListener(OnButtonClicked);
     }
 
-    protected abstract void OnButtonClicked();
+    public virtual void SetupButton(T dataObject, Action<T> onClickHandler, Sprite image = null, string displayName = "Unknown")
+    {
+        customClickHandler = onClickHandler;
+        SetupButton(dataObject, image, displayName);
+    }
+
+    protected virtual void OnButtonClicked()
+    {
+        if (customClickHandler != null)
+        {
+            Debug.Log($"[PreviewButtonBase] Using custom click handler for {data}");
+            customClickHandler(data);
+        }
+        else
+        {
+            Debug.Log($"[PreviewButtonBase] Using default click handler for {data}");
+            OnDefaultButtonClicked();
+        }
+    }
+
+    protected abstract void OnDefaultButtonClicked();
 }

@@ -87,8 +87,9 @@ public class RobotCharacterController : HumanCharacterController, INarrativeTarg
             currentWorkTask = newTask;
             isWorking = true;
             PlayWorkAnimation(currentWorkTask.GetAnimationClipName());
-            // Start the work task once
-            currentWorkTask.PerformTask(this);
+            
+            // Call the base class StartWork to handle the work coroutine
+            base.StartWork(newTask);
 
             currentWorkTask.StopWork += HandleWorkCompleted;
         }
@@ -100,7 +101,10 @@ public class RobotCharacterController : HumanCharacterController, INarrativeTarg
         {
             currentWorkTask.StopWork -= HandleWorkCompleted;
             isWorking = false;
-            currentWorkTask.StopWorkCoroutine();
+            
+            // Call the base class StopWork to handle the work coroutine
+            base.StopWork();
+            
             currentWorkTask = null;
             animator.Play("Empty", workLayerIndex);
         }

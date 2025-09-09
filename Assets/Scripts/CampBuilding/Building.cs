@@ -141,15 +141,15 @@ public class Building : PlaceableStructure<BuildingScriptableObj>, IInteractive<
 
     #region Utility Methods
 
-    internal string GetBuildingStatsText()
+    public virtual string GetBuildingStatsText()
     {
         string upgradeTimeText = StructureScriptableObj.upgradeTarget != null 
-            ? $"{StructureScriptableObj.upgradeTarget.constructionTime} seconds" 
+            ? $"{StructureScriptableObj.upgradeTarget.constructionTimeInGameHours} game hours" 
             : "N/A";
             
         return $"Building Stats:\n" +
                $"Health: {currentHealth}/{MaxHealth}\n" +
-               $"Repair Time: {StructureScriptableObj.repairTime} seconds\n" +
+               $"Repair Time: {StructureScriptableObj.repairTimeInGameHours} game hours\n" +
                $"Upgrade Time: {upgradeTimeText}\n" +
                $"Max Health: {MaxHealth}\n" +
                $"Health Restored Per Repair: {StructureScriptableObj.healthRestoredPerRepair}\n" +

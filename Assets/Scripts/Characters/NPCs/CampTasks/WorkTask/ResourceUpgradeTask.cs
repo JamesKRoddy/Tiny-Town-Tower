@@ -21,24 +21,22 @@ public class ResourceUpgradeTask : QueuedWorkTask
         if (currentTaskData is ResourceUpgradeScriptableObj nextUpgrade)
         {
             currentUpgrade = nextUpgrade;
-            baseWorkTime = nextUpgrade.upgradeTime;
+            // Convert game hours to real seconds using TimeManager
+            baseWorkTime = Managers.TimeManager.ConvertGameHoursToSecondsStatic(nextUpgrade.craftTimeInGameHours);
             requiredResources = nextUpgrade.requiredResources;
         }
     }
 
-    protected override IEnumerator WorkCoroutine()
+    public override bool DoWork(HumanCharacterController worker, float deltaTime)
     {
-        // Consume input resources
-        ConsumeResources();
-
-        // Process the upgrade
-        while (workProgress < baseWorkTime)
+        // Start by consuming resources if we haven't started work yet
+        if (workProgress == 0f && currentUpgrade != null)
         {
-            workProgress += Time.deltaTime;
-            yield return null;
+            ConsumeResources();
         }
-
-        CompleteWork();
+        
+        // Call base DoWork to handle electricity and progress
+        return base.DoWork(worker, deltaTime);
     }
 
     protected override void CompleteWork()
@@ -48,7 +46,7 @@ public class ResourceUpgradeTask : QueuedWorkTask
             // Create the upgraded resources
             for (int i = 0; i < currentUpgrade.outputAmount; i++)
             {
-                AddResourceToInventory(currentUpgrade.outputResource);
+                AddResourceToInventory(currentUpgrade.outputResources);
             }
         }
         

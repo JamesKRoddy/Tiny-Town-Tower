@@ -25,6 +25,7 @@ public class SelectionPopup : PreviewPopupBase<object, string>
     private List<SelectionOption> currentOptions = new List<SelectionOption>();
     private Action onClose;
     private int currentSelectedIndex = -1;
+    private bool isInAssignmentMode = false; // Track if we're in work assignment mode
 
     protected override void Start()
     {
@@ -33,11 +34,19 @@ public class SelectionPopup : PreviewPopupBase<object, string>
 
     public void Setup(List<SelectionOption> options, GameObject element, Action onClose = null)
     {
+        Setup(options, element, onClose, false);
+    }
+
+    public void Setup(List<SelectionOption> options, GameObject element, Action onClose, bool isAssignmentMode)
+    {
         PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
 
         currentOptions = options;
         selectedElement = element;
         this.onClose = onClose;
+        this.isInAssignmentMode = isAssignmentMode;
+        
+        Debug.Log($"[SelectionPopup] Setup called with isAssignmentMode: {isAssignmentMode}");
         
         // Disable all buttons in the parent UI except popup buttons
         SetParentUIButtonsInteractable(false);
@@ -153,9 +162,29 @@ public class SelectionPopup : PreviewPopupBase<object, string>
     {
         if (optionIndex >= 0 && optionIndex < currentOptions.Count)
         {
-            currentOptions[optionIndex].onSelected?.Invoke();
+            var selectedOption = currentOptions[optionIndex];
+            Debug.Log($"[SelectionPopup] Option selected: {selectedOption.optionName}, isAssignmentMode: {isInAssignmentMode}");
+            
+            selectedOption.onSelected?.Invoke();
+            
+            // Only close and clear assignments if we're NOT in assignment mode
+            // OR if this is not an "Assign Worker" option
+            bool shouldClearAssignments = !isInAssignmentMode || selectedOption.optionName != "Assign Worker";
+            
+            Debug.Log($"[SelectionPopup] shouldClearAssignments: {shouldClearAssignments}");
+            
+            if (shouldClearAssignments)
+            {
+                OnCloseClicked();
+            }
+            else
+            {
+                // Just close the popup without clearing assignments
+                Debug.Log("[SelectionPopup] Closing popup without clearing assignments (assignment mode)");
+                base.OnCloseClicked();
+                onClose?.Invoke();
+            }
         }
-        OnCloseClicked();
     }
 
     protected override void SetupInitialSelection()
@@ -165,16 +194,10 @@ public class SelectionPopup : PreviewPopupBase<object, string>
         {
             if (button.gameObject.activeSelf && button.interactable)
             {
-                StartCoroutine(SetSelectedAfterDelay(button.gameObject));
+                PlayerUIManager.Instance.SetSelectedGameObject(button.gameObject);
                 break;
             }
         }
-    }
-
-    private IEnumerator SetSelectedAfterDelay(GameObject button)
-    {
-        yield return new WaitForSeconds(0.5f); // Wait for 0.5 seconds before selecting the button
-        PlayerUIManager.Instance.SetSelectedGameObject(button);
     }
 
     void ReturnToGame()
@@ -184,9 +207,23 @@ public class SelectionPopup : PreviewPopupBase<object, string>
 
     public override void OnCloseClicked()
     {
+        Debug.Log($"[SelectionPopup] OnCloseClicked called - isAssignmentMode: {isInAssignmentMode}");
         base.OnCloseClicked();
         onClose?.Invoke();
-        ReturnToGame();
-        CampManager.Instance.WorkManager.ClearNPCForAssignment();
+        //ReturnToGame();  //Removed because when selecting a building and assign task it was immediately returning to the gamemode with the menu open
+        
+        // Only clear assignments if we're not in assignment mode, or if explicitly closing
+        if (!isInAssignmentMode)
+        {
+            Debug.Log("[SelectionPopup] Clearing NPC assignment (not in assignment mode)");
+            CampManager.Instance.WorkManager.ClearNPCForAssignment();
+        }
+        else
+        {
+            Debug.Log("[SelectionPopup] Preserving assignments (in assignment mode)");
+        }
+        
+        // Reset assignment mode flag
+        isInAssignmentMode = false;
     }
 } 

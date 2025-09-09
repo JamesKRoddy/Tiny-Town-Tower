@@ -37,7 +37,8 @@ public class ResearchTask : QueuedWorkTask
         if (currentTaskData is ResearchScriptableObj nextResearch)
         {
             currentResearch = nextResearch;
-            baseWorkTime = nextResearch.researchTime;
+            // Convert game hours to real seconds using TimeManager
+            baseWorkTime = Managers.TimeManager.ConvertGameHoursToSecondsStatic(nextResearch.craftTimeInGameHours);
             requiredResources = nextResearch.requiredResources;
         }
     }
@@ -54,14 +55,7 @@ public class ResearchTask : QueuedWorkTask
             {
                 for (int i = 0; i < currentResearch.outputResources.Length; i++)
                 {
-                    if (i < currentResearch.outputAmounts.Length)
-                    {
-                        // Add output resources to player inventory
-                        PlayerInventory.Instance.AddItem(
-                            currentResearch.outputResources[i], 
-                            (int)currentResearch.outputAmounts[i]
-                        );
-                    }
+                    AddResourceToInventory(currentResearch.outputResources[i]);
                 }
             }
         }
