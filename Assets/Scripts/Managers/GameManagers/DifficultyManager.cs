@@ -4,24 +4,6 @@ namespace Managers
 {
     public class DifficultyManager : MonoBehaviour
     {
-        // Singleton instance
-        private static DifficultyManager _instance;
-        public static DifficultyManager Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<DifficultyManager>();
-                    if (_instance == null)
-                    {
-                        Debug.LogWarning("DifficultyManager instance not found in the scene!");
-                    }
-                }
-                return _instance;
-            }
-        }
-
         [Header("Difficulty Settings")]
         [SerializeField] private float difficultyScalingPerRoom = 1.5f;
         [SerializeField] private int maxDifficulty = 100;
@@ -34,18 +16,6 @@ namespace Managers
         private int currentRogueLikeBuildingDifficulty;
         private int currentRoomNumber;
         private int currentRoomDifficulty;
-
-        private void Awake()
-        {
-            if (_instance != null && _instance != this)
-            {
-                Destroy(gameObject);
-            }
-            else
-            {
-                _instance = this;
-            }
-        }
 
         /// <summary>
         /// Initialize difficulty for a new building

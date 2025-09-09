@@ -26,11 +26,17 @@ namespace Managers
             }
         }
 
+        [SerializeField] private DifficultyManager _difficultyManager;
+        public DifficultyManager DifficultyManager => _difficultyManager;
+
         [SerializeField] private ResourceManager _resourceManager;
         public ResourceManager ResourceManager => _resourceManager;
         
         [SerializeField] private TimeManager _timeManager;
         public TimeManager TimeManager => _timeManager;
+
+        [SerializeField] private GameProgressionManager _gameProgressionManager;
+        public GameProgressionManager GameProgressionManager => _gameProgressionManager;
 
         // Public event to notify when the game mode changes
         public event Action<GameMode> OnGameModeChanged;

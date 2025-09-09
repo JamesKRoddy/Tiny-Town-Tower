@@ -16,7 +16,7 @@ namespace Managers
         {
             LootTableForBuildingType lootTableForBuildingType = buildingLootTables.Find(lootTable => lootTable.buildingType == buildingType);
             LootTableScriptableObj lootTableScriptableObj = lootTableForBuildingType.lootTable;
-            ItemRarity rarity = DifficultyManager.Instance.GetResourceRarity(roomDifficulty);
+            ItemRarity rarity = GameManager.Instance.DifficultyManager.GetResourceRarity(roomDifficulty);
             return lootTableScriptableObj.GetLootByRarity(rarity);
         }
 
@@ -24,7 +24,7 @@ namespace Managers
         {
             LootTableForCharacterType lootTableForCharacterType = characterLootTables.Find(lootTable => lootTable.characterType == characterType);
             LootTableScriptableObj lootTableScriptableObj = lootTableForCharacterType.lootTable;
-            ItemRarity rarity = DifficultyManager.Instance.GetResourceRarity(roomDifficulty);
+            ItemRarity rarity = GameManager.Instance.DifficultyManager.GetResourceRarity(roomDifficulty);
             ResourceItemCount resourceItemCount = lootTableScriptableObj.GetLootByRarity(rarity);
             SpawnResourcePickup(resourceItemCount, position);
         }

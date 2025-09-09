@@ -53,7 +53,7 @@ public abstract class RogueLiteRoom : MonoBehaviour
         // Initialize all chests
         foreach (var chest in chests)
         {
-            chest.SetupChest(DifficultyManager.Instance.GetCurrentRoomDifficulty());
+            chest.SetupChest(GameManager.Instance.DifficultyManager.GetCurrentRoomDifficulty());
         }
         
         // Call abstract method for room-specific setup

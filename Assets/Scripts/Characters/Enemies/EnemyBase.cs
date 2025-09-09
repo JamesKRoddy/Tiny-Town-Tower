@@ -973,7 +973,7 @@ namespace Enemies
             int shouldDropLoot = UnityEngine.Random.Range(0, 100);
             if (shouldDropLoot < 50)
             {
-                GameManager.Instance.ResourceManager.SpawnCharacterLoot(characterType, DifficultyManager.Instance.GetCurrentWaveDifficulty(), transform.position + Vector3.up * 1.0f);
+                GameManager.Instance.ResourceManager.SpawnCharacterLoot(characterType, GameManager.Instance.DifficultyManager.GetCurrentWaveDifficulty(), transform.position + Vector3.up * 1.0f);
             }
 
             // Play death VFX

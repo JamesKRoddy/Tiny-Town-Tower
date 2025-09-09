@@ -296,7 +296,7 @@ namespace Managers
 
         public override int GetCurrentWaveDifficulty()
         {
-            return DifficultyManager.Instance.GetCurrentWaveDifficulty();
+            return GameManager.Instance.DifficultyManager.GetCurrentWaveDifficulty();
         }
     
 

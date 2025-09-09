@@ -18,13 +18,9 @@ They can increase chances of recovery by not working or even better receiving tr
 Tomorrow work:
 
 
-Create debug menu that controls the in game time to fast forward game time
-
-
 
 
 Bugs and refactoring:
-Add a visual queue for when a settler is starving, sleeping, tired, sick
 The TimeDisplayUI has a CanvasGroup used to affect ui elements as a group maybe use in other places? Can be used to make elements not interactable use this on the building, cooking etc menus!!
 The game manager should have references to the managers childed to it, they shouldn't be singletons
 If you create a second construction site not all npcs move onto the second one after completing the first, think its because the task has been marked as occupied
@@ -84,6 +80,7 @@ Setup some new enemies: Zombie that when its killed splits into smaller enemies.
 Figure out what happens time wise in the camp while youre gone, does progress on stuff freeze? Does it keep going or does it progress but slower?
 
 Status effects, adding sleep, work etc effects to npcs Also damage ones like fire electric, poison etc. Effects for work task buildings (camp fire smoke etc.)
+
 Test upgrade and destruction effects for buildings
 
 

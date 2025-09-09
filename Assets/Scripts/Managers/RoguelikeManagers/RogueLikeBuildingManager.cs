@@ -40,9 +40,9 @@ namespace Managers
         public RogueLiteRoomParent CurrentRoomParentComponent => currentRoomParentComponent;
 
         public RogueLikeBuildingDataScriptableObj CurrentBuilding => currentBuilding;
-        public int RogueLikeBuildingDifficulty => DifficultyManager.Instance.GetCurrentRogueLikeBuildingDifficulty();
-        public int CurrentRoom => DifficultyManager.Instance.GetCurrentRoomNumber();
-        public int CurrentRoomDifficulty => DifficultyManager.Instance.GetCurrentRoomDifficulty();
+        public int RogueLikeBuildingDifficulty => GameManager.Instance.DifficultyManager.GetCurrentRogueLikeBuildingDifficulty();
+        public int CurrentRoom => GameManager.Instance.DifficultyManager.GetCurrentRoomNumber();
+        public int CurrentRoomDifficulty => GameManager.Instance.DifficultyManager.GetCurrentRoomDifficulty();
 
         public RogueLikeBuildingDataScriptableObj SetBuildingData(RogueLikeBuildingType buildingType){
             // Find all buildings matching the door's building type
@@ -62,7 +62,7 @@ namespace Managers
             currentBuilding = rogueLikeBuildingDataScriptableObjs[randomIndex];
 
             // Note: Difficulty is now initialized by the OverWorldDoor before this method is called
-            currentMaxRooms = currentBuilding.GetMaxRoomsForDifficulty(DifficultyManager.Instance.GetCurrentWaveDifficulty());
+            currentMaxRooms = currentBuilding.GetMaxRoomsForDifficulty(GameManager.Instance.DifficultyManager.GetCurrentWaveDifficulty());
 
             rogueLikeBuildingSpawn = matchingBuildings[randomIndex].buildingEntrance.GetComponent<RogueLikeBuildingEntrance>().PlayerSpawnPoint;
             if (rogueLikeBuildingSpawn == null)
@@ -72,7 +72,7 @@ namespace Managers
             }
 
             // Track building progression milestone
-            Managers.GameProgressionManager.Instance.OnBuildingTypeReached(buildingType);
+            GameManager.Instance.GameProgressionManager.OnBuildingTypeReached(buildingType);
 
             return currentBuilding;
         }
@@ -80,10 +80,10 @@ namespace Managers
         public bool EnterRoomCheck(RogueLikeRoomDoor rogueLiteDoor)
         {
             // Automatically calculate and set room difficulty based on building difficulty and room number
-            DifficultyManager.Instance.SetNextRoomDifficulty();
+            GameManager.Instance.DifficultyManager.SetNextRoomDifficulty();
             
             //Reached the end of the building check
-            if(DifficultyManager.Instance.GetCurrentRoomNumber() >= currentMaxRooms){
+            if(GameManager.Instance.DifficultyManager.GetCurrentRoomNumber() >= currentMaxRooms){
                 LeaveBuilding();
                 return false;
             }
@@ -148,7 +148,7 @@ namespace Managers
             }
 
             // Create the new building
-            int difficulty = DifficultyManager.Instance.GetCurrentWaveDifficulty();
+            int difficulty = GameManager.Instance.DifficultyManager.GetCurrentWaveDifficulty();
             GameObject newBuildingParent = Instantiate(GetBuildingParent(buildingType, difficulty, out RogueLikeBuildingDataScriptableObj selectedBuilding));
 
             if (newBuildingParent != null && selectedBuilding != null)
@@ -197,7 +197,7 @@ namespace Managers
 
         public int GetCurrentWaveDifficulty()
         {
-            return DifficultyManager.Instance.GetCurrentWaveDifficulty();
+            return GameManager.Instance.DifficultyManager.GetCurrentWaveDifficulty();
         }
 
         public void SetupPlayer(Transform playerTransform)
@@ -229,14 +229,14 @@ namespace Managers
             // Track building completion milestone before clearing current building
             if (currentBuilding != null)
             {
-                Managers.GameProgressionManager.Instance.OnBuildingTypeCleared(currentBuilding.buildingType);
+                GameManager.Instance.GameProgressionManager.OnBuildingTypeCleared(currentBuilding.buildingType);
             }
 
             currentBuilding = null;
             currentRoomParent = null;
             lastPlayerSpawnPoint = Vector3.zero;
             placedRooms.Clear();
-            DifficultyManager.Instance.ResetDifficulty();
+            GameManager.Instance.DifficultyManager.ResetDifficulty();
         }
 
         public void ClearDebugState()

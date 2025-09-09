@@ -250,8 +250,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98d2e6833a44b1d428a19f0d0fc29b9d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _difficultyManager: {fileID: 8500866176951590164}
   _resourceManager: {fileID: 2792607112023517297}
   _timeManager: {fileID: 3155998006727192342}
+  _gameProgressionManager: {fileID: 1436072651122523167}
   _currentGameMode: 100
 --- !u!1 &2242077205400694440
 GameObject:
@@ -346,8 +348,7 @@ MonoBehaviour:
   characterEffects:
   - {fileID: 11400000, guid: 83115b41ecc29d44284ef52b7551852a, type: 2}
   - {fileID: 11400000, guid: e917dc6f66606014dbfa9cec973cd6f3, type: 2}
-  buildingEffects:
-  - {fileID: 11400000, guid: b2956269c7a4fca44bb6cba25d5f3b19, type: 2}
+  buildingHitEffects: []
   poolSize: 10
 --- !u!1 &2832878052533813605
 GameObject:
@@ -1753,6 +1754,8 @@ MonoBehaviour:
     effect: {fileID: 11400000, guid: 5ae9b375b149ee34f8e519df46e6d5b4, type: 2}
   - gridSize: {x: 1, y: 1}
     effect: {fileID: 11400000, guid: ce47b9855e546c446aa73e7717588dcb, type: 2}
+  repairEffectMappings: []
+  destructionEffectMappings: []
 --- !u!1 &8937295529231746835
 GameObject:
   m_ObjectHideFlags: 0
