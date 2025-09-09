@@ -18,6 +18,8 @@ They can increase chances of recovery by not working or even better receiving tr
 Tomorrow work:
 Status effects, adding sleep, work etc effects to npcs
 Also damage ones like fire electric, poison etc.
+Effects for work task buildings (camp fire smoke etc.)
+Create debug menu that controls the in game time to fast forward game time
 
 
 
@@ -34,6 +36,7 @@ Sometimes 2 npcs can sleep in the same bed unassigned bed
 Time manager is running in the main menu
 Research upgrade, cooking and research not progressing correctly (add a progress bar or something to see how its progressing)
 NPCs not returning to work after sleeping
+Switching between mouse and controller controls on the fly
 
 
 Errors:
@@ -62,7 +65,6 @@ VFX for player
 
 NPCs have to use toilets, need to figure out timers for when they need it
 
-Damaging buildings: ties into turret system
 Repairing buildings: wait until damage is finished
 
 SaveLoadManager, have to implement saving/loading research, player data?, other player data for camp?, building data, cleaness and electricity, manager data? (? just means the ai put TODO there but not sure exactly what it means or what data is needed)
@@ -89,6 +91,7 @@ Enemies
 Mutations
 
 Research
+Unlock vaulting and dash for roguelike to increase movement options
 Strength that allows you to push heavier objects to open new areas
 
 Buildings:
