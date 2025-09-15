@@ -413,11 +413,9 @@ namespace Managers
                     }
                     
                     maxDuration = Mathf.Max(maxDuration, duration);
-                    Debug.Log($"[EffectManager] ParticleSystem '{ps.name}' duration: {duration}s");
                 }
             }
             
-            Debug.Log($"[EffectManager] Maximum particle duration found: {maxDuration}s across {particleSystems.Length} particle systems");
             return maxDuration;
         }
 
@@ -497,7 +495,6 @@ namespace Managers
                 Debug.LogWarning($"[EffectManager] No status effect definition found for {statusType} on {target.GetCharacterType()}");
                 return;
             } else{
-                Debug.Log($"[EffectManager] Status effect definition found for {statusType} on {target.GetCharacterType()}");
             }
             
             // Initialize status effects dictionary for this target if needed
@@ -568,7 +565,6 @@ namespace Managers
             // Notify target
             target.OnStatusEffectApplied(statusType, activeEffect.duration);
             
-            Debug.Log($"[EffectManager] Applied status effect {statusType} to {target.GetCharacterType()} for {activeEffect.duration}s");
         }
         
         /// <summary>
@@ -596,7 +592,6 @@ namespace Managers
             // Notify target
             target.OnStatusEffectRemoved(statusType);
             
-            Debug.Log($"[EffectManager] Removed status effect {statusType} from {target.GetCharacterType()}");
         }
         
         /// <summary>
@@ -664,7 +659,6 @@ namespace Managers
                 // Check if this is a looping effect
                 if (visualEffect != null && visualEffect.looping)
                 {
-                    Debug.Log($"[EffectManager] Starting looping visual effect for {activeEffect.statusType}");
                     // For looping effects, start the looping coroutine
                     activeEffect.loopingCoroutine = StartCoroutine(HandleLoopingVisualEffect(target, activeEffect));
                 }
@@ -686,7 +680,7 @@ namespace Managers
             if (definition.HasFloatingText())
             {
                 // TODO: Implement floating text system or integrate with UI system
-                Debug.Log($"[EffectManager] Status text: {definition.floatingText}");
+
             }
             
             // Apply material modifications
@@ -875,7 +869,6 @@ namespace Managers
                 if (definition.healingPerSecond > 0f)
                 {
                     // TODO: Implement healing interface or system
-                    Debug.Log($"[EffectManager] Healing {target.GetCharacterType()} for {definition.healingPerSecond}");
                 }
                 
                 yield return new WaitForSeconds(1f);

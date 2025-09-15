@@ -10,6 +10,7 @@ public abstract class WorkTask : MonoBehaviour
     [Header("Task Settings")]
     [SerializeField] protected Transform workLocationTransform; // Optional specific work location
     [SerializeField] protected int maxWorkers = 1; // Maximum number of workers that can be assigned to this task
+    [SerializeField] protected bool autoQueue = false; // Whether this task should be automatically added to the work queue for NPCs to pick up
     protected List<HumanCharacterController> currentWorkers = new List<HumanCharacterController>(); // List of NPCs performing this task
     [HideInInspector] public ResourceItemCount[] requiredResources; // Resources needed to perform this task
     [SerializeField] protected bool showTooltip = false; // Whether to show tooltips for this task
@@ -49,6 +50,7 @@ public abstract class WorkTask : MonoBehaviour
     public int CurrentWorkerCount => currentWorkers.Count;
     public int MaxWorkerCount => maxWorkers;
     public bool IsMultiWorkerTask => maxWorkers > 1;
+    public bool IsAutoQueued => autoQueue;
     public virtual bool IsTaskCompleted => true; // Base WorkTask is always completed when done
     public virtual bool HasQueuedTasks => false; // Base WorkTask has no queue
 
@@ -225,7 +227,11 @@ public abstract class WorkTask : MonoBehaviour
 
     protected void AddWorkTask()
     {
-        CampManager.Instance.WorkManager.AddWorkTask(this);
+        // Only add to work queue if autoQueue is enabled
+        if (autoQueue)
+        {
+            CampManager.Instance.WorkManager.AddWorkTask(this);
+        }
     }
 
     // Helper method to trigger the event safely (other classes can call this to invoke StopWork)
@@ -438,6 +444,13 @@ public abstract class WorkTask : MonoBehaviour
         // Clear all workers
         currentWorkers.Clear();
         Debug.Log($"[WorkTask] Cleared all workers, count now: {currentWorkers.Count}");
+        
+        // Remove this task from the work queue now that it's completed
+        if (autoQueue)
+        {
+            CampManager.Instance.WorkManager.RemoveTaskFromQueue(this);
+            Debug.Log($"[WorkTask] Removed completed task from work queue");
+        }
         
         // Switch back to idle effects when work is complete
         if (isOperational)

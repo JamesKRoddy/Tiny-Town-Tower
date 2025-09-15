@@ -16,6 +16,13 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
     protected override void Start()
     {
         base.Start();
+        
+        // Construction tasks should support multiple workers to speed up building
+        maxWorkers = 3; // Allow up to 3 workers on construction sites
+        
+        // Construction tasks should be automatically queued for NPCs to pick up
+        autoQueue = true;
+        
         AddWorkTask();
         taskAnimation = TaskAnimation.HAMMER_STANDING;
         

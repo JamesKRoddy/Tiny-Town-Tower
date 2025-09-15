@@ -80,9 +80,6 @@ public class WanderState : _TaskState
                 }
             }
             
-            // 4. If no higher priority tasks, start wandering
-            Debug.Log($"[WanderState] {npc.name} starting to wander");
-            
             // Reset agent state properly
             ResetAgentState();
             
@@ -100,7 +97,6 @@ public class WanderState : _TaskState
             if (wanderCoroutine == null)
             {
                 wanderCoroutine = npc.StartCoroutine(WanderCoroutine());
-                Debug.Log($"[WanderState] {npc.name} started wander coroutine");
             }
             
             CampManager.Instance.WorkManager.OnTaskAvailable += WorkAvalible;
@@ -195,7 +191,6 @@ public class WanderState : _TaskState
         if (NavMesh.SamplePosition(newPosition, out hit, wanderRadius, NavMesh.AllAreas))
         {
             agent.SetDestination(hit.position);
-            Debug.Log($"[WanderState] {npc.name} set new wander destination: {hit.position}");
         }
         else
         {
@@ -205,22 +200,18 @@ public class WanderState : _TaskState
 
     private IEnumerator WanderCoroutine()
     {
-        Debug.Log($"[WanderState] {npc.name} WanderCoroutine started");
         
         while (isWandering)
         {
             if (!isWaiting)
             {
-                Debug.Log($"[WanderState] {npc.name} WanderCoroutine calling SetNewWanderPoint");
                 SetNewWanderPoint();
             }
             
             float waitTime = Random.Range(wanderIntervalMin, wanderIntervalMax);
-            Debug.Log($"[WanderState] {npc.name} WanderCoroutine waiting {waitTime}s");
             yield return new WaitForSeconds(waitTime);
         }
         
-        Debug.Log($"[WanderState] {npc.name} WanderCoroutine ended");
     }
 
     private void WorkAvalible(WorkTask newTask)

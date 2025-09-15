@@ -28,6 +28,26 @@ namespace Managers
             OnTaskAvailable?.Invoke(newTask);
         }
 
+        // Method to remove a completed task from the queue
+        public void RemoveTaskFromQueue(WorkTask taskToRemove)
+        {
+            if (taskToRemove == null) return;
+            
+            // Create a new queue without the completed task
+            Queue<WorkTask> newQueue = new Queue<WorkTask>();
+            while (workQueue.Count > 0)
+            {
+                WorkTask task = workQueue.Dequeue();
+                if (task != taskToRemove)
+                {
+                    newQueue.Enqueue(task);
+                }
+            }
+            workQueue = newQueue;
+            
+            Debug.Log($"[WorkManager] Removed {taskToRemove.GetType().Name} from work queue. Queue count: {workQueue.Count}");
+        }
+
         // Method to get the next available task
         public WorkTask GetNextTask()
         {
@@ -43,72 +63,110 @@ namespace Managers
         {
             if (npc == null) return false;
 
-            WorkTask nextTask = GetNextTask();
-            if (nextTask != null)
+            // Keep track of tasks we've already checked to prevent infinite loops
+            HashSet<WorkTask> checkedTasks = new HashSet<WorkTask>();
+            
+            // Create a temporary queue to process tasks
+            Queue<WorkTask> tempQueue = new Queue<WorkTask>();
+            
+            while (workQueue.Count > 0)
             {
+                WorkTask nextTask = workQueue.Dequeue();
+                if (nextTask == null) continue;
+                
+                // If we've already checked this task, don't process it again
+                if (checkedTasks.Contains(nextTask))
+                {
+                    tempQueue.Enqueue(nextTask); // Keep it in queue for future attempts
+                    continue;
+                }
+                
+                checkedTasks.Add(nextTask);
+
                 // Check if the task can be performed
                 if (!nextTask.CanPerformTask())
                 {
-                    // Put the task back in the queue if it can't be performed
-                    workQueue.Enqueue(nextTask);
-                    return false;
+                    tempQueue.Enqueue(nextTask); // Keep it in queue
+                    continue;
                 }
 
                 // Check if the player has required resources
                 if (!nextTask.HasRequiredResources())
                 {
-                    // Put the task back in the queue if resources are missing
-                    workQueue.Enqueue(nextTask);
-                    return false;
+                    tempQueue.Enqueue(nextTask); // Keep it in queue
+                    continue;
                 }
 
                 // Check if task is already fully occupied
                 if (nextTask.IsFullyOccupied)
                 {
-                    // Put the task back in the queue if it's full
-                    workQueue.Enqueue(nextTask);
-                    return false;
+                    tempQueue.Enqueue(nextTask); // Keep it in queue, might have space later
+                    continue;
                 }
 
-                // Assign the task to the NPC
-                if (npc is RobotCharacterController robot)
+                // Found a suitable task - assign the NPC but keep the task in queue for other workers
+                tempQueue.Enqueue(nextTask); // Keep task in queue for potential additional workers
+                
+                // Restore the queue with all tasks
+                while (tempQueue.Count > 0)
                 {
-                    nextTask.AssignNPC(robot);
-                    robot.StartWork(nextTask);
+                    workQueue.Enqueue(tempQueue.Dequeue());
                 }
-                else if (npc is SettlerNPC settler)
+                
+                return AssignNPCToTask(npc, nextTask);
+            }
+            
+            // If we get here, no suitable tasks were found - restore all tasks to queue
+            while (tempQueue.Count > 0)
+            {
+                workQueue.Enqueue(tempQueue.Dequeue());
+            }
+            
+            return false;
+        }
+
+
+        /// <summary>
+        /// Helper method to assign an NPC to a specific task
+        /// </summary>
+        private bool AssignNPCToTask(HumanCharacterController npc, WorkTask task)
+        {
+            // Assign the task to the NPC
+            if (npc is RobotCharacterController robot)
+            {
+                task.AssignNPC(robot);
+                robot.StartWork(task);
+            }
+            else if (npc is SettlerNPC settler)
+            {
+                task.AssignNPC(settler);
+                
+                Debug.Log($"[WorkManager] Assigning task {task.GetType().Name} to {settler.name}. Current task type: {settler.GetCurrentTaskType()}");
+                
+                // If the NPC is already in work state, we need to update the work state directly
+                if (settler.GetCurrentTaskType() == TaskType.WORK)
                 {
-                    nextTask.AssignNPC(settler);
-                    
-                    Debug.Log($"[WorkManager] Assigning task {nextTask.GetType().Name} to {settler.name}. Current task type: {settler.GetCurrentTaskType()}");
-                    
-                    // If the NPC is already in work state, we need to update the work state directly
-                    if (settler.GetCurrentTaskType() == TaskType.WORK)
+                    var workState = settler.GetComponent<WorkState>();
+                    if (workState != null)
                     {
-                        var workState = settler.GetComponent<WorkState>();
-                        if (workState != null)
-                        {
-                            workState.AssignTask(nextTask);
-                            workState.UpdateTaskDestination(); // Force update the destination
-                            Debug.Log($"[WorkManager] Updated work state for {settler.name} to task {nextTask.GetType().Name}");
-                        }
-                    }
-                    else
-                    {
-                        settler.StartWork(nextTask);
-                        Debug.Log($"[WorkManager] Started work for {settler.name} on task {nextTask.GetType().Name}");
+                        workState.AssignTask(task);
+                        workState.UpdateTaskDestination(); // Force update the destination
+                        Debug.Log($"[WorkManager] Updated work state for {settler.name} to task {task.GetType().Name}");
                     }
                 }
                 else
                 {
-                    Debug.LogError($"[WorkManager] Invalid character type for assignment: {npc.GetType().Name}");
-                    workQueue.Enqueue(nextTask);
-                    return false;
+                    settler.StartWork(task);
+                    Debug.Log($"[WorkManager] Started work for {settler.name} on task {task.GetType().Name}");
                 }
-
-                return true;
             }
-            return false;
+            else
+            {
+                Debug.LogError($"[WorkManager] Invalid character type for assignment: {npc.GetType().Name}");
+                return false;
+            }
+
+            return true;
         }
 
         // Method to assign a task to a specific NPC
@@ -464,7 +522,6 @@ namespace Managers
             if (sleepTask != null && !availableSleepTasks.Contains(sleepTask))
             {
                 availableSleepTasks.Add(sleepTask);
-                Debug.Log($"[WorkManager] Registered sleep task: {sleepTask.name}");
             }
         }
         
@@ -477,7 +534,6 @@ namespace Managers
             if (sleepTask != null && availableSleepTasks.Contains(sleepTask))
             {
                 availableSleepTasks.Remove(sleepTask);
-                Debug.Log($"[WorkManager] Unregistered sleep task: {sleepTask.name}");
             }
         }
         
@@ -524,7 +580,6 @@ namespace Managers
             bool success = sleepTask.AssignSettlerToBed(settler);
             if (success)
             {
-                Debug.Log($"[WorkManager] Successfully assigned {settler.name} to bed {sleepTask.name}");
                 PlayerUIManager.Instance.DisplayUIErrorMessage($"{settler.name} assigned to bed");
                 
                 // Close any open popups
