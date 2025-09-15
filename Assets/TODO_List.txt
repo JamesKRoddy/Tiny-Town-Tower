@@ -24,8 +24,6 @@ Bugs and refactoring:
 The TimeDisplayUI has a CanvasGroup used to affect ui elements as a group maybe use in other places? Can be used to make elements not interactable use this on the building, cooking etc menus!!
 Effect Manager TODO Show floating text, Implement healing interface or system
 
-Refactor the rest of the _TaskState to reduce repetition of code
-Still some issue with the melee zombie bugging out between hits while being close to the player
 Sometimes 2 npcs can sleep in the same bed unassigned bed
 Time manager is running in the main menu
 Research upgrade, cooking and research not progressing correctly (add a progress bar or something to see how its progressing)
@@ -54,7 +52,9 @@ Time of day
 
 ******Stuff for later******
 
+Add in some poise dame for enemy and player attacks which dictate if knockback animation should play
 
+Need some close range attacks for ranged zombies
 
 VFX for player
 
