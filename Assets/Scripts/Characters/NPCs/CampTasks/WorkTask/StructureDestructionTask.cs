@@ -1,13 +1,9 @@
 using UnityEngine;
-using Managers;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine.AI;
 
 public class StructureDestructionTask : WorkTask, IInteractive<object>
 {
     private PlaceableObjectParent structureScriptableObj;
-    private bool isDestructionComplete = false;
 
     protected override void Start()
     {
@@ -56,7 +52,6 @@ public class StructureDestructionTask : WorkTask, IInteractive<object>
             }
         }
 
-        isDestructionComplete = true;
         base.CompleteWork();
         Destroy(gameObject);
     }

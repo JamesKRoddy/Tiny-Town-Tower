@@ -24,7 +24,6 @@ Bugs and refactoring:
 The TimeDisplayUI has a CanvasGroup used to affect ui elements as a group maybe use in other places? Can be used to make elements not interactable use this on the building, cooking etc menus!!
 Effect Manager TODO Show floating text, Implement healing interface or system
 
-Sometimes 2 npcs can sleep in the same bed unassigned bed
 Time manager is running in the main menu
 Research upgrade, cooking and research not progressing correctly (add a progress bar or something to see how its progressing)
 NPCs not returning to work after sleeping
