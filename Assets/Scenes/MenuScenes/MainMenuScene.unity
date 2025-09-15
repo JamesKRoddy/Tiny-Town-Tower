@@ -1845,7 +1845,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: totalCycleDurationInSeconds
-      value: 240
+      value: 24
       objectReference: {fileID: 0}
     - target: {fileID: 3415585928227201123, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_Shadows.m_Type

@@ -65,19 +65,30 @@ public class SleepTask : WorkTask
             return false;
         }
         
-        if (isBedAssigned && assignedSettler != settler)
+        // ATOMIC CHECK: Only assign if bed is truly available or already assigned to this settler
+        if (isBedAssigned)
         {
-            Debug.LogWarning($"[SleepTask] Bed {name} is already assigned to {assignedSettler.name}");
+            if (assignedSettler == settler)
+            {
+                // Already assigned to this settler, return success
+                return true;
+            }
+            else
+            {
+                // Already assigned to someone else
+                Debug.LogWarning($"[SleepTask] Bed {name} is already assigned to {assignedSettler.name}");
+                return false;
+            }
+        }
+        
+        // Double-check that no other NPC is currently using this bed (race condition protection)
+        if (IsAnotherNPCUsing(settler))
+        {
+            Debug.LogWarning($"[SleepTask] Bed {name} is currently being used by another NPC");
             return false;
         }
         
-        // Unassign current settler if different
-        if (isBedAssigned && assignedSettler != settler)
-        {
-            UnassignSettlerFromBed();
-        }
-        
-        // Assign new settler
+        // Assign new settler (bed is confirmed available)
         assignedSettler = settler;
         isBedAssigned = true;
         
@@ -177,6 +188,7 @@ public class SleepTask : WorkTask
         {
             if (worker != excludeSettler && worker is SettlerNPC)
             {
+                Debug.Log($"[SleepTask] Bed {name} is being used by {worker.name} (current worker)");
                 return true; // Another NPC is currently using this bed
             }
         }
@@ -188,6 +200,7 @@ public class SleepTask : WorkTask
             var npc = collider.GetComponent<SettlerNPC>();
             if (npc != null && npc != excludeSettler && npc.GetCurrentTaskType() == TaskType.SLEEP)
             {
+                Debug.Log($"[SleepTask] Bed {name} area is occupied by {npc.name} (sleeping nearby)");
                 return true; // Another NPC is sleeping nearby
             }
         }

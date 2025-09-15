@@ -143,16 +143,18 @@ public class SleepState : _TaskState
                 }
             }
             
-            // Second priority: Available bed
+            // Second priority: Available bed (try to assign to any unassigned bed)
             foreach (var sleepTask in sleepTasks)
             {
-                if (!sleepTask.IsBedAssigned && sleepTask.CanSettlerUseBed(settler))
+                if (!sleepTask.IsBedAssigned)
                 {
+                    // Attempt atomic assignment - this will fail if another NPC claims it first
                     if (sleepTask.AssignSettlerToBed(settler))
                     {
                         Debug.Log($"[SleepState] {npc.name} assigned to available bed");
                         return sleepTask.GetPrecisePosition() ?? sleepTask.transform;
                     }
+                    // If assignment failed, continue to next bed (this one was claimed by another NPC)
                 }
             }
         }
