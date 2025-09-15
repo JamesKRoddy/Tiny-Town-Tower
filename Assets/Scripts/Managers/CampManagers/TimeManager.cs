@@ -43,6 +43,9 @@ namespace Managers
         [Range(0f, 1f)]
         [SerializeField] private float sleepChance = 0.6f; // 60% chance NPCs will sleep at night
         
+        [Header("Game Mode Settings")]
+        [SerializeField] private float rogueLiteTimeSpeedMultiplier = 0.5f; // Half speed for rogue lite mode
+        
         // Public properties for NPC access
         public bool EnableNightSleepBehavior => enableNightSleepBehavior;
         public float SleepChance => sleepChance;
@@ -66,6 +69,8 @@ namespace Managers
         private float totalDayProgress = 0f; // 0-1 progress through entire day/night cycle
         private Coroutine timeCoroutine;
         private bool isPaused = false;
+        private bool shouldRunCycle = false; // Whether the time cycle should be running based on game mode
+        private float currentTimeSpeedMultiplier = 1f; // Current speed multiplier based on game mode
         
         // Calculated values
         private float totalCycleDuration; // Total time for complete day/night cycle
@@ -88,6 +93,8 @@ namespace Managers
         public bool IsNight => currentTimeOfDay == TimeOfDay.Night;
         public float CurrentWorkEfficiencyMultiplier => IsNight ? nightWorkEfficiencyMultiplier : 1f;
         public float CurrentMovementSpeedMultiplier => IsNight ? nightMovementSpeedMultiplier : 1f;
+        public float CurrentTimeSpeedMultiplier => currentTimeSpeedMultiplier;
+        public bool ShouldRunTimeCycle => shouldRunCycle;
         
         #endregion
         
@@ -100,6 +107,14 @@ namespace Managers
         
         private void Start()
         {
+            // Subscribe to GameManager events
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.OnGameModeChanged += OnGameModeChanged;
+                // Set initial state based on current game mode
+                OnGameModeChanged(GameManager.Instance.CurrentGameMode);
+            }
+            
             if (autoStartCycle)
             {
                 StartTimeCycle();
@@ -108,9 +123,54 @@ namespace Managers
         
         private void OnDestroy()
         {
+            // Unsubscribe from GameManager events
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.OnGameModeChanged -= OnGameModeChanged;
+            }
+            
             if (timeCoroutine != null)
             {
                 StopCoroutine(timeCoroutine);
+            }
+        }
+        
+        #endregion
+        
+        #region Game Mode Integration
+        
+        /// <summary>
+        /// Handle game mode changes to control time cycle behavior
+        /// </summary>
+        private void OnGameModeChanged(GameMode newGameMode)
+        {
+            switch (newGameMode)
+            {
+                case GameMode.MAIN_MENU:
+                case GameMode.NONE:
+                    shouldRunCycle = false;
+                    currentTimeSpeedMultiplier = 1f;
+                    Debug.Log("[TimeManager] Time cycle disabled for main menu/none mode");
+                    break;
+                    
+                case GameMode.CAMP:
+                case GameMode.CAMP_ATTACK:
+                    shouldRunCycle = true;
+                    currentTimeSpeedMultiplier = 1f;
+                    Debug.Log("[TimeManager] Time cycle enabled at normal speed for camp mode");
+                    break;
+                    
+                case GameMode.ROGUE_LITE:
+                    shouldRunCycle = true;
+                    currentTimeSpeedMultiplier = rogueLiteTimeSpeedMultiplier;
+                    Debug.Log($"[TimeManager] Time cycle enabled at {rogueLiteTimeSpeedMultiplier}x speed for rogue lite mode");
+                    break;
+                    
+                default:
+                    shouldRunCycle = false;
+                    currentTimeSpeedMultiplier = 1f;
+                    Debug.LogWarning($"[TimeManager] Unknown game mode: {newGameMode}, disabling time cycle");
+                    break;
             }
         }
         
@@ -198,9 +258,9 @@ namespace Managers
         {
             while (true)
             {
-                if (!isPaused)
+                if (!isPaused && shouldRunCycle)
                 {
-                    float deltaTime = Time.deltaTime;
+                    float deltaTime = Time.deltaTime * currentTimeSpeedMultiplier;
                     float periodDuration = GetCurrentPeriodDuration();
                     
                     // Update current period progress
