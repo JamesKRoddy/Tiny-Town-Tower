@@ -22,9 +22,8 @@ Tomorrow work:
 
 Bugs and refactoring:
 The TimeDisplayUI has a CanvasGroup used to affect ui elements as a group maybe use in other places? Can be used to make elements not interactable use this on the building, cooking etc menus!!
+Effect Manager TODO Show floating text, Implement healing interface or system
 
-If you create a second construction site not all npcs move onto the second one after completing the first, think its because the task has been marked as occupied
-Pressing b after selecting a bed locks the controls
 Refactor the rest of the _TaskState to reduce repetition of code
 Still some issue with the melee zombie bugging out between hits while being close to the player
 Sometimes 2 npcs can sleep in the same bed unassigned bed

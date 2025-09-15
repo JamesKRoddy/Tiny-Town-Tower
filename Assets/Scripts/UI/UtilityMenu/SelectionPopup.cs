@@ -210,17 +210,21 @@ public class SelectionPopup : PreviewPopupBase<object, string>
         Debug.Log($"[SelectionPopup] OnCloseClicked called - isAssignmentMode: {isInAssignmentMode}");
         base.OnCloseClicked();
         onClose?.Invoke();
-        //ReturnToGame();  //Removed because when selecting a building and assign task it was immediately returning to the gamemode with the menu open
         
         // Only clear assignments if we're not in assignment mode, or if explicitly closing
         if (!isInAssignmentMode)
         {
             Debug.Log("[SelectionPopup] Clearing NPC assignment (not in assignment mode)");
             CampManager.Instance.WorkManager.ClearNPCForAssignment();
+            // Return to game controls when fully closing (not in assignment mode)
+            ReturnToGame();
         }
         else
         {
             Debug.Log("[SelectionPopup] Preserving assignments (in assignment mode)");
+            // In assignment mode, we still need to return to game controls since the popup is closing
+            // This was the missing piece - the controls were stuck in IN_MENU state
+            ReturnToGame();
         }
         
         // Reset assignment mode flag
