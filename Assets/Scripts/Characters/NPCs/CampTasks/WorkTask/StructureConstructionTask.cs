@@ -23,6 +23,9 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
         // Construction tasks should be automatically queued for NPCs to pick up
         autoQueue = true;
         
+        // Enable progress bars for construction tasks
+        showProgressBar = true;
+        
         AddWorkTask();
         taskAnimation = TaskAnimation.HAMMER_STANDING;
         
@@ -54,6 +57,8 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
         finalBuildingPrefab = scriptableObj.prefab;
         // Convert game hours to real seconds using TimeManager
         baseWorkTime = Managers.TimeManager.ConvertGameHoursToSecondsStatic(scriptableObj.constructionTimeInGameHours);
+        
+        Debug.Log($"[StructureConstructionTask] SetupConstruction for {scriptableObj.objectName} - constructionTimeInGameHours: {scriptableObj.constructionTimeInGameHours}, baseWorkTime: {baseWorkTime}");
         
         SetupNavMeshObstacle();
     }
@@ -130,16 +135,17 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
             CampManager.Instance.MarkSharedGridSlotsOccupied(transform.position, buildingScriptableObj.size, structureObj);
         }
 
-        Debug.Log($"[StructureConstructionTask] About to destroy construction site and call base.CompleteWork()");
+        Debug.Log($"[StructureConstructionTask] About to call base.CompleteWork() to notify workers");
         Debug.Log($"[StructureConstructionTask] Workers before base.CompleteWork(): {currentWorkers.Count}");
         
-        Destroy(gameObject);
-        isConstructionComplete = true;
-        
-        Debug.Log($"[StructureConstructionTask] Calling base.CompleteWork() to notify workers");
+        // Call base.CompleteWork() first to properly clean up workers and progress bars
         base.CompleteWork();
         
         Debug.Log($"[StructureConstructionTask] Construction completed successfully for {buildingScriptableObj?.objectName ?? "Unknown"}");
+        
+        // Destroy the construction site after cleanup
+        isConstructionComplete = true;
+        Destroy(gameObject);
     }
 
     public void RemoveWorker(SettlerNPC npc)

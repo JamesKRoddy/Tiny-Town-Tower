@@ -117,7 +117,8 @@ public abstract class WorkTask : MonoBehaviour
         }
         
         // Start in-use ambient effects when work actually begins (NPC has arrived and is starting work)
-        if (currentWorkers.Count == 1) // First worker starting work
+        // Show progress bar when the first worker calls PerformTask, regardless of how many workers are already assigned
+        if (!progressBarActive) // Only show progress bar once
         {
             SetAmbientEffectsState(true);
             
@@ -255,17 +256,22 @@ public abstract class WorkTask : MonoBehaviour
     // Method to assign an NPC to this task
     public bool AssignNPC(HumanCharacterController npc)
     {
+        Debug.Log($"[WorkTask] AssignNPC called for {GetType().Name} - {name} by {npc.name}. Current count: {currentWorkers.Count}");
+        
         if (currentWorkers.Contains(npc))
         {
+            Debug.Log($"[WorkTask] Worker {npc.name} already assigned to {GetType().Name}");
             return false; // Already assigned
         }
         
         if (currentWorkers.Count >= maxWorkers)
         {
+            Debug.Log($"[WorkTask] Task {GetType().Name} is full ({currentWorkers.Count}/{maxWorkers})");
             return false; // Task is full
         }
         
         currentWorkers.Add(npc);
+        Debug.Log($"[WorkTask] Successfully assigned {npc.name} to {GetType().Name}. New count: {currentWorkers.Count}");
         
         if (taskStructure != null)
         {
@@ -415,6 +421,8 @@ public abstract class WorkTask : MonoBehaviour
         // Advance work progress
         workProgress += workDelta;
         
+        Debug.Log($"[WorkTask] DoWork for {GetType().Name} - workDelta: {workDelta}, workProgress: {workProgress}, baseWorkTime: {baseWorkTime}, finalWorkSpeed: {finalWorkSpeed}");
+        
         // Update progress bar if active
         if (progressBarActive && CampManager.Instance?.WorkManager != null)
         {
@@ -426,6 +434,7 @@ public abstract class WorkTask : MonoBehaviour
         // Check if work is complete
         if (workProgress >= baseWorkTime)
         {
+            Debug.Log($"[WorkTask] Work completed for {GetType().Name} - workProgress: {workProgress}, baseWorkTime: {baseWorkTime}");
             workProgress = baseWorkTime;
             CompleteWork();
             return false; // Work is done
