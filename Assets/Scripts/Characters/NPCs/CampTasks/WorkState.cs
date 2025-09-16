@@ -246,6 +246,9 @@ public class WorkState : _TaskState
             settler.StopWorkAnimation();
         }
 
+        // Clear the assigned task since work is complete
+        assignedTask = null;
+
         // Use shared method to assign work or wander
         TryAssignWorkOrWander();
     }

@@ -167,7 +167,7 @@ public abstract class _TaskState : MonoBehaviour
             bool isCompleted = assignedWork.IsTaskCompleted;
             Debug.Log($"[TaskState] {npc.name} assigned task validation - CanPerform: {canPerform}, IsCompleted: {isCompleted}");
             
-            if (canPerform)
+            if (canPerform && !isCompleted)
             {
                 Debug.Log($"[TaskState] {npc.name} returning to assigned work task: {assignedWork.GetType().Name}");
                 npc.StartWork(assignedWork);
@@ -175,7 +175,7 @@ public abstract class _TaskState : MonoBehaviour
             }
             else
             {
-                Debug.Log($"[TaskState] {npc.name} assigned work task cannot be performed, clearing it");
+                Debug.Log($"[TaskState] {npc.name} assigned work task cannot be performed or is completed, clearing it");
                 npc.ClearAssignedWork();
             }
         }

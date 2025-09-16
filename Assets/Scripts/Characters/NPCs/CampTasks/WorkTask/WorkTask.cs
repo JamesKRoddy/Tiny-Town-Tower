@@ -59,7 +59,7 @@ public abstract class WorkTask : MonoBehaviour
     public virtual bool IsTaskCompleted => true; // Base WorkTask is always completed when done
     public virtual bool HasQueuedTasks => false; // Base WorkTask has no queue
 
-    private IPlaceableStructure taskStructure;
+    protected IPlaceableStructure taskStructure;
 
     protected virtual void Start()
     {
@@ -120,14 +120,20 @@ public abstract class WorkTask : MonoBehaviour
         // Show progress bar when the first worker calls PerformTask, regardless of how many workers are already assigned
         if (!progressBarActive) // Only show progress bar once
         {
+            Debug.Log($"[WorkTask] Starting work for {GetType().Name} - progressBarActive: {progressBarActive}, showProgressBar: {showProgressBar}");
             SetAmbientEffectsState(true);
             
             // Show progress bar if enabled and manager exists
             if (showProgressBar && CampManager.Instance?.WorkManager != null)
             {
+                Debug.Log($"[WorkTask] Showing progress bar for {GetType().Name}");
                 CampManager.Instance.WorkManager.ShowProgressBar(this);
                 progressBarActive = true;
             }
+        }
+        else
+        {
+            Debug.Log($"[WorkTask] Progress bar already active for {GetType().Name}, skipping show");
         }
         
         // Work execution is now handled by the worker's coroutine started in AssignNPC
@@ -256,17 +262,22 @@ public abstract class WorkTask : MonoBehaviour
     // Method to assign an NPC to this task
     public bool AssignNPC(HumanCharacterController npc)
     {
+        Debug.Log($"[WorkTask] AssignNPC called for {GetType().Name} - NPC: {npc.name}, currentWorkers: {currentWorkers.Count}, maxWorkers: {maxWorkers}");
+        
         if (currentWorkers.Contains(npc))
         {
+            Debug.Log($"[WorkTask] NPC {npc.name} already assigned to {GetType().Name}");
             return false; // Already assigned
         }
         
         if (currentWorkers.Count >= maxWorkers)
         {
+            Debug.Log($"[WorkTask] Task {GetType().Name} is full, cannot assign {npc.name}");
             return false; // Task is full
         }
         
         currentWorkers.Add(npc);
+        Debug.Log($"[WorkTask] Assigned {npc.name} to {GetType().Name}, currentWorkers: {currentWorkers.Count}");
         
         if (taskStructure != null)
         {

@@ -212,7 +212,7 @@ public class WorkTaskProgressBar : MonoBehaviour
 
     private void Update()
     {
-        if (associatedTask != null && mainCamera != null && isVisible)
+        if (associatedTask != null && mainCamera != null)
         {
             // Position the progress bar above the task
             Vector3 worldPos = associatedTask.transform.position + offsetFromTask;
@@ -231,7 +231,16 @@ public class WorkTaskProgressBar : MonoBehaviour
                 
                 if (canvasGroup != null)
                 {
-                    canvasGroup.alpha = shouldBeVisible ? (isVisible ? 1f : 0f) : 0f;
+                    // Only override alpha if we're not currently fading out
+                    if (fadeCoroutine == null)
+                    {
+                        canvasGroup.alpha = shouldBeVisible ? (isVisible ? 1f : 0f) : 0f;
+                    }
+                    else if (!shouldBeVisible)
+                    {
+                        // If we're fading but shouldn't be visible, hide immediately
+                        canvasGroup.alpha = 0f;
+                    }
                 }
             }
             else
