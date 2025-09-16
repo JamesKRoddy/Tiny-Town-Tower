@@ -58,27 +58,11 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
         // Convert game hours to real seconds using TimeManager
         baseWorkTime = Managers.TimeManager.ConvertGameHoursToSecondsStatic(scriptableObj.constructionTimeInGameHours);
         
-        Debug.Log($"[StructureConstructionTask] SetupConstruction for {scriptableObj.objectName} - constructionTimeInGameHours: {scriptableObj.constructionTimeInGameHours}, baseWorkTime: {baseWorkTime}");
-        
         SetupNavMeshObstacle();
     }
 
     protected override void CompleteWork()
     {
-        Debug.Log($"[StructureConstructionTask] CompleteWork called for {buildingScriptableObj?.objectName ?? "Unknown"}");
-        Debug.Log($"[StructureConstructionTask] Current workers count: {currentWorkers.Count}");
-        
-        // Log all current workers before completion
-        for (int i = 0; i < currentWorkers.Count; i++)
-        {
-            var worker = currentWorkers[i];
-            Debug.Log($"[StructureConstructionTask] Worker {i}: {worker.name} - Type: {worker.GetType().Name}");
-            if (worker is SettlerNPC settler)
-            {
-                Debug.Log($"[StructureConstructionTask] - Settler current task: {settler.GetCurrentTaskType()}");
-                Debug.Log($"[StructureConstructionTask] - Settler assigned work: {settler.GetAssignedWork()?.GetType().Name ?? "null"}");
-            }
-        }
         
         // Free grid slots from construction site
         if (CampManager.Instance != null)
@@ -135,13 +119,8 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
             CampManager.Instance.MarkSharedGridSlotsOccupied(transform.position, buildingScriptableObj.size, structureObj);
         }
 
-        Debug.Log($"[StructureConstructionTask] About to call base.CompleteWork() to notify workers");
-        Debug.Log($"[StructureConstructionTask] Workers before base.CompleteWork(): {currentWorkers.Count}");
-        
         // Call base.CompleteWork() first to properly clean up workers and progress bars
         base.CompleteWork();
-        
-        Debug.Log($"[StructureConstructionTask] Construction completed successfully for {buildingScriptableObj?.objectName ?? "Unknown"}");
         
         // Destroy the construction site after cleanup
         isConstructionComplete = true;

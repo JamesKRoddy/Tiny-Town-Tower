@@ -256,22 +256,17 @@ public abstract class WorkTask : MonoBehaviour
     // Method to assign an NPC to this task
     public bool AssignNPC(HumanCharacterController npc)
     {
-        Debug.Log($"[WorkTask] AssignNPC called for {GetType().Name} - {name} by {npc.name}. Current count: {currentWorkers.Count}");
-        
         if (currentWorkers.Contains(npc))
         {
-            Debug.Log($"[WorkTask] Worker {npc.name} already assigned to {GetType().Name}");
             return false; // Already assigned
         }
         
         if (currentWorkers.Count >= maxWorkers)
         {
-            Debug.Log($"[WorkTask] Task {GetType().Name} is full ({currentWorkers.Count}/{maxWorkers})");
             return false; // Task is full
         }
         
         currentWorkers.Add(npc);
-        Debug.Log($"[WorkTask] Successfully assigned {npc.name} to {GetType().Name}. New count: {currentWorkers.Count}");
         
         if (taskStructure != null)
         {
@@ -421,8 +416,6 @@ public abstract class WorkTask : MonoBehaviour
         // Advance work progress
         workProgress += workDelta;
         
-        Debug.Log($"[WorkTask] DoWork for {GetType().Name} - workDelta: {workDelta}, workProgress: {workProgress}, baseWorkTime: {baseWorkTime}, finalWorkSpeed: {finalWorkSpeed}");
-        
         // Update progress bar if active
         if (progressBarActive && CampManager.Instance?.WorkManager != null)
         {
@@ -434,7 +427,6 @@ public abstract class WorkTask : MonoBehaviour
         // Check if work is complete
         if (workProgress >= baseWorkTime)
         {
-            Debug.Log($"[WorkTask] Work completed for {GetType().Name} - workProgress: {workProgress}, baseWorkTime: {baseWorkTime}");
             workProgress = baseWorkTime;
             CompleteWork();
             return false; // Work is done
@@ -446,14 +438,10 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual method for completing work that can be overridden
     protected virtual void CompleteWork()
     {
-        Debug.Log($"[WorkTask] CompleteWork called for {GetType().Name}");
-        Debug.Log($"[WorkTask] Current workers count: {currentWorkers.Count}");
-        
         // Store the first worker as previous worker before clearing (for backward compatibility)
         if (currentWorkers.Count > 0)
         {
             CampManager.Instance.WorkManager.StorePreviousWorker(this, currentWorkers[0]);
-            Debug.Log($"[WorkTask] Stored previous worker: {currentWorkers[0].name}");
         }
         
         // Reset state
@@ -461,24 +449,19 @@ public abstract class WorkTask : MonoBehaviour
         
         // Stop all workers from working on this task
         var workersToStop = new List<HumanCharacterController>(currentWorkers);
-        Debug.Log($"[WorkTask] About to stop {workersToStop.Count} workers");
         
         foreach (var worker in workersToStop)
         {
-            Debug.Log($"[WorkTask] Stopping work for {worker.name} (Type: {worker.GetType().Name})");
             worker.StopWork();
-            Debug.Log($"[WorkTask] StopWork() called for {worker.name}");
         }
         
         // Clear all workers
         currentWorkers.Clear();
-        Debug.Log($"[WorkTask] Cleared all workers, count now: {currentWorkers.Count}");
         
         // Remove this task from the work queue now that it's completed
         if (autoQueue)
         {
             CampManager.Instance.WorkManager.RemoveTaskFromQueue(this);
-            Debug.Log($"[WorkTask] Removed completed task from work queue");
         }
         
         // Hide progress bar when work is complete
