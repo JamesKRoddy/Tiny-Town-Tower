@@ -165,6 +165,13 @@ public class SelectionPopup : PreviewPopupBase<object, string>
             var selectedOption = currentOptions[optionIndex];
             Debug.Log($"[SelectionPopup] Option selected: {selectedOption.optionName}, isAssignmentMode: {isInAssignmentMode}");
             
+            // Check if we're in a work assignment flow BEFORE executing the action
+            // This needs to be done before the action clears the assignment state
+            bool isInWorkAssignmentFlow = CampManager.Instance.WorkManager.IsNPCForAssignmentSet() || 
+                                        CampManager.Instance.WorkManager.buildingForAssignment != null;
+            
+            Debug.Log($"[SelectionPopup] isInWorkAssignmentFlow: {isInWorkAssignmentFlow}");
+            
             selectedOption.onSelected?.Invoke();
             
             // Only close and clear assignments if we're NOT in assignment mode
@@ -175,7 +182,16 @@ public class SelectionPopup : PreviewPopupBase<object, string>
             
             if (shouldClearAssignments)
             {
-                OnCloseClicked();
+                if (isInWorkAssignmentFlow)
+                {
+                    Debug.Log("[SelectionPopup] Work assignment flow detected - closing popup without returning to game controls");
+                    // Close the popup but don't return to game controls
+                    OnCloseClickedWithoutReturningToGame();
+                }
+                else
+                {
+                    OnCloseClicked();
+                }
             }
             else
             {
@@ -225,6 +241,29 @@ public class SelectionPopup : PreviewPopupBase<object, string>
             // In assignment mode, we still need to return to game controls since the popup is closing
             // This was the missing piece - the controls were stuck in IN_MENU state
             ReturnToGame();
+        }
+        
+        // Reset assignment mode flag
+        isInAssignmentMode = false;
+    }
+
+    public void OnCloseClickedWithoutReturningToGame()
+    {
+        Debug.Log($"[SelectionPopup] OnCloseClickedWithoutReturningToGame called - isAssignmentMode: {isInAssignmentMode}");
+        base.OnCloseClicked();
+        onClose?.Invoke();
+        
+        // Only clear assignments if we're not in assignment mode, or if explicitly closing
+        if (!isInAssignmentMode)
+        {
+            Debug.Log("[SelectionPopup] Clearing NPC assignment (not in assignment mode)");
+            CampManager.Instance.WorkManager.ClearNPCForAssignment();
+            // Don't return to game controls - let the next menu handle it
+        }
+        else
+        {
+            Debug.Log("[SelectionPopup] Preserving assignments (in assignment mode)");
+            // Don't return to game controls - let the next menu handle it
         }
         
         // Reset assignment mode flag
