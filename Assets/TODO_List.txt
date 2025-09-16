@@ -16,7 +16,9 @@ They can increase chances of recovery by not working or even better receiving tr
 
 
 Tomorrow work:
-
+Research upgrade, cooking and research not progressing correctly (add a progress bar or something to see how its progressing)
+So have to figure out how to actually control this. Since buildings can have multiple different tasks have to use the one thats being done. need to show only one progress bar at a time on the building.
+UI code doesn't seem to work well i think we overlay the bar on the building in world space.
 
 
 
@@ -24,7 +26,7 @@ Bugs and refactoring:
 The TimeDisplayUI has a CanvasGroup used to affect ui elements as a group maybe use in other places? Can be used to make elements not interactable use this on the building, cooking etc menus!!
 Effect Manager TODO Show floating text, Implement healing interface or system
 
-Research upgrade, cooking and research not progressing correctly (add a progress bar or something to see how its progressing)
+
 NPCs not returning to work after sleeping
 Switching between mouse and controller controls on the fly
 Destroying a building freezes the npcs and they just keep working for some reason
@@ -50,7 +52,7 @@ Time of day
 
 ******Stuff for later******
 
-Add in some poise dame for enemy and player attacks which dictate if knockback animation should play
+Add in some poise damage for enemy and player attacks which dictate if knockback animation should play
 
 Need some close range attacks for ranged zombies
 
@@ -84,8 +86,10 @@ Test upgrade and destruction effects for buildings
 *****Ideas*****
 
 Enemies
+Slower animations for injured enemies
 
 Mutations
+One that shows enemies life bars
 
 Research
 Unlock vaulting and dash for roguelike to increase movement options

@@ -74,6 +74,9 @@ public class PlayerUIManager : MonoBehaviour
     [Header("Time Display References")]
     public TimeDisplayUI timeDisplayUI;
 
+    [Header("Progress Bar References")]
+    [SerializeField] private Transform progressBarParent; // Transform to parent all work task progress bars
+
     private Coroutine openingMenuCoroutine;
     private Coroutine notificationCoroutine; // For managing notification text timing
 
@@ -97,6 +100,9 @@ public class PlayerUIManager : MonoBehaviour
         campUI.Setup();
         waveUI.Setup();
         timeDisplayUI.Setup();
+        
+        // Ensure progress bar parent exists
+        EnsureProgressBarParent();
     }
 
     private void Update()
@@ -331,6 +337,35 @@ public class PlayerUIManager : MonoBehaviour
             default:
                 Debug.LogWarning("BackPressed no menu found");
                 break;  
+        }
+    }
+
+    /// <summary>
+    /// Get the transform to parent work task progress bars
+    /// </summary>
+    /// <returns>Transform to parent progress bars</returns>
+    public Transform GetProgressBarParent()
+    {
+        EnsureProgressBarParent();
+        return progressBarParent;
+    }
+
+    /// <summary>
+    /// Ensure the progress bar parent transform exists
+    /// </summary>
+    private void EnsureProgressBarParent()
+    {
+        if (progressBarParent == null)
+        {
+            // Create a child GameObject to hold progress bars
+            GameObject progressBarContainer = new GameObject("ProgressBars");
+            progressBarParent = progressBarContainer.transform;
+            progressBarParent.SetParent(transform);
+            progressBarParent.localPosition = Vector3.zero;
+            progressBarParent.localRotation = Quaternion.identity;
+            progressBarParent.localScale = Vector3.one;
+            
+            Debug.Log("[PlayerUIManager] Created progress bar parent transform");
         }
     }
 

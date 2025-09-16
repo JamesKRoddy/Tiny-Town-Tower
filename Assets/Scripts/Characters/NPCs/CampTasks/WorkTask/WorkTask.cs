@@ -42,6 +42,11 @@ public abstract class WorkTask : MonoBehaviour
     protected float baseWorkTime = 5f;
     protected int resourceAmount = 1;
 
+    // Progress bar settings
+    [Header("Progress Display")]
+    [SerializeField] protected bool showProgressBar = true; // Whether to show progress bar for this task
+    protected bool progressBarActive = false;
+
     // Properties to access the assigned NPCs
     public List<HumanCharacterController> AssignedNPCs => currentWorkers;
     public HumanCharacterController AssignedNPC => currentWorkers.Count > 0 ? currentWorkers[0] : null; // For backward compatibility
@@ -115,6 +120,13 @@ public abstract class WorkTask : MonoBehaviour
         if (currentWorkers.Count == 1) // First worker starting work
         {
             SetAmbientEffectsState(true);
+            
+            // Show progress bar if enabled and manager exists
+            if (showProgressBar && CampManager.Instance?.WorkManager != null)
+            {
+                CampManager.Instance.WorkManager.ShowProgressBar(this);
+                progressBarActive = true;
+            }
         }
         
         // Work execution is now handled by the worker's coroutine started in AssignNPC
@@ -403,6 +415,14 @@ public abstract class WorkTask : MonoBehaviour
         // Advance work progress
         workProgress += workDelta;
         
+        // Update progress bar if active
+        if (progressBarActive && CampManager.Instance?.WorkManager != null)
+        {
+            float progressPercentage = workProgress / baseWorkTime;
+            WorkTaskProgressState state = finalWorkSpeed <= 0 ? WorkTaskProgressState.Paused : WorkTaskProgressState.Normal;
+            CampManager.Instance.WorkManager.UpdateProgress(this, progressPercentage, state);
+        }
+        
         // Check if work is complete
         if (workProgress >= baseWorkTime)
         {
@@ -450,6 +470,13 @@ public abstract class WorkTask : MonoBehaviour
         {
             CampManager.Instance.WorkManager.RemoveTaskFromQueue(this);
             Debug.Log($"[WorkTask] Removed completed task from work queue");
+        }
+        
+        // Hide progress bar when work is complete
+        if (progressBarActive && CampManager.Instance?.WorkManager != null)
+        {
+            CampManager.Instance.WorkManager.HideProgressBar(this);
+            progressBarActive = false;
         }
         
         // Switch back to idle effects when work is complete
@@ -509,6 +536,13 @@ public abstract class WorkTask : MonoBehaviour
             if (!isOperational)
             {
                 Debug.Log($"[WorkTask] {GetType().Name} becoming non-operational, stopping all workers");
+                
+                // Hide progress bar when becoming non-operational
+                if (progressBarActive && CampManager.Instance?.WorkManager != null)
+                {
+                    CampManager.Instance.WorkManager.HideProgressBar(this);
+                    progressBarActive = false;
+                }
                 
                 // Stop all ambient effects when becoming non-operational
                 StopAmbientEffects(inUseParticleSystems, inUseAudioSources);

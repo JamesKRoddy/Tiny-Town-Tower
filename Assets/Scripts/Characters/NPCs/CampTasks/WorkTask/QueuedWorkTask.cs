@@ -91,6 +91,13 @@ public abstract class QueuedWorkTask : WorkTask
             currentTaskData = taskQueue.Dequeue();
             SetupNextTask();
             
+            // Update progress bar to show new task if it's active
+            if (progressBarActive && CampManager.Instance?.WorkManager != null)
+            {
+                // Reset progress to 0 for the new task
+                CampManager.Instance.WorkManager.UpdateProgress(this, 0f, WorkTaskProgressState.Normal);
+            }
+            
             // Workers will automatically continue working on the next task
             // since they're still assigned to this task
         }

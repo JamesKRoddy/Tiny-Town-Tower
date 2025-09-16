@@ -991,6 +991,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26c2b1d435a05d44f819fc1fa1cf1cba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  progressBarPrefab: {fileID: 6865060584137632757, guid: b49d6c92050b87b4793c54c7269dbd3d, type: 3}
+  maxActiveProgressBars: 30
 --- !u!1 &5084882977589491775
 GameObject:
   m_ObjectHideFlags: 0
@@ -1375,6 +1377,7 @@ MonoBehaviour:
   nightMovementSpeedMultiplier: 0.8
   enableNightSleepBehavior: 1
   sleepChance: 1
+  rogueLiteTimeSpeedMultiplier: 0.5
 --- !u!1 &5711646058787768948
 GameObject:
   m_ObjectHideFlags: 0

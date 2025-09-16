@@ -1,6 +1,17 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System;
+using UnityEngine.SceneManagement;
+
+/// <summary>
+/// Enum representing the different states of work task progress
+/// </summary>
+public enum WorkTaskProgressState
+{
+    Normal,   // Task is progressing normally
+    Paused,   // Task is paused (worker can't work efficiently)
+    Error     // Task has encountered an error
+}
 
 namespace Managers
 {
@@ -19,6 +30,14 @@ namespace Managers
         private Dictionary<WorkTask, HumanCharacterController> previousWorkers = new Dictionary<WorkTask, HumanCharacterController>();
 
         public object buildingForAssignment; // Can be IPlaceableStructure or WorkTask (for construction sites)
+
+        [Header("Progress Bar Settings")]
+        [SerializeField] private GameObject progressBarPrefab;
+        [SerializeField] private int maxActiveProgressBars = 10; // Limit to prevent performance issues
+
+        // Progress bar management
+        private Dictionary<WorkTask, WorkTaskProgressBar> activeProgressBars = new Dictionary<WorkTask, WorkTaskProgressBar>();
+        private Queue<WorkTaskProgressBar> progressBarPool = new Queue<WorkTaskProgressBar>();
 
         // Method to add a new work task to the queue
         public void AddWorkTask(WorkTask newTask)
@@ -598,6 +617,182 @@ namespace Managers
                 Debug.LogWarning($"[WorkManager] Failed to assign {settler.name} to bed {sleepTask.name}");
                 PlayerUIManager.Instance.DisplayUIErrorMessage("Failed to assign settler to bed");
             }
+        }
+
+        #region Progress Bar Management
+
+        private void Start()
+        {
+            // Subscribe to scene loaded events
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            
+            // Don't pre-create progress bars - create them only when needed
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            // Clear any existing progress bars since we're in a new scene
+            ClearAllProgressBars();
+        }
+
+        /// <summary>
+        /// Show a progress bar for the specified work task
+        /// </summary>
+        /// <param name="task">The work task to show progress for</param>
+        public void ShowProgressBar(WorkTask task)
+        {
+            if (task == null) return;
+            
+            // Check if we already have a progress bar for this task
+            if (activeProgressBars.ContainsKey(task))
+            {
+                return;
+            }
+            
+            // Limit the number of active progress bars
+            if (activeProgressBars.Count >= maxActiveProgressBars)
+            {
+                Debug.LogWarning($"[WorkManager] Maximum number of active progress bars ({maxActiveProgressBars}) reached. Cannot show progress for {task.name}");
+                return;
+            }
+
+            WorkTaskProgressBar progressBar = GetPooledProgressBar();
+            if (progressBar != null)
+            {
+                progressBar.Initialize(task);
+                progressBar.Show();
+                activeProgressBars[task] = progressBar;
+                
+                Debug.Log($"[WorkManager] Showing progress bar for {task.name}");
+            }
+            else
+            {
+                Debug.LogError("[WorkManager] Failed to get a progress bar from pool");
+            }
+        }
+
+        /// <summary>
+        /// Update the progress for a specific work task
+        /// </summary>
+        /// <param name="task">The work task</param>
+        /// <param name="progress">Progress value between 0 and 1</param>
+        /// <param name="state">The current state of the progress</param>
+        public void UpdateProgress(WorkTask task, float progress, WorkTaskProgressState state = WorkTaskProgressState.Normal)
+        {
+            if (task == null) return;
+            
+            if (activeProgressBars.TryGetValue(task, out WorkTaskProgressBar progressBar))
+            {
+                progressBar.UpdateProgress(progress, state);
+            }
+        }
+
+        /// <summary>
+        /// Hide the progress bar for the specified work task
+        /// </summary>
+        /// <param name="task">The work task to hide progress for</param>
+        public void HideProgressBar(WorkTask task)
+        {
+            if (task == null) return;
+            
+            if (activeProgressBars.TryGetValue(task, out WorkTaskProgressBar progressBar))
+            {
+                progressBar.Hide();
+                activeProgressBars.Remove(task);
+                ReturnProgressBarToPool(progressBar);
+                
+                Debug.Log($"[WorkManager] Hiding progress bar for {task.name}");
+            }
+        }
+
+        /// <summary>
+        /// Check if a task currently has a progress bar showing
+        /// </summary>
+        /// <param name="task">The work task to check</param>
+        /// <returns>True if progress bar is active</returns>
+        public bool HasProgressBar(WorkTask task)
+        {
+            return task != null && activeProgressBars.ContainsKey(task);
+        }
+
+        private WorkTaskProgressBar GetPooledProgressBar()
+        {
+            if (progressBarPool.Count > 0)
+            {
+                var progressBar = progressBarPool.Dequeue();
+                // Reactivate the pooled progress bar
+                progressBar.gameObject.SetActive(true);
+                return progressBar;
+            }
+            
+            // Create a new progress bar only when needed
+            return CreatePooledProgressBar();
+        }
+
+        private WorkTaskProgressBar CreatePooledProgressBar()
+        {
+            if (progressBarPrefab == null)
+            {
+                Debug.LogError("[WorkManager] Progress bar prefab is not assigned!");
+                return null;
+            }
+            
+            if (PlayerUIManager.Instance == null)
+            {
+                Debug.LogError("[WorkManager] PlayerUIManager instance not found!");
+                return null;
+            }
+
+            Transform progressBarParent = PlayerUIManager.Instance.GetProgressBarParent();
+            GameObject progressBarObj = Instantiate(progressBarPrefab, progressBarParent);
+            
+            // Create as inactive initially
+            progressBarObj.SetActive(false);
+            
+            WorkTaskProgressBar progressBar = progressBarObj.GetComponent<WorkTaskProgressBar>();
+            
+            if (progressBar == null)
+            {
+                Debug.LogError("[WorkManager] Progress bar prefab does not have WorkTaskProgressBar component!");
+                Destroy(progressBarObj);
+                return null;
+            }
+
+            return progressBar;
+        }
+
+        private void ReturnProgressBarToPool(WorkTaskProgressBar progressBar)
+        {
+            if (progressBar != null)
+            {
+                progressBar.gameObject.SetActive(false);
+                progressBarPool.Enqueue(progressBar);
+            }
+        }
+
+        /// <summary>
+        /// Clean up all progress bars (useful when changing scenes)
+        /// </summary>
+        public void ClearAllProgressBars()
+        {
+            foreach (var progressBar in activeProgressBars.Values)
+            {
+                progressBar.Hide();
+                ReturnProgressBarToPool(progressBar);
+            }
+            activeProgressBars.Clear();
+            
+            Debug.Log("[WorkManager] Cleared all active progress bars");
+        }
+
+        #endregion
+
+        private void OnDestroy()
+        {
+            // Unsubscribe from scene loaded events
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            
+            ClearAllProgressBars();
         }
     }
 }
