@@ -16,16 +16,11 @@ They can increase chances of recovery by not working or even better receiving tr
 
 
 Tomorrow work:
-Research upgrade, cooking and research not progressing correctly (add a progress bar or something to see how its progressing)
-So have to figure out how to actually control this. Since buildings can have multiple different tasks have to use the one thats being done. need to show only one progress bar at a time on the building.
-UI code doesn't seem to work well i think we overlay the bar on the building in world space.
-
 
 
 Bugs and refactoring:
 The TimeDisplayUI has a CanvasGroup used to affect ui elements as a group maybe use in other places? Can be used to make elements not interactable use this on the building, cooking etc menus!!
 Effect Manager TODO Show floating text, Implement healing interface or system
-
 
 NPCs not returning to work after sleeping
 Switching between mouse and controller controls on the fly
