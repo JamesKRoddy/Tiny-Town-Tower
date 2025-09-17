@@ -14,12 +14,13 @@ public class MedicalTask : WorkTask
     private MedicalBuilding medicalBuilding;
     private Dictionary<SettlerNPC, float> patientTreatmentProgress = new Dictionary<SettlerNPC, float>();
 
-    public override bool IsTaskCompleted => false; // Medical buildings are always operational
     public override bool HasQueuedTasks => medicalBuilding != null && medicalBuilding.CurrentPatientCount > 0;
 
     protected override void Start()
     {
         base.Start();
+        
+        taskType = WorkTaskType.Continuous; // Medical treatment is continuous
         
         // Get reference to medical building
         medicalBuilding = GetComponent<MedicalBuilding>();

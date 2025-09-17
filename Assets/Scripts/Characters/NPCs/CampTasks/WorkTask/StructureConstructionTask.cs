@@ -17,6 +17,8 @@ public class StructureConstructionTask : WorkTask, IInteractive<object>
     {
         base.Start();
         
+        taskType = WorkTaskType.Complete; // Construction is a one-time task
+        
         // Construction tasks should support multiple workers to speed up building
         maxWorkers = 3; // Allow up to 3 workers on construction sites
         

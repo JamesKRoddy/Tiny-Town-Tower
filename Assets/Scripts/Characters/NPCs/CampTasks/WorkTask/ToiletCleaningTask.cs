@@ -11,6 +11,7 @@ public class ToiletCleaningTask : WorkTask
     public void SetupTask(Toilet toilet)
     {
         targetToilet = toilet;
+        taskType = WorkTaskType.Complete; // Toilet cleaning is a one-time task
         baseWorkTime = 10f;
         workLocationTransform = toilet.transform;
     }

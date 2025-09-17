@@ -9,6 +9,8 @@ public class StructureDestructionTask : WorkTask, IInteractive<object>
     {
         base.Start();
         
+        taskType = WorkTaskType.Complete; // Destruction is a one-time task
+        
         // Destruction tasks should support multiple workers and be automatically queued
         maxWorkers = 3; // Allow up to 3 workers on destruction sites
         autoQueue = true;

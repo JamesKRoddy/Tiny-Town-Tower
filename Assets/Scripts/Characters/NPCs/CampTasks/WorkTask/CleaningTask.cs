@@ -16,6 +16,7 @@ public class CleaningTask : ManagerTask
     protected override void Start()
     {
         base.Start();
+        taskType = WorkTaskType.Continuous; // Cleaning is continuous - new dirt piles and bins appear regularly
         CampManager.Instance.CleanlinessManager.OnDirtPileSpawned += HandleDirtPileSpawned;
         CampManager.Instance.CleanlinessManager.OnWasteBinFull += HandleWasteBinFull;
     }

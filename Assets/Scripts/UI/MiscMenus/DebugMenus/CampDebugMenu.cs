@@ -11,6 +11,18 @@ public class CampDebugMenu : BaseDebugMenu
     [SerializeField] private TextMeshProUGUI campInfoText;
     [SerializeField] private float updateInterval = 0.5f; // Update every 0.5 seconds
     
+    [Header("NPC Feature Toggles")]
+    [SerializeField] private Toggle hungerToggle;
+    [SerializeField] private Toggle staminaToggle;
+    [SerializeField] private Toggle sicknessToggle;
+    [SerializeField] private Toggle sleepToggle;
+    
+    // Static debug flags for controlling NPC features
+    public static bool DisableHungerSystem = false;
+    public static bool DisableStaminaSystem = false;
+    public static bool DisableSicknessSystem = false;
+    public static bool DisableSleepSystem = false;
+    
     private float lastUpdateTime;
     private StringBuilder stringBuilder = new StringBuilder();
     
@@ -29,6 +41,60 @@ public class CampDebugMenu : BaseDebugMenu
         {
             Debug.LogError("[CampDebugMenu] No TextMeshProUGUI component found! Please assign campInfoText in the inspector.");
         }
+        
+        // Setup toggle listeners
+        SetupToggleListeners();
+    }
+    
+    private void SetupToggleListeners()
+    {
+        if (hungerToggle != null)
+        {
+            hungerToggle.isOn = !DisableHungerSystem;
+            hungerToggle.onValueChanged.AddListener(OnHungerToggleChanged);
+        }
+        
+        if (staminaToggle != null)
+        {
+            staminaToggle.isOn = !DisableStaminaSystem;
+            staminaToggle.onValueChanged.AddListener(OnStaminaToggleChanged);
+        }
+        
+        if (sicknessToggle != null)
+        {
+            sicknessToggle.isOn = !DisableSicknessSystem;
+            sicknessToggle.onValueChanged.AddListener(OnSicknessToggleChanged);
+        }
+        
+        if (sleepToggle != null)
+        {
+            sleepToggle.isOn = !DisableSleepSystem;
+            sleepToggle.onValueChanged.AddListener(OnSleepToggleChanged);
+        }
+    }
+    
+    private void OnHungerToggleChanged(bool isEnabled)
+    {
+        DisableHungerSystem = !isEnabled;
+        Debug.Log($"[CampDebugMenu] Hunger system {(isEnabled ? "enabled" : "disabled")}");
+    }
+    
+    private void OnStaminaToggleChanged(bool isEnabled)
+    {
+        DisableStaminaSystem = !isEnabled;
+        Debug.Log($"[CampDebugMenu] Stamina system {(isEnabled ? "enabled" : "disabled")}");
+    }
+    
+    private void OnSicknessToggleChanged(bool isEnabled)
+    {
+        DisableSicknessSystem = !isEnabled;
+        Debug.Log($"[CampDebugMenu] Sickness system {(isEnabled ? "enabled" : "disabled")}");
+    }
+    
+    private void OnSleepToggleChanged(bool isEnabled)
+    {
+        DisableSleepSystem = !isEnabled;
+        Debug.Log($"[CampDebugMenu] Sleep system {(isEnabled ? "enabled" : "disabled")}");
     }
     
     private void Update()
@@ -54,6 +120,10 @@ public class CampDebugMenu : BaseDebugMenu
             stringBuilder.AppendLine($"Game Mode: {GameManager.Instance.CurrentGameMode}");
         }
         stringBuilder.AppendLine($"Game Time: {Time.time:F1}s");
+        stringBuilder.AppendLine();
+        
+        // Debug toggles information
+        AddDebugTogglesInfo();
         stringBuilder.AppendLine();
         
         // Cleanliness Information
@@ -290,6 +360,15 @@ public class CampDebugMenu : BaseDebugMenu
         {
             stringBuilder.AppendLine("PlayerInventory not available");
         }
+    }
+    
+    private void AddDebugTogglesInfo()
+    {
+        stringBuilder.AppendLine("--- DEBUG TOGGLES ---");
+        stringBuilder.AppendLine($"Hunger System: {(DisableHungerSystem ? "DISABLED" : "ENABLED")}");
+        stringBuilder.AppendLine($"Stamina System: {(DisableStaminaSystem ? "DISABLED" : "ENABLED")}");
+        stringBuilder.AppendLine($"Sickness System: {(DisableSicknessSystem ? "DISABLED" : "ENABLED")}");
+        stringBuilder.AppendLine($"Sleep System: {(DisableSleepSystem ? "DISABLED" : "ENABLED")}");
     }
     
     public override void RegisterMenu()

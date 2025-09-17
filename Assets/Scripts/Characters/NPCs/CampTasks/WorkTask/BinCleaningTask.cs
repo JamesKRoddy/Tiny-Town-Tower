@@ -11,6 +11,7 @@ public class BinCleaningTask : WorkTask
     public void SetupTask(WasteBin bin)
     {
         targetBin = bin;
+        taskType = WorkTaskType.Complete; // Bin cleaning is a one-time task
         baseWorkTime = 5f;
         workLocationTransform = bin.transform;
     }

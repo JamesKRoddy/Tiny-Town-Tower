@@ -9,6 +9,7 @@ public class ResourceUpgradeTask : QueuedWorkTask
     protected override void Start()
     {
         base.Start();
+        taskType = WorkTaskType.Queued; // Resource upgrades process a queue of upgrade tasks
     }
 
     public void SetUpgrade(ResourceUpgradeScriptableObj upgrade)

@@ -170,7 +170,15 @@ public abstract class _TaskState : MonoBehaviour
             if (canPerform && !isCompleted)
             {
                 Debug.Log($"[TaskState] {npc.name} returning to assigned work task: {assignedWork.GetType().Name}");
-                npc.StartWork(assignedWork);
+                // Use ReturnToWork to properly handle the isOnBreak flag
+                if (npc is SettlerNPC settler)
+                {
+                    settler.ReturnToWork();
+                }
+                else
+                {
+                    npc.StartWork(assignedWork);
+                }
                 return;
             }
             else

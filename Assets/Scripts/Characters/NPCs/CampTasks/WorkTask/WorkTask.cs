@@ -5,12 +5,34 @@ using System.Collections.Generic;
 using System.Linq;
 using Managers;
 
+/// <summary>
+/// Defines the type of work task and its completion behavior
+/// </summary>
+public enum WorkTaskType
+{
+    /// <summary>
+    /// Task completes once and is marked as done (e.g., construction, gathering)
+    /// </summary>
+    Complete,
+    
+    /// <summary>
+    /// Task processes a queue of items and completes when queue is empty (e.g., cooking, research)
+    /// </summary>
+    Queued,
+    
+    /// <summary>
+    /// Task runs continuously and never completes (e.g., electricity generation, medical treatment)
+    /// </summary>
+    Continuous
+}
+
 public abstract class WorkTask : MonoBehaviour
 {
     [Header("Task Settings")]
     [SerializeField] protected Transform workLocationTransform; // Optional specific work location
     [SerializeField] protected int maxWorkers = 1; // Maximum number of workers that can be assigned to this task
     [SerializeField] protected bool autoQueue = false; // Whether this task should be automatically added to the work queue for NPCs to pick up
+    [SerializeField, ReadOnly] protected WorkTaskType taskType = WorkTaskType.Complete; // Type of work task determining completion behavior
     protected List<HumanCharacterController> currentWorkers = new List<HumanCharacterController>(); // List of NPCs performing this task
     [HideInInspector] public ResourceItemCount[] requiredResources; // Resources needed to perform this task
     [SerializeField] protected bool showTooltip = false; // Whether to show tooltips for this task
@@ -56,7 +78,24 @@ public abstract class WorkTask : MonoBehaviour
     public int MaxWorkerCount => maxWorkers;
     public bool IsMultiWorkerTask => maxWorkers > 1;
     public bool IsAutoQueued => autoQueue;
-    public virtual bool IsTaskCompleted => true; // Base WorkTask is always completed when done
+    public virtual bool IsTaskCompleted
+    {
+        get
+        {
+            switch (taskType)
+            {
+                case WorkTaskType.Complete:
+                    return workProgress >= baseWorkTime;
+                case WorkTaskType.Queued:
+                    return !HasQueuedTasks && workProgress >= baseWorkTime;
+                case WorkTaskType.Continuous:
+                    return false; // Continuous tasks never complete
+                default:
+                    return workProgress >= baseWorkTime;
+            }
+        }
+    }
+    
     public virtual bool HasQueuedTasks => false; // Base WorkTask has no queue
 
     protected IPlaceableStructure taskStructure;
@@ -435,8 +474,8 @@ public abstract class WorkTask : MonoBehaviour
             CampManager.Instance.WorkManager.UpdateProgress(this, progressPercentage, state);
         }
         
-        // Check if work is complete
-        if (workProgress >= baseWorkTime)
+        // Check if work is complete (only for non-continuous tasks)
+        if (taskType != WorkTaskType.Continuous && workProgress >= baseWorkTime)
         {
             workProgress = baseWorkTime;
             CompleteWork();

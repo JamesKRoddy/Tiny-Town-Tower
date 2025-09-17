@@ -14,6 +14,7 @@ public class ElectricityGeneratorTask : WorkTask
     protected override void Start()
     {
         base.Start();
+        taskType = WorkTaskType.Continuous; // This is a continuous task
         baseWorkTime = float.MaxValue; // Set to max value so it never completes automatically
     }
 
@@ -44,15 +45,18 @@ public class ElectricityGeneratorTask : WorkTask
         }
         
         // Call base DoWork for electricity consumption and dirt generation
-        base.DoWork(worker, deltaTime);
+        // The base class now handles continuous tasks properly
+        bool canContinue = base.DoWork(worker, deltaTime);
         
-        // Keep progress below max to prevent completion (this task runs indefinitely)
-        if (workProgress >= baseWorkTime - 1f)
+        // Update progress bar to show cycling progress for continuous tasks
+        if (progressBarActive && CampManager.Instance?.WorkManager != null)
         {
-            workProgress = baseWorkTime - 1f;
+            float progressPercentage = (generationTimer / generationInterval) % 1f;
+            WorkTaskProgressState state = finalWorkSpeed <= 0 ? WorkTaskProgressState.Paused : WorkTaskProgressState.Normal;
+            CampManager.Instance.WorkManager.UpdateProgress(this, progressPercentage, state);
         }
         
-        return true; // Always continue (generator never completes)
+        return canContinue;
     }
 
     public override string GetTooltipText()

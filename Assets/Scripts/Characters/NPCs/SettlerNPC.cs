@@ -5,7 +5,6 @@ using Characters.NPC.Characteristic;
 using Managers;
 using UnityEngine;
 using UnityEngine.AI;
-using Mono.Cecil.Cil;
 
 
 [RequireComponent(typeof(NavMeshAgent))]
@@ -652,6 +651,10 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     /// </summary>
     public bool IsTired()
     {
+        // If stamina system is disabled, NPCs are never tired
+        if (CampDebugMenu.DisableStaminaSystem)
+            return false;
+            
         return currentStamina <= lowStaminaThreshold;
     }
     
@@ -660,6 +663,10 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     /// </summary>
     public bool IsVeryTired()
     {
+        // If stamina system is disabled, NPCs are never very tired
+        if (CampDebugMenu.DisableStaminaSystem)
+            return false;
+            
         return currentStamina <= veryLowStaminaThreshold;
     }
     
@@ -781,17 +788,23 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
             currentState.UpdateState(); // Call UpdateState on the current state
         }
 
-        // Update stamina through current state
-        if (currentState != null)
+        // Update stamina through current state (only if not disabled by debug menu)
+        if (currentState != null && !CampDebugMenu.DisableStaminaSystem)
         {
             currentState.UpdateStamina();
         }
 
-        // Check for automatic sleep when stamina is critically low
-        CheckForExhaustionSleep();
+        // Check for automatic sleep when stamina is critically low (only if sleep system is enabled)
+        if (!CampDebugMenu.DisableSleepSystem)
+        {
+            CheckForExhaustionSleep();
+        }
 
-        // Update sickness system
-        UpdateSicknessChance();
+        // Update sickness system (only if not disabled by debug menu)
+        if (!CampDebugMenu.DisableSicknessSystem)
+        {
+            UpdateSicknessChance();
+        }
         
         // Check for medical treatment if sick (periodically)
         if (isSick && Time.frameCount % 300 == 0) // Check every 5 seconds at 60fps
@@ -799,8 +812,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
             CheckForMedicalTreatment();
         }
 
-        // Update hunger
-        if (currentHunger > 0)
+        // Update hunger (only if not disabled by debug menu)
+        if (!CampDebugMenu.DisableHungerSystem && currentHunger > 0)
         {
             float previousHunger = currentHunger;
             currentHunger = Mathf.Max(0, currentHunger - (hungerDecreaseRate * Time.deltaTime));
@@ -849,6 +862,10 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
 
     public void UseStamina(float amount)
     {
+        // Skip stamina changes if disabled by debug menu
+        if (CampDebugMenu.DisableStaminaSystem)
+            return;
+            
         float oldStamina = currentStamina;
         currentStamina = Mathf.Max(0, currentStamina - amount);
         
@@ -864,6 +881,10 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
 
     public void RestoreStamina(float amount)
     {
+        // Skip stamina changes if disabled by debug menu
+        if (CampDebugMenu.DisableStaminaSystem)
+            return;
+            
         float oldStamina = currentStamina;
         currentStamina = Mathf.Min(maxStamina, currentStamina + amount);
         
@@ -889,6 +910,10 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     /// </summary>
     public void ApplyStaminaChange(float staminaChange, string reason = "")
     {
+        // Skip stamina changes if disabled by debug menu
+        if (CampDebugMenu.DisableStaminaSystem)
+            return;
+            
         float oldStamina = currentStamina;
         currentStamina = Mathf.Clamp(currentStamina + staminaChange, 0f, maxStamina);
         
@@ -1182,7 +1207,12 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
                 isOnBreak = true;
             }
             
-
+            // If we're changing from work to sleep, set isOnBreak to preserve the assigned work task
+            if (currentState != null && currentState.GetTaskType() == TaskType.WORK && newTask == TaskType.SLEEP)
+            {
+                isOnBreak = true;
+                Debug.Log($"[SettlerNPC] {name} going to sleep while on break from work task: {(assignedWorkTask != null ? assignedWorkTask.name : "null")}");
+            }
             
             ChangeState(taskStates[newTask]);
             
@@ -1216,11 +1246,19 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
 
     public bool IsHungry()
     {
+        // If hunger system is disabled, NPCs are never hungry
+        if (CampDebugMenu.DisableHungerSystem)
+            return false;
+            
         return currentHunger <= hungerThreshold;
     }
 
     public bool IsStarving()
     {
+        // If hunger system is disabled, NPCs are never starving
+        if (CampDebugMenu.DisableHungerSystem)
+            return false;
+            
         return currentHunger <= starvationThreshold;
     }
 

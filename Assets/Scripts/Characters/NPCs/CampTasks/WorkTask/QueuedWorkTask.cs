@@ -11,12 +11,12 @@ public abstract class QueuedWorkTask : WorkTask
 
     // Properties
     public override bool HasQueuedTasks => taskQueue.Count > 0;
-    public override bool IsTaskCompleted => currentTaskData == null && !HasQueuedTasks;
     public bool HasCurrentWork => currentTaskData != null;
 
     protected override void Start()
     {
         base.Start();
+        taskType = WorkTaskType.Queued; // This is a queued task
         maxWorkers = 1; // Queued tasks like cooking and researching are single-worker tasks
     }
 

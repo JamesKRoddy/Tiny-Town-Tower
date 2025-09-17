@@ -10,6 +10,7 @@ public class DirtPileTask : WorkTask, IInteractive<DirtPileTask>
     protected override void Start()
     {
         base.Start();
+        taskType = WorkTaskType.Complete; // Dirt pile cleaning is a one-time task
         baseWorkTime = 5f;
     }
 

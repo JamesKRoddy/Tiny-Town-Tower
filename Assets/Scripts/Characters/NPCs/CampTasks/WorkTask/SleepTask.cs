@@ -24,6 +24,8 @@ public class SleepTask : WorkTask
     {
         base.Start();
         
+        taskType = WorkTaskType.Complete; // Sleep is a one-time task (completes when rested)
+        
         // Sleep tasks are single-worker tasks (one bed per NPC)
         maxWorkers = 1;
         

@@ -11,6 +11,7 @@ public class CookingTask : QueuedWorkTask
     protected override void Start()
     {
         base.Start();
+        taskType = WorkTaskType.Queued; // Cooking processes a queue of recipes
         canteenBuilding = GetComponent<CanteenBuilding>();
         if (canteenBuilding == null)
         {
