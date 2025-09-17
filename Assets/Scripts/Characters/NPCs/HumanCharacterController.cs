@@ -49,10 +49,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     [Header("Gravity System")]
     public bool enableGravity = true; // Enable/disable gravity system
     public float gravity = 9.81f; // Gravity strength
-    public float groundCheckDistance = 0.2f; // Distance to check for ground below
-    public float groundCheckRadius = 0.5f; // Radius for ground detection sphere
+    public float groundCheckDistance = 0.1f; // Distance to check for ground below
     public LayerMask groundLayers = 1; // Layers to consider as ground (default to default layer)
     public float terminalVelocity = 20f; // Maximum falling speed
+    public float maxFallDistance = 100f; // Maximum distance to fall before stopping (prevents endless drops)
     private Vector3 gravityVelocity = Vector3.zero; // Current gravity velocity
     private bool isGrounded = true; // Whether character is currently grounded
 
@@ -161,7 +161,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 Debug.Log($"[Gravity] {gameObject.name}: Obstacle layer {i}: {obstacleLayers[i].value}");
             }
         }
-        Debug.Log($"[Gravity] {gameObject.name}: Ground check distance: {groundCheckDistance}, radius: {groundCheckRadius}");
+        Debug.Log($"[Gravity] {gameObject.name}: Ground check distance: {groundCheckDistance}");
     }
 
     public virtual void PossessedUpdate()
@@ -1218,25 +1218,57 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             return false;
         }
 
-        // Use sphere cast to check for ground below, using the same obstacle layers
-        Vector3 spherePosition = transform.position; // Start at character position
-        Vector3 sphereCenter = spherePosition + Vector3.down * groundCheckDistance; // Check below character feet
+        // Use raycast to check for ground directly below character feet
+        Vector3 rayStart = transform.position;
+        Vector3 rayDirection = Vector3.down;
         
-        // Check against obstacle layers (same as the vaulting system)
+        // Combine all layers we want to check (obstacle layers + ground layers)
+        LayerMask allGroundLayers = groundLayers;
         foreach (LayerMask layer in obstacleLayers)
         {
-            if (Physics.CheckSphere(sphereCenter, groundCheckRadius, layer))
-            {
-                return true;
-            }
+            allGroundLayers |= layer;
         }
         
-        // Also check against the explicit ground layers
-        if (Physics.CheckSphere(sphereCenter, groundCheckRadius, groundLayers))
+        // Cast ray downward to check for ground within a small distance
+        // Use QueryTriggerInteraction.Ignore to skip trigger colliders
+        if (Physics.Raycast(rayStart, rayDirection, out RaycastHit hit, groundCheckDistance, allGroundLayers, QueryTriggerInteraction.Ignore))
         {
-            return true;
+            // Check if the hit point is close enough to the character's feet
+            float distanceToGround = hit.distance;
+            bool isCloseEnough = distanceToGround <= groundCheckDistance;
+            Debug.Log($"[Gravity] {gameObject.name}: Ground detected at distance: {distanceToGround:F2}, close enough: {isCloseEnough}, hit: {hit.collider.name} (isTrigger: {hit.collider.isTrigger})");
+            return isCloseEnough;
         }
+        
+        Debug.Log($"[Gravity] {gameObject.name}: No ground detected within {groundCheckDistance:F2} units");
         return false;
+    }
+
+    /// <summary>
+    /// Check if there's ground within the maximum fall distance below the character
+    /// </summary>
+    /// <returns>True if there's ground within maxFallDistance, false if it's an endless drop</returns>
+    private bool HasGroundWithinMaxFallDistance()
+    {
+        // Cast a ray downward to check for ground within maxFallDistance
+        Vector3 rayStart = transform.position;
+        Vector3 rayDirection = Vector3.down;
+        
+        // Combine all layers we want to check (obstacle layers + ground layers)
+        LayerMask allGroundLayers = groundLayers;
+        foreach (LayerMask layer in obstacleLayers)
+        {
+            allGroundLayers |= layer;
+        }
+        
+        // Cast ray to check for ground within max fall distance
+        // Use QueryTriggerInteraction.Ignore to skip trigger colliders
+        if (Physics.Raycast(rayStart, rayDirection, out RaycastHit hit, maxFallDistance, allGroundLayers, QueryTriggerInteraction.Ignore))
+        {
+            return true; // Found ground within max fall distance
+        }
+        
+        return false; // No ground found within max fall distance (endless drop)
     }
 
     /// <summary>
@@ -1274,6 +1306,14 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Apply gravity when not grounded
         if (!isGrounded)
         {
+            // Safety check: don't fall into endless drops
+            if (!HasGroundWithinMaxFallDistance())
+            {
+                Debug.Log($"[Gravity] {gameObject.name}: ENDLESS DROP DETECTED - stopping fall at position: {transform.position.y:F2}");
+                gravityVelocity = Vector3.zero;
+                return;
+            }
+            
             // Apply gravity acceleration
             gravityVelocity.y -= gravity * Time.deltaTime;
             
@@ -1534,9 +1574,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         if (Application.isPlaying)
         {
             // Ground check visualization
-            Vector3 groundCheckPos = transform.position + Vector3.down * (groundCheckDistance + groundCheckRadius);
             Gizmos.color = isGrounded ? Color.green : Color.red;
-            Gizmos.DrawWireSphere(groundCheckPos, groundCheckRadius);
+            Gizmos.DrawRay(transform.position, Vector3.down * groundCheckDistance);
+            
+            // Safety fall distance raycast visualization
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawRay(transform.position, Vector3.down * maxFallDistance);
             
             // Gravity velocity visualization
             if (gravityVelocity.magnitude > 0.1f)
