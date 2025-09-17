@@ -329,12 +329,16 @@ public class PlayerInput : MonoBehaviour
         // Ensure a button is selected when switching to controller in a menu
         if (PlayerUIManager.Instance != null)
         {
-            // Find the first selectable button in the current menu
-            GameObject firstSelectable = FindFirstSelectableButton();
-            if (firstSelectable != null)
+            // Only select a button if none is currently selected
+            if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null)
             {
-                PlayerUIManager.Instance.SetSelectedGameObject(firstSelectable);
-                Debug.Log($"[PlayerInput] Selected first button for controller navigation: {firstSelectable.name}");
+                // Find the first selectable button in the current menu
+                GameObject firstSelectable = FindFirstSelectableButton();
+                if (firstSelectable != null)
+                {
+                    PlayerUIManager.Instance.SetSelectedGameObject(firstSelectable);
+                    Debug.Log($"[PlayerInput] Selected first button for controller navigation: {firstSelectable.name}");
+                }
             }
         }
     }

@@ -19,7 +19,6 @@ Tomorrow work:
 
 
 Bugs and refactoring:
-Effect Manager TODO Show floating text, Implement healing interface or system
 
 
 Errors:
