@@ -17,22 +17,33 @@ MonoBehaviour:
   buildingParents:
   - buildingParent: {fileID: 6580146161225253427, guid: d39e3a580096e404a9efd86f03d7c2d7, type: 3}
     difficulty: 0
+    excludeFromTesting: 0
   - buildingParent: {fileID: 6580146161225253427, guid: 45dc0088d2babc2408ae040a275aa6ea, type: 3}
     difficulty: 0
+    excludeFromTesting: 0
   buildingRooms:
   - buildingRoom: {fileID: 5318116250113263644, guid: be8d9f1e471c37f4b858b8b16b62f4e0, type: 3}
     difficulty: 0
+    excludeFromTesting: 0
   - buildingRoom: {fileID: 5318116250113263644, guid: 2ea7af89f449ae74ea89f7cc6b651bf5, type: 3}
     difficulty: 0
+    excludeFromTesting: 1
   - buildingRoom: {fileID: 5318116250113263644, guid: e4a4bbe3f351d3747aee914af3a864d6, type: 3}
     difficulty: 0
+    excludeFromTesting: 1
   - buildingRoom: {fileID: 5318116250113263644, guid: 6f32b60ac1ce641458e713c00d62f331, type: 3}
     difficulty: 0
+    excludeFromTesting: 1
   - buildingRoom: {fileID: 5318116250113263644, guid: e3e10d8d0b272594ca693d9183282991, type: 3}
     difficulty: 0
+    excludeFromTesting: 1
+  - buildingRoom: {fileID: 5318116250113263644, guid: 7024fcf187661ed488ddea124ea69a18, type: 3}
+    difficulty: 0
+    excludeFromTesting: 0
   friendlyRooms:
   - buildingRoom: {fileID: 5318116250113263644, guid: 4dd61a44160145b448518cb32744f622, type: 3}
     difficulty: 0
+    excludeFromTesting: 0
   friendlyRoomSpawnChance: 0
   buildingNPCs:
   - {fileID: 11400000, guid: ff84a74ffbac90849b0eb152033e7ac8, type: 2}

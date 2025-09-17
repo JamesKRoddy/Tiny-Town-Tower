@@ -46,6 +46,16 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public int heightCheckRayCount = 5; // Number of raycasts for height analysis
     public bool autoNavigateObstacles = true; // Enable/disable automatic obstacle navigation
 
+    [Header("Gravity System")]
+    public bool enableGravity = true; // Enable/disable gravity system
+    public float gravity = 9.81f; // Gravity strength
+    public float groundCheckDistance = 0.2f; // Distance to check for ground below
+    public float groundCheckRadius = 0.5f; // Radius for ground detection sphere
+    public LayerMask groundLayers = 1; // Layers to consider as ground (default to default layer)
+    public float terminalVelocity = 20f; // Maximum falling speed
+    private Vector3 gravityVelocity = Vector3.zero; // Current gravity velocity
+    private bool isGrounded = true; // Whether character is currently grounded
+
     // Automatic obstacle navigation: analyzes height to determine WalkOver, Vault, or TooHigh
     // RollUnder and Block types only come from ObstacleVaultBehavior components
 
@@ -139,6 +149,19 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             animator.applyRootMotion = false;
         }
+        
+        // Log gravity system configuration
+        Debug.Log($"[Gravity] {gameObject.name}: Gravity system initialized - enableGravity: {enableGravity}");
+        Debug.Log($"[Gravity] {gameObject.name}: Ground layers: {groundLayers.value}");
+        Debug.Log($"[Gravity] {gameObject.name}: Obstacle layers count: {obstacleLayers?.Length ?? 0}");
+        if (obstacleLayers != null)
+        {
+            for (int i = 0; i < obstacleLayers.Length; i++)
+            {
+                Debug.Log($"[Gravity] {gameObject.name}: Obstacle layer {i}: {obstacleLayers[i].value}");
+            }
+        }
+        Debug.Log($"[Gravity] {gameObject.name}: Ground check distance: {groundCheckDistance}, radius: {groundCheckRadius}");
     }
 
     public virtual void PossessedUpdate()
@@ -150,6 +173,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         }
         
         HandleDash();
+        ApplyGravity(); // Apply gravity before movement
         MoveCharacter();
         UpdateActualMovementSpeed();
         UpdateAnimations();
@@ -159,15 +183,27 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void OnPossess()
     {
+        Debug.Log($"[Gravity] {gameObject.name}: OnPossess called");
         SetAIControl(false);
         transform.parent = PlayerController.Instance.transform;
+        
+        // Initialize gravity system for player control
+        ResetGravityVelocity();
+        isGrounded = CheckGrounded(); // Check initial ground state
+        Debug.Log($"[Gravity] {gameObject.name}: OnPossess complete - isGrounded: {isGrounded}, agent.enabled: {(agent != null ? agent.enabled : false)}");
     }
 
     public void OnUnpossess()
     {
+        Debug.Log($"[Gravity] {gameObject.name}: OnUnpossess called");
         SetAIControl(true);
         transform.SetParent(null, true);
         SceneTransitionManager.Instance.MoveGameObjectBackToCurrent(gameObject);
+        
+        // Reset gravity system when returning to AI control
+        ResetGravityVelocity();
+        isGrounded = true; // Assume grounded when NavMeshAgent takes over
+        Debug.Log($"[Gravity] {gameObject.name}: OnUnpossess complete - isGrounded: {isGrounded}, agent.enabled: {(agent != null ? agent.enabled : false)}");
     }
 
     /// <summary>
@@ -177,7 +213,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private void SetAIControl(bool isAIControlled)
     {
         var navMeshAgent = GetComponent<NavMeshAgent>();
+        Debug.Log($"[Gravity] {gameObject.name}: SetAIControl({isAIControlled}) - NavMeshAgent was: {(navMeshAgent != null ? navMeshAgent.enabled : false)}");
         if (navMeshAgent != null) navMeshAgent.enabled = isAIControlled;
+        Debug.Log($"[Gravity] {gameObject.name}: NavMeshAgent now: {(navMeshAgent != null ? navMeshAgent.enabled : false)}");
 
         var narrativeInteractive = GetComponent<NarrativeInteractive>();
         if (narrativeInteractive != null) narrativeInteractive.enabled = isAIControlled;
@@ -370,6 +408,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         dashTime = 0f; // Reset dash timer
         dashCooldownTime = 0f; // Reset dash cooldown to allow immediate subsequent vaults
         
+        // Reset gravity velocity when starting vault
+        ResetGravityVelocity();
+        
         // Use custom duration if obstacle component specifies it
         float duration = currentObstacleComponent != null ? 
             currentObstacleComponent.GetVaultDuration(vaultDuration) : vaultDuration;
@@ -409,6 +450,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         isVaulting = false;
         vaultCooldownTime = Time.time + vaultCooldown; // Set vault cooldown
         humanCollider.enabled = true; // Re-enable the player's collider
+        
+        // Reset gravity velocity when finishing vault to prevent immediate falling
+        ResetGravityVelocity();
         
         // Call obstacle component callback if present
         currentObstacleComponent?.OnVaultComplete(this);
@@ -1159,6 +1203,134 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     #endregion
 
+    #region Gravity System
+
+    /// <summary>
+    /// Check if the character is currently grounded
+    /// </summary>
+    /// <returns>True if grounded, false if in air</returns>
+    private bool CheckGrounded()
+    {
+        // Don't check for ground during vaulting or when collider is disabled
+        if (isVaulting || (humanCollider != null && !humanCollider.enabled))
+        {
+            Debug.Log($"[Gravity] {gameObject.name}: Ground check skipped - isVaulting: {isVaulting}, colliderEnabled: {(humanCollider != null ? humanCollider.enabled : false)}");
+            return false;
+        }
+
+        // Use sphere cast to check for ground below, using the same obstacle layers
+        Vector3 spherePosition = transform.position; // Start at character position
+        Vector3 sphereCenter = spherePosition + Vector3.down * groundCheckDistance; // Check below character feet
+        
+        // Check against obstacle layers (same as the vaulting system)
+        foreach (LayerMask layer in obstacleLayers)
+        {
+            if (Physics.CheckSphere(sphereCenter, groundCheckRadius, layer))
+            {
+                return true;
+            }
+        }
+        
+        // Also check against the explicit ground layers
+        if (Physics.CheckSphere(sphereCenter, groundCheckRadius, groundLayers))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Apply gravity to the character when not grounded
+    /// </summary>
+    protected virtual void ApplyGravity()
+    {
+        // Don't apply gravity if disabled or during certain states
+        if (!enableGravity || isVaulting || isDashing || isPushing || isDead)
+        {
+            return;
+        }
+
+        // Only apply gravity when NavMeshAgent is disabled (player-controlled)
+        // When NavMeshAgent is enabled, it handles ground detection and positioning
+        if (agent != null && agent.enabled)
+        {
+            // Reset gravity velocity when NavMeshAgent is handling positioning
+            gravityVelocity = Vector3.zero;
+            isGrounded = true; // Assume grounded when NavMeshAgent is active
+            return;
+        }
+
+        // Check if grounded
+        bool wasGrounded = isGrounded;
+        isGrounded = CheckGrounded();
+
+        // If we just landed, reset gravity velocity
+        if (isGrounded && !wasGrounded)
+        {
+            gravityVelocity = Vector3.zero;
+            return;
+        }
+
+        // Apply gravity when not grounded
+        if (!isGrounded)
+        {
+            // Apply gravity acceleration
+            gravityVelocity.y -= gravity * Time.deltaTime;
+            
+            // Clamp to terminal velocity
+            gravityVelocity.y = Mathf.Max(gravityVelocity.y, -terminalVelocity);
+            
+            // Apply gravity movement
+            Vector3 gravityMovement = gravityVelocity * Time.deltaTime;
+            transform.position += gravityMovement;
+            
+            Debug.Log($"[Gravity] {gameObject.name}: FALLING - velocity: {gravityVelocity.y:F2}, position: {transform.position.y:F2}");
+        }
+        else
+        {
+            // When grounded, reset gravity velocity to prevent accumulation
+            gravityVelocity = Vector3.zero;
+            Debug.Log($"[Gravity] {gameObject.name}: GROUNDED - position: {transform.position.y:F2}");
+        }
+    }
+
+    /// <summary>
+    /// Get the current gravity velocity (for external systems that need to know falling state)
+    /// </summary>
+    /// <returns>Current gravity velocity vector</returns>
+    public Vector3 GetGravityVelocity()
+    {
+        return gravityVelocity;
+    }
+
+    /// <summary>
+    /// Check if the character is currently falling
+    /// </summary>
+    /// <returns>True if falling (not grounded and has downward velocity)</returns>
+    public bool IsFalling()
+    {
+        return !isGrounded && gravityVelocity.y < 0;
+    }
+
+    /// <summary>
+    /// Check if the character is currently grounded
+    /// </summary>
+    /// <returns>True if grounded</returns>
+    public bool IsGrounded()
+    {
+        return isGrounded;
+    }
+
+    /// <summary>
+    /// Reset gravity velocity (useful for teleporting or special movement)
+    /// </summary>
+    public void ResetGravityVelocity()
+    {
+        gravityVelocity = Vector3.zero;
+    }
+
+    #endregion
+
     #region Animation
 
     private void UpdateActualMovementSpeed()
@@ -1356,6 +1528,35 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             // Note: This text will only be visible in Scene view, not Game view
             Handles.Label(textPos, vaultTypeText, style);
 #endif
+        }
+        
+        // Gravity system visualization
+        if (Application.isPlaying)
+        {
+            // Ground check visualization
+            Vector3 groundCheckPos = transform.position + Vector3.down * (groundCheckDistance + groundCheckRadius);
+            Gizmos.color = isGrounded ? Color.green : Color.red;
+            Gizmos.DrawWireSphere(groundCheckPos, groundCheckRadius);
+            
+            // Gravity velocity visualization
+            if (gravityVelocity.magnitude > 0.1f)
+            {
+                Gizmos.color = Color.yellow;
+                Vector3 gravityArrowStart = transform.position + Vector3.up * 1.5f;
+                Vector3 gravityArrowEnd = gravityArrowStart + gravityVelocity * 0.5f;
+                Gizmos.DrawLine(gravityArrowStart, gravityArrowEnd);
+                Gizmos.DrawWireSphere(gravityArrowEnd, 0.1f);
+                
+#if UNITY_EDITOR
+                // Display gravity velocity text
+                Vector3 gravityTextPos = transform.position + Vector3.up * 2.5f;
+                string gravityText = $"Gravity: {gravityVelocity.y:F1} m/s";
+                var gravityStyle = new GUIStyle();
+                gravityStyle.normal.textColor = Color.yellow;
+                gravityStyle.fontSize = 10;
+                Handles.Label(gravityTextPos, gravityText, gravityStyle);
+#endif
+            }
         }
         
         // Show push state visualization
