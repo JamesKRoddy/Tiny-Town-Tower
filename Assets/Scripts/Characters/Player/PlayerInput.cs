@@ -5,6 +5,7 @@ using static UnityEditor.Searcher.SearcherWindow.Alignment;
 using System.Collections;
 using Managers;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 /// <summary>
 /// Handles all player input events and control type management.
@@ -33,6 +34,11 @@ public class PlayerInput : MonoBehaviour
 
     #region Events
     public event Action<PlayerControlType> OnUpdatePlayerControls;
+    
+    // Input Device Events
+    public event Action<InputDeviceType> OnInputDeviceChanged;
+    public event Action OnControllerConnected;
+    public event Action OnControllerDisconnected;
     
     // Face Buttons
     public event Action OnYPressed;
@@ -69,7 +75,11 @@ public class PlayerInput : MonoBehaviour
 
     #region Properties
     public PlayerControlType CurrentControlType { get; private set; } = PlayerControlType.COMBAT_NPC_MOVEMENT;
+    public InputDeviceType CurrentInputDevice { get; private set; } = InputDeviceType.MOUSE_KEYBOARD;
     private bool _playerInputDisabled = false;
+    private bool _controllerWasConnected = false;
+    private float _lastInputTime = 0f;
+    private const float INPUT_DEBOUNCE_TIME = 0.1f;
     #endregion
 
     #region Unity Lifecycle
@@ -89,6 +99,7 @@ public class PlayerInput : MonoBehaviour
     private void Update()
     {
         if (_playerInputDisabled) return;
+        DetectInputDevice();
         ProcessInput();
     }
     #endregion
@@ -97,6 +108,27 @@ public class PlayerInput : MonoBehaviour
     public void DisablePlayerInput(bool disable)
     {
         _playerInputDisabled = disable;
+    }
+
+    /// <summary>
+    /// Manually switch to a specific input device type
+    /// </summary>
+    /// <param name="deviceType">The input device type to switch to</param>
+    public void SwitchToInputDevice(InputDeviceType deviceType)
+    {
+        if (deviceType != CurrentInputDevice)
+        {
+            SwitchInputDevice(deviceType);
+        }
+    }
+
+    /// <summary>
+    /// Get the current input device type
+    /// </summary>
+    /// <returns>The current input device type</returns>
+    public InputDeviceType GetCurrentInputDevice()
+    {
+        return CurrentInputDevice;
     }
 
     public void UpdatePlayerControls(PlayerControlType playerControlType)
@@ -139,6 +171,9 @@ public class PlayerInput : MonoBehaviour
         OnRightStickPressed = null;
         OnQuickSavePressed = null;
         OnQuickLoadPressed = null;
+        OnInputDeviceChanged = null;
+        OnControllerConnected = null;
+        OnControllerDisconnected = null;
     }
     #endregion
 
@@ -154,6 +189,192 @@ public class PlayerInput : MonoBehaviour
             _instance = this;
             DontDestroyOnLoad(gameObject);
         }
+    }
+
+    private void DetectInputDevice()
+    {
+        // Check for controller input
+        bool controllerInput = IsControllerInputDetected();
+        bool mouseKeyboardInput = IsMouseKeyboardInputDetected();
+        
+        // Check for controller connection changes
+        bool controllerConnected = IsControllerConnected();
+        if (controllerConnected != _controllerWasConnected)
+        {
+            _controllerWasConnected = controllerConnected;
+            if (controllerConnected)
+            {
+                OnControllerConnected?.Invoke();
+                Debug.Log("[PlayerInput] Controller connected");
+            }
+            else
+            {
+                OnControllerDisconnected?.Invoke();
+                Debug.Log("[PlayerInput] Controller disconnected");
+            }
+        }
+        
+        // Determine current input device based on recent input
+        InputDeviceType newInputDevice = CurrentInputDevice;
+        
+        if (controllerInput && !mouseKeyboardInput)
+        {
+            newInputDevice = InputDeviceType.CONTROLLER;
+        }
+        else if (mouseKeyboardInput && !controllerInput)
+        {
+            newInputDevice = InputDeviceType.MOUSE_KEYBOARD;
+        }
+        
+        // Only switch if we have clear input from one device and not the other
+        if (newInputDevice != CurrentInputDevice && (controllerInput || mouseKeyboardInput))
+        {
+            // Debounce input to prevent rapid switching
+            if (Time.time - _lastInputTime > INPUT_DEBOUNCE_TIME)
+            {
+                SwitchInputDevice(newInputDevice);
+                _lastInputTime = Time.time;
+            }
+        }
+    }
+
+    private bool IsControllerInputDetected()
+    {
+        // Check for controller button presses
+        if (Input.GetButtonDown("A") || Input.GetButtonDown("B") || Input.GetButtonDown("X") || Input.GetButtonDown("Y") ||
+            Input.GetButtonDown("Start") || Input.GetButtonDown("Select") || Input.GetButtonDown("LeftStickPress") || Input.GetButtonDown("RightStickPress") ||
+            Input.GetButtonDown("LB") || Input.GetButtonDown("RB") ||
+            Input.GetAxis("RT") > 0.1f || Input.GetAxis("LT") > 0.1f)
+        {
+            return true;
+        }
+        
+        // Check for joystick movement
+        Vector2 leftStick = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+        Vector2 rightStick = new Vector2(Input.GetAxis("RightStickHorizontal"), Input.GetAxis("RightStickVertical"));
+        
+        if (leftStick.magnitude > 0.1f || rightStick.magnitude > 0.1f)
+        {
+            return true;
+        }
+        
+        return false;
+    }
+
+    private bool IsMouseKeyboardInputDetected()
+    {
+        // Check for mouse input
+        if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2) ||
+            Input.GetMouseButton(0) || Input.GetMouseButton(1) || Input.GetMouseButton(2) ||
+            Input.GetAxis("Mouse X") != 0 || Input.GetAxis("Mouse Y") != 0)
+        {
+            return true;
+        }
+        
+        // Check for keyboard input (excluding controller keys)
+        if (Input.anyKeyDown)
+        {
+            // Exclude controller-specific keys to avoid conflicts
+            if (!Input.GetKeyDown(KeyCode.JoystickButton0) && !Input.GetKeyDown(KeyCode.JoystickButton1) &&
+                !Input.GetKeyDown(KeyCode.JoystickButton2) && !Input.GetKeyDown(KeyCode.JoystickButton3) &&
+                !Input.GetKeyDown(KeyCode.JoystickButton4) && !Input.GetKeyDown(KeyCode.JoystickButton5) &&
+                !Input.GetKeyDown(KeyCode.JoystickButton6) && !Input.GetKeyDown(KeyCode.JoystickButton7) &&
+                !Input.GetKeyDown(KeyCode.JoystickButton8) && !Input.GetKeyDown(KeyCode.JoystickButton9) &&
+                !Input.GetKeyDown(KeyCode.JoystickButton10) && !Input.GetKeyDown(KeyCode.JoystickButton11) &&
+                !Input.GetKeyDown(KeyCode.JoystickButton12) && !Input.GetKeyDown(KeyCode.JoystickButton13) &&
+                !Input.GetKeyDown(KeyCode.JoystickButton14) && !Input.GetKeyDown(KeyCode.JoystickButton15) &&
+                !Input.GetKeyDown(KeyCode.JoystickButton16) && !Input.GetKeyDown(KeyCode.JoystickButton17) &&
+                !Input.GetKeyDown(KeyCode.JoystickButton18) && !Input.GetKeyDown(KeyCode.JoystickButton19))
+            {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    private bool IsControllerConnected()
+    {
+        // Check if any joystick is connected
+        string[] joystickNames = Input.GetJoystickNames();
+        return joystickNames.Length > 0 && !string.IsNullOrEmpty(joystickNames[0]);
+    }
+
+    private void SwitchInputDevice(InputDeviceType newDevice)
+    {
+        if (newDevice == CurrentInputDevice) return;
+        
+        InputDeviceType previousDevice = CurrentInputDevice;
+        CurrentInputDevice = newDevice;
+        
+        Debug.Log($"[PlayerInput] Input device switched from {previousDevice} to {CurrentInputDevice}");
+        
+        // Notify listeners about the input device change
+        OnInputDeviceChanged?.Invoke(CurrentInputDevice);
+        
+        // Handle menu navigation based on input device
+        if (CurrentInputDevice == InputDeviceType.CONTROLLER && 
+            (CurrentControlType == PlayerControlType.IN_MENU || CurrentControlType == PlayerControlType.MAIN_MENU))
+        {
+            HandleControllerMenuNavigation();
+        }
+        else if (CurrentInputDevice == InputDeviceType.MOUSE_KEYBOARD)
+        {
+            HandleMouseKeyboardNavigation();
+        }
+    }
+
+    private void HandleControllerMenuNavigation()
+    {
+        // Ensure a button is selected when switching to controller in a menu
+        if (PlayerUIManager.Instance != null)
+        {
+            // Find the first selectable button in the current menu
+            GameObject firstSelectable = FindFirstSelectableButton();
+            if (firstSelectable != null)
+            {
+                PlayerUIManager.Instance.SetSelectedGameObject(firstSelectable);
+                Debug.Log($"[PlayerInput] Selected first button for controller navigation: {firstSelectable.name}");
+            }
+        }
+    }
+
+    private void HandleMouseKeyboardNavigation()
+    {
+        // Clear the selected object when switching to mouse/keyboard to allow proper mouse interaction
+        if (EventSystem.current != null)
+        {
+            EventSystem.current.SetSelectedGameObject(null);
+            Debug.Log("[PlayerInput] Cleared selected object for mouse/keyboard navigation");
+        }
+    }
+
+    private GameObject FindFirstSelectableButton()
+    {
+        // Try to find a button in the current menu
+        if (PlayerUIManager.Instance?.currentMenu != null)
+        {
+            Button[] buttons = PlayerUIManager.Instance.currentMenu.GetComponentsInChildren<Button>();
+            foreach (Button button in buttons)
+            {
+                if (button.gameObject.activeInHierarchy && button.interactable)
+                {
+                    return button.gameObject;
+                }
+            }
+        }
+        
+        // Fallback: find any active selectable UI element
+        UnityEngine.UI.Selectable[] selectables = FindObjectsByType<UnityEngine.UI.Selectable>(FindObjectsSortMode.None);
+        foreach (UnityEngine.UI.Selectable selectable in selectables)
+        {
+            if (selectable.gameObject.activeInHierarchy && selectable.interactable)
+            {
+                return selectable.gameObject;
+            }
+        }
+        
+        return null;
     }
 
     private void SubscribeToGameManager()
@@ -233,6 +454,19 @@ public class PlayerInput : MonoBehaviour
         ResetControlPositions();
         UnsubscribeAll();
         OnUpdatePlayerControls?.Invoke(CurrentControlType);
+        
+        // Handle menu navigation based on current input device when entering menu states
+        if (playerControlType == PlayerControlType.IN_MENU || playerControlType == PlayerControlType.MAIN_MENU)
+        {
+            if (CurrentInputDevice == InputDeviceType.CONTROLLER)
+            {
+                HandleControllerMenuNavigation();
+            }
+            else if (CurrentInputDevice == InputDeviceType.MOUSE_KEYBOARD)
+            {
+                HandleMouseKeyboardNavigation();
+            }
+        }
     }
 
     private void ResetControlPositions()
