@@ -29,5 +29,6 @@ public class RogueLikeBuildingDataEditor : Editor
         {
             EditorGUILayout.HelpBox("No settler NPCs assigned. Friendly rooms in this building won't spawn NPCs.", MessageType.Warning);
         }
+        
     }
 } 

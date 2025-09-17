@@ -14,7 +14,7 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     public List<BuildingRooms> buildingRooms;
 
     [Header("Friendly Rooms")]
-    [SerializeField] private List<BuildingRooms> friendlyRooms = new List<BuildingRooms>();
+    public List<BuildingRooms> friendlyRooms = new List<BuildingRooms>();
     [SerializeField, Range(0f, 100f)] private float friendlyRoomSpawnChance = 15f; // 15% chance for friendly rooms by default
     
     [Header("NPC Configuration")]
@@ -40,7 +40,7 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
         
         foreach (var parent in buildingParents)
         {
-            if (parent.difficulty <= difficulty)
+            if (parent.difficulty <= difficulty && !parent.excludeFromTesting)
             {
                 suitableParents.Add(parent);
             }
@@ -82,7 +82,7 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
         
         foreach (var room in buildingRooms)
         {
-            if (room.difficulty <= difficulty)
+            if (room.difficulty <= difficulty && !room.excludeFromTesting)
             {
                 suitableRooms.Add(room);
             }
@@ -110,7 +110,7 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
         
         foreach (var room in friendlyRooms)
         {
-            if (room.difficulty <= difficulty)
+            if (room.difficulty <= difficulty && !room.excludeFromTesting)
             {
                 suitableFriendlyRooms.Add(room);
             }
@@ -188,7 +188,7 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
         // Add hostile rooms
         foreach (var room in buildingRooms)
         {
-            if (room.difficulty <= difficulty)
+            if (room.difficulty <= difficulty && !room.excludeFromTesting)
             {
                 allRooms.Add(room.buildingRoom);
             }
@@ -197,7 +197,7 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
         // Add friendly rooms
         foreach (var room in friendlyRooms)
         {
-            if (room.difficulty <= difficulty)
+            if (room.difficulty <= difficulty && !room.excludeFromTesting)
             {
                 allRooms.Add(room.buildingRoom);
             }
@@ -212,6 +212,7 @@ public struct BuildingParents
 {
     public GameObject buildingParent;
     public int difficulty;
+    public bool excludeFromTesting;
 }
 
 [System.Serializable]
@@ -219,5 +220,6 @@ public struct BuildingRooms
 {
     public GameObject buildingRoom;
     public int difficulty;
+    public bool excludeFromTesting;
 }
 
