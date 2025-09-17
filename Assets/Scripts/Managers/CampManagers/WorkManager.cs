@@ -382,7 +382,8 @@ namespace Managers
                         ClearNPCForAssignment(); // Clear assignment when destroying structure
                     },
                     canSelect = () => !structure.IsUnderConstruction(),
-                    workTask = null
+                    workTask = null,
+                    returnToGameControls = true
                 });
             }
 
@@ -501,7 +502,8 @@ namespace Managers
                 optionName = name,
                 onSelected = action,
                 canSelect = canSelectTask,
-                workTask = task
+                workTask = task,
+                returnToGameControls = !(task is ResearchTask || task is CookingTask || task is ResourceUpgradeTask || task is FarmingTask)
             };
         }
 

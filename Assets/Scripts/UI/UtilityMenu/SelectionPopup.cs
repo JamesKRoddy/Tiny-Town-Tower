@@ -17,6 +17,7 @@ public class SelectionPopup : PreviewPopupBase<object, string>
         public Func<bool> canSelect;
         public WorkTask workTask; // Reference to the work task for tooltips
         public string customTooltip; // Custom tooltip text (overrides workTask tooltip if set)
+        public bool returnToGameControls = true; // Whether to return to game controls when this option is selected
     }
 
     [Header("Selection Options")]
@@ -165,13 +166,6 @@ public class SelectionPopup : PreviewPopupBase<object, string>
             var selectedOption = currentOptions[optionIndex];
             Debug.Log($"[SelectionPopup] Option selected: {selectedOption.optionName}, isAssignmentMode: {isInAssignmentMode}");
             
-            // Check if we're in a work assignment flow BEFORE executing the action
-            // This needs to be done before the action clears the assignment state
-            bool isInWorkAssignmentFlow = CampManager.Instance.WorkManager.IsNPCForAssignmentSet() || 
-                                        CampManager.Instance.WorkManager.buildingForAssignment != null;
-            
-            Debug.Log($"[SelectionPopup] isInWorkAssignmentFlow: {isInWorkAssignmentFlow}");
-            
             selectedOption.onSelected?.Invoke();
             
             // Only close and clear assignments if we're NOT in assignment mode
@@ -182,15 +176,16 @@ public class SelectionPopup : PreviewPopupBase<object, string>
             
             if (shouldClearAssignments)
             {
-                if (isInWorkAssignmentFlow)
+                if (selectedOption.returnToGameControls)
                 {
-                    Debug.Log("[SelectionPopup] Work assignment flow detected - closing popup without returning to game controls");
-                    // Close the popup but don't return to game controls
-                    OnCloseClickedWithoutReturningToGame();
+                    Debug.Log("[SelectionPopup] Option should return to game controls - closing popup normally");
+                    OnCloseClicked();
                 }
                 else
                 {
-                    OnCloseClicked();
+                    Debug.Log("[SelectionPopup] Option should stay in menu controls - closing popup without returning to game controls");
+                    // Close the popup but don't return to game controls
+                    OnCloseClickedWithoutReturningToGame();
                 }
             }
             else
