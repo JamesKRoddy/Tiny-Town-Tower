@@ -15067,7 +15067,7 @@ MonoBehaviour:
   campUI: {fileID: 7957405063769124335}
   waveUI: {fileID: 590653716714484773}
   timeDisplayUI: {fileID: 7705830910676661071}
-  progressBarParent: {fileID: 1136493023226433139}
+  worldUIParent: {fileID: 1136493023226433139}
   floatingTextPrefab: {fileID: 7653262469835949063, guid: d77ee00e541c1a244b85cda2e1090bfc, type: 3}
   floatingTextPoolSize: 20
   progressBarPrefab: {fileID: 6865060584137632757, guid: b49d6c92050b87b4793c54c7269dbd3d, type: 3}
@@ -29788,7 +29788,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1136493023226433139}
   m_Layer: 5
-  m_Name: WorkProgressBar
+  m_Name: WorldUIParent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

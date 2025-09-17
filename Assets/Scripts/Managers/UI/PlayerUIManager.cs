@@ -75,7 +75,7 @@ public class PlayerUIManager : MonoBehaviour
     public TimeDisplayUI timeDisplayUI;
 
     [Header("Progress Bar References")]
-    [SerializeField] private Transform progressBarParent; // Transform to parent all work task progress bars
+    [SerializeField] private Transform worldUIParent; // Transform to parent all work task progress bars
     
     [Header("Floating Text References")]
     [SerializeField] private GameObject floatingTextPrefab; // Prefab for floating text
@@ -370,7 +370,7 @@ public class PlayerUIManager : MonoBehaviour
     public Transform GetProgressBarParent()
     {
         EnsureProgressBarParent();
-        return progressBarParent;
+        return worldUIParent;
     }
 
     /// <summary>
@@ -378,15 +378,15 @@ public class PlayerUIManager : MonoBehaviour
     /// </summary>
     private void EnsureProgressBarParent()
     {
-        if (progressBarParent == null)
+        if (worldUIParent == null)
         {
             // Create a child GameObject to hold progress bars
             GameObject progressBarContainer = new GameObject("ProgressBars");
-            progressBarParent = progressBarContainer.transform;
-            progressBarParent.SetParent(transform);
-            progressBarParent.localPosition = Vector3.zero;
-            progressBarParent.localRotation = Quaternion.identity;
-            progressBarParent.localScale = Vector3.one;
+            worldUIParent = progressBarContainer.transform;
+            worldUIParent.SetParent(transform);
+            worldUIParent.localPosition = Vector3.zero;
+            worldUIParent.localRotation = Quaternion.identity;
+            worldUIParent.localScale = Vector3.one;
             
             Debug.Log("[PlayerUIManager] Created progress bar parent transform");
         }
@@ -405,7 +405,7 @@ public class PlayerUIManager : MonoBehaviour
         
         for (int i = 0; i < floatingTextPoolSize; i++)
         {
-            GameObject obj = Instantiate(floatingTextPrefab, progressBarParent);
+            GameObject obj = Instantiate(floatingTextPrefab, worldUIParent);
             FloatingTextUI floatingText = obj.GetComponent<FloatingTextUI>();
             if (floatingText == null)
             {
@@ -474,7 +474,7 @@ public class PlayerUIManager : MonoBehaviour
             // Create new one if pool is empty
             if (floatingTextPrefab != null)
             {
-                GameObject obj = Instantiate(floatingTextPrefab, progressBarParent);
+                GameObject obj = Instantiate(floatingTextPrefab, worldUIParent);
                 return obj.GetComponent<FloatingTextUI>();
             }
         }
@@ -503,7 +503,7 @@ public class PlayerUIManager : MonoBehaviour
         
         for (int i = 0; i < maxActiveProgressBars; i++)
         {
-            GameObject obj = Instantiate(progressBarPrefab, progressBarParent);
+            GameObject obj = Instantiate(progressBarPrefab, worldUIParent);
             WorkTaskProgressBar progressBar = obj.GetComponent<WorkTaskProgressBar>();
             if (progressBar == null)
             {
@@ -619,7 +619,7 @@ public class PlayerUIManager : MonoBehaviour
             return null;
         }
         
-        GameObject progressBarObj = Instantiate(progressBarPrefab, progressBarParent);
+        GameObject progressBarObj = Instantiate(progressBarPrefab, worldUIParent);
         progressBarObj.SetActive(false);
         
         WorkTaskProgressBar progressBar = progressBarObj.GetComponent<WorkTaskProgressBar>();
