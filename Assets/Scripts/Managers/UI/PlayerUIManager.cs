@@ -76,9 +76,25 @@ public class PlayerUIManager : MonoBehaviour
 
     [Header("Progress Bar References")]
     [SerializeField] private Transform progressBarParent; // Transform to parent all work task progress bars
+    
+    [Header("Floating Text References")]
+    [SerializeField] private GameObject floatingTextPrefab; // Prefab for floating text
+    [SerializeField] private int floatingTextPoolSize = 20; // Number of floating text objects to pool
+    
+    [Header("Progress Bar References")]
+    [SerializeField] private GameObject progressBarPrefab; // Prefab for work task progress bars
+    [SerializeField] private int maxActiveProgressBars = 10; // Limit to prevent performance issues
 
     private Coroutine openingMenuCoroutine;
     private Coroutine notificationCoroutine; // For managing notification text timing
+    
+    // Floating text pooling
+    private System.Collections.Generic.Queue<FloatingTextUI> floatingTextPool = new System.Collections.Generic.Queue<FloatingTextUI>();
+    private System.Collections.Generic.List<FloatingTextUI> activeFloatingTexts = new System.Collections.Generic.List<FloatingTextUI>();
+    
+    // Progress bar management
+    private System.Collections.Generic.Dictionary<WorkTask, WorkTaskProgressBar> activeProgressBars = new System.Collections.Generic.Dictionary<WorkTask, WorkTaskProgressBar>();
+    private System.Collections.Generic.Queue<WorkTaskProgressBar> progressBarPool = new System.Collections.Generic.Queue<WorkTaskProgressBar>();
 
     // Ensure that there is only one instance of PlayerCombat
     private void Awake()
@@ -103,6 +119,12 @@ public class PlayerUIManager : MonoBehaviour
         
         // Ensure progress bar parent exists
         EnsureProgressBarParent();
+        
+        // Initialize floating text pool
+        InitializeFloatingTextPool();
+        
+        // Initialize progress bar pool
+        InitializeProgressBarPool();
     }
 
     private void Update()
@@ -366,6 +388,256 @@ public class PlayerUIManager : MonoBehaviour
             progressBarParent.localScale = Vector3.one;
             
             Debug.Log("[PlayerUIManager] Created progress bar parent transform");
+        }
+    }
+
+    /// <summary>
+    /// Initialize the floating text object pool
+    /// </summary>
+    private void InitializeFloatingTextPool()
+    {
+        if (floatingTextPrefab == null)
+        {
+            Debug.LogWarning("[PlayerUIManager] Floating text prefab not assigned!");
+            return;
+        }
+        
+        for (int i = 0; i < floatingTextPoolSize; i++)
+        {
+            GameObject obj = Instantiate(floatingTextPrefab, progressBarParent);
+            FloatingTextUI floatingText = obj.GetComponent<FloatingTextUI>();
+            if (floatingText == null)
+            {
+                floatingText = obj.AddComponent<FloatingTextUI>();
+            }
+            
+            obj.SetActive(false);
+            floatingTextPool.Enqueue(floatingText);
+        }
+    }
+    
+    /// <summary>
+    /// Show floating text above a target
+    /// </summary>
+    public FloatingTextUI ShowFloatingText(Transform target, string text, FloatingTextType textType = FloatingTextType.Normal)
+    {
+        FloatingTextUI floatingText = GetPooledFloatingText();
+        if (floatingText != null)
+        {
+            floatingText.Initialize(target, text, textType);
+            activeFloatingTexts.Add(floatingText);
+        }
+        return floatingText;
+    }
+    
+    /// <summary>
+    /// Show floating text at a specific world position
+    /// </summary>
+    public FloatingTextUI ShowFloatingText(Vector3 worldPosition, string text, FloatingTextType textType = FloatingTextType.Normal)
+    {
+        // Create a temporary transform for positioning
+        GameObject tempTarget = new GameObject("TempFloatingTextTarget");
+        tempTarget.transform.position = worldPosition;
+        
+        FloatingTextUI floatingText = ShowFloatingText(tempTarget.transform, text, textType);
+        
+        // Clean up temp target after a delay
+        StartCoroutine(CleanupTempTarget(tempTarget, 5f));
+        
+        return floatingText;
+    }
+    
+    /// <summary>
+    /// Return a floating text to the pool
+    /// </summary>
+    public void ReturnFloatingText(FloatingTextUI floatingText)
+    {
+        if (floatingText == null) return;
+        
+        if (activeFloatingTexts.Contains(floatingText))
+        {
+            activeFloatingTexts.Remove(floatingText);
+            floatingText.gameObject.SetActive(false);
+            floatingTextPool.Enqueue(floatingText);
+        }
+    }
+    
+    private FloatingTextUI GetPooledFloatingText()
+    {
+        if (floatingTextPool.Count > 0)
+        {
+            return floatingTextPool.Dequeue();
+        }
+        else
+        {
+            // Create new one if pool is empty
+            if (floatingTextPrefab != null)
+            {
+                GameObject obj = Instantiate(floatingTextPrefab, progressBarParent);
+                return obj.GetComponent<FloatingTextUI>();
+            }
+        }
+        return null;
+    }
+    
+    private IEnumerator CleanupTempTarget(GameObject tempTarget, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (tempTarget != null)
+        {
+            Destroy(tempTarget);
+        }
+    }
+    
+    /// <summary>
+    /// Initialize the progress bar object pool
+    /// </summary>
+    private void InitializeProgressBarPool()
+    {
+        if (progressBarPrefab == null)
+        {
+            Debug.LogWarning("[PlayerUIManager] Progress bar prefab not assigned!");
+            return;
+        }
+        
+        for (int i = 0; i < maxActiveProgressBars; i++)
+        {
+            GameObject obj = Instantiate(progressBarPrefab, progressBarParent);
+            WorkTaskProgressBar progressBar = obj.GetComponent<WorkTaskProgressBar>();
+            if (progressBar == null)
+            {
+                Debug.LogError("[PlayerUIManager] Progress bar prefab missing WorkTaskProgressBar component!");
+                Destroy(obj);
+                continue;
+            }
+            
+            obj.SetActive(false);
+            progressBarPool.Enqueue(progressBar);
+        }
+    }
+    
+    /// <summary>
+    /// Show a progress bar for a work task
+    /// </summary>
+    public void ShowProgressBar(WorkTask task)
+    {
+        if (task == null) return;
+        
+        // Don't show if already active
+        if (activeProgressBars.ContainsKey(task))
+        {
+            return;
+        }
+        
+        // Check if we've reached the maximum number of active progress bars
+        if (activeProgressBars.Count >= maxActiveProgressBars)
+        {
+            Debug.LogWarning($"[PlayerUIManager] Maximum number of active progress bars ({maxActiveProgressBars}) reached. Cannot show progress for {task.name}");
+            return;
+        }
+        
+        WorkTaskProgressBar progressBar = GetPooledProgressBar();
+        if (progressBar != null)
+        {
+            progressBar.Initialize(task);
+            progressBar.Show();
+            activeProgressBars[task] = progressBar;
+        }
+    }
+    
+    /// <summary>
+    /// Update progress for a work task
+    /// </summary>
+    public void UpdateProgressBar(WorkTask task, float progress, WorkTaskProgressState state = WorkTaskProgressState.Normal)
+    {
+        if (activeProgressBars.TryGetValue(task, out WorkTaskProgressBar progressBar))
+        {
+            progressBar.UpdateProgress(progress, state);
+        }
+    }
+    
+    /// <summary>
+    /// Hide a progress bar for a work task
+    /// </summary>
+    public void HideProgressBar(WorkTask task)
+    {
+        if (task == null) return;
+        
+        if (activeProgressBars.TryGetValue(task, out WorkTaskProgressBar progressBar))
+        {
+            progressBar.Hide();
+            activeProgressBars.Remove(task);
+            ReturnProgressBarToPool(progressBar);
+        }
+    }
+    
+    /// <summary>
+    /// Check if a work task has an active progress bar
+    /// </summary>
+    public bool HasProgressBar(WorkTask task)
+    {
+        return task != null && activeProgressBars.ContainsKey(task);
+    }
+    
+    /// <summary>
+    /// Clear all active progress bars
+    /// </summary>
+    public void ClearAllProgressBars()
+    {
+        foreach (var progressBar in activeProgressBars.Values)
+        {
+            if (progressBar != null)
+            {
+                progressBar.Hide();
+                ReturnProgressBarToPool(progressBar);
+            }
+        }
+        activeProgressBars.Clear();
+    }
+    
+    private WorkTaskProgressBar GetPooledProgressBar()
+    {
+        if (progressBarPool.Count > 0)
+        {
+            var progressBar = progressBarPool.Dequeue();
+            if (progressBar != null)
+            {
+                progressBar.gameObject.SetActive(true);
+                return progressBar;
+            }
+        }
+        
+        return CreatePooledProgressBar();
+    }
+    
+    private WorkTaskProgressBar CreatePooledProgressBar()
+    {
+        if (progressBarPrefab == null)
+        {
+            Debug.LogError("[PlayerUIManager] Progress bar prefab is null!");
+            return null;
+        }
+        
+        GameObject progressBarObj = Instantiate(progressBarPrefab, progressBarParent);
+        progressBarObj.SetActive(false);
+        
+        WorkTaskProgressBar progressBar = progressBarObj.GetComponent<WorkTaskProgressBar>();
+        if (progressBar == null)
+        {
+            Debug.LogError("[PlayerUIManager] Progress bar prefab does not have WorkTaskProgressBar component!");
+            Destroy(progressBarObj);
+            return null;
+        }
+        
+        return progressBar;
+    }
+    
+    private void ReturnProgressBarToPool(WorkTaskProgressBar progressBar)
+    {
+        if (progressBar != null)
+        {
+            progressBar.gameObject.SetActive(false);
+            progressBarPool.Enqueue(progressBar);
         }
     }
 

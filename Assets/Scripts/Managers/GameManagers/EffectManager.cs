@@ -679,8 +679,7 @@ namespace Managers
             // Show floating text
             if (definition.HasFloatingText())
             {
-                // TODO: Implement floating text system or integrate with UI system
-
+                ShowStatusFloatingText(target, definition);
             }
             
             // Apply material modifications
@@ -868,7 +867,8 @@ namespace Managers
                 
                 if (definition.healingPerSecond > 0f)
                 {
-                    // TODO: Implement healing interface or system
+                    var damageable = targetComponent.GetComponent<IDamageable>();
+                    damageable?.Heal(definition.healingPerSecond);
                 }
                 
                 yield return new WaitForSeconds(1f);
@@ -969,6 +969,75 @@ namespace Managers
                 // If we can't return to pool, destroy it to prevent memory leaks
                 Destroy(effectInstance);
             }
+        }
+        
+        /// <summary>
+        /// Show floating text for a status effect
+        /// </summary>
+        private void ShowStatusFloatingText(IStatusEffectTarget target, StatusEffectDefinition definition)
+        {
+            var targetTransform = (target as Component)?.transform;
+            if (targetTransform == null) return;
+            
+            // Determine floating text type based on status effect
+            FloatingTextType textType = GetFloatingTextTypeForStatus(definition.statusType);
+            
+            // Show floating text using PlayerUIManager
+            if (PlayerUIManager.Instance != null)
+            {
+                PlayerUIManager.Instance.ShowFloatingText(targetTransform, definition.floatingText, textType);
+            }
+            else
+            {
+                Debug.LogWarning("[EffectManager] PlayerUIManager not available for floating text display");
+            }
+        }
+        
+        /// <summary>
+        /// Get the appropriate floating text type for a status effect
+        /// </summary>
+        private FloatingTextType GetFloatingTextTypeForStatus(StatusEffectType statusType)
+        {
+            // Map status effects to floating text types
+            return statusType switch
+            {
+                // Error states (damaging/harmful)
+                StatusEffectType.POISONED => FloatingTextType.Error,
+                StatusEffectType.BURNING => FloatingTextType.Error,
+                StatusEffectType.ON_FIRE => FloatingTextType.Error,
+                StatusEffectType.BLEEDING => FloatingTextType.Error,
+                StatusEffectType.SICK => FloatingTextType.Error,
+                StatusEffectType.STARVING => FloatingTextType.Error,
+                StatusEffectType.EXHAUSTED => FloatingTextType.Error,
+                StatusEffectType.CORRODED => FloatingTextType.Error,
+                StatusEffectType.ELECTROCUTED => FloatingTextType.Error,
+                StatusEffectType.SHOCKED => FloatingTextType.Error,
+                
+                // Warning states (temporary issues)
+                StatusEffectType.FROZEN => FloatingTextType.Warning,
+                StatusEffectType.STUNNED => FloatingTextType.Warning,
+                StatusEffectType.CONFUSED => FloatingTextType.Warning,
+                StatusEffectType.FEARED => FloatingTextType.Warning,
+                StatusEffectType.HUNGRY => FloatingTextType.Warning,
+                StatusEffectType.TIRED => FloatingTextType.Warning,
+                StatusEffectType.WET => FloatingTextType.Warning,
+                StatusEffectType.VULNERABLE => FloatingTextType.Warning,
+                StatusEffectType.WEAKENED => FloatingTextType.Warning,
+                StatusEffectType.SLOWED => FloatingTextType.Warning,
+                
+                // Success states (beneficial)
+                StatusEffectType.HEALING => FloatingTextType.Success,
+                StatusEffectType.REGENERATING => FloatingTextType.Success,
+                StatusEffectType.HASTENED => FloatingTextType.Success,
+                StatusEffectType.STRENGTHENED => FloatingTextType.Success,
+                StatusEffectType.PROTECTED => FloatingTextType.Success,
+                StatusEffectType.BUFFED => FloatingTextType.Success,
+                StatusEffectType.SHIELDED => FloatingTextType.Success,
+                StatusEffectType.HEALTHY => FloatingTextType.Success,
+                
+                // Normal states
+                _ => FloatingTextType.Normal
+            };
         }
         
         #endregion

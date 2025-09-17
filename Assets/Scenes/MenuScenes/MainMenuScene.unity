@@ -1190,6 +1190,10 @@ PrefabInstance:
       propertyPath: returnToCampMenu
       value: 
       objectReference: {fileID: 1028008550}
+    - target: {fileID: 362492413140139470, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
+      propertyPath: progressBarPrefab
+      value: 
+      objectReference: {fileID: 6865060584137632757, guid: b49d6c92050b87b4793c54c7269dbd3d, type: 3}
     - target: {fileID: 393952194566369977, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
       propertyPath: m_Pivot.x
       value: 0

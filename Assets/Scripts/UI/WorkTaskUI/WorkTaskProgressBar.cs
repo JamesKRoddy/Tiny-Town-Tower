@@ -4,6 +4,7 @@ using TMPro;
 
 /// <summary>
 /// UI component to display work task progress as a world space progress bar
+/// Now works with WorldUIManager for better pooling and management
 /// </summary>
 public class WorkTaskProgressBar : MonoBehaviour
 {
@@ -28,10 +29,14 @@ public class WorkTaskProgressBar : MonoBehaviour
     private Camera mainCamera;
     private bool isVisible = false;
     private Coroutine fadeCoroutine;
+    
+    // Reference to PlayerUIManager for proper cleanup
+    private PlayerUIManager playerUIManager;
 
     private void Start()
     {
         mainCamera = Camera.main;
+        playerUIManager = PlayerUIManager.Instance;
     }
 
     public void Initialize(WorkTask task)
@@ -254,6 +259,22 @@ public class WorkTaskProgressBar : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Clean up and return to pool when done
+    /// </summary>
+    public void Cleanup()
+    {
+        if (fadeCoroutine != null)
+        {
+            StopCoroutine(fadeCoroutine);
+            fadeCoroutine = null;
+        }
+        
+        // Return to PlayerUIManager pool (if needed)
+        // Note: WorkTaskProgressBar doesn't need pooling in PlayerUIManager
+        // as it's managed by the work task system directly
+    }
+    
     private void OnDestroy()
     {
         if (fadeCoroutine != null)

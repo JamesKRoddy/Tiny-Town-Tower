@@ -482,3 +482,14 @@ public enum StatusEffectBehavior
 // MISCELLANEOUS ENUMS
 // =========================
 
+/// <summary>
+/// Types of floating text for different visual styles
+/// </summary>
+public enum FloatingTextType
+{
+    Normal,
+    Warning,
+    Error,
+    Success
+}
+

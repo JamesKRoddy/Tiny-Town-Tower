@@ -31,13 +31,7 @@ namespace Managers
 
         public object buildingForAssignment; // Can be IPlaceableStructure or WorkTask (for construction sites)
 
-        [Header("Progress Bar Settings")]
-        [SerializeField] private GameObject progressBarPrefab;
-        [SerializeField] private int maxActiveProgressBars = 10; // Limit to prevent performance issues
-
-        // Progress bar management
-        private Dictionary<WorkTask, WorkTaskProgressBar> activeProgressBars = new Dictionary<WorkTask, WorkTaskProgressBar>();
-        private Queue<WorkTaskProgressBar> progressBarPool = new Queue<WorkTaskProgressBar>();
+        // Progress bar management is now handled by PlayerUIManager
 
         // Method to add a new work task to the queue
         public void AddWorkTask(WorkTask newTask)
@@ -643,33 +637,9 @@ namespace Managers
         /// <param name="task">The work task to show progress for</param>
         public void ShowProgressBar(WorkTask task)
         {
-            if (task == null) return;
-            
-            // Check if we already have a progress bar for this task
-            if (activeProgressBars.ContainsKey(task))
+            if (PlayerUIManager.Instance != null)
             {
-                return;
-            }
-            
-            // Limit the number of active progress bars
-            if (activeProgressBars.Count >= maxActiveProgressBars)
-            {
-                Debug.LogWarning($"[WorkManager] Maximum number of active progress bars ({maxActiveProgressBars}) reached. Cannot show progress for {task.name}");
-                return;
-            }
-
-            WorkTaskProgressBar progressBar = GetPooledProgressBar();
-            if (progressBar != null)
-            {
-                progressBar.Initialize(task);
-                progressBar.Show();
-                activeProgressBars[task] = progressBar;
-                
-                Debug.Log($"[WorkManager] Showing progress bar for {task.name}");
-            }
-            else
-            {
-                Debug.LogError("[WorkManager] Failed to get a progress bar from pool");
+                PlayerUIManager.Instance.ShowProgressBar(task);
             }
         }
 
@@ -681,11 +651,9 @@ namespace Managers
         /// <param name="state">The current state of the progress</param>
         public void UpdateProgress(WorkTask task, float progress, WorkTaskProgressState state = WorkTaskProgressState.Normal)
         {
-            if (task == null) return;
-            
-            if (activeProgressBars.TryGetValue(task, out WorkTaskProgressBar progressBar))
+            if (PlayerUIManager.Instance != null)
             {
-                progressBar.UpdateProgress(progress, state);
+                PlayerUIManager.Instance.UpdateProgressBar(task, progress, state);
             }
         }
 
@@ -695,15 +663,9 @@ namespace Managers
         /// <param name="task">The work task to hide progress for</param>
         public void HideProgressBar(WorkTask task)
         {
-            if (task == null) return;
-            
-            if (activeProgressBars.TryGetValue(task, out WorkTaskProgressBar progressBar))
+            if (PlayerUIManager.Instance != null)
             {
-                progressBar.Hide();
-                activeProgressBars.Remove(task);
-                ReturnProgressBarToPool(progressBar);
-                
-                Debug.Log($"[WorkManager] Hiding progress bar for {task.name}");
+                PlayerUIManager.Instance.HideProgressBar(task);
             }
         }
 
@@ -714,62 +676,11 @@ namespace Managers
         /// <returns>True if progress bar is active</returns>
         public bool HasProgressBar(WorkTask task)
         {
-            return task != null && activeProgressBars.ContainsKey(task);
-        }
-
-        private WorkTaskProgressBar GetPooledProgressBar()
-        {
-            if (progressBarPool.Count > 0)
+            if (PlayerUIManager.Instance != null)
             {
-                var progressBar = progressBarPool.Dequeue();
-                // Reactivate the pooled progress bar
-                progressBar.gameObject.SetActive(true);
-                return progressBar;
+                return PlayerUIManager.Instance.HasProgressBar(task);
             }
-            
-            // Create a new progress bar only when needed
-            return CreatePooledProgressBar();
-        }
-
-        private WorkTaskProgressBar CreatePooledProgressBar()
-        {
-            if (progressBarPrefab == null)
-            {
-                Debug.LogError("[WorkManager] Progress bar prefab is not assigned!");
-                return null;
-            }
-            
-            if (PlayerUIManager.Instance == null)
-            {
-                Debug.LogError("[WorkManager] PlayerUIManager instance not found!");
-                return null;
-            }
-
-            Transform progressBarParent = PlayerUIManager.Instance.GetProgressBarParent();
-            GameObject progressBarObj = Instantiate(progressBarPrefab, progressBarParent);
-            
-            // Create as inactive initially
-            progressBarObj.SetActive(false);
-            
-            WorkTaskProgressBar progressBar = progressBarObj.GetComponent<WorkTaskProgressBar>();
-            
-            if (progressBar == null)
-            {
-                Debug.LogError("[WorkManager] Progress bar prefab does not have WorkTaskProgressBar component!");
-                Destroy(progressBarObj);
-                return null;
-            }
-
-            return progressBar;
-        }
-
-        private void ReturnProgressBarToPool(WorkTaskProgressBar progressBar)
-        {
-            if (progressBar != null)
-            {
-                progressBar.gameObject.SetActive(false);
-                progressBarPool.Enqueue(progressBar);
-            }
+            return false;
         }
 
         /// <summary>
@@ -777,14 +688,10 @@ namespace Managers
         /// </summary>
         public void ClearAllProgressBars()
         {
-            foreach (var progressBar in activeProgressBars.Values)
+            if (PlayerUIManager.Instance != null)
             {
-                progressBar.Hide();
-                ReturnProgressBarToPool(progressBar);
+                PlayerUIManager.Instance.ClearAllProgressBars();
             }
-            activeProgressBars.Clear();
-            
-            Debug.Log("[WorkManager] Cleared all active progress bars");
         }
 
         #endregion
