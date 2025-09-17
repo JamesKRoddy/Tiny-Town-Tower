@@ -827,7 +827,7 @@ public class NarrativeManager : MonoBehaviour
         }
 
         // Fall back to global progression flags
-        return Managers.GameProgressionManager.Instance.HasGlobalFlag(flagName);
+        return GameManager.Instance.GameProgressionManager.HasGlobalFlag(flagName);
     }
 
     #endregion

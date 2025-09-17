@@ -1,17 +1,20 @@
 using UnityEngine;
-using Managers;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine.AI;
 
 public class StructureDestructionTask : WorkTask, IInteractive<object>
 {
     private PlaceableObjectParent structureScriptableObj;
-    private bool isDestructionComplete = false;
 
     protected override void Start()
     {
         base.Start();
+        
+        taskType = WorkTaskType.Complete; // Destruction is a one-time task
+        
+        // Destruction tasks should support multiple workers and be automatically queued
+        maxWorkers = 3; // Allow up to 3 workers on destruction sites
+        autoQueue = true;
+        
         taskAnimation = TaskAnimation.HAMMER_STANDING;
     }
 
@@ -51,7 +54,6 @@ public class StructureDestructionTask : WorkTask, IInteractive<object>
             }
         }
 
-        isDestructionComplete = true;
         base.CompleteWork();
         Destroy(gameObject);
     }

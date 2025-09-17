@@ -10,6 +10,7 @@ public class ResearchTask : QueuedWorkTask
     protected override void Start()
     {
         base.Start();
+        taskType = WorkTaskType.Queued; // Research processes a queue of research projects
     }
 
     public void SetResearch(ResearchScriptableObj research)

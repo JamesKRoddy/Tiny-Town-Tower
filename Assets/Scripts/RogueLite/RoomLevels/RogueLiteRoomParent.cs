@@ -99,7 +99,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         // Clear props on the center piece
         ClearPropsOnCenterPiece();
 
-        int currentDifficulty = DifficultyManager.Instance.GetCurrentWaveDifficulty();
+        int currentDifficulty = GameManager.Instance.DifficultyManager.GetCurrentWaveDifficulty();
 
         // Use hierarchical room placement instead of random placement
         HierarchicalRoomPlacement(buildingScriptableObj, currentDifficulty);
@@ -842,7 +842,7 @@ public class RogueLiteRoomParent : MonoBehaviour
                 continue;
             }
 
-            chest.SetupChest(DifficultyManager.Instance.GetCurrentRoomDifficulty());
+            chest.SetupChest(GameManager.Instance.DifficultyManager.GetCurrentRoomDifficulty());
         }
     }
 

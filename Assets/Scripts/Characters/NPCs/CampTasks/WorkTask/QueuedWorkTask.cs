@@ -11,12 +11,12 @@ public abstract class QueuedWorkTask : WorkTask
 
     // Properties
     public override bool HasQueuedTasks => taskQueue.Count > 0;
-    public override bool IsTaskCompleted => currentTaskData == null && !HasQueuedTasks;
     public bool HasCurrentWork => currentTaskData != null;
 
     protected override void Start()
     {
         base.Start();
+        taskType = WorkTaskType.Queued; // This is a queued task
         maxWorkers = 1; // Queued tasks like cooking and researching are single-worker tasks
     }
 
@@ -91,19 +91,65 @@ public abstract class QueuedWorkTask : WorkTask
             currentTaskData = taskQueue.Dequeue();
             SetupNextTask();
             
+            // Update progress bar to show new task if it's active
+            if (progressBarActive && CampManager.Instance?.WorkManager != null)
+            {
+                // Reset progress to 0 for the new task
+                CampManager.Instance.WorkManager.UpdateProgress(this, 0f, WorkTaskProgressState.Normal);
+            }
+            
             // Workers will automatically continue working on the next task
             // since they're still assigned to this task
         }
         else
         {
+            Debug.Log($"[QueuedWorkTask] No more tasks in queue, completing work for {GetType().Name}");
+            
             // Only unassign and notify completion if there are no more tasks
             UnassignNPC();
             
             // Clear current task data since there are no more tasks
             currentTaskData = null;
             
-            // Notify completion and stop work
-            base.CompleteWork();
+            // Reset progress bar state before calling base CompleteWork
+            if (progressBarActive && CampManager.Instance?.WorkManager != null)
+            {
+                Debug.Log($"[QueuedWorkTask] Hiding progress bar for completed task {GetType().Name}");
+                CampManager.Instance.WorkManager.HideProgressBar(this);
+                progressBarActive = false;
+            }
+            
+            // For queued tasks, we don't want to call base.CompleteWork() when there are no more tasks
+            // because that would remove the task from the work queue and make it unavailable for new tasks
+            // Instead, we just stop the current work and let the task remain available for new tasks
+            
+            // Stop all workers from working on this task
+            var workersToStop = new List<HumanCharacterController>(currentWorkers);
+            foreach (var worker in workersToStop)
+            {
+                Debug.Log($"[QueuedWorkTask] Stopping worker {worker.name} from completed task {GetType().Name}");
+                worker.StopWork();
+            }
+            
+            // Clear all workers
+            currentWorkers.Clear();
+            
+            // Switch back to idle effects when work is complete
+            if (isOperational)
+            {
+                SetAmbientEffectsState(false); // Back to idle state
+            }
+            
+            if (taskStructure != null)
+            {
+                taskStructure.SetCurrentWorkTask(null);
+                Debug.Log($"[WorkTask] Set task structure current work task to null");
+            }
+            
+            // Notify completion
+            NotifyTaskCompletion();
+            InvokeStopWork();
+            Debug.Log($"[QueuedWorkTask] Work completion notifications sent for {GetType().Name}");
         }
     }
 } 

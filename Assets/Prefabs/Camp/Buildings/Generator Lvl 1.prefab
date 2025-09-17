@@ -63,10 +63,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   workLocationTransform: {fileID: 0}
   maxWorkers: 1
+  autoQueue: 0
+  taskType: 0
   requiredResources: []
   showTooltip: 0
   electricityRequired: 0
   taskAnimation: 0
+  inUseParticleSystems: []
+  idleParticleSystems: []
+  inUseAudioSources: []
+  idleAudioSources: []
+  showProgressBar: 1
 --- !u!114 &8006970659689362581
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -81,10 +88,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   workLocationTransform: {fileID: 2817744664164276921}
   maxWorkers: 1
+  autoQueue: 0
+  taskType: 0
   requiredResources: []
   showTooltip: 0
   electricityRequired: 0
   taskAnimation: 0
+  inUseParticleSystems: []
+  idleParticleSystems: []
+  inUseAudioSources: []
+  idleAudioSources: []
+  showProgressBar: 1
 --- !u!114 &4170937883672164495
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -145,10 +159,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   workLocationTransform: {fileID: 2817744664164276921}
   maxWorkers: 1
+  autoQueue: 0
+  taskType: 0
   requiredResources: []
   showTooltip: 0
   electricityRequired: 0
   taskAnimation: 5
+  inUseParticleSystems: []
+  idleParticleSystems: []
+  inUseAudioSources: []
+  idleAudioSources: []
+  showProgressBar: 0
   electricityGeneratedPerCycle: 100
   generationInterval: 5
 --- !u!65 &6219236042022673340

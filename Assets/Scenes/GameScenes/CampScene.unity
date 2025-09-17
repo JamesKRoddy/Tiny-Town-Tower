@@ -561,15 +561,30 @@ MonoBehaviour:
   additionalMutationSlots: 3
   maxStamina: 100
   currentStamina: 100
+  baseStaminaDrainInGameHours: 36
+  baseStaminaRegenInGameHours: 8
+  staminaDrainRate: 1
   staminaRegenRate: 5
+  baseFatigueRate: 1
   fatigueRate: 2
+  sleepStaminaRegenMultiplier: 3
+  nightFatigueMultiplier: 1.5
   maxHunger: 100
   currentHunger: 100
+  baseHungerDecreaseInGameHours: 24
   hungerDecreaseRate: 1
   hungerThreshold: 30
   starvationThreshold: 10
   workSpeedMultiplier: 1
   noFoodCooldown: 10
+  isSick: 0
+  baseSicknessChance: 0.001
+  sicknessCheckInterval: 5
+  baseSicknessDurationInGameHours: 6
+  sicknessDuration: 30
+  sickWorkSpeedPenalty: 0.5
+  lowStaminaThreshold: 30
+  veryLowStaminaThreshold: 10
 --- !u!195 &412939991
 NavMeshAgent:
   m_ObjectHideFlags: 0

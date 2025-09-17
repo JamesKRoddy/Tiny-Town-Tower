@@ -433,6 +433,8 @@ namespace Enemies
         {
             if (navMeshTarget == null) return;
             
+            string logPrefix = $"[{gameObject.name}] EnemyBase.UpdateMovement";
+            
             // For root motion zombies, check if we should stop the agent
             if (useRootMotion)
             {
@@ -444,10 +446,13 @@ namespace Enemies
                 float minDistance = 1.0f;
                 bool shouldStop = (distanceToTarget <= effectiveAttackDistance && distanceToTarget >= minDistance) || isAttacking || isRotatingToAttack;
                 
+                bool wasStoppedBefore = agent.isStopped;
+                
                 if (shouldStop)
                 {
                     if (!agent.isStopped)
                     {
+                        Debug.Log($"{logPrefix} - STOPPING AGENT | Distance: {distanceToTarget:F2} | EffectiveAttackDist: {effectiveAttackDistance:F2} | MinDist: {minDistance:F2} | isAttacking: {isAttacking} | isRotatingToAttack: {isRotatingToAttack}");
                         agent.isStopped = true;
                         agent.velocity = Vector3.zero;
                     }
@@ -457,13 +462,27 @@ namespace Enemies
                     // Resume movement when out of attack range or too close
                     if (agent.isStopped)
                     {
+                        Debug.Log($"{logPrefix} - RESUMING AGENT | Distance: {distanceToTarget:F2} | EffectiveAttackDist: {effectiveAttackDistance:F2} | Reason: {(distanceToTarget > effectiveAttackDistance ? "OUT_OF_RANGE" : "TOO_CLOSE")}");
                         agent.isStopped = false;
                     }
+                }
+                
+                // Log significant state changes
+                if (Time.frameCount % 60 == 0) // Every 60 frames
+                {
+                    Debug.Log($"{logPrefix} - Root Motion State | Distance: {distanceToTarget:F2} | ShouldStop: {shouldStop} | isStopped: {agent.isStopped} | Velocity: {agent.velocity.magnitude:F2} | Position: {transform.position} | Target: {navMeshTarget.position}");
                 }
             }
             
             // Update the destination continuously
+            Vector3 previousDestination = agent.destination;
             agent.SetDestination(navMeshTarget.position);
+            
+            // Log destination changes
+            if (Time.frameCount % 90 == 0) // Every 90 frames to reduce spam
+            {
+                Debug.Log($"{logPrefix} - Destination Update | Target: {navMeshTarget.name} | Pos: {navMeshTarget.position} | PrevDest: {previousDestination} | DestChanged: {Vector3.Distance(previousDestination, navMeshTarget.position) > 0.1f} | PathStatus: {agent.pathStatus} | RemainingDistance: {agent.remainingDistance:F2}");
+            }
             
             // Update animation parameters
             UpdateAnimationParameters();
@@ -973,7 +992,7 @@ namespace Enemies
             int shouldDropLoot = UnityEngine.Random.Range(0, 100);
             if (shouldDropLoot < 50)
             {
-                GameManager.Instance.ResourceManager.SpawnCharacterLoot(characterType, DifficultyManager.Instance.GetCurrentWaveDifficulty(), transform.position + Vector3.up * 1.0f);
+                GameManager.Instance.ResourceManager.SpawnCharacterLoot(characterType, GameManager.Instance.DifficultyManager.GetCurrentWaveDifficulty(), transform.position + Vector3.up * 1.0f);
             }
 
             // Play death VFX

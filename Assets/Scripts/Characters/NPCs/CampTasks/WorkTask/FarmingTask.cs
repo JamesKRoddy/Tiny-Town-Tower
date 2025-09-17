@@ -28,13 +28,11 @@ public class FarmingTask : WorkTask
         Clearing
     }
 
-    // Override to ensure task is only complete when no work is needed and no crop to monitor
-    public override bool IsTaskCompleted => currentAction == FarmingAction.None && 
-                                           (!farmBuilding.IsOccupied || farmBuilding.IsDead);
 
     protected override void Start()
     {
         base.Start();
+        taskType = WorkTaskType.Continuous; // Farming is continuous - crops need ongoing care
         farmBuilding = GetComponent<FarmBuilding>();
         if (farmBuilding == null)
         {

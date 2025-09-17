@@ -10,6 +10,7 @@ public class GatherTask : WorkTask
     protected override void Start()
     {
         base.Start();
+        taskType = WorkTaskType.Complete; // Gathering is a one-time task
         baseWorkTime = gatherTime;
     }
     protected override void CompleteWork()

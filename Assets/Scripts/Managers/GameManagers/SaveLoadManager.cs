@@ -1188,13 +1188,13 @@ public class SaveLoadManager : MonoBehaviour
     /// </summary>
     private void SaveProgressionData(Managers.GameProgressionData progressionData)
     {
-        if (Managers.GameProgressionManager.Instance == null)
+        if (GameManager.Instance.GameProgressionManager == null)
         {
             Debug.LogWarning("[SaveLoadManager] GameProgressionManager not found for saving progression data");
             return;
         }
 
-        var currentProgressionData = Managers.GameProgressionManager.Instance.GetProgressionData();
+        var currentProgressionData = GameManager.Instance.GameProgressionManager.GetProgressionData();
         
         // Copy data to the save structure
         progressionData.completedMilestones.Clear();
@@ -1214,7 +1214,7 @@ public class SaveLoadManager : MonoBehaviour
     /// </summary>
     private void LoadProgressionData(Managers.GameProgressionData progressionData)
     {
-        if (Managers.GameProgressionManager.Instance == null)
+        if (GameManager.Instance.GameProgressionManager == null)
         {
             Debug.LogWarning("[SaveLoadManager] GameProgressionManager not found for loading progression data");
             return;
@@ -1226,7 +1226,7 @@ public class SaveLoadManager : MonoBehaviour
             return;
         }
 
-        Managers.GameProgressionManager.Instance.LoadProgressionData(progressionData);
+        GameManager.Instance.GameProgressionManager.LoadProgressionData(progressionData);
         Debug.Log($"[SaveLoadManager] Loaded progression data: {progressionData.completedMilestones?.Count ?? 0} milestones, {progressionData.globalFlags?.Count ?? 0} flags");
     }
 

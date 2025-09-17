@@ -10,6 +10,7 @@ public class StructureRepairTask : WorkTask
     protected override void Start()
     {
         base.Start();
+        taskType = WorkTaskType.Complete; // Repair is a one-time task
         taskAnimation = TaskAnimation.HAMMER_STANDING;
         
         targetStructure = GetComponent<IPlaceableStructure>();

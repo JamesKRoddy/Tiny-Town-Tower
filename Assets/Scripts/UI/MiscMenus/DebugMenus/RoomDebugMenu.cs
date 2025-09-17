@@ -122,9 +122,9 @@ public class RoomDebugMenu : BaseDebugMenu
         }
         
         // Initialize difficulty
-        if (DifficultyManager.Instance != null)
+        if (GameManager.Instance.DifficultyManager != null)
         {
-            DifficultyManager.Instance.InitializeBuildingDifficulty(currentBuildingType, currentDifficulty);
+            GameManager.Instance.DifficultyManager.InitializeBuildingDifficulty(currentBuildingType, currentDifficulty);
         }
         
         // Use BuildingManager's actual room spawning system

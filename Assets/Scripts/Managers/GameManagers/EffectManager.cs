@@ -413,11 +413,9 @@ namespace Managers
                     }
                     
                     maxDuration = Mathf.Max(maxDuration, duration);
-                    Debug.Log($"[EffectManager] ParticleSystem '{ps.name}' duration: {duration}s");
                 }
             }
             
-            Debug.Log($"[EffectManager] Maximum particle duration found: {maxDuration}s across {particleSystems.Length} particle systems");
             return maxDuration;
         }
 
@@ -497,7 +495,6 @@ namespace Managers
                 Debug.LogWarning($"[EffectManager] No status effect definition found for {statusType} on {target.GetCharacterType()}");
                 return;
             } else{
-                Debug.Log($"[EffectManager] Status effect definition found for {statusType} on {target.GetCharacterType()}");
             }
             
             // Initialize status effects dictionary for this target if needed
@@ -568,7 +565,6 @@ namespace Managers
             // Notify target
             target.OnStatusEffectApplied(statusType, activeEffect.duration);
             
-            Debug.Log($"[EffectManager] Applied status effect {statusType} to {target.GetCharacterType()} for {activeEffect.duration}s");
         }
         
         /// <summary>
@@ -596,7 +592,6 @@ namespace Managers
             // Notify target
             target.OnStatusEffectRemoved(statusType);
             
-            Debug.Log($"[EffectManager] Removed status effect {statusType} from {target.GetCharacterType()}");
         }
         
         /// <summary>
@@ -664,7 +659,6 @@ namespace Managers
                 // Check if this is a looping effect
                 if (visualEffect != null && visualEffect.looping)
                 {
-                    Debug.Log($"[EffectManager] Starting looping visual effect for {activeEffect.statusType}");
                     // For looping effects, start the looping coroutine
                     activeEffect.loopingCoroutine = StartCoroutine(HandleLoopingVisualEffect(target, activeEffect));
                 }
@@ -685,8 +679,7 @@ namespace Managers
             // Show floating text
             if (definition.HasFloatingText())
             {
-                // TODO: Implement floating text system or integrate with UI system
-                Debug.Log($"[EffectManager] Status text: {definition.floatingText}");
+                ShowStatusFloatingText(target, definition);
             }
             
             // Apply material modifications
@@ -874,8 +867,8 @@ namespace Managers
                 
                 if (definition.healingPerSecond > 0f)
                 {
-                    // TODO: Implement healing interface or system
-                    Debug.Log($"[EffectManager] Healing {target.GetCharacterType()} for {definition.healingPerSecond}");
+                    var damageable = targetComponent.GetComponent<IDamageable>();
+                    damageable?.Heal(definition.healingPerSecond);
                 }
                 
                 yield return new WaitForSeconds(1f);
@@ -976,6 +969,75 @@ namespace Managers
                 // If we can't return to pool, destroy it to prevent memory leaks
                 Destroy(effectInstance);
             }
+        }
+        
+        /// <summary>
+        /// Show floating text for a status effect
+        /// </summary>
+        private void ShowStatusFloatingText(IStatusEffectTarget target, StatusEffectDefinition definition)
+        {
+            var targetTransform = (target as Component)?.transform;
+            if (targetTransform == null) return;
+            
+            // Determine floating text type based on status effect
+            FloatingTextType textType = GetFloatingTextTypeForStatus(definition.statusType);
+            
+            // Show floating text using PlayerUIManager
+            if (PlayerUIManager.Instance != null)
+            {
+                PlayerUIManager.Instance.ShowFloatingText(targetTransform, definition.floatingText, textType);
+            }
+            else
+            {
+                Debug.LogWarning("[EffectManager] PlayerUIManager not available for floating text display");
+            }
+        }
+        
+        /// <summary>
+        /// Get the appropriate floating text type for a status effect
+        /// </summary>
+        private FloatingTextType GetFloatingTextTypeForStatus(StatusEffectType statusType)
+        {
+            // Map status effects to floating text types
+            return statusType switch
+            {
+                // Error states (damaging/harmful)
+                StatusEffectType.POISONED => FloatingTextType.Error,
+                StatusEffectType.BURNING => FloatingTextType.Error,
+                StatusEffectType.ON_FIRE => FloatingTextType.Error,
+                StatusEffectType.BLEEDING => FloatingTextType.Error,
+                StatusEffectType.SICK => FloatingTextType.Error,
+                StatusEffectType.STARVING => FloatingTextType.Error,
+                StatusEffectType.EXHAUSTED => FloatingTextType.Error,
+                StatusEffectType.CORRODED => FloatingTextType.Error,
+                StatusEffectType.ELECTROCUTED => FloatingTextType.Error,
+                StatusEffectType.SHOCKED => FloatingTextType.Error,
+                
+                // Warning states (temporary issues)
+                StatusEffectType.FROZEN => FloatingTextType.Warning,
+                StatusEffectType.STUNNED => FloatingTextType.Warning,
+                StatusEffectType.CONFUSED => FloatingTextType.Warning,
+                StatusEffectType.FEARED => FloatingTextType.Warning,
+                StatusEffectType.HUNGRY => FloatingTextType.Warning,
+                StatusEffectType.TIRED => FloatingTextType.Warning,
+                StatusEffectType.WET => FloatingTextType.Warning,
+                StatusEffectType.VULNERABLE => FloatingTextType.Warning,
+                StatusEffectType.WEAKENED => FloatingTextType.Warning,
+                StatusEffectType.SLOWED => FloatingTextType.Warning,
+                
+                // Success states (beneficial)
+                StatusEffectType.HEALING => FloatingTextType.Success,
+                StatusEffectType.REGENERATING => FloatingTextType.Success,
+                StatusEffectType.HASTENED => FloatingTextType.Success,
+                StatusEffectType.STRENGTHENED => FloatingTextType.Success,
+                StatusEffectType.PROTECTED => FloatingTextType.Success,
+                StatusEffectType.BUFFED => FloatingTextType.Success,
+                StatusEffectType.SHIELDED => FloatingTextType.Success,
+                StatusEffectType.HEALTHY => FloatingTextType.Success,
+                
+                // Normal states
+                _ => FloatingTextType.Normal
+            };
         }
         
         #endregion

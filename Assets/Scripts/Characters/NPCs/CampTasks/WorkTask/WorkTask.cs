@@ -5,11 +5,34 @@ using System.Collections.Generic;
 using System.Linq;
 using Managers;
 
+/// <summary>
+/// Defines the type of work task and its completion behavior
+/// </summary>
+public enum WorkTaskType
+{
+    /// <summary>
+    /// Task completes once and is marked as done (e.g., construction, gathering)
+    /// </summary>
+    Complete,
+    
+    /// <summary>
+    /// Task processes a queue of items and completes when queue is empty (e.g., cooking, research)
+    /// </summary>
+    Queued,
+    
+    /// <summary>
+    /// Task runs continuously and never completes (e.g., electricity generation, medical treatment)
+    /// </summary>
+    Continuous
+}
+
 public abstract class WorkTask : MonoBehaviour
 {
     [Header("Task Settings")]
     [SerializeField] protected Transform workLocationTransform; // Optional specific work location
     [SerializeField] protected int maxWorkers = 1; // Maximum number of workers that can be assigned to this task
+    [SerializeField] protected bool autoQueue = false; // Whether this task should be automatically added to the work queue for NPCs to pick up
+    [SerializeField, ReadOnly] protected WorkTaskType taskType = WorkTaskType.Complete; // Type of work task determining completion behavior
     protected List<HumanCharacterController> currentWorkers = new List<HumanCharacterController>(); // List of NPCs performing this task
     [HideInInspector] public ResourceItemCount[] requiredResources; // Resources needed to perform this task
     [SerializeField] protected bool showTooltip = false; // Whether to show tooltips for this task
@@ -41,6 +64,11 @@ public abstract class WorkTask : MonoBehaviour
     protected float baseWorkTime = 5f;
     protected int resourceAmount = 1;
 
+    // Progress bar settings
+    [Header("Progress Display")]
+    [SerializeField] protected bool showProgressBar = true; // Whether to show progress bar for this task
+    protected bool progressBarActive = false;
+
     // Properties to access the assigned NPCs
     public List<HumanCharacterController> AssignedNPCs => currentWorkers;
     public HumanCharacterController AssignedNPC => currentWorkers.Count > 0 ? currentWorkers[0] : null; // For backward compatibility
@@ -49,10 +77,28 @@ public abstract class WorkTask : MonoBehaviour
     public int CurrentWorkerCount => currentWorkers.Count;
     public int MaxWorkerCount => maxWorkers;
     public bool IsMultiWorkerTask => maxWorkers > 1;
-    public virtual bool IsTaskCompleted => true; // Base WorkTask is always completed when done
+    public bool IsAutoQueued => autoQueue;
+    public virtual bool IsTaskCompleted
+    {
+        get
+        {
+            switch (taskType)
+            {
+                case WorkTaskType.Complete:
+                    return workProgress >= baseWorkTime;
+                case WorkTaskType.Queued:
+                    return !HasQueuedTasks && workProgress >= baseWorkTime;
+                case WorkTaskType.Continuous:
+                    return false; // Continuous tasks never complete
+                default:
+                    return workProgress >= baseWorkTime;
+            }
+        }
+    }
+    
     public virtual bool HasQueuedTasks => false; // Base WorkTask has no queue
 
-    private IPlaceableStructure taskStructure;
+    protected IPlaceableStructure taskStructure;
 
     protected virtual void Start()
     {
@@ -110,9 +156,23 @@ public abstract class WorkTask : MonoBehaviour
         }
         
         // Start in-use ambient effects when work actually begins (NPC has arrived and is starting work)
-        if (currentWorkers.Count == 1) // First worker starting work
+        // Show progress bar when the first worker calls PerformTask, regardless of how many workers are already assigned
+        if (!progressBarActive) // Only show progress bar once
         {
+            Debug.Log($"[WorkTask] Starting work for {GetType().Name} - progressBarActive: {progressBarActive}, showProgressBar: {showProgressBar}");
             SetAmbientEffectsState(true);
+            
+            // Show progress bar if enabled and manager exists
+            if (showProgressBar && CampManager.Instance?.WorkManager != null)
+            {
+                Debug.Log($"[WorkTask] Showing progress bar for {GetType().Name}");
+                CampManager.Instance.WorkManager.ShowProgressBar(this);
+                progressBarActive = true;
+            }
+        }
+        else
+        {
+            Debug.Log($"[WorkTask] Progress bar already active for {GetType().Name}, skipping show");
         }
         
         // Work execution is now handled by the worker's coroutine started in AssignNPC
@@ -225,7 +285,11 @@ public abstract class WorkTask : MonoBehaviour
 
     protected void AddWorkTask()
     {
-        CampManager.Instance.WorkManager.AddWorkTask(this);
+        // Only add to work queue if autoQueue is enabled
+        if (autoQueue)
+        {
+            CampManager.Instance.WorkManager.AddWorkTask(this);
+        }
     }
 
     // Helper method to trigger the event safely (other classes can call this to invoke StopWork)
@@ -237,17 +301,22 @@ public abstract class WorkTask : MonoBehaviour
     // Method to assign an NPC to this task
     public bool AssignNPC(HumanCharacterController npc)
     {
+        Debug.Log($"[WorkTask] AssignNPC called for {GetType().Name} - NPC: {npc.name}, currentWorkers: {currentWorkers.Count}, maxWorkers: {maxWorkers}");
+        
         if (currentWorkers.Contains(npc))
         {
+            Debug.Log($"[WorkTask] NPC {npc.name} already assigned to {GetType().Name}");
             return false; // Already assigned
         }
         
         if (currentWorkers.Count >= maxWorkers)
         {
+            Debug.Log($"[WorkTask] Task {GetType().Name} is full, cannot assign {npc.name}");
             return false; // Task is full
         }
         
         currentWorkers.Add(npc);
+        Debug.Log($"[WorkTask] Assigned {npc.name} to {GetType().Name}, currentWorkers: {currentWorkers.Count}");
         
         if (taskStructure != null)
         {
@@ -397,8 +466,16 @@ public abstract class WorkTask : MonoBehaviour
         // Advance work progress
         workProgress += workDelta;
         
-        // Check if work is complete
-        if (workProgress >= baseWorkTime)
+        // Update progress bar if active
+        if (progressBarActive && CampManager.Instance?.WorkManager != null)
+        {
+            float progressPercentage = workProgress / baseWorkTime;
+            WorkTaskProgressState state = finalWorkSpeed <= 0 ? WorkTaskProgressState.Paused : WorkTaskProgressState.Normal;
+            CampManager.Instance.WorkManager.UpdateProgress(this, progressPercentage, state);
+        }
+        
+        // Check if work is complete (only for non-continuous tasks)
+        if (taskType != WorkTaskType.Continuous && workProgress >= baseWorkTime)
         {
             workProgress = baseWorkTime;
             CompleteWork();
@@ -411,14 +488,10 @@ public abstract class WorkTask : MonoBehaviour
     // Virtual method for completing work that can be overridden
     protected virtual void CompleteWork()
     {
-        Debug.Log($"[WorkTask] CompleteWork called for {GetType().Name}");
-        Debug.Log($"[WorkTask] Current workers count: {currentWorkers.Count}");
-        
         // Store the first worker as previous worker before clearing (for backward compatibility)
         if (currentWorkers.Count > 0)
         {
             CampManager.Instance.WorkManager.StorePreviousWorker(this, currentWorkers[0]);
-            Debug.Log($"[WorkTask] Stored previous worker: {currentWorkers[0].name}");
         }
         
         // Reset state
@@ -426,18 +499,27 @@ public abstract class WorkTask : MonoBehaviour
         
         // Stop all workers from working on this task
         var workersToStop = new List<HumanCharacterController>(currentWorkers);
-        Debug.Log($"[WorkTask] About to stop {workersToStop.Count} workers");
         
         foreach (var worker in workersToStop)
         {
-            Debug.Log($"[WorkTask] Stopping work for {worker.name} (Type: {worker.GetType().Name})");
             worker.StopWork();
-            Debug.Log($"[WorkTask] StopWork() called for {worker.name}");
         }
         
         // Clear all workers
         currentWorkers.Clear();
-        Debug.Log($"[WorkTask] Cleared all workers, count now: {currentWorkers.Count}");
+        
+        // Remove this task from the work queue now that it's completed
+        if (autoQueue)
+        {
+            CampManager.Instance.WorkManager.RemoveTaskFromQueue(this);
+        }
+        
+        // Hide progress bar when work is complete
+        if (progressBarActive && CampManager.Instance?.WorkManager != null)
+        {
+            CampManager.Instance.WorkManager.HideProgressBar(this);
+            progressBarActive = false;
+        }
         
         // Switch back to idle effects when work is complete
         if (isOperational)
@@ -496,6 +578,13 @@ public abstract class WorkTask : MonoBehaviour
             if (!isOperational)
             {
                 Debug.Log($"[WorkTask] {GetType().Name} becoming non-operational, stopping all workers");
+                
+                // Hide progress bar when becoming non-operational
+                if (progressBarActive && CampManager.Instance?.WorkManager != null)
+                {
+                    CampManager.Instance.WorkManager.HideProgressBar(this);
+                    progressBarActive = false;
+                }
                 
                 // Stop all ambient effects when becoming non-operational
                 StopAmbientEffects(inUseParticleSystems, inUseAudioSources);

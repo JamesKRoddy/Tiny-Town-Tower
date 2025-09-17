@@ -15,19 +15,19 @@ MonoBehaviour:
   objectName: House Lvl 1
   description: House Lvl 1 desc
   sprite: {fileID: 0}
+  category: 0
+  rarity: 0
+  isUnlocked: 1
   _resourceCost: []
-  prefab: {fileID: 147044, guid: 60eaacb9ed4eea74c9348107646b92a4, type: 3}
+  prefab: {fileID: 147044, guid: 1c6096afa8cc6fc4f98e7c5d54f4a5e1, type: 3}
   size: {x: 3, y: 3}
-  buildingCategory: 0
-  constructionTime: 1
+  placeableObjectCategory: 0
   maxHealth: 100
-  repairTime: 5
+  repairTimeInGameHours: 2
   healthRestoredPerRepair: 50
   repairResources: []
+  constructionTimeInGameHours: 1
   upgradeTarget: {fileID: 0}
-  upgradeTime: 30
   upgradeResources: []
-  destructionPrefab: {fileID: 0}
-  destructionTime: 5
+  destructionTimeInGameHours: 0.5
   reclaimedResources: []
-  taskRadius: 2

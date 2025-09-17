@@ -12,29 +12,6 @@ namespace Managers
     /// </summary>
     public class GameProgressionManager : MonoBehaviour
     {
-        #region Singleton
-        private static GameProgressionManager _instance;
-        public static GameProgressionManager Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<GameProgressionManager>();
-                    if (_instance == null)
-                    {
-                        // Create one if it doesn't exist
-                        GameObject progressionManager = new GameObject("GameProgressionManager");
-                        _instance = progressionManager.AddComponent<GameProgressionManager>();
-                        DontDestroyOnLoad(progressionManager);
-                        Debug.Log("[GameProgressionManager] Created new instance");
-                    }
-                }
-                return _instance;
-            }
-        }
-        #endregion
-
         [Header("Progression Tracking")]
         [SerializeField] private bool debugLogging = true;
         [SerializeField] private List<ProgressionMilestone> milestones = new List<ProgressionMilestone>();
@@ -47,20 +24,6 @@ namespace Managers
         // Events
         public event Action<ProgressionMilestone> OnMilestoneCompleted;
         public event Action<string, string> OnGlobalFlagChanged;
-
-        private void Awake()
-        {
-            if (_instance == null)
-            {
-                _instance = this;
-                DontDestroyOnLoad(gameObject);
-                InitializeProgressionSystem();
-            }
-            else if (_instance != this)
-            {
-                Destroy(gameObject);
-            }
-        }
 
         private void InitializeProgressionSystem()
         {

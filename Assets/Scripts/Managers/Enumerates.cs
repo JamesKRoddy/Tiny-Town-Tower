@@ -191,6 +191,19 @@ public enum PlayerControlType
 }
 
 // =========================
+// INPUT DEVICE ENUMS
+// =========================
+
+/// <summary>
+/// Defines the type of input device being used
+/// </summary>
+public enum InputDeviceType
+{
+    MOUSE_KEYBOARD = 0,
+    CONTROLLER = 1
+}
+
+// =========================
 // GAME MODE AND ROOM SETUP ENUMS
 // =========================
 
@@ -468,4 +481,15 @@ public enum StatusEffectBehavior
 // =========================
 // MISCELLANEOUS ENUMS
 // =========================
+
+/// <summary>
+/// Types of floating text for different visual styles
+/// </summary>
+public enum FloatingTextType
+{
+    Normal,
+    Warning,
+    Error,
+    Success
+}
 

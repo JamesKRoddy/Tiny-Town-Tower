@@ -128,6 +128,32 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
         {
             string baseDescription = settler.SettlerDescription;
             
+            // Add stats and status information
+            baseDescription += "\n\nStats & Status:";
+            
+            // Health status
+            var healthStatus = settler.GetHealthStatus();
+            string healthStatusText = GetHealthStatusText(healthStatus);
+            baseDescription += $"\n• Health: {healthStatusText}";
+            
+            // Stamina
+            baseDescription += $"\n• Stamina: {settler.currentStamina:F0}/{settler.maxStamina:F0}";
+            
+            // Hunger (if hunger system is enabled)
+            if (!CampDebugMenu.DisableHungerSystem)
+            {
+                string hungerStatus = GetHungerStatusText(settler);
+                baseDescription += $"\n• Hunger: {hungerStatus}";
+            }
+            
+            // Work status
+            string workStatus = GetWorkStatusText(settler);
+            baseDescription += $"\n• Work Status: {workStatus}";
+            
+            // Current task
+            string currentTask = GetCurrentTaskText(settler);
+            baseDescription += $"\n• Current Task: {currentTask}";
+            
             // Add characteristics descriptions if any exist
             if (settler.characteristicSystem != null && settler.characteristicSystem.EquippedCharacteristics.Count > 0)
             {
@@ -144,6 +170,80 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
             return baseDescription;
         }
         return string.Empty;
+    }
+    
+    private string GetHealthStatusText(HealthStatus healthStatus)
+    {
+        switch (healthStatus)
+        {
+            case HealthStatus.Healthy:
+                return "Healthy";
+            case HealthStatus.Hungry:
+                return "Hungry";
+            case HealthStatus.Starving:
+                return "Starving";
+            case HealthStatus.Tired:
+                return "Tired";
+            case HealthStatus.Exhausted:
+                return "Exhausted";
+            case HealthStatus.Sick:
+                return "Sick";
+            default:
+                return "Unknown";
+        }
+    }
+    
+    private string GetHungerStatusText(SettlerNPC settler)
+    {
+        if (settler.IsStarving())
+            return "Starving";
+        else if (settler.IsHungry())
+            return "Hungry";
+        else
+            return "Well Fed";
+    }
+    
+    private string GetWorkStatusText(SettlerNPC settler)
+    {
+        if (settler.HasAssignedWorkTask)
+        {
+            var workTask = settler.GetAssignedWork();
+            if (workTask != null)
+            {
+                string taskName = workTask.GetType().Name.Replace("Task", "");
+                if (settler.IsOnBreak)
+                    return $"On Break from {taskName}";
+                else
+                    return $"Assigned to {taskName}";
+            }
+        }
+        return "No Work Assignment";
+    }
+    
+    private string GetCurrentTaskText(SettlerNPC settler)
+    {
+        var currentTask = settler.GetCurrentTaskType();
+        switch (currentTask)
+        {
+            case TaskType.WORK:
+                return "Working";
+            case TaskType.WANDER:
+                return "Wandering";
+            case TaskType.EAT:
+                return "Eating";
+            case TaskType.SLEEP:
+                return "Sleeping";
+            case TaskType.ATTACK:
+                return "Attacking";
+            case TaskType.FLEE:
+                return "Fleeing";
+            case TaskType.SHELTERED:
+                return "Sheltered";
+            case TaskType.MEDICAL_TREATMENT:
+                return "Receiving Medical Treatment";
+            default:
+                return "Idle";
+        }
     }
 
     public override IEnumerable<(string resourceName, int requiredCount, int playerCount)> GetPreviewResourceCosts(HumanCharacterController item)

@@ -105,8 +105,6 @@ public class CharacterAnimationEvents : MonoBehaviour
 
     public void PlayTaskAnimationEffect(string taskAnimationEnum)
     {
-        Debug.Log($"Playing task animation effect for {taskAnimationEnum}");
-        
         // If string is empty, get TaskAnimation from the current WorkTask
         if (string.IsNullOrEmpty(taskAnimationEnum))
         {

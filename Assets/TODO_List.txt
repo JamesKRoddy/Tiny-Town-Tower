@@ -17,37 +17,23 @@ They can increase chances of recovery by not working or even better receiving tr
 
 Tomorrow work:
 
+Enviromental hazzards in the roguelike section enviromental hazzards, electrical/acid etc.
 
-Create debug menu that controls the in game time to fast forward game time
+Add in some poise damage for enemy and player attacks which dictate if knockback animation should play
 
+Need some close range attacks for ranged zombies
 
+Visual effects from elemental weapons eg. zombies get shocked by electrical weapon, they freeze and particles are emitted.
+
+VFX for player
+
+Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
 
 
 Bugs and refactoring:
-Add a visual queue for when a settler is starving, sleeping, tired, sick
-The TimeDisplayUI has a CanvasGroup used to affect ui elements as a group maybe use in other places? Can be used to make elements not interactable use this on the building, cooking etc menus!!
-The game manager should have references to the managers childed to it, they shouldn't be singletons
-If you create a second construction site not all npcs move onto the second one after completing the first, think its because the task has been marked as occupied
-Pressing b after selecting a bed locks the controls
-Refactor the rest of the _TaskState to reduce repetition of code
-Still some issue with the melee zombie bugging out between hits while being close to the player
-Sometimes 2 npcs can sleep in the same bed unassigned bed
-Time manager is running in the main menu
-Research upgrade, cooking and research not progressing correctly (add a progress bar or something to see how its progressing)
-NPCs not returning to work after sleeping
-Switching between mouse and controller controls on the fly
-Destroying a building freezes the npcs and they just keep working for some reason
-
+PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
 
 Errors:
-Building prefab AI_Prop_Makeshift_Tent_02 must have a Building component!
-UnityEngine.Debug:LogError (object)
-StructureConstructionTask:CompleteWork () (at Assets/Scripts/Characters/NPCs/CampTasks/WorkTask/StructureConstructionTask.cs:86)
-WorkTask:DoWork (HumanCharacterController,single) (at Assets/Scripts/Characters/NPCs/CampTasks/WorkTask/WorkTask.cs:366)
-WorkState:StartTaskIfReady () (at Assets/Scripts/Characters/NPCs/CampTasks/WorkState.cs:181)
-WorkState:HandleReachedTask () (at Assets/Scripts/Characters/NPCs/CampTasks/WorkState.cs:162)
-WorkState:UpdateState () (at Assets/Scripts/Characters/NPCs/CampTasks/WorkState.cs:114)
-SettlerNPC:Update () (at Assets/Scripts/Characters/NPCs/SettlerNPC.cs:781)
 
 
 
@@ -60,16 +46,11 @@ Time of day
 ******Stuff for later******
 
 
-
-VFX for player
-
 NPCs have to use toilets, need to figure out timers for when they need it
 
 Repairing buildings: wait until damage is finished
 
 SaveLoadManager, have to implement saving/loading research, player data?, other player data for camp?, building data, cleaness and electricity, manager data? (? just means the ai put TODO there but not sure exactly what it means or what data is needed)
-
-Enviromental hazzards in the roguelike section enviromental hazzards, electrical/acid etc.
 
 Filling out the overworld, having more options of buildings to select.
 
@@ -77,21 +58,18 @@ Create more room/building prefabs
 
 Filling out sound and VFX
 
-Visual effects from elemental weapons eg. zombies get shocked by electrical weapon, they freeze and particles are emitted.
-
-Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
-
-Figure out what happens time wise in the camp while youre gone, does progress on stuff freeze? Does it keep going or does it progress but slower?
-
 Status effects, adding sleep, work etc effects to npcs Also damage ones like fire electric, poison etc. Effects for work task buildings (camp fire smoke etc.)
+
 Test upgrade and destruction effects for buildings
 
 
 *****Ideas*****
 
 Enemies
+Slower animations for injured enemies
 
 Mutations
+One that shows enemies life bars
 
 Research
 Unlock vaulting and dash for roguelike to increase movement options

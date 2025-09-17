@@ -10,6 +10,7 @@ public class StructureUpgradeTask : WorkTask
     protected override void Start()
     {
         base.Start();
+        taskType = WorkTaskType.Complete; // Upgrade is a one-time task
         taskAnimation = TaskAnimation.HAMMER_STANDING;
     }
 
