@@ -15,9 +15,11 @@ Settlers not treated will die, recover or turn to zombies eventually (this is ju
 They can increase chances of recovery by not working or even better receiving treatment.
 
 
-Tomorrow work:
+****** Tomorrow work:
 
-Enviromental hazzards in the roguelike section enviromental hazzards, electrical/acid etc.
+Player climb up onto objects to get out of damage pools
+
+****** Next work:
 
 Add in some poise damage for enemy and player attacks which dictate if knockback animation should play
 
@@ -30,15 +32,17 @@ VFX for player
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
 
 
-Bugs and refactoring:
+****** Bugs and refactoring:
+
 PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
 
-Errors:
+****** Errors:
 
 
 
 
-Add to save load manager:
+****** Add to save load manager:
+
 Construction, repair and destruction sites
 Time of day
 
