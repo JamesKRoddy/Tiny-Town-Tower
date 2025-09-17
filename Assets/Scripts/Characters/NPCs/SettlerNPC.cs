@@ -27,6 +27,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     private WorkTask assignedWorkTask; // Track the assigned work task
     public bool HasAssignedWorkTask => assignedWorkTask != null;
     private bool isOnBreak = false; // Track if NPC is on break
+    public bool IsOnBreak => isOnBreak; // Public property to access break status
     // Removed workTaskBeforeSleep - using assignedWorkTask is sufficient
 
     [Header("Initialization Control")]
