@@ -59,6 +59,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public LayerMask groundLayers = 1; // Layers to consider as ground (default to default layer)
     public float terminalVelocity = 20f; // Maximum falling speed
     public float maxFallDistance = 100f; // Maximum distance to fall before stopping (prevents endless drops)
+    public float fallingMovementMultiplier = 0.2f; // Movement speed multiplier when falling (0.2 = 20% speed)
     private Vector3 gravityVelocity = Vector3.zero; // Current gravity velocity
     private bool isGrounded = true; // Whether character is currently grounded
 
@@ -112,6 +113,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private Vector3 climbTargetPosition; // Target position for climbing (top of obstacle)
     private Vector3 climbExactFinalPosition; // Exact final position on the platform surface
     private float climbCooldownTime = 0f; // Timer for climb cooldown
+    private float climbLandingDelay = 0.1f; // Brief delay after landing before returning control
+    private bool isClimbLanding = false; // Whether we're in the landing delay phase
 
     [Header("Push State")]
     private PushableObject currentPushTarget = null; // The object currently being pushed
@@ -187,6 +190,23 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             return;
         }
         
+        // Handle climb landing delay
+        if (isClimbLanding)
+        {
+            if (Time.time >= climbCooldownTime - climbCooldown + climbLandingDelay)
+            {
+                isClimbLanding = false;
+                Debug.Log($"[Climb] {gameObject.name}: Landing delay complete - control returned to player");
+            }
+            else
+            {
+                // During landing delay, only apply gravity and update animations, but no movement
+                ApplyGravity();
+                UpdateAnimations();
+                return;
+            }
+        }
+        
         HandleDash();
         ApplyGravity(); // Apply gravity before movement
         MoveCharacter();
@@ -259,7 +279,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void Attack()
     {
-        if (!isDashing && !isVaulting && !isPushing && !isClimbing && characterInventory.equippedWeaponScriptObj != null)
+        if (!isDashing && !isVaulting && !isPushing && !isClimbing && !isClimbLanding && characterInventory.equippedWeaponScriptObj != null)
         {
             isAttacking = true;
             animator.SetBool("LightAttack", true);
@@ -268,7 +288,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void Dash()
     {
-        if (!isDashing && !isVaulting && !isPushing && !isClimbing && Time.time > dashCooldownTime && Time.time > vaultCooldownTime && movementInput.magnitude > 0.1f)
+        if (!isDashing && !isVaulting && !isPushing && !isClimbing && !isClimbLanding && Time.time > dashCooldownTime && Time.time > vaultCooldownTime && movementInput.magnitude > 0.1f)
         {
             StopAttacking(); // Ensure player stops attacking when dashing
 
@@ -555,8 +575,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         dashTime = 0f; // Reset dash timer
         dashCooldownTime = 0f; // Reset dash cooldown
         
-        // Reset gravity velocity when starting climb
+        // Reset gravity velocity when starting climb and mark as grounded to prevent falling
         ResetGravityVelocity();
+        isGrounded = true; // Prevent gravity from affecting us during climb
         
         climbTime = Time.time + climbDuration;
         climbStartPosition = transform.position; // Store starting position for lerp
@@ -573,7 +594,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         }
         
         // Trigger climb animation (use vault animation as fallback since climb animation might not exist)
-        animator.SetTrigger("IsVaulting");
+        animator.SetTrigger("IsClimbing");
         
         humanCollider.enabled = false; // Disable the player's collider to avoid collision during climbing
     }
@@ -585,7 +606,14 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Teleport to the exact final position on the platform
         transform.position = climbExactFinalPosition;
         
+        // Move slightly forward to ensure we're well positioned on the platform
+        Vector3 forwardDirection = (climbTargetPosition - climbStartPosition).normalized;
+        forwardDirection.y = 0; // Keep movement horizontal
+        Vector3 landingPosition = climbExactFinalPosition + forwardDirection * 0.2f; // Move 0.2 units forward
+        transform.position = landingPosition;
+        
         isClimbing = false;
+        isClimbLanding = true; // Start landing delay phase
         climbCooldownTime = Time.time + climbCooldown; // Set climb cooldown
         humanCollider.enabled = true; // Re-enable the player's collider
         
@@ -600,6 +628,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             animator.applyRootMotion = true;
         }
+        
+        Debug.Log($"[Climb] {gameObject.name}: Landing delay started - will return control in {climbLandingDelay}s");
     }
 
     #endregion
@@ -1253,6 +1283,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             climbProgress = Mathf.Clamp01(climbProgress); // Ensure progress stays between 0 and 1
             
             // Lerp position from start to the exact final position (upward movement)
+            // This is purely time-based and ignores any input movement
             transform.position = Vector3.Lerp(climbStartPosition, climbExactFinalPosition, climbProgress);
             
             // Keep facing the same direction during climb
@@ -1265,10 +1296,19 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 FinishClimb();
             }
         }
-        else
+        else if (!isClimbing && !isClimbLanding) // Only allow normal movement when not climbing or in landing delay
         {
             float inputMagnitude = movementInput.magnitude;
-            float speed = isDashing ? dashSpeed : moveMaxSpeed;
+            float baseSpeed = isDashing ? dashSpeed : moveMaxSpeed;
+            
+            // Reduce movement speed when falling due to gravity
+            float movementMultiplier = 1.0f;
+            if (enableGravity && !isGrounded && gravityVelocity.y < 0)
+            {
+                movementMultiplier = fallingMovementMultiplier;
+            }
+            
+            float speed = baseSpeed * movementMultiplier;
             float currentRotationSpeed = (isAttacking || isDamaged) ? attackRotationSpeed : rotationSpeed;
 
             // If dashing, smoothly change direction
@@ -1485,7 +1525,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                     isDashing = false;
                 }
             }
-        }
+        } // End of else if (!isClimbing) block
         
         // Reset push state if player stops trying to push
         ResetPushState();
