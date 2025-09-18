@@ -1787,6 +1787,18 @@ MonoBehaviour:
   obstacleAnalysisRange: 1.5
   heightCheckRayCount: 5
   autoNavigateObstacles: 1
+  maxClimbHeight: 1.8
+  climbDuration: 0.4
+  climbCooldown: 0.5
+  climbCheckDistance: 0.5
+  enableGravity: 1
+  gravity: 9.81
+  groundCheckDistance: 0.1
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 1
+  terminalVelocity: 20
+  maxFallDistance: 100
   health: 100
   maxHealth: 100
   damageCooldown: 0.5
