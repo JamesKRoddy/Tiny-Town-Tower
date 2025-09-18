@@ -60,8 +60,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public float terminalVelocity = 20f; // Maximum falling speed
     public float maxFallDistance = 100f; // Maximum distance to fall before stopping (prevents endless drops)
     public float fallingMovementMultiplier = 0.2f; // Movement speed multiplier when falling (0.2 = 20% speed)
+    public float fallingMomentumMultiplier = 0.8f; // How much horizontal momentum to retain when falling (0.8 = 80% of original speed)
     private Vector3 gravityVelocity = Vector3.zero; // Current gravity velocity
     private bool isGrounded = true; // Whether character is currently grounded
+    private Vector3 fallingMomentum = Vector3.zero; // Horizontal momentum to apply when falling
 
     // Automatic obstacle navigation: analyzes height to determine WalkOver, Vault, or TooHigh
     // RollUnder and Block types only come from ObstacleVaultBehavior components
@@ -1286,8 +1288,14 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             // This is purely time-based and ignores any input movement
             transform.position = Vector3.Lerp(climbStartPosition, climbExactFinalPosition, climbProgress);
             
-            // Keep facing the same direction during climb
-            // (No rotation changes during climb to maintain stability)
+            // Rotate to face the climb direction during climb (same as vaulting)
+            Vector3 climbDirection = (climbTargetPosition - climbStartPosition).normalized;
+            climbDirection.y = 0; // Keep rotation horizontal
+            if (climbDirection != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(climbDirection);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            }
             
             // End climb when duration is complete
             if (Time.time >= climbTime)
@@ -1642,11 +1650,21 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         bool wasGrounded = isGrounded;
         isGrounded = CheckGrounded();
 
-        // If we just landed, reset gravity velocity
+        // If we just landed, reset gravity velocity and momentum
         if (isGrounded && !wasGrounded)
         {
             gravityVelocity = Vector3.zero;
+            fallingMomentum = Vector3.zero;
             return;
+        }
+        
+        // If we just became airborne, capture current movement momentum
+        if (!isGrounded && wasGrounded)
+        {
+            // Store the current movement input as falling momentum
+            fallingMomentum = movementInput * moveMaxSpeed * fallingMomentumMultiplier;
+            fallingMomentum.y = 0; // Only horizontal momentum
+            Debug.Log($"[Gravity] {gameObject.name}: Became airborne, captured momentum: {fallingMomentum}");
         }
 
         // Apply gravity when not grounded
@@ -1656,6 +1674,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             if (!HasGroundWithinMaxFallDistance())
             {
                 gravityVelocity = Vector3.zero;
+                fallingMomentum = Vector3.zero;
                 return;
             }
             
@@ -1665,9 +1684,19 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             // Clamp to terminal velocity
             gravityVelocity.y = Mathf.Max(gravityVelocity.y, -terminalVelocity);
             
-            // Apply gravity movement
+            // Apply gravity movement and falling momentum
             Vector3 gravityMovement = gravityVelocity * Time.deltaTime;
-            transform.position += gravityMovement;
+            Vector3 momentumMovement = fallingMomentum * Time.deltaTime;
+            transform.position += gravityMovement + momentumMovement;
+            
+            // Gradually reduce falling momentum over time for more realistic physics
+            fallingMomentum *= 0.98f; // Reduce momentum by 2% each frame
+            
+            // Stop applying momentum if it becomes too small
+            if (fallingMomentum.magnitude < 0.1f)
+            {
+                fallingMomentum = Vector3.zero;
+            }
             
         }
         else
