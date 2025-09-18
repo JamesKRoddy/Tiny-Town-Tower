@@ -17,7 +17,7 @@ They can increase chances of recovery by not working or even better receiving tr
 
 ****** Tomorrow work:
 
-Player climb up onto objects to get out of damage pools
+So climbing/falling working in camp. Isnt working in the toxic pools though so have to figure that out. Think its because the plane under it causes issues
 
 ****** Next work:
 
