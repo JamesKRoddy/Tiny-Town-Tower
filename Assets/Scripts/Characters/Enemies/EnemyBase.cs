@@ -70,6 +70,12 @@ namespace Enemies
         [SerializeField] private float health = 100f;
         [SerializeField] private float maxHealth = 100f;
 
+        [Header("Poise Settings")]
+        [SerializeField] private float poise = 50f;
+        [SerializeField] private float maxPoise = 50f;
+        [SerializeField] private float poiseRecoveryRate = 10f; // Poise recovered per second
+        [SerializeField] private float poiseRecoveryDelay = 2f; // Delay before poise starts recovering
+
 
 
         #endregion
@@ -105,11 +111,22 @@ namespace Enemies
             get => maxHealth;
             set => maxHealth = value;
         }
+        public float Poise
+        {
+            get => poise;
+            set => poise = Mathf.Clamp(value, 0, maxPoise);
+        }
+        public float MaxPoise
+        {
+            get => maxPoise;
+            set => maxPoise = value;
+        }
         public CharacterType CharacterType => characterType;
         public Allegiance GetAllegiance() => Allegiance.HOSTILE;
 
         public event Action<float, float> OnDamageTaken;
         public event Action<float, float> OnHeal;
+        public event Action<float, float> OnPoiseBroken;
         public event Action OnDeath;
         public static event System.Action<Transform> OnTargetDestroyedEvent;
 
@@ -127,6 +144,10 @@ namespace Enemies
 
         private float lastTargetSearchTime = 0f;
         private float targetSearchInterval = 3f; // Check for new targets every 3 seconds
+
+        // Poise recovery fields
+        private float lastPoiseDamageTime = 0f;
+        private bool isPoiseBroken = false;
 
         #endregion
 
@@ -149,8 +170,15 @@ namespace Enemies
             // Subscribe to target destroyed events
             OnTargetDestroyedEvent += OnTargetDestroyed;
             
-            // Initialize health
+            // Initialize health and poise
             Health = maxHealth;
+            Poise = maxPoise;
+            
+            // Apply character type-specific poise configuration if using defaults
+            if (Mathf.Approximately(maxPoise, 50f)) // Check if using default value
+            {
+                ApplyCharacterTypePoiseConfig();
+            }
             
             // Find initial target
             FindNewTarget();
@@ -195,6 +223,9 @@ namespace Enemies
 
             // Periodically check if current target is still reachable
             CheckTargetReachability();
+
+            // Update poise recovery
+            UpdatePoiseRecovery();
 
             if (!isAttacking)
             {
@@ -761,6 +792,54 @@ namespace Enemies
             return NavigationUtils.RotateTowardsTargetForAction(transform, navMeshTarget, rotationSpeed, ROTATION_TOWARDS_TARGET_SPEED_MULTIPLIER, ATTACK_READY_ANGLE_THRESHOLD, true);
         }
 
+        /// <summary>
+        /// Checks if the enemy is currently in a poise-broken state
+        /// </summary>
+        /// <returns>True if poise is broken and enemy should be stunned</returns>
+        protected bool IsPoiseBroken()
+        {
+            return isPoiseBroken || Poise <= 0;
+        }
+
+        /// <summary>
+        /// Gets the poise damage this enemy deals with its attacks
+        /// </summary>
+        /// <returns>Poise damage amount for this enemy's attacks</returns>
+        public float GetAttackPoiseDamage()
+        {
+            // Base poise damage based on character type
+            float basePoiseDamage = 0f;
+            
+            switch (characterType)
+            {
+                case CharacterType.ZOMBIE_MELEE:
+                    basePoiseDamage = 15f;
+                    break;
+                case CharacterType.ZOMBIE_SPITTER:
+                    basePoiseDamage = 8f; // Lower poise damage for ranged attacks
+                    break;
+                case CharacterType.ZOMBIE_TANK:
+                    basePoiseDamage = 25f; // Higher poise damage for tank
+                    break;
+                case CharacterType.MACHINE_DRONE:
+                    basePoiseDamage = 12f;
+                    break;
+                case CharacterType.MACHINE_ROBOT:
+                    basePoiseDamage = 20f;
+                    break;
+                case CharacterType.BOSS_1:
+                case CharacterType.BOSS_2:
+                case CharacterType.BOSS_3:
+                    basePoiseDamage = 30f; // High poise damage for bosses
+                    break;
+                default:
+                    basePoiseDamage = 10f; // Default poise damage
+                    break;
+            }
+            
+            return basePoiseDamage;
+        }
+
         #endregion
 
         #region Attack Validation
@@ -780,6 +859,12 @@ namespace Enemies
 
             // Basic target validation
             if (navMeshTarget == null || !IsTargetStillValid(navMeshTarget))
+            {
+                return false;
+            }
+
+            // Don't attack if poise is broken (enemy is stunned)
+            if (IsPoiseBroken())
             {
                 return false;
             }
@@ -845,23 +930,12 @@ namespace Enemies
             float previousHealth = Health;
             Health -= amount;
 
-            // Calculate hit direction and trigger damaged animation
-            DamageUtils.TriggerDamagedAnimation(animator, DamageUtils.CalculateHitDirection(transform, damageSource));
-
-            if (animator != null)
-            {
-                animator.ResetTrigger("Attack");
-                animator.Play("Default", 1, 0);
-                animator.SetTrigger("Damaged");
-            }
-
-            OnDamageTaken?.Invoke(amount, Health);
+            // Use DamageUtils for consistent damage handling
+            DamageUtils.ApplyDamage(this, amount, damageSource, animator, transform, 
+                OnDamageTaken, OnDeath, true);
 
             if (damageSource != null)
             {
-                var (hitPoint, hitNormal) = DamageUtils.CalculateHitPointAndNormal(transform, damageSource);
-                EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
-                
                 HandleDamageReaction(damageSource);
             }
 
@@ -875,35 +949,33 @@ namespace Enemies
 
 
 
-            /// <summary>
-        /// Overloaded TakeDamage method that allows explicit hit direction specification
+        /// <summary>
+        /// Overloaded TakeDamage method that handles both health and poise damage
         /// </summary>
         /// <param name="amount">Amount of damage to take</param>
-        /// <param name="hitDirection">Explicit hit direction value (-1 = back, 0 = side, 1 = front)</param>
+        /// <param name="poiseDamage">Amount of poise damage to take</param>
         /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
-        public void TakeDamage(float amount, float hitDirection, Transform damageSource = null)
+        public void TakeDamage(float amount, float poiseDamage, Transform damageSource = null)
         {
             float previousHealth = Health;
             Health -= amount;
 
-            // Convert 1D hit direction to 2D for the blend tree
-            Vector2 hitDirection2D = new Vector2(0f, hitDirection); // X = 0 (center), Y = forward/back
-            DamageUtils.TriggerDamagedAnimation(animator, hitDirection2D);
+            // Use DamageUtils for consistent damage and poise handling
+            var (hitDirection, poiseBroken) = DamageUtils.ApplyDamageWithPoise(this, amount, poiseDamage, 
+                damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
 
-            if (animator != null)
+            // Update poise damage tracking
+            if (poiseDamage > 0)
             {
-                animator.ResetTrigger("Attack");
-                animator.Play("Default", 1, 0);
-                animator.SetTrigger("Damaged");
+                lastPoiseDamageTime = Time.time;
+                if (poiseBroken)
+                {
+                    isPoiseBroken = true;
+                }
             }
-
-            OnDamageTaken?.Invoke(amount, Health);
 
             if (damageSource != null)
             {
-                var (hitPoint, hitNormal) = DamageUtils.CalculateHitPointAndNormal(transform, damageSource);
-                EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
-                
                 HandleDamageReaction(damageSource);
             }
 
@@ -1050,6 +1122,93 @@ namespace Enemies
             {
                 FindNewTarget();
                 lastTargetSearchTime = Time.time;
+            }
+        }
+
+        private void UpdatePoiseRecovery()
+        {
+            // Only recover poise if enough time has passed since last poise damage
+            if (Time.time - lastPoiseDamageTime > poiseRecoveryDelay && Poise < MaxPoise)
+            {
+                float recoveryAmount = poiseRecoveryRate * Time.deltaTime;
+                DamageUtils.RestorePoise(this, recoveryAmount);
+                
+                // Reset poise broken state if we've recovered enough
+                if (isPoiseBroken && Poise > MaxPoise * 0.5f)
+                {
+                    isPoiseBroken = false;
+                }
+            }
+        }
+
+        private void ApplyCharacterTypePoiseConfig()
+        {
+            switch (characterType)
+            {
+                // Human types - moderate poise
+                case CharacterType.HUMAN_MALE_1:
+                case CharacterType.HUMAN_MALE_2:
+                case CharacterType.HUMAN_FEMALE_1:
+                case CharacterType.HUMAN_FEMALE_2:
+                    MaxPoise = 40f;
+                    Poise = MaxPoise;
+                    poiseRecoveryRate = 8f;
+                    poiseRecoveryDelay = 2f;
+                    break;
+
+                // Zombie types - varying poise based on size/strength
+                case CharacterType.ZOMBIE_MELEE:
+                    MaxPoise = 60f;
+                    Poise = MaxPoise;
+                    poiseRecoveryRate = 5f;
+                    poiseRecoveryDelay = 3f;
+                    break;
+                case CharacterType.ZOMBIE_SPITTER:
+                    MaxPoise = 30f;
+                    Poise = MaxPoise;
+                    poiseRecoveryRate = 5f;
+                    poiseRecoveryDelay = 3f;
+                    break;
+                case CharacterType.ZOMBIE_TANK:
+                    MaxPoise = 120f;
+                    Poise = MaxPoise;
+                    poiseRecoveryRate = 5f;
+                    poiseRecoveryDelay = 3f;
+                    break;
+
+                // Machine types - high poise resistance
+                case CharacterType.MACHINE_DRONE:
+                    MaxPoise = 80f;
+                    Poise = MaxPoise;
+                    poiseRecoveryRate = 12f;
+                    poiseRecoveryDelay = 1f;
+                    break;
+                case CharacterType.MACHINE_TURRET_BASE_TARGET:
+                    MaxPoise = 200f;
+                    Poise = MaxPoise;
+                    poiseRecoveryRate = 15f;
+                    poiseRecoveryDelay = 1f;
+                    break;
+                case CharacterType.MACHINE_ROBOT:
+                    MaxPoise = 100f;
+                    Poise = MaxPoise;
+                    poiseRecoveryRate = 12f;
+                    poiseRecoveryDelay = 1f;
+                    break;
+
+                // Boss types - very high poise
+                case CharacterType.BOSS_1:
+                case CharacterType.BOSS_2:
+                case CharacterType.BOSS_3:
+                    MaxPoise = 300f;
+                    Poise = MaxPoise;
+                    poiseRecoveryRate = 10f;
+                    poiseRecoveryDelay = 2.5f;
+                    break;
+
+                default:
+                    // Keep default values
+                    break;
             }
         }
 

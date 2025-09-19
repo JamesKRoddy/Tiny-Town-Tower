@@ -41,7 +41,9 @@ namespace Enemies
                 IDamageable damageable = hitCollider.GetComponent<IDamageable>();
                 if (damageable != null && damageable.GetAllegiance() == Allegiance.FRIENDLY)
                 {
-                    damageable.TakeDamage(damage, transform);
+                    // Shockwave attacks deal moderate poise damage
+                    float poiseDamage = damage * 0.6f; // 60% of health damage as poise damage
+                    damageable.TakeDamage(damage, poiseDamage, transform);
                     // Optionally destroy the shockwave on hit
                     Destroy(gameObject);
                     return;

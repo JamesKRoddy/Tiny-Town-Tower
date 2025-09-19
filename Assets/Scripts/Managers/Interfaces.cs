@@ -42,6 +42,8 @@ public interface IDamageable
 {
     [SerializeField] public float Health { get; set; } // Property for current health
     [SerializeField] public float MaxHealth { get; set; } // Property for max health
+    [SerializeField] public float Poise { get; set; } // Property for current poise
+    [SerializeField] public float MaxPoise { get; set; } // Property for max poise
 
     // Character type for VFX and sound effects
     CharacterType CharacterType { get; }
@@ -50,10 +52,13 @@ public interface IDamageable
     event System.Action<float, float> OnDamageTaken;
     // Event that fires when healing occurs, providing the heal amount and new health
     event System.Action<float, float> OnHeal;
+    // Event that fires when poise is broken, providing the poise damage amount and remaining poise
+    event System.Action<float, float> OnPoiseBroken;
     // Event that fires when the entity dies
     event System.Action OnDeath;
 
     void TakeDamage(float amount, Transform damageSource = null); // Method to handle damage
+    void TakeDamage(float amount, float poiseDamage, Transform damageSource = null); // Method to handle damage with poise
     void Heal(float amount);       // Optional: Method to handle healing
     void Die();
     Allegiance GetAllegiance(); // Method to get the allegiance of the entity

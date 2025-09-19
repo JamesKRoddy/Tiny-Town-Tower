@@ -60,6 +60,61 @@ public static class DamageUtils
     }
 
     /// <summary>
+    /// Triggers the knockback animation with 2D direction parameters for blend tree control
+    /// </summary>
+    /// <param name="animator">The character's animator component</param>
+    /// <param name="hitDirection">2D direction vector from CalculateHitDirection</param>
+    public static void TriggerKnockbackAnimation(Animator animator, Vector2 hitDirection)
+    {
+        if (animator == null) return;
+
+        // Set the 2D hit direction parameters for the blend tree
+        animator.SetFloat("HitDirectionX", hitDirection.x);  // Left/Right component
+        animator.SetFloat("HitDirectionY", hitDirection.y);  // Forward/Back component
+        
+        // Trigger the knockback animation
+        animator.SetTrigger("Knockback");
+    }
+
+    /// <summary>
+    /// Applies poise damage to a character and checks if poise is broken
+    /// </summary>
+    /// <param name="character">The character taking poise damage</param>
+    /// <param name="poiseDamage">Amount of poise damage to apply</param>
+    /// <param name="onPoiseBroken">Callback for when poise is broken</param>
+    /// <returns>True if poise was broken (reached 0 or below)</returns>
+    public static bool ApplyPoiseDamage(IDamageable character, float poiseDamage, System.Action<float, float> onPoiseBroken = null)
+    {
+        if (character == null) return false;
+
+        float previousPoise = character.Poise;
+        character.Poise = Mathf.Max(0, character.Poise - poiseDamage);
+        
+        bool poiseBroken = character.Poise <= 0;
+        
+        if (poiseBroken)
+        {
+            // Reset poise to max when broken to prevent repeated staggering
+            character.Poise = character.MaxPoise;
+            onPoiseBroken?.Invoke(poiseDamage, character.Poise);
+        }
+        
+        return poiseBroken;
+    }
+
+    /// <summary>
+    /// Restores poise to a character (useful for recovery over time)
+    /// </summary>
+    /// <param name="character">The character to restore poise to</param>
+    /// <param name="amount">Amount of poise to restore</param>
+    public static void RestorePoise(IDamageable character, float amount)
+    {
+        if (character == null) return;
+        
+        character.Poise = Mathf.Min(character.MaxPoise, character.Poise + amount);
+    }
+
+    /// <summary>
     /// Calculates hit point and normal for VFX effects
     /// </summary>
     /// <param name="characterTransform">Transform of the character taking damage</param>
@@ -116,6 +171,58 @@ public static class DamageUtils
         }
         
         return hitDirection;
+    }
+
+    /// <summary>
+    /// Applies damage with poise damage to a character with automatic 2D direction detection
+    /// </summary>
+    /// <param name="character">The character taking damage</param>
+    /// <param name="amount">Amount of damage to take</param>
+    /// <param name="poiseDamage">Amount of poise damage to take</param>
+    /// <param name="damageSource">Transform of the damage source</param>
+    /// <param name="animator">The character's animator component</param>
+    /// <param name="characterTransform">Transform of the character taking damage</param>
+    /// <param name="onDamageTaken">Callback for when damage is taken</param>
+    /// <param name="onPoiseBroken">Callback for when poise is broken</param>
+    /// <param name="onDeath">Callback for when character dies</param>
+    /// <param name="playHitEffect">Whether to play hit VFX (default: true)</param>
+    /// <returns>The calculated 2D hit direction vector and whether poise was broken</returns>
+    public static (Vector2 hitDirection, bool poiseBroken) ApplyDamageWithPoise(
+        IDamageable character,
+        float amount,
+        float poiseDamage,
+        Transform damageSource,
+        Animator animator,
+        Transform characterTransform,
+        System.Action<float, float> onDamageTaken = null,
+        System.Action<float, float> onPoiseBroken = null,
+        System.Action onDeath = null,
+        bool playHitEffect = true)
+    {
+        // Calculate 2D hit direction
+        Vector2 hitDirection = CalculateHitDirection(characterTransform, damageSource);
+        
+        // Apply poise damage and check if poise is broken
+        bool poiseBroken = ApplyPoiseDamage(character, poiseDamage, onPoiseBroken);
+        
+        // Trigger appropriate animation based on poise state
+        if (poiseBroken)
+        {
+            TriggerKnockbackAnimation(animator, hitDirection);
+        }
+        else
+        {
+            TriggerDamagedAnimation(animator, hitDirection);
+        }
+        
+        // Play hit VFX if requested
+        if (playHitEffect && damageSource != null)
+        {
+            var (hitPoint, hitNormal) = CalculateHitPointAndNormal(characterTransform, damageSource);
+            EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, character);
+        }
+        
+        return (hitDirection, poiseBroken);
     }
 
     /// <summary>

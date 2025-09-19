@@ -133,8 +133,17 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private bool isDead = false;
     private float lastDamageTime = 0f; // Track when damage was last taken
 
+    [Header("Poise Settings")]
+    [SerializeField] private float poise = 40f;
+    [SerializeField] private float maxPoise = 40f;
+    [SerializeField] private float poiseRecoveryRate = 8f; // Poise recovered per second
+    [SerializeField] private float poiseRecoveryDelay = 2f; // Delay before poise starts recovering
+    private float lastPoiseDamageTime = 0f; // Track when poise damage was last taken
+    private bool isPoiseBroken = false; // Track if poise is currently broken
+
     public event Action<float, float> OnDamageTaken;
     public event Action<float, float> OnHeal;
+    public event Action<float, float> OnPoiseBroken;
     public event Action OnDeath;
     public CharacterType CharacterType => characterType;
     
@@ -163,6 +172,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Initialize movement tracking
         lastPosition = transform.position;
         actualMovementSpeed = 0f;
+        
+        // Initialize poise
+        Poise = maxPoise;
         
         // Ensure root motion is disabled by default
         if (animator != null)
@@ -211,6 +223,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         
         HandleDash();
         ApplyGravity(); // Apply gravity before movement
+        UpdatePoiseRecovery(); // Update poise recovery
         MoveCharacter();
         UpdateActualMovementSpeed();
         UpdateAnimations();
@@ -2073,12 +2086,73 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         if (health <= 0 && !isDead) Die();
     }
 
+    // Overloaded TakeDamage method for poise damage
+    public void TakeDamage(float amount, float poiseDamage, Transform damageSource = null)
+    {
+        // Use DamageUtils for consistent damage and poise handling
+        var (hitDirection, poiseBroken) = DamageUtils.ApplyDamageWithPoise(this, amount, poiseDamage, 
+            damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
+
+        // Update poise damage tracking
+        if (poiseDamage > 0)
+        {
+            lastPoiseDamageTime = Time.time;
+            if (poiseBroken)
+            {
+                isPoiseBroken = true;
+                // Reset poise to max when broken to prevent repeated staggering
+                Poise = MaxPoise;
+            }
+        }
+
+        if (damageSource != null)
+        {
+            HandleDamageReaction(damageSource);
+        }
+
+        if (Health <= 0 && !isDead) Die();
+    }
+
     /// <summary>
     /// Called when damage animation ends to re-enable movement
     /// </summary>
     public void StopDamage()
     {
         isDamaged = false;
+    }
+
+    /// <summary>
+    /// Updates poise recovery over time
+    /// </summary>
+    private void UpdatePoiseRecovery()
+    {
+        // Only recover poise if enough time has passed since last poise damage
+        if (Time.time - lastPoiseDamageTime > poiseRecoveryDelay && Poise < MaxPoise)
+        {
+            float recoveryAmount = poiseRecoveryRate * Time.deltaTime;
+            DamageUtils.RestorePoise(this, recoveryAmount);
+            
+            // Reset poise broken state if we've recovered enough
+            if (isPoiseBroken && Poise > MaxPoise * 0.5f)
+            {
+                isPoiseBroken = false;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Handles damage reaction (rotation towards damage source)
+    /// </summary>
+    /// <param name="damageSource">Transform of the damage source</param>
+    protected virtual void HandleDamageReaction(Transform damageSource)
+    {
+        Vector3 direction = (damageSource.position - transform.position).normalized;
+        direction.y = 0;
+        if (direction != Vector3.zero)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 10f);
+        }
     }
 
     public void Heal(float amount)
@@ -2180,6 +2254,18 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public float Health { get => health; set => health = value; }
     public float MaxHealth { get => maxHealth; set => maxHealth = value; }
     public float DamageCooldown { get => damageCooldown; set => damageCooldown = value; }
+
+    // Poise properties
+    public float Poise 
+    { 
+        get => poise; 
+        set => poise = Mathf.Clamp(value, 0, maxPoise); 
+    }
+    public float MaxPoise 
+    { 
+        get => maxPoise; 
+        set => maxPoise = value; 
+    }
 
     protected virtual void OnDestroy()
     {

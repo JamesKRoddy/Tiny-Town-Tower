@@ -130,9 +130,10 @@ namespace Enemies
             IDamageable target = navMeshTarget.GetComponent<IDamageable>();
             if (target != null)
             {
-                Debug.Log($"{logPrefix} - EXECUTING ATTACK | Target: {target} | Damage: {meleeDamage} | TargetHealth: {target.Health} | Distance: {distanceToTarget:F2} | Angle: {angleToTarget:F1}°");
-                target.TakeDamage(meleeDamage, transform);
-                Debug.Log($"{logPrefix} - Attack completed | TargetHealthAfter: {target.Health}");
+                float poiseDamage = GetAttackPoiseDamage();
+                Debug.Log($"{logPrefix} - EXECUTING ATTACK | Target: {target} | Damage: {meleeDamage} | PoiseDamage: {poiseDamage} | TargetHealth: {target.Health} | TargetPoise: {target.Poise} | Distance: {distanceToTarget:F2} | Angle: {angleToTarget:F1}°");
+                target.TakeDamage(meleeDamage, poiseDamage, transform);
+                Debug.Log($"{logPrefix} - Attack completed | TargetHealthAfter: {target.Health} | TargetPoiseAfter: {target.Poise}");
             }
             else
             {

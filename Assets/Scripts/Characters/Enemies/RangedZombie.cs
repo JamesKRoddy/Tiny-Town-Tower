@@ -112,14 +112,15 @@ namespace Enemies
             if (projectileObj != null)
             {
                 ZombieVomitProjectile projectile = projectileObj.GetComponent<ZombieVomitProjectile>();
+                float poiseDamage = GetAttackPoiseDamage();
                 if (projectile != null)
                 {
-                    projectile.Initialize(attackTargetPosition, rangedDamage, vomitPoolEffect);
+                    projectile.Initialize(attackTargetPosition, rangedDamage, poiseDamage, vomitPoolEffect);
                 }
                 else
                 {
                     projectile = projectileObj.AddComponent<ZombieVomitProjectile>();
-                    projectile.Initialize(attackTargetPosition, rangedDamage, vomitPoolEffect);
+                    projectile.Initialize(attackTargetPosition, rangedDamage, poiseDamage, vomitPoolEffect);
                     Debug.LogWarning("ZombieVomitProjectile component not found on spawned projectile, added it to the projectile object");
                 }
             }

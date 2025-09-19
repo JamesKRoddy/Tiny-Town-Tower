@@ -6,8 +6,9 @@ using System.Collections.Generic;
 [RequireComponent(typeof(Rigidbody))]
 public class DamageArea : MonoBehaviour
 {
-    private float damage;
-    private float damageInterval = 1f; // Time between damage applications
+    [SerializeField] private float damage;
+    [SerializeField] private float poiseDamage;
+    [SerializeField] private float damageInterval = 1f; // Time between damage applications
     private Dictionary<IDamageable, float> lastDamageTimes = new Dictionary<IDamageable, float>(); // Track damage times per IDamageable
 
     void OnTriggerStay(Collider other)
@@ -24,15 +25,16 @@ public class DamageArea : MonoBehaviour
             // Only apply damage if enough time has passed since last damage for this specific damageable
             if (Time.time >= lastDamageTimes[damageable] + damageInterval)
             {
-                damageable.TakeDamage(damage);
+                damageable.TakeDamage(damage, poiseDamage);
                 lastDamageTimes[damageable] = Time.time;
             }
         }
     }
 
-    public void SetDamage(float dmg)
+    public void SetDamage(float dmg, float pdm)
     {
         damage = dmg;
+        poiseDamage = pdm;
     }
 
     public void SetDamageInterval(float interval)

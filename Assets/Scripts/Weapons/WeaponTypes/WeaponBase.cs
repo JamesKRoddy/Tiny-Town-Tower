@@ -7,14 +7,21 @@ public abstract class WeaponBase : MonoBehaviour, IPickupableItem
     
     // Store original values for mutation restoration
     private int originalDamage;
+    private float originalPoiseDamage;
     private float originalAttackSpeed;
     private bool originalValuesStored = false;
     
     // Store current modified values
     private int currentDamage;
+    private float currentPoiseDamage;
     private float currentAttackSpeed;
 
     public WeaponScriptableObj WeaponData => weaponData;
+    
+    // Getter properties for current weapon stats
+    public int CurrentDamage => currentDamage;
+    public float CurrentPoiseDamage => currentPoiseDamage;
+    public float CurrentAttackSpeed => currentAttackSpeed;
 
     public virtual void Initialize(ResourceScriptableObj data, int count = 1)
     {
@@ -35,15 +42,17 @@ public abstract class WeaponBase : MonoBehaviour, IPickupableItem
         if (!originalValuesStored && weaponData != null)
         {
             originalDamage = weaponData.damage;
+            originalPoiseDamage = weaponData.poiseDamage;
             originalAttackSpeed = weaponData.attackSpeed;
             currentDamage = originalDamage;
+            currentPoiseDamage = originalPoiseDamage;
             currentAttackSpeed = originalAttackSpeed;
             originalValuesStored = true;
         }
     }
 
     // Apply mutation multipliers to weapon stats (on instance, not ScriptableObject)
-    public void ApplyMutationMultipliers(float damageMultiplier = 1f, float attackSpeedMultiplier = 1f, int activeInstances = 1)
+    public void ApplyMutationMultipliers(float damageMultiplier = 1f, float poiseDamageMultiplier = 1f, float attackSpeedMultiplier = 1f, int activeInstances = 1)
     {
         if (weaponData == null) return;
         
@@ -51,6 +60,7 @@ public abstract class WeaponBase : MonoBehaviour, IPickupableItem
         
         // Apply the multiplier for each active instance (stacking)
         currentDamage = Mathf.RoundToInt(originalDamage * Mathf.Pow(damageMultiplier, activeInstances));
+        currentPoiseDamage = originalPoiseDamage * Mathf.Pow(poiseDamageMultiplier, activeInstances);
         currentAttackSpeed = originalAttackSpeed * Mathf.Pow(attackSpeedMultiplier, activeInstances);
     }
 
@@ -60,11 +70,15 @@ public abstract class WeaponBase : MonoBehaviour, IPickupableItem
         if (weaponData == null || !originalValuesStored) return;
         
         currentDamage = originalDamage;
+        currentPoiseDamage = originalPoiseDamage;
         currentAttackSpeed = originalAttackSpeed;
     }
 
     // Get current damage (modified by mutations)
     public int GetCurrentDamage() => currentDamage;
+    
+    // Get current poise damage (modified by mutations)
+    public float GetCurrentPoiseDamage() => currentPoiseDamage;
     
     // Get current attack speed (modified by mutations)
     public float GetCurrentAttackSpeed() => currentAttackSpeed;

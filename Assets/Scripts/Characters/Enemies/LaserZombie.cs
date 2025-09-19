@@ -214,8 +214,9 @@ namespace Enemies
                 IDamageable damageable = hit.collider.GetComponent<IDamageable>();
                 if (damageable != null && damageable.GetAllegiance() == Allegiance.FRIENDLY)
                 {
-                    // Deal damage
-                    damageable.TakeDamage(laserDamage, transform);
+                    // Deal damage with poise damage
+                    float poiseDamage = GetAttackPoiseDamage();
+                    damageable.TakeDamage(laserDamage, poiseDamage, transform);
                     
                     // Play hit effect
                     Vector3 hitPoint = hit.point;

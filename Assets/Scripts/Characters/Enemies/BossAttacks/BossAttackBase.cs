@@ -149,7 +149,9 @@ namespace Enemies.BossAttacks
                         continue; // Skip inactive targets (like NPCs in bunkers)
                     }
                     
-                    damageable.TakeDamage(damageAmount, transform);
+                    // Boss attacks deal high poise damage
+                    float poiseDamage = damageAmount * 0.8f; // 80% of health damage as poise damage
+                    damageable.TakeDamage(damageAmount, poiseDamage, transform);
                     // Play hit effect at the point of impact
                     Vector3 hitPoint = hitCollider.ClosestPoint(attackPosition);
                     Vector3 hitNormal = (hitPoint - attackPosition).normalized;

@@ -60,6 +60,19 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
         get => structureScriptableObj != null ? structureScriptableObj.maxHealth : 100f;
         set { /* Override in derived classes if needed */ }
     }
+
+    // Poise properties - buildings don't use poise, so return default values
+    public float Poise 
+    { 
+        get => 0f; 
+        set { /* Buildings don't use poise */ } 
+    }
+    
+    public float MaxPoise 
+    { 
+        get => 0f; 
+        set { /* Buildings don't use poise */ } 
+    }
     
     // IDamageable implementation - for compatibility with existing systems
     public CharacterType CharacterType => CharacterType.NONE;
@@ -340,6 +353,13 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
         {
             Die();
         }
+    }
+
+    // Overloaded TakeDamage method for poise damage - buildings don't use poise
+    public virtual void TakeDamage(float amount, float poiseDamage, Transform damageSource = null)
+    {
+        // Buildings don't use poise, so just call the regular TakeDamage method
+        TakeDamage(amount, damageSource);
     }
 
     /// <summary>
@@ -656,6 +676,7 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
     public event Action<float> OnHealthChanged;
     public event Action<float, float> OnDamageTaken;
     public event Action<float, float> OnHeal;
+    public event Action<float, float> OnPoiseBroken; // Buildings don't use poise, but required by interface
     public event Action OnDeath;
     public event Action OnDestroyed;
 

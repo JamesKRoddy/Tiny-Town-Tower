@@ -17,11 +17,9 @@ They can increase chances of recovery by not working or even better receiving tr
 
 ****** Tomorrow work:
 
-So climbing/falling working in camp. Isnt working in the toxic pools though so have to figure that out. Think its because the plane under it causes issues
+Add in some poise damage for enemy and player attacks which dictate if knockback animation should play
 
 ****** Next work:
-
-Add in some poise damage for enemy and player attacks which dictate if knockback animation should play
 
 Need some close range attacks for ranged zombies
 

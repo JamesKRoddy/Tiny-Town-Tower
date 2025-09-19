@@ -8,6 +8,7 @@ namespace Enemies
         private Vector3 initialPosition;
         private Vector3 targetPosition;
         private float damage;
+        private float poiseDamage;
         [SerializeField] private float speed = 10f;
         [SerializeField] private float maxHeight = 5f;
         [SerializeField] private float maxLifetime = 10f;
@@ -17,11 +18,12 @@ namespace Enemies
         private bool hasHit = false;
         private float jumpDuration;
 
-        public void Initialize(Vector3 targetPos, float dmg, EffectDefinition poolEffect)
+        public void Initialize(Vector3 targetPos, float dmg, float poiseDmg, EffectDefinition poolEffect)
         {
             initialPosition = transform.position;
             targetPosition = targetPos;
             damage = dmg;
+            poiseDamage = poiseDmg;
             vomitPoolEffect = poolEffect;
             timeAlive = 0f;
             hasHit = false;
@@ -97,7 +99,7 @@ namespace Enemies
                 {
                     pool = poolObj.AddComponent<ZombieVomitPool>();
                 }
-                pool.Setup(damage, 0.5f, new Vector3(0.7f, 0.4f, 0.7f));
+                pool.Setup(damage, poiseDamage, 0.5f, new Vector3(0.7f, 0.4f, 0.7f));
             }
         }
 

@@ -7,9 +7,9 @@ namespace Enemies
     {
         private Coroutine scaleCoroutine;
 
-        public void Setup(float damage,float scaleDuration, Vector3 targetScale)
+        public void Setup(float damage, float poiseDamage, float scaleDuration, Vector3 targetScale)
         {
-            SetDamage(damage);
+            SetDamage(damage, poiseDamage);
             
             // Set initial scale
             transform.localScale = new Vector3(0f, 0.3f, 0f);

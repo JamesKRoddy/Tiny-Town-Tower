@@ -92,8 +92,10 @@ namespace Enemies
                 IDamageable damageable = hitCollider.GetComponent<IDamageable>();
                 if (damageable != null && damageable != this)
                 {
-                    damageable.TakeDamage(explosionDamage);
-                    Debug.Log($"[BoomerZombie] {gameObject.name} dealt {explosionDamage} damage to {hitCollider.name}");
+                    // Explosion deals high poise damage
+                    float poiseDamage = explosionDamage * 1.2f; // 120% of health damage as poise damage
+                    damageable.TakeDamage(explosionDamage, poiseDamage);
+                    Debug.Log($"[BoomerZombie] {gameObject.name} dealt {explosionDamage} damage and {poiseDamage} poise damage to {hitCollider.name}");
                 }
             }
             
