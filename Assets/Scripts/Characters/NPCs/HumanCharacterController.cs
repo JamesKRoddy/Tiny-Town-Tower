@@ -459,6 +459,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     {
         // Calculate the top of the obstacle as the climb target using the provided height
         // Add extra clearance to ensure we land well above the platform surface
+        // Handle negative Y values properly by adding clearance relative to current position
         Vector3 climbTopPosition = new Vector3(hitInfo.point.x, transform.position.y + obstacleHeight + 0.3f, hitInfo.point.z);
         
         // Move slightly forward from the wall to land on top
@@ -935,6 +936,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         float highestHitPoint = playerGroundLevel;
         
         // Cast rays at different heights to find the top of the obstacle
+        // Handle negative Y values by ensuring we check a reasonable range above the player
+        float maxCheckHeight = playerGroundLevel + maxVaultHeight + 1f;
         for (int i = 0; i < heightCheckRayCount; i++)
         {
             float checkHeight = playerGroundLevel + (maxVaultHeight + 1f) * ((float)i / (heightCheckRayCount - 1));
@@ -969,7 +972,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         Vector3 horizontalTarget = hitInfo.point + direction.normalized * vaultOffset;
         
         // Keep the player at the same Y level but add a small buffer to avoid ground detection issues
-        float targetY = Mathf.Max(transform.position.y, 0.3f); // Ensure minimum height of 0.3f above ground
+        // Handle negative Y values properly by adding clearance relative to current position
+        float targetY = transform.position.y + 0.3f; // Add 0.3f clearance above current position
         Vector3 primaryTarget = new Vector3(horizontalTarget.x, targetY, horizontalTarget.z);
         
         // Safety check: Ensure target position and path are clear
@@ -1016,9 +1020,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     {
         // Check 1: Target position isn't inside an obstacle (but be more lenient with ground-level checks)
         Vector3 checkPos = targetPos;
-        if (targetPos.y < 0.5f) // If target is close to ground, check slightly above
+        // Handle negative Y values by checking slightly above the target position
+        if (targetPos.y < startPos.y + 0.2f) // If target is close to or below start level, check slightly above
         {
-            checkPos = new Vector3(targetPos.x, 0.5f, targetPos.z);
+            checkPos = new Vector3(targetPos.x, startPos.y + 0.5f, targetPos.z);
         }
         
         if (Physics.CheckSphere(checkPos, capsuleCastRadius * 0.8f, GetCombinedObstacleLayers())) // Use smaller radius for more lenient checking
