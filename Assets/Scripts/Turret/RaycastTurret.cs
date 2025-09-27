@@ -11,7 +11,9 @@ public class RaycastTurret : BaseTurret
 
             if (damageable != null)
             {
-                damageable.TakeDamage(damage);
+                // Turrets deal moderate poise damage
+                float poiseDamage = damage * 0.5f; // 50% of health damage as poise damage
+                damageable.TakeDamage(damage, poiseDamage);
             }
         }
     }

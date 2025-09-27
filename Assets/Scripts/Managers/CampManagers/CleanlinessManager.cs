@@ -513,7 +513,8 @@ namespace Managers
             {
                 if (npc is SettlerNPC settler && settler.Health > 0)
                 {
-                    settler.TakeDamage(healthDrain);
+                    // Environmental damage doesn't deal poise damage
+                    settler.TakeDamage(healthDrain, 0f);
                     
                     // Log occasionally for feedback
                     if (Time.time - lastHealthDrainTime >= 10f)

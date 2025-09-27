@@ -18,6 +18,7 @@ They can increase chances of recovery by not working or even better receiving tr
 ****** Tomorrow work:
 
 Add in some poise damage for enemy and player attacks which dictate if knockback animation should play
+Poise damage for boss attacks
 
 ****** Next work:
 

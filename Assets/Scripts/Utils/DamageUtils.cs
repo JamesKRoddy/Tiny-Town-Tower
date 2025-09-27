@@ -90,12 +90,10 @@ public static class DamageUtils
         float previousPoise = character.Poise;
         character.Poise = Mathf.Max(0, character.Poise - poiseDamage);
         
-        bool poiseBroken = character.Poise <= 0;
+        bool poiseBroken = previousPoise > 0 && character.Poise <= 0;
         
         if (poiseBroken)
         {
-            // Reset poise to max when broken to prevent repeated staggering
-            character.Poise = character.MaxPoise;
             onPoiseBroken?.Invoke(poiseDamage, character.Poise);
         }
         

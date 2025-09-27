@@ -38,17 +38,19 @@ public class ThrowableWeapon : WeaponBase
 
         // Add collision handler to deal damage
         var damageHandler = throwableInstance.AddComponent<ThrowableCollisionHandler>();
-        damageHandler.SetDamage(GetCurrentDamage());
+        damageHandler.SetDamage(GetCurrentDamage(), GetCurrentPoiseDamage());
     }
 }
 
 public class ThrowableCollisionHandler : MonoBehaviour
 {
     private float damage;
+    private float poiseDamage;
 
-    public void SetDamage(float damageAmount)
+    public void SetDamage(float damageAmount, float poiseDamageAmount)
     {
         damage = damageAmount;
+        poiseDamage = poiseDamageAmount;
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -56,8 +58,8 @@ public class ThrowableCollisionHandler : MonoBehaviour
         var target = collision.collider.GetComponent<IDamageable>();
         if (target != null)
         {
-            target.TakeDamage(damage);
-            Debug.Log($"{collision.collider.name} took {damage} damage!");
+            target.TakeDamage(damage, poiseDamage);
+            Debug.Log($"{collision.collider.name} took {damage} damage and {poiseDamage} poise damage!");
         }
 
         // Destroy the throwable object after impact

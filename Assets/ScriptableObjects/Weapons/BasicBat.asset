@@ -17,8 +17,10 @@ MonoBehaviour:
   sprite: {fileID: 0}
   category: 0
   rarity: 0
+  isUnlocked: 1
   prefab: {fileID: 6242529188225862484, guid: 4be9664411af89841a88d59a92bc8d84, type: 3}
   animationType: 1
-  damage: 1000
+  damage: 10
+  poiseDamage: 10
   weaponElement: 0
   attackSpeed: 0.8
