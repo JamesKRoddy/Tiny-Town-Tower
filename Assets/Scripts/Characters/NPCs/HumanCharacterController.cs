@@ -1144,7 +1144,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     /// <summary>
     /// Handles root motion from animations, particularly during attack animations
-    /// This prevents the character from moving through walls during root motion
+    /// This prevents the character from moving through walls and pushing enemies during root motion
     /// </summary>
     private void OnAnimatorMove()
     {
@@ -1171,6 +1171,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         Vector3 capsuleTop = transform.position + Vector3.up * humanCollider.bounds.size.y;
         
         bool collisionDetected = false;
+        
+        // Check for obstacle collisions (walls, etc.)
         foreach (LayerMask layer in obstacleLayers)
         {
             if (Physics.CapsuleCast(capsuleBottom, capsuleTop, capsuleCastRadius * 0.8f, 
@@ -1180,6 +1182,23 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 break;
             }
         }
+        
+        // Check for enemy collisions to prevent pushing enemies during attacks
+        if (!collisionDetected)
+        {
+            LayerMask enemyLayer = 1 << 8; // Enemy layer (same as used in FleeState)
+            if (Physics.CapsuleCast(capsuleBottom, capsuleTop, capsuleCastRadius * 0.8f, 
+                rootMotionDelta.normalized, out RaycastHit enemyHitInfo, rootMotionDelta.magnitude, enemyLayer))
+            {
+                // Check if the hit object is actually an enemy
+                if (enemyHitInfo.collider.CompareTag("Enemy") || 
+                    enemyHitInfo.collider.GetComponent<EnemyBase>() != null)
+                {
+                    collisionDetected = true;
+                    Debug.Log($"[{gameObject.name}] Root motion blocked by enemy: {enemyHitInfo.collider.name}");
+                }
+            }
+        }
 
         // If no collision detected, apply the root motion movement
         if (!collisionDetected)
@@ -1187,7 +1206,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             transform.position = proposedPosition;
         }
         // If collision detected, don't apply the movement (character stays in place)
-        // This prevents the character from moving through walls during attack animations
+        // This prevents the character from moving through walls and pushing enemies during attack animations
     }
 
     #endregion
