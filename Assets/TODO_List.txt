@@ -19,10 +19,6 @@ They can increase chances of recovery by not working or even better receiving tr
 
 Visual effects from elemental weapons eg. zombies get shocked by electrical weapon, they freeze and particles are emitted.
 
-Element system needs to tie in with current weapon system as the ai has added in a new weapon class
-
-Have to make the resistance and vulnerabilities exposed in the inspector
-
 Setup default effects to play on the effected characters mesh
 
 Have to create npc mutations/characteristics to affect element damage
@@ -31,6 +27,7 @@ Have to create npc mutations/characteristics to affect element damage
 
 Need some close range attacks for ranged zombies
 
+Custom inspectors for NPC and their components
 
 
 VFX for player

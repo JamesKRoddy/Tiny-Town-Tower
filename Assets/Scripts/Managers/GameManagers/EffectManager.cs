@@ -25,6 +25,14 @@ namespace Managers
         [Tooltip("Hit effects for different building categories")]
         public BuildingHitEffects[] buildingHitEffects;
 
+        [Header("Universal Elemental Effects")]
+        [Tooltip("Elemental effects that apply to all character types")]
+        public ElementalEffects[] universalElementalEffects;
+
+        [Header("Universal Status Effects")]
+        [Tooltip("Status effect definitions that apply to all character types")]
+        public StatusEffectDefinition[] universalStatusEffects;
+
         [Tooltip("Number of instances of each effect to keep in the object pool")]
         public int poolSize = 20;
 
@@ -52,6 +60,8 @@ namespace Managers
         {
             InitializeCharacterEffectPools();
             InitializeBuildingEffectPools();
+            InitializeUniversalElementalEffectPools();
+            InitializeUniversalStatusEffectPools();
         }
 
         private void InitializeCharacterEffectPools()
@@ -81,6 +91,33 @@ namespace Managers
                 if (buildingEffect == null) continue;
 
                 InitializeEffectPool(buildingEffect.impactEffects);
+            }
+        }
+
+        private void InitializeUniversalElementalEffectPools()
+        {
+            if (universalElementalEffects == null) return;
+
+            foreach (var elementalEffect in universalElementalEffects)
+            {
+                if (elementalEffect != null)
+                {
+                    InitializeEffectPool(elementalEffect.hitEffects);
+                    InitializeEffectPool(elementalEffect.impactEffects);
+                }
+            }
+        }
+
+        private void InitializeUniversalStatusEffectPools()
+        {
+            if (universalStatusEffects == null) return;
+
+            foreach (var statusEffect in universalStatusEffects)
+            {
+                if (statusEffect != null && statusEffect.visualEffect != null)
+                {
+                    InitializeEffectPool(new[] { statusEffect.visualEffect });
+                }
             }
         }
 
@@ -157,53 +194,68 @@ namespace Managers
             // First play the base hit effect
             PlayHitEffect(position, normal, damageable);
             
-            // Then play elemental-specific effects
-            var characterEffects = GetCharacterEffects(damageable.CharacterType);
-            if (characterEffects != null)
+            // Then play universal elemental-specific effects
+            // Play elemental hit effect on the character
+            EffectDefinition elementalHitEffect = GetElementalHitEffect(damageType);
+            if (elementalHitEffect != null)
             {
-                EffectDefinition elementalEffect = GetElementalEffect(characterEffects, damageType);
-                if (elementalEffect != null)
-                {
-                    PlayEffect(position, normal, Quaternion.LookRotation(normal), null, elementalEffect);
-                }
+                PlayEffect(position, normal, Quaternion.LookRotation(normal), null, elementalHitEffect);
+            }
+            
+            // Play elemental impact effect on the ground/impact point
+            EffectDefinition elementalImpactEffect = GetElementalImpactEffect(damageType);
+            if (elementalImpactEffect != null)
+            {
+                // Play impact effect at ground level (slightly below hit position)
+                Vector3 impactPosition = new Vector3(position.x, position.y - 0.1f, position.z);
+                PlayEffect(impactPosition, Vector3.up, Quaternion.identity, null, elementalImpactEffect);
             }
         }
 
         /// <summary>
-        /// Gets the appropriate elemental effect for a character type and damage type
+        /// Gets the appropriate elemental hit effect for a damage type
         /// </summary>
-        /// <param name="characterEffects">Character effects configuration</param>
         /// <param name="damageType">Type of elemental damage</param>
-        /// <returns>Effect definition for the elemental damage, or null if none found</returns>
-        private EffectDefinition GetElementalEffect(CharacterEffects characterEffects, AttackElement damageType)
+        /// <returns>Effect definition for the elemental hit effect, or null if none found</returns>
+        private EffectDefinition GetElementalHitEffect(AttackElement damageType)
         {
-            // This would need to be implemented based on your VFX structure
-            // For now, return null to use base effects
-            // You can extend this to have elemental-specific effect arrays in CharacterEffects
+            if (universalElementalEffects == null) return null;
             
-            switch (damageType)
+            foreach (var elementalEffect in universalElementalEffects)
             {
-                case AttackElement.FIRE:
-                    // Return fire effect if available
-                    return null; // Placeholder
-                case AttackElement.ICE:
-                    // Return ice effect if available
-                    return null; // Placeholder
-                case AttackElement.ELECTRIC:
-                    // Return electric effect if available
-                    return null; // Placeholder
-                case AttackElement.POISON:
-                    // Return poison effect if available
-                    return null; // Placeholder
-                case AttackElement.HOLY:
-                    // Return holy effect if available
-                    return null; // Placeholder
-                case AttackElement.SHADOW:
-                    // Return shadow effect if available
-                    return null; // Placeholder
-                default:
-                    return null; // Use base effects for other types
+                if (elementalEffect != null && elementalEffect.elementType == damageType)
+                {
+                    if (elementalEffect.hitEffects != null && elementalEffect.hitEffects.Length > 0)
+                    {
+                        return elementalEffect.hitEffects[Random.Range(0, elementalEffect.hitEffects.Length)];
+                    }
+                }
             }
+            
+            return null; // No elemental effect found
+        }
+
+        /// <summary>
+        /// Gets the appropriate elemental impact effect for a damage type
+        /// </summary>
+        /// <param name="damageType">Type of elemental damage</param>
+        /// <returns>Effect definition for the elemental impact effect, or null if none found</returns>
+        private EffectDefinition GetElementalImpactEffect(AttackElement damageType)
+        {
+            if (universalElementalEffects == null) return null;
+            
+            foreach (var elementalEffect in universalElementalEffects)
+            {
+                if (elementalEffect != null && elementalEffect.elementType == damageType)
+                {
+                    if (elementalEffect.impactEffects != null && elementalEffect.impactEffects.Length > 0)
+                    {
+                        return elementalEffect.impactEffects[Random.Range(0, elementalEffect.impactEffects.Length)];
+                    }
+                }
+            }
+            
+            return null; // No elemental impact effect found
         }
 
         public void PlayDeathEffect(Vector3 position, Vector3 normal, IDamageable damageable)
@@ -552,7 +604,7 @@ namespace Managers
                 return;
             }
             
-            var statusDefinition = GetStatusEffectDefinition(target.GetCharacterType(), statusType);
+            var statusDefinition = GetStatusEffectDefinition(statusType);
             if (statusDefinition == null)
             {
                 Debug.LogWarning($"[EffectManager] No status effect definition found for {statusType} on {target.GetCharacterType()}");
@@ -686,16 +738,15 @@ namespace Managers
         }
         
         /// <summary>
-        /// Get the status effect definition for a character type and status type
+        /// Get the status effect definition for a status type
         /// </summary>
-        private StatusEffectDefinition GetStatusEffectDefinition(CharacterType characterType, StatusEffectType statusType)
+        private StatusEffectDefinition GetStatusEffectDefinition(StatusEffectType statusType)
         {
-            var characterEffects = GetCharacterEffects(characterType);
-            if (characterEffects?.statusEffects == null) return null;
+            if (universalStatusEffects == null) return null;
             
-            foreach (var statusEffect in characterEffects.statusEffects)
+            foreach (var statusEffect in universalStatusEffects)
             {
-                if (statusEffect.statusType == statusType)
+                if (statusEffect != null && statusEffect.statusType == statusType)
                 {
                     return statusEffect;
                 }
