@@ -256,4 +256,184 @@ public static class DamageUtils
             EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, character);
         }
     }
+
+    /// <summary>
+    /// Calculates damage multiplier based on character's resistance to a damage type
+    /// </summary>
+    /// <param name="resistance">The character's resistance level</param>
+    /// <returns>Damage multiplier (0.0 to 2.0)</returns>
+    public static float GetDamageMultiplier(DamageResistance resistance)
+    {
+        switch (resistance)
+        {
+            case DamageResistance.IMMUNE:
+                return 0.0f;
+            case DamageResistance.RESISTANT:
+                return 0.5f;
+            case DamageResistance.NORMAL:
+                return 1.0f;
+            case DamageResistance.WEAK:
+                return 1.5f;
+            case DamageResistance.VULNERABLE:
+                return 2.0f;
+            default:
+                return 1.0f;
+        }
+    }
+
+    /// <summary>
+    /// Applies elemental damage to a character with automatic resistance calculation
+    /// </summary>
+    /// <param name="character">The character taking damage</param>
+    /// <param name="amount">Base amount of damage to take</param>
+    /// <param name="damageType">Type of elemental damage</param>
+    /// <param name="damageSource">Transform of the damage source</param>
+    /// <param name="animator">The character's animator component</param>
+    /// <param name="characterTransform">Transform of the character taking damage</param>
+    /// <param name="onDamageTaken">Callback for when damage is taken</param>
+    /// <param name="onDeath">Callback for when character dies</param>
+    /// <param name="playHitEffect">Whether to play hit VFX (default: true)</param>
+    /// <returns>The calculated 2D hit direction vector and final damage amount</returns>
+    public static (Vector2 hitDirection, float finalDamage) ApplyElementalDamage(
+        IDamageable character,
+        float amount,
+        AttackElement damageType,
+        Transform damageSource,
+        Animator animator,
+        Transform characterTransform,
+        System.Action<float, float> onDamageTaken = null,
+        System.Action onDeath = null,
+        bool playHitEffect = true)
+    {
+        // Get character's damage multiplier for this damage type
+        float damageMultiplier = character.GetDamageMultiplier(damageType);
+        float finalDamage = amount * damageMultiplier;
+
+        // Skip damage if immune (multiplier is 0)
+        if (damageMultiplier <= 0f)
+        {
+            return (Vector2.zero, 0f);
+        }
+
+        // Calculate 2D hit direction
+        Vector2 hitDirection = CalculateHitDirection(characterTransform, damageSource);
+        
+        // Set damage type parameter for animations
+        TriggerElementalDamagedAnimation(animator, hitDirection, damageType);
+        
+        // Play elemental hit VFX if requested
+        if (playHitEffect && damageSource != null)
+        {
+            var (hitPoint, hitNormal) = CalculateHitPointAndNormal(characterTransform, damageSource);
+            EffectManager.Instance.PlayElementalHitEffect(hitPoint, hitNormal, character, damageType);
+        }
+        
+        return (hitDirection, finalDamage);
+    }
+
+    /// <summary>
+    /// Applies elemental damage with poise damage to a character with automatic resistance calculation
+    /// </summary>
+    /// <param name="character">The character taking damage</param>
+    /// <param name="amount">Base amount of damage to take</param>
+    /// <param name="poiseDamage">Amount of poise damage to take</param>
+    /// <param name="damageType">Type of elemental damage</param>
+    /// <param name="damageSource">Transform of the damage source</param>
+    /// <param name="animator">The character's animator component</param>
+    /// <param name="characterTransform">Transform of the character taking damage</param>
+    /// <param name="onDamageTaken">Callback for when damage is taken</param>
+    /// <param name="onPoiseBroken">Callback for when poise is broken</param>
+    /// <param name="onDeath">Callback for when character dies</param>
+    /// <param name="playHitEffect">Whether to play hit VFX (default: true)</param>
+    /// <returns>The calculated 2D hit direction vector, final damage amount, and whether poise was broken</returns>
+    public static (Vector2 hitDirection, float finalDamage, bool poiseBroken) ApplyElementalDamageWithPoise(
+        IDamageable character,
+        float amount,
+        float poiseDamage,
+        AttackElement damageType,
+        Transform damageSource,
+        Animator animator,
+        Transform characterTransform,
+        System.Action<float, float> onDamageTaken = null,
+        System.Action<float, float> onPoiseBroken = null,
+        System.Action onDeath = null,
+        bool playHitEffect = true)
+    {
+        // Get character's damage multiplier for this damage type
+        float damageMultiplier = character.GetDamageMultiplier(damageType);
+        float finalDamage = amount * damageMultiplier;
+
+        // Skip damage if immune (multiplier is 0)
+        if (damageMultiplier <= 0f)
+        {
+            return (Vector2.zero, 0f, false);
+        }
+
+        // Calculate 2D hit direction
+        Vector2 hitDirection = CalculateHitDirection(characterTransform, damageSource);
+        
+        // Apply poise damage and check if poise is broken
+        bool poiseBroken = ApplyPoiseDamage(character, poiseDamage, onPoiseBroken);
+        
+        // Trigger appropriate animation based on poise state and damage type
+        if (poiseBroken)
+        {
+            TriggerElementalKnockbackAnimation(animator, hitDirection, damageType);
+        }
+        else
+        {
+            TriggerElementalDamagedAnimation(animator, hitDirection, damageType);
+        }
+        
+        // Play elemental hit VFX if requested
+        if (playHitEffect && damageSource != null)
+        {
+            var (hitPoint, hitNormal) = CalculateHitPointAndNormal(characterTransform, damageSource);
+            EffectManager.Instance.PlayElementalHitEffect(hitPoint, hitNormal, character, damageType);
+        }
+        
+        return (hitDirection, finalDamage, poiseBroken);
+    }
+
+    /// <summary>
+    /// Triggers the elemental damaged animation with 2D direction and damage type parameters
+    /// </summary>
+    /// <param name="animator">The character's animator component</param>
+    /// <param name="hitDirection">2D direction vector from CalculateHitDirection</param>
+    /// <param name="damageType">Type of elemental damage</param>
+    public static void TriggerElementalDamagedAnimation(Animator animator, Vector2 hitDirection, AttackElement damageType)
+    {
+        if (animator == null) return;
+
+        // Set the 2D hit direction parameters for the blend tree
+        animator.SetFloat("HitDirectionX", hitDirection.x);  // Left/Right component
+        animator.SetFloat("HitDirectionY", hitDirection.y);  // Forward/Back component
+        
+        // Set the damage type parameter for elemental animations
+        animator.SetInteger("DamageType", (int)damageType);
+        
+        // Trigger the damaged animation
+        animator.SetTrigger("Damaged");
+    }
+
+    /// <summary>
+    /// Triggers the elemental knockback animation with 2D direction and damage type parameters
+    /// </summary>
+    /// <param name="animator">The character's animator component</param>
+    /// <param name="hitDirection">2D direction vector from CalculateHitDirection</param>
+    /// <param name="damageType">Type of elemental damage</param>
+    public static void TriggerElementalKnockbackAnimation(Animator animator, Vector2 hitDirection, AttackElement damageType)
+    {
+        if (animator == null) return;
+
+        // Set the 2D hit direction parameters for the blend tree
+        animator.SetFloat("HitDirectionX", hitDirection.x);  // Left/Right component
+        animator.SetFloat("HitDirectionY", hitDirection.y);  // Forward/Back component
+        
+        // Set the damage type parameter for elemental animations
+        animator.SetInteger("DamageType", (int)damageType);
+        
+        // Trigger the knockback animation
+        animator.SetTrigger("Knockback");
+    }
 }

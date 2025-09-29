@@ -3031,8 +3031,16 @@ MonoBehaviour:
   angularSpeed: 120
   obstacleBoundsOffset: 1
   rootMotionMultiplier: 1
+  showCollisionDebug: 0
   health: 100
   maxHealth: 100
+  poise: 50
+  maxPoise: 50
+  poiseRecoveryRate: 10
+  poiseRecoveryDelay: 2
+  attackElement: 0
+  elementalDamageBonus: 0
+  resistances: []
   attackRange: 4
   attackCooldown: 1.5
   approachDistance: 3

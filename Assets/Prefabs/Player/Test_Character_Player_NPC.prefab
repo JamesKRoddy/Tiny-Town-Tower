@@ -1799,9 +1799,16 @@ MonoBehaviour:
     m_Bits: 1
   terminalVelocity: 20
   maxFallDistance: 100
+  fallingMovementMultiplier: 0.2
+  fallingMomentumMultiplier: 0.8
   health: 100
   maxHealth: 100
   damageCooldown: 0.5
+  poise: 40
+  maxPoise: 40
+  poiseRecoveryRate: 8
+  poiseRecoveryDelay: 2
+  resistances: []
   settlerName: 
   settlerAge: 0
   settlerDescription: 

@@ -7,21 +7,21 @@ public class DashVFX : MonoBehaviour
     [System.Serializable]
     public class ElementVfxPrefab
     {
-        public WeaponElement element;
+        public AttackElement element;
         public ParticleSystem particleSystemPrefab;
     }
 
     [SerializeField] private List<ElementVfxPrefab> dashElementVfxPrefabs;
-    [SerializeField] private Dictionary<WeaponElement, Queue<ParticleSystem>> dashVfxPool;
+    [SerializeField] private Dictionary<AttackElement, Queue<ParticleSystem>> dashVfxPool;
 
     private void Start()
     {
-        dashVfxPool = new Dictionary<WeaponElement, Queue<ParticleSystem>>();
+        dashVfxPool = new Dictionary<AttackElement, Queue<ParticleSystem>>();
 
         // Initialize the pool for each WeaponElement type
         foreach (var elementPrefab in dashElementVfxPrefabs)
         {
-            WeaponElement element = elementPrefab.element;
+            AttackElement element = elementPrefab.element;
             var particleSystemPrefab = elementPrefab.particleSystemPrefab;
 
             // Initialize the pool for each element
@@ -37,7 +37,7 @@ public class DashVFX : MonoBehaviour
         }
     }
 
-    internal void Play(WeaponElement element, Transform spawnTransform)
+    internal void Play(AttackElement element, Transform spawnTransform)
     {
         // Get a ParticleSystem from the pool for the specific element
         if (dashVfxPool[element].Count > 0)
@@ -61,7 +61,7 @@ public class DashVFX : MonoBehaviour
         }
     }
 
-    private IEnumerator StopAfterDelay(ParticleSystem ps, float delay, WeaponElement element)
+    private IEnumerator StopAfterDelay(ParticleSystem ps, float delay, AttackElement element)
     {
         // Wait for the specified delay
         yield return new WaitForSeconds(delay);
@@ -76,7 +76,7 @@ public class DashVFX : MonoBehaviour
         }
     }
 
-    internal void Stop(WeaponElement element)
+    internal void Stop(AttackElement element)
     {
         foreach (var ps in dashVfxPool[element])
         {

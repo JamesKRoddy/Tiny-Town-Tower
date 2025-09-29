@@ -16,6 +16,11 @@ namespace Enemies.BossAttacks
         public override void Initialize(Boss boss)
         {
             base.Initialize(boss);
+            // Set default elemental damage for punch attacks (can be overridden in inspector)
+            if (attackElement == AttackElement.NONE)
+            {
+                attackElement = AttackElement.PHYSICAL;
+            }
         }
 
         public override void OnAttack()

@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using Managers;
@@ -2294,4 +2295,119 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             Managers.CampManager.Instance.UnregisterTarget(this);
         }
     }
+
+    #region Elemental Damage System
+
+    [Header("Elemental Resistances")]
+    [SerializeField] private ElementalResistance[] resistances = new ElementalResistance[0];
+
+    /// <summary>
+    /// Gets the character's resistance to a specific damage type
+    /// </summary>
+    /// <param name="damageType">The damage type to check resistance for</param>
+    /// <returns>The resistance level for this damage type</returns>
+    public DamageResistance GetResistance(AttackElement damageType)
+    {
+        if (resistances != null)
+        {
+            foreach (var resistance in resistances)
+            {
+                if (resistance != null && resistance.damageType == damageType)
+                {
+                    return resistance.resistance;
+                }
+            }
+        }
+        return DamageResistance.NORMAL;
+    }
+    
+    /// <summary>
+    /// Gets the damage multiplier for a specific damage type
+    /// </summary>
+    /// <param name="damageType">The damage type to check multiplier for</param>
+    /// <returns>The damage multiplier (0.0 to 3.0)</returns>
+    public float GetDamageMultiplier(AttackElement damageType)
+    {
+        return DamageUtils.GetDamageMultiplier(GetResistance(damageType));
+    }
+
+    /// <summary>
+    /// Take damage with elemental type consideration
+    /// </summary>
+    /// <param name="amount">Base amount of damage to take</param>
+    /// <param name="damageType">Type of elemental damage</param>
+    /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
+    public void TakeDamage(float amount, AttackElement damageType, Transform damageSource = null)
+    {
+        // Prevent taking damage if cooldown is active
+        if (Time.time - lastDamageTime < damageCooldown)
+        {
+            Debug.Log($"{gameObject.name} damage cooldown active. Damage not applied.");
+            return;
+        }
+
+        // Use DamageUtils for elemental damage calculation with resistance
+        var (hitDirection, finalDamage) = DamageUtils.ApplyElementalDamage(this, amount, damageType, 
+            damageSource, animator, transform, OnDamageTaken, OnDeath, true);
+
+        // Skip if immune to this damage type
+        if (finalDamage <= 0) return;
+
+        // Apply the calculated damage
+        float previousHealth = health;
+        health = Mathf.Max(0, health - finalDamage);
+        OnDamageTaken?.Invoke(finalDamage, health);
+
+        // Check if already damaged to prevent unnecessary animation calls
+        bool wasAlreadyDamaged = isDamaged;
+        
+        // Set damaged state to prevent movement
+        isDamaged = true;
+        lastDamageTime = Time.time; // Update last damage time
+
+        if (health <= 0 && !isDead) Die();
+    }
+
+    /// <summary>
+    /// Take damage with poise damage and elemental type consideration
+    /// </summary>
+    /// <param name="amount">Base amount of damage to take</param>
+    /// <param name="poiseDamage">Amount of poise damage to take</param>
+    /// <param name="damageType">Type of elemental damage</param>
+    /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
+    public void TakeDamage(float amount, float poiseDamage, AttackElement damageType, Transform damageSource = null)
+    {
+        // Use DamageUtils for elemental damage calculation with resistance
+        var (hitDirection, finalDamage, poiseBroken) = DamageUtils.ApplyElementalDamageWithPoise(this, amount, poiseDamage, damageType, 
+            damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
+
+        // Skip if immune to this damage type
+        if (finalDamage <= 0) return;
+
+        // Apply the calculated damage
+        float previousHealth = health;
+        health = Mathf.Max(0, health - finalDamage);
+        OnDamageTaken?.Invoke(finalDamage, health);
+
+        // Update poise damage tracking
+        if (poiseDamage > 0)
+        {
+            lastPoiseDamageTime = Time.time;
+            if (poiseBroken)
+            {
+                isPoiseBroken = true;
+                // Reset poise to max when broken to prevent repeated staggering
+                Poise = MaxPoise;
+            }
+        }
+
+        if (damageSource != null)
+        {
+            HandleDamageReaction(damageSource);
+        }
+
+        if (health <= 0 && !isDead) Die();
+    }
+
+    #endregion
 }

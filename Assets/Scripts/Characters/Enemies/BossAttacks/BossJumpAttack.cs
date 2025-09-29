@@ -35,6 +35,12 @@ namespace Enemies.BossAttacks
         public override void Initialize(Boss boss)
         {
             base.Initialize(boss);
+            // Set default elemental damage for jump attacks (can be overridden in inspector)
+            if (attackElement == AttackElement.NONE)
+            {
+                attackElement = AttackElement.ELECTRIC; // Jump attacks could be electric/shock damage
+            }
+            
             // Store the original stopping distance and agent reference
             if (boss != null)
             {

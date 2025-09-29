@@ -37,7 +37,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     [SerializeField] private Vector3 boxCastSize = new Vector3(0.5f, 0.5f, 0.5f); // Size of the box cast for interaction detection
 
     [Header("Players currently equipped items")] 
-    public WeaponElement dashElement = WeaponElement.NONE;
+    public AttackElement dashElement = AttackElement.NONE;
 
     [Header("Mutation Grid")]
     [SerializeField] private int maxMutationSlots = 9; // Default to a 3x3 grid

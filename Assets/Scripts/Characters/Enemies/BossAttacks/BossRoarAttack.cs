@@ -10,6 +10,11 @@ namespace Enemies.BossAttacks
         public override void Initialize(Boss boss)
         {
             base.Initialize(boss);
+            // Set default elemental damage for roar attacks (can be overridden in inspector)
+            if (attackElement == AttackElement.NONE)
+            {
+                attackElement = AttackElement.SHADOW; // Roar attacks could be shadow/psychic damage
+            }
         }
 
         public override void OnAttack()

@@ -59,9 +59,15 @@ public interface IDamageable
 
     void TakeDamage(float amount, Transform damageSource = null); // Method to handle damage
     void TakeDamage(float amount, float poiseDamage, Transform damageSource = null); // Method to handle damage with poise
+    void TakeDamage(float amount, AttackElement damageType, Transform damageSource = null); // Method to handle elemental damage
+    void TakeDamage(float amount, float poiseDamage, AttackElement damageType, Transform damageSource = null); // Method to handle elemental damage with poise
     void Heal(float amount);       // Optional: Method to handle healing
     void Die();
     Allegiance GetAllegiance(); // Method to get the allegiance of the entity
+    
+    // Elemental resistance system
+    DamageResistance GetResistance(AttackElement damageType); // Get resistance level for a specific damage type
+    float GetDamageMultiplier(AttackElement damageType); // Get damage multiplier for a specific damage type
 }
 
 /// <summary>

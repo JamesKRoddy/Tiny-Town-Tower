@@ -143,6 +143,69 @@ namespace Managers
             PlayEffect(position, normal, Quaternion.LookRotation(normal), null, buildingHitEffects.impactEffects[Random.Range(0, buildingHitEffects.impactEffects.Length)]);
         }
 
+        /// <summary>
+        /// Plays elemental hit effects based on damage type
+        /// </summary>
+        /// <param name="position">Position where the hit occurred</param>
+        /// <param name="normal">Surface normal at hit point</param>
+        /// <param name="damageable">The character being hit</param>
+        /// <param name="damageType">Type of elemental damage</param>
+        public void PlayElementalHitEffect(Vector3 position, Vector3 normal, IDamageable damageable, AttackElement damageType)
+        {
+            if (damageable == null) return;
+            
+            // First play the base hit effect
+            PlayHitEffect(position, normal, damageable);
+            
+            // Then play elemental-specific effects
+            var characterEffects = GetCharacterEffects(damageable.CharacterType);
+            if (characterEffects != null)
+            {
+                EffectDefinition elementalEffect = GetElementalEffect(characterEffects, damageType);
+                if (elementalEffect != null)
+                {
+                    PlayEffect(position, normal, Quaternion.LookRotation(normal), null, elementalEffect);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the appropriate elemental effect for a character type and damage type
+        /// </summary>
+        /// <param name="characterEffects">Character effects configuration</param>
+        /// <param name="damageType">Type of elemental damage</param>
+        /// <returns>Effect definition for the elemental damage, or null if none found</returns>
+        private EffectDefinition GetElementalEffect(CharacterEffects characterEffects, AttackElement damageType)
+        {
+            // This would need to be implemented based on your VFX structure
+            // For now, return null to use base effects
+            // You can extend this to have elemental-specific effect arrays in CharacterEffects
+            
+            switch (damageType)
+            {
+                case AttackElement.FIRE:
+                    // Return fire effect if available
+                    return null; // Placeholder
+                case AttackElement.ICE:
+                    // Return ice effect if available
+                    return null; // Placeholder
+                case AttackElement.ELECTRIC:
+                    // Return electric effect if available
+                    return null; // Placeholder
+                case AttackElement.POISON:
+                    // Return poison effect if available
+                    return null; // Placeholder
+                case AttackElement.HOLY:
+                    // Return holy effect if available
+                    return null; // Placeholder
+                case AttackElement.SHADOW:
+                    // Return shadow effect if available
+                    return null; // Placeholder
+                default:
+                    return null; // Use base effects for other types
+            }
+        }
+
         public void PlayDeathEffect(Vector3 position, Vector3 normal, IDamageable damageable)
         {
             if (damageable == null) return;
@@ -1004,37 +1067,20 @@ namespace Managers
             return statusType switch
             {
                 // Error states (damaging/harmful)
-                StatusEffectType.POISONED => FloatingTextType.Error,
                 StatusEffectType.BURNING => FloatingTextType.Error,
                 StatusEffectType.ON_FIRE => FloatingTextType.Error,
-                StatusEffectType.BLEEDING => FloatingTextType.Error,
                 StatusEffectType.SICK => FloatingTextType.Error,
                 StatusEffectType.STARVING => FloatingTextType.Error,
                 StatusEffectType.EXHAUSTED => FloatingTextType.Error,
-                StatusEffectType.CORRODED => FloatingTextType.Error,
                 StatusEffectType.ELECTROCUTED => FloatingTextType.Error,
                 StatusEffectType.SHOCKED => FloatingTextType.Error,
                 
                 // Warning states (temporary issues)
                 StatusEffectType.FROZEN => FloatingTextType.Warning,
-                StatusEffectType.STUNNED => FloatingTextType.Warning,
-                StatusEffectType.CONFUSED => FloatingTextType.Warning,
-                StatusEffectType.FEARED => FloatingTextType.Warning,
                 StatusEffectType.HUNGRY => FloatingTextType.Warning,
                 StatusEffectType.TIRED => FloatingTextType.Warning,
-                StatusEffectType.WET => FloatingTextType.Warning,
-                StatusEffectType.VULNERABLE => FloatingTextType.Warning,
-                StatusEffectType.WEAKENED => FloatingTextType.Warning,
-                StatusEffectType.SLOWED => FloatingTextType.Warning,
                 
                 // Success states (beneficial)
-                StatusEffectType.HEALING => FloatingTextType.Success,
-                StatusEffectType.REGENERATING => FloatingTextType.Success,
-                StatusEffectType.HASTENED => FloatingTextType.Success,
-                StatusEffectType.STRENGTHENED => FloatingTextType.Success,
-                StatusEffectType.PROTECTED => FloatingTextType.Success,
-                StatusEffectType.BUFFED => FloatingTextType.Success,
-                StatusEffectType.SHIELDED => FloatingTextType.Success,
                 StatusEffectType.HEALTHY => FloatingTextType.Success,
                 
                 // Normal states

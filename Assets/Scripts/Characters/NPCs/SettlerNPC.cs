@@ -1739,9 +1739,6 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
             case StatusEffectType.FROZEN:
                 Debug.Log($"[SettlerNPC] {name} is frozen! Movement slowed.");
                 break;
-            case StatusEffectType.STUNNED:
-                Debug.Log($"[SettlerNPC] {name} is stunned! Actions prevented.");
-                break;
             case StatusEffectType.SICK:
                 Debug.Log($"[SettlerNPC] {name} is sick! Seeking medical treatment.");
                 CheckForMedicalTreatment();
@@ -1761,9 +1758,6 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         {
             case StatusEffectType.SICK:
                 Debug.Log($"[SettlerNPC] {name} has recovered from sickness.");
-                break;
-            case StatusEffectType.STUNNED:
-                Debug.Log($"[SettlerNPC] {name} is no longer stunned.");
                 break;
         }
     }

@@ -62,7 +62,8 @@ public class RangedWeapon : WeaponBase
             var target = hit.collider.GetComponent<IDamageable>();
             if (target != null)
             {
-                target.TakeDamage(GetCurrentDamage(), GetCurrentPoiseDamage());
+                // Use the new elemental damage system
+                DealDamage(target, firePoint);
             }
 
             if (impactEffect != null)

@@ -395,13 +395,13 @@ AnimatorController:
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
-  - m_Name: DamageType
+  - m_Name: DamageDirection
     m_Type: 1
     m_DefaultFloat: 0
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
-  - m_Name: DeathType
+  - m_Name: DeathDirection
     m_Type: 1
     m_DefaultFloat: 0
     m_DefaultInt: 0
@@ -597,7 +597,7 @@ BlendTree:
     m_CycleOffset: 0
     m_DirectBlendParameter: AttackType
     m_Mirror: 0
-  m_BlendParameter: DeathType
+  m_BlendParameter: DeathDirection
   m_BlendParameterY: AttackType
   m_MinThreshold: 0
   m_MaxThreshold: 1
@@ -808,7 +808,7 @@ BlendTree:
     m_CycleOffset: 0
     m_DirectBlendParameter: AttackType
     m_Mirror: 0
-  m_BlendParameter: DamageType
+  m_BlendParameter: DamageDirection
   m_BlendParameterY: AttackType
   m_MinThreshold: 0
   m_MaxThreshold: 4

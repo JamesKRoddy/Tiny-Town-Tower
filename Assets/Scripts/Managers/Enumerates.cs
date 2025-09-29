@@ -282,14 +282,18 @@ public enum MeleeAttackDirection
     VERTICAL_UP
 }
 
-public enum WeaponElement
+public enum AttackElement
 {
     NONE,
     BASIC,
     FIRE,
+    ICE,
     ELECTRIC,
+    POISON,
     BLEED,
-    HOLY
+    HOLY,
+    SHADOW,
+    PHYSICAL
 }
 
 public enum WeaponAnimationType
@@ -297,6 +301,19 @@ public enum WeaponAnimationType
     NONE,
     ONE_HANDED,
     TWO_HANDED
+}
+
+/// <summary>
+/// Defines resistance levels for different damage types
+/// Used by characters to determine damage multipliers
+/// </summary>
+public enum DamageResistance
+{
+    IMMUNE = 0,      // 0% damage taken (0x multiplier)
+    RESISTANT = 1,   // 50% damage taken (0.5x multiplier)
+    NORMAL = 2,      // 100% damage taken (1x multiplier)
+    WEAK = 3,        // 150% damage taken (1.5x multiplier)
+    VULNERABLE = 4   // 200% damage taken (2x multiplier)
 }
 
 public enum GeneticMutation
@@ -363,95 +380,37 @@ public enum NPCInitializationContext
 // =========================
 
 /// <summary>
-/// Enum defining all possible status effects that can affect NPCs and enemies
-/// Organized by category for better management and integration with EffectManager
+/// Enum defining essential status effects that can affect NPCs and enemies
+/// Only includes effects that are actually implemented with gameplay mechanics
 /// </summary>
 [System.Serializable]
 public enum StatusEffectType
 {
-    // Health-related effects
+    // Core health states (actually implemented in SettlerNPC)
     HEALTHY,
     HUNGRY,
     STARVING,
     TIRED,
     EXHAUSTED,
     SICK,
-    POISONED,
-    BLEEDING,
-    HEALING,
-    REGENERATING,
     
-    // Physical state effects
+    // Physical activity states (actually implemented in SettlerNPC)
     SLEEPING,
     WORKING,
     EATING,
     FIGHTING,
     FLEEING,
-    RESTING,
+
     
-    // Environmental effects
+    // Environmental damage effects (used in weapon system)
     ON_FIRE,
     FROZEN,
     ELECTROCUTED,
-    WET,
     BURNING,
     SHOCKED,
-    CORRODED,
     
-    // Buff/Debuff effects
-    BUFFED,
-    DEBUFFED,
-    SLOWED,
-    HASTENED,
-    STRENGTHENED,
-    WEAKENED,
-    PROTECTED,
-    VULNERABLE,
-    
-    // Special status effects
-    INVISIBLE,
-    SHIELDED,
-    STUNNED,
-    CONFUSED,
-    MIND_CONTROLLED,
-    CHARMED,
-    FEARED,
-    
-    // Work-related effects
-    HIGHLY_MOTIVATED,
-    DEPRESSED,
-    FOCUSED,
-    DISTRACTED,
-    INSPIRED,
-    
-    // Social effects
-    HAPPY,
-    SAD,
-    ANGRY,
-    FEARFUL,
-    CALM,
-    
-    // Medical/Treatment effects
-    RECEIVING_MEDICAL_TREATMENT,
-    QUARANTINED,
-    RECOVERING,
-    
-    // Combat effects
-    COMBAT_READY,
-    RETREATING,
-    DEFENDING,
-    ATTACKING,
-    
-    // Magical/Special effects (for future expansion)
-    CURSED,
-    BLESSED,
-    ENCHANTED,
-    DISPELLED,
-    
-    // Custom effects (for modding/future expansion)
-    CUSTOM_EFFECT_1,
-    CUSTOM_EFFECT_2,
-    CUSTOM_EFFECT_3
+    // Medical/Treatment effects (actually implemented)
+    RECEIVING_MEDICAL_TREATMENT
 }
 
 /// <summary>

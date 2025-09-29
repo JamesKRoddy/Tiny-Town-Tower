@@ -17,14 +17,21 @@ They can increase chances of recovery by not working or even better receiving tr
 
 ****** Tomorrow work:
 
-Add in some poise damage for enemy and player attacks which dictate if knockback animation should play
-Poise damage for boss attacks
+Visual effects from elemental weapons eg. zombies get shocked by electrical weapon, they freeze and particles are emitted.
+
+Element system needs to tie in with current weapon system as the ai has added in a new weapon class
+
+Have to make the resistance and vulnerabilities exposed in the inspector
+
+Setup default effects to play on the effected characters mesh
+
+Have to create npc mutations/characteristics to affect element damage
 
 ****** Next work:
 
 Need some close range attacks for ranged zombies
 
-Visual effects from elemental weapons eg. zombies get shocked by electrical weapon, they freeze and particles are emitted.
+
 
 VFX for player
 

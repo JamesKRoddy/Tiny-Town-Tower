@@ -362,6 +362,42 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
         TakeDamage(amount, damageSource);
     }
 
+    // Elemental damage methods - buildings have normal resistance to all elements
+    public virtual void TakeDamage(float amount, AttackElement damageType, Transform damageSource = null)
+    {
+        // Buildings have normal resistance to all elemental damage types
+        TakeDamage(amount, damageSource);
+    }
+
+    public virtual void TakeDamage(float amount, float poiseDamage, AttackElement damageType, Transform damageSource = null)
+    {
+        // Buildings don't use poise, so just call the elemental damage method
+        TakeDamage(amount, damageType, damageSource);
+    }
+
+    [Header("Elemental Resistances")]
+    [SerializeField] private ElementalResistance[] resistances = new ElementalResistance[0];
+
+    public virtual DamageResistance GetResistance(AttackElement damageType)
+    {
+        if (resistances != null)
+        {
+            foreach (var resistance in resistances)
+            {
+                if (resistance != null && resistance.damageType == damageType)
+                {
+                    return resistance.resistance;
+                }
+            }
+        }
+        return DamageResistance.NORMAL;
+    }
+    
+    public virtual float GetDamageMultiplier(AttackElement damageType)
+    {
+        return DamageUtils.GetDamageMultiplier(GetResistance(damageType));
+    }
+
     /// <summary>
     /// Triggers the damage shake effect on all mesh renderers
     /// </summary>

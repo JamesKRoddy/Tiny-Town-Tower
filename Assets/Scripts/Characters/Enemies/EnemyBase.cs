@@ -889,9 +889,58 @@ namespace Enemies
 
         #region Combat & Damage
 
+        [Header("Enemy Attack Settings")]
+        [Tooltip("The elemental type of this enemy's attacks. NONE means physical damage only.")]
+        [SerializeField] private AttackElement attackElement = AttackElement.NONE;
+        [Tooltip("Additional elemental damage bonus for this enemy's attacks")]
+        [Range(0, 50)]
+        [SerializeField] private int elementalDamageBonus = 0;
+
         public virtual void Attack()
         {
             Debug.LogWarning($"Attack not overridden for {gameObject.name}");
+        }
+        
+        /// <summary>
+        /// Deals damage to a target with this enemy's elemental properties
+        /// </summary>
+        /// <param name="target">The target to damage</param>
+        /// <param name="baseDamage">Base damage amount</param>
+        /// <param name="poiseDamage">Poise damage amount</param>
+        protected virtual void DealDamageToTarget(IDamageable target, float baseDamage, float poiseDamage = 0f)
+        {
+            if (target == null) return;
+            
+            // Calculate total damage including elemental bonus
+            float totalDamage = baseDamage;
+            if (attackElement != AttackElement.NONE)
+            {
+                totalDamage += elementalDamageBonus;
+            }
+            
+            // Apply damage with elemental type
+            if (attackElement == AttackElement.NONE || attackElement == AttackElement.PHYSICAL)
+            {
+                if (poiseDamage > 0)
+                {
+                    target.TakeDamage(totalDamage, poiseDamage, transform);
+                }
+                else
+                {
+                    target.TakeDamage(totalDamage, transform);
+                }
+            }
+            else
+            {
+                if (poiseDamage > 0)
+                {
+                    target.TakeDamage(totalDamage, poiseDamage, attackElement, transform);
+                }
+                else
+                {
+                    target.TakeDamage(totalDamage, attackElement, transform);
+                }
+            }
         }
 
         protected virtual void BeginAttackSequence()
@@ -1251,6 +1300,116 @@ namespace Enemies
                 Gizmos.color = Color.magenta;
                 Vector3 obstacleSize = obstacle.size;
                 Gizmos.DrawWireCube(navMeshTarget.position, obstacleSize);
+            }
+        }
+
+        #endregion
+
+        #region Elemental Damage System
+
+        [Header("Elemental Resistances")]
+        [SerializeField] private ElementalResistance[] resistances = new ElementalResistance[0];
+
+        /// <summary>
+        /// Gets the character's resistance to a specific damage type
+        /// </summary>
+        /// <param name="damageType">The damage type to check resistance for</param>
+        /// <returns>The resistance level for this damage type</returns>
+        public DamageResistance GetResistance(AttackElement damageType)
+        {
+            if (resistances != null)
+            {
+                foreach (var resistance in resistances)
+                {
+                    if (resistance != null && resistance.damageType == damageType)
+                    {
+                        return resistance.resistance;
+                    }
+                }
+            }
+            return DamageResistance.NORMAL;
+        }
+        
+        /// <summary>
+        /// Gets the damage multiplier for a specific damage type
+        /// </summary>
+        /// <param name="damageType">The damage type to check multiplier for</param>
+        /// <returns>The damage multiplier (0.0 to 3.0)</returns>
+        public float GetDamageMultiplier(AttackElement damageType)
+        {
+            return DamageUtils.GetDamageMultiplier(GetResistance(damageType));
+        }
+
+        /// <summary>
+        /// Take damage with elemental type consideration
+        /// </summary>
+        /// <param name="amount">Base amount of damage to take</param>
+        /// <param name="damageType">Type of elemental damage</param>
+        /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
+        public void TakeDamage(float amount, AttackElement damageType, Transform damageSource = null)
+        {
+            // Use DamageUtils for elemental damage calculation with resistance
+            var (hitDirection, finalDamage) = DamageUtils.ApplyElementalDamage(this, amount, damageType, 
+                damageSource, animator, transform, OnDamageTaken, OnDeath, true);
+
+            // Skip if immune to this damage type
+            if (finalDamage <= 0) return;
+
+            // Apply the calculated damage
+            float previousHealth = Health;
+            Health -= finalDamage;
+            OnDamageTaken?.Invoke(finalDamage, Health);
+
+            if (damageSource != null)
+            {
+                HandleDamageReaction(damageSource);
+            }
+
+            if (Health <= 0)
+            {
+                Die();
+            }
+        }
+
+        /// <summary>
+        /// Take damage with poise damage and elemental type consideration
+        /// </summary>
+        /// <param name="amount">Base amount of damage to take</param>
+        /// <param name="poiseDamage">Amount of poise damage to take</param>
+        /// <param name="damageType">Type of elemental damage</param>
+        /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
+        public void TakeDamage(float amount, float poiseDamage, AttackElement damageType, Transform damageSource = null)
+        {
+            // Use DamageUtils for elemental damage calculation with resistance
+            var (hitDirection, finalDamage, poiseBroken) = DamageUtils.ApplyElementalDamageWithPoise(this, amount, poiseDamage, damageType, 
+                damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
+
+            // Skip if immune to this damage type
+            if (finalDamage <= 0) return;
+
+            // Apply the calculated damage
+            float previousHealth = Health;
+            Health -= finalDamage;
+            OnDamageTaken?.Invoke(finalDamage, Health);
+
+            // Update poise damage tracking
+            if (poiseDamage > 0)
+            {
+                lastPoiseDamageTime = Time.time;
+                if (poiseBroken)
+                {
+                    isPoiseBroken = true;
+                }
+            }
+
+            if (damageSource != null)
+            {
+                HandleDamageReaction(damageSource);
+            }
+
+            if (Health <= 0)
+            {
+                Die();
             }
         }
 

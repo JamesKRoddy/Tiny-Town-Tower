@@ -15,6 +15,13 @@ namespace Enemies.BossAttacks
         public int attackType = 0; // Used to set the animator parameter
         [Tooltip("Optional transform to use as the attack origin. If not set, will use the boss's transform.")]
         public Transform attackOrigin;
+        
+        [Header("Elemental Damage")]
+        [Tooltip("The elemental type of this attack. NONE means physical damage only.")]
+        public AttackElement attackElement = AttackElement.NONE;
+        [Tooltip("Additional elemental damage bonus (added to base damage)")]
+        [Range(0, 50)]
+        public int elementalDamageBonus = 0;
 
         [Header("Attack Game Objects")]
         [Tooltip("Game objects that will be enabled when this attack is active")]
@@ -149,9 +156,26 @@ namespace Enemies.BossAttacks
                         continue; // Skip inactive targets (like NPCs in bunkers)
                     }
                     
+                    // Calculate total damage including elemental bonus
+                    float totalDamage = damageAmount;
+                    if (attackElement != AttackElement.NONE)
+                    {
+                        totalDamage += elementalDamageBonus;
+                    }
+                    
                     // Boss attacks deal high poise damage
-                    float poiseDamage = damageAmount * 0.8f; // 80% of health damage as poise damage
-                    damageable.TakeDamage(damageAmount, poiseDamage, transform);
+                    float poiseDamage = totalDamage * 0.8f; // 80% of health damage as poise damage
+                    
+                    // Apply damage with elemental type
+                    if (attackElement == AttackElement.NONE || attackElement == AttackElement.PHYSICAL)
+                    {
+                        damageable.TakeDamage(totalDamage, poiseDamage, transform);
+                    }
+                    else
+                    {
+                        damageable.TakeDamage(totalDamage, poiseDamage, attackElement, transform);
+                    }
+                    
                     // Play hit effect at the point of impact
                     Vector3 hitPoint = hitCollider.ClosestPoint(attackPosition);
                     Vector3 hitNormal = (hitPoint - attackPosition).normalized;
