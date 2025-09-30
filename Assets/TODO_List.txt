@@ -27,7 +27,9 @@ Have to create npc mutations/characteristics to affect element damage
 
 Need some close range attacks for ranged zombies
 
-Custom inspectors for NPC and their components
+Custom inspectors for NPC and their components, enemies, managers that need it
+
+Create the scriptable obj and prefabs for: Genetic mutations, weapons, world objects etc.
 
 
 VFX for player
