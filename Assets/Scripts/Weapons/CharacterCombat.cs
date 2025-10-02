@@ -183,12 +183,12 @@ public class CharacterCombat : MonoBehaviour
         Vector3 normal = directionTransform.vfxTransform.forward;
         Quaternion rotation = directionTransform.vfxTransform.rotation;
 
-        // Play the effect using EffectManager
+        // Play the effect using EffectManager (not parented to transform)
         GameObject effectInstance = EffectManager.Instance.PlayEffect(
             position, 
             normal, 
             rotation, 
-            directionTransform.vfxTransform, 
+            null, // Don't parent to transform for melee effects
             elementEffect.meleeEffect,
             defaultVfxDuration
         );

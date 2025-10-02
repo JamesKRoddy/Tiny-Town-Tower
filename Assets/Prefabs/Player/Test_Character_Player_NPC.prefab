@@ -1766,6 +1766,8 @@ MonoBehaviour:
   meleeElementalEffects:
   - element: 0
     meleeEffect: {fileID: 11400000, guid: ba3d531537432b34e85ed3b265a6eb06, type: 2}
+  - element: 2
+    meleeEffect: {fileID: 11400000, guid: 52c6fe2f7eb9a0844abd20061aa89584, type: 2}
   dashElementalEffects:
   - element: 0
     dashEffect: {fileID: 11400000, guid: 115e1d46a30b4f644bb674d91e81537c, type: 2}
@@ -4739,6 +4741,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 214912892486926426, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.25
+      objectReference: {fileID: 0}
     - target: {fileID: 336233431012168019, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -4787,6 +4793,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2778890788061940017, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.25
+      objectReference: {fileID: 0}
     - target: {fileID: 3751976351383133144, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -4795,6 +4805,14 @@ PrefabInstance:
       propertyPath: dashVFXPoint
       value: 
       objectReference: {fileID: 2150085026169600938}
+    - target: {fileID: 4573978088541020853, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 4749021119175381470, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.25
+      objectReference: {fileID: 0}
     - target: {fileID: 8217325088818768309, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
       propertyPath: m_Name
       value: AttackVFX
