@@ -1753,6 +1753,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37936d33caa405f4a87ac73e6d80133c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  attackDirectionTransforms:
+  - attackDirection: 0
+    vfxTransform: {fileID: 8904687828584927395}
+  - attackDirection: 1
+    vfxTransform: {fileID: 7095804676585388839}
+  - attackDirection: 2
+    vfxTransform: {fileID: 364280550919381960}
+  - attackDirection: 3
+    vfxTransform: {fileID: 5049169135916888652}
+  dashVfxTransform: {fileID: 2150085026169600938}
+  meleeElementalEffects:
+  - element: 0
+    meleeEffect: {fileID: 11400000, guid: ba3d531537432b34e85ed3b265a6eb06, type: 2}
+  dashElementalEffects:
+  - element: 0
+    dashEffect: {fileID: 11400000, guid: 115e1d46a30b4f644bb674d91e81537c, type: 2}
+  defaultVfxDuration: 2
 --- !u!114 &1287946293633936085
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4714,6 +4731,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 4023079707919572210}
     m_Modifications:
+    - target: {fileID: 29303266774242399, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 195627577901085246, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 336233431012168019, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2312577079656741781, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
       propertyPath: dashElementVfxPrefabs.Array.size
       value: 1
@@ -4758,6 +4787,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3751976351383133144, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4263922213240884375, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
       propertyPath: dashVFXPoint
       value: 
@@ -4766,19 +4799,45 @@ PrefabInstance:
       propertyPath: m_Name
       value: AttackVFX
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 4263922213240884375, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+    - {fileID: 2312577079656741781, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+    - {fileID: 780586559784655579, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+    - {fileID: 8588038562099722752, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+    - {fileID: 5271461225757467525, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+    - {fileID: 7392040141348495613, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
     m_RemovedGameObjects:
     - {fileID: 7168723526862689677, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+--- !u!4 &364280550919381960 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4749021119175381470, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+  m_PrefabInstance: {fileID: 4965718526647398934}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2150085026169600938 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6430969020272167356, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
   m_PrefabInstance: {fileID: 4965718526647398934}
   m_PrefabAsset: {fileID: 0}
+--- !u!4 &5049169135916888652 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 214912892486926426, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+  m_PrefabInstance: {fileID: 4965718526647398934}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &7034930588691365147 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2686641998464454413, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+  m_PrefabInstance: {fileID: 4965718526647398934}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &7095804676585388839 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2778890788061940017, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
+  m_PrefabInstance: {fileID: 4965718526647398934}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &8904687828584927395 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4573978088541020853, guid: a2bfb6ce5ad12a04badc26cacf6ca27a, type: 3}
   m_PrefabInstance: {fileID: 4965718526647398934}
   m_PrefabAsset: {fileID: 0}

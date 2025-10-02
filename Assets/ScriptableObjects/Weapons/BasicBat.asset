@@ -22,5 +22,10 @@ MonoBehaviour:
   animationType: 1
   damage: 10
   poiseDamage: 10
-  weaponElement: 0
   attackSpeed: 0.8
+  weaponElement: 2
+  elementalDamageBonus: 0
+  isPureElemental: 0
+  possibleStatusEffects: 
+  statusEffectChance: 0.1
+  statusEffectDuration: 5
