@@ -1038,6 +1038,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1633898417205440891, guid: b5c3cb9ae758fb549906e6cc604c6b3e, type: 3}
+      propertyPath: characterType
+      value: 202
+      objectReference: {fileID: 0}
+    - target: {fileID: 1633898417205440891, guid: b5c3cb9ae758fb549906e6cc604c6b3e, type: 3}
       propertyPath: rotationSpeed
       value: 30
       objectReference: {fileID: 0}
@@ -1051,7 +1055,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7886037407994308560, guid: b5c3cb9ae758fb549906e6cc604c6b3e, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

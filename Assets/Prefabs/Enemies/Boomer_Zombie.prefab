@@ -2898,7 +2898,8 @@ GameObject:
   - component: {fileID: -6610119119996104940}
   - component: {fileID: 4816306560198809998}
   - component: {fileID: 5237491215696526443}
-  - component: {fileID: 6096021547279428693}
+  - component: {fileID: 6377118714033894061}
+  - component: {fileID: 5648941839540981947}
   m_Layer: 8
   m_Name: Boomer_Zombie
   m_TagString: Untagged
@@ -3010,7 +3011,7 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &6096021547279428693
+--- !u!114 &6377118714033894061
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3019,11 +3020,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 6477775522615659138}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ecb4f3324fc237449a3bad05a1dc0fbe, type: 3}
+  m_Script: {fileID: 11500000, guid: d3ec8c7d65a0c974581ca471b6948708, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   characterType: 201
-  useRootMotion: 1
+  useRootMotion: 0
   stoppingDistance: 1.5
   rotationSpeed: 10
   movementSpeed: 3.5
@@ -3038,17 +3039,48 @@ MonoBehaviour:
   maxPoise: 50
   poiseRecoveryRate: 10
   poiseRecoveryDelay: 2
+  animator: {fileID: 0}
+  isAttacking: 0
+  resistances: []
+  selectionStrategy: 2
+  attackSwitchCooldown: 0.5
+--- !u!114 &5648941839540981947
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6477775522615659138}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78a0bbd8a365df245bd8566a6fb8fb0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  range: 5
+  cooldown: 2
+  damage: 10
+  poiseDamage: 15
+  attackType: 0
+  attackOrigin: {fileID: 0}
   attackElement: 0
   elementalDamageBonus: 0
-  resistances: []
-  attackRange: 4
-  attackCooldown: 1.5
-  approachDistance: 3
+  startEffect: {fileID: 0}
+  startEffectDelay: 0
+  attackEffect: {fileID: 0}
+  attackEffectDelay: 0
+  hitEffect: {fileID: 0}
+  hitEffectDelay: 0
+  endEffect: {fileID: 0}
+  endEffectDelay: 0
+  attackTrigger: Attack
+  attackGameObjects: []
   explosionRadius: 5
-  explosionDamage: 20
+  explosionDamage: 50
+  poiseDamageMultiplier: 1.2
   explosionEffect: {fileID: 11400000, guid: ce058444ab7d3b24ebc0ffb7c961e39e, type: 2}
-  chargeSpeed: 8
-  useChargeAnimation: 1
+  explodeOnDeath: 1
+  explodeOnDamage: 0
+  minDamageToExplode: 10
 --- !u!1 &6616253873932381118
 GameObject:
   m_ObjectHideFlags: 0
