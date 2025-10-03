@@ -1,27 +1,15 @@
 *****Current Work*****
 
-Finalizing game loops:
+Refactor of zombie to make the attacks more modular. All use a single animator and class that controls navigation, health etc. Want to make the attacks and specifics components like the boss attack system so we can customise and make different zombie types easier.
 
-Camp management:
+Melee zombies are still pretty janky while attacking and doing subsequent attacks
 
-Clean system:
-Next ppl get sick, stop working completely
-Buildings to work on:
-Check cleaning station still works
-Toilet
-
-Health system for settlers:
-Settlers not treated will die, recover or turn to zombies eventually (this is just based on their age and luck)
-They can increase chances of recovery by not working or even better receiving treatment.
+Setup ranged, lazer and boomer zombies
 
 
 ****** Tomorrow work:
 
-Visual effects from elemental weapons eg. zombies get shocked by electrical weapon, they freeze and particles are emitted.
 
-Setup default effects to play on the effected characters mesh
-
-Have to create npc mutations/characteristics to affect element damage
 
 ****** Next work:
 
@@ -30,7 +18,6 @@ Need some close range attacks for ranged zombies
 Custom inspectors for NPC and their components, enemies, managers that need it
 
 Create the scriptable obj and prefabs for: Genetic mutations, weapons, world objects etc.
-
 
 VFX for player
 
@@ -71,6 +58,11 @@ Status effects, adding sleep, work etc effects to npcs Also damage ones like fir
 
 Test upgrade and destruction effects for buildings
 
+Combine the poise and elemental systems and add visual effects and animations from elemental weapons eg. zombies get shocked by electrical weapon, they freeze and particles are emitted.
+
+Health system for settlers:
+Settlers not treated will die, recover or turn to zombies eventually (this is just based on their age and luck)
+They can increase chances of recovery by not working or even better receiving treatment.
 
 *****Ideas*****
 

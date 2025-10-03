@@ -1164,49 +1164,21 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             return;
         }
 
-        // Check if the root motion movement would cause a collision
-        Vector3 proposedPosition = transform.position + rootMotionDelta;
+        // Use the centralized root motion utility
+        LayerMask collisionLayers = GetCombinedObstacleLayers();
+        collisionLayers |= (1 << 8); // Add enemy layer
         
-        // Use capsule cast to check for collisions in the root motion direction
-        Vector3 capsuleBottom = transform.position + Vector3.up * 0.3f;
-        Vector3 capsuleTop = transform.position + Vector3.up * humanCollider.bounds.size.y;
+        bool movementApplied = RootMotionUtils.ApplyRootMotion(
+            transform, 
+            rootMotionDelta, 
+            null, // No NavMeshAgent for HumanCharacterController
+            collisionLayers, 
+            null, // No specific target to maintain distance from
+            0.2f, // Standard safe distance
+            false // Debug logging disabled for NPCs
+        );
         
-        bool collisionDetected = false;
-        
-        // Check for obstacle collisions (walls, etc.)
-        foreach (LayerMask layer in obstacleLayers)
-        {
-            if (Physics.CapsuleCast(capsuleBottom, capsuleTop, capsuleCastRadius * 0.8f, 
-                rootMotionDelta.normalized, out RaycastHit hitInfo, rootMotionDelta.magnitude, layer))
-            {
-                collisionDetected = true;
-                break;
-            }
-        }
-        
-        // Check for enemy collisions to prevent pushing enemies during attacks
-        if (!collisionDetected)
-        {
-            LayerMask enemyLayer = 1 << 8; // Enemy layer (same as used in FleeState)
-            if (Physics.CapsuleCast(capsuleBottom, capsuleTop, capsuleCastRadius * 0.8f, 
-                rootMotionDelta.normalized, out RaycastHit enemyHitInfo, rootMotionDelta.magnitude, enemyLayer))
-            {
-                // Check if the hit object is actually an enemy
-                if (enemyHitInfo.collider.CompareTag("Enemy") || 
-                    enemyHitInfo.collider.GetComponent<EnemyBase>() != null)
-                {
-                    collisionDetected = true;
-                    Debug.Log($"[{gameObject.name}] Root motion blocked by enemy: {enemyHitInfo.collider.name}");
-                }
-            }
-        }
-
-        // If no collision detected, apply the root motion movement
-        if (!collisionDetected)
-        {
-            transform.position = proposedPosition;
-        }
-        // If collision detected, don't apply the movement (character stays in place)
+        // If movement was blocked, character stays in place
         // This prevents the character from moving through walls and pushing enemies during attack animations
     }
 

@@ -55,7 +55,7 @@ namespace Enemies
         [Header("Movement Settings")]
         [SerializeField] protected bool useRootMotion = false;
         [SerializeField] protected float stoppingDistance = 1.5f;
-        [SerializeField] protected float rotationSpeed = 10f; // Only used for non-root motion
+        [SerializeField] public float rotationSpeed = 10f; // Only used for non-root motion, made public for attack components
         [SerializeField] protected float movementSpeed = 3.5f;
         [SerializeField] protected float acceleration = 8f;
         [SerializeField] protected float angularSpeed = 120f;
@@ -64,7 +64,7 @@ namespace Enemies
         // Add these fields for better root motion control
         [Header("Root Motion Settings")]
         [SerializeField] protected float rootMotionMultiplier = 1f;
-        [SerializeField] protected bool showCollisionDebug = false; // Debug visualization for collision detection
+        [SerializeField] public bool showCollisionDebug = false; // Debug visualization for collision detection
 
         [Header("Health Settings")]
         [SerializeField] private float health = 100f;
@@ -83,11 +83,12 @@ namespace Enemies
         #region Protected Fields
         
         protected NavMeshAgent agent;
-        protected Animator animator;
+        public Animator animator; // Made public for attack components
         protected Transform navMeshTarget;        
-        protected bool isAttacking = false;
+        public bool isAttacking = false; // Made public for attack components
         protected bool isRotatingToAttack = false; // New state for rotation phase before attack
         protected float damage;
+        protected float lastAttackTime = -999f; // Track when last attack occurred for root motion collision buffer (start with old time)
 
         // Material flash effect
         protected SkinnedMeshRenderer skinnedMeshRenderer;
@@ -236,8 +237,12 @@ namespace Enemies
         // This method is called by the Animator when root motion is being applied
         protected virtual void OnAnimatorMove()
         {
+            // Always log when OnAnimatorMove is called (temporarily always on for debugging)
+            Debug.Log($"[{gameObject.name}] OnAnimatorMove called - useRootMotion: {useRootMotion} | Health: {Health} | agent.isOnNavMesh: {agent.isOnNavMesh}");
+            
             if (!useRootMotion || Health <= 0 || !agent.isOnNavMesh) 
             {
+                Debug.Log($"[{gameObject.name}] OnAnimatorMove early return - useRootMotion: {useRootMotion} | Health: {Health} | agent.isOnNavMesh: {agent.isOnNavMesh}");
                 return;
             }
 
@@ -245,149 +250,52 @@ namespace Enemies
             Vector3 rootMotion = animator.deltaPosition * rootMotionMultiplier;
             rootMotion.y = 0; // Ignore vertical movement from animation
 
+            // Always log root motion magnitude (temporarily always on for debugging)
+            Debug.Log($"[{gameObject.name}] OnAnimatorMove - rootMotion magnitude: {rootMotion.magnitude:F3} | deltaPosition: {animator.deltaPosition} | multiplier: {rootMotionMultiplier}");
+
             // If there's no movement from root motion, don't do anything
             if (rootMotion.magnitude < 0.001f)
             {
+                Debug.Log($"[{gameObject.name}] OnAnimatorMove - no movement (magnitude < 0.001)");
                 return;
             }
-
-            // Calculate new position based purely on root motion
-            Vector3 newPosition = transform.position + rootMotion;
-
-            // Check for collisions before applying root motion
-            Vector3 adjustedRootMotion = IsRootMotionCollisionSafe(rootMotion, out bool collisionDetected);
             
-            if (!collisionDetected)
-            {
-                // No collision detected, apply full root motion
-                Vector3 finalPosition = transform.position + adjustedRootMotion;
-                
-                // Only ensure we stay on the NavMesh - don't constrain to agent position
-                if (NavMesh.SamplePosition(finalPosition, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
-                {
-                    transform.position = hit.position;
-                    
-                    // Update the agent's position to follow the character (not the other way around)
-                    agent.nextPosition = hit.position;
-                }
-                else
-                {
-                    // If we can't find a valid NavMesh position, try a smaller step
-                    Vector3 smallerStep = transform.position + adjustedRootMotion * 0.5f;
-                    if (NavMesh.SamplePosition(smallerStep, out NavMeshHit smallerHit, 1.0f, NavMesh.AllAreas))
-                    {
-                        transform.position = smallerHit.position;
-                        agent.nextPosition = smallerHit.position;
-                    }
-                    // If still no valid position, don't move this frame (stay where we are)
-                }
-            }
-            else
-            {
-                // Collision detected, apply reduced movement if possible
-                if (adjustedRootMotion.magnitude > 0.001f)
-                {
-                    Vector3 finalPosition = transform.position + adjustedRootMotion;
-                    
-                    if (NavMesh.SamplePosition(finalPosition, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
-                    {
-                        transform.position = hit.position;
-                        agent.nextPosition = hit.position;
-                    }
-                }
-                // If no adjusted movement possible, zombie stays in place
-                // This prevents the zombie from moving through the player during attack animations
-            }
-        }
+            // Debug log to see if OnAnimatorMove is being called (temporarily always on for debugging)
+            Debug.Log($"[{gameObject.name}] OnAnimatorMove called - rootMotion: {rootMotion.magnitude:F3}");
 
-        /// <summary>
-        /// Checks if the root motion movement would cause a collision with the player or other obstacles
-        /// Returns an adjusted root motion vector that prevents overlapping
-        /// </summary>
-        /// <param name="rootMotion">The root motion delta to check</param>
-        /// <param name="collisionDetected">Output parameter indicating if a collision was detected</param>
-        /// <returns>Adjusted root motion vector that prevents overlapping</returns>
-        protected virtual Vector3 IsRootMotionCollisionSafe(Vector3 rootMotion, out bool collisionDetected)
-        {
-            collisionDetected = false;
-            
-            // Get the character's collider for collision detection
-            Collider characterCollider = GetComponent<Collider>();
-            if (characterCollider == null)
-            {
-                return rootMotion; // No collider, assume safe
-            }
-
-            // Use capsule cast to check for collisions in the root motion direction
-            // This is similar to how HumanCharacterController handles it
-            Vector3 capsuleBottom = transform.position + Vector3.up * 0.3f;
-            Vector3 capsuleTop = transform.position + Vector3.up * characterCollider.bounds.size.y;
-            float capsuleRadius = characterCollider.bounds.extents.x; // Use X extent as radius
-
-            // Check for collisions with player and other obstacles
-            // Layer mask for player (Default layer) and obstacles (ObstacleLayer)
+            // Use the centralized root motion utility
             LayerMask collisionLayers = LayerMask.GetMask("Default", "ObstacleLayer");
-
-            if (Physics.CapsuleCast(capsuleBottom, capsuleTop, capsuleRadius * 0.8f, 
-                rootMotion.normalized, out RaycastHit hitInfo, rootMotion.magnitude, collisionLayers))
+            
+            // Determine minimum distance based on attack state and recent attack history
+            // Keep zombie within attack range (0-1.5f) by preventing getting too close
+            // Use larger buffer for a short time after attacking to prevent root motion from pushing too close
+            float timeSinceLastAttack = Time.time - lastAttackTime;
+            bool recentlyAttacked = timeSinceLastAttack < 2.0f; // 2 seconds after attack
+            float minDistance = (isAttacking || recentlyAttacked) ? 1.2f : 0.2f;
+            
+            // Always log the collision detection state for debugging (temporarily always on for debugging)
+            Debug.Log($"[{gameObject.name}] Root Motion - isAttacking: {isAttacking} | recentlyAttacked: {recentlyAttacked} | timeSinceLastAttack: {timeSinceLastAttack:F2} | minDistance: {minDistance} | currentDistance: {Vector3.Distance(transform.position, navMeshTarget.position):F2}");
+            
+            // Always enable debug for RootMotionUtils (temporarily always on for debugging)
+            bool movementApplied = RootMotionUtils.ApplyRootMotion(
+                transform, 
+                rootMotion, 
+                agent, 
+                collisionLayers, 
+                navMeshTarget, 
+                minDistance, 
+                true // Force debug on
+            );
+            
+            // Always log the result (temporarily always on for debugging)
+            Debug.Log($"[{gameObject.name}] RootMotionUtils.ApplyRootMotion result - movementApplied: {movementApplied}");
+            
+            if (!movementApplied)
             {
-                collisionDetected = true;
-                
-                // Debug visualization
-                if (showCollisionDebug)
-                {
-                    Debug.DrawLine(transform.position, hitInfo.point, Color.red, 0.1f);
-                    Debug.Log($"[{gameObject.name}] Root motion collision detected with {hitInfo.collider.name}");
-                }
-                
-                // Check if we hit the player specifically
-                if (hitInfo.collider.CompareTag("Player") || hitInfo.collider.GetComponent<PlayerController>() != null)
-                {
-                    // Allow partial movement towards player but prevent complete overlap
-                    float playerSafeDistance = hitInfo.distance - 0.2f; // Leave a buffer
-                    if (playerSafeDistance > 0)
-                    {
-                        if (showCollisionDebug)
-                            Debug.Log($"[{gameObject.name}] Partial movement towards player: {playerSafeDistance:F2} units");
-                        return rootMotion.normalized * playerSafeDistance;
-                    }
-                    
-                    if (showCollisionDebug)
-                        Debug.Log($"[{gameObject.name}] Blocked by player collision");
-                    return Vector3.zero;
-                }
-
-                // Check if we hit an NPC (HumanCharacterController)
-                if (hitInfo.collider.GetComponent<HumanCharacterController>() != null)
-                {
-                    // Allow partial movement towards NPCs but prevent complete overlap
-                    float npcSafeDistance = hitInfo.distance - 0.2f; // Leave a buffer
-                    if (npcSafeDistance > 0)
-                    {
-                        if (showCollisionDebug)
-                            Debug.Log($"[{gameObject.name}] Partial movement towards NPC: {npcSafeDistance:F2} units");
-                        return rootMotion.normalized * npcSafeDistance;
-                    }
-                    
-                    if (showCollisionDebug)
-                        Debug.Log($"[{gameObject.name}] Blocked by NPC collision");
-                    return Vector3.zero;
-                }
-
-                // For other obstacles (walls, etc.), allow partial movement up to the collision point
-                float safeDistance = hitInfo.distance - 0.1f; // Leave a small buffer
-                if (safeDistance > 0)
-                {
-                    if (showCollisionDebug)
-                        Debug.Log($"[{gameObject.name}] Partial movement allowed: {safeDistance:F2} units");
-                    return rootMotion.normalized * safeDistance;
-                }
-                
-                return Vector3.zero; // No safe movement possible
+                Debug.Log($"[{gameObject.name}] Root motion blocked - staying in place");
             }
-
-            return rootMotion; // No collision detected, return original root motion
         }
+
 
         #endregion
 
@@ -889,12 +797,6 @@ namespace Enemies
 
         #region Combat & Damage
 
-        [Header("Enemy Attack Settings")]
-        [Tooltip("The elemental type of this enemy's attacks. NONE means physical damage only.")]
-        [SerializeField] private AttackElement attackElement = AttackElement.NONE;
-        [Tooltip("Additional elemental damage bonus for this enemy's attacks")]
-        [Range(0, 50)]
-        [SerializeField] private int elementalDamageBonus = 0;
 
         public virtual void Attack()
         {
@@ -902,7 +804,7 @@ namespace Enemies
         }
         
         /// <summary>
-        /// Deals damage to a target with this enemy's elemental properties
+        /// Deals damage to a target (legacy method - use AttackBase for new implementations)
         /// </summary>
         /// <param name="target">The target to damage</param>
         /// <param name="baseDamage">Base damage amount</param>
@@ -911,35 +813,14 @@ namespace Enemies
         {
             if (target == null) return;
             
-            // Calculate total damage including elemental bonus
-            float totalDamage = baseDamage;
-            if (attackElement != AttackElement.NONE)
+            // Legacy method - new attack components should use AttackBase.DealDamage instead
+            if (poiseDamage > 0)
             {
-                totalDamage += elementalDamageBonus;
-            }
-            
-            // Apply damage with elemental type
-            if (attackElement == AttackElement.NONE || attackElement == AttackElement.PHYSICAL)
-            {
-                if (poiseDamage > 0)
-                {
-                    target.TakeDamage(totalDamage, poiseDamage, transform);
-                }
-                else
-                {
-                    target.TakeDamage(totalDamage, transform);
-                }
+                target.TakeDamage(baseDamage, poiseDamage, transform);
             }
             else
             {
-                if (poiseDamage > 0)
-                {
-                    target.TakeDamage(totalDamage, poiseDamage, attackElement, transform);
-                }
-                else
-                {
-                    target.TakeDamage(totalDamage, attackElement, transform);
-                }
+                target.TakeDamage(baseDamage, transform);
             }
         }
 

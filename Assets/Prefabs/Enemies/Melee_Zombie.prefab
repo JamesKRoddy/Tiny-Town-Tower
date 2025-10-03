@@ -2898,7 +2898,8 @@ GameObject:
   - component: {fileID: -6610119119996104940}
   - component: {fileID: 4816306560198809998}
   - component: {fileID: 5237491215696526443}
-  - component: {fileID: 1501960958168938100}
+  - component: {fileID: 7708733117594400575}
+  - component: {fileID: 5874133948715530558}
   m_Layer: 8
   m_Name: Melee_Zombie
   m_TagString: Untagged
@@ -3010,7 +3011,7 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &1501960958168938100
+--- !u!114 &7708733117594400575
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3019,28 +3020,69 @@ MonoBehaviour:
   m_GameObject: {fileID: 6477775522615659138}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a1aa8b8fb928dbf4892118fc7500f7a1, type: 3}
+  m_Script: {fileID: 11500000, guid: d3ec8c7d65a0c974581ca471b6948708, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   characterType: 201
-  useRootMotion: 1
+  useRootMotion: 0
   stoppingDistance: 1.5
   rotationSpeed: 10
   movementSpeed: 3.5
   acceleration: 8
   angularSpeed: 120
   obstacleBoundsOffset: 1
+  rootMotionMultiplier: 1
+  showCollisionDebug: 0
   health: 100
   maxHealth: 100
-  attackRange: 2
-  attackCooldown: 1.5
-  approachDistance: 3
-  meleeDamage: 5
-  meleeAttackRadius: 1.5
+  poise: 50
+  maxPoise: 50
+  poiseRecoveryRate: 10
+  poiseRecoveryDelay: 2
+  animator: {fileID: 0}
+  isAttacking: 0
+  resistances: []
+  selectionStrategy: 2
+  attackSwitchCooldown: 0.5
+--- !u!114 &5874133948715530558
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6477775522615659138}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b955b0dab8606148a7e6a5866316e49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  range: 5
+  cooldown: 2
+  damage: 10
+  poiseDamage: 15
+  attackType: 0
+  attackOrigin: {fileID: 0}
+  attackElement: 1
+  elementalDamageBonus: 0
+  startEffect: {fileID: 0}
+  startEffectDelay: 0
+  attackEffect: {fileID: 0}
+  attackEffectDelay: 0
+  hitEffect: {fileID: 0}
+  hitEffectDelay: 0
+  endEffect: {fileID: 0}
+  endEffectDelay: 0
+  attackTrigger: Attack
+  attackGameObjects: []
+  attackRadius: 1.5
   targetLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 4294967295
   buildingAttackRange: 5
+  minAttackDistance: 1
+  maxAttackDistance: 1.5
+  idealAttackDistance: 1.2
+  attackAngleThreshold: 45
 --- !u!1 &6616253873932381118
 GameObject:
   m_ObjectHideFlags: 0

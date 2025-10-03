@@ -5,79 +5,45 @@ using System;
 
 namespace Enemies.BossAttacks
 {  
-    public abstract class BossAttackBase : MonoBehaviour
+    public abstract class BossAttackBase : AttackBase
     {
-        [Header("Attack Settings")]
-        public float range = 5f;
-        [Tooltip("Cooldown in seconds between attacks of this type, doesnt include the length of attack animation")]
-        public float cooldown = 2f;
-        public float damage = 10f;
-        public int attackType = 0; // Used to set the animator parameter
-        [Tooltip("Optional transform to use as the attack origin. If not set, will use the boss's transform.")]
-        public Transform attackOrigin;
-        
-        [Header("Elemental Damage")]
-        [Tooltip("The elemental type of this attack. NONE means physical damage only.")]
-        public AttackElement attackElement = AttackElement.NONE;
-        [Tooltip("Additional elemental damage bonus (added to base damage)")]
-        [Range(0, 50)]
-        public int elementalDamageBonus = 0;
-
-        [Header("Attack Game Objects")]
-        [Tooltip("Game objects that will be enabled when this attack is active")]
-        public GameObject[] attackGameObjects;
-
-        [Header("Attack Effects")]
-        [Tooltip("Effect played when the attack starts")]
-        public EffectDefinition startEffect;
-        [Tooltip("Delay in seconds before playing the start effect")]
-        public float startEffectDelay = 0f;
-
-        [Tooltip("Effect played when the boss attacks")]
-        public EffectDefinition attackEffect;
-        [Tooltip("Delay in seconds before playing the attack effect")]
-        public float attackEffectDelay = 0f;
-        
-        [Tooltip("Effect played when the attack hits")]
-        public EffectDefinition hitEffect;
-        [Tooltip("Delay in seconds before playing the hit effect")]
-        public float hitEffectDelay = 0f;
-        
-        [Tooltip("Effect played when the attack ends")]
-        public EffectDefinition endEffect;
-        [Tooltip("Delay in seconds before playing the end effect")]
-        public float endEffectDelay = 0f;
 
         protected Boss boss;
         protected Animator animator;
         protected Transform target;
-        protected float lastAttackTime;
 
         private EffectPlayer startEffectPlayer;
         private EffectPlayer attackEffectPlayer;
         private EffectPlayer hitEffectPlayer;
         private EffectPlayer endEffectPlayer;
 
-        public virtual void Initialize(Boss boss)
+        public override void Initialize(EnemyBase enemy)
         {
-            this.boss = boss;
-            this.animator = boss.GetComponent<Animator>();
-            this.target = boss.NavMeshTarget;
-            
-            // If no attack origin is set, use the boss's transform
-            if (attackOrigin == null)
+            if (enemy is Boss bossEnemy)
             {
-                attackOrigin = boss.transform;
-            }
+                this.boss = bossEnemy;
+                this.animator = bossEnemy.GetComponent<Animator>();
+                this.target = bossEnemy.NavMeshTarget;
+                
+                // If no attack origin is set, use the boss's transform
+                if (attackOrigin == null)
+                {
+                    attackOrigin = bossEnemy.transform;
+                }
 
-            // Initialize effect players
-            startEffectPlayer = new EffectPlayer(this, startEffect, startEffectDelay);
-            attackEffectPlayer = new EffectPlayer(this, attackEffect, attackEffectDelay);
-            hitEffectPlayer = new EffectPlayer(this, hitEffect, hitEffectDelay);
-            endEffectPlayer = new EffectPlayer(this, endEffect, endEffectDelay);
+                // Initialize effect players
+                startEffectPlayer = new EffectPlayer(this, startEffect, startEffectDelay);
+                attackEffectPlayer = new EffectPlayer(this, attackEffect, attackEffectDelay);
+                hitEffectPlayer = new EffectPlayer(this, hitEffect, hitEffectDelay);
+                endEffectPlayer = new EffectPlayer(this, endEffect, endEffectDelay);
+            }
+            else
+            {
+                Debug.LogError($"[{gameObject.name}] BossAttackBase can only be initialized with a Boss enemy");
+            }
         }
 
-        public virtual bool CanAttack()
+        public override bool CanAttack()
         {
             if (target == null) return false;
             
@@ -85,7 +51,7 @@ namespace Enemies.BossAttacks
             float effectiveDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, target, range, 1f);
             float distance = Vector3.Distance(transform.position, target.position);
             
-            return distance <= effectiveDistance && Time.time >= lastAttackTime + cooldown;
+            return distance <= effectiveDistance && base.CanAttack();
         }
 
         /// <summary>
@@ -98,23 +64,34 @@ namespace Enemies.BossAttacks
             return NavigationUtils.CalculateEffectiveReachDistance(transform.position, target, range, 1f);
         }
 
-        public virtual void StartAttack()
+        public override void StartAttack()
         {
             if (animator != null)
             {
                 animator.SetInteger("AttackType", attackType);
             }
-            lastAttackTime = Time.time;            
+            lastAttackTime = Time.time;
+            
+            // Enable attack game objects
+            EnableAttackGameObjects();
+            
+            // Play start effect
+            PlayStartEffect();
         }
 
-        public virtual void OnAttack()
+        public override void OnAttack()
         {
-            // Override in child classes for specific attack start behavior
+            // Play attack effect
+            PlayAttackEffect();
         }
 
-        public virtual void OnAttackEnd()
+        public override void OnAttackEnd()
         {
-            // Override in child classes for specific attack end behavior
+            // Disable attack game objects
+            DisableAttackGameObjects();
+            
+            // Play end effect
+            PlayEndEffect();
         }
 
         protected void PlayStartEffect(Vector3? position = null, Vector3? normal = null, Quaternion? rotation = null, Transform parent = null)
@@ -164,16 +141,16 @@ namespace Enemies.BossAttacks
                     }
                     
                     // Boss attacks deal high poise damage
-                    float poiseDamage = totalDamage * 0.8f; // 80% of health damage as poise damage
+                    float bossPoiseDamage = totalDamage * 0.8f; // 80% of health damage as poise damage
                     
                     // Apply damage with elemental type
                     if (attackElement == AttackElement.NONE || attackElement == AttackElement.PHYSICAL)
                     {
-                        damageable.TakeDamage(totalDamage, poiseDamage, transform);
+                        damageable.TakeDamage(totalDamage, bossPoiseDamage, transform);
                     }
                     else
                     {
-                        damageable.TakeDamage(totalDamage, poiseDamage, attackElement, transform);
+                        damageable.TakeDamage(totalDamage, bossPoiseDamage, attackElement, transform);
                     }
                     
                     // Play hit effect at the point of impact

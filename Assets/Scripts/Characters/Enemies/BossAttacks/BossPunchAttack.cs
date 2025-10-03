@@ -13,13 +13,17 @@ namespace Enemies.BossAttacks
             PlayStartEffect(attackOrigin.position, attackOrigin.forward, attackOrigin.rotation, attackOrigin);
         }
 
-        public override void Initialize(Boss boss)
+        public override void Initialize(EnemyBase enemy)
         {
-            base.Initialize(boss);
-            // Set default elemental damage for punch attacks (can be overridden in inspector)
-            if (attackElement == AttackElement.NONE)
+            base.Initialize(enemy);
+            
+            if (enemy is Boss bossEnemy)
             {
-                attackElement = AttackElement.PHYSICAL;
+                // Set default elemental damage for punch attacks (can be overridden in inspector)
+                if (attackElement == AttackElement.NONE)
+                {
+                    attackElement = AttackElement.PHYSICAL;
+                }
             }
         }
 

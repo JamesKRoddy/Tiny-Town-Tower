@@ -32,19 +32,20 @@ namespace Enemies.BossAttacks
         private float originalStoppingDistance;
         private NavMeshAgent agent;
 
-        public override void Initialize(Boss boss)
+        public override void Initialize(EnemyBase enemy)
         {
-            base.Initialize(boss);
-            // Set default elemental damage for jump attacks (can be overridden in inspector)
-            if (attackElement == AttackElement.NONE)
-            {
-                attackElement = AttackElement.ELECTRIC; // Jump attacks could be electric/shock damage
-            }
+            base.Initialize(enemy);
             
-            // Store the original stopping distance and agent reference
-            if (boss != null)
+            if (enemy is Boss bossEnemy)
             {
-                agent = boss.GetComponent<NavMeshAgent>();
+                // Set default elemental damage for jump attacks (can be overridden in inspector)
+                if (attackElement == AttackElement.NONE)
+                {
+                    attackElement = AttackElement.ELECTRIC; // Jump attacks could be electric/shock damage
+                }
+                
+                // Store the original stopping distance and agent reference
+                agent = bossEnemy.GetComponent<NavMeshAgent>();
                 if (agent != null)
                 {
                     originalStoppingDistance = agent.stoppingDistance;
