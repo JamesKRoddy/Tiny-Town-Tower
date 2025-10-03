@@ -47,20 +47,18 @@ public static class RootMotionUtils
             float distanceToTarget = Vector3.Distance(proposedPosition, target.position);
             float currentDistance = Vector3.Distance(character.position, target.position);
             
-            // Always log distance check (temporarily always on for debugging)
-            Debug.Log($"[{character.name}] CheckRootMotionCollision - currentDistance: {currentDistance:F2} | proposedDistance: {distanceToTarget:F2} | minDistance: {minDistance:F2}");
-            
             if (distanceToTarget < minDistance)
             {
                 collisionDetected = true;
                 
-                Debug.Log($"[{character.name}] Root motion would get too close to target. Distance: {distanceToTarget:F2}, Min: {minDistance:F2}");
+                if (enableDebug)
+                {
+                    Debug.Log($"[{character.name}] Root motion would get too close to target. Distance: {distanceToTarget:F2}, Min: {minDistance:F2}");
+                }
                 
                 // Calculate maximum allowed movement that maintains minimum distance
                 Vector3 directionToTarget = (target.position - character.position).normalized;
                 float dotProduct = Vector3.Dot(rootMotion.normalized, directionToTarget);
-                
-                Debug.Log($"[{character.name}] CheckRootMotionCollision - directionToTarget: {directionToTarget} | rootMotion.normalized: {rootMotion.normalized} | dotProduct: {dotProduct:F3}");
                 
                 // If we're moving towards the target, limit the movement
                 if (dotProduct > 0)
@@ -68,34 +66,22 @@ public static class RootMotionUtils
                     // Calculate how far we can move towards the target
                     float maxMoveDistance = currentDistance - minDistance;
                     
-                    Debug.Log($"[{character.name}] CheckRootMotionCollision - maxMoveDistance: {maxMoveDistance:F2}");
-                    
                     if (maxMoveDistance > 0)
                     {
                         float limitedMovement = Mathf.Min(maxMoveDistance, rootMotion.magnitude);
                         Vector3 result = rootMotion.normalized * limitedMovement;
-                        Debug.Log($"[{character.name}] Limited movement towards target: {limitedMovement:F2} units | result: {result.magnitude:F3}");
+                        if (enableDebug)
+                            Debug.Log($"[{character.name}] Limited movement towards target: {limitedMovement:F2} units");
                         return result;
                     }
                     else
                     {
-                        Debug.Log($"[{character.name}] Already too close to target, blocking movement");
+                        if (enableDebug)
+                            Debug.Log($"[{character.name}] Already too close to target, blocking movement");
                         return Vector3.zero;
                     }
                 }
-                else
-                {
-                    Debug.Log($"[{character.name}] Not moving towards target (dotProduct <= 0), allowing movement");
-                }
             }
-            else
-            {
-                Debug.Log($"[{character.name}] Distance check passed - not too close to target");
-            }
-        }
-        else
-        {
-            Debug.Log($"[{character.name}] CheckRootMotionCollision - no target or minDistance is 0");
         }
 
         // Use capsule cast to check for collisions in the root motion direction (from HumanCharacterController logic)
@@ -202,64 +188,46 @@ public static class RootMotionUtils
         float minDistance = 0.2f,
         bool enableDebug = false)
     {
-        // Always log entry (temporarily always on for debugging)
-        Debug.Log($"[{character.name}] RootMotionUtils.ApplyRootMotion called - rootMotion: {rootMotion.magnitude:F3} | target: {(target != null ? target.name : "null")} | minDistance: {minDistance:F2}");
-        
         if (rootMotion.magnitude < 0.001f)
         {
-            Debug.Log($"[{character.name}] RootMotionUtils.ApplyRootMotion - no movement (magnitude < 0.001)");
             return false; // No movement
         }
 
         // Use default collision layers if none provided
         LayerMask layers = collisionLayers ?? LayerMask.GetMask("Default", "ObstacleLayer");
         
-        // Always log before collision check
-        Debug.Log($"[{character.name}] RootMotionUtils.ApplyRootMotion - checking collision with layers: {layers.value}");
-        
         // Check for collisions and get adjusted movement
         Vector3 adjustedRootMotion = CheckRootMotionCollision(
             character, rootMotion, layers, out bool collisionDetected, target, minDistance, enableDebug);
-
-        // Always log collision check result
-        Debug.Log($"[{character.name}] RootMotionUtils.ApplyRootMotion - collisionDetected: {collisionDetected} | adjustedRootMotion: {adjustedRootMotion.magnitude:F3}");
 
         // Apply the adjusted movement
         if (adjustedRootMotion.magnitude > 0.001f)
         {
             Vector3 newPosition = character.position + adjustedRootMotion;
             
-            // Always log position calculation
-            Debug.Log($"[{character.name}] RootMotionUtils.ApplyRootMotion - newPosition: {newPosition} | currentPosition: {character.position}");
-            
             // If we have a NavMeshAgent, validate the position is on the NavMesh (EnemyBase logic)
             if (agent != null && agent.isOnNavMesh)
             {
-                Debug.Log($"[{character.name}] RootMotionUtils.ApplyRootMotion - validating position on NavMesh");
-                
                 if (UnityEngine.AI.NavMesh.SamplePosition(newPosition, out UnityEngine.AI.NavMeshHit hit, 1.0f, UnityEngine.AI.NavMesh.AllAreas))
                 {
-                    Debug.Log($"[{character.name}] RootMotionUtils.ApplyRootMotion - position valid on NavMesh, applying movement");
                     character.position = hit.position;
                     agent.nextPosition = hit.position;
                     return true;
                 }
-                else
+                else if (enableDebug)
                 {
                     Debug.Log($"[{character.name}] Root motion position not on NavMesh, blocking movement");
-                    return false;
                 }
+                return false;
             }
             else
             {
                 // No NavMeshAgent, apply directly (HumanCharacterController logic)
-                Debug.Log($"[{character.name}] RootMotionUtils.ApplyRootMotion - no NavMeshAgent, applying movement directly");
                 character.position = newPosition;
                 return true;
             }
         }
 
-        Debug.Log($"[{character.name}] RootMotionUtils.ApplyRootMotion - movement blocked (adjustedRootMotion magnitude < 0.001)");
         return false; // Movement was blocked
     }
 }

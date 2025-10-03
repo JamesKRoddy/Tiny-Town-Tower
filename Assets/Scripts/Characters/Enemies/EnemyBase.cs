@@ -237,12 +237,8 @@ namespace Enemies
         // This method is called by the Animator when root motion is being applied
         protected virtual void OnAnimatorMove()
         {
-            // Always log when OnAnimatorMove is called (temporarily always on for debugging)
-            Debug.Log($"[{gameObject.name}] OnAnimatorMove called - useRootMotion: {useRootMotion} | Health: {Health} | agent.isOnNavMesh: {agent.isOnNavMesh}");
-            
             if (!useRootMotion || Health <= 0 || !agent.isOnNavMesh) 
             {
-                Debug.Log($"[{gameObject.name}] OnAnimatorMove early return - useRootMotion: {useRootMotion} | Health: {Health} | agent.isOnNavMesh: {agent.isOnNavMesh}");
                 return;
             }
 
@@ -250,18 +246,11 @@ namespace Enemies
             Vector3 rootMotion = animator.deltaPosition * rootMotionMultiplier;
             rootMotion.y = 0; // Ignore vertical movement from animation
 
-            // Always log root motion magnitude (temporarily always on for debugging)
-            Debug.Log($"[{gameObject.name}] OnAnimatorMove - rootMotion magnitude: {rootMotion.magnitude:F3} | deltaPosition: {animator.deltaPosition} | multiplier: {rootMotionMultiplier}");
-
             // If there's no movement from root motion, don't do anything
             if (rootMotion.magnitude < 0.001f)
             {
-                Debug.Log($"[{gameObject.name}] OnAnimatorMove - no movement (magnitude < 0.001)");
                 return;
             }
-            
-            // Debug log to see if OnAnimatorMove is being called (temporarily always on for debugging)
-            Debug.Log($"[{gameObject.name}] OnAnimatorMove called - rootMotion: {rootMotion.magnitude:F3}");
 
             // Use the centralized root motion utility
             LayerMask collisionLayers = LayerMask.GetMask("Default", "ObstacleLayer");
@@ -273,10 +262,6 @@ namespace Enemies
             bool recentlyAttacked = timeSinceLastAttack < 2.0f; // 2 seconds after attack
             float minDistance = (isAttacking || recentlyAttacked) ? 1.2f : 0.2f;
             
-            // Always log the collision detection state for debugging (temporarily always on for debugging)
-            Debug.Log($"[{gameObject.name}] Root Motion - isAttacking: {isAttacking} | recentlyAttacked: {recentlyAttacked} | timeSinceLastAttack: {timeSinceLastAttack:F2} | minDistance: {minDistance} | currentDistance: {Vector3.Distance(transform.position, navMeshTarget.position):F2}");
-            
-            // Always enable debug for RootMotionUtils (temporarily always on for debugging)
             bool movementApplied = RootMotionUtils.ApplyRootMotion(
                 transform, 
                 rootMotion, 
@@ -284,13 +269,10 @@ namespace Enemies
                 collisionLayers, 
                 navMeshTarget, 
                 minDistance, 
-                true // Force debug on
+                showCollisionDebug
             );
             
-            // Always log the result (temporarily always on for debugging)
-            Debug.Log($"[{gameObject.name}] RootMotionUtils.ApplyRootMotion result - movementApplied: {movementApplied}");
-            
-            if (!movementApplied)
+            if (!movementApplied && showCollisionDebug)
             {
                 Debug.Log($"[{gameObject.name}] Root motion blocked - staying in place");
             }

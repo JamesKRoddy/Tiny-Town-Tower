@@ -101,16 +101,13 @@ namespace Enemies
         /// </summary>
         private void HandleModularAttackLogic()
         {
-            // Always log entry (temporarily always on for debugging)
-            Debug.Log($"[{gameObject.name}] HandleModularAttackLogic called - isExecutingAttack: {isExecutingAttack}");
-            
             // Auto-reset isExecutingAttack if it's been too long (fallback for missing animation events)
             if (isExecutingAttack)
             {
                 float timeSinceAttackStart = Time.time - attackExecutionStartTime;
                 if (timeSinceAttackStart > 3.0f) // 3 second timeout for attack execution
                 {
-                    Debug.Log($"[{gameObject.name}] HandleModularAttackLogic - Auto-resetting isExecutingAttack after timeout ({timeSinceAttackStart:F2}s)");
+                    Debug.Log($"[{gameObject.name}] Auto-resetting stuck attack execution after timeout ({timeSinceAttackStart:F2}s)");
                     isExecutingAttack = false;
                     if (currentAttack != null)
                     {
@@ -124,7 +121,6 @@ namespace Enemies
                 }
                 else
                 {
-                    Debug.Log($"[{gameObject.name}] HandleModularAttackLogic - early return due to isExecutingAttack (timeSinceStart: {timeSinceAttackStart:F2}s)");
                     return;
                 }
             }
@@ -132,7 +128,6 @@ namespace Enemies
             // Don't switch attacks too frequently
             if (Time.time - lastAttackSwitchTime < attackSwitchCooldown && currentAttack != null)
             {
-                Debug.Log($"[{gameObject.name}] HandleModularAttackLogic - early return due to attack switch cooldown");
                 return;
             }
 
@@ -144,7 +139,6 @@ namespace Enemies
             
             if (availableAttacks.Count == 0)
             {
-                Debug.Log($"[{gameObject.name}] HandleModularAttackLogic - no available attacks, setting currentAttack to null");
                 currentAttack = null;
                 return;
             }
@@ -198,31 +192,27 @@ namespace Enemies
         {
             var available = new List<ZombieAttackBase>();
             
-            // Always log attack components info (temporarily always on for debugging)
-            Debug.Log($"[{gameObject.name}] GetAvailableAttacks - attackComponents.Length: {attackComponents.Length}");
-            
             foreach (var attack in attackComponents)
             {
                 if (attack != null && attack.enabled)
                 {
                     bool canAttack = attack.CanAttack();
-                    
-                    // Always log attack availability (temporarily always on for debugging)
-                    Debug.Log($"[{gameObject.name}] Attack {attack.GetType().Name} - CanAttack: {canAttack} | enabled: {attack.enabled}");
+                    if (showCollisionDebug && !canAttack)
+                    {
+                        Debug.Log($"[{gameObject.name}] Attack {attack.GetType().Name} not available - CanAttack: {canAttack}");
+                    }
                     
                     if (canAttack)
                     {
                         available.Add(attack);
                     }
                 }
-                else
-                {
-                    Debug.Log($"[{gameObject.name}] Attack component is null or disabled: {attack?.GetType().Name ?? "null"}");
-                }
             }
             
-            // Always log final result (temporarily always on for debugging)
-            Debug.Log($"[{gameObject.name}] Available attacks: {available.Count}/{attackComponents.Length}");
+            if (showCollisionDebug)
+            {
+                Debug.Log($"[{gameObject.name}] Available attacks: {available.Count}/{attackComponents.Length}");
+            }
             
             return available;
         }
@@ -373,9 +363,6 @@ namespace Enemies
         /// </summary>
         public override void Attack()
         {
-            // Always log when Attack is called (temporarily always on for debugging)
-            Debug.Log($"[{gameObject.name}] Attack() called - currentAttack: {(currentAttack != null ? currentAttack.GetType().Name : "null")}");
-            
             if (currentAttack != null)
             {
                 currentAttack.OnAttack();
@@ -392,9 +379,6 @@ namespace Enemies
         /// </summary>
         public void AttackEnd()
         {
-            // Always log when AttackEnd is called (temporarily always on for debugging)
-            Debug.Log($"[{gameObject.name}] AttackEnd() called - currentAttack: {(currentAttack != null ? currentAttack.GetType().Name : "null")} | isExecutingAttack before: {isExecutingAttack}");
-            
             if (currentAttack != null)
             {
                 currentAttack.OnAttackEnd();
@@ -413,9 +397,6 @@ namespace Enemies
             
             // Allow new attacks to be selected
             isExecutingAttack = false;
-            
-            // Always log the final state (temporarily always on for debugging)
-            Debug.Log($"[{gameObject.name}] AttackEnd() completed - isExecutingAttack after: {isExecutingAttack}");
         }
 
         /// <summary>
@@ -430,14 +411,6 @@ namespace Enemies
             if (attacking)
             {
                 lastAttackTime = Time.time;
-                
-                // Always log when SetAttacking is called for debugging
-                Debug.Log($"[{gameObject.name}] SetAttacking(true) - Updated lastAttackTime: {lastAttackTime} | Time.time: {Time.time} | timeSinceLastAttack will be: {Time.time - lastAttackTime:F2}");
-            }
-            else
-            {
-                // Also log when SetAttacking(false) is called
-                Debug.Log($"[{gameObject.name}] SetAttacking(false) - isAttacking: {isAttacking}");
             }
         }
 
