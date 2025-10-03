@@ -3538,7 +3538,8 @@ GameObject:
   - component: {fileID: 6346534077692332075}
   - component: {fileID: 2776341640234842976}
   - component: {fileID: 6546660248869265839}
-  - component: {fileID: 2159619885850534844}
+  - component: {fileID: 1633898417205440891}
+  - component: {fileID: 7364723393561273145}
   m_Layer: 8
   m_Name: Ranged_Zombie
   m_TagString: Untagged
@@ -3616,7 +3617,7 @@ Animator:
   m_GameObject: {fileID: 7886037407994308560}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 0045ffb477e043a46950af7e617beb06, type: 3}
-  m_Controller: {fileID: 9100000, guid: b2e79cab7445f44459a595f830f50ab1, type: 2}
+  m_Controller: {fileID: 9100000, guid: c3207e38939cf1e428d075844965e796, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
   m_ApplyRootMotion: 1
@@ -3650,7 +3651,7 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &2159619885850534844
+--- !u!114 &1633898417205440891
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3659,11 +3660,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 7886037407994308560}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 460ccb7ef18c99f45b6688ac79302ca9, type: 3}
+  m_Script: {fileID: 11500000, guid: d3ec8c7d65a0c974581ca471b6948708, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  characterType: 202
-  useRootMotion: 1
+  characterType: 201
+  useRootMotion: 0
   stoppingDistance: 1.5
   rotationSpeed: 10
   movementSpeed: 3.5
@@ -3671,16 +3672,52 @@ MonoBehaviour:
   angularSpeed: 120
   obstacleBoundsOffset: 1
   rootMotionMultiplier: 1
-  debugRootMotion: 0
+  showCollisionDebug: 0
   health: 100
   maxHealth: 100
-  attackRange: 2
-  attackCooldown: 1.5
-  approachDistance: 3
-  rangedDamage: 5
-  shootCooldown: 2
+  poise: 50
+  maxPoise: 50
+  poiseRecoveryRate: 10
+  poiseRecoveryDelay: 2
+  animator: {fileID: 0}
+  isAttacking: 0
+  resistances: []
+  selectionStrategy: 2
+  attackSwitchCooldown: 0.5
+--- !u!114 &7364723393561273145
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7886037407994308560}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32c2a48d7c145dc4593a5ab7d7243106, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  range: 5
+  cooldown: 2
+  damage: 10
+  poiseDamage: 15
+  attackType: 0
+  attackOrigin: {fileID: 0}
+  attackElement: 0
+  elementalDamageBonus: 0
+  startEffect: {fileID: 0}
+  startEffectDelay: 0
+  attackEffect: {fileID: 0}
+  attackEffectDelay: 0
+  hitEffect: {fileID: 0}
+  hitEffectDelay: 0
+  endEffect: {fileID: 0}
+  endEffectDelay: 0
+  attackTrigger: Attack
+  attackGameObjects: []
   minAttackRange: 5
-  maxAttackRange: 10
+  maxAttackRange: 15
+  projectileSpawnHeight: 1.5
+  attackAngleThreshold: 5
   vomitProjectileEffect: {fileID: 11400000, guid: 94e6acf029b2a8e4f947c2e75662ee75, type: 2}
   vomitPoolEffect: {fileID: 11400000, guid: 2f3ea51455a426f48b24456a8147c1f2, type: 2}
 --- !u!1 &7944999906928915032

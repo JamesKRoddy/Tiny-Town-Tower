@@ -416,6 +416,79 @@ namespace Enemies
 
 
         /// <summary>
+        /// Calculate the optimal stopping distance based on available attacks.
+        /// For zombies, this ensures they don't get closer than their closest attack range.
+        /// </summary>
+        /// <returns>Optimal stopping distance from target</returns>
+        protected override float CalculateOptimalStoppingDistance()
+        {
+            if (attackComponents == null || attackComponents.Length == 0)
+            {
+                return base.CalculateOptimalStoppingDistance(); // Fall back to default
+            }
+
+            float closestAttackRange = float.MaxValue;
+            bool foundAnyAttacks = false;
+
+            // Find the closest attack range among all available attacks
+            foreach (var attack in attackComponents)
+            {
+                if (attack != null && attack.enabled)
+                {
+                    float attackRange = attack.GetCurrentAttackRange();
+                    if (attackRange > 0 && attackRange < closestAttackRange)
+                    {
+                        closestAttackRange = attackRange;
+                        foundAnyAttacks = true;
+                    }
+                }
+            }
+
+            // If no attacks found, use default stopping distance
+            if (!foundAnyAttacks)
+            {
+                return base.CalculateOptimalStoppingDistance();
+            }
+
+            // Return the closest attack range as the optimal stopping distance
+            // This ensures the zombie doesn't get closer than its minimum attack range
+            return closestAttackRange;
+        }
+
+        /// <summary>
+        /// Get the minimum distance at which the zombie can attack.
+        /// For zombies with ranged attacks, this returns the minimum attack distance.
+        /// </summary>
+        /// <returns>Minimum attack distance (0 if can attack at any close distance)</returns>
+        protected override float GetMinimumAttackDistance()
+        {
+            if (attackComponents == null || attackComponents.Length == 0)
+            {
+                return 0f;
+            }
+
+            float minDistance = 0f;
+
+            // Check all attack components for minimum attack distance
+            foreach (var attack in attackComponents)
+            {
+                if (attack != null && attack.enabled)
+                {
+                    // Check if this is a ranged attack with a minimum distance
+                    if (attack is RangedZombieAttack rangedAttack)
+                    {
+                        minDistance = Mathf.Max(minDistance, rangedAttack.minAttackRange);
+                    }
+                    // Melee attacks have no minimum (can attack at 0 distance)
+                    // Laser attacks have no minimum
+                    // Boomer attacks have no minimum
+                }
+            }
+
+            return minDistance;
+        }
+
+        /// <summary>
         /// Get attack component of specific type
         /// </summary>
         /// <typeparam name="T">Type of attack component</typeparam>

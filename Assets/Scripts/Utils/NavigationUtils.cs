@@ -774,5 +774,120 @@ public static class NavigationUtils
         return isReady;
     }
 
+    /// <summary>
+    /// Find a repositioning point for an enemy that has gotten too close to the player
+    /// </summary>
+    /// <param name="enemyPosition">Current position of the enemy</param>
+    /// <param name="playerPosition">Current position of the player</param>
+    /// <param name="minAttackDistance">Minimum distance required for the enemy's attacks</param>
+    /// <param name="maxRepositionDistance">Maximum distance to search for repositioning points</param>
+    /// <param name="maxAttempts">Maximum number of attempts to find a valid repositioning point</param>
+    /// <param name="sampleRadius">Radius to sample around generated points</param>
+    /// <returns>A valid repositioning point, or Vector3.zero if none found</returns>
+    public static Vector3 FindRepositioningPoint(Vector3 enemyPosition, Vector3 playerPosition, float minAttackDistance, float maxRepositionDistance = 15f, int maxAttempts = 30, float sampleRadius = 2f)
+    {
+        // Calculate direction away from player
+        Vector3 directionAwayFromPlayer = (enemyPosition - playerPosition).normalized;
+        
+        // If enemy is at same position as player, use a random direction
+        if (directionAwayFromPlayer == Vector3.zero)
+        {
+            directionAwayFromPlayer = new Vector3(Random.Range(-1f, 1f), 0f, Random.Range(-1f, 1f)).normalized;
+        }
+        
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            // Generate a point at the desired distance from the player
+            float targetDistance = Random.Range(minAttackDistance, maxRepositionDistance);
+            Vector3 idealPosition = playerPosition + directionAwayFromPlayer * targetDistance;
+            
+            // Add some randomness to avoid always going in the same direction
+            Vector3 randomOffset = new Vector3(
+                Random.Range(-maxRepositionDistance * 0.3f, maxRepositionDistance * 0.3f),
+                0f,
+                Random.Range(-maxRepositionDistance * 0.3f, maxRepositionDistance * 0.3f)
+            );
+            idealPosition += randomOffset;
+            
+            // Sample the NavMesh at this position
+            NavMeshHit hit;
+            if (NavMesh.SamplePosition(idealPosition, out hit, sampleRadius, NavMesh.AllAreas))
+            {
+                float distanceFromPlayer = Vector3.Distance(hit.position, playerPosition);
+                float distanceFromEnemy = Vector3.Distance(hit.position, enemyPosition);
+                
+                // Check if this position meets our requirements
+                if (distanceFromPlayer >= minAttackDistance && distanceFromEnemy <= maxRepositionDistance)
+                {
+                    return hit.position;
+                }
+            }
+            
+            // Try a different direction for the next attempt
+            directionAwayFromPlayer = Quaternion.AngleAxis(Random.Range(-45f, 45f), Vector3.up) * directionAwayFromPlayer;
+        }
+        
+        return Vector3.zero;
+    }
+
+    /// <summary>
+    /// Check if an enemy needs to reposition because they're too close to the player for their attacks
+    /// </summary>
+    /// <param name="enemyPosition">Current position of the enemy</param>
+    /// <param name="playerPosition">Current position of the player</param>
+    /// <param name="minAttackDistance">Minimum distance required for the enemy's attacks</param>
+    /// <param name="bufferDistance">Additional buffer distance to account for movement</param>
+    /// <returns>True if the enemy needs to reposition</returns>
+    public static bool NeedsRepositioning(Vector3 enemyPosition, Vector3 playerPosition, float minAttackDistance, float bufferDistance = 0.5f)
+    {
+        float currentDistance = Vector3.Distance(enemyPosition, playerPosition);
+        float thresholdDistance = minAttackDistance + bufferDistance;
+        
+        return currentDistance < thresholdDistance;
+    }
+
+    /// <summary>
+    /// Find multiple potential repositioning points for an enemy
+    /// </summary>
+    /// <param name="enemyPosition">Current position of the enemy</param>
+    /// <param name="playerPosition">Current position of the player</param>
+    /// <param name="minAttackDistance">Minimum distance required for the enemy's attacks</param>
+    /// <param name="count">Number of repositioning points to find</param>
+    /// <param name="maxRepositionDistance">Maximum distance to search for repositioning points</param>
+    /// <param name="maxAttemptsPerPoint">Maximum attempts per repositioning point</param>
+    /// <param name="sampleRadius">Radius to sample around generated points</param>
+    /// <returns>Array of valid repositioning points</returns>
+    public static Vector3[] FindMultipleRepositioningPoints(Vector3 enemyPosition, Vector3 playerPosition, float minAttackDistance, int count = 3, float maxRepositionDistance = 15f, int maxAttemptsPerPoint = 20, float sampleRadius = 2f)
+    {
+        Vector3[] repositioningPoints = new Vector3[count];
+        int foundCount = 0;
+        
+        for (int i = 0; i < count; i++)
+        {
+            Vector3 repositioningPoint = FindRepositioningPoint(enemyPosition, playerPosition, minAttackDistance, maxRepositionDistance, maxAttemptsPerPoint, sampleRadius);
+            
+            if (repositioningPoint != Vector3.zero)
+            {
+                repositioningPoints[foundCount] = repositioningPoint;
+                foundCount++;
+            }
+            else
+            {
+                Debug.LogWarning($"[NavigationUtils] Could not find repositioning point {i + 1} after {maxAttemptsPerPoint} attempts");
+                break;
+            }
+        }
+        
+        // Resize array to actual found count
+        if (foundCount < count)
+        {
+            Vector3[] resizedArray = new Vector3[foundCount];
+            System.Array.Copy(repositioningPoints, resizedArray, foundCount);
+            return resizedArray;
+        }
+        
+        return repositioningPoints;
+    }
+
     #endregion
 } 

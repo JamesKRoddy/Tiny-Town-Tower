@@ -88,7 +88,13 @@ namespace Enemies
         public bool isAttacking = false; // Made public for attack components
         protected bool isRotatingToAttack = false; // New state for rotation phase before attack
         protected float damage;
-        protected float lastAttackTime = -999f; // Track when last attack occurred for root motion collision buffer (start with old time)
+        protected float lastAttackTime = -999f;
+        
+        // Back-away state management
+        private bool isBackingAway = false;
+        private float backAwayStartTime = 0f;
+        private const float BACK_AWAY_DURATION = 1.5f; // Minimum time to spend backing away
+        private const float BACK_AWAY_COOLDOWN = 2.0f; // Cooldown before backing away again
 
         // Material flash effect
         protected SkinnedMeshRenderer skinnedMeshRenderer;
@@ -350,59 +356,118 @@ namespace Enemies
 
         #region Movement & Targeting
 
+        /// <summary>
+        /// Calculate the optimal stopping distance based on available attacks.
+        /// Override this method in derived classes to provide attack-specific logic.
+        /// </summary>
+        /// <returns>Optimal stopping distance from target</returns>
+        protected virtual float CalculateOptimalStoppingDistance()
+        {
+            // Default behavior: use the configured stopping distance
+            return stoppingDistance;
+        }
+
+        /// <summary>
+        /// Get the minimum distance at which the enemy can attack.
+        /// Override this method in derived classes to provide attack-specific logic.
+        /// Returns 0 if there's no minimum (can attack at any close distance).
+        /// </summary>
+        /// <returns>Minimum attack distance (0 if none)</returns>
+        protected virtual float GetMinimumAttackDistance()
+        {
+            // Default: no minimum distance, can attack when close
+            return 0f;
+        }
+
         private void UpdateMovement()
         {
-            if (navMeshTarget == null) return;
-            
-            string logPrefix = $"[{gameObject.name}] EnemyBase.UpdateMovement";
-            
-            // For root motion zombies, check if we should stop the agent
-            if (useRootMotion)
+            // If no target, try to find one first
+            if (navMeshTarget == null)
             {
-                float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
-                float effectiveAttackDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, stoppingDistance, obstacleBoundsOffset);
-                
-                // Stop agent when in attack range or during attack phases
-                // But maintain a minimum distance to prevent spinning
-                float minDistance = 1.0f;
-                bool shouldStop = (distanceToTarget <= effectiveAttackDistance && distanceToTarget >= minDistance) || isAttacking || isRotatingToAttack;
-                
-                bool wasStoppedBefore = agent.isStopped;
-                
-                if (shouldStop)
+                FindNewTarget();
+                if (navMeshTarget == null)
                 {
-                    if (!agent.isStopped)
+                    // Still no target, can't move
+                    return;
+                }
+            }
+            
+            float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
+            float optimalStoppingDistance = CalculateOptimalStoppingDistance();
+            float minAttackDistance = GetMinimumAttackDistance();
+            
+            // Check if we should initiate or continue backing away
+            bool currentlyTooClose = minAttackDistance > 0 && distanceToTarget < minAttackDistance;
+            float timeSinceBackAwayStart = Time.time - backAwayStartTime;
+            
+            // State machine for backing away
+            if (isBackingAway)
+            {
+                // Continue backing away for the duration or until far enough away
+                if (timeSinceBackAwayStart < BACK_AWAY_DURATION || distanceToTarget < optimalStoppingDistance)
+                {
+                    // Keep backing away
+                    Vector3 directionAway = (transform.position - navMeshTarget.position).normalized;
+                    Vector3 backAwayPoint = navMeshTarget.position + directionAway * (optimalStoppingDistance + 1f);
+                    
+                    UnityEngine.AI.NavMeshHit hit;
+                    if (UnityEngine.AI.NavMesh.SamplePosition(backAwayPoint, out hit, 5f, UnityEngine.AI.NavMesh.AllAreas))
                     {
-                        Debug.Log($"{logPrefix} - STOPPING AGENT | Distance: {distanceToTarget:F2} | EffectiveAttackDist: {effectiveAttackDistance:F2} | MinDist: {minDistance:F2} | isAttacking: {isAttacking} | isRotatingToAttack: {isRotatingToAttack}");
-                        agent.isStopped = true;
-                        agent.velocity = Vector3.zero;
+                        agent.SetDestination(hit.position);
+                        agent.isStopped = false;
                     }
                 }
                 else
                 {
-                    // Resume movement when out of attack range or too close
-                    if (agent.isStopped)
-                    {
-                        Debug.Log($"{logPrefix} - RESUMING AGENT | Distance: {distanceToTarget:F2} | EffectiveAttackDist: {effectiveAttackDistance:F2} | Reason: {(distanceToTarget > effectiveAttackDistance ? "OUT_OF_RANGE" : "TOO_CLOSE")}");
-                        agent.isStopped = false;
-                    }
-                }
-                
-                // Log significant state changes
-                if (Time.frameCount % 60 == 0) // Every 60 frames
-                {
-                    Debug.Log($"{logPrefix} - Root Motion State | Distance: {distanceToTarget:F2} | ShouldStop: {shouldStop} | isStopped: {agent.isStopped} | Velocity: {agent.velocity.magnitude:F2} | Position: {transform.position} | Target: {navMeshTarget.position}");
+                    // Done backing away
+                    isBackingAway = false;
                 }
             }
-            
-            // Update the destination continuously
-            Vector3 previousDestination = agent.destination;
-            agent.SetDestination(navMeshTarget.position);
-            
-            // Log destination changes
-            if (Time.frameCount % 90 == 0) // Every 90 frames to reduce spam
+            else if (currentlyTooClose && timeSinceBackAwayStart > BACK_AWAY_COOLDOWN)
             {
-                Debug.Log($"{logPrefix} - Destination Update | Target: {navMeshTarget.name} | Pos: {navMeshTarget.position} | PrevDest: {previousDestination} | DestChanged: {Vector3.Distance(previousDestination, navMeshTarget.position) > 0.1f} | PathStatus: {agent.pathStatus} | RemainingDistance: {agent.remainingDistance:F2}");
+                // Initiate new back-away
+                isBackingAway = true;
+                backAwayStartTime = Time.time;
+                
+                // Calculate back-away destination
+                Vector3 directionAway = (transform.position - navMeshTarget.position).normalized;
+                Vector3 backAwayPoint = navMeshTarget.position + directionAway * (optimalStoppingDistance + 1f);
+                
+                UnityEngine.AI.NavMeshHit hit;
+                if (UnityEngine.AI.NavMesh.SamplePosition(backAwayPoint, out hit, 5f, UnityEngine.AI.NavMesh.AllAreas))
+                {
+                    agent.SetDestination(hit.position);
+                    agent.isStopped = false;
+                }
+            }
+            else
+            {
+                // Normal movement toward target
+                agent.SetDestination(navMeshTarget.position);
+                
+                // For root motion zombies, check if we should stop the agent
+                if (useRootMotion)
+                {
+                    // Stop agent when at optimal distance or during attack phases
+                    bool shouldStop = (distanceToTarget <= optimalStoppingDistance) || isAttacking || isRotatingToAttack;
+                    
+                    if (shouldStop)
+                    {
+                        if (!agent.isStopped)
+                        {
+                            agent.isStopped = true;
+                            agent.velocity = Vector3.zero;
+                        }
+                    }
+                    else
+                    {
+                        // Resume movement when out of optimal distance
+                        if (agent.isStopped)
+                        {
+                            agent.isStopped = false;
+                        }
+                    }
+                }
             }
             
             // Update animation parameters
@@ -526,12 +591,18 @@ namespace Enemies
                     if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null)
                     {
                         newTarget = PlayerController.Instance._possessedNPC.GetTransform();
+                        Debug.Log($"[{gameObject.name}] Found player target in ROGUE_LITE mode: {newTarget.name}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[{gameObject.name}] PlayerController.Instance or _possessedNPC is null in ROGUE_LITE mode");
                     }
                     break;
                     
                 case GameMode.CAMP:
                 case GameMode.CAMP_ATTACK:
                     newTarget = FindCampTarget();
+                    Debug.Log($"[{gameObject.name}] Found camp target: {(newTarget != null ? newTarget.name : "null")}");
                     break;
                     
                 default:
@@ -542,6 +613,7 @@ namespace Enemies
             if (newTarget != null)
             {
                 navMeshTarget = newTarget;
+                Debug.Log($"[{gameObject.name}] Target set to: {navMeshTarget.name}");
                 // Speed will be set by UpdateAnimationParameters based on agent velocity
             }
             else

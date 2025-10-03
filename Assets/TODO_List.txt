@@ -6,6 +6,8 @@ Melee zombies are still pretty janky while attacking and doing subsequent attack
 
 Setup ranged, lazer and boomer zombies
 
+Refactor the animator to be the zombie base animator
+
 
 ****** Tomorrow work:
 
