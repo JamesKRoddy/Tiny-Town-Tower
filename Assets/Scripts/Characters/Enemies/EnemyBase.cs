@@ -396,17 +396,53 @@ namespace Enemies
             float optimalStoppingDistance = CalculateOptimalStoppingDistance();
             float minAttackDistance = GetMinimumAttackDistance();
             
-            // Check if we should initiate or continue backing away
-            bool currentlyTooClose = minAttackDistance > 0 && distanceToTarget < minAttackDistance;
-            float timeSinceBackAwayStart = Time.time - backAwayStartTime;
-            
-            // State machine for backing away
-            if (isBackingAway)
+            // Only use back-away logic for enemies with a minimum attack distance (ranged enemies)
+            if (minAttackDistance > 0)
             {
-                // Continue backing away for the duration or until far enough away
-                if (timeSinceBackAwayStart < BACK_AWAY_DURATION || distanceToTarget < optimalStoppingDistance)
+                // Check if we should initiate or continue backing away
+                bool currentlyTooClose = distanceToTarget < minAttackDistance;
+                float timeSinceBackAwayStart = Time.time - backAwayStartTime;
+                
+                // Debug logging for back-away system
+                if (showCollisionDebug && Time.frameCount % 60 == 0) // Log once per second at 60fps
                 {
-                    // Keep backing away
+                    Debug.Log($"[{gameObject.name}] BackAway State | isBackingAway: {isBackingAway} | Distance: {distanceToTarget:F2} | " +
+                             $"MinAttackDist: {minAttackDistance:F2} | OptimalStop: {optimalStoppingDistance:F2} | " +
+                             $"TooClose: {currentlyTooClose} | TimeSinceStart: {timeSinceBackAwayStart:F2}");
+                }
+                
+                // State machine for backing away
+                if (isBackingAway)
+                {
+                    // Continue backing away until duration expires AND we're beyond minimum attack distance
+                    if (timeSinceBackAwayStart < BACK_AWAY_DURATION || distanceToTarget < minAttackDistance)
+                    {
+                        // Keep backing away to optimal distance (which should be >= minAttackDistance)
+                        Vector3 directionAway = (transform.position - navMeshTarget.position).normalized;
+                        Vector3 backAwayPoint = navMeshTarget.position + directionAway * (optimalStoppingDistance + 1f);
+                        
+                        UnityEngine.AI.NavMeshHit hit;
+                        if (UnityEngine.AI.NavMesh.SamplePosition(backAwayPoint, out hit, 5f, UnityEngine.AI.NavMesh.AllAreas))
+                        {
+                            agent.SetDestination(hit.position);
+                            agent.isStopped = false;
+                        }
+                    }
+                    else
+                    {
+                        // Done backing away - now beyond minimum attack distance
+                        Debug.Log($"[{gameObject.name}] Finished backing away - Distance: {distanceToTarget:F2} >= MinDist: {minAttackDistance:F2}");
+                        isBackingAway = false;
+                    }
+                }
+                else if (currentlyTooClose && timeSinceBackAwayStart > BACK_AWAY_COOLDOWN)
+                {
+                    // Initiate new back-away
+                    Debug.Log($"[{gameObject.name}] Starting back-away - Distance: {distanceToTarget:F2} < MinDist: {minAttackDistance:F2}");
+                    isBackingAway = true;
+                    backAwayStartTime = Time.time;
+                    
+                    // Calculate back-away destination
                     Vector3 directionAway = (transform.position - navMeshTarget.position).normalized;
                     Vector3 backAwayPoint = navMeshTarget.position + directionAway * (optimalStoppingDistance + 1f);
                     
@@ -419,30 +455,46 @@ namespace Enemies
                 }
                 else
                 {
-                    // Done backing away
-                    isBackingAway = false;
-                }
-            }
-            else if (currentlyTooClose && timeSinceBackAwayStart > BACK_AWAY_COOLDOWN)
-            {
-                // Initiate new back-away
-                isBackingAway = true;
-                backAwayStartTime = Time.time;
-                
-                // Calculate back-away destination
-                Vector3 directionAway = (transform.position - navMeshTarget.position).normalized;
-                Vector3 backAwayPoint = navMeshTarget.position + directionAway * (optimalStoppingDistance + 1f);
-                
-                UnityEngine.AI.NavMeshHit hit;
-                if (UnityEngine.AI.NavMesh.SamplePosition(backAwayPoint, out hit, 5f, UnityEngine.AI.NavMesh.AllAreas))
-                {
-                    agent.SetDestination(hit.position);
-                    agent.isStopped = false;
+                    // Normal movement toward target
+                    agent.SetDestination(navMeshTarget.position);
+                    
+                    // For root motion zombies, check if we should stop the agent
+                    if (useRootMotion)
+                    {
+                        // Stop agent when at optimal distance or during attack phases
+                        bool shouldStop = (distanceToTarget <= optimalStoppingDistance) || isAttacking || isRotatingToAttack;
+                        
+                        if (shouldStop)
+                        {
+                            if (!agent.isStopped)
+                            {
+                                if (showCollisionDebug)
+                                {
+                                    Debug.Log($"[{gameObject.name}] Stopping agent - Distance: {distanceToTarget:F2} <= Optimal: {optimalStoppingDistance:F2} | " +
+                                             $"isAttacking: {isAttacking} | isRotating: {isRotatingToAttack}");
+                                }
+                                agent.isStopped = true;
+                                agent.velocity = Vector3.zero;
+                            }
+                        }
+                        else
+                        {
+                            // Resume movement when out of optimal distance
+                            if (agent.isStopped)
+                            {
+                                if (showCollisionDebug)
+                                {
+                                    Debug.Log($"[{gameObject.name}] Resuming agent - Distance: {distanceToTarget:F2} > Optimal: {optimalStoppingDistance:F2}");
+                                }
+                                agent.isStopped = false;
+                            }
+                        }
+                    }
                 }
             }
             else
             {
-                // Normal movement toward target
+                // Melee enemy (no minimum attack distance) - use simple movement logic
                 agent.SetDestination(navMeshTarget.position);
                 
                 // For root motion zombies, check if we should stop the agent
@@ -455,6 +507,11 @@ namespace Enemies
                     {
                         if (!agent.isStopped)
                         {
+                            if (showCollisionDebug)
+                            {
+                                Debug.Log($"[{gameObject.name}] Stopping agent - Distance: {distanceToTarget:F2} <= Optimal: {optimalStoppingDistance:F2} | " +
+                                         $"isAttacking: {isAttacking} | isRotating: {isRotatingToAttack}");
+                            }
                             agent.isStopped = true;
                             agent.velocity = Vector3.zero;
                         }
@@ -464,6 +521,10 @@ namespace Enemies
                         // Resume movement when out of optimal distance
                         if (agent.isStopped)
                         {
+                            if (showCollisionDebug)
+                            {
+                                Debug.Log($"[{gameObject.name}] Resuming agent - Distance: {distanceToTarget:F2} > Optimal: {optimalStoppingDistance:F2}");
+                            }
                             agent.isStopped = false;
                         }
                     }

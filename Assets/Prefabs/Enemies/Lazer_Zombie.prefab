@@ -2899,7 +2899,8 @@ GameObject:
   - component: {fileID: -6610119119996104940}
   - component: {fileID: 4816306560198809998}
   - component: {fileID: 5237491215696526443}
-  - component: {fileID: 5544021385977096053}
+  - component: {fileID: 1929164753014622273}
+  - component: {fileID: 6606015106678431955}
   m_Layer: 8
   m_Name: Lazer_Zombie
   m_TagString: Untagged
@@ -3011,7 +3012,7 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &5544021385977096053
+--- !u!114 &1929164753014622273
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3020,7 +3021,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 6477775522615659138}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b7432697b8c23284ea4a4f6aed4e379e, type: 3}
+  m_Script: {fileID: 11500000, guid: d3ec8c7d65a0c974581ca471b6948708, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   characterType: 201
@@ -3032,20 +3033,59 @@ MonoBehaviour:
   angularSpeed: 120
   obstacleBoundsOffset: 1
   rootMotionMultiplier: 1
+  showCollisionDebug: 0
   health: 100
   maxHealth: 100
-  attackRange: 2
-  attackCooldown: 1.5
-  approachDistance: 3
-  laserDamage: 25
+  poise: 50
+  maxPoise: 50
+  poiseRecoveryRate: 10
+  poiseRecoveryDelay: 2
+  animator: {fileID: 0}
+  isAttacking: 0
+  resistances: []
+  selectionStrategy: 2
+  attackSwitchCooldown: 0.5
+--- !u!114 &6606015106678431955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6477775522615659138}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f136ae3c59b06f4589e5be21c6c36b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  range: 5
+  cooldown: 2
+  damage: 10
+  poiseDamage: 15
+  attackType: 0
+  attackOrigin: {fileID: 0}
+  attackElement: 0
+  elementalDamageBonus: 0
+  startEffect: {fileID: 0}
+  startEffectDelay: 0
+  attackEffect: {fileID: 0}
+  attackEffectDelay: 0
+  hitEffect: {fileID: 0}
+  hitEffectDelay: 0
+  endEffect: {fileID: 0}
+  endEffectDelay: 0
+  attackTrigger: Attack
+  attackGameObjects: []
   laserHitLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  laserFirePoint: {fileID: 9031626134019856262}
+  attackAngleThreshold: 15
+  damageInterval: 0.1
+  laserFirePoint: {fileID: 6270375218561003132}
   laserBeam: {fileID: 3550279635202582810}
   headIKWeight: 1
   headIKRotationWeight: 1
   headIKLerpSpeed: 3
+  maxHeadRotationAngle: 90
 --- !u!1 &6616253873932381118
 GameObject:
   m_ObjectHideFlags: 0

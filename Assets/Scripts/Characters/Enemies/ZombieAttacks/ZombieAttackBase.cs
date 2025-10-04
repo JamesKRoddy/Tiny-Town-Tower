@@ -4,7 +4,8 @@ using System.Collections;
 using System;
 
 namespace Enemies.ZombieAttacks
-{  
+{
+    [RequireComponent(typeof(Zombie))]
     /// <summary>
     /// Base class for all zombie attack components.
     /// Provides common functionality for attack range validation, cooldowns, and damage dealing.

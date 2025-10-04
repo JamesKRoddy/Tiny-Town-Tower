@@ -2,9 +2,7 @@
 
 Refactor of zombie to make the attacks more modular. All use a single animator and class that controls navigation, health etc. Want to make the attacks and specifics components like the boss attack system so we can customise and make different zombie types easier.
 
-Melee zombies are still pretty janky while attacking and doing subsequent attacks
-
-Setup ranged, lazer and boomer zombies
+Setup lazer zombies
 
 Refactor the animator to be the zombie base animator
 

@@ -33,8 +33,8 @@ namespace Enemies.ZombieAttacks
         public float maxAttackDistance = 1.5f;
         [Tooltip("Preferred attack distance")]
         public float idealAttackDistance = 1.2f;
-        [Tooltip("Stopping distance for navigation (should be slightly larger than maxAttackDistance)")]
-        public float stoppingDistance = 2.0f;
+        [Tooltip("Stopping distance for navigation (must be LESS than maxAttackDistance so zombie stops within attack range)")]
+        public float stoppingDistance = 1.3f;
 
         [Header("Melee Attack Angle")]
         [Tooltip("Maximum angle deviation for melee attacks")]
