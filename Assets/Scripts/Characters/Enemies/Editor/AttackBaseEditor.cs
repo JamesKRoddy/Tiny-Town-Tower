@@ -161,7 +161,16 @@ namespace Enemies.Editor
                 "endEffectDelay",
                 "attackRadius",
                 "targetLayer",
-                "buildingAttackRange");
+                "buildingAttackRange",
+                "projectileSpawnHeight",
+                "projectileSpeed",
+                "projectileMaxHeight",
+                "createDamageAreaOnImpact",
+                "impactDamageDuration",
+                "useTriggerBasedDamage",
+                "fallbackDamageRadius",
+                "projectileEffect",
+                "impactEffect");
 
             serializedObject.ApplyModifiedProperties();
         }

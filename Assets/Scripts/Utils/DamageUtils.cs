@@ -626,7 +626,7 @@ public static class DamageUtils
     public static GameObject FireProjectileWithEffect(Vector3 startPosition, Vector3 direction, Quaternion rotation,
         Vector3 targetPosition, float damage, float poiseDamage, Transform attacker, AttackElement element,
         EffectDefinition projectileEffect, EffectDefinition impactEffect = null, bool createDamageArea = false,
-        float damageAreaRadius = 0f, float damageAreaDuration = 5f)
+        float damageAreaRadius = 0f, float damageAreaDuration = 5f, bool useTriggerBasedDamage = false)
     {
         if (projectileEffect == null)
         {
@@ -646,7 +646,7 @@ public static class DamageUtils
                 projectile = projectileObj.AddComponent<ArcProjectile>();
             }
             projectile.Initialize(targetPosition, damage, poiseDamage, attacker, element, 10f, 5f, 
-                impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration);
+                impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage);
         }
         
         return projectileObj;

@@ -18,10 +18,12 @@ namespace Enemies.Attacks
         public float projectileMaxHeight = 5f;
         [Tooltip("Whether to create a damage area on impact")]
         public bool createDamageAreaOnImpact = true;
-        [Tooltip("Radius of the damage area created on impact")]
-        public float impactDamageRadius = 2f;
         [Tooltip("Duration of the damage area created on impact")]
         public float impactDamageDuration = 5f;
+        [Tooltip("Whether to use trigger-based damage (requires component on impact effect)")]
+        public bool useTriggerBasedDamage = true;
+        [Tooltip("Fallback radius if no trigger component is found")]
+        public float fallbackDamageRadius = 2f;
 
         [Header("Projectile Effects")]
         [Tooltip("Effect definition for the projectile visual")]
@@ -98,25 +100,79 @@ namespace Enemies.Attacks
             // Always fire in the direction we were aiming when the attack started
             Vector3 direction = (attackTargetPosition - enemy.transform.position).normalized;
             
-            // Fire the projectile using the utility
-            GameObject projectile = DamageUtils.FireProjectileWithEffect(
-                enemy.transform.position + Vector3.up * projectileSpawnHeight,
-                direction,
-                Quaternion.LookRotation(direction),
-                attackTargetPosition,
-                damage,
-                poiseDamage,
-                enemy.transform,
-                attackElement,
-                projectileEffect,
-                impactEffect,
-                createDamageAreaOnImpact,
-                impactDamageRadius,
-                impactDamageDuration
-            );
+            // Calculate damage radius based on settings
+            float damageRadius = CalculateDamageRadius();
+            bool useTriggerDetection = (damageRadius == 0f); // Special value indicates trigger-based detection
             
-            Debug.Log($"[{enemy.gameObject.name}] Projectile attack executed | Projectile fired towards: {attackTargetPosition} | Damage: {damage}");
+                // Fire the projectile using the utility
+                GameObject projectile = DamageUtils.FireProjectileWithEffect(
+                    enemy.transform.position + Vector3.up * projectileSpawnHeight,
+                    direction,
+                    Quaternion.LookRotation(direction),
+                    attackTargetPosition,
+                    damage,
+                    poiseDamage,
+                    enemy.transform,
+                    attackElement,
+                    projectileEffect,
+                    impactEffect,
+                    createDamageAreaOnImpact,
+                    damageRadius,
+                    impactDamageDuration,
+                    useTriggerDetection
+                );
+            
+            Debug.Log($"[{enemy.gameObject.name}] Projectile attack executed | Projectile fired towards: {attackTargetPosition} | Damage: {damage} | Radius: {damageRadius}");
         }
+
+        /// <summary>
+        /// Determines the damage detection method and radius for the impact effect
+        /// </summary>
+        private float CalculateDamageRadius()
+        {
+            if (!useTriggerBasedDamage || impactEffect == null)
+            {
+                return fallbackDamageRadius;
+            }
+
+            // Check if the impact effect has a damage component that can handle triggers
+            if (impactEffect.prefabs != null && impactEffect.prefabs.Length > 0)
+            {
+                GameObject effectPrefab = impactEffect.prefabs[0];
+                
+                // Check for damage area components that can handle OnTriggerEnter
+                // This will find DamageArea or any class that inherits from it (like ZombieVomitPool)
+                var damageArea = effectPrefab.GetComponent<DamageArea>();
+                if (damageArea == null)
+                {
+                    damageArea = effectPrefab.GetComponentInChildren<DamageArea>();
+                }
+                
+                // If we found a damage area component, return 0 to indicate trigger-based detection
+                if (damageArea != null)
+                {
+                    Debug.Log($"[{enemy.gameObject.name}] Using trigger-based damage detection with {damageArea.GetType().Name} component");
+                    return 0f; // Special value to indicate trigger-based detection
+                }
+                
+                // Check for other trigger-capable components
+                var triggerComponent = effectPrefab.GetComponent<Collider>();
+                if (triggerComponent == null)
+                {
+                    triggerComponent = effectPrefab.GetComponentInChildren<Collider>();
+                }
+                
+                if (triggerComponent != null && triggerComponent.isTrigger)
+                {
+                    Debug.Log($"[{enemy.gameObject.name}] Found trigger collider, but no DamageArea component. Using fallback radius.");
+                }
+            }
+
+            // Fallback to radius-based detection
+            Debug.Log($"[{enemy.gameObject.name}] No trigger-capable damage component found in impact effect '{impactEffect.name}', using fallback radius: {fallbackDamageRadius}");
+            return fallbackDamageRadius;
+        }
+
 
         protected override void OnDrawGizmosSelected()
         {

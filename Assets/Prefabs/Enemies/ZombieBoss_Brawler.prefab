@@ -712,9 +712,9 @@ GameObject:
   - component: {fileID: 1642315922267150981}
   - component: {fileID: 865813623137836336}
   - component: {fileID: 506023768571128916}
-  - component: {fileID: 6879063096656345588}
-  - component: {fileID: 7910383977426684308}
-  - component: {fileID: 7411960016900357099}
+  - component: {fileID: 6150023108025577922}
+  - component: {fileID: 2700677688428301997}
+  - component: {fileID: 6988115495219620664}
   m_Layer: 0
   m_Name: ZombieBoss_Brawler
   m_TagString: Untagged
@@ -797,7 +797,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd0aeaed6c68bbe4b9a4fd883e382915, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  characterType: 11
+  characterType: 201
   useRootMotion: 1
   stoppingDistance: 1.5
   rotationSpeed: 10
@@ -818,7 +818,7 @@ MonoBehaviour:
   resistances: []
   bossHealthBarPrefab: {fileID: 0}
   attacks: []
---- !u!114 &6879063096656345588
+--- !u!114 &6150023108025577922
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -827,20 +827,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 3498937984024521076}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d27b4aed525ffbc4d8e818e2016e834c, type: 3}
+  m_Script: {fileID: 11500000, guid: 8ff8a937cd8a28d4895a0996e1f6f54c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   minRange: 0
-  maxRange: 2
+  maxRange: 5
   attackAngleThreshold: 30
   cooldown: 2
   damage: 10
   poiseDamage: 15
   attackType: 1
-  attackOrigin: {fileID: 8384904350946220507}
+  attackOrigin: {fileID: 0}
   attackElement: 0
   elementalDamageBonus: 0
-  startEffect: {fileID: 11400000, guid: fcf79a6a167279b4eae818ba6f5238fa, type: 2}
+  startEffect: {fileID: 0}
   startEffectDelay: 0
   attackEffect: {fileID: 0}
   attackEffectDelay: 0
@@ -850,8 +850,12 @@ MonoBehaviour:
   endEffectDelay: 0
   attackTrigger: Attack
   attackGameObjects: []
-  punchRadius: 2
---- !u!114 &7910383977426684308
+  attackRadius: 1.5
+  targetLayer:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  buildingAttackRange: 5
+--- !u!114 &2700677688428301997
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -860,13 +864,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 3498937984024521076}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 83e4b11bcf4d9a24d86f9952e8ccae1d, type: 3}
+  m_Script: {fileID: 11500000, guid: 6954cf813090a8f4da8ef65214157664, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   minRange: 0
   maxRange: 5
   attackAngleThreshold: 30
-  cooldown: 7
+  cooldown: 2
   damage: 10
   poiseDamage: 15
   attackType: 2
@@ -875,7 +879,7 @@ MonoBehaviour:
   elementalDamageBonus: 0
   startEffect: {fileID: 0}
   startEffectDelay: 0
-  attackEffect: {fileID: 11400000, guid: f67d8cac14b3bd64eb6ca922af912f97, type: 2}
+  attackEffect: {fileID: 0}
   attackEffectDelay: 0
   hitEffect: {fileID: 0}
   hitEffectDelay: 0
@@ -883,8 +887,13 @@ MonoBehaviour:
   endEffectDelay: 0
   attackTrigger: Attack
   attackGameObjects: []
-  aoeRadius: 7
---- !u!114 &7411960016900357099
+  maxShockwaveRadius: 10
+  shockwaveSpeed: 15
+  shockwaveWidth: 1
+  shockwaveDamage: 25
+  shockwavePoiseDamage: 15
+  shockwaveEffect: {fileID: 0}
+--- !u!114 &6988115495219620664
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -893,34 +902,34 @@ MonoBehaviour:
   m_GameObject: {fileID: 3498937984024521076}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 08403c2fae191bb46ae14a7f5add1802, type: 3}
+  m_Script: {fileID: 11500000, guid: 220a8623ef166e34ba6a3f56eec614ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  minRange: 5
-  maxRange: 20
+  minRange: 0
+  maxRange: 5
   attackAngleThreshold: 30
   cooldown: 2
-  damage: 5
+  damage: 10
   poiseDamage: 15
   attackType: 3
   attackOrigin: {fileID: 0}
   attackElement: 0
   elementalDamageBonus: 0
-  startEffect: {fileID: 11400000, guid: 34dd8713150ee7c4b93e486ac20fed3a, type: 2}
+  startEffect: {fileID: 0}
   startEffectDelay: 0
   attackEffect: {fileID: 0}
   attackEffectDelay: 0
   hitEffect: {fileID: 0}
   hitEffectDelay: 0
-  endEffect: {fileID: 11400000, guid: 7f3b9784e46c47e4faedf0ac585c4f17, type: 2}
+  endEffect: {fileID: 0}
   endEffectDelay: 0
   attackTrigger: Attack
   attackGameObjects: []
   jumpRadius: 3
-  jumpHeight: 20
+  jumpHeight: 5
   jumpDuration: 1
   predictionFactor: 0.5
-  finalJumpLockPercentage: 0.2
+  finalJumpLockPercentage: 0.1
   rotationSpeed: 360
 --- !u!1 &3544621238500329224
 GameObject:

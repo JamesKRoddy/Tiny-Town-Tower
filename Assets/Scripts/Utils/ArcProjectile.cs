@@ -19,6 +19,7 @@ public class ArcProjectile : MonoBehaviour
     private bool createDamageArea;
     private float damageAreaRadius;
     private float damageAreaDuration;
+    private bool useTriggerBasedDamage;
 
     private float timeAlive = 0f;
     private bool hasHit = false;
@@ -27,7 +28,7 @@ public class ArcProjectile : MonoBehaviour
 
     public void Initialize(Vector3 targetPos, float dmg, float poiseDmg, Transform attackTransform, 
         AttackElement elem, float projectileSpeed = 10f, float projectileMaxHeight = 5f,
-        EffectDefinition impactEff = null, bool createArea = false, float areaRadius = 0f, float areaDuration = 5f)
+        EffectDefinition impactEff = null, bool createArea = false, float areaRadius = 0f, float areaDuration = 5f, bool triggerBased = false)
     {
         initialPosition = transform.position;
         targetPosition = targetPos;
@@ -41,6 +42,7 @@ public class ArcProjectile : MonoBehaviour
         createDamageArea = createArea;
         damageAreaRadius = areaRadius;
         damageAreaDuration = areaDuration;
+        useTriggerBasedDamage = triggerBased;
         timeAlive = 0f;
         hasHit = false;
 
@@ -90,17 +92,52 @@ public class ArcProjectile : MonoBehaviour
         if (hasHit) return;
         hasHit = true;
 
+        GameObject impactObject = null;
+
         // Play impact effect
         if (impactEffect != null)
         {
-            EffectManager.Instance.PlayEffect(transform.position, Vector3.up, Quaternion.identity, null, impactEffect, damageAreaDuration);
+            impactObject = EffectManager.Instance.PlayEffect(transform.position, Vector3.up, Quaternion.identity, null, impactEffect, damageAreaDuration);
+            
+            // Configure trigger-based damage if requested
+            if (useTriggerBasedDamage && impactObject != null)
+            {
+                ConfigureTriggerDamageComponent(impactObject);
+            }
         }
 
-        // Create damage area if requested
+        // Create damage area if requested (fallback for radius-based damage)
         if (createDamageArea && damageAreaRadius > 0)
         {
             DamageUtils.CreateDamageArea(transform.position, damageAreaRadius, damage, poiseDamage, 
                 attacker, element, damageAreaDuration);
+        }
+    }
+
+    /// <summary>
+    /// Configure the damage component on the impact effect for trigger-based damage
+    /// </summary>
+    private void ConfigureTriggerDamageComponent(GameObject impactObject)
+    {
+        if (impactObject == null) return;
+        
+        // Find damage area component (including inherited classes like ZombieVomitPool)
+        var damageArea = impactObject.GetComponent<DamageArea>();
+        if (damageArea == null)
+        {
+            damageArea = impactObject.GetComponentInChildren<DamageArea>();
+        }
+        
+        if (damageArea != null)
+        {
+            // Configure the damage area with our attack parameters
+            damageArea.SetDamage(damage, poiseDamage);
+            
+            Debug.Log($"[ArcProjectile] Configured trigger-based damage component ({damageArea.GetType().Name}) with damage: {damage}, poise: {poiseDamage}");
+        }
+        else
+        {
+            Debug.LogWarning($"[ArcProjectile] No DamageArea component found on impact effect for trigger-based damage");
         }
     }
 
