@@ -66,6 +66,21 @@ namespace Enemies
         [SerializeField] protected float rootMotionMultiplier = 1f;
         [SerializeField] public bool showCollisionDebug = false; // Debug visualization for collision detection
 
+        [Header("Cooldown Movement Settings")]
+        [SerializeField] protected bool enableCooldownMovement = true;
+        [SerializeField] protected float cooldownMovementMinDistance = 2f;
+        [SerializeField] protected float cooldownMovementMaxDistance = 4f;
+        [SerializeField] protected float cooldownMovementMinDuration = 1f;
+        [SerializeField] protected float cooldownMovementMaxDuration = 3f;
+
+        [Header("Head Tracking Settings")]
+        [SerializeField] protected bool enableHeadTracking = true;
+        [SerializeField] protected float headTrackingWeight = 0.8f;
+        [SerializeField] protected float headTrackingRotationWeight = 0.5f;
+        [SerializeField] protected float headTrackingLerpSpeed = 3f;
+        [SerializeField] protected float maxHeadTrackingAngle = 60f;
+        [SerializeField] protected float headTrackingDistance = 15f;
+
         [Header("Health Settings")]
         [SerializeField] private float health = 100f;
         [SerializeField] private float maxHealth = 100f;
@@ -95,6 +110,20 @@ namespace Enemies
         private float backAwayStartTime = 0f;
         private const float BACK_AWAY_DURATION = 1.5f; // Minimum time to spend backing away
         private const float BACK_AWAY_COOLDOWN = 2.0f; // Cooldown before backing away again
+
+        // Cooldown movement state management
+        private bool isMovingDuringCooldown = false;
+        private float cooldownMovementStartTime = 0f;
+        private float lastCooldownMovementEndTime = 0f; // Track when cooldown movement ended
+        private float lastTargetChangeTime = 0f; // Track when we last changed the strafe target
+        private Vector3 cooldownMovementTarget = Vector3.zero;
+        private const float COOLDOWN_MOVEMENT_COOLDOWN = 1.0f; // Cooldown before starting new cooldown movement
+        private const float TARGET_CHANGE_COOLDOWN = 1.5f; // Minimum time between target changes
+
+        // Head tracking state management
+        private bool isHeadTrackingActive = false;
+        private float currentHeadTrackingWeight = 0f;
+        private Vector3 currentLookAtTarget = Vector3.zero;
 
         // Material flash effect
         protected SkinnedMeshRenderer skinnedMeshRenderer;
@@ -381,6 +410,15 @@ namespace Enemies
 
         private void UpdateMovement()
         {
+            // Handle cooldown movement for ranged enemies (this takes priority over regular movement)
+            UpdateCooldownMovement();
+            
+            // If we're moving during cooldown, don't let regular movement override it
+            if (isMovingDuringCooldown)
+            {
+                return; // Skip ALL regular movement logic
+            }
+            
             // If no target, try to find one first
             if (navMeshTarget == null)
             {
@@ -545,6 +583,325 @@ namespace Enemies
             }
         }
 
+        /// <summary>
+        /// Handle movement during attack cooldowns for ranged enemies to make them feel more natural
+        /// </summary>
+        private void UpdateCooldownMovement()
+        {
+            // Check if cooldown movement is enabled
+            if (!enableCooldownMovement)
+            {
+                return;
+            }
+
+            // Only apply to ranged enemies (those with minimum attack distance)
+            float minAttackDistance = GetMinimumAttackDistance();
+            if (minAttackDistance <= 0)
+            {
+                return; // Not a ranged enemy
+            }
+
+            // Only move during cooldowns when not attacking
+            if (isAttacking || navMeshTarget == null)
+            {
+                return;
+            }
+
+            // Debug: Log cooldown movement attempts for ranged enemies
+            if (showCollisionDebug)
+            {
+                Debug.Log($"[{gameObject.name}] UpdateCooldownMovement called | MinAttackDistance: {minAttackDistance} | IsAttacking: {isAttacking} | HasTarget: {navMeshTarget != null}");
+            }
+
+            // Check if we're in a cooldown state (can't attack due to cooldown, not distance/angle)
+            bool inCooldown = IsInAttackCooldown();
+            if (!inCooldown)
+            {
+                // Reset cooldown movement state when not in cooldown
+                if (isMovingDuringCooldown)
+                {
+                    isMovingDuringCooldown = false;
+                    lastCooldownMovementEndTime = Time.time;
+                    if (showCollisionDebug)
+                    {
+                        Debug.Log($"[{gameObject.name}] Ending cooldown movement - attack ready");
+                    }
+                }
+                return;
+            }
+
+            // Debug: We're in cooldown, let's see what happens
+            if (showCollisionDebug && !isMovingDuringCooldown)
+            {
+                Debug.Log($"[{gameObject.name}] In cooldown but not moving yet - checking conditions");
+            }
+
+            float timeSinceCooldownMovementStart = Time.time - cooldownMovementStartTime;
+
+            // State machine for cooldown movement
+            if (isMovingDuringCooldown)
+            {
+                if (showCollisionDebug)
+                {
+                    Debug.Log($"[{gameObject.name}] Currently moving during cooldown - Time since start: {timeSinceCooldownMovementStart:F2}s / {cooldownMovementMaxDuration:F2}s");
+                }
+                
+                // Continue moving until duration expires
+                if (timeSinceCooldownMovementStart < cooldownMovementMaxDuration)
+                {
+                    // Check if we're too close to the player - if so, back away (but only if enough time has passed since last target change)
+                    float distanceToPlayer = Vector3.Distance(transform.position, navMeshTarget.position);
+                    float minDistance = GetMinimumAttackDistance();
+                    float timeSinceLastTargetChange = Time.time - lastTargetChangeTime;
+                    
+                    if (distanceToPlayer < minDistance && timeSinceLastTargetChange > TARGET_CHANGE_COOLDOWN)
+                    {
+                        // TOO CLOSE! Find a new strafe position farther away
+                        if (showCollisionDebug)
+                        {
+                            Debug.Log($"[{gameObject.name}] TOO CLOSE to player during cooldown ({distanceToPlayer:F2}m < {minDistance:F2}m)! Finding new position.");
+                        }
+                        FindNewCooldownMovementTarget();
+                        lastTargetChangeTime = Time.time;
+                    }
+                    
+                    // Keep moving towards cooldown movement target
+                    agent.SetDestination(cooldownMovementTarget);
+                    agent.isStopped = false;
+                    
+                    // Update animation parameters to ensure Speed parameter is set for root motion
+                    UpdateAnimationParameters();
+                    
+                    // Check if we've reached the target
+                    float distanceToCooldownTarget = Vector3.Distance(transform.position, cooldownMovementTarget);
+                    float agentVelocity = agent.velocity.magnitude;
+                    bool hasPath = agent.hasPath;
+                    bool pathPending = agent.pathPending;
+                    
+                    if (showCollisionDebug)
+                    {
+                        Debug.Log($"[{gameObject.name}] Moving to cooldown target | Distance: {distanceToCooldownTarget:F2}m | Agent Stopped: {agent.isStopped} | Velocity: {agentVelocity:F2} | HasPath: {hasPath} | PathPending: {pathPending}");
+                    }
+                        if (distanceToCooldownTarget < agent.stoppingDistance + 0.5f && timeSinceLastTargetChange > TARGET_CHANGE_COOLDOWN)
+                        {
+                            // Close enough to target, find a new strafe position
+                            if (showCollisionDebug)
+                            {
+                                Debug.Log($"[{gameObject.name}] Close to strafe target ({distanceToCooldownTarget:F2}m < {agent.stoppingDistance + 0.5f:F2}m), finding new position");
+                            }
+                            FindNewCooldownMovementTarget();
+                            lastTargetChangeTime = Time.time;
+                        }
+                }
+                else
+                {
+                    // Cooldown movement duration expired
+                    isMovingDuringCooldown = false;
+                    lastCooldownMovementEndTime = Time.time;
+                    if (showCollisionDebug)
+                    {
+                        Debug.Log($"[{gameObject.name}] Cooldown movement duration expired");
+                    }
+                }
+            }
+            else
+            {
+                // Start new cooldown movement if enough time has passed since last movement ended
+                float timeSinceLastCooldownMovement = Time.time - lastCooldownMovementEndTime;
+                if (showCollisionDebug)
+                {
+                    Debug.Log($"[{gameObject.name}] Not moving during cooldown - Time since last movement ended: {timeSinceLastCooldownMovement:F2}s / {COOLDOWN_MOVEMENT_COOLDOWN:F2}s | Should start: {timeSinceLastCooldownMovement > COOLDOWN_MOVEMENT_COOLDOWN}");
+                }
+                
+                if (timeSinceLastCooldownMovement > COOLDOWN_MOVEMENT_COOLDOWN)
+                {
+                    if (showCollisionDebug)
+                    {
+                        Debug.Log($"[{gameObject.name}] Starting cooldown movement - enough time has passed");
+                    }
+                    StartCooldownMovement();
+                }
+                else
+                {
+                    if (showCollisionDebug)
+                    {
+                        Debug.Log($"[{gameObject.name}] Not starting cooldown movement yet - waiting for cooldown period");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Check if the enemy is in an attack cooldown by checking actual attack components
+        /// </summary>
+        /// <returns>True if in cooldown</returns>
+        private bool IsInAttackCooldown()
+        {
+            if (navMeshTarget == null) return false;
+
+            float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
+            float minAttackDistance = GetMinimumAttackDistance();
+            float maxAttackRange = GetMaximumAttackRange();
+            
+            // Must be in range to potentially attack
+            if (distanceToTarget < minAttackDistance || distanceToTarget > maxAttackRange)
+            {
+                if (showCollisionDebug)
+                {
+                    Debug.Log($"[{gameObject.name}] Not in attack range: {distanceToTarget:F2}m | Range: {minAttackDistance:F2}-{maxAttackRange:F2}m");
+                }
+                return false; // Not in range, so not in cooldown
+            }
+
+            // Check if any attack component is on cooldown
+            bool anyAttackOnCooldown = false;
+            var zombieComponent = GetComponent<Zombie>();
+            if (zombieComponent != null)
+            {
+                var attackComponents = GetComponents<AttackBase>();
+                foreach (var attack in attackComponents)
+                {
+                    if (attack != null && attack.enabled && !attack.CanAttack())
+                    {
+                        anyAttackOnCooldown = true;
+                        break;
+                    }
+                }
+            }
+            
+            // Debug logging for cooldown movement
+            if (showCollisionDebug)
+            {
+                Debug.Log($"[{gameObject.name}] Cooldown check: AnyAttackOnCooldown: {anyAttackOnCooldown} | Distance: {distanceToTarget:F2}m | Range: {minAttackDistance:F2}-{maxAttackRange:F2}m");
+            }
+            
+            return anyAttackOnCooldown;
+        }
+
+        /// <summary>
+        /// Start a new cooldown movement sequence
+        /// </summary>
+        private void StartCooldownMovement()
+        {
+            if (navMeshTarget == null) 
+            {
+                if (showCollisionDebug)
+                {
+                    Debug.Log($"[{gameObject.name}] Cannot start cooldown movement - no navMeshTarget");
+                }
+                return;
+            }
+
+            if (showCollisionDebug)
+            {
+                Debug.Log($"[{gameObject.name}] StartCooldownMovement called - finding new target");
+            }
+
+            FindNewCooldownMovementTarget();
+            isMovingDuringCooldown = true;
+            cooldownMovementStartTime = Time.time;
+            lastTargetChangeTime = Time.time; // Initialize the target change timer
+
+            if (showCollisionDebug)
+            {
+                Debug.Log($"[{gameObject.name}] Starting cooldown movement towards: {cooldownMovementTarget} | StartTime: {cooldownMovementStartTime}");
+            }
+        }
+
+        /// <summary>
+        /// Find a new target position for cooldown movement - strafe around the player at optimal range
+        /// </summary>
+        private void FindNewCooldownMovementTarget()
+        {
+            if (navMeshTarget == null) return;
+
+            Vector3 currentPos = transform.position;
+            Vector3 targetPos = navMeshTarget.position;
+            float minAttackDistance = GetMinimumAttackDistance();
+            
+            // Calculate the desired distance (add significant buffer beyond min distance)
+            float desiredDistance = minAttackDistance + UnityEngine.Random.Range(2f, 5f);
+            
+            // Get direction to target
+            Vector3 directionToTarget = (targetPos - currentPos).normalized;
+            
+            // Choose a random strafe angle (left or right, 60-120 degrees)
+            float strafeAngle = UnityEngine.Random.Range(-120f, 120f);
+            if (Mathf.Abs(strafeAngle) < 60f)
+            {
+                strafeAngle += strafeAngle < 0 ? -60f : 60f; // Ensure minimum 60 degree angle
+            }
+            
+            // Calculate strafe direction
+            Vector3 strafeDirection = Quaternion.AngleAxis(strafeAngle, Vector3.up) * directionToTarget;
+            
+            // Calculate target position at desired distance from player
+            Vector3 strafePosition = targetPos + strafeDirection * desiredDistance;
+            
+            // Sample NavMesh to find valid position
+            UnityEngine.AI.NavMeshHit hit;
+            if (UnityEngine.AI.NavMesh.SamplePosition(strafePosition, out hit, 5f, UnityEngine.AI.NavMesh.AllAreas))
+            {
+                cooldownMovementTarget = hit.position;
+                if (showCollisionDebug)
+                {
+                    float distanceToNewTarget = Vector3.Distance(currentPos, hit.position);
+                    Debug.Log($"[{gameObject.name}] Found strafe position: {hit.position} | StrafeAngle: {strafeAngle:F0}° | Distance from player: {desiredDistance:F2}m | Distance to travel: {distanceToNewTarget:F2}m");
+                }
+            }
+            else
+            {
+                // Fallback: try a simpler position - just move to the side
+                Vector3 rightVector = Vector3.Cross(directionToTarget, Vector3.up);
+                float sideDirection = UnityEngine.Random.value > 0.5f ? 1f : -1f;
+                Vector3 sidePosition = currentPos + rightVector * sideDirection * 3f;
+                
+                if (UnityEngine.AI.NavMesh.SamplePosition(sidePosition, out hit, 5f, UnityEngine.AI.NavMesh.AllAreas))
+                {
+                    cooldownMovementTarget = hit.position;
+                    if (showCollisionDebug)
+                    {
+                        Debug.Log($"[{gameObject.name}] Using fallback side-step position: {hit.position}");
+                    }
+                }
+                else
+                {
+                    // Ultimate fallback: move slightly forward
+                    cooldownMovementTarget = currentPos + directionToTarget * 2f;
+                    if (showCollisionDebug)
+                    {
+                        Debug.Log($"[{gameObject.name}] Using ultimate fallback (move forward): {cooldownMovementTarget}");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get the maximum attack range from all available attacks
+        /// </summary>
+        /// <returns>Maximum attack range</returns>
+        private float GetMaximumAttackRange()
+        {
+            float maxRange = 0f;
+
+            // Check Zombie attack components
+            var zombieComponent = GetComponent<Zombie>();
+            if (zombieComponent != null)
+            {
+                var attackComponents = GetComponents<AttackBase>();
+                foreach (var attack in attackComponents)
+                {
+                    if (attack != null && attack.enabled)
+                    {
+                        maxRange = Mathf.Max(maxRange, attack.maxRange);
+                    }
+                }
+            }
+
+            // Fallback to a reasonable default
+            return maxRange > 0 ? maxRange : 10f;
+        }
+
         private void UpdateAnimationParameters()
         {
             if (animator == null) return;
@@ -563,6 +920,83 @@ namespace Enemies
             
             // Use centralized rotation utility
             NavigationUtils.HandleMovementRotation(transform, navMeshTarget, agent.velocity, rotationSpeed, MOVEMENT_VELOCITY_THRESHOLD);
+        }
+
+        /// <summary>
+        /// Called by Unity for IK (Inverse Kinematics) updates
+        /// Implements general head tracking for all enemies when not attacking
+        /// </summary>
+        /// <param name="layerIndex">The IK layer index</param>
+        protected virtual void OnAnimatorIK(int layerIndex)
+        {
+            if (animator == null || !enableHeadTracking) return;
+            
+            // Check if we should do head tracking
+            bool shouldTrackHead = ShouldPerformHeadTracking();
+            
+            if (shouldTrackHead && navMeshTarget != null && Health > 0)
+            {
+                // Calculate target position with Y offset for head height
+                Vector3 targetPosition = navMeshTarget.position + Vector3.up * 1.5f; // Assume target head height
+                
+                // Calculate direction from current position to target
+                Vector3 directionToTarget = (targetPosition - transform.position).normalized;
+                
+                // Check if target is within head rotation limits
+                float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
+                float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
+                
+                if (angleToTarget <= maxHeadTrackingAngle && distanceToTarget <= headTrackingDistance)
+                {
+                    // Enable head tracking
+                    isHeadTrackingActive = true;
+                    currentLookAtTarget = targetPosition;
+                    currentHeadTrackingWeight = Mathf.Lerp(currentHeadTrackingWeight, headTrackingWeight, headTrackingLerpSpeed * Time.deltaTime);
+                }
+                else
+                {
+                    // Target is outside head tracking limits
+                    isHeadTrackingActive = false;
+                    currentHeadTrackingWeight = Mathf.Lerp(currentHeadTrackingWeight, 0f, headTrackingLerpSpeed * Time.deltaTime);
+                }
+            }
+            else
+            {
+                // No target or shouldn't track, disable head tracking
+                isHeadTrackingActive = false;
+                currentHeadTrackingWeight = Mathf.Lerp(currentHeadTrackingWeight, 0f, headTrackingLerpSpeed * Time.deltaTime);
+            }
+            
+            // Apply head IK weights
+            if (currentHeadTrackingWeight > 0.01f)
+            {
+                animator.SetLookAtWeight(currentHeadTrackingWeight, headTrackingRotationWeight, 0f, 0f, 0f);
+                animator.SetLookAtPosition(currentLookAtTarget);
+            }
+            else
+            {
+                animator.SetLookAtWeight(0f);
+            }
+        }
+
+        /// <summary>
+        /// Determine if the enemy should perform head tracking
+        /// Override in child classes to customize when head tracking should occur
+        /// </summary>
+        /// <returns>True if head tracking should be performed</returns>
+        protected virtual bool ShouldPerformHeadTracking()
+        {
+            // Don't track head when attacking (let attack components handle their own IK)
+            if (isAttacking) return false;
+            
+            // Don't track head when dead
+            if (Health <= 0) return false;
+            
+            // Don't track head when stunned/poise broken
+            if (IsPoiseBroken()) return false;
+            
+            // Track head when we have a target and are moving or idle
+            return navMeshTarget != null;
         }
 
         private void CheckIfStuck()
@@ -1296,6 +1730,56 @@ namespace Enemies
                 Gizmos.color = Color.magenta;
                 Vector3 obstacleSize = obstacle.size;
                 Gizmos.DrawWireCube(navMeshTarget.position, obstacleSize);
+            }
+
+            // Draw cooldown movement visualization
+            if (isMovingDuringCooldown && cooldownMovementTarget != Vector3.zero)
+            {
+                // Draw cooldown movement target
+                Gizmos.color = Color.cyan;
+                Gizmos.DrawWireSphere(cooldownMovementTarget, 0.5f);
+                
+                // Draw line to cooldown movement target
+                Gizmos.color = Color.cyan;
+                Gizmos.DrawLine(transform.position, cooldownMovementTarget);
+                
+                // Draw arrow indicating direction
+                Vector3 direction = (cooldownMovementTarget - transform.position).normalized;
+                Vector3 arrowHead = cooldownMovementTarget - direction * 0.5f;
+                Vector3 arrowLeft = arrowHead + Quaternion.AngleAxis(45f, Vector3.up) * -direction * 0.3f;
+                Vector3 arrowRight = arrowHead + Quaternion.AngleAxis(-45f, Vector3.up) * -direction * 0.3f;
+                
+                Gizmos.DrawLine(arrowHead, arrowLeft);
+                Gizmos.DrawLine(arrowHead, arrowRight);
+            }
+
+            // Draw head tracking visualization
+            if (enableHeadTracking && isHeadTrackingActive && currentLookAtTarget != Vector3.zero)
+            {
+                // Draw line from enemy head to look-at target
+                Vector3 headPosition = transform.position + Vector3.up * 1.6f; // Approximate head height
+                Gizmos.color = Color.white;
+                Gizmos.DrawLine(headPosition, currentLookAtTarget);
+                
+                // Draw head tracking target position
+                Gizmos.color = Color.white;
+                Gizmos.DrawWireSphere(currentLookAtTarget, 0.2f);
+                
+                // Draw head tracking angle limits
+                if (navMeshTarget != null)
+                {
+                    Vector3 targetPos = navMeshTarget.position + Vector3.up * 1.5f;
+                    Vector3 directionToTarget = (targetPos - transform.position).normalized;
+                    
+                    // Draw left angle limit
+                    Vector3 leftLimit = Quaternion.AngleAxis(-maxHeadTrackingAngle, Vector3.up) * transform.forward;
+                    Gizmos.color = new Color(1f, 1f, 1f, 0.3f);
+                    Gizmos.DrawRay(transform.position + Vector3.up * 1.6f, leftLimit * headTrackingDistance);
+                    
+                    // Draw right angle limit
+                    Vector3 rightLimit = Quaternion.AngleAxis(maxHeadTrackingAngle, Vector3.up) * transform.forward;
+                    Gizmos.DrawRay(transform.position + Vector3.up * 1.6f, rightLimit * headTrackingDistance);
+                }
             }
         }
 

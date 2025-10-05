@@ -321,10 +321,13 @@ namespace Enemies
                 // After rotation, check if we're now ready to attack
                 if (!attack.ShouldRotateToAttack())
                 {
-                    // Rotation complete, now execute the attack
-                    isExecutingAttack = true;
-                    attackExecutionStartTime = Time.time;
-                    attack.StartAttack();
+                // Rotation complete, now execute the attack
+                isExecutingAttack = true;
+                attackExecutionStartTime = Time.time;
+                attack.StartAttack();
+                
+                // Update base class attack time for cooldown movement system
+                lastAttackTime = Time.time;
                 }
                 // If still need rotation, we'll try again next frame
                 return;
@@ -334,6 +337,9 @@ namespace Enemies
             isExecutingAttack = true;
             attackExecutionStartTime = Time.time;
             attack.StartAttack();
+            
+            // Update base class attack time for cooldown movement system
+            lastAttackTime = Time.time;
         }
 
 
@@ -486,11 +492,20 @@ namespace Enemies
                     if (attack is ProjectileAttack projectileAttack)
                     {
                         minDistance = Mathf.Max(minDistance, projectileAttack.minRange);
+                        if (showCollisionDebug)
+                        {
+                            Debug.Log($"[{gameObject.name}] ProjectileAttack minRange: {projectileAttack.minRange}");
+                        }
                     }
                     // Melee attacks have no minimum (can attack at 0 distance)
                     // Laser attacks have no minimum
                     // Boomer attacks have no minimum
                 }
+            }
+
+            if (showCollisionDebug && minDistance > 0)
+            {
+                Debug.Log($"[{gameObject.name}] GetMinimumAttackDistance returning: {minDistance}");
             }
 
             return minDistance;
@@ -545,12 +560,18 @@ namespace Enemies
 
         /// <summary>
         /// Called by Unity for IK (Inverse Kinematics) updates
-        /// Delegates to the current attack's IK implementation
+        /// Handles both general head tracking and attack-specific IK behavior
         /// </summary>
-        private void OnAnimatorIK(int layerIndex)
+        protected override void OnAnimatorIK(int layerIndex)
         {
-            // Let the current attack handle its own IK behavior
-            if (currentAttack != null)
+            // First, let the base class handle general head tracking (when not attacking)
+            if (currentAttack == null || !isExecutingAttack)
+            {
+                base.OnAnimatorIK(layerIndex);
+            }
+            
+            // Then, let the current attack handle its own IK behavior (if attacking)
+            if (currentAttack != null && isExecutingAttack)
             {
                 currentAttack.OnAnimatorIK(layerIndex);
             }

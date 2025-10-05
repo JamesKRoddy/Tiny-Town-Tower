@@ -1,19 +1,11 @@
 *****Current Work*****
 
-Refactor of zombie to make the attacks more modular. All use a single animator and class that controls navigation, health etc. Want to make the attacks and specifics components like the boss attack system so we can customise and make different zombie types easier.
-
-Setup lazer zombies
-
-Refactor the animator to be the zombie base animator
-
 
 ****** Tomorrow work:
 
-
+Make enemies move around while not attacking if they are far away (still isn't working)
 
 ****** Next work:
-
-Need some close range attacks for ranged zombies
 
 Custom inspectors for NPC and their components, enemies, managers that need it
 
@@ -27,6 +19,11 @@ Setup some new enemies: Zombie that when its killed splits into smaller enemies.
 ****** Bugs and refactoring:
 
 PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
+
+Spawning enemies to attack camp issues:
+If theres no npcs newly spawned in enemies dont attack buildings
+Buildings only take damage occationaly
+Npc get away from zombies too easily
 
 ****** Errors:
 
