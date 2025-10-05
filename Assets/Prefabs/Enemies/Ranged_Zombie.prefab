@@ -3539,7 +3539,7 @@ GameObject:
   - component: {fileID: 2776341640234842976}
   - component: {fileID: 6546660248869265839}
   - component: {fileID: 1633898417205440891}
-  - component: {fileID: 7364723393561273145}
+  - component: {fileID: 2505444480820924123}
   m_Layer: 8
   m_Name: Ranged_Zombie
   m_TagString: Untagged
@@ -3684,7 +3684,7 @@ MonoBehaviour:
   resistances: []
   selectionStrategy: 2
   attackSwitchCooldown: 0.5
---- !u!114 &7364723393561273145
+--- !u!114 &2505444480820924123
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3693,12 +3693,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 7886037407994308560}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 32c2a48d7c145dc4593a5ab7d7243106, type: 3}
+  m_Script: {fileID: 11500000, guid: bb82b1178e60d5d44b29ef440bb1aa45, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  range: 5
+  minRange: 0
+  maxRange: 5
+  attackAngleThreshold: 30
   cooldown: 2
-  damage: 10
+  damage: 1
   poiseDamage: 15
   attackType: 0
   attackOrigin: {fileID: 0}
@@ -3714,12 +3716,14 @@ MonoBehaviour:
   endEffectDelay: 0
   attackTrigger: Attack
   attackGameObjects: []
-  minAttackRange: 5
-  maxAttackRange: 15
   projectileSpawnHeight: 1.5
-  attackAngleThreshold: 5
-  vomitProjectileEffect: {fileID: 11400000, guid: 94e6acf029b2a8e4f947c2e75662ee75, type: 2}
-  vomitPoolEffect: {fileID: 11400000, guid: 2f3ea51455a426f48b24456a8147c1f2, type: 2}
+  projectileSpeed: 10
+  projectileMaxHeight: 5
+  createDamageAreaOnImpact: 1
+  impactDamageRadius: 2
+  impactDamageDuration: 5
+  projectileEffect: {fileID: 11400000, guid: 94e6acf029b2a8e4f947c2e75662ee75, type: 2}
+  impactEffect: {fileID: 11400000, guid: 2f3ea51455a426f48b24456a8147c1f2, type: 2}
 --- !u!1 &7944999906928915032
 GameObject:
   m_ObjectHideFlags: 0

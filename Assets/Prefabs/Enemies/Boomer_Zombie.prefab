@@ -2899,7 +2899,7 @@ GameObject:
   - component: {fileID: 4816306560198809998}
   - component: {fileID: 5237491215696526443}
   - component: {fileID: 6377118714033894061}
-  - component: {fileID: 5648941839540981947}
+  - component: {fileID: 778508632017002504}
   m_Layer: 8
   m_Name: Boomer_Zombie
   m_TagString: Untagged
@@ -3044,7 +3044,7 @@ MonoBehaviour:
   resistances: []
   selectionStrategy: 2
   attackSwitchCooldown: 0.5
---- !u!114 &5648941839540981947
+--- !u!114 &778508632017002504
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3053,7 +3053,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 6477775522615659138}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 78a0bbd8a365df245bd8566a6fb8fb0b, type: 3}
+  m_Script: {fileID: 11500000, guid: 4f1f22bd6f2ee8e449bf43e5b276bb3c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   minRange: 0
@@ -3079,6 +3079,7 @@ MonoBehaviour:
   explosionRadius: 5
   explosionDamage: 50
   poiseDamageMultiplier: 1.2
+  dieAfterExplosion: 1
   explosionEffect: {fileID: 11400000, guid: ce058444ab7d3b24ebc0ffb7c961e39e, type: 2}
   explodeOnDeath: 1
   explodeOnDamage: 0

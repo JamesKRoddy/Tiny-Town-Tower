@@ -467,6 +467,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2392341437657199187, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
+      propertyPath: attackGameObjects.Array.size
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5874133948715530558, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
       propertyPath: stoppingDistance
       value: 1.3
@@ -521,62 +525,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6477775522615659138, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7708733117594400575, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
       propertyPath: stoppingDistance
-      value: 1.3
+      value: 1
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5874133948715530558, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 6477775522615659138, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1009346760}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
---- !u!1 &1009346759 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6477775522615659138, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
-  m_PrefabInstance: {fileID: 1009346758}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1009346760
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1009346759}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b955b0dab8606148a7e6a5866316e49, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  minRange: 0
-  maxRange: 5
-  attackAngleThreshold: 30
-  cooldown: 2
-  damage: 10
-  poiseDamage: 15
-  attackType: 0
-  attackOrigin: {fileID: 0}
-  attackElement: 0
-  elementalDamageBonus: 0
-  startEffect: {fileID: 0}
-  startEffectDelay: 0
-  attackEffect: {fileID: 0}
-  attackEffectDelay: 0
-  hitEffect: {fileID: 0}
-  hitEffectDelay: 0
-  endEffect: {fileID: 0}
-  endEffectDelay: 0
-  attackTrigger: Attack
-  attackGameObjects: []
-  attackRadius: 1.5
-  targetLayer:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  buildingAttackRange: 5
 --- !u!1 &1125983075
 GameObject:
   m_ObjectHideFlags: 0
@@ -853,7 +813,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6477775522615659138, guid: 3b7d470b21c168e4787198fb36f0c7fc, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6606015106678431955, guid: 3b7d470b21c168e4787198fb36f0c7fc, type: 3}
       propertyPath: range
@@ -1134,7 +1094,8 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 7364723393561273145, guid: b5c3cb9ae758fb549906e6cc604c6b3e, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
