@@ -26,6 +26,12 @@ public class GenericStateMachineBehaviour : StateMachineBehaviour
         public int intValue;
         public float floatValue;
         
+        // Random animation support
+        public bool useRandom = false;
+        public int randomMinValue = 0;
+        public int randomMaxValue = 1;
+        public bool randomMaxInclusive = true; // For INT types, max is inclusive; for FLOAT, it's exclusive
+        
         public bool modifyOnEnter = true;
         public bool modifyOnExit = false;
         public bool modifyOnUpdate = false;
@@ -129,10 +135,26 @@ public class GenericStateMachineBehaviour : StateMachineBehaviour
                             animator.SetBool(mod.parameterName, mod.boolValue);
                             break;
                         case ParameterModification.ParameterType.Int:
-                            animator.SetInteger(mod.parameterName, mod.intValue);
+                            if (mod.useRandom)
+                            {
+                                int randomValue = UnityEngine.Random.Range(mod.randomMinValue, mod.randomMaxValue + (mod.randomMaxInclusive ? 1 : 0));
+                                animator.SetInteger(mod.parameterName, randomValue);
+                            }
+                            else
+                            {
+                                animator.SetInteger(mod.parameterName, mod.intValue);
+                            }
                             break;
                         case ParameterModification.ParameterType.Float:
-                            animator.SetFloat(mod.parameterName, mod.floatValue);
+                            if (mod.useRandom)
+                            {
+                                float randomValue = UnityEngine.Random.Range(mod.randomMinValue, mod.randomMaxValue + (mod.randomMaxInclusive ? 0f : 1f));
+                                animator.SetFloat(mod.parameterName, randomValue);
+                            }
+                            else
+                            {
+                                animator.SetFloat(mod.parameterName, mod.floatValue);
+                            }
                             break;
                         case ParameterModification.ParameterType.Trigger:
                             animator.SetTrigger(mod.parameterName);

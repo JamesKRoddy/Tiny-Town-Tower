@@ -521,7 +521,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6477775522615659138, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7708733117594400575, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
       propertyPath: stoppingDistance
@@ -1149,6 +1149,10 @@ PrefabInstance:
     - target: {fileID: 4521413630554356895, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6879063096656345588, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: maxRange
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 6879063096656345588, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: startEffect

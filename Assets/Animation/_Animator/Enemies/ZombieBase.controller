@@ -427,6 +427,33 @@ AnimatorStateMachine:
   m_ExitPosition: {x: 1370, y: 110, z: 0}
   m_ParentStateMachinePosition: {x: 800, y: 20, z: 0}
   m_DefaultState: {fileID: 4640610065976507783}
+--- !u!1102 &-4450821099101147128
+AnimatorState:
+  serializedVersion: 6
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: New State
+  m_Speed: 1
+  m_CycleOffset: 0
+  m_Transitions: []
+  m_StateMachineBehaviours:
+  - {fileID: 4430103233417738465}
+  m_Position: {x: 50, y: 50, z: 0}
+  m_IKOnFeet: 0
+  m_WriteDefaultValues: 1
+  m_Mirror: 0
+  m_SpeedParameterActive: 0
+  m_MirrorParameterActive: 0
+  m_CycleOffsetParameterActive: 0
+  m_TimeParameterActive: 0
+  m_Motion: {fileID: 0}
+  m_Tag: 
+  m_SpeedParameter: 
+  m_MirrorParameter: 
+  m_CycleOffsetParameter: 
+  m_TimeParameter: 
 --- !u!1102 &-3901340303975016561
 AnimatorState:
   serializedVersion: 6
@@ -520,19 +547,22 @@ AnimatorStateMachine:
   m_ChildStates:
   - serializedVersion: 1
     m_State: {fileID: -6899665087950101437}
-    m_Position: {x: 300, y: 80, z: 0}
+    m_Position: {x: 250, y: 100, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 626877528856949416}
-    m_Position: {x: 550, y: 80, z: 0}
+    m_Position: {x: 500, y: 100, z: 0}
+  - serializedVersion: 1
+    m_State: {fileID: -4450821099101147128}
+    m_Position: {x: 200, y: 310, z: 0}
   m_ChildStateMachines: []
   m_AnyStateTransitions: []
   m_EntryTransitions: []
   m_StateMachineTransitions: {}
   m_StateMachineBehaviours: []
   m_AnyStatePosition: {x: 50, y: 20, z: 0}
-  m_EntryPosition: {x: 50, y: 120, z: 0}
+  m_EntryPosition: {x: -20, y: 100, z: 0}
   m_ExitPosition: {x: 800, y: 120, z: 0}
-  m_ParentStateMachinePosition: {x: 320, y: -240, z: 0}
+  m_ParentStateMachinePosition: {x: 400, y: -230, z: 0}
   m_DefaultState: {fileID: -6899665087950101437}
 --- !u!91 &9100000
 AnimatorController:
@@ -912,6 +942,20 @@ MonoBehaviour:
   paramName: DamageType
   minNumber: 0
   maxNumber: 4
+--- !u!114 &4430103233417738465
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33440e54b6d69df42b148162d1315857, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  functionCalls: []
+  parameterModifications: []
 --- !u!1102 &4640610065976507783
 AnimatorState:
   serializedVersion: 6
