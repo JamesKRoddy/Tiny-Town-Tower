@@ -1,5 +1,5 @@
 using UnityEngine;
-using Enemies.BossAttacks;
+using Enemies.Attacks;
 using Managers;
 using System.Collections;
 
@@ -11,10 +11,10 @@ namespace Enemies{
         private BossHealthBarUI healthBarUI;
 
         [Header("Boss Attacks")]
-        public BossAttackBase[] attacks; // Assign attack components in inspector
-        protected BossAttackBase currentAttack;
+        public AttackBase[] attacks; // Assign attack components in inspector
+        protected AttackBase currentAttack;
 
-        protected virtual void SetCurrentAttack(BossAttackBase attack)
+        protected virtual void SetCurrentAttack(AttackBase attack)
         {
             currentAttack = attack;
         }
@@ -23,7 +23,7 @@ namespace Enemies{
         {
             base.Awake();
             InitializeBossUI();
-            var allAttacks = GetComponents<BossAttackBase>();
+            var allAttacks = GetComponents<AttackBase>();
             attacks = System.Array.FindAll(allAttacks, attack => attack.enabled);
         }
 

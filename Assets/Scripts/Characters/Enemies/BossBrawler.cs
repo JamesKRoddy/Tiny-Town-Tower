@@ -1,7 +1,7 @@
 using UnityEngine;
 using Managers;
 using UnityEngine.AI;
-using Enemies.BossAttacks;
+using Enemies.Attacks;
 
 namespace Enemies
 {

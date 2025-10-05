@@ -200,6 +200,19 @@ public static class DamageUtils
         // Calculate 2D hit direction
         Vector2 hitDirection = CalculateHitDirection(characterTransform, damageSource);
         
+        // Apply health damage
+        float previousHealth = character.Health;
+        character.Health -= amount;
+        
+        // Clamp health to 0
+        if (character.Health < 0)
+        {
+            character.Health = 0;
+        }
+        
+        // Invoke damage taken callback
+        onDamageTaken?.Invoke(amount, character.Health);
+        
         // Apply poise damage and check if poise is broken
         bool poiseBroken = ApplyPoiseDamage(character, poiseDamage, onPoiseBroken);
         
@@ -218,6 +231,12 @@ public static class DamageUtils
         {
             var (hitPoint, hitNormal) = CalculateHitPointAndNormal(characterTransform, damageSource);
             EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, character);
+        }
+        
+        // Check for death
+        if (character.Health <= 0)
+        {
+            onDeath?.Invoke();
         }
         
         return (hitDirection, poiseBroken);
@@ -435,5 +454,201 @@ public static class DamageUtils
         
         // Trigger the knockback animation
         animator.SetTrigger("Knockback");
+    }
+
+    // ===== AREA DAMAGE UTILITIES =====
+
+    /// <summary>
+    /// Deal damage to all targets in a radius
+    /// </summary>
+    /// <param name="center">Center position of the damage area</param>
+    /// <param name="radius">Radius of the damage area</param>
+    /// <param name="damageAmount">Amount of damage to deal</param>
+    /// <param name="poiseDamage">Amount of poise damage to deal</param>
+    /// <param name="attacker">The attacker (for damage source tracking)</param>
+    /// <param name="element">Elemental type of the damage</param>
+    /// <param name="layerMask">Layer mask for valid targets (-1 for all layers)</param>
+    /// <param name="excludeSelf">Whether to exclude the attacker from damage</param>
+    /// <returns>Number of targets damaged</returns>
+    public static int DealDamageInRadius(Vector3 center, float radius, float damageAmount, float poiseDamage, 
+        Transform attacker, AttackElement element = AttackElement.PHYSICAL, LayerMask layerMask = default(LayerMask), bool excludeSelf = false)
+    {
+        int targetsDamaged = 0;
+        
+        // Find all colliders in the radius
+        Collider[] hitColliders = Physics.OverlapSphere(center, radius, layerMask);
+        
+        foreach (var hitCollider in hitColliders)
+        {
+            IDamageable damageable = hitCollider.GetComponent<IDamageable>();
+            if (damageable != null && damageable.GetAllegiance() == Allegiance.FRIENDLY)
+            {
+                // Check if the target is still active (this will catch NPCs in bunkers)
+                if (!hitCollider.gameObject.activeInHierarchy)
+                {
+                    continue; // Skip inactive targets
+                }
+                
+                // Exclude self if requested
+                if (excludeSelf && hitCollider.transform == attacker)
+                {
+                    continue;
+                }
+                
+                // Apply damage with elemental type
+                if (element == AttackElement.NONE || element == AttackElement.PHYSICAL)
+                {
+                    damageable.TakeDamage(damageAmount, poiseDamage, attacker);
+                }
+                else
+                {
+                    damageable.TakeDamage(damageAmount, poiseDamage, element, attacker);
+                }
+                
+                targetsDamaged++;
+            }
+        }
+        
+        return targetsDamaged;
+    }
+    
+    /// <summary>
+    /// Deal damage to a single target
+    /// </summary>
+    /// <param name="target">The target to damage</param>
+    /// <param name="damageAmount">Amount of damage to deal</param>
+    /// <param name="poiseDamage">Amount of poise damage to deal</param>
+    /// <param name="attacker">The attacker (for damage source tracking)</param>
+    /// <param name="element">Elemental type of the damage</param>
+    public static void DealDamageToTarget(IDamageable target, float damageAmount, float poiseDamage, 
+        Transform attacker, AttackElement element = AttackElement.PHYSICAL)
+    {
+        if (target == null) return;
+        
+        // Apply damage with elemental type
+        if (element == AttackElement.NONE || element == AttackElement.PHYSICAL)
+        {
+            target.TakeDamage(damageAmount, poiseDamage, attacker);
+        }
+        else
+        {
+            target.TakeDamage(damageAmount, poiseDamage, element, attacker);
+        }
+    }
+
+    /// <summary>
+    /// Create a temporary damage area that deals damage over time
+    /// </summary>
+    /// <param name="position">Position of the damage area</param>
+    /// <param name="radius">Radius of the damage area</param>
+    /// <param name="damage">Damage per tick</param>
+    /// <param name="poiseDamage">Poise damage per tick</param>
+    /// <param name="attacker">The attacker (for damage source tracking)</param>
+    /// <param name="element">Elemental type of the damage</param>
+    /// <param name="duration">How long the area lasts</param>
+    /// <param name="damageInterval">How often damage is dealt (seconds)</param>
+    /// <param name="visualEffect">Visual effect for the damage area</param>
+    /// <returns>The created damage area GameObject</returns>
+    public static GameObject CreateDamageArea(Vector3 position, float radius, float damage, float poiseDamage,
+        Transform attacker, AttackElement element = AttackElement.PHYSICAL, float duration = 5f, 
+        float damageInterval = 0.5f, EffectDefinition visualEffect = null)
+    {
+        // Create the damage area GameObject
+        GameObject damageAreaObj = new GameObject($"DamageArea_{element}");
+        damageAreaObj.transform.position = position;
+        
+        // Add the damage area component
+        PersistentDamageArea damageArea = damageAreaObj.AddComponent<PersistentDamageArea>();
+        damageArea.Setup(radius, damage, poiseDamage, attacker, element, duration, damageInterval);
+        
+        // Add visual effect if provided
+        if (visualEffect != null)
+        {
+            GameObject visualObj = EffectManager.Instance.PlayEffect(position, Vector3.up, Quaternion.identity, 
+                damageAreaObj.transform, visualEffect, duration);
+            
+            if (visualObj != null)
+            {
+                // Add scaling animation to the visual effect
+                DamageAreaVisual visual = visualObj.AddComponent<DamageAreaVisual>();
+                visual.Setup(duration);
+            }
+        }
+        
+        return damageAreaObj;
+    }
+    
+    /// <summary>
+    /// Create a simple instant damage area (explosion-like)
+    /// </summary>
+    /// <param name="position">Position of the damage area</param>
+    /// <param name="radius">Radius of the damage area</param>
+    /// <param name="damage">Damage to deal</param>
+    /// <param name="poiseDamage">Poise damage to deal</param>
+    /// <param name="attacker">The attacker (for damage source tracking)</param>
+    /// <param name="element">Elemental type of the damage</param>
+    /// <param name="visualEffect">Visual effect for the explosion</param>
+    /// <returns>Number of targets damaged</returns>
+    public static int CreateInstantDamageArea(Vector3 position, float radius, float damage, float poiseDamage,
+        Transform attacker, AttackElement element = AttackElement.PHYSICAL, EffectDefinition visualEffect = null)
+    {
+        // Deal damage instantly
+        int targetsDamaged = DealDamageInRadius(position, radius, damage, poiseDamage, attacker, element, -1, true);
+        
+        // Play visual effect
+        if (visualEffect != null)
+        {
+            EffectManager.Instance.PlayEffect(position, Vector3.up, Quaternion.identity, null, visualEffect);
+        }
+        
+        return targetsDamaged;
+    }
+
+    // ===== PROJECTILE UTILITIES =====
+
+    /// <summary>
+    /// Fire a projectile with arc trajectory using an effect definition
+    /// </summary>
+    /// <param name="startPosition">Starting position of the projectile</param>
+    /// <param name="direction">Direction of the projectile</param>
+    /// <param name="rotation">Rotation of the projectile</param>
+    /// <param name="targetPosition">Target position for the projectile</param>
+    /// <param name="damage">Damage the projectile deals on impact</param>
+    /// <param name="poiseDamage">Poise damage the projectile deals on impact</param>
+    /// <param name="attacker">The attacker (for damage source tracking)</param>
+    /// <param name="element">Elemental type of the damage</param>
+    /// <param name="projectileEffect">Effect definition for the projectile visual</param>
+    /// <param name="impactEffect">Effect to play on impact</param>
+    /// <param name="createDamageArea">Whether to create a damage area on impact</param>
+    /// <param name="damageAreaRadius">Radius of the damage area (if createDamageArea is true)</param>
+    /// <param name="damageAreaDuration">Duration of the damage area (if createDamageArea is true)</param>
+    /// <returns>The spawned projectile GameObject</returns>
+    public static GameObject FireProjectileWithEffect(Vector3 startPosition, Vector3 direction, Quaternion rotation,
+        Vector3 targetPosition, float damage, float poiseDamage, Transform attacker, AttackElement element,
+        EffectDefinition projectileEffect, EffectDefinition impactEffect = null, bool createDamageArea = false,
+        float damageAreaRadius = 0f, float damageAreaDuration = 5f)
+    {
+        if (projectileEffect == null)
+        {
+            Debug.LogError("Projectile effect definition is null!");
+            return null;
+        }
+        
+        // Play the projectile effect and get the spawned GameObject
+        GameObject projectileObj = EffectManager.Instance.PlayEffect(startPosition, direction, rotation, null, projectileEffect);
+        
+        // Add projectile component to the spawned object
+        if (projectileObj != null)
+        {
+            ArcProjectile projectile = projectileObj.GetComponent<ArcProjectile>();
+            if (projectile == null)
+            {
+                projectile = projectileObj.AddComponent<ArcProjectile>();
+            }
+            projectile.Initialize(targetPosition, damage, poiseDamage, attacker, element, 10f, 5f, 
+                impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration);
+        }
+        
+        return projectileObj;
     }
 }

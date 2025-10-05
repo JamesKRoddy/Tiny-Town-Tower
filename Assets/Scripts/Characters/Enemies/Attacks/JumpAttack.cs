@@ -1,9 +1,13 @@
 using UnityEngine;
 using UnityEngine.AI;
 
-namespace Enemies.BossAttacks
+namespace Enemies.Attacks
 {
-    public class BossJumpAttack : BossAttackBase
+    /// <summary>
+    /// Jump attack that launches the attacker into the air and lands with area damage.
+    /// Good for boss leap attacks, jumping enemies, etc.
+    /// </summary>
+    public class JumpAttack : AttackBase
     {
         [Header("Jump Settings")]
         [Range(1f, 10f)]
@@ -12,13 +16,13 @@ namespace Enemies.BossAttacks
         public float jumpHeight = 5f;
         [Range(0.1f, 3f)]
         public float jumpDuration = 1f;
-        [Tooltip("How much to predict player movement (0 = no prediction, 1 = full prediction)")]
+        [Tooltip("How much to predict target movement (0 = no prediction, 1 = full prediction)")]
         [Range(0f, 1f)]
         public float predictionFactor = 0.5f;
-        [Tooltip("Stop tracking player during the final portion of the jump (0-1)")]
+        [Tooltip("Stop tracking target during the final portion of the jump (0-1)")]
         [Range(0f, 1f)]
         public float finalJumpLockPercentage = 0.1f;
-        [Tooltip("How fast the boss rotates to face the player (degrees per second)")]
+        [Tooltip("How fast the attacker rotates to face the target (degrees per second)")]
         [Range(90f, 720f)]
         public float rotationSpeed = 360f;
 
@@ -27,7 +31,7 @@ namespace Enemies.BossAttacks
         private float jumpStartTime;
         private bool isJumping = false;
         private bool wasRootMotionEnabled;
-        private Vector3 playerVelocity;
+        private Vector3 targetVelocity;
         private Quaternion targetRotation;
         private float originalStoppingDistance;
         private NavMeshAgent agent;
@@ -36,20 +40,17 @@ namespace Enemies.BossAttacks
         {
             base.Initialize(enemy);
             
-            if (enemy is Boss bossEnemy)
+            // Set default elemental damage for jump attacks
+            if (attackElement == AttackElement.NONE)
             {
-                // Set default elemental damage for jump attacks (can be overridden in inspector)
-                if (attackElement == AttackElement.NONE)
-                {
-                    attackElement = AttackElement.ELECTRIC; // Jump attacks could be electric/shock damage
-                }
-                
-                // Store the original stopping distance and agent reference
-                agent = bossEnemy.GetComponent<NavMeshAgent>();
-                if (agent != null)
-                {
-                    originalStoppingDistance = agent.stoppingDistance;
-                }
+                attackElement = AttackElement.PHYSICAL;
+            }
+            
+            // Store the original stopping distance and agent reference
+            agent = enemy.GetComponent<NavMeshAgent>();
+            if (agent != null)
+            {
+                originalStoppingDistance = agent.stoppingDistance;
             }
         }
 
@@ -59,30 +60,28 @@ namespace Enemies.BossAttacks
         public void StartJump()
         {
             // Don't jump if dead
-            if (boss != null && boss.Health <= 0) return;
+            if (enemy != null && enemy.Health <= 0) return;
             
             if (target == null)
             {
-                Debug.LogWarning("[BossJumpAttack] StartJump failed: target is null");
+                Debug.LogWarning("[JumpAttack] StartJump failed: target is null");
                 return;
             }
 
-            PlayStartEffect();
-
             jumpStartPosition = transform.position;
             
-            // Get player's current velocity for prediction
+            // Get target's current velocity for prediction
             if (target.GetComponent<Rigidbody>() != null)
             {
-                playerVelocity = target.GetComponent<Rigidbody>().linearVelocity;
+                targetVelocity = target.GetComponent<Rigidbody>().linearVelocity;
             }
             else
             {
-                playerVelocity = Vector3.zero;
+                targetVelocity = Vector3.zero;
             }
 
             // Calculate predicted landing position
-            Vector3 predictedPosition = target.position + (playerVelocity * jumpDuration * predictionFactor);
+            Vector3 predictedPosition = target.position + (targetVelocity * jumpDuration * predictionFactor);
             
             // Ensure the predicted position is on the NavMesh
             if (NavMesh.SamplePosition(predictedPosition, out NavMeshHit hit, 5f, NavMesh.AllAreas))
@@ -101,7 +100,7 @@ namespace Enemies.BossAttacks
             isJumping = true;
 
             // Disable NavMeshAgent and root motion during jump
-            if (boss != null)
+            if (enemy != null)
             {
                 if (agent != null)
                 {
@@ -109,10 +108,10 @@ namespace Enemies.BossAttacks
                 }
                 else
                 {
-                    Debug.LogWarning("[BossJumpAttack] No NavMeshAgent found on boss");
+                    Debug.LogWarning("[JumpAttack] No NavMeshAgent found on enemy");
                 }
 
-                var animator = boss.GetComponent<Animator>();
+                var animator = enemy.GetComponent<Animator>();
                 if (animator != null)
                 {
                     wasRootMotionEnabled = animator.applyRootMotion;
@@ -121,7 +120,7 @@ namespace Enemies.BossAttacks
             }
             else
             {
-                Debug.LogWarning("[BossJumpAttack] Boss reference is null");
+                Debug.LogWarning("[JumpAttack] Enemy reference is null");
             }
         }
 
@@ -154,7 +153,7 @@ namespace Enemies.BossAttacks
             // Only update target position if we're not in the final portion of the jump
             if (progress < (1f - finalJumpLockPercentage))
             {
-                // Update target position during jump to account for player movement
+                // Update target position during jump to account for target movement
                 if (target != null)
                 {
                     Vector3 currentTargetPos = target.position;
@@ -167,7 +166,7 @@ namespace Enemies.BossAttacks
                 }
             }
 
-            // Update rotation to face the player
+            // Update rotation to face the target
             UpdateTargetRotation();
             transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
 
@@ -186,7 +185,7 @@ namespace Enemies.BossAttacks
         {
             isJumping = false;
 
-            if (boss != null && agent != null)
+            if (enemy != null && agent != null)
             {
                 // First, ensure we're on the NavMesh
                 if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 5f, NavMesh.AllAreas))
@@ -210,37 +209,38 @@ namespace Enemies.BossAttacks
                         }
                         else
                         {
-                            Debug.LogWarning("[BossJumpAttack] Could not find valid NavMesh position for target");
+                            Debug.LogWarning("[JumpAttack] Could not find valid NavMesh position for target");
                         }
                     }
                     else
                     {
-                        Debug.LogWarning("[BossJumpAttack] Target is null when trying to set destination");
+                        Debug.LogWarning("[JumpAttack] Target is null when trying to set destination");
                     }
                 }
                 else
                 {
-                    Debug.LogWarning("[BossJumpAttack] Could not find valid NavMesh position for boss");
+                    Debug.LogWarning("[JumpAttack] Could not find valid NavMesh position for enemy");
                 }
 
-                var animator = boss.GetComponent<Animator>();
+                var animator = enemy.GetComponent<Animator>();
                 if (animator != null)
                 {
                     animator.applyRootMotion = wasRootMotionEnabled;
                 }
 
                 // Reset the attack state
-                boss.AttackEnd();
+                if (enemy is Boss boss)
+                {
+                    boss.AttackEnd();
+                }
             }
             else
             {
-                Debug.LogWarning("[BossJumpAttack] Boss or NavMeshAgent reference is null");
+                Debug.LogWarning("[JumpAttack] Enemy or NavMeshAgent reference is null");
             }
 
             // Deal damage on landing
-            DealDamageInRadius(jumpRadius, damage, transform.position);
-
-            PlayEndEffect();
+            DamageUtils.CreateInstantDamageArea(transform.position, jumpRadius, damage, poiseDamage, enemy.transform, attackElement);
         }
 
         public override void OnAttack()
@@ -282,4 +282,4 @@ namespace Enemies.BossAttacks
             }
         }
     }
-} 
+}

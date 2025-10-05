@@ -54,7 +54,7 @@ namespace Enemies
 
         [Header("Movement Settings")]
         [SerializeField] protected bool useRootMotion = false;
-        [SerializeField] protected float stoppingDistance = 1.5f;
+        [SerializeField] protected float stoppingDistance = 1.0f;
         [SerializeField] public float rotationSpeed = 10f; // Only used for non-root motion, made public for attack components
         [SerializeField] protected float movementSpeed = 3.5f;
         [SerializeField] protected float acceleration = 8f;

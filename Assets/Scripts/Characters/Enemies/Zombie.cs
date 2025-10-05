@@ -3,7 +3,7 @@ using UnityEngine.AI;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Enemies.ZombieAttacks;
+using Enemies.Attacks;
 
 namespace Enemies
 {
@@ -24,8 +24,8 @@ namespace Enemies
         [SerializeField] protected float attackSwitchCooldown = 0.5f;
 
         // Attack components and management
-        private ZombieAttackBase[] attackComponents;
-        private ZombieAttackBase currentAttack;
+        private AttackBase[] attackComponents;
+        private AttackBase currentAttack;
         private float lastAttackSwitchTime;
         private bool isExecutingAttack = false;
         private float attackExecutionStartTime;
@@ -73,11 +73,11 @@ namespace Enemies
         private void InitializeAttackComponents()
         {
             // Find all attack components on this GameObject
-            attackComponents = GetComponents<ZombieAttackBase>();
+            attackComponents = GetComponents<AttackBase>();
             
             if (attackComponents.Length == 0)
             {
-                Debug.LogWarning($"[{gameObject.name}] No attack components found. Add attack components like MeleeZombieAttack, RangedZombieAttack, etc.");
+                Debug.LogWarning($"[{gameObject.name}] No attack components found. Add attack components like CloseRangeAttack, ProjectileAttack, etc.");
             }
         }
 
@@ -121,10 +121,11 @@ namespace Enemies
                 }
                 else
                 {
-                    // For laser attacks, continue rotating towards target during attack
-                    if (currentAttack is LaserZombieAttack laserAttack)
+                    // For beam attacks, continue rotating towards target during attack
+                    if (currentAttack is BeamAttack beamAttack)
                     {
-                        laserAttack.RotateTowardsTargetForLaserAttack();
+                        // Use the generic rotation method from AttackBase
+                        NavigationUtils.RotateTowardsTargetForAction(transform, navMeshTarget, rotationSpeed, 2f, beamAttack.attackAngleThreshold, true);
                     }
                     
                     return;
@@ -150,7 +151,7 @@ namespace Enemies
             }
 
             // Select attack based on strategy
-            ZombieAttackBase selectedAttack = SelectAttack(availableAttacks);
+            AttackBase selectedAttack = SelectAttack(availableAttacks);
             
             if (selectedAttack != currentAttack)
             {
@@ -194,9 +195,9 @@ namespace Enemies
         /// <summary>
         /// Get list of attacks that can currently be used
         /// </summary>
-        private List<ZombieAttackBase> GetAvailableAttacks()
+        private List<AttackBase> GetAvailableAttacks()
         {
-            var available = new List<ZombieAttackBase>();
+            var available = new List<AttackBase>();
             
             foreach (var attack in attackComponents)
             {
@@ -226,7 +227,7 @@ namespace Enemies
         /// <summary>
         /// Select an attack based on the current strategy
         /// </summary>
-        private ZombieAttackBase SelectAttack(List<ZombieAttackBase> availableAttacks)
+        private AttackBase SelectAttack(List<AttackBase> availableAttacks)
         {
             if (availableAttacks.Count == 0) return null;
             if (availableAttacks.Count == 1) return availableAttacks[0];
@@ -254,14 +255,14 @@ namespace Enemies
         /// <summary>
         /// Select attack based on distance to target
         /// </summary>
-        private ZombieAttackBase SelectByDistance(List<ZombieAttackBase> availableAttacks)
+        private AttackBase SelectByDistance(List<AttackBase> availableAttacks)
         {
             if (navMeshTarget == null) return availableAttacks[0];
             
             float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
             
             // Find the attack with range closest to current distance
-            ZombieAttackBase bestAttack = null;
+            AttackBase bestAttack = null;
             float bestDifference = float.MaxValue;
             
             foreach (var attack in availableAttacks)
@@ -282,7 +283,7 @@ namespace Enemies
         /// <summary>
         /// Select attack based on rotation requirements
         /// </summary>
-        private ZombieAttackBase SelectByRotation(List<ZombieAttackBase> availableAttacks)
+        private AttackBase SelectByRotation(List<AttackBase> availableAttacks)
         {
             // Prefer attacks that don't require rotation
             var noRotationAttacks = availableAttacks.Where(a => !a.ShouldRotateToAttack()).ToList();
@@ -298,7 +299,7 @@ namespace Enemies
         /// <summary>
         /// Execute the selected attack
         /// </summary>
-        private void ExecuteAttack(ZombieAttackBase attack)
+        private void ExecuteAttack(AttackBase attack)
         {
             if (attack == null) return;
             
@@ -306,9 +307,10 @@ namespace Enemies
             if (attack.ShouldRotateToAttack())
             {
                 // Handle rotation for specific attack types
-                if (attack is LaserZombieAttack laserAttack)
+                if (attack is BeamAttack beamAttack)
                 {
-                    laserAttack.RotateTowardsTargetForLaserAttack();
+                    // Use the generic rotation method from AttackBase
+                    NavigationUtils.RotateTowardsTargetForAction(transform, navMeshTarget, rotationSpeed, 2f, beamAttack.attackAngleThreshold, true);
                 }
                 else
                 {
@@ -480,10 +482,10 @@ namespace Enemies
             {
                 if (attack != null && attack.enabled)
                 {
-                    // Check if this is a ranged attack with a minimum distance
-                    if (attack is RangedZombieAttack rangedAttack)
+                    // Check if this is a projectile attack with a minimum distance
+                    if (attack is ProjectileAttack projectileAttack)
                     {
-                        minDistance = Mathf.Max(minDistance, rangedAttack.minRange);
+                        minDistance = Mathf.Max(minDistance, projectileAttack.minRange);
                     }
                     // Melee attacks have no minimum (can attack at 0 distance)
                     // Laser attacks have no minimum
@@ -499,7 +501,7 @@ namespace Enemies
         /// </summary>
         /// <typeparam name="T">Type of attack component</typeparam>
         /// <returns>Attack component of specified type</returns>
-        public T GetAttackComponent<T>() where T : ZombieAttackBase
+        public T GetAttackComponent<T>() where T : AttackBase
         {
             foreach (var attack in attackComponents)
             {
@@ -515,7 +517,7 @@ namespace Enemies
         /// Get the currently active attack
         /// </summary>
         /// <returns>Current attack component</returns>
-        public ZombieAttackBase GetCurrentAttack()
+        public AttackBase GetCurrentAttack()
         {
             return currentAttack;
         }
