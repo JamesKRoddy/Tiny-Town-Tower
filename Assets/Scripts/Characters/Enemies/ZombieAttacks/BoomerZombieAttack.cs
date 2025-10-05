@@ -53,8 +53,8 @@ namespace Enemies.ZombieAttacks
                     attackElement = AttackElement.FIRE; // Explosions could be fire damage
                 }
                 
-                // Set default range to explosion radius
-                range = explosionRadius;
+                // Set default maxRange to explosion radius
+                maxRange = explosionRadius;
                 
                 // Validate explosion effect
                 if (explosionEffect == null)
@@ -74,7 +74,7 @@ namespace Enemies.ZombieAttacks
             float distanceToTarget = Vector3.Distance(zombie.transform.position, target.position);
             
             // Can attack when close enough to target
-            return distanceToTarget <= range;
+            return distanceToTarget <= maxRange;
         }
 
         public override void StartAttack()
@@ -229,7 +229,7 @@ namespace Enemies.ZombieAttacks
         {
             if (target == null) return false;
             
-            return !IsReadyToAttack(45f); // Boomers don't need precise aiming
+            return !IsReadyToAttack(); // Boomers don't need precise aiming
         }
 
         /// <summary>
@@ -238,7 +238,7 @@ namespace Enemies.ZombieAttacks
         /// <returns>Current effective attack range</returns>
         public override float GetCurrentAttackRange()
         {
-            return range;
+            return maxRange;
         }
 
         /// <summary>
@@ -263,7 +263,7 @@ namespace Enemies.ZombieAttacks
             
             // Draw detonation distance
             Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(zombie.transform.position, range);
+            Gizmos.DrawWireSphere(zombie.transform.position, maxRange);
             
             // Draw explosion center
             Gizmos.color = new Color(1f, 0.5f, 0f); // Orange color

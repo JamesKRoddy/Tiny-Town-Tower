@@ -121,6 +121,12 @@ namespace Enemies
                 }
                 else
                 {
+                    // For laser attacks, continue rotating towards target during attack
+                    if (currentAttack is LaserZombieAttack laserAttack)
+                    {
+                        laserAttack.RotateTowardsTargetForLaserAttack();
+                    }
+                    
                     return;
                 }
             }
@@ -477,7 +483,7 @@ namespace Enemies
                     // Check if this is a ranged attack with a minimum distance
                     if (attack is RangedZombieAttack rangedAttack)
                     {
-                        minDistance = Mathf.Max(minDistance, rangedAttack.minAttackRange);
+                        minDistance = Mathf.Max(minDistance, rangedAttack.minRange);
                     }
                     // Melee attacks have no minimum (can attack at 0 distance)
                     // Laser attacks have no minimum
@@ -532,6 +538,19 @@ namespace Enemies
             {
                 currentAttack.OnAttackEnd();
                 currentAttack = null;
+            }
+        }
+
+        /// <summary>
+        /// Called by Unity for IK (Inverse Kinematics) updates
+        /// Delegates to the current attack's IK implementation
+        /// </summary>
+        private void OnAnimatorIK(int layerIndex)
+        {
+            // Let the current attack handle its own IK behavior
+            if (currentAttack != null)
+            {
+                currentAttack.OnAnimatorIK(layerIndex);
             }
         }
 

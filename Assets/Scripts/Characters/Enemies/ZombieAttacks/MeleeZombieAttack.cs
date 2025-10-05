@@ -24,21 +24,21 @@ namespace Enemies.ZombieAttacks
             {
                 attackType = 1; // Melee attack type
             }
+            
+            // Set default range values for melee attacks
+            if (minRange == 0 && maxRange == 5) // Only set defaults if they haven't been customized
+            {
+                minRange = 1.0f;  // Minimum distance for melee attacks
+                maxRange = 1.5f;  // Maximum distance for melee attacks
+            }
+            
+            // Set default angle threshold for melee attacks
+            if (attackAngleThreshold == 30) // Only set default if it hasn't been customized
+            {
+                attackAngleThreshold = 45f; // Melee attacks are more forgiving with angle
+            }
         }
         
-        [Header("Melee Attack Distance")]
-        [Tooltip("Minimum distance for attacks")]
-        public float minAttackDistance = 1.0f;
-        [Tooltip("Maximum distance for attacks")]
-        public float maxAttackDistance = 1.5f;
-        [Tooltip("Preferred attack distance")]
-        public float idealAttackDistance = 1.2f;
-        [Tooltip("Stopping distance for navigation (must be LESS than maxAttackDistance so zombie stops within attack range)")]
-        public float stoppingDistance = 1.3f;
-
-        [Header("Melee Attack Angle")]
-        [Tooltip("Maximum angle deviation for melee attacks")]
-        public float attackAngleThreshold = 45f;
 
         public override void Initialize(EnemyBase enemy)
         {
@@ -52,10 +52,8 @@ namespace Enemies.ZombieAttacks
                     attackElement = AttackElement.PHYSICAL;
                 }
                 
-                // Set default range to stopping distance for navigation
-                range = stoppingDistance;
                 
-                Debug.Log($"[{zombieEnemy.gameObject.name}] MeleeZombieAttack initialized | Range: {range} | Radius: {attackRadius} | Damage: {damage}");
+                Debug.Log($"[{zombieEnemy.gameObject.name}] MeleeZombieAttack initialized | Min: {minRange} | Max: {maxRange} | Radius: {attackRadius} | Damage: {damage}");
             }
         }
 
@@ -65,12 +63,12 @@ namespace Enemies.ZombieAttacks
             
             float distanceToTarget = Vector3.Distance(zombie.transform.position, target.position);
             
-            // Check if we're in the melee attack range (no minimum distance - can attack when close)
-            bool inRange = distanceToTarget <= maxAttackDistance;
+            // Check if we're in the melee attack range
+            bool inRange = distanceToTarget >= minRange && distanceToTarget <= maxRange;
             
             if (inRange)
             {
-                Debug.Log($"[{zombie.gameObject.name}] MeleeZombieAttack CanAttack: TRUE | Distance: {distanceToTarget:F2} | Range: 0-{maxAttackDistance}");
+                Debug.Log($"[{zombie.gameObject.name}] MeleeZombieAttack CanAttack: TRUE | Distance: {distanceToTarget:F2} | Range: {minRange}-{maxRange}");
             }
             
             return inRange;
@@ -95,7 +93,7 @@ namespace Enemies.ZombieAttacks
             }
             
             // Check if we should use building-specific attack range
-            float currentAttackRange = range;
+            float currentAttackRange = maxRange;
             bool isAttackingBuilding = target.GetComponent<Building>() != null;
             if (isAttackingBuilding)
             {
@@ -113,7 +111,7 @@ namespace Enemies.ZombieAttacks
             }
             
             // Check angle validation
-            if (!IsReadyToAttack(attackAngleThreshold))
+            if (!IsReadyToAttack())
             {
                 Debug.LogWarning($"[{zombie.gameObject.name}] Melee attack failed - not facing target");
                 return;
@@ -142,9 +140,8 @@ namespace Enemies.ZombieAttacks
         /// <returns>True if rotation is needed</returns>
         public override bool ShouldRotateToAttack()
         {
-            if (target == null) return false;
-            
-            return !IsReadyToAttack(attackAngleThreshold);
+            // Use base class ShouldRotateToAttack() which uses attackAngleThreshold
+            return base.ShouldRotateToAttack();
         }
 
         /// <summary>
@@ -153,10 +150,10 @@ namespace Enemies.ZombieAttacks
         /// <returns>Current effective attack range</returns>
         public override float GetCurrentAttackRange()
         {
-            if (target == null) return range;
+            if (target == null) return maxRange;
             
             bool isAttackingBuilding = target.GetComponent<Building>() != null;
-            return isAttackingBuilding ? buildingAttackRange : range;
+            return isAttackingBuilding ? buildingAttackRange : maxRange;
         }
 
         /// <summary>
@@ -168,7 +165,7 @@ namespace Enemies.ZombieAttacks
             
             // Draw attack range
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(zombie.transform.position, range);
+            Gizmos.DrawWireSphere(zombie.transform.position, maxRange);
             
             // Draw attack radius
             Gizmos.color = Color.yellow;
@@ -176,16 +173,16 @@ namespace Enemies.ZombieAttacks
             
             // Draw min/max distances
             Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(zombie.transform.position, minAttackDistance);
+            Gizmos.DrawWireSphere(zombie.transform.position, minRange);
             Gizmos.color = Color.blue;
-            Gizmos.DrawWireSphere(zombie.transform.position, maxAttackDistance);
+            Gizmos.DrawWireSphere(zombie.transform.position, maxRange);
             
             // Draw attack angle
             Vector3 rightDir = Quaternion.Euler(0, attackAngleThreshold, 0) * zombie.transform.forward;
             Vector3 leftDir = Quaternion.Euler(0, -attackAngleThreshold, 0) * zombie.transform.forward;
             Gizmos.color = Color.cyan;
-            Gizmos.DrawRay(zombie.transform.position, rightDir * range);
-            Gizmos.DrawRay(zombie.transform.position, leftDir * range);
+            Gizmos.DrawRay(zombie.transform.position, rightDir * maxRange);
+            Gizmos.DrawRay(zombie.transform.position, leftDir * maxRange);
         }
     }
 }

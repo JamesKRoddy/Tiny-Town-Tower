@@ -14,8 +14,6 @@ namespace Enemies.ZombieAttacks
         [Header("Laser Settings")]
         [Tooltip("Layer mask for laser hit detection")]
         public LayerMask laserHitLayers = -1;
-        [Tooltip("Maximum angle deviation for laser attacks")]
-        public float attackAngleThreshold = 15f;
         [Tooltip("Interval between damage checks (seconds)")]
         public float damageInterval = 0.1f;
         
@@ -26,6 +24,12 @@ namespace Enemies.ZombieAttacks
             if (attackType == 0)
             {
                 attackType = 3; // Laser attack type
+            }
+            
+            // Set default angle threshold for laser attacks
+            if (attackAngleThreshold == 30) // Only set default if it hasn't been customized
+            {
+                attackAngleThreshold = 15f; // Laser attacks need precise aiming
             }
         }
         
@@ -73,7 +77,7 @@ namespace Enemies.ZombieAttacks
                 // Initialize current look target to forward position
                 currentLookAtTarget = zombieEnemy.transform.position + zombieEnemy.transform.forward * 5f + Vector3.up;
                 
-                Debug.Log($"[{zombieEnemy.gameObject.name}] LaserZombieAttack initialized | Range: {range} | Damage: {damage} | DamageInterval: {damageInterval}");
+                Debug.Log($"[{zombieEnemy.gameObject.name}] LaserZombieAttack initialized | Max: {maxRange} | Damage: {damage} | DamageInterval: {damageInterval}");
             }
         }
 
@@ -212,7 +216,7 @@ namespace Enemies.ZombieAttacks
             
             // Raycast to find the actual hit point (same as the visual beam)
             RaycastHit hit;
-            if (Physics.Raycast(startPosition, direction, out hit, range, laserHitLayers))
+            if (Physics.Raycast(startPosition, direction, out hit, maxRange, laserHitLayers))
             {
                 // Check if hit object is damageable
                 IDamageable damageable = hit.collider.GetComponent<IDamageable>();
@@ -244,13 +248,14 @@ namespace Enemies.ZombieAttacks
         /// <returns>Current effective attack range</returns>
         public override float GetCurrentAttackRange()
         {
-            return range;
+            return maxRange;
         }
 
         /// <summary>
-        /// Update head IK targeting (called from zombie's OnAnimatorIK)
+        /// Called by Unity for IK updates - implements head tracking for laser attacks
         /// </summary>
-        public void UpdateHeadIK()
+        /// <param name="layerIndex">The IK layer index</param>
+        public override void OnAnimatorIK(int layerIndex)
         {
             if (zombie == null || zombie.animator == null) return;
             
@@ -307,7 +312,7 @@ namespace Enemies.ZombieAttacks
             
             // Draw attack range
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(zombie.transform.position, range);
+            Gizmos.DrawWireSphere(zombie.transform.position, maxRange);
             
             // Draw laser fire point
             if (laserFirePoint != null)
@@ -317,14 +322,14 @@ namespace Enemies.ZombieAttacks
                 
                 // Draw laser direction
                 Gizmos.color = Color.red;
-                Gizmos.DrawRay(laserFirePoint.position, laserFirePoint.forward * range);
+                Gizmos.DrawRay(laserFirePoint.position, laserFirePoint.forward * maxRange);
                 
                 // Draw attack angle
                 Vector3 rightDir = Quaternion.Euler(0, attackAngleThreshold, 0) * laserFirePoint.forward;
                 Vector3 leftDir = Quaternion.Euler(0, -attackAngleThreshold, 0) * laserFirePoint.forward;
                 Gizmos.color = Color.cyan;
-                Gizmos.DrawRay(laserFirePoint.position, rightDir * range);
-                Gizmos.DrawRay(laserFirePoint.position, leftDir * range);
+                Gizmos.DrawRay(laserFirePoint.position, rightDir * maxRange);
+                Gizmos.DrawRay(laserFirePoint.position, leftDir * maxRange);
             }
             
             // Draw head IK target

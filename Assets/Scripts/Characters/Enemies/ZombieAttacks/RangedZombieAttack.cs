@@ -10,10 +10,6 @@ namespace Enemies.ZombieAttacks
     public class RangedZombieAttack : ZombieAttackBase
     {
         [Header("Ranged Settings")]
-        [Tooltip("Minimum range for ranged attacks")]
-        public float minAttackRange = 5f;
-        [Tooltip("Maximum range for ranged attacks")]
-        public float maxAttackRange = 15f;
         [Tooltip("Height offset for projectile spawn")]
         public float projectileSpawnHeight = 1.5f;
         
@@ -25,11 +21,21 @@ namespace Enemies.ZombieAttacks
             {
                 attackType = 2; // Ranged attack type
             }
+            
+            // Set default range values for ranged attacks
+            if (minRange == 0 && maxRange == 5) // Only set defaults if they haven't been customized
+            {
+                minRange = 5f;   // Minimum range for ranged attacks
+                maxRange = 15f;  // Maximum range for ranged attacks
+            }
+            
+            // Set default angle threshold for ranged attacks
+            if (attackAngleThreshold == 30) // Only set default if it hasn't been customized
+            {
+                attackAngleThreshold = 5f; // Ranged attacks need precise aiming
+            }
         }
         
-        [Header("Ranged Attack Angle")]
-        [Tooltip("Maximum angle deviation for ranged attacks")]
-        public float attackAngleThreshold = 5f;
 
         [Header("Vomit Effects")]
         [Tooltip("Effect definition for vomit projectile")]
@@ -52,8 +58,6 @@ namespace Enemies.ZombieAttacks
                     attackElement = AttackElement.POISON; // Vomit could be poison damage
                 }
                 
-                // Set default range to max attack range
-                range = maxAttackRange;
                 
                 // Validate effects
                 if (vomitProjectileEffect == null)
@@ -65,18 +69,14 @@ namespace Enemies.ZombieAttacks
                     Debug.LogError("Vomit pool effect definition is not assigned to RangedZombieAttack on " + zombieEnemy.gameObject.name);
                 }
                 
-                Debug.Log($"[{zombieEnemy.gameObject.name}] RangedZombieAttack initialized | Range: {range} | Min: {minAttackRange} | Max: {maxAttackRange} | Damage: {damage}");
+                Debug.Log($"[{zombieEnemy.gameObject.name}] RangedZombieAttack initialized | Min: {minRange} | Max: {maxRange} | Damage: {damage}");
             }
         }
 
         public override bool CanAttack()
         {
-            if (!base.CanAttack()) return false;
-            
-            float distanceToTarget = Vector3.Distance(zombie.transform.position, target.position);
-            
-            // Check if we're in the ranged attack range
-            return distanceToTarget >= minAttackRange && distanceToTarget <= maxAttackRange;
+            // Use base class CanAttack() which now handles min/max range checking
+            return base.CanAttack();
         }
 
         public override void StartAttack()
@@ -151,9 +151,8 @@ namespace Enemies.ZombieAttacks
         /// <returns>True if rotation is needed</returns>
         public override bool ShouldRotateToAttack()
         {
-            if (target == null) return false;
-            
-            return !IsReadyToAttack(attackAngleThreshold);
+            // Use base class ShouldRotateToAttack() which uses attackAngleThreshold
+            return base.ShouldRotateToAttack();
         }
 
         /// <summary>
@@ -162,19 +161,16 @@ namespace Enemies.ZombieAttacks
         /// <returns>Current effective attack range</returns>
         public override float GetCurrentAttackRange()
         {
-            return range;
+            return maxRange;
         }
 
         /// <summary>
         /// Check if the target is within minimum range (too close for ranged attack)
         /// </summary>
         /// <returns>True if target is too close</returns>
-        public bool IsTargetTooClose()
+        public override bool IsTargetTooClose()
         {
-            if (target == null) return false;
-            
-            float distance = Vector3.Distance(zombie.transform.position, target.position);
-            return distance < minAttackRange;
+            return base.IsTargetTooClose();
         }
 
         /// <summary>
@@ -186,18 +182,18 @@ namespace Enemies.ZombieAttacks
             
             // Draw min attack range
             Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(zombie.transform.position, minAttackRange);
+            Gizmos.DrawWireSphere(zombie.transform.position, minRange);
             
             // Draw max attack range
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(zombie.transform.position, maxAttackRange);
+            Gizmos.DrawWireSphere(zombie.transform.position, maxRange);
             
             // Draw attack angle
             Vector3 rightDir = Quaternion.Euler(0, attackAngleThreshold, 0) * zombie.transform.forward;
             Vector3 leftDir = Quaternion.Euler(0, -attackAngleThreshold, 0) * zombie.transform.forward;
             Gizmos.color = Color.cyan;
-            Gizmos.DrawRay(zombie.transform.position, rightDir * maxAttackRange);
-            Gizmos.DrawRay(zombie.transform.position, leftDir * maxAttackRange);
+            Gizmos.DrawRay(zombie.transform.position, rightDir * maxRange);
+            Gizmos.DrawRay(zombie.transform.position, leftDir * maxRange);
             
             // Draw projectile spawn height
             Gizmos.color = Color.yellow;

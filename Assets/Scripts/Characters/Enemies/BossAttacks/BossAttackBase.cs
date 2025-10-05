@@ -48,7 +48,7 @@ namespace Enemies.BossAttacks
             if (target == null) return false;
             
             // Use shared navigation utility for sophisticated distance checking
-            float effectiveDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, target, range, 1f);
+            float effectiveDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, target, maxRange, 1f);
             float distance = Vector3.Distance(transform.position, target.position);
             
             return distance <= effectiveDistance && base.CanAttack();
@@ -61,7 +61,7 @@ namespace Enemies.BossAttacks
         /// <returns>The effective distance required to attack this target</returns>
         protected virtual float CalculateEffectiveAttackDistance(Transform target)
         {
-            return NavigationUtils.CalculateEffectiveReachDistance(transform.position, target, range, 1f);
+            return NavigationUtils.CalculateEffectiveReachDistance(transform.position, target, maxRange, 1f);
         }
 
         public override void StartAttack()
