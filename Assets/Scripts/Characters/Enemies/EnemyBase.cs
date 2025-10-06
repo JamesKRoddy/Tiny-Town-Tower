@@ -610,12 +610,6 @@ namespace Enemies
                 return;
             }
 
-            // Debug: Log cooldown movement attempts for ranged enemies
-            if (showCollisionDebug)
-            {
-                Debug.Log($"[{gameObject.name}] UpdateCooldownMovement called | MinAttackDistance: {minAttackDistance} | IsAttacking: {isAttacking} | HasTarget: {navMeshTarget != null}");
-            }
-
             // Check if we're in a cooldown state (can't attack due to cooldown, not distance/angle)
             bool inCooldown = IsInAttackCooldown();
             if (!inCooldown)
@@ -625,18 +619,8 @@ namespace Enemies
                 {
                     isMovingDuringCooldown = false;
                     lastCooldownMovementEndTime = Time.time;
-                    if (showCollisionDebug)
-                    {
-                        Debug.Log($"[{gameObject.name}] Ending cooldown movement - attack ready");
-                    }
                 }
                 return;
-            }
-
-            // Debug: We're in cooldown, let's see what happens
-            if (showCollisionDebug && !isMovingDuringCooldown)
-            {
-                Debug.Log($"[{gameObject.name}] In cooldown but not moving yet - checking conditions");
             }
 
             float timeSinceCooldownMovementStart = Time.time - cooldownMovementStartTime;
@@ -644,11 +628,6 @@ namespace Enemies
             // State machine for cooldown movement
             if (isMovingDuringCooldown)
             {
-                if (showCollisionDebug)
-                {
-                    Debug.Log($"[{gameObject.name}] Currently moving during cooldown - Time since start: {timeSinceCooldownMovementStart:F2}s / {cooldownMovementMaxDuration:F2}s");
-                }
-                
                 // Continue moving until duration expires
                 if (timeSinceCooldownMovementStart < cooldownMovementMaxDuration)
                 {
@@ -662,11 +641,6 @@ namespace Enemies
                     // This prevents constant repositioning and allows movement to complete
                     if (distanceToPlayer < (minDistance * 0.5f) && timeSinceLastTargetChange > TARGET_CHANGE_COOLDOWN)
                     {
-                        // CRITICALLY TOO CLOSE! Find a new strafe position farther away
-                        if (showCollisionDebug)
-                        {
-                            Debug.Log($"[{gameObject.name}] *** CRITICALLY TOO CLOSE *** | Distance: {distanceToPlayer:F2}m < CriticalMin: {(minDistance * 0.5f):F2}m | Time since last change: {timeSinceLastTargetChange:F2}s");
-                        }
                         FindNewCooldownMovementTarget();
                         lastTargetChangeTime = Time.time;
                         isWaitingAtTarget = false; // Reset waiting state
@@ -674,14 +648,6 @@ namespace Enemies
                     
                     // Check if we've reached the target
                     float distanceToCooldownTarget = Vector3.Distance(transform.position, cooldownMovementTarget);
-                    float agentVelocity = agent.velocity.magnitude;
-                    bool hasPath = agent.hasPath;
-                    bool pathPending = agent.pathPending;
-                    
-                    if (showCollisionDebug)
-                    {
-                        Debug.Log($"[{gameObject.name}] Moving state | Distance to target: {distanceToCooldownTarget:F2}m | Velocity: {agentVelocity:F2} | HasPath: {hasPath} | PathPending: {pathPending} | Waiting: {isWaitingAtTarget} | Time since last change: {timeSinceLastTargetChange:F2}s");
-                    }
                     
                     // Check if we've reached the target and should start waiting
                     // Only consider "reached" if we've been moving for at least 1 second AND we're close to the target
@@ -693,11 +659,6 @@ namespace Enemies
                         isWaitingAtTarget = true;
                         targetReachedTime = Time.time;
                         agent.isStopped = true; // Stop the agent while waiting
-                        
-                        if (showCollisionDebug)
-                        {
-                            Debug.Log($"[{gameObject.name}] *** TARGET REACHED *** | Distance: {distanceToCooldownTarget:F2}m | Time moving: {timeSinceLastTargetChange:F2}s | Starting wait period of {WAIT_AT_TARGET_DURATION:F2}s");
-                        }
                     }
                     
                     // If we're waiting at the target
@@ -705,19 +666,10 @@ namespace Enemies
                     {
                         float timeSpentWaiting = Time.time - targetReachedTime;
                         
-                        if (showCollisionDebug)
-                        {
-                            Debug.Log($"[{gameObject.name}] Waiting at target | Time: {timeSpentWaiting:F2}s / {WAIT_AT_TARGET_DURATION:F2}s");
-                        }
-                        
                         // Check if we've waited long enough
                         if (timeSpentWaiting >= WAIT_AT_TARGET_DURATION && timeSinceLastTargetChange > TARGET_CHANGE_COOLDOWN)
                         {
                             // Wait period complete, find a new target
-                            if (showCollisionDebug)
-                            {
-                                Debug.Log($"[{gameObject.name}] *** WAIT COMPLETE *** | Finding new target after {timeSpentWaiting:F2}s wait");
-                            }
                             FindNewCooldownMovementTarget();
                             lastTargetChangeTime = Time.time;
                             isWaitingAtTarget = false;
@@ -740,35 +692,16 @@ namespace Enemies
                     isMovingDuringCooldown = false;
                     isWaitingAtTarget = false;
                     lastCooldownMovementEndTime = Time.time;
-                    if (showCollisionDebug)
-                    {
-                        Debug.Log($"[{gameObject.name}] Cooldown movement duration expired");
-                    }
                 }
             }
             else
             {
                 // Start new cooldown movement if enough time has passed since last movement ended
                 float timeSinceLastCooldownMovement = Time.time - lastCooldownMovementEndTime;
-                if (showCollisionDebug)
-                {
-                    Debug.Log($"[{gameObject.name}] Not moving during cooldown - Time since last movement ended: {timeSinceLastCooldownMovement:F2}s / {COOLDOWN_MOVEMENT_COOLDOWN:F2}s | Should start: {timeSinceLastCooldownMovement > COOLDOWN_MOVEMENT_COOLDOWN}");
-                }
                 
                 if (timeSinceLastCooldownMovement > COOLDOWN_MOVEMENT_COOLDOWN)
                 {
-                    if (showCollisionDebug)
-                    {
-                        Debug.Log($"[{gameObject.name}] Starting cooldown movement - enough time has passed");
-                    }
                     StartCooldownMovement();
-                }
-                else
-                {
-                    if (showCollisionDebug)
-                    {
-                        Debug.Log($"[{gameObject.name}] Not starting cooldown movement yet - waiting for cooldown period");
-                    }
                 }
             }
         }
@@ -788,10 +721,6 @@ namespace Enemies
             // Must be in range to potentially attack
             if (distanceToTarget < minAttackDistance || distanceToTarget > maxAttackRange)
             {
-                if (showCollisionDebug)
-                {
-                    Debug.Log($"[{gameObject.name}] Not in attack range: {distanceToTarget:F2}m | Range: {minAttackDistance:F2}-{maxAttackRange:F2}m");
-                }
                 return false; // Not in range, so not in cooldown
             }
 
@@ -811,12 +740,6 @@ namespace Enemies
                 }
             }
             
-            // Debug logging for cooldown movement
-            if (showCollisionDebug)
-            {
-                Debug.Log($"[{gameObject.name}] Cooldown check: AnyAttackOnCooldown: {anyAttackOnCooldown} | Distance: {distanceToTarget:F2}m | Range: {minAttackDistance:F2}-{maxAttackRange:F2}m");
-            }
-            
             return anyAttackOnCooldown;
         }
 
@@ -825,29 +748,12 @@ namespace Enemies
         /// </summary>
         private void StartCooldownMovement()
         {
-            if (navMeshTarget == null) 
-            {
-                if (showCollisionDebug)
-                {
-                    Debug.Log($"[{gameObject.name}] Cannot start cooldown movement - no navMeshTarget");
-                }
-                return;
-            }
-
-            if (showCollisionDebug)
-            {
-                Debug.Log($"[{gameObject.name}] StartCooldownMovement called - finding new target");
-            }
+            if (navMeshTarget == null) return;
 
             FindNewCooldownMovementTarget();
             isMovingDuringCooldown = true;
             cooldownMovementStartTime = Time.time;
             lastTargetChangeTime = Time.time; // Initialize the target change timer
-
-            if (showCollisionDebug)
-            {
-                Debug.Log($"[{gameObject.name}] Starting cooldown movement towards: {cooldownMovementTarget} | StartTime: {cooldownMovementStartTime}");
-            }
         }
 
         /// <summary>
@@ -860,15 +766,9 @@ namespace Enemies
             Vector3 currentPos = transform.position;
             Vector3 targetPos = navMeshTarget.position;
             float minAttackDistance = GetMinimumAttackDistance();
-            float currentDistanceToPlayer = Vector3.Distance(currentPos, targetPos);
             
             // Calculate the desired distance (add significant buffer beyond min distance)
             float desiredDistance = minAttackDistance + UnityEngine.Random.Range(2f, 5f);
-            
-            if (showCollisionDebug)
-            {
-                Debug.Log($"[{gameObject.name}] *** FINDING NEW TARGET *** | Current distance to player: {currentDistanceToPlayer:F2}m | Min attack distance: {minAttackDistance:F2}m | Desired distance: {desiredDistance:F2}m");
-            }
             
             // Get direction to target
             Vector3 directionToTarget = (targetPos - currentPos).normalized;
@@ -878,11 +778,6 @@ namespace Enemies
             if (Mathf.Abs(strafeAngle) < 60f)
             {
                 strafeAngle += strafeAngle < 0 ? -60f : 60f; // Ensure minimum 60 degree angle
-            }
-            
-            if (showCollisionDebug)
-            {
-                Debug.Log($"[{gameObject.name}] Strafe angle: {strafeAngle:F0}° | Direction to player: {directionToTarget}");
             }
             
             // Calculate strafe direction
@@ -896,11 +791,6 @@ namespace Enemies
             if (UnityEngine.AI.NavMesh.SamplePosition(strafePosition, out hit, 5f, UnityEngine.AI.NavMesh.AllAreas))
             {
                 cooldownMovementTarget = hit.position;
-                if (showCollisionDebug)
-                {
-                    float distanceToNewTarget = Vector3.Distance(currentPos, hit.position);
-                    Debug.Log($"[{gameObject.name}] Found strafe position: {hit.position} | StrafeAngle: {strafeAngle:F0}° | Distance from player: {desiredDistance:F2}m | Distance to travel: {distanceToNewTarget:F2}m");
-                }
             }
             else
             {
@@ -912,19 +802,11 @@ namespace Enemies
                 if (UnityEngine.AI.NavMesh.SamplePosition(sidePosition, out hit, 5f, UnityEngine.AI.NavMesh.AllAreas))
                 {
                     cooldownMovementTarget = hit.position;
-                    if (showCollisionDebug)
-                    {
-                        Debug.Log($"[{gameObject.name}] Using fallback side-step position: {hit.position}");
-                    }
                 }
                 else
                 {
                     // Ultimate fallback: move slightly forward
                     cooldownMovementTarget = currentPos + directionToTarget * 2f;
-                    if (showCollisionDebug)
-                    {
-                        Debug.Log($"[{gameObject.name}] Using ultimate fallback (move forward): {cooldownMovementTarget}");
-                    }
                 }
             }
         }

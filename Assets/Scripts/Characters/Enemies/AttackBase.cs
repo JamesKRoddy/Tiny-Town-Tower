@@ -115,17 +115,7 @@ namespace Enemies
             // Check if within attack range (minRange to maxRange)
             bool inRange = distance >= minRange && distance <= maxRange;
             
-            float timeSinceLastAttack = Time.time - lastAttackTime;
-            bool cooldownComplete = timeSinceLastAttack >= cooldown;
-            bool canAttack = inRange && cooldownComplete;
-            
-            // Debug logging for cooldown system
-            if (enemy.showCollisionDebug)
-            {
-                Debug.Log($"[{enemy.gameObject.name}] {GetType().Name}.CanAttack() | Distance: {distance:F2}m | Range: {minRange:F2}-{maxRange:F2}m | InRange: {inRange} | TimeSinceAttack: {timeSinceLastAttack:F2}s | Cooldown: {cooldown:F2}s | CooldownComplete: {cooldownComplete} | CanAttack: {canAttack}");
-            }
-            
-            return canAttack;
+            return inRange && Time.time - lastAttackTime >= cooldown;
         }
 
         /// <summary>
