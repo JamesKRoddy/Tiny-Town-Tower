@@ -5,6 +5,8 @@
 
 Make enemies move around while not attacking if they are far away (still isn't working)
 
+Setup running melee attack
+
 ****** Next work:
 
 Custom inspectors for NPC and their components, enemies, managers that need it

@@ -1120,11 +1120,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2505444480820924123, guid: b5c3cb9ae758fb549906e6cc604c6b3e, type: 3}
       propertyPath: maxRange
-      value: 15
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 2505444480820924123, guid: b5c3cb9ae758fb549906e6cc604c6b3e, type: 3}
       propertyPath: minRange
-      value: 3
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2505444480820924123, guid: b5c3cb9ae758fb549906e6cc604c6b3e, type: 3}
       propertyPath: elementalDamageBonus

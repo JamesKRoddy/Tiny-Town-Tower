@@ -113,12 +113,15 @@ namespace Enemies
 
         // Cooldown movement state management
         private bool isMovingDuringCooldown = false;
+        private bool isWaitingAtTarget = false; // New: Track if we're waiting at target position
         private float cooldownMovementStartTime = 0f;
         private float lastCooldownMovementEndTime = 0f; // Track when cooldown movement ended
         private float lastTargetChangeTime = 0f; // Track when we last changed the strafe target
+        private float targetReachedTime = 0f; // New: Track when we reached the current target
         private Vector3 cooldownMovementTarget = Vector3.zero;
         private const float COOLDOWN_MOVEMENT_COOLDOWN = 1.0f; // Cooldown before starting new cooldown movement
-        private const float TARGET_CHANGE_COOLDOWN = 1.5f; // Minimum time between target changes
+        private const float TARGET_CHANGE_COOLDOWN = 2.5f; // Minimum time between target changes (increased for more deliberate movement)
+        private const float WAIT_AT_TARGET_DURATION = 1.5f; // How long to wait at target before finding next one (increased for more deliberate behavior)
 
         // Head tracking state management
         private bool isHeadTrackingActive = false;
@@ -649,28 +652,25 @@ namespace Enemies
                 // Continue moving until duration expires
                 if (timeSinceCooldownMovementStart < cooldownMovementMaxDuration)
                 {
-                    // Check if we're too close to the player - if so, back away (but only if enough time has passed since last target change)
+                    // Check if we're too close to the player - but with very strict conditions
+                    // Only interrupt if we're in immediate danger (very close) and have been at this target long enough
                     float distanceToPlayer = Vector3.Distance(transform.position, navMeshTarget.position);
                     float minDistance = GetMinimumAttackDistance();
                     float timeSinceLastTargetChange = Time.time - lastTargetChangeTime;
                     
-                    if (distanceToPlayer < minDistance && timeSinceLastTargetChange > TARGET_CHANGE_COOLDOWN)
+                    // Only find new target if CRITICALLY too close (within 50% of minDistance) AND enough time has passed
+                    // This prevents constant repositioning and allows movement to complete
+                    if (distanceToPlayer < (minDistance * 0.5f) && timeSinceLastTargetChange > TARGET_CHANGE_COOLDOWN)
                     {
-                        // TOO CLOSE! Find a new strafe position farther away
+                        // CRITICALLY TOO CLOSE! Find a new strafe position farther away
                         if (showCollisionDebug)
                         {
-                            Debug.Log($"[{gameObject.name}] TOO CLOSE to player during cooldown ({distanceToPlayer:F2}m < {minDistance:F2}m)! Finding new position.");
+                            Debug.Log($"[{gameObject.name}] *** CRITICALLY TOO CLOSE *** | Distance: {distanceToPlayer:F2}m < CriticalMin: {(minDistance * 0.5f):F2}m | Time since last change: {timeSinceLastTargetChange:F2}s");
                         }
                         FindNewCooldownMovementTarget();
                         lastTargetChangeTime = Time.time;
+                        isWaitingAtTarget = false; // Reset waiting state
                     }
-                    
-                    // Keep moving towards cooldown movement target
-                    agent.SetDestination(cooldownMovementTarget);
-                    agent.isStopped = false;
-                    
-                    // Update animation parameters to ensure Speed parameter is set for root motion
-                    UpdateAnimationParameters();
                     
                     // Check if we've reached the target
                     float distanceToCooldownTarget = Vector3.Distance(transform.position, cooldownMovementTarget);
@@ -680,23 +680,65 @@ namespace Enemies
                     
                     if (showCollisionDebug)
                     {
-                        Debug.Log($"[{gameObject.name}] Moving to cooldown target | Distance: {distanceToCooldownTarget:F2}m | Agent Stopped: {agent.isStopped} | Velocity: {agentVelocity:F2} | HasPath: {hasPath} | PathPending: {pathPending}");
+                        Debug.Log($"[{gameObject.name}] Moving state | Distance to target: {distanceToCooldownTarget:F2}m | Velocity: {agentVelocity:F2} | HasPath: {hasPath} | PathPending: {pathPending} | Waiting: {isWaitingAtTarget} | Time since last change: {timeSinceLastTargetChange:F2}s");
                     }
-                        if (distanceToCooldownTarget < agent.stoppingDistance + 0.5f && timeSinceLastTargetChange > TARGET_CHANGE_COOLDOWN)
+                    
+                    // Check if we've reached the target and should start waiting
+                    // Only consider "reached" if we've been moving for at least 1 second AND we're close to the target
+                    if (!isWaitingAtTarget && 
+                        distanceToCooldownTarget < agent.stoppingDistance + 0.3f && 
+                        timeSinceLastTargetChange > 1.0f)
+                    {
+                        // We've reached the target, start waiting
+                        isWaitingAtTarget = true;
+                        targetReachedTime = Time.time;
+                        agent.isStopped = true; // Stop the agent while waiting
+                        
+                        if (showCollisionDebug)
                         {
-                            // Close enough to target, find a new strafe position
+                            Debug.Log($"[{gameObject.name}] *** TARGET REACHED *** | Distance: {distanceToCooldownTarget:F2}m | Time moving: {timeSinceLastTargetChange:F2}s | Starting wait period of {WAIT_AT_TARGET_DURATION:F2}s");
+                        }
+                    }
+                    
+                    // If we're waiting at the target
+                    if (isWaitingAtTarget)
+                    {
+                        float timeSpentWaiting = Time.time - targetReachedTime;
+                        
+                        if (showCollisionDebug)
+                        {
+                            Debug.Log($"[{gameObject.name}] Waiting at target | Time: {timeSpentWaiting:F2}s / {WAIT_AT_TARGET_DURATION:F2}s");
+                        }
+                        
+                        // Check if we've waited long enough
+                        if (timeSpentWaiting >= WAIT_AT_TARGET_DURATION && timeSinceLastTargetChange > TARGET_CHANGE_COOLDOWN)
+                        {
+                            // Wait period complete, find a new target
                             if (showCollisionDebug)
                             {
-                                Debug.Log($"[{gameObject.name}] Close to strafe target ({distanceToCooldownTarget:F2}m < {agent.stoppingDistance + 0.5f:F2}m), finding new position");
+                                Debug.Log($"[{gameObject.name}] *** WAIT COMPLETE *** | Finding new target after {timeSpentWaiting:F2}s wait");
                             }
                             FindNewCooldownMovementTarget();
                             lastTargetChangeTime = Time.time;
+                            isWaitingAtTarget = false;
+                            agent.isStopped = false;
                         }
+                    }
+                    else
+                    {
+                        // Keep moving towards cooldown movement target
+                        agent.SetDestination(cooldownMovementTarget);
+                        agent.isStopped = false;
+                        
+                        // Update animation parameters to ensure Speed parameter is set for root motion
+                        UpdateAnimationParameters();
+                    }
                 }
                 else
                 {
                     // Cooldown movement duration expired
                     isMovingDuringCooldown = false;
+                    isWaitingAtTarget = false;
                     lastCooldownMovementEndTime = Time.time;
                     if (showCollisionDebug)
                     {
@@ -818,9 +860,15 @@ namespace Enemies
             Vector3 currentPos = transform.position;
             Vector3 targetPos = navMeshTarget.position;
             float minAttackDistance = GetMinimumAttackDistance();
+            float currentDistanceToPlayer = Vector3.Distance(currentPos, targetPos);
             
             // Calculate the desired distance (add significant buffer beyond min distance)
             float desiredDistance = minAttackDistance + UnityEngine.Random.Range(2f, 5f);
+            
+            if (showCollisionDebug)
+            {
+                Debug.Log($"[{gameObject.name}] *** FINDING NEW TARGET *** | Current distance to player: {currentDistanceToPlayer:F2}m | Min attack distance: {minAttackDistance:F2}m | Desired distance: {desiredDistance:F2}m");
+            }
             
             // Get direction to target
             Vector3 directionToTarget = (targetPos - currentPos).normalized;
@@ -830,6 +878,11 @@ namespace Enemies
             if (Mathf.Abs(strafeAngle) < 60f)
             {
                 strafeAngle += strafeAngle < 0 ? -60f : 60f; // Ensure minimum 60 degree angle
+            }
+            
+            if (showCollisionDebug)
+            {
+                Debug.Log($"[{gameObject.name}] Strafe angle: {strafeAngle:F0}° | Direction to player: {directionToTarget}");
             }
             
             // Calculate strafe direction
