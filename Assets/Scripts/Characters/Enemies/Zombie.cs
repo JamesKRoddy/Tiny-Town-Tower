@@ -121,6 +121,12 @@ namespace Enemies
                 }
                 else
                 {
+                    // Update current attack during execution (allows for target tracking if enabled)
+                    if (currentAttack != null)
+                    {
+                        currentAttack.UpdateDuringAttack();
+                    }
+                    
                     // For beam attacks, continue rotating towards target during attack
                     if (currentAttack is BeamAttack beamAttack)
                     {

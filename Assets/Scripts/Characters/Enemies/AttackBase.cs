@@ -28,6 +28,8 @@ namespace Enemies
         public int attackType = 0;
         [Tooltip("Optional transform to use as the attack origin. If not set, will use the enemy's transform.")]
         public Transform attackOrigin;
+        [Tooltip("Allow NavMeshAgent to drive rotation during attack (useful for tracking moving targets)")]
+        public bool allowRotationDuringAttack = false;
         
         [Header("Elemental Damage")]
         [Tooltip("The elemental type of this attack. NONE means physical damage only.")]
@@ -133,11 +135,42 @@ namespace Enemies
             // Mark enemy as attacking
             enemy.isAttacking = true;
             
+            // Note: Rotation during attack is now handled by UpdateDuringAttack() using Quaternion.Lerp
+            // This approach doesn't conflict with NavMeshAgent rotation settings
+            
             // Enable attack game objects
             EnableAttackGameObjects();
             
             // Play start effect
             PlayStartEffect();
+        }
+
+        /// <summary>
+        /// Called during Update while attacking - allows continuous target tracking
+        /// </summary>
+        public virtual void UpdateDuringAttack()
+        {
+            // If rotation is allowed during attack, manually rotate towards target using Quaternion.Lerp
+            // This works regardless of whether the NavMeshAgent is moving or stopped
+            if (allowRotationDuringAttack && enemy != null && target != null)
+            {
+                // Calculate direction to target
+                Vector3 directionToTarget = (target.position - enemy.transform.position).normalized;
+                directionToTarget.y = 0; // Keep rotation on horizontal plane
+                
+                if (directionToTarget != Vector3.zero)
+                {
+                    // Calculate target rotation
+                    Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
+                    
+                    // Smoothly rotate towards target using enemy's rotation speed
+                    enemy.transform.rotation = Quaternion.Lerp(
+                        enemy.transform.rotation, 
+                        targetRotation, 
+                        enemy.rotationSpeed * Time.deltaTime
+                    );
+                }
+            }
         }
 
         /// <summary>
@@ -167,6 +200,9 @@ namespace Enemies
             {
                 animator.SetInteger("AttackType", 0);
             }
+            
+            // Note: NavMeshAgent rotation is handled by EnemyBase.EndAttack()
+            // Manual rotation during attack doesn't interfere with it
             
             // Disable attack game objects
             DisableAttackGameObjects();

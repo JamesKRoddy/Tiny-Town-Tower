@@ -3,8 +3,6 @@
 
 ****** Tomorrow work:
 
-Make enemies move around while not attacking if they are far away (still isn't working)
-
 Setup running melee attack
 
 ****** Next work:

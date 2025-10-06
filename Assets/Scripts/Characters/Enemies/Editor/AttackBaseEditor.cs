@@ -27,6 +27,7 @@ namespace Enemies.Editor
         private SerializedProperty endEffectDelay;
         private SerializedProperty elementalDamageBonus;
         private SerializedProperty attackTrigger;
+        private SerializedProperty allowRotationDuringAttack;
 
         private bool showRangeSettings = true;
         private bool showDamageSettings = true;
@@ -54,6 +55,7 @@ namespace Enemies.Editor
             endEffectDelay = serializedObject.FindProperty("endEffectDelay");
             elementalDamageBonus = serializedObject.FindProperty("elementalDamageBonus");
             attackTrigger = serializedObject.FindProperty("attackTrigger");
+            allowRotationDuringAttack = serializedObject.FindProperty("allowRotationDuringAttack");
         }
 
         public override void OnInspectorGUI()
@@ -90,6 +92,10 @@ namespace Enemies.Editor
             // Animation Settings
             EditorGUILayout.LabelField("Animation Settings", EditorStyles.boldLabel);
             if (attackTrigger != null) EditorGUILayout.PropertyField(attackTrigger);
+            if (allowRotationDuringAttack != null) 
+            {
+                EditorGUILayout.PropertyField(allowRotationDuringAttack, new GUIContent("Allow Rotation During Attack", "Enable NavMeshAgent rotation during attack (useful for tracking moving targets)"));
+            }
             EditorGUILayout.Space(5);
 
             // Attack Visualization Settings - All visualization controls in one place
@@ -146,6 +152,7 @@ namespace Enemies.Editor
                 "attackElement", 
                 "elementalDamageBonus",
                 "attackTrigger",
+                "allowRotationDuringAttack",
                 "cooldown", 
                 "minRange", 
                 "maxRange", 

@@ -2900,6 +2900,7 @@ GameObject:
   - component: {fileID: 5237491215696526443}
   - component: {fileID: 7708733117594400575}
   - component: {fileID: 2392341437657199187}
+  - component: {fileID: 720831851527509635}
   m_Layer: 8
   m_Name: Melee_Zombie
   m_TagString: Untagged
@@ -3033,6 +3034,17 @@ MonoBehaviour:
   obstacleBoundsOffset: 1
   rootMotionMultiplier: 1
   showCollisionDebug: 0
+  enableCooldownMovement: 1
+  cooldownMovementMinDistance: 2
+  cooldownMovementMaxDistance: 4
+  cooldownMovementMinDuration: 1
+  cooldownMovementMaxDuration: 3
+  enableHeadTracking: 1
+  headTrackingWeight: 0.8
+  headTrackingRotationWeight: 0.5
+  headTrackingLerpSpeed: 3
+  maxHeadTrackingAngle: 60
+  headTrackingDistance: 15
   health: 100
   maxHealth: 100
   poise: 50
@@ -3051,7 +3063,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6477775522615659138}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8ff8a937cd8a28d4895a0996e1f6f54c, type: 3}
   m_Name: 
@@ -3063,6 +3075,43 @@ MonoBehaviour:
   damage: 10
   poiseDamage: 15
   attackType: 0
+  attackOrigin: {fileID: 0}
+  attackElement: 0
+  elementalDamageBonus: 0
+  startEffect: {fileID: 0}
+  startEffectDelay: 0
+  attackEffect: {fileID: 0}
+  attackEffectDelay: 0
+  hitEffect: {fileID: 0}
+  hitEffectDelay: 0
+  endEffect: {fileID: 0}
+  endEffectDelay: 0
+  attackTrigger: Attack
+  attackGameObjects: []
+  attackRadius: 1.5
+  targetLayer:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  buildingAttackRange: 5
+--- !u!114 &720831851527509635
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6477775522615659138}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ff8a937cd8a28d4895a0996e1f6f54c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  minRange: 3
+  maxRange: 10
+  attackAngleThreshold: 30
+  cooldown: 2
+  damage: 5
+  poiseDamage: 7
+  attackType: 5
   attackOrigin: {fileID: 0}
   attackElement: 0
   elementalDamageBonus: 0

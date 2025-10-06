@@ -53,7 +53,7 @@ namespace Enemies
         [SerializeField] protected CharacterType characterType = CharacterType.ZOMBIE_MELEE;
 
         [Header("Movement Settings")]
-        [SerializeField] protected bool useRootMotion = false;
+        [SerializeField] public bool useRootMotion = false; // Made public for attack components
         [SerializeField] protected float stoppingDistance = 1.0f;
         [SerializeField] public float rotationSpeed = 10f; // Only used for non-root motion, made public for attack components
         [SerializeField] protected float movementSpeed = 3.5f;
