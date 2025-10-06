@@ -253,15 +253,20 @@ namespace Enemies
                 return;
             }
 
-            // Check if current target is still valid
-            if (!IsTargetStillValid(navMeshTarget))
+            // Don't validate or switch targets while actively attacking
+            // This prevents glitchy rotation when player moves out of range during attack
+            if (!isAttacking)
             {
-                FindNewTarget();
-                return;
-            }
+                // Check if current target is still valid
+                if (!IsTargetStillValid(navMeshTarget))
+                {
+                    FindNewTarget();
+                    return;
+                }
 
-            // Periodically check if current target is still reachable
-            CheckTargetReachability();
+                // Periodically check if current target is still reachable
+                CheckTargetReachability();
+            }
 
             // Update poise recovery
             UpdatePoiseRecovery();
@@ -885,7 +890,10 @@ namespace Enemies
                 {
                     // Enable head tracking
                     isHeadTrackingActive = true;
-                    currentLookAtTarget = targetPosition;
+                    
+                    // Smoothly lerp the look-at target position to prevent snappy head movements
+                    currentLookAtTarget = Vector3.Lerp(currentLookAtTarget, targetPosition, headTrackingLerpSpeed * Time.deltaTime);
+                    
                     currentHeadTrackingWeight = Mathf.Lerp(currentHeadTrackingWeight, headTrackingWeight, headTrackingLerpSpeed * Time.deltaTime);
                 }
                 else

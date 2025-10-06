@@ -154,6 +154,12 @@ namespace Enemies
             // This works regardless of whether the NavMeshAgent is moving or stopped
             if (allowRotationDuringAttack && enemy != null && target != null)
             {
+                // Safety check: Skip if target was destroyed during attack
+                if (target.gameObject == null || !target.gameObject.activeInHierarchy)
+                {
+                    return;
+                }
+                
                 // Calculate direction to target
                 Vector3 directionToTarget = (target.position - enemy.transform.position).normalized;
                 directionToTarget.y = 0; // Keep rotation on horizontal plane
