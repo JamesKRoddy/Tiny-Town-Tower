@@ -119,6 +119,17 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private float climbLandingDelay = 0.1f; // Brief delay after landing before returning control
     private bool isClimbLanding = false; // Whether we're in the landing delay phase
 
+    [Header("Collision Recovery")]
+    public float collisionCheckRadius = 0.6f; // Radius for checking if stuck in colliders
+    public int maxCollisionRecoveryAttempts = 5; // Maximum attempts to unstuck character
+    public float collisionRecoveryDistance = 0.1f; // Distance to move per recovery step
+    public float emergencyTeleportHeight = 2.0f; // Height to teleport up in emergency situations
+    private float lastCollisionCheckTime = 0f; // Last time we checked for collision issues
+    private float collisionCheckInterval = 0.5f; // How often to check for stuck collisions (in seconds)
+    private float lastCollisionRecoveryTime = 0f; // Last time we performed recovery
+    private float collisionRecoveryCooldown = 1.0f; // Cooldown after successful recovery to prevent spam
+    private int consecutiveRecoveryAttempts = 0; // Track consecutive recovery attempts
+
     [Header("Push State")]
     private PushableObject currentPushTarget = null; // The object currently being pushed
     private float pushHoldTime = 0f; // How long the player has been trying to push
@@ -222,6 +233,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             }
         }
         
+        // Periodic check for collision penetration (respects interval to avoid performance impact)
+        CheckAndResolveCollisionPenetration(forceCheck: false);
+        
         HandleDash();
         ApplyGravity(); // Apply gravity before movement
         UpdatePoiseRecovery(); // Update poise recovery
@@ -241,6 +255,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Initialize gravity system for player control
         ResetGravityVelocity();
         isGrounded = CheckGrounded(); // Check initial ground state
+        
+        // Check if character is stuck in any colliders (force check, important for spawn points)
+        CheckAndResolveCollisionPenetration(forceCheck: true);
+        
         Debug.Log($"[Gravity] {gameObject.name}: OnPossess complete - isGrounded: {isGrounded}, agent.enabled: {(agent != null ? agent.enabled : false)}");
     }
 
@@ -588,6 +606,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Reset gravity velocity when finishing vault to prevent immediate falling
         ResetGravityVelocity();
         
+        // Check if we ended up inside a collider after vaulting (force check)
+        CheckAndResolveCollisionPenetration(forceCheck: true);
+        
         // Call obstacle component callback if present
         currentObstacleComponent?.OnVaultComplete(this);
         currentObstacleComponent = null; // Clear reference
@@ -650,6 +671,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         
         // Reset gravity velocity when finishing climb to prevent immediate falling
         ResetGravityVelocity();
+        
+        // Check if we ended up inside a collider after climbing (force check)
+        CheckAndResolveCollisionPenetration(forceCheck: true);
         
         // Force ground check to update immediately after climbing
         isGrounded = CheckGrounded();
@@ -1767,6 +1791,424 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     #endregion
 
+    #region Collision Recovery
+
+    /// <summary>
+    /// Checks if the character is stuck inside any colliders and attempts to resolve the penetration
+    /// </summary>
+    /// <param name="forceCheck">If true, bypasses the interval check and performs immediate check</param>
+    /// <returns>True if character was stuck and has been moved, false otherwise</returns>
+    public bool CheckAndResolveCollisionPenetration(bool forceCheck = false)
+    {
+        // Skip check if collider is disabled (during vault/climb)
+        if (humanCollider == null || !humanCollider.enabled)
+        {
+            return false;
+        }
+
+        // Check if we're on cooldown from a recent recovery (unless forced)
+        if (!forceCheck && Time.time - lastCollisionRecoveryTime < collisionRecoveryCooldown)
+        {
+            return false;
+        }
+
+        // Check interval to avoid expensive checks every frame (unless forced)
+        if (!forceCheck && Time.time - lastCollisionCheckTime < collisionCheckInterval)
+        {
+            return false;
+        }
+
+        lastCollisionCheckTime = Time.time;
+
+        // Get the character's capsule collider bounds
+        CapsuleCollider capsule = humanCollider as CapsuleCollider;
+        if (capsule == null)
+        {
+            Debug.LogWarning($"[CollisionRecovery] {gameObject.name}: humanCollider is not a CapsuleCollider, using fallback sphere check");
+            return CheckAndResolveSphereCollision();
+        }
+
+        // Calculate capsule parameters for overlap check
+        Vector3 center = transform.TransformPoint(capsule.center);
+        float radius = capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z);
+        float height = capsule.height * transform.lossyScale.y;
+        
+        Vector3 point1 = center + Vector3.up * (height * 0.5f - radius);
+        Vector3 point2 = center - Vector3.up * (height * 0.5f - radius);
+
+        // Check for overlapping colliders
+        LayerMask checkLayers = GetCombinedObstacleLayers();
+        Collider[] overlappingColliders = Physics.OverlapCapsule(point1, point2, radius, checkLayers, QueryTriggerInteraction.Ignore);
+
+        // Filter out self
+        List<Collider> validOverlaps = new List<Collider>();
+        foreach (Collider col in overlappingColliders)
+        {
+            if (col != humanCollider && !col.isTrigger)
+            {
+                validOverlaps.Add(col);
+            }
+        }
+
+        if (validOverlaps.Count == 0)
+        {
+            // Not stuck anymore, reset consecutive attempts
+            consecutiveRecoveryAttempts = 0;
+            return false;
+        }
+
+        // Increment consecutive recovery attempts
+        consecutiveRecoveryAttempts++;
+        
+        Debug.LogWarning($"[CollisionRecovery] {gameObject.name}: Detected {validOverlaps.Count} overlapping colliders (attempt #{consecutiveRecoveryAttempts})");
+
+        // If we've had too many consecutive recovery attempts, use emergency teleport
+        if (consecutiveRecoveryAttempts >= 3)
+        {
+            Debug.LogError($"[CollisionRecovery] {gameObject.name}: Too many consecutive recovery attempts, using emergency teleport!");
+            return EmergencyTeleportToSurface();
+        }
+
+        // Try to resolve penetration with each overlapping collider
+        bool wasResolved = false;
+        int attempts = 0;
+
+        foreach (Collider overlappingCollider in validOverlaps)
+        {
+            if (attempts >= maxCollisionRecoveryAttempts)
+            {
+                break;
+            }
+
+            // Use Physics.ComputePenetration to find the separation direction
+            if (Physics.ComputePenetration(
+                capsule, center, transform.rotation,
+                overlappingCollider, overlappingCollider.transform.position, overlappingCollider.transform.rotation,
+                out Vector3 direction, out float distance))
+            {
+                Debug.Log($"[CollisionRecovery] {gameObject.name}: Penetrating {overlappingCollider.name} by {distance:F3}m, direction: {direction}");
+
+                // Calculate escape positions
+                Vector3 separationMove = direction * (distance + collisionRecoveryDistance);
+                Vector3 upwardMove = Vector3.up * (distance + collisionRecoveryDistance);
+                
+                // Determine which escape route is better
+                Vector3 escapeMove = ChooseBestEscapeDirection(separationMove, upwardMove, overlappingCollider);
+
+                // Apply the escape movement
+                transform.position += escapeMove;
+                
+                Debug.Log($"[CollisionRecovery] {gameObject.name}: Moved by {escapeMove} to escape collision");
+                
+                // Reset gravity velocity to prevent immediate falling
+                ResetGravityVelocity();
+                
+                wasResolved = true;
+                attempts++;
+            }
+        }
+
+        if (wasResolved)
+        {
+            // Force ground check after resolution
+            isGrounded = CheckGrounded();
+            lastCollisionRecoveryTime = Time.time; // Set recovery cooldown
+            Debug.Log($"[CollisionRecovery] {gameObject.name}: Collision resolved with ComputePenetration, isGrounded: {isGrounded}");
+        }
+        else
+        {
+            // ComputePenetration failed, use smart teleport instead of blind move
+            Debug.LogWarning($"[CollisionRecovery] {gameObject.name}: ComputePenetration failed, using smart surface teleport");
+            wasResolved = EmergencyTeleportToSurface();
+        }
+
+        return wasResolved;
+    }
+
+    /// <summary>
+    /// Finds the shortest escape route from current stuck position, checking all directions
+    /// </summary>
+    /// <returns>Best escape position with ground underneath, or Vector3.zero if none found</returns>
+    private (Vector3 position, float totalDistance, string direction) FindShortestEscapeRoute()
+    {
+        CapsuleCollider capsule = humanCollider as CapsuleCollider;
+        float radius = capsule != null ? capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z) : collisionCheckRadius;
+        float checkHeight = capsule != null ? capsule.height * transform.lossyScale.y : 2.0f;
+        
+        LayerMask checkLayers = GetCombinedObstacleLayers();
+        LayerMask allGroundLayers = groundLayers;
+        foreach (LayerMask layer in obstacleLayers)
+        {
+            allGroundLayers |= layer;
+        }
+        
+        Vector3 startPos = transform.position;
+        
+        // Define escape directions to check (8 horizontal + up + combinations)
+        List<(Vector3 direction, string name)> escapeDirections = new List<(Vector3, string)>
+        {
+            (Vector3.up, "Up"),
+            (Vector3.right, "Right"),
+            (Vector3.left, "Left"),
+            (Vector3.forward, "Forward"),
+            (Vector3.back, "Back"),
+            ((Vector3.right + Vector3.forward).normalized, "Right-Forward"),
+            ((Vector3.right + Vector3.back).normalized, "Right-Back"),
+            ((Vector3.left + Vector3.forward).normalized, "Left-Forward"),
+            ((Vector3.left + Vector3.back).normalized, "Left-Back"),
+        };
+        
+        Vector3 bestEscapePosition = Vector3.zero;
+        float bestTotalDistance = float.MaxValue;
+        string bestDirection = "None";
+        
+        foreach (var (direction, name) in escapeDirections)
+        {
+            // Find minimum distance needed to escape in this direction
+            float escapeDistance = FindMinimumEscapeDistance(startPos, direction, radius, checkHeight, checkLayers);
+            
+            if (escapeDistance < 0 || escapeDistance > emergencyTeleportHeight * 2f)
+            {
+                continue; // Too far or couldn't find escape
+            }
+            
+            Vector3 escapePosition = startPos + direction * escapeDistance;
+            
+            // Check if there's ground underneath this escape position
+            Vector3 rayStart = escapePosition + Vector3.up * 1f;
+            float maxGroundSearchDistance = emergencyTeleportHeight * 2f;
+            
+            if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit groundHit, maxGroundSearchDistance, allGroundLayers, QueryTriggerInteraction.Ignore))
+            {
+                // Found ground! Calculate total distance (escape + vertical drop)
+                Vector3 finalPosition = groundHit.point + Vector3.up * 0.2f;
+                float verticalDrop = Mathf.Max(0, escapePosition.y - finalPosition.y);
+                float totalDistance = escapeDistance + verticalDrop * 0.5f; // Weight vertical less than horizontal
+                
+                Debug.Log($"[CollisionRecovery] {gameObject.name}: {name} escape - distance: {escapeDistance:F2}, drop: {verticalDrop:F2}, total: {totalDistance:F2}");
+                
+                if (totalDistance < bestTotalDistance)
+                {
+                    bestTotalDistance = totalDistance;
+                    bestEscapePosition = finalPosition;
+                    bestDirection = name;
+                }
+            }
+        }
+        
+        return (bestEscapePosition, bestTotalDistance, bestDirection);
+    }
+    
+    /// <summary>
+    /// Finds the minimum distance needed to move in a direction to escape all colliders
+    /// </summary>
+    private float FindMinimumEscapeDistance(Vector3 startPos, Vector3 direction, float radius, float height, LayerMask checkLayers)
+    {
+        float maxSearchDistance = emergencyTeleportHeight * 2f;
+        float stepSize = 0.2f; // Check every 0.2 units
+        
+        for (float distance = stepSize; distance <= maxSearchDistance; distance += stepSize)
+        {
+            Vector3 testPosition = startPos + direction * distance;
+            Vector3 point1 = testPosition + Vector3.up * (height * 0.5f - radius);
+            Vector3 point2 = testPosition - Vector3.up * (height * 0.5f - radius);
+            
+            // Check if this position is clear
+            if (!Physics.CheckCapsule(point1, point2, radius * 0.9f, checkLayers, QueryTriggerInteraction.Ignore))
+            {
+                return distance;
+            }
+        }
+        
+        return -1f; // Couldn't find escape within max distance
+    }
+
+    /// <summary>
+    /// Emergency teleport to find the nearest valid surface, checking all directions
+    /// </summary>
+    /// <returns>True if teleport was successful</returns>
+    private bool EmergencyTeleportToSurface()
+    {
+        Debug.Log($"[CollisionRecovery] {gameObject.name}: Finding shortest escape route...");
+        
+        // Try to find the shortest escape route in any direction
+        var (escapePosition, totalDistance, direction) = FindShortestEscapeRoute();
+        
+        if (escapePosition != Vector3.zero)
+        {
+            // Found a good escape route!
+            Debug.Log($"[CollisionRecovery] {gameObject.name}: Best escape: {direction} direction, total distance: {totalDistance:F2}m");
+            Debug.Log($"[CollisionRecovery] {gameObject.name}: Emergency teleport from {transform.position} to {escapePosition}");
+            
+            transform.position = escapePosition;
+            ResetGravityVelocity();
+            isGrounded = CheckGrounded();
+            lastCollisionRecoveryTime = Time.time;
+            consecutiveRecoveryAttempts = 0; // Reset counter on successful teleport
+            
+            return true;
+        }
+        else
+        {
+            // Fallback: Try simple upward teleport as last resort
+            Debug.LogWarning($"[CollisionRecovery] {gameObject.name}: No escape route found, using fallback upward teleport");
+            
+            LayerMask checkLayers = GetCombinedObstacleLayers();
+            Vector3 startPos = transform.position;
+            Vector3 clearPosition = startPos + Vector3.up * emergencyTeleportHeight;
+            
+            CapsuleCollider capsule = humanCollider as CapsuleCollider;
+            float radius = capsule != null ? capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z) : collisionCheckRadius;
+            float checkHeight = capsule != null ? capsule.height * transform.lossyScale.y : 2.0f;
+            
+            Vector3 point1 = clearPosition + Vector3.up * (checkHeight * 0.5f - radius);
+            Vector3 point2 = clearPosition - Vector3.up * (checkHeight * 0.5f - radius);
+            
+            bool isClearAbove = !Physics.CheckCapsule(point1, point2, radius * 0.9f, checkLayers, QueryTriggerInteraction.Ignore);
+            
+            if (!isClearAbove)
+            {
+                // Try even higher
+                clearPosition = startPos + Vector3.up * emergencyTeleportHeight * 2f;
+            }
+            
+            // From clear position, raycast down to find ground
+            Vector3 rayStart = clearPosition + Vector3.up * 1f;
+            float maxRayDistance = emergencyTeleportHeight * 3f;
+            
+            LayerMask allGroundLayers = groundLayers;
+            foreach (LayerMask layer in obstacleLayers)
+            {
+                allGroundLayers |= layer;
+            }
+            
+            if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit groundHit, maxRayDistance, allGroundLayers, QueryTriggerInteraction.Ignore))
+            {
+                Vector3 targetPosition = groundHit.point + Vector3.up * 0.2f;
+                Debug.Log($"[CollisionRecovery] {gameObject.name}: Fallback teleport to {targetPosition}");
+                
+                transform.position = targetPosition;
+                ResetGravityVelocity();
+                isGrounded = CheckGrounded();
+                lastCollisionRecoveryTime = Time.time;
+                consecutiveRecoveryAttempts = 0;
+                
+                return true;
+            }
+            else
+            {
+                // Last resort: just move to clear position
+                Debug.LogWarning($"[CollisionRecovery] {gameObject.name}: No ground found, teleporting to clear air: {clearPosition}");
+                
+                transform.position = clearPosition;
+                ResetGravityVelocity();
+                isGrounded = false;
+                lastCollisionRecoveryTime = Time.time;
+                
+                return true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Fallback collision check using sphere overlap (for non-capsule colliders)
+    /// </summary>
+    private bool CheckAndResolveSphereCollision()
+    {
+        Vector3 checkPosition = transform.position + Vector3.up * 1f; // Check at waist height
+        LayerMask checkLayers = GetCombinedObstacleLayers();
+        
+        Collider[] overlappingColliders = Physics.OverlapSphere(checkPosition, collisionCheckRadius, checkLayers, QueryTriggerInteraction.Ignore);
+        
+        // Filter out self
+        List<Collider> validOverlaps = new List<Collider>();
+        foreach (Collider col in overlappingColliders)
+        {
+            if (col != humanCollider && !col.isTrigger)
+            {
+                validOverlaps.Add(col);
+            }
+        }
+
+        if (validOverlaps.Count == 0)
+        {
+            return false; // Not stuck
+        }
+
+        Debug.LogWarning($"[CollisionRecovery] {gameObject.name}: Sphere check detected {validOverlaps.Count} overlaps, using emergency teleport");
+        
+        // Use emergency teleport instead of blind move
+        return EmergencyTeleportToSurface();
+    }
+
+    /// <summary>
+    /// Choose the best escape direction based on proximity and obstacle type
+    /// </summary>
+    private Vector3 ChooseBestEscapeDirection(Vector3 separationMove, Vector3 upwardMove, Collider obstacle)
+    {
+        // If separation is mostly upward already (dot product > 0.7), use it
+        float upwardDot = Vector3.Dot(separationMove.normalized, Vector3.up);
+        if (upwardDot > 0.7f)
+        {
+            Debug.Log($"[CollisionRecovery] {gameObject.name}: Using separation direction (mostly upward: {upwardDot:F2})");
+            return separationMove;
+        }
+
+        // Check if moving upward would clear us from the obstacle
+        Vector3 upwardTestPosition = transform.position + upwardMove;
+        bool upwardIsClear = !Physics.CheckCapsule(
+            upwardTestPosition + Vector3.up * 0.3f, 
+            upwardTestPosition + Vector3.up * humanCollider.bounds.size.y,
+            capsuleCastRadius * 0.8f,
+            GetCombinedObstacleLayers(),
+            QueryTriggerInteraction.Ignore
+        );
+
+        // Check if moving in separation direction would clear us
+        Vector3 separationTestPosition = transform.position + separationMove;
+        bool separationIsClear = !Physics.CheckCapsule(
+            separationTestPosition + Vector3.up * 0.3f,
+            separationTestPosition + Vector3.up * humanCollider.bounds.size.y,
+            capsuleCastRadius * 0.8f,
+            GetCombinedObstacleLayers(),
+            QueryTriggerInteraction.Ignore
+        );
+
+        // Prefer the direction that's clear
+        if (upwardIsClear && !separationIsClear)
+        {
+            Debug.Log($"[CollisionRecovery] {gameObject.name}: Using upward move (separation blocked)");
+            return upwardMove;
+        }
+        else if (!upwardIsClear && separationIsClear)
+        {
+            Debug.Log($"[CollisionRecovery] {gameObject.name}: Using separation move (upward blocked)");
+            return separationMove;
+        }
+        else if (upwardIsClear && separationIsClear)
+        {
+            // Both are clear, choose the shorter distance
+            if (upwardMove.magnitude < separationMove.magnitude)
+            {
+                Debug.Log($"[CollisionRecovery] {gameObject.name}: Using upward move (shorter distance)");
+                return upwardMove;
+            }
+            else
+            {
+                Debug.Log($"[CollisionRecovery] {gameObject.name}: Using separation move (shorter distance)");
+                return separationMove;
+            }
+        }
+        else
+        {
+            // Neither is clear, use separation as it's computed by physics engine
+            Debug.Log($"[CollisionRecovery] {gameObject.name}: Both blocked, using separation move as fallback");
+            return separationMove;
+        }
+    }
+
+    #endregion
+
     #region Animation
 
     private void UpdateActualMovementSpeed()
@@ -2053,6 +2495,121 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             
             Handles.Label(pushTextPos, pushText, pushStyle);
 #endif
+        }
+        
+        // Collision recovery visualization
+        if (Application.isPlaying && humanCollider != null && humanCollider.enabled)
+        {
+            // Visualize the collision check volume (capsule for overlap detection)
+            CapsuleCollider capsule = humanCollider as CapsuleCollider;
+            if (capsule != null)
+            {
+                Vector3 center = transform.TransformPoint(capsule.center);
+                float radius = capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z);
+                float height = capsule.height * transform.lossyScale.y;
+                
+                Vector3 point1 = center + Vector3.up * (height * 0.5f - radius);
+                Vector3 point2 = center - Vector3.up * (height * 0.5f - radius);
+                
+                // Check if currently overlapping with any obstacles
+                LayerMask checkLayers = GetCombinedObstacleLayers();
+                Collider[] overlaps = Physics.OverlapCapsule(point1, point2, radius, checkLayers, QueryTriggerInteraction.Ignore);
+                
+                bool hasOverlap = false;
+                foreach (Collider col in overlaps)
+                {
+                    if (col != humanCollider && !col.isTrigger)
+                    {
+                        hasOverlap = true;
+                        break;
+                    }
+                }
+                
+                // Color code based on collision state and consecutive attempts
+                if (hasOverlap)
+                {
+                    if (consecutiveRecoveryAttempts >= 3)
+                    {
+                        Gizmos.color = new Color(1f, 0f, 1f, 0.5f); // Magenta for emergency state
+                    }
+                    else if (consecutiveRecoveryAttempts > 0)
+                    {
+                        Gizmos.color = new Color(1f, 0.5f, 0f, 0.4f); // Orange for recovery attempts
+                    }
+                    else
+                    {
+                        Gizmos.color = new Color(1f, 0f, 0f, 0.3f); // Red for collision
+                    }
+                }
+                else
+                {
+                    Gizmos.color = new Color(0f, 1f, 0f, 0.1f); // Green for clear
+                }
+                
+                // Draw collision check capsule
+                Gizmos.DrawWireSphere(point1, radius);
+                Gizmos.DrawWireSphere(point2, radius);
+                Gizmos.DrawLine(point1 + Vector3.forward * radius, point2 + Vector3.forward * radius);
+                Gizmos.DrawLine(point1 - Vector3.forward * radius, point2 - Vector3.forward * radius);
+                Gizmos.DrawLine(point1 + Vector3.right * radius, point2 + Vector3.right * radius);
+                Gizmos.DrawLine(point1 - Vector3.right * radius, point2 - Vector3.right * radius);
+                
+#if UNITY_EDITOR
+                if (hasOverlap)
+                {
+                    // Display warning text if stuck
+                    Vector3 warningPos = transform.position + Vector3.up * 3f;
+                    var warningStyle = new GUIStyle();
+                    warningStyle.fontSize = 14;
+                    warningStyle.fontStyle = FontStyle.Bold;
+                    
+                    string warningText;
+                    if (consecutiveRecoveryAttempts >= 3)
+                    {
+                        warningStyle.normal.textColor = Color.magenta;
+                        warningText = $"EMERGENCY TELEPORT! (Attempt {consecutiveRecoveryAttempts})";
+                    }
+                    else if (consecutiveRecoveryAttempts > 0)
+                    {
+                        warningStyle.normal.textColor = new Color(1f, 0.5f, 0f);
+                        warningText = $"COLLISION - Recovering... (Attempt {consecutiveRecoveryAttempts})";
+                    }
+                    else
+                    {
+                        warningStyle.normal.textColor = Color.red;
+                        warningText = "COLLISION DETECTED!";
+                    }
+                    
+                    Handles.Label(warningPos, warningText, warningStyle);
+                    
+                    // Show escape route analysis if in emergency state
+                    if (consecutiveRecoveryAttempts >= 2)
+                    {
+                        // Visualize all escape directions being checked
+                        List<(Vector3 direction, string name)> escapeDirections = new List<(Vector3, string)>
+                        {
+                            (Vector3.up, "Up"),
+                            (Vector3.right, "Right"),
+                            (Vector3.left, "Left"),
+                            (Vector3.forward, "Forward"),
+                            (Vector3.back, "Back"),
+                            ((Vector3.right + Vector3.forward).normalized, "Right-Forward"),
+                            ((Vector3.right + Vector3.back).normalized, "Right-Back"),
+                            ((Vector3.left + Vector3.forward).normalized, "Left-Forward"),
+                            ((Vector3.left + Vector3.back).normalized, "Left-Back"),
+                        };
+                        
+                        foreach (var (direction, name) in escapeDirections)
+                        {
+                            Vector3 testPos = transform.position + direction * 1.0f;
+                            Gizmos.color = new Color(0f, 1f, 1f, 0.3f); // Cyan semi-transparent
+                            Gizmos.DrawLine(transform.position, testPos);
+                            Gizmos.DrawWireSphere(testPos, 0.1f);
+                        }
+                    }
+                }
+#endif
+            }
         }
     }
 
