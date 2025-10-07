@@ -31,6 +31,10 @@ public class GeneticMutationObjEditor : Editor
 
         serializedObject.ApplyModifiedProperties();
 
+        // Validate and display mutation prefab information
+        EditorGUILayout.Space(10);
+        DrawMutationPrefabInfo(mutation);
+
         EditorGUILayout.Space(10);
         EditorGUILayout.LabelField("Shape Editor", EditorStyles.boldLabel);
 
@@ -149,5 +153,71 @@ public class GeneticMutationObjEditor : Editor
 
         mutation.shape = newShape;
         GUI.changed = true;
+    }
+
+    private void DrawMutationPrefabInfo(GeneticMutationObj mutation)
+    {
+        EditorGUILayout.LabelField("Mutation Prefab Validation", EditorStyles.boldLabel);
+        
+        if (mutation.prefab == null)
+        {
+            EditorGUILayout.HelpBox("No prefab assigned! Please assign a GameObject with a mutation component (CombatMutation, ElementalMutation, SurvivalMutation, or ConditionalMutation).", MessageType.Warning);
+            return;
+        }
+
+        // Check if the prefab has a BaseMutationEffect component
+        BaseMutationEffect mutationEffect = mutation.prefab.GetComponent<BaseMutationEffect>();
+        
+        if (mutationEffect == null)
+        {
+            EditorGUILayout.HelpBox($"ERROR: Prefab '{mutation.prefab.name}' does not have a BaseMutationEffect component!\n\n" +
+                                   "Please add one of these components to the prefab:\n" +
+                                   "• CombatMutation - For damage, attack speed, poise, or elemental damage modifiers\n" +
+                                   "• ElementalMutation - For elemental damage, resistance, or conversion effects\n" +
+                                   "• SurvivalMutation - For health regen, max health, or damage reduction\n" +
+                                   "• ConditionalMutation - For conditional/triggered mutations", 
+                                   MessageType.Error);
+            
+            // Button to select the prefab for easy editing
+            if (GUILayout.Button($"Select Prefab '{mutation.prefab.name}' to Fix"))
+            {
+                Selection.activeObject = mutation.prefab;
+            }
+        }
+        else
+        {
+            // Valid prefab - show success and description
+            EditorGUILayout.HelpBox($"✓ Valid mutation prefab: {mutationEffect.GetType().Name}", MessageType.Info);
+            
+            // Try to get and display the mutation description
+            try
+            {
+                string description = mutationEffect.GetStatsDescription();
+                
+                EditorGUILayout.Space(5);
+                EditorGUILayout.LabelField("Mutation Effect:", EditorStyles.boldLabel);
+                
+                // Draw a styled box for the description
+                GUIStyle descriptionStyle = new GUIStyle(GUI.skin.box);
+                descriptionStyle.alignment = TextAnchor.MiddleLeft;
+                descriptionStyle.padding = new RectOffset(10, 10, 10, 10);
+                descriptionStyle.normal.textColor = Color.white;
+                descriptionStyle.fontSize = 12;
+                descriptionStyle.wordWrap = true;
+                
+                EditorGUILayout.LabelField(description, descriptionStyle);
+            }
+            catch (System.Exception e)
+            {
+                EditorGUILayout.HelpBox($"Could not get mutation description: {e.Message}", MessageType.Warning);
+            }
+            
+            // Button to select the prefab
+            EditorGUILayout.Space(5);
+            if (GUILayout.Button($"Edit Prefab '{mutation.prefab.name}'"))
+            {
+                Selection.activeObject = mutation.prefab;
+            }
+        }
     }
 } 
