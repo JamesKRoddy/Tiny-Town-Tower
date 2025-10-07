@@ -113,7 +113,9 @@ namespace Managers
             {
                 if (rogueLiteDoor.targetSpawnPoint != null)
                 {
-                    PlayerController.Instance._possessedNPC.GetTransform().position = rogueLiteDoor.targetSpawnPoint.position;
+                    // Use validated spawn position to avoid spawning into obstacles
+                    Vector3 validSpawnPosition = rogueLiteDoor.GetValidSpawnPosition();
+                    PlayerController.Instance._possessedNPC.GetTransform().position = validSpawnPosition;
                 }
                 else
                 {

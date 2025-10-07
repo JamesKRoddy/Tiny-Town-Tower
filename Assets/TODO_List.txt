@@ -1,11 +1,9 @@
 *****Current Work*****
 
+Size of the mutation grid UI is wrong
 
 ****** Tomorrow work:
 
-Move mutation scripts around because theyre in individual folders
-
-Custom inspectors for mutations to show the prefab in the scriptable obj and what the mutation affects
 
 ****** Next work:
 

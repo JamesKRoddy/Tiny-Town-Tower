@@ -284,7 +284,21 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         }
         else
         {
-            settlerNPC?.ChangeState(null);            
+            // Clean up work animations and tasks when possessed
+            if (settlerNPC != null)
+            {
+                // Stop any work animations on the work layer
+                settlerNPC.StopWorkAnimation();
+                
+                // Clear any assigned work tasks
+                if (settlerNPC.HasAssignedWork())
+                {
+                    settlerNPC.ClearAssignedWork();
+                }
+                
+                // Set state to null to disable AI behavior
+                settlerNPC.ChangeState(null);
+            }
         }
     }
 
