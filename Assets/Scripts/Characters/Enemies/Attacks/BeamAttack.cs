@@ -247,7 +247,10 @@ namespace Enemies.Attacks
                 {
                     // Enable head IK
                     isHeadIKActive = true;
-                    currentLookAtTarget = targetPosition;
+                    
+                    // Smoothly lerp the look-at target position to prevent snappy head movements
+                    currentLookAtTarget = Vector3.Lerp(currentLookAtTarget, targetPosition, headIKLerpSpeed * Time.deltaTime);
+                    
                     currentIKWeight = Mathf.Lerp(currentIKWeight, headIKWeight, headIKLerpSpeed * Time.deltaTime);
                 }
                 else

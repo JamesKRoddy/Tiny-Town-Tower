@@ -3,7 +3,9 @@
 
 ****** Tomorrow work:
 
-Setup running melee attack
+Move mutation scripts around because theyre in individual folders
+
+Custom inspectors for mutations to show the prefab in the scriptable obj and what the mutation affects
 
 ****** Next work:
 

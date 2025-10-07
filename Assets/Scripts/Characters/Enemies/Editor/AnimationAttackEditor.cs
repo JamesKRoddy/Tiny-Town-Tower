@@ -4,7 +4,7 @@ using Enemies.Attacks;
 
 namespace Enemies.Editor
 {
-    [CustomEditor(typeof(CloseRangeAttack))]
+    [CustomEditor(typeof(AnimationAttack))]
     [CanEditMultipleObjects]
     public class CloseRangeAttackEditor : AttackBaseEditor
     {

@@ -12,8 +12,24 @@ public class GeneticMutationObjEditor : Editor
     {
         GeneticMutationObj mutation = (GeneticMutationObj)target;
 
-        // Draw default inspector properties
-        DrawDefaultInspector();
+        serializedObject.Update();
+
+        // Draw all properties except shapeRows
+        SerializedProperty prop = serializedObject.GetIterator();
+        if (prop.NextVisible(true))
+        {
+            do
+            {
+                // Skip the script field and shapeRows field
+                if (prop.name == "m_Script" || prop.name == "shapeRows")
+                    continue;
+                
+                EditorGUILayout.PropertyField(prop, true);
+            }
+            while (prop.NextVisible(false));
+        }
+
+        serializedObject.ApplyModifiedProperties();
 
         EditorGUILayout.Space(10);
         EditorGUILayout.LabelField("Shape Editor", EditorStyles.boldLabel);

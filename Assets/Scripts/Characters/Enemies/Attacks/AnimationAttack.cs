@@ -3,10 +3,10 @@ using UnityEngine;
 namespace Enemies.Attacks
 {
     /// <summary>
-    /// Close-range attack that deals damage in a small radius around the attacker.
+    /// Used for all attacks that directly call their damage through animation events and collision detection.
     /// Good for melee combat, punches, claws, etc.
     /// </summary>
-    public class CloseRangeAttack : AttackBase
+    public class AnimationAttack : AttackBase
     {
         [Header("Close Range Settings")]
         [Tooltip("Radius of the attack damage area")]

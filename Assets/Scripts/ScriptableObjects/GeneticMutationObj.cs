@@ -21,7 +21,6 @@ public class GeneticMutationObj : ResourceScriptableObj
     }
 
     [SerializeField] private ShapeRow[] shapeRows = new ShapeRow[MAX_SHAPE_SIZE];
-    public Sprite mutationIcon;
 
     private void OnEnable()
     {
