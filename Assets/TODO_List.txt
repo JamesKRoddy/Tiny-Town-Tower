@@ -1,6 +1,8 @@
 *****Current Work*****
 
-Size of the mutation grid UI is wrong
+Stopping the rooms overlapping when spawning in building rooms
+
+Start experimenting with some extra rooms and buildings
 
 ****** Tomorrow work:
 
@@ -22,8 +24,10 @@ PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basic
 
 Spawning enemies to attack camp issues:
 If theres no npcs newly spawned in enemies dont attack buildings
-Buildings only take damage occationaly
+Buildings only take damage occasionally
 Npc get away from zombies too easily
+
+Size of the mutation grid UI is wrong
 
 ****** Errors:
 

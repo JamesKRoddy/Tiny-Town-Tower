@@ -128,6 +128,9 @@ public abstract class RogueLiteRoom : MonoBehaviour
             return new Bounds(testPosition, Vector3.one * 10f);
         }
         
+        // Calculate the offset from the room's current position to the test position
+        Vector3 positionOffset = testPosition - transform.position;
+        
         Bounds bounds = new Bounds();
         bool boundsInitialized = false;
         
@@ -135,22 +138,23 @@ public abstract class RogueLiteRoom : MonoBehaviour
         {
             if (collider == null || !collider.enabled) continue;
             
+            // Get the collider's bounds and offset them to the test position
+            Bounds colliderBounds = collider.bounds;
+            colliderBounds.center += positionOffset;
+            
             if (!boundsInitialized)
             {
-                bounds = collider.bounds;
+                bounds = colliderBounds;
                 boundsInitialized = true;
             }
             else
             {
-                bounds.Encapsulate(collider.bounds);
+                bounds.Encapsulate(colliderBounds);
             }
         }
         
         // Add padding to the bounds
         bounds.Expand(boundsPadding);
-        
-        // Adjust bounds to test position
-        bounds.center = testPosition;
         
         return bounds;
     }

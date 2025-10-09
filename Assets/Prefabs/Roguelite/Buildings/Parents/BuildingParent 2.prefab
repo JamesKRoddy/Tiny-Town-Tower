@@ -291,11 +291,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   centerPiece: {fileID: 6463753889405488631}
   roomSpawnPointsParent: {fileID: 3846975403741790461}
+  overlapTolerancePercent: 15
+  minRoomDistance: 5
+  showCollisionDebug: 0
+  maxSwapRetries: 5
+  showSwapDebug: 1
   showDirectionArrows: 1
   arrowLength: 5
   arrowHeadLength: 1.5
   arrowHeadAngle: 20
   arrowColor: {r: 0, g: 1, b: 1, a: 1}
+  roomType: 1
 --- !u!1 &7767438849479311874
 GameObject:
   m_ObjectHideFlags: 0

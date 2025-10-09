@@ -17,6 +17,16 @@ public class RogueLikeRoomDoor : RogueLiteDoor
     [Tooltip("Layers to check for obstacles")]
     [SerializeField] private LayerMask obstacleLayer = ~0; // All layers by default
 
+    [Header("Door Placement Validation")]
+    [Tooltip("Distance behind the door to check for floor (opposite side from player spawn)")]
+    [SerializeField] private float floorCheckDistance = 1f;
+    [Tooltip("Radius for floor detection raycast")]
+    [SerializeField] private float floorCheckRadius = 0.5f;
+    [Tooltip("Maximum downward distance to check for floor")]
+    [SerializeField] private float floorRaycastDistance = 2f;
+    [Tooltip("Layer mask for floor detection")]
+    [SerializeField] private LayerMask floorLayer = ~0; // All layers by default
+
     private RogueLiteRoom parentRoom;
 
     protected override void Start()
@@ -180,6 +190,45 @@ public class RogueLikeRoomDoor : RogueLiteDoor
     }
 
     /// <summary>
+    /// Validates if this door has a valid floor behind it (opposite side from player spawn).
+    /// This prevents doors on walls in the middle of rooms from being enabled.
+    /// </summary>
+    /// <returns>True if there's a valid floor behind the door, false otherwise</returns>
+    public bool HasValidFloorBehindDoor()
+    {
+        if (playerSpawn == null)
+        {
+            Debug.LogWarning($"Door {gameObject.name} has no player spawn point set!");
+            return false;
+        }
+
+        // Calculate the direction from player spawn to door (this is the "forward" direction)
+        Vector3 doorPosition = transform.position;
+        Vector3 spawnPosition = playerSpawn.position;
+        Vector3 doorToSpawn = (spawnPosition - doorPosition).normalized;
+
+        // Calculate position behind the door (opposite from player spawn)
+        Vector3 behindDoorPosition = doorPosition - (doorToSpawn * floorCheckDistance);
+        
+        // Perform a spherecast downward to check for floor
+        RaycastHit hit;
+        Vector3 rayStart = behindDoorPosition + Vector3.up * 0.5f; // Start slightly above to account for door height
+        
+        if (Physics.SphereCast(rayStart, floorCheckRadius, Vector3.down, out hit, floorRaycastDistance, floorLayer))
+        {
+            // Check if we hit a non-trigger collider (actual floor)
+            if (!hit.collider.isTrigger)
+            {
+                return true;
+            }
+        }
+
+        Debug.LogWarning($"Door {gameObject.name} at {doorPosition} has no valid floor behind it! " +
+                        $"Check position: {behindDoorPosition}, Ray start: {rayStart}");
+        return false;
+    }
+
+    /// <summary>
     /// Draws debug gizmos to visualize spawn point validation
     /// </summary>
     private void OnDrawGizmosSelected()
@@ -219,6 +268,29 @@ public class RogueLikeRoomDoor : RogueLiteDoor
                 Vector3 testPosition = spawnPos + offset;
                 Gizmos.DrawWireSphere(testPosition, 0.2f);
             }
+        }
+
+        // Draw floor validation check
+        if (playerSpawn != null)
+        {
+            Vector3 doorPosition = transform.position;
+            Vector3 spawnPosition = playerSpawn.position;
+            Vector3 doorToSpawn = (spawnPosition - doorPosition).normalized;
+            Vector3 behindDoorPosition = doorPosition - (doorToSpawn * floorCheckDistance);
+            Vector3 rayStart = behindDoorPosition + Vector3.up * 0.5f;
+
+            // Draw the check position
+            bool hasFloor = HasValidFloorBehindDoor();
+            Gizmos.color = hasFloor ? Color.green : Color.red;
+            Gizmos.DrawWireSphere(behindDoorPosition, floorCheckRadius);
+            
+            // Draw the raycast line
+            Gizmos.color = hasFloor ? new Color(0, 1, 0, 0.5f) : new Color(1, 0, 0, 0.5f);
+            Gizmos.DrawLine(rayStart, rayStart + Vector3.down * floorRaycastDistance);
+            
+            // Draw arrow pointing to check position
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(doorPosition, behindDoorPosition);
         }
     }
 
