@@ -964,8 +964,9 @@ public class RogueLiteRoomParent : MonoBehaviour
             placedRoomsBySpawnIndex.Remove(spawnIndex);
         }
 
-        // Place the new room
-        GameObject room = Instantiate(roomPrefab, targetTransform.position, targetTransform.rotation, targetTransform);
+        // Place the new room (parent to this RogueLiteRoomParent, not to the spawn point itself)
+        // This prevents nested transform hierarchies when using extender spawn points
+        GameObject room = Instantiate(roomPrefab, targetTransform.position, targetTransform.rotation, this.transform);
         spawnedRooms[targetTransform.position] = room;
 
         // Get room component and ensure bounds are calculated at the new position
