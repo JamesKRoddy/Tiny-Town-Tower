@@ -58,7 +58,7 @@ Transform:
   m_GameObject: {fileID: 1517359497736524126}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 20}
+  m_LocalPosition: {x: 0, y: 0, z: 10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -89,7 +89,7 @@ Transform:
   m_GameObject: {fileID: 2165689385844334075}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 1, z: -0, w: 0.0000029504295}
-  m_LocalPosition: {x: 0, y: 0, z: -20}
+  m_LocalPosition: {x: 0, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -120,7 +120,7 @@ Transform:
   m_GameObject: {fileID: 3080062464814182103}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.70710677, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -20, y: 0, z: 0}
+  m_LocalPosition: {x: -10, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -219,11 +219,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   centerPiece: {fileID: 6463753889405488631}
   roomSpawnPointsParent: {fileID: 3846975403741790461}
+  maxAcceptableOverlapVolume: 100
+  minRoomDistance: 5
+  showPlacedRoomBounds: 1
+  maxSwapRetries: 5
+  showSwapDebug: 1
   showDirectionArrows: 1
   arrowLength: 5
   arrowHeadLength: 1.5
   arrowHeadAngle: 20
   arrowColor: {r: 0, g: 1, b: 0.7696707, a: 1}
+  roomType: 1
 --- !u!1 &7767438849479311874
 GameObject:
   m_ObjectHideFlags: 0
@@ -249,7 +255,7 @@ Transform:
   m_GameObject: {fileID: 7767438849479311874}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.70710677, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 20, y: 0, z: 0}
+  m_LocalPosition: {x: 10, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
