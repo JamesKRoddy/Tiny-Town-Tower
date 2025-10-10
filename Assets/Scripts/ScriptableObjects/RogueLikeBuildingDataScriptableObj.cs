@@ -17,6 +17,12 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     public List<BuildingRooms> friendlyRooms = new List<BuildingRooms>();
     [SerializeField, Range(0f, 100f)] private float friendlyRoomSpawnChance = 15f; // 15% chance for friendly rooms by default
     
+    [Header("Room Extenders")]
+    [Tooltip("Room extenders add additional spawn points to expand the building")]
+    public List<BuildingRooms> extenderRooms = new List<BuildingRooms>();
+    [SerializeField, Range(0f, 100f)] private float extenderSpawnChance = 30f; // 30% chance for room extenders by default
+    [SerializeField, Range(0, 5)] private int maxExtendersPerBuilding = 2; // Maximum number of extenders per building
+    
     [Header("NPC Configuration")]
     [SerializeField] private NPCScriptableObj[] buildingNPCs;
     [SerializeField] private bool autoSpawnNPCs = true;
@@ -58,17 +64,59 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
         return suitableParents[randomIndex].buildingParent;
     }
 
-    public GameObject GetBuildingRoom(int difficulty)
+    /// <summary>
+    /// Get a building room, considering extenders, friendly rooms, and hostile rooms based on spawn chances
+    /// This method is used by the room placement system to select appropriate rooms
+    /// </summary>
+    public GameObject GetBuildingRoom(int difficulty, int currentExtenderCount = 0, bool allowExtenders = true)
     {
+        // Check if we should try to spawn an extender first
+        if (allowExtenders && extenderRooms.Count > 0 && currentExtenderCount < maxExtendersPerBuilding)
+        {
+            float extenderRoll = Random.Range(0f, 100f);
+            Debug.Log($"[GetBuildingRoom] Extender check - Roll: {extenderRoll:F1}, Chance: {extenderSpawnChance:F1}, Current: {currentExtenderCount}, Max: {maxExtendersPerBuilding}");
+            
+            if (extenderRoll < extenderSpawnChance)
+            {
+                GameObject extender = GetExtenderRoom(difficulty);
+                if (extender != null)
+                {
+                    Debug.Log($"[GetBuildingRoom] Selected EXTENDER room: {extender.name}");
+                    return extender;
+                }
+                else
+                {
+                    Debug.LogWarning($"[GetBuildingRoom] Extender roll passed ({extenderRoll:F1} < {extenderSpawnChance:F1}) but no extender room found for difficulty {difficulty}");
+                }
+            }
+            else
+            {
+                Debug.Log($"[GetBuildingRoom] Extender roll failed: {extenderRoll:F1} >= {extenderSpawnChance:F1}");
+            }
+        }
+        else
+        {
+            if (!allowExtenders)
+                Debug.Log($"[GetBuildingRoom] Extenders not allowed for this spawn point");
+            else if (extenderRooms.Count == 0)
+                Debug.LogWarning($"[GetBuildingRoom] No extender rooms configured");
+            else if (currentExtenderCount >= maxExtendersPerBuilding)
+                Debug.Log($"[GetBuildingRoom] Max extenders reached: {currentExtenderCount}/{maxExtendersPerBuilding}");
+        }
+        
         // Randomly decide between friendly and hostile rooms based on spawn chance
         float randomValue = Random.Range(0f, 100f);
         if (friendlyRooms.Count > 0 && randomValue < friendlyRoomSpawnChance)
         {
-            return GetFriendlyRoom(difficulty);
+            GameObject friendlyRoom = GetFriendlyRoom(difficulty);
+            Debug.Log($"[GetBuildingRoom] Selected FRIENDLY room: {friendlyRoom.name} (roll: {randomValue:F1} < {friendlyRoomSpawnChance:F1})");
+            return friendlyRoom;
         }
         else
         {
-            return GetHostileRoom(difficulty);
+            GameObject hostileRoom = GetHostileRoom(difficulty);
+            Debug.Log($"[GetBuildingRoom] Selected HOSTILE room: {hostileRoom.name} (roll: {randomValue:F1} >= {friendlyRoomSpawnChance:F1})");
+            return hostileRoom;
         }
     }
 
@@ -128,6 +176,33 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
         return suitableFriendlyRooms[randomIndex].buildingRoom;
     }
 
+    /// <summary>
+    /// Get a room extender
+    /// </summary>
+    public GameObject GetExtenderRoom(int difficulty)
+    {
+        // Find all suitable extender rooms based on difficulty
+        List<BuildingRooms> suitableExtenderRooms = new List<BuildingRooms>();
+        
+        foreach (var room in extenderRooms)
+        {
+            if (room.difficulty <= difficulty && !room.excludeFromTesting)
+            {
+                suitableExtenderRooms.Add(room);
+            }
+        }
+
+        // If no suitable extender rooms found, return null
+        if (suitableExtenderRooms.Count == 0)
+        {
+            return null;
+        }
+
+        // Randomly select from suitable extender rooms
+        int randomIndex = Random.Range(0, suitableExtenderRooms.Count);
+        return suitableExtenderRooms[randomIndex].buildingRoom;
+    }
+
 
 
     /// <summary>
@@ -181,7 +256,9 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     /// <summary>
     /// Get all available rooms for this building at the given difficulty
     /// </summary>
-    public GameObject[] GetAllRooms(int difficulty)
+    /// <param name="difficulty">Current difficulty level</param>
+    /// <param name="includeExtenders">Whether to include room extenders in the list</param>
+    public GameObject[] GetAllRooms(int difficulty, bool includeExtenders = true)
     {
         List<GameObject> allRooms = new List<GameObject>();
         
@@ -203,7 +280,61 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
             }
         }
 
+        // Add extender rooms if requested
+        if (includeExtenders)
+        {
+            foreach (var room in extenderRooms)
+            {
+                if (room.difficulty <= difficulty && !room.excludeFromTesting)
+                {
+                    allRooms.Add(room.buildingRoom);
+                }
+            }
+        }
+
+        int hostileCount = 0;
+        foreach (var room in buildingRooms)
+            if (room.difficulty <= difficulty && !room.excludeFromTesting) hostileCount++;
+        
+        int friendlyCount = 0;
+        foreach (var room in friendlyRooms)
+            if (room.difficulty <= difficulty && !room.excludeFromTesting) friendlyCount++;
+        
+        int extenderCount = 0;
+        if (includeExtenders)
+        {
+            foreach (var room in extenderRooms)
+                if (room.difficulty <= difficulty && !room.excludeFromTesting) extenderCount++;
+        }
+        
+        Debug.Log($"[GetAllRooms] Found {allRooms.Count} rooms for difficulty {difficulty} (includeExtenders: {includeExtenders}) - " +
+                 $"Hostile: {hostileCount}, Friendly: {friendlyCount}, Extenders: {extenderCount}");
+
         return allRooms.ToArray();
+    }
+
+    /// <summary>
+    /// Get the maximum number of extenders allowed per building
+    /// </summary>
+    public int GetMaxExtendersPerBuilding()
+    {
+        return maxExtendersPerBuilding;
+    }
+
+    /// <summary>
+    /// Get the extender spawn chance (0-100%)
+    /// </summary>
+    public float GetExtenderSpawnChance()
+    {
+        return extenderSpawnChance;
+    }
+
+    /// <summary>
+    /// Set the extender spawn chance (0-100%)
+    /// </summary>
+    public void SetExtenderSpawnChance(float chance)
+    {
+        extenderSpawnChance = Mathf.Clamp(chance, 0f, 100f);
     }
 }
 

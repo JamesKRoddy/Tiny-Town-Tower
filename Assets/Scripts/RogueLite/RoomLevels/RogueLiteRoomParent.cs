@@ -14,6 +14,8 @@ public class RogueLiteRoomParent : MonoBehaviour
     [Header("Room Spawn Points")]
     public Transform roomSpawnPointsParent;
     private Transform[] roomTransforms;
+    private List<Transform> dynamicSpawnPoints = new List<Transform>(); // Includes original + extender spawn points
+    private int extendersPlaced = 0; // Track number of extenders placed in this building
     
     [Header("Room Collision Settings")]
     [Tooltip("Maximum acceptable overlap in cubic units (lower = stricter)")]
@@ -140,6 +142,8 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
         spawnedRooms.Clear();
         placedRoomsBySpawnIndex.Clear();
+        dynamicSpawnPoints.Clear();
+        extendersPlaced = 0;
 
         foreach (Transform roomTransform in roomTransforms)
         {
@@ -277,6 +281,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// <summary>
     /// Intelligently place rooms at all spawn points
     /// Prioritizes collision-free placement over filling every spawn point
+    /// Supports room extenders that add additional spawn points dynamically
     /// </summary>
     private void HierarchicalRoomPlacement(RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty)
     {
@@ -286,87 +291,178 @@ public class RogueLiteRoomParent : MonoBehaviour
             return;
         }
 
-        List<int> availableSpawnPoints = new List<int>();
-        for (int i = 0; i < roomTransforms.Length; i++)
+        // Initialize dynamic spawn points with original transforms
+        dynamicSpawnPoints.Clear();
+        dynamicSpawnPoints.AddRange(roomTransforms);
+        
+        int originalSpawnCount = dynamicSpawnPoints.Count;
+
+        List<int> availableSpawnIndices = new List<int>();
+        for (int i = 0; i < dynamicSpawnPoints.Count; i++)
         {
-            availableSpawnPoints.Add(i);
+            availableSpawnIndices.Add(i);
         }
 
-        // Track which spawn points we've attempted and failed
-        List<int> failedSpawnPoints = new List<int>();
-
-        // Add loop protection
-        int maxIterations = availableSpawnPoints.Count * 3; // Increased to allow more retries
+        // Add loop protection - dynamically adjust max iterations as new spawns are added
         int iterations = 0;
+        int previousSpawnCount = dynamicSpawnPoints.Count;
         
-        while (availableSpawnPoints.Count > 0 && iterations < maxIterations)
+        while (availableSpawnIndices.Count > 0)
         {
+            // Recalculate max iterations each time (accounts for dynamically added spawns)
+            int maxIterations = dynamicSpawnPoints.Count * 5; // Increased multiplier for extenders
+            
+            if (iterations >= maxIterations)
+            {
+                Debug.LogWarning($"[HierarchicalPlacement] Hit safety limit ({maxIterations} iterations) with {availableSpawnIndices.Count} remaining spawn points");
+                break;
+            }
+            
             iterations++;
             
-            int spawnIndex = availableSpawnPoints[0];
-            GameObject roomPrefab = buildingScriptableObj.GetBuildingRoom(currentDifficulty);
+            int spawnIndex = availableSpawnIndices[0];
             
-            if (GuaranteedRoomPlacement(roomTransforms[spawnIndex], roomPrefab, buildingScriptableObj, currentDifficulty, $"Room {spawnIndex}"))
+            // Check if this is an extender spawn point (index >= original spawn count)
+            bool isExtenderSpawnPoint = spawnIndex >= originalSpawnCount;
+            bool allowExtenders = !isExtenderSpawnPoint; // Don't allow extenders at extender spawn points
+            
+            if (ShowCollisionDebug)
             {
-                availableSpawnPoints.RemoveAt(0);
+                string spawnType = isExtenderSpawnPoint ? "EXTENDER" : "ORIGINAL";
+                Debug.Log($"[HierarchicalPlacement] Processing spawn {spawnIndex} ({spawnType}) - allowExtenders: {allowExtenders}, currentExtenders: {extendersPlaced}");
+            }
+            
+            // Get room, considering extender count and allowing extenders only for original spawn points
+            GameObject roomPrefab = buildingScriptableObj.GetBuildingRoom(currentDifficulty, extendersPlaced, allowExtenders);
+            
+            // Use dynamic spawn points list
+            Transform targetTransform = dynamicSpawnPoints[spawnIndex];
+            
+            if (GuaranteedRoomPlacement(targetTransform, roomPrefab, buildingScriptableObj, currentDifficulty, $"Room {spawnIndex}", originalSpawnCount))
+            {
+                availableSpawnIndices.RemoveAt(0);
                 if (ShowCollisionDebug)
                     Debug.Log($"[HierarchicalPlacement] Successfully placed room at spawn {spawnIndex}");
             }
             else
             {
                 // Try to find ANY room that fits without excessive overlap
-                bool placed = TryPlaceAnyValidRoom(spawnIndex, buildingScriptableObj, currentDifficulty);
+                bool placed = TryPlaceAnyValidRoom(spawnIndex, buildingScriptableObj, currentDifficulty, originalSpawnCount);
                 
                 if (placed)
                 {
-                    availableSpawnPoints.RemoveAt(0);
+                    availableSpawnIndices.RemoveAt(0);
                     if (ShowCollisionDebug)
                         Debug.Log($"[HierarchicalPlacement] Placed valid room at spawn {spawnIndex} after retry");
                 }
                 else
                 {
                     // No room fits within tolerance - find and place the room with MINIMUM overlap
-                    if (PlaceRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty))
+                    if (PlaceRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty, originalSpawnCount))
                     {
-                        availableSpawnPoints.RemoveAt(0);
+                        availableSpawnIndices.RemoveAt(0);
                         Debug.LogWarning($"[HierarchicalPlacement] Placed room with minimum overlap at spawn {spawnIndex} (exceeded tolerance but best option)");
                     }
                     else
                     {
                         // Should never happen, but handle gracefully
                         Debug.LogError($"[HierarchicalPlacement] Failed to place any room at spawn {spawnIndex}!");
-                        availableSpawnPoints.RemoveAt(0);
+                        availableSpawnIndices.RemoveAt(0);
                     }
                 }
             }
-        }
-        
-        // Check if we hit the safety limit
-        if (iterations >= maxIterations)
-        {
-            Debug.LogWarning($"[HierarchicalPlacement] Hit safety limit ({maxIterations} iterations) with {availableSpawnPoints.Count} remaining spawn points");
+            
+            // Check if a room extender added new spawn points
+            if (dynamicSpawnPoints.Count > previousSpawnCount)
+            {
+                int newSpawnsAdded = dynamicSpawnPoints.Count - previousSpawnCount;
+                Debug.Log($"[HierarchicalPlacement] ⚠️ Room extender added {newSpawnsAdded} new spawn points - MUST be filled!");
+                
+                // Add the new spawn indices to the FRONT of the available list (high priority)
+                // Insert in reverse order so they maintain their original order at the front
+                for (int i = dynamicSpawnPoints.Count - 1; i >= previousSpawnCount; i--)
+                {
+                    availableSpawnIndices.Insert(0, i);
+                    Debug.Log($"[HierarchicalPlacement] Prioritizing extender spawn {i} at position {dynamicSpawnPoints[i].position}");
+                }
+                
+                previousSpawnCount = dynamicSpawnPoints.Count;
+                
+                // Reset iteration counter to ensure extender spawns get processed
+                iterations = 0;
+                Debug.Log($"[HierarchicalPlacement] Reset iteration counter to ensure extender spawns are processed");
+            }
         }
 
         // Final report
         int placedCount = placedRoomsBySpawnIndex.Count;
-        int totalSpawns = roomTransforms.Length;
+        int totalSpawns = dynamicSpawnPoints.Count;
+        int extenderSpawns = totalSpawns - originalSpawnCount;
         
         if (placedCount < totalSpawns)
         {
-            Debug.LogError($"[HierarchicalPlacement] PLACEMENT FAILED: Only placed {placedCount}/{totalSpawns} rooms!");
+            Debug.LogWarning($"[HierarchicalPlacement] Placed {placedCount}/{totalSpawns} rooms ({originalSpawnCount} original + {extenderSpawns} from extenders)");
             
-            // Log which spawn points are missing rooms
-            for (int i = 0; i < roomTransforms.Length; i++)
+            // Log which spawn points are missing rooms and attempt emergency placement
+            List<int> emptySpawnIndices = new List<int>();
+            for (int i = 0; i < dynamicSpawnPoints.Count; i++)
             {
                 if (!placedRoomsBySpawnIndex.ContainsKey(i))
                 {
-                    Debug.LogError($"[HierarchicalPlacement] Missing room at spawn point {i} at position {roomTransforms[i].position}");
+                    emptySpawnIndices.Add(i);
+                    bool isFromExtender = i >= originalSpawnCount;
+                    string extenderNote = isFromExtender ? " [FROM EXTENDER - CRITICAL!]" : "";
+                    Debug.LogError($"[HierarchicalPlacement] ⚠️ Spawn point {i} at position {dynamicSpawnPoints[i].position} was not filled!{extenderNote}");
+                }
+            }
+            
+            // Emergency fill for empty spawn points (especially important for extender spawns)
+            if (emptySpawnIndices.Count > 0)
+            {
+                Debug.LogWarning($"[HierarchicalPlacement] Attempting emergency fill for {emptySpawnIndices.Count} empty spawn points...");
+                foreach (int emptyIndex in emptySpawnIndices)
+                {
+                    // Try to get a basic room (non-extender) for emergency fill
+                    GameObject[] allRooms = buildingScriptableObj.GetAllRooms(currentDifficulty, includeExtenders: false);
+                    if (allRooms != null && allRooms.Length > 0)
+                    {
+                        // Find the room with minimum overlap
+                        GameObject bestRoom = null;
+                        float minOverlap = float.MaxValue;
+                        
+                        foreach (GameObject room in allRooms)
+                        {
+                            // Skip extenders for emergency fill to avoid infinite recursion
+                            if (room.GetComponent<RoomExtender>() != null) continue;
+                            
+                            float overlap = CalculateMaxOverlapForRoom(room, dynamicSpawnPoints[emptyIndex].position);
+                            if (overlap < minOverlap)
+                            {
+                                minOverlap = overlap;
+                                bestRoom = room;
+                            }
+                        }
+                        
+                        if (bestRoom != null)
+                        {
+                            bool placed = PlaceRoomAtSpawn(emptyIndex, bestRoom, $"EMERGENCY Fill for Spawn {emptyIndex}");
+                            if (placed)
+                            {
+                                Debug.Log($"[HierarchicalPlacement] ✓ Emergency filled spawn {emptyIndex} with {bestRoom.name}");
+                            }
+                            else
+                            {
+                                Debug.LogError($"[HierarchicalPlacement] ✗ Failed to emergency fill spawn {emptyIndex}");
+                            }
+                        }
+                    }
                 }
             }
         }
         else
         {
-            Debug.Log($"[HierarchicalPlacement] ✓ Successfully placed all {placedCount} rooms (minimum overlap strategy used when needed)");
+            string extenderInfo = extenderSpawns > 0 ? $" ({originalSpawnCount} original + {extenderSpawns} from extenders)" : "";
+            Debug.Log($"[HierarchicalPlacement] ✓ Successfully placed all {placedCount} rooms{extenderInfo}");
         }
     }
 
@@ -374,7 +470,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// Intelligently place rooms using constraint satisfaction with room swapping
     /// Tries to resolve conflicts by swapping blocking rooms with smaller alternatives
     /// </summary>
-    private bool GuaranteedRoomPlacement(Transform targetTransform, GameObject preferredRoomPrefab, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName)
+    private bool GuaranteedRoomPlacement(Transform targetTransform, GameObject preferredRoomPrefab, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName, int originalSpawnCount)
     {
         int spawnIndex = GetSpawnIndex(targetTransform);
         if (spawnIndex == -1)
@@ -383,39 +479,59 @@ public class RogueLiteRoomParent : MonoBehaviour
             return false;
         }
 
-        return SmartRoomPlacement(spawnIndex, preferredRoomPrefab, buildingScriptableObj, currentDifficulty, debugName, 0);
+        return SmartRoomPlacement(spawnIndex, preferredRoomPrefab, buildingScriptableObj, currentDifficulty, debugName, 0, originalSpawnCount);
     }
 
     /// <summary>
     /// Smart room placement with conflict resolution through room swapping and minimum overlap selection
     /// </summary>
-    private bool SmartRoomPlacement(int spawnIndex, GameObject preferredRoomPrefab, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName, int retryCount)
+    private bool SmartRoomPlacement(int spawnIndex, GameObject preferredRoomPrefab, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName, int retryCount, int originalSpawnCount)
     {
         if (retryCount >= maxSwapRetries)
         {
             // Use minimum overlap placement after max retries
-            return PlaceRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty);
+            return PlaceRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty, originalSpawnCount);
         }
 
-        Transform targetTransform = roomTransforms[spawnIndex];
+        Transform targetTransform = dynamicSpawnPoints[spawnIndex];
+
+        // Check if this is an extender spawn point
+        bool isExtenderSpawnPoint = spawnIndex >= originalSpawnCount;
 
         // Strategy 1: Try the preferred room first
         if (preferredRoomPrefab != null)
         {
+            // Check if the preferred room is an extender
+            RoomExtender preferredExtender = preferredRoomPrefab.GetComponent<RoomExtender>();
+            bool isPreferredExtender = preferredExtender != null;
+            
             if (TryPlaceWithConflictResolution(spawnIndex, preferredRoomPrefab, buildingScriptableObj, currentDifficulty, debugName + " (Preferred)", retryCount))
                 return true;
+            
+            // If we specifically wanted an extender but it failed, don't fall back to other room types
+            // This preserves the intent to place an extender at original spawn points
+            if (isPreferredExtender && !isExtenderSpawnPoint)
+            {
+                Debug.Log($"[SmartPlacement] Extender placement failed at spawn {spawnIndex}, but not falling back to other room types to preserve extender intent");
+                return false;
+            }
         }
 
-        // Strategy 2: Try room with minimum overlap directly
-        GameObject bestRoom = FindRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty, out float minOverlapVolume);
-        if (bestRoom != null && minOverlapVolume <= maxAcceptableOverlapVolume)
+        // Strategy 2: Try room with minimum overlap directly (only for non-extender spawn points)
+        if (!isExtenderSpawnPoint)
         {
-            if (TryPlaceWithConflictResolution(spawnIndex, bestRoom, buildingScriptableObj, currentDifficulty, debugName + $" (Min Overlap {minOverlapVolume:F1} units)", retryCount))
+            GameObject bestRoom = FindRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty, originalSpawnCount, out float minOverlapVolume);
+            if (bestRoom != null && minOverlapVolume <= maxAcceptableOverlapVolume)
+            {
+                if (TryPlaceWithConflictResolution(spawnIndex, bestRoom, buildingScriptableObj, currentDifficulty, debugName + $" (Min Overlap {minOverlapVolume:F1} units)", retryCount))
                 return true;
+            }
         }
 
         // Strategy 3: Try any available room
-        GameObject anyRoom = buildingScriptableObj.GetBuildingRoom(currentDifficulty);
+        bool allowExtenders = !isExtenderSpawnPoint; // Don't allow extenders at extender spawn points
+        
+        GameObject anyRoom = buildingScriptableObj.GetBuildingRoom(currentDifficulty, extendersPlaced, allowExtenders);
         if (anyRoom != null)
         {
             if (TryPlaceWithConflictResolution(spawnIndex, anyRoom, buildingScriptableObj, currentDifficulty, debugName + " (Any)", retryCount))
@@ -423,7 +539,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
 
         // Final fallback: Use minimum overlap placement
-        return PlaceRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty);
+        return PlaceRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty, originalSpawnCount);
     }
 
     /// <summary>
@@ -431,9 +547,10 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// </summary>
     private int GetSpawnIndex(Transform targetTransform)
     {
-        for (int i = 0; i < roomTransforms.Length; i++)
+        // Search in dynamic spawn points (includes original + extender spawns)
+        for (int i = 0; i < dynamicSpawnPoints.Count; i++)
         {
-            if (roomTransforms[i] == targetTransform)
+            if (dynamicSpawnPoints[i] == targetTransform)
             {
                 return i;
             }
@@ -446,13 +563,25 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// </summary>
     private bool TryPlaceWithConflictResolution(int spawnIndex, GameObject roomPrefab, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName, int retryCount)
     {
-        Transform targetTransform = roomTransforms[spawnIndex];
+        Transform targetTransform = dynamicSpawnPoints[spawnIndex];
+        
+        // Check if the room being placed is an extender
+        RoomExtender extenderComponent = roomPrefab.GetComponent<RoomExtender>();
+        bool isExtender = extenderComponent != null;
         
         // Check if room would fit without conflicts
         if (!WouldRoomOverlapAtPosition(roomPrefab.GetComponent<RogueLiteRoom>(), targetTransform.position))
         {
             // No conflicts - place the room directly
             return PlaceRoomAtSpawn(spawnIndex, roomPrefab, debugName);
+        }
+
+        // If this is an extender and it has conflicts, don't try to resolve them
+        // Extenders should only be placed if they fit perfectly
+        if (isExtender)
+        {
+            Debug.Log($"[ConflictResolution] Extender at spawn {spawnIndex} has conflicts - will not place it");
+            return false;
         }
 
         // Find conflicting rooms
@@ -494,10 +623,15 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// Find and place the room with the absolute MINIMUM overlap, even if it exceeds tolerance
     /// This is used as a last resort to ensure every spawn point gets a room
     /// </summary>
-    private bool PlaceRoomWithMinimumOverlap(int spawnIndex, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty)
+    private bool PlaceRoomWithMinimumOverlap(int spawnIndex, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, int originalSpawnCount)
     {
-        Transform targetTransform = roomTransforms[spawnIndex];
-        GameObject[] allRooms = buildingScriptableObj.GetAllRooms(currentDifficulty);
+        Transform targetTransform = dynamicSpawnPoints[spawnIndex];
+        
+        // Check if this is an extender spawn point and exclude extenders accordingly
+        bool isExtenderSpawnPoint = spawnIndex >= originalSpawnCount;
+        bool includeExtenders = !isExtenderSpawnPoint; // Don't include extenders at extender spawn points
+        
+        GameObject[] allRooms = buildingScriptableObj.GetAllRooms(currentDifficulty, includeExtenders);
         
         if (allRooms == null || allRooms.Length == 0)
         {
@@ -566,10 +700,15 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// Try to place ANY room from the available pool that fits with minimal or zero overlap
     /// Prioritizes rooms with least overlap
     /// </summary>
-    private bool TryPlaceAnyValidRoom(int spawnIndex, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty)
+    private bool TryPlaceAnyValidRoom(int spawnIndex, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, int originalSpawnCount)
     {
-        Transform targetTransform = roomTransforms[spawnIndex];
-        GameObject[] allRooms = buildingScriptableObj.GetAllRooms(currentDifficulty);
+        Transform targetTransform = dynamicSpawnPoints[spawnIndex];
+        
+        // Check if this is an extender spawn point and exclude extenders accordingly
+        bool isExtenderSpawnPoint = spawnIndex >= originalSpawnCount;
+        bool includeExtenders = !isExtenderSpawnPoint; // Don't include extenders at extender spawn points
+        
+        GameObject[] allRooms = buildingScriptableObj.GetAllRooms(currentDifficulty, includeExtenders);
         
         if (allRooms == null || allRooms.Length == 0)
         {
@@ -623,15 +762,19 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// <summary>
     /// Find the room that produces the minimum overlap at a given spawn point
     /// </summary>
-    private GameObject FindRoomWithMinimumOverlap(int spawnIndex, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, out float minOverlap)
+    private GameObject FindRoomWithMinimumOverlap(int spawnIndex, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, int originalSpawnCount, out float minOverlap)
     {
-        Transform targetTransform = roomTransforms[spawnIndex];
+        Transform targetTransform = dynamicSpawnPoints[spawnIndex];
         
         GameObject bestRoom = null;
         minOverlap = float.MaxValue;
         
+        // Check if this is an extender spawn point and exclude extenders accordingly
+        bool isExtenderSpawnPoint = spawnIndex >= originalSpawnCount;
+        bool includeExtenders = !isExtenderSpawnPoint; // Don't include extenders at extender spawn points
+        
         // Test all available rooms
-        GameObject[] allRooms = buildingScriptableObj.GetAllRooms(currentDifficulty);
+        GameObject[] allRooms = buildingScriptableObj.GetAllRooms(currentDifficulty, includeExtenders);
         
         foreach (var roomPrefab in allRooms)
         {
@@ -746,6 +889,7 @@ public class RogueLiteRoomParent : MonoBehaviour
 
     /// <summary>
     /// Place a room at a specific spawn index and track it properly
+    /// Handles room extenders that add additional spawn points
     /// </summary>
     private bool PlaceRoomAtSpawn(int spawnIndex, GameObject roomPrefab, string debugName)
     {
@@ -755,7 +899,7 @@ public class RogueLiteRoomParent : MonoBehaviour
             return false;
         }
 
-        Transform targetTransform = roomTransforms[spawnIndex];
+        Transform targetTransform = dynamicSpawnPoints[spawnIndex];
         
         // Remove existing room at this spawn if any
         if (placedRoomsBySpawnIndex.ContainsKey(spawnIndex))
@@ -842,6 +986,37 @@ public class RogueLiteRoomParent : MonoBehaviour
             }
         }
         
+        // Check if this is a room extender and add its spawn points
+        RoomExtender extender = room.GetComponent<RoomExtender>();
+        if (extender != null)
+        {
+            // Increment extender counter
+            extendersPlaced++;
+            
+            // Set the extender's room type based on the current building composition
+            RogueLikeRoomType extenderType = DetermineExtenderRoomType();
+            extender.SetRoomType(extenderType);
+            
+            // Add spawn points if available
+            if (extender.HasSpawnPoints())
+            {
+                Transform[] extenderSpawnPoints = extender.GetAdditionalSpawnPoints();
+                int addedCount = extenderSpawnPoints.Length;
+                
+                Debug.Log($"[PlaceRoomAtSpawn] Room extender #{extendersPlaced} detected! Type: {extenderType}, Adding {addedCount} new spawn points to building");
+                
+                foreach (Transform newSpawnPoint in extenderSpawnPoints)
+                {
+                    dynamicSpawnPoints.Add(newSpawnPoint);
+                    Debug.Log($"[PlaceRoomAtSpawn] Added extender spawn point at position {newSpawnPoint.position}");
+                }
+                
+                // Add these new indices to the available spawn list in HierarchicalRoomPlacement
+                // Note: The calling method (HierarchicalRoomPlacement) will handle adding these to availableSpawnIndices
+                Debug.Log($"[PlaceRoomAtSpawn] Building now has {dynamicSpawnPoints.Count} total spawn points ({extendersPlaced} extenders placed)");
+            }
+        }
+        
         return true;
     }
     
@@ -861,6 +1036,10 @@ public class RogueLiteRoomParent : MonoBehaviour
                 RogueLiteRoom roomComponent = roomData.roomObject.GetComponent<RogueLiteRoom>();
                 if (roomComponent != null)
                 {
+                    // Skip extenders when determining parent type (they inherit, not determine)
+                    if (roomComponent is RoomExtender)
+                        continue;
+                    
                     if (roomComponent.RoomType == RogueLikeRoomType.FRIENDLY)
                     {
                         hasFriendlyRoom = true;
@@ -878,6 +1057,32 @@ public class RogueLiteRoomParent : MonoBehaviour
         {
             roomType = RogueLikeRoomType.HOSTILE;
         }
+    }
+    
+    /// <summary>
+    /// Determine what room type an extender should have based on existing rooms
+    /// Returns FRIENDLY if any non-extender room is friendly, otherwise HOSTILE
+    /// </summary>
+    private RogueLikeRoomType DetermineExtenderRoomType()
+    {
+        foreach (var kvp in placedRoomsBySpawnIndex)
+        {
+            var roomData = kvp.Value;
+            if (roomData.roomObject != null)
+            {
+                RogueLiteRoom roomComponent = roomData.roomObject.GetComponent<RogueLiteRoom>();
+                if (roomComponent != null && !(roomComponent is RoomExtender))
+                {
+                    if (roomComponent.RoomType == RogueLikeRoomType.FRIENDLY)
+                    {
+                        return RogueLikeRoomType.FRIENDLY;
+                    }
+                }
+            }
+        }
+        
+        // Default to hostile if no friendly rooms found
+        return RogueLikeRoomType.HOSTILE;
     }
 
     /// <summary>
@@ -941,15 +1146,28 @@ public class RogueLiteRoomParent : MonoBehaviour
             return false; // No room to swap
         }
 
-        // Try to find a different room that fits better
-        GameObject[] allRooms = buildingScriptableObj.GetAllRooms(currentDifficulty);
+        // Check if the current room is an extender - if so, NEVER swap it out
+        PlacedRoomData currentRoomData = placedRoomsBySpawnIndex[spawnIndex];
+        if (currentRoomData.roomObject != null)
+        {
+            RoomExtender existingExtender = currentRoomData.roomObject.GetComponent<RoomExtender>();
+            if (existingExtender != null)
+            {
+                Debug.Log($"[AttemptRoomSwap] Room at spawn {spawnIndex} is an extender - will NOT swap it out");
+                return false;
+            }
+        }
+
+        // Try to find a different room that fits better (but DON'T include extenders as alternatives)
+        // Extenders should only be placed intentionally, not as conflict resolution alternatives
+        GameObject[] allRooms = buildingScriptableObj.GetAllRooms(currentDifficulty, includeExtenders: false);
         
         foreach (var alternativeRoom in allRooms)
         {
             if (alternativeRoom == null) continue;
             
             // Test if the alternative room would work at this position
-            Transform targetTransform = roomTransforms[spawnIndex];
+            Transform targetTransform = dynamicSpawnPoints[spawnIndex];
             if (!WouldRoomOverlapAtPosition(alternativeRoom.GetComponent<RogueLiteRoom>(), targetTransform.position))
             {
                 // Swap successful

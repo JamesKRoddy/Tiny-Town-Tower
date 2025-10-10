@@ -309,7 +309,7 @@ public abstract class RogueLiteRoom : MonoBehaviour
     }
     #endif
     
-    private void OnDrawGizmos()
+    protected virtual void OnDrawGizmos()
     {
         if (!showRoomBounds) return;
 
@@ -352,7 +352,7 @@ public abstract class RogueLiteRoom : MonoBehaviour
         #endif
     }
     
-    private void OnDrawGizmosSelected()
+    protected virtual void OnDrawGizmosSelected()
     {
         if (!showRoomBounds) return;
         

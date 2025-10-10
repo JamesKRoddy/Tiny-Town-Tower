@@ -52,7 +52,7 @@ MonoBehaviour:
   - buildingRoom: {fileID: 5318116250113263644, guid: bbc953b06b694954a9279171c514a957, type: 3}
     difficulty: 0
     excludeFromTesting: 0
-  extenderRoomSpawnChance: 10
+  extenderSpawnChance: 100
   buildingNPCs:
   - {fileID: 11400000, guid: ff84a74ffbac90849b0eb152033e7ac8, type: 2}
   autoSpawnNPCs: 1

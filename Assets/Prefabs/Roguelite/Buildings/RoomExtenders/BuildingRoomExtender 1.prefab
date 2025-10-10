@@ -354,7 +354,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 33782479450088449}
-  - component: {fileID: 3600680311234483541}
+  - component: {fileID: 4871406115342139660}
   m_Layer: 6
   m_Name: BuildingRoomExtender 1
   m_TagString: Untagged
@@ -382,7 +382,7 @@ Transform:
   - {fileID: 3423549491328455813}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3600680311234483541
+--- !u!114 &4871406115342139660
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -391,21 +391,24 @@ MonoBehaviour:
   m_GameObject: {fileID: 5318116250113263644}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1115d460b4dd9124daf56cf7a5f9aaeb, type: 3}
+  m_Script: {fileID: 11500000, guid: 7f8e3d4a9b2c1e5f6a8b9c0d1e2f3a4b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   doors: []
   chests: []
   roomBounds:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 0, y: 0, z: 0}
+    m_Center: {x: 0.000008583069, y: 2.25, z: 0.25000668}
+    m_Extent: {x: 11.50001, y: 3.5000005, z: 11.250011}
   autoCalculateBounds: 1
   boundsPadding: 2
   showRoomBounds: 1
   connectionTolerance: 15
   showConnectionDebug: 0
   additionalSpawnPointsParent: {fileID: 3423549491328455813}
-  dynamicRoomType: 1
+  basicRoomsOnly: 1
+  showExtenderSpawnPoints: 1
+  spawnPointGizmoColor: {r: 1, g: 0, b: 1, a: 1}
+  extenderRoomType: 1
 --- !u!1 &5466462518210956541
 GameObject:
   m_ObjectHideFlags: 0
