@@ -16,11 +16,14 @@ public class RogueLiteRoomParent : MonoBehaviour
     private Transform[] roomTransforms;
     
     [Header("Room Collision Settings")]
-    [SerializeField] private float overlapTolerancePercent = 15f; // Allow up to 15% overlap for connections
+    [Tooltip("Maximum acceptable overlap in cubic units (lower = stricter)")]
+    [SerializeField] private float maxAcceptableOverlapVolume = 100f; // Allow up to 100 cubic units overlap
     [SerializeField] private float minRoomDistance = 5f; // Minimum distance between room centers
-    [SerializeField] private bool showCollisionDebug = false;
     [Tooltip("If true, shows all placed rooms' bounds in Scene view")]
     [SerializeField] private bool showPlacedRoomBounds = true;
+    
+    // Public property to enable/disable detailed collision logging (controlled from RoomDebugMenu)
+    public bool ShowCollisionDebug { get; set; } = false;
     
     [Header("Room Swapping Settings")]
     [SerializeField] private int maxSwapRetries = 5; // Maximum attempts to resolve conflicts through swapping
@@ -52,6 +55,8 @@ public class RogueLiteRoomParent : MonoBehaviour
         public GameObject originalPrefab;
         public int spawnIndex;
         public string debugName;
+        public float overlapPercentage;
+        public bool exceededTolerance;
         
         public PlacedRoomData(GameObject room, GameObject prefab, int spawnIdx, string name)
         {
@@ -59,6 +64,8 @@ public class RogueLiteRoomParent : MonoBehaviour
             originalPrefab = prefab;
             spawnIndex = spawnIdx;
             debugName = name;
+            overlapPercentage = 0f;
+            exceededTolerance = false;
         }
     }
 
@@ -172,7 +179,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         // Use the new CalculateTestBounds method that doesn't modify the original prefab
         Bounds testBounds = roomToTest.CalculateTestBounds(position);
         
-        if (showCollisionDebug)
+        if (ShowCollisionDebug)
         {
             Debug.Log($"[RoomCollision] Testing room at position {position}, bounds: center={testBounds.center}, size={testBounds.size}");
         }
@@ -188,7 +195,7 @@ public class RogueLiteRoomParent : MonoBehaviour
             
             Bounds existingBounds = existingRoomComponent.GetWorldBounds();
             
-            if (showCollisionDebug)
+            if (ShowCollisionDebug)
             {
                 Debug.Log($"[RoomCollision] Checking against {roomData.debugName} at spawn {kvp.Key}, bounds: center={existingBounds.center}, size={existingBounds.size}");
             }
@@ -201,25 +208,36 @@ public class RogueLiteRoomParent : MonoBehaviour
             float centerDistance = Vector3.Distance(testBounds.center, existingBounds.center);
             if (centerDistance < dynamicMinDistance)
             {
-                if (showCollisionDebug)
+                if (ShowCollisionDebug)
                     Debug.Log($"[RoomCollision] Rooms too close: {centerDistance:F2} < {dynamicMinDistance:F2} (dynamic min based on room sizes)");
                 return true;
             }
             
-            // Check for excessive overlap using volume calculation
+            // Check for overlap using intersection volume
             if (testBounds.Intersects(existingBounds))
             {
-                float overlapPercentage = CalculateOverlapPercentage(testBounds, existingBounds);
-                if (showCollisionDebug)
-                {
-                    Debug.Log($"[RoomCollision] Overlap detected: {overlapPercentage:F1}% (tolerance: {overlapTolerancePercent}%)");
-                }
+                // Calculate raw intersection volume
+                Vector3 intersectionMin = Vector3.Max(testBounds.min, existingBounds.min);
+                Vector3 intersectionMax = Vector3.Min(testBounds.max, existingBounds.max);
                 
-                if (overlapPercentage > overlapTolerancePercent)
+                if (intersectionMin.x < intersectionMax.x && 
+                    intersectionMin.y < intersectionMax.y && 
+                    intersectionMin.z < intersectionMax.z)
                 {
-                    if (showCollisionDebug)
-                        Debug.Log($"[RoomCollision] EXCESSIVE overlap: {overlapPercentage:F1}% > {overlapTolerancePercent}%");
-                    return true; // Excessive overlap detected
+                    Vector3 intersectionSize = intersectionMax - intersectionMin;
+                    float intersectionVolume = intersectionSize.x * intersectionSize.y * intersectionSize.z;
+                    
+                    if (ShowCollisionDebug)
+                    {
+                        Debug.Log($"[RoomCollision] Overlap detected: {intersectionVolume:F1} cubic units (tolerance: {maxAcceptableOverlapVolume})");
+                    }
+                    
+                    if (intersectionVolume > maxAcceptableOverlapVolume)
+                    {
+                        if (ShowCollisionDebug)
+                            Debug.Log($"[RoomCollision] EXCESSIVE overlap: {intersectionVolume:F1} > {maxAcceptableOverlapVolume} cubic units");
+                        return true; // Excessive overlap detected
+                    }
                 }
             }
         }
@@ -276,7 +294,7 @@ public class RogueLiteRoomParent : MonoBehaviour
 
         // Track which spawn points we've attempted and failed
         List<int> failedSpawnPoints = new List<int>();
-        
+
         // Add loop protection
         int maxIterations = availableSpawnPoints.Count * 3; // Increased to allow more retries
         int iterations = 0;
@@ -291,7 +309,7 @@ public class RogueLiteRoomParent : MonoBehaviour
             if (GuaranteedRoomPlacement(roomTransforms[spawnIndex], roomPrefab, buildingScriptableObj, currentDifficulty, $"Room {spawnIndex}"))
             {
                 availableSpawnPoints.RemoveAt(0);
-                if (showCollisionDebug)
+                if (ShowCollisionDebug)
                     Debug.Log($"[HierarchicalPlacement] Successfully placed room at spawn {spawnIndex}");
             }
             else
@@ -302,26 +320,22 @@ public class RogueLiteRoomParent : MonoBehaviour
                 if (placed)
                 {
                     availableSpawnPoints.RemoveAt(0);
-                    if (showCollisionDebug)
+                    if (ShowCollisionDebug)
                         Debug.Log($"[HierarchicalPlacement] Placed valid room at spawn {spawnIndex} after retry");
                 }
                 else
                 {
-                    // Mark as failed and move to end of queue
-                    availableSpawnPoints.RemoveAt(0);
-                    
-                    if (!failedSpawnPoints.Contains(spawnIndex))
+                    // No room fits within tolerance - find and place the room with MINIMUM overlap
+                    if (PlaceRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty))
                     {
-                        // First failure - try again later
-                        availableSpawnPoints.Add(spawnIndex);
-                        failedSpawnPoints.Add(spawnIndex);
-                        if (showCollisionDebug)
-                            Debug.Log($"[HierarchicalPlacement] Moving spawn {spawnIndex} to end of queue for retry");
+                        availableSpawnPoints.RemoveAt(0);
+                        Debug.LogWarning($"[HierarchicalPlacement] Placed room with minimum overlap at spawn {spawnIndex} (exceeded tolerance but best option)");
                     }
                     else
                     {
-                        // Already failed once - skip this spawn point to avoid excessive overlap
-                        Debug.LogWarning($"[HierarchicalPlacement] Skipping spawn {spawnIndex} - no valid room fits without excessive overlap");
+                        // Should never happen, but handle gracefully
+                        Debug.LogError($"[HierarchicalPlacement] Failed to place any room at spawn {spawnIndex}!");
+                        availableSpawnPoints.RemoveAt(0);
                     }
                 }
             }
@@ -339,21 +353,20 @@ public class RogueLiteRoomParent : MonoBehaviour
         
         if (placedCount < totalSpawns)
         {
-            Debug.LogWarning($"[HierarchicalPlacement] Placed {placedCount}/{totalSpawns} rooms. " +
-                           $"Skipped {totalSpawns - placedCount} spawn points to prevent excessive overlap.");
+            Debug.LogError($"[HierarchicalPlacement] PLACEMENT FAILED: Only placed {placedCount}/{totalSpawns} rooms!");
             
-            // Log which spawn points were skipped
+            // Log which spawn points are missing rooms
             for (int i = 0; i < roomTransforms.Length; i++)
             {
                 if (!placedRoomsBySpawnIndex.ContainsKey(i))
                 {
-                    Debug.Log($"[HierarchicalPlacement] Skipped spawn point {i} at position {roomTransforms[i].position}");
+                    Debug.LogError($"[HierarchicalPlacement] Missing room at spawn point {i} at position {roomTransforms[i].position}");
                 }
             }
         }
         else
         {
-            Debug.Log($"[HierarchicalPlacement] Successfully placed all {placedCount} rooms without excessive overlap");
+            Debug.Log($"[HierarchicalPlacement] ✓ Successfully placed all {placedCount} rooms (minimum overlap strategy used when needed)");
         }
     }
 
@@ -381,7 +394,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         if (retryCount >= maxSwapRetries)
         {
             // Use minimum overlap placement after max retries
-            return ForcePlaceAnyRoom(spawnIndex, buildingScriptableObj, currentDifficulty, debugName + " (Min Overlap After Retries)");
+            return PlaceRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty);
         }
 
         Transform targetTransform = roomTransforms[spawnIndex];
@@ -394,10 +407,10 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
 
         // Strategy 2: Try room with minimum overlap directly
-        GameObject bestRoom = FindRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty, out float minOverlap);
-        if (bestRoom != null && minOverlap <= overlapTolerancePercent)
+        GameObject bestRoom = FindRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty, out float minOverlapVolume);
+        if (bestRoom != null && minOverlapVolume <= maxAcceptableOverlapVolume)
         {
-            if (TryPlaceWithConflictResolution(spawnIndex, bestRoom, buildingScriptableObj, currentDifficulty, debugName + $" (Min Overlap {minOverlap:F1}%)", retryCount))
+            if (TryPlaceWithConflictResolution(spawnIndex, bestRoom, buildingScriptableObj, currentDifficulty, debugName + $" (Min Overlap {minOverlapVolume:F1} units)", retryCount))
                 return true;
         }
 
@@ -410,7 +423,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
 
         // Final fallback: Use minimum overlap placement
-        return ForcePlaceAnyRoom(spawnIndex, buildingScriptableObj, currentDifficulty, debugName + " (Final Min Overlap)");
+        return PlaceRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty);
     }
 
     /// <summary>
@@ -478,8 +491,80 @@ public class RogueLiteRoomParent : MonoBehaviour
     }
 
     /// <summary>
-    /// Try to place ANY room from the available pool that fits within overlap tolerance
-    /// Will NOT place rooms that exceed tolerance
+    /// Find and place the room with the absolute MINIMUM overlap, even if it exceeds tolerance
+    /// This is used as a last resort to ensure every spawn point gets a room
+    /// </summary>
+    private bool PlaceRoomWithMinimumOverlap(int spawnIndex, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty)
+    {
+        Transform targetTransform = roomTransforms[spawnIndex];
+        GameObject[] allRooms = buildingScriptableObj.GetAllRooms(currentDifficulty);
+        
+        if (allRooms == null || allRooms.Length == 0)
+        {
+            Debug.LogError($"[PlaceRoomWithMinimumOverlap] No rooms available for difficulty {currentDifficulty}");
+            return false;
+        }
+
+        GameObject bestRoom = null;
+        float minOverlapVolume = float.MaxValue;
+        
+        Debug.Log($"[PlaceRoomWithMinimumOverlap] Testing {allRooms.Length} rooms for spawn {spawnIndex}:");
+        
+        // Test every available room and find the one with minimum overlap
+        foreach (GameObject roomPrefab in allRooms)
+        {
+            if (roomPrefab == null) continue;
+            
+            RogueLiteRoom roomComponent = roomPrefab.GetComponent<RogueLiteRoom>();
+            if (roomComponent == null) continue;
+
+            float overlapVolume = CalculateMaxOverlapForRoom(roomPrefab, targetTransform.position);
+            
+            string selectionMarker = "";
+            if (overlapVolume < minOverlapVolume)
+            {
+                selectionMarker = " ← NEW BEST";
+                minOverlapVolume = overlapVolume;
+                bestRoom = roomPrefab;
+            }
+            
+            // ALWAYS log all room comparisons showing cubic units
+            Debug.Log($"  • {roomPrefab.name}: {overlapVolume:F1} cubic units overlap{selectionMarker}");
+        }
+
+        // Place the room with minimum overlap
+        if (bestRoom != null)
+        {
+            string statusMessage = minOverlapVolume == 0 ? "✓ NO OVERLAP" : $"Overlap: {minOverlapVolume:F1} cubic units";
+            Debug.Log($"[PlaceRoomWithMinimumOverlap] Selected {bestRoom.name} at spawn {spawnIndex} ({statusMessage})");
+            
+            bool placed = PlaceRoomAtSpawn(spawnIndex, bestRoom, $"Min Overlap Room ({minOverlapVolume:F1} units)");
+            
+            // Store overlap metadata for visualization (convert to approximate percentage for display)
+            if (placed && placedRoomsBySpawnIndex.ContainsKey(spawnIndex))
+            {
+                // Calculate approximate percentage for visualization only
+                RogueLiteRoom placedRoomComp = bestRoom.GetComponent<RogueLiteRoom>();
+                if (placedRoomComp != null)
+                {
+                    Bounds roomBounds = placedRoomComp.CalculateTestBounds(targetTransform.position);
+                    float roomVolume = roomBounds.size.x * roomBounds.size.y * roomBounds.size.z;
+                    float approxPercentage = roomVolume > 0 ? (minOverlapVolume / roomVolume) * 100f : 0f;
+                    
+                    placedRoomsBySpawnIndex[spawnIndex].overlapPercentage = approxPercentage;
+                    placedRoomsBySpawnIndex[spawnIndex].exceededTolerance = minOverlapVolume > 0;
+                }
+            }
+            
+            return placed;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Try to place ANY room from the available pool that fits with minimal or zero overlap
+    /// Prioritizes rooms with least overlap
     /// </summary>
     private bool TryPlaceAnyValidRoom(int spawnIndex, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty)
     {
@@ -502,7 +587,7 @@ public class RogueLiteRoomParent : MonoBehaviour
             shuffledRooms[randomIndex] = temp;
         }
 
-        // Try each room, but ONLY place if it fits within tolerance
+        // Try each room, prioritizing those with minimal overlap
         foreach (GameObject roomPrefab in shuffledRooms)
         {
             if (roomPrefab == null) continue;
@@ -510,75 +595,28 @@ public class RogueLiteRoomParent : MonoBehaviour
             RogueLiteRoom roomComponent = roomPrefab.GetComponent<RogueLiteRoom>();
             if (roomComponent == null) continue;
 
-            // Check if room fits WITHOUT exceeding tolerance
-            float maxOverlap = CalculateMaxOverlapForRoom(roomPrefab, targetTransform.position);
+            // Check if room fits with minimal overlap
+            float overlapVolume = CalculateMaxOverlapForRoom(roomPrefab, targetTransform.position);
             
-            if (maxOverlap <= overlapTolerancePercent)
+            if (overlapVolume <= maxAcceptableOverlapVolume)
             {
                 // This room fits! Place it
-                if (PlaceRoomAtSpawn(spawnIndex, roomPrefab, $"Valid Room (Overlap: {maxOverlap:F1}%)"))
+                if (PlaceRoomAtSpawn(spawnIndex, roomPrefab, $"Valid Room ({overlapVolume:F1} units)"))
                 {
-                    if (showCollisionDebug)
-                        Debug.Log($"[TryPlaceAnyValidRoom] Placed room at spawn {spawnIndex} with {maxOverlap:F1}% overlap");
-                    return true;
-                }
-            }
-            else if (showCollisionDebug)
-            {
-                Debug.Log($"[TryPlaceAnyValidRoom] Room {roomPrefab.name} rejected at spawn {spawnIndex} - {maxOverlap:F1}% overlap exceeds {overlapTolerancePercent}% tolerance");
-            }
-        }
-
-        if (showCollisionDebug)
-            Debug.LogWarning($"[TryPlaceAnyValidRoom] No valid room found for spawn {spawnIndex} - all options exceed overlap tolerance");
-        
-        return false;
-    }
-
-    /// <summary>
-    /// Smart room placement that finds the room with minimum overlap
-    /// Priority: 1) Rooms within tolerance, 2) Room with smallest overlap, 3) Force placement
-    /// </summary>
-    private bool ForcePlaceAnyRoom(int spawnIndex, RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty, string debugName)
-    {
-        Transform targetTransform = roomTransforms[spawnIndex];
-        
-        // First try: Find room with minimum overlap
-        GameObject bestRoom = FindRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty, out float minOverlap);
-        
-        if (bestRoom != null)
-        {
-            if (minOverlap <= overlapTolerancePercent)
-            {
-                // Room fits within tolerance - place it normally
-                if (PlaceRoomAtSpawn(spawnIndex, bestRoom, debugName + $" (Min Overlap {minOverlap:F1}%)"))
-                {
-                    return true;
-                }
-            }
-            else
-            {
-                // Room exceeds tolerance but is the best option available
-                Debug.LogWarning($"[SmartPlacement] Placing room with {minOverlap:F1}% overlap (exceeds {overlapTolerancePercent}% tolerance) at spawn {spawnIndex}");
-                if (PlaceRoomAtSpawn(spawnIndex, bestRoom, debugName + $" (Best Option {minOverlap:F1}%)"))
-                {
-                    return true;
-                }
-            }
-        }
-        
-        // Absolute last resort: try any room without collision checking
-        GameObject anyRoom = buildingScriptableObj.GetBuildingRoom(currentDifficulty);
-        if (anyRoom != null)
-        {
-            if (PlaceRoomAtSpawn(spawnIndex, anyRoom, debugName + " (Force Any)"))
-            {
-                Debug.LogWarning($"[ForcePlacement] Used absolute force placement for {debugName} at spawn {spawnIndex}");
+                    if (ShowCollisionDebug)
+                        Debug.Log($"[TryPlaceAnyValidRoom] Placed room at spawn {spawnIndex} with {overlapVolume:F1} cubic units overlap");
                 return true;
+                }
+            }
+            else if (ShowCollisionDebug)
+            {
+                Debug.Log($"[TryPlaceAnyValidRoom] Room {roomPrefab.name} rejected at spawn {spawnIndex} - {overlapVolume:F1} cubic units exceeds {maxAcceptableOverlapVolume} tolerance");
             }
         }
         
-        Debug.LogError($"[ForcePlacement] Failed to place any room at spawn {spawnIndex}");
+        if (ShowCollisionDebug)
+            Debug.LogWarning($"[TryPlaceAnyValidRoom] No room found for spawn {spawnIndex} with less than {maxAcceptableOverlapVolume} cubic units overlap");
+        
         return false;
     }
 
@@ -612,7 +650,9 @@ public class RogueLiteRoomParent : MonoBehaviour
     }
 
     /// <summary>
-    /// Calculate the maximum overlap percentage this room would have with existing rooms
+    /// Calculate the maximum overlap volume (in cubic units) for this room with existing rooms.
+    /// Returns raw intersection volume - smaller is better.
+    /// This naturally favors smaller rooms and rooms with minimal physical overlap.
     /// </summary>
     private float CalculateMaxOverlapForRoom(GameObject roomPrefab, Vector3 position)
     {
@@ -622,7 +662,13 @@ public class RogueLiteRoomParent : MonoBehaviour
         // Use the new CalculateTestBounds method that doesn't modify the original prefab
         Bounds testBounds = testRoom.CalculateTestBounds(position);
 
-        float maxOverlap = 0f;
+        float maxIntersectionVolume = 0f;
+        
+        if (ShowCollisionDebug)
+        {
+            Debug.Log($"[OverlapCalc] Testing {roomPrefab.name} at position {position}");
+            Debug.Log($"[OverlapCalc]   Test bounds: center={testBounds.center}, size={testBounds.size}, min={testBounds.min}, max={testBounds.max}");
+        }
 
         // Check against all placed rooms
         foreach (var kvp in placedRoomsBySpawnIndex)
@@ -635,24 +681,67 @@ public class RogueLiteRoomParent : MonoBehaviour
             
             Bounds existingBounds = existingRoom.GetWorldBounds();
             
+            if (ShowCollisionDebug)
+            {
+                Debug.Log($"[OverlapCalc]   Checking against {roomData.debugName} (spawn {kvp.Key})");
+                Debug.Log($"[OverlapCalc]     Existing bounds: center={existingBounds.center}, size={existingBounds.size}, min={existingBounds.min}, max={existingBounds.max}");
+            }
+            
             // Check for overlap
             if (testBounds.Intersects(existingBounds))
             {
-                float overlapPercentage = CalculateOverlapPercentage(testBounds, existingBounds);
-                maxOverlap = Mathf.Max(maxOverlap, overlapPercentage);
+                // Calculate intersection volume (RAW cubic units)
+                Vector3 intersectionMin = Vector3.Max(testBounds.min, existingBounds.min);
+                Vector3 intersectionMax = Vector3.Min(testBounds.max, existingBounds.max);
+                
+                if (intersectionMin.x < intersectionMax.x && 
+                    intersectionMin.y < intersectionMax.y && 
+                    intersectionMin.z < intersectionMax.z)
+                {
+                    Vector3 intersectionSize = intersectionMax - intersectionMin;
+                    float intersectionVolume = intersectionSize.x * intersectionSize.y * intersectionSize.z;
+                    
+                    if (ShowCollisionDebug)
+                    {
+                        Debug.Log($"[OverlapCalc]     INTERSECTION DETECTED! Volume: {intersectionVolume:F1} cubic units");
+                        Debug.Log($"[OverlapCalc]       Intersection: min={intersectionMin}, max={intersectionMax}, size={intersectionSize}");
+                    }
+                    
+                    // Use the largest intersection found
+                    maxIntersectionVolume = Mathf.Max(maxIntersectionVolume, intersectionVolume);
+                }
+            }
+            else if (ShowCollisionDebug)
+            {
+                Debug.Log($"[OverlapCalc]     No intersection detected");
             }
             
             // Also check minimum distance requirement
             float centerDistance = Vector3.Distance(testBounds.center, existingBounds.center);
             if (centerDistance < minRoomDistance)
             {
-                // Penalize rooms that are too close by adding extra "virtual overlap"
-                float distancePenalty = (minRoomDistance - centerDistance) / minRoomDistance * 50f; // Convert to percentage
-                maxOverlap = Mathf.Max(maxOverlap, distancePenalty);
+                // Penalize rooms that are too close with a large virtual intersection volume
+                float distancePenalty = (minRoomDistance - centerDistance) * 500f; // Scale to cubic units
+                
+                if (ShowCollisionDebug)
+                {
+                    Debug.Log($"[OverlapCalc]     DISTANCE PENALTY! Distance: {centerDistance:F1} < min: {minRoomDistance:F1}, penalty: {distancePenalty:F1}");
+                }
+                
+                maxIntersectionVolume = Mathf.Max(maxIntersectionVolume, distancePenalty);
+            }
+            else if (ShowCollisionDebug)
+            {
+                Debug.Log($"[OverlapCalc]     Distance OK: {centerDistance:F1} >= {minRoomDistance:F1}");
             }
         }
 
-        return maxOverlap;
+        if (ShowCollisionDebug)
+        {
+            Debug.Log($"[OverlapCalc] Result for {roomPrefab.name}: Max overlap volume = {maxIntersectionVolume:F1} cubic units");
+        }
+
+        return maxIntersectionVolume;
     }
 
     /// <summary>
@@ -696,6 +785,9 @@ public class RogueLiteRoomParent : MonoBehaviour
         // Force bounds recalculation at the new position (Awake should have done this, but be safe)
         roomComponent.CalculateRoomBounds();
         
+        // Get the actual placed bounds for verification
+        Bounds placedBounds = roomComponent.GetWorldBounds();
+
         // Track the placed room data
         var roomData = new PlacedRoomData(room, roomPrefab, spawnIndex, debugName);
         placedRoomsBySpawnIndex[spawnIndex] = roomData;
@@ -707,11 +799,47 @@ public class RogueLiteRoomParent : MonoBehaviour
         // Update the parent's room type based on placed rooms
         UpdateParentRoomType();
         
-        if (showCollisionDebug)
+        // Log placement with full bounds info
+        Debug.Log($"[PlaceRoomAtSpawn] Placed {roomPrefab.name} as '{debugName}' at spawn {spawnIndex}");
+        Debug.Log($"  Position: {targetTransform.position}");
+        Debug.Log($"  Bounds: center={placedBounds.center}, size={placedBounds.size}");
+        Debug.Log($"  Bounds: min={placedBounds.min}, max={placedBounds.max}");
+        
+        // Now check if this newly placed room overlaps with any existing rooms
+        if (ShowCollisionDebug)
         {
-            Bounds placedBounds = roomComponent.GetWorldBounds();
-            Debug.Log($"[PlaceRoomAtSpawn] Successfully placed {debugName} at spawn {spawnIndex}, " +
-                     $"position: {targetTransform.position}, bounds center: {placedBounds.center}, size: {placedBounds.size}");
+            Debug.Log($"[PlaceRoomAtSpawn] Checking for overlaps with previously placed rooms...");
+            foreach (var kvp in placedRoomsBySpawnIndex)
+            {
+                if (kvp.Key == spawnIndex) continue; // Skip self
+                
+                var otherRoomData = kvp.Value;
+                if (otherRoomData.roomObject == null) continue;
+                
+                RogueLiteRoom otherRoom = otherRoomData.roomObject.GetComponent<RogueLiteRoom>();
+                if (otherRoom == null) continue;
+                
+                Bounds otherBounds = otherRoom.GetWorldBounds();
+                
+                if (placedBounds.Intersects(otherBounds))
+                {
+                    Vector3 intersectionMin = Vector3.Max(placedBounds.min, otherBounds.min);
+                    Vector3 intersectionMax = Vector3.Min(placedBounds.max, otherBounds.max);
+                    
+                    if (intersectionMin.x < intersectionMax.x && 
+                        intersectionMin.y < intersectionMax.y && 
+                        intersectionMin.z < intersectionMax.z)
+                    {
+                        Vector3 intersectionSize = intersectionMax - intersectionMin;
+                        float intersectionVolume = intersectionSize.x * intersectionSize.y * intersectionSize.z;
+                        
+                        Debug.LogWarning($"[PlaceRoomAtSpawn] ⚠️ OVERLAP DETECTED after placement!");
+                        Debug.LogWarning($"  {roomPrefab.name} at spawn {spawnIndex} overlaps with {otherRoomData.debugName} at spawn {kvp.Key}");
+                        Debug.LogWarning($"  Intersection volume: {intersectionVolume:F1} cubic units");
+                        Debug.LogWarning($"  Intersection: min={intersectionMin}, max={intersectionMax}, size={intersectionSize}");
+                    }
+                }
+            }
         }
         
         return true;
@@ -781,10 +909,21 @@ public class RogueLiteRoomParent : MonoBehaviour
             // Check for excessive overlap
             if (testBounds.Intersects(existingBounds))
             {
-                float overlapPercentage = CalculateOverlapPercentage(testBounds, existingBounds);
-                if (overlapPercentage > overlapTolerancePercent)
+                // Calculate intersection volume
+                Vector3 intersectionMin = Vector3.Max(testBounds.min, existingBounds.min);
+                Vector3 intersectionMax = Vector3.Min(testBounds.max, existingBounds.max);
+                
+                if (intersectionMin.x < intersectionMax.x && 
+                    intersectionMin.y < intersectionMax.y && 
+                    intersectionMin.z < intersectionMax.z)
+                {
+                    Vector3 intersectionSize = intersectionMax - intersectionMin;
+                    float intersectionVolume = intersectionSize.x * intersectionSize.y * intersectionSize.z;
+                    
+                    if (intersectionVolume > maxAcceptableOverlapVolume)
                 {
                     conflictingSpawns.Add(spawnIndex);
+                    }
                 }
             }
         }
@@ -1079,15 +1218,34 @@ public class RogueLiteRoomParent : MonoBehaviour
                     {
                         Bounds bounds = roomComponent.GetWorldBounds();
                         
-                        // Draw wireframe in magenta for easy visibility
-                        Gizmos.color = Color.magenta;
+                        // Color code based on overlap status
+                        if (roomData.exceededTolerance)
+                        {
+                            // Red/orange for rooms that exceeded tolerance
+                            Gizmos.color = new Color(1f, 0.5f, 0f, 1f); // Orange
+                        }
+                        else if (roomData.overlapPercentage > 0)
+                        {
+                            // Yellow for rooms with acceptable overlap
+                            Gizmos.color = Color.yellow;
+                        }
+                        else
+                        {
+                            // Green for rooms with no overlap
+                            Gizmos.color = Color.green;
+                        }
+                        
                         Gizmos.DrawWireCube(bounds.center, bounds.size);
                         
                         #if UNITY_EDITOR
-                        // Draw label with room info
+                        // Draw label with room info and overlap status
                         UnityEditor.Handles.color = Color.white;
+                        string overlapInfo = roomData.overlapPercentage > 0 
+                            ? $"\nOverlap: {roomData.overlapPercentage:F1}% {(roomData.exceededTolerance ? "⚠️" : "✓")}"
+                            : "\nOverlap: None ✓";
+                        
                         UnityEditor.Handles.Label(bounds.center + Vector3.up * (bounds.size.y * 0.5f + 1f), 
-                            $"Spawn {kvp.Key}: {roomData.debugName}\nBounds: {bounds.size}");
+                            $"Spawn {kvp.Key}: {roomData.debugName}\nBounds: {bounds.size}{overlapInfo}");
                         #endif
                     }
                 }
@@ -1143,14 +1301,6 @@ public class RogueLiteRoomParent : MonoBehaviour
     }
 
     #if UNITY_EDITOR
-    [UnityEditor.MenuItem("CONTEXT/RogueLiteRoomParent/Toggle Collision Debug")]
-    private static void ToggleCollisionDebug(UnityEditor.MenuCommand command)
-    {
-        RogueLiteRoomParent parent = (RogueLiteRoomParent)command.context;
-        parent.showCollisionDebug = !parent.showCollisionDebug;
-        Debug.Log($"[RogueLiteRoomParent] Collision debug {(parent.showCollisionDebug ? "enabled" : "disabled")} for {parent.gameObject.name}");
-    }
-
     [UnityEditor.MenuItem("CONTEXT/RogueLiteRoomParent/Log Current Room Placement")]
     private static void LogCurrentRoomPlacement(UnityEditor.MenuCommand command)
     {
@@ -1158,7 +1308,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         Debug.Log($"[RogueLiteRoomParent] === Room Placement Info for {parent.gameObject.name} ===");
         Debug.Log($"Total spawn points: {(parent.roomTransforms != null ? parent.roomTransforms.Length : 0)}");
         Debug.Log($"Placed rooms: {parent.placedRoomsBySpawnIndex.Count}");
-        Debug.Log($"Overlap tolerance: {parent.overlapTolerancePercent}%");
+        Debug.Log($"Max acceptable overlap: {parent.maxAcceptableOverlapVolume} cubic units");
         Debug.Log($"Min room distance: {parent.minRoomDistance}");
         
         foreach (var kvp in parent.placedRoomsBySpawnIndex)
@@ -1176,6 +1326,119 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
     }
     #endif
+    
+    #region Context Menu Debug Tools
+    
+    [ContextMenu("Check All Room Overlaps")]
+    private void CheckAllRoomOverlaps()
+    {
+        Debug.Log($"=== Checking All Room Overlaps ===");
+        Debug.Log($"Total placed rooms: {placedRoomsBySpawnIndex.Count}");
+        Debug.Log($"Max acceptable overlap volume: {maxAcceptableOverlapVolume}");
+        
+        if (placedRoomsBySpawnIndex.Count == 0)
+        {
+            Debug.LogWarning("No rooms have been placed yet!");
+            return;
+        }
+        
+        int overlapCount = 0;
+        
+        // Check each pair of rooms
+        var roomList = new List<KeyValuePair<int, PlacedRoomData>>(placedRoomsBySpawnIndex);
+        
+        for (int i = 0; i < roomList.Count; i++)
+        {
+            var room1Data = roomList[i];
+            if (room1Data.Value.roomObject == null) continue;
+            
+            RogueLiteRoom room1Component = room1Data.Value.roomObject.GetComponent<RogueLiteRoom>();
+            if (room1Component == null) continue;
+            
+            Bounds bounds1 = room1Component.GetWorldBounds();
+            
+            Debug.Log($"\n[Room {i}] {room1Data.Value.debugName} at spawn {room1Data.Key}:");
+            Debug.Log($"  Prefab: {room1Data.Value.originalPrefab.name}");
+            Debug.Log($"  Position: {room1Data.Value.roomObject.transform.position}");
+            Debug.Log($"  Bounds: center={bounds1.center}, size={bounds1.size}");
+            Debug.Log($"  Bounds: min={bounds1.min}, max={bounds1.max}");
+            
+            for (int j = i + 1; j < roomList.Count; j++)
+            {
+                var room2Data = roomList[j];
+                if (room2Data.Value.roomObject == null) continue;
+                
+                RogueLiteRoom room2Component = room2Data.Value.roomObject.GetComponent<RogueLiteRoom>();
+                if (room2Component == null) continue;
+                
+                Bounds bounds2 = room2Component.GetWorldBounds();
+                
+                if (bounds1.Intersects(bounds2))
+                {
+                    Vector3 intersectionMin = Vector3.Max(bounds1.min, bounds2.min);
+                    Vector3 intersectionMax = Vector3.Min(bounds1.max, bounds2.max);
+                    
+                    if (intersectionMin.x < intersectionMax.x && 
+                        intersectionMin.y < intersectionMax.y && 
+                        intersectionMin.z < intersectionMax.z)
+                    {
+                        Vector3 intersectionSize = intersectionMax - intersectionMin;
+                        float intersectionVolume = intersectionSize.x * intersectionSize.y * intersectionSize.z;
+                        
+                        overlapCount++;
+                        
+                        string status = intersectionVolume <= maxAcceptableOverlapVolume ? "ACCEPTABLE" : "⚠️ EXCEEDS TOLERANCE";
+                        
+                        Debug.LogWarning($"  OVERLAP #{overlapCount} with {room2Data.Value.debugName} (Prefab: {room2Data.Value.originalPrefab.name}) at spawn {room2Data.Key}: {status}");
+                        Debug.LogWarning($"    Intersection volume: {intersectionVolume:F1} cubic units (tolerance: {maxAcceptableOverlapVolume:F1})");
+                        Debug.LogWarning($"    Intersection: min={intersectionMin}, max={intersectionMax}");
+                        Debug.LogWarning($"    Intersection size: {intersectionSize}");
+                    }
+                }
+            }
+        }
+        
+        if (overlapCount == 0)
+        {
+            Debug.Log($"\n✓ No overlaps detected!");
+        }
+        else
+        {
+            Debug.LogWarning($"\n⚠️ Total overlaps found: {overlapCount}");
+        }
+    }
+    
+    [ContextMenu("Log Current Room Placement")]
+    private void LogCurrentRoomPlacement()
+    {
+        Debug.Log($"=== Current Room Placement ===");
+        Debug.Log($"Placed Rooms: {placedRoomsBySpawnIndex.Count}");
+        
+        if (placedRoomsBySpawnIndex.Count == 0)
+        {
+            Debug.LogWarning("No rooms have been placed yet!");
+            return;
+        }
+        
+        foreach (var kvp in placedRoomsBySpawnIndex)
+        {
+            var roomData = kvp.Value;
+            if (roomData.roomObject != null)
+            {
+                RogueLiteRoom roomComp = roomData.roomObject.GetComponent<RogueLiteRoom>();
+                if (roomComp != null)
+                {
+                    Bounds bounds = roomComp.GetWorldBounds();
+                    Debug.Log($"  Spawn {kvp.Key}: {roomData.debugName}");
+                    Debug.Log($"    Prefab: {roomData.originalPrefab.name}");
+                    Debug.Log($"    Position: {roomData.roomObject.transform.position}");
+                    Debug.Log($"    Bounds: center={bounds.center}, size={bounds.size}");
+                }
+            }
+        }
+    }
+    
+    #endregion
 }
 
 

@@ -743,6 +743,10 @@ PrefabInstance:
       propertyPath: mutationQuantities.Array.data[0].quantity
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 766745705719833539, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1125807288198912761, guid: 9e5c7ff6d4169f94986c5a0288d3faf1, type: 3}
       propertyPath: _firstSelected
       value: 

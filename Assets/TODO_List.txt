@@ -4,6 +4,11 @@ Stopping the rooms overlapping when spawning in building rooms
 
 Start experimenting with some extra rooms and buildings
 
+Look at controlling group enemy behaviour. ie. staggering attacking, agro, have the ai kind of work together to make the game more challenging and engaging.
+
+TODO now!
+Mark doors and chests of rooms as private
+
 ****** Tomorrow work:
 
 
