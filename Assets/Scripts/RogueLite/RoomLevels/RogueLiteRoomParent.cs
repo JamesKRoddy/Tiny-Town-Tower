@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.AI.Navigation;
 using UnityEngine;
+using UnityEngine.AI;
 using System.Linq;
 using Managers;
 using Enemies;
@@ -124,9 +125,29 @@ public class RogueLiteRoomParent : MonoBehaviour
         // Check if this is a friendly room and trigger door unlock if needed
         CheckAndHandleFriendlyRoomDoors();
 
+        // Get or add NavMeshSurface component on THIS parent (not on child rooms)
         if (navMeshSurface == null)
         {
+            navMeshSurface = GetComponent<NavMeshSurface>();
+            if (navMeshSurface == null)
+            {
+                // If not found on parent, try to find one in scene
             navMeshSurface = FindAnyObjectByType<NavMeshSurface>();
+                if (navMeshSurface != null)
+                {
+                    Debug.Log($"[RogueLiteRoomParent] Using scene NavMeshSurface from {navMeshSurface.gameObject.name}");
+                }
+                else
+                {
+                    Debug.LogError("[RogueLiteRoomParent] No NavMeshSurface found in scene! Please add one or attach it to the RogueLiteRoomParent GameObject.");
+                }
+            }
+        }
+
+        // Configure NavMeshSurface for dynamic room spawning
+        if (navMeshSurface != null)
+        {
+            ConfigureNavMeshSurface();
         }
 
         StartCoroutine(DelayedBakeNavMesh());
@@ -1276,9 +1297,49 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Configures the NavMeshSurface with optimal settings for dynamic room spawning.
+    /// </summary>
+    private void ConfigureNavMeshSurface()
+    {
+        bool settingsChanged = false;
+
+        // Ensure Collect Objects is set to All (required for dynamically spawned rooms)
+        if (navMeshSurface.collectObjects != Unity.AI.Navigation.CollectObjects.All)
+        {
+            Debug.Log($"[RogueLiteRoomParent] Changing NavMeshSurface 'Collect Objects' from '{navMeshSurface.collectObjects}' to 'All' for dynamic room spawning");
+            navMeshSurface.collectObjects = Unity.AI.Navigation.CollectObjects.All;
+            settingsChanged = true;
+        }
+
+        // Ensure Use Geometry is set to Render Meshes (best for most room setups)
+        if (navMeshSurface.useGeometry != NavMeshCollectGeometry.RenderMeshes)
+        {
+            Debug.Log($"[RogueLiteRoomParent] Changing NavMeshSurface 'Use Geometry' from '{navMeshSurface.useGeometry}' to 'RenderMeshes' for proper floor detection");
+            navMeshSurface.useGeometry = NavMeshCollectGeometry.RenderMeshes;
+            settingsChanged = true;
+        }
+
+        if (settingsChanged)
+        {
+            Debug.Log("[RogueLiteRoomParent] NavMeshSurface configured for dynamic room spawning");
+        }
+        else
+        {
+            Debug.Log("[RogueLiteRoomParent] NavMeshSurface already configured correctly");
+        }
+    }
+
     private IEnumerator DelayedBakeNavMesh()
     {
-        yield return new WaitForSeconds(0.1f);
+        // Wait for end of frame to ensure all Instantiate calls are complete
+        yield return new WaitForEndOfFrame();
+        
+        // Wait for physics to update (important after transform hierarchy changes)
+        yield return new WaitForFixedUpdate();
+        
+        // Add a small additional delay to ensure all colliders are in final positions
+        yield return new WaitForSeconds(0.2f);
 
         Debug.Log("[RogueLiteRoomParent] Starting NavMesh baking...");
 
