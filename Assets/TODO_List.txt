@@ -2,10 +2,6 @@
 
 Look at controlling group enemy behaviour. ie. staggering attacking, agro, have the ai kind of work together to make the game more challenging and engaging.
 
-TODO now!
-Mark doors and chests of rooms as private
-Navmesh is breaking on extender rooms
-
 ****** Tomorrow work:
 
 
@@ -18,6 +14,8 @@ Create the scriptable obj and prefabs for: Genetic mutations, weapons, world obj
 VFX for player
 
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
+
+Recruitable NPCs in roguelike section shouldn't wander, get tired/sick etc. They should just hang out until the player talks to them. Have to create an animation state to just have idle animations
 
 
 ****** Bugs and refactoring:
