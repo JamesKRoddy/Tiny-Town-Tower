@@ -349,6 +349,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 83115b41ecc29d44284ef52b7551852a, type: 2}
   - {fileID: 11400000, guid: e917dc6f66606014dbfa9cec973cd6f3, type: 2}
   buildingHitEffects: []
+  universalElementalEffects: []
+  universalStatusEffects: []
   poolSize: 10
 --- !u!1 &2832878052533813605
 GameObject:
@@ -991,8 +993,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26c2b1d435a05d44f819fc1fa1cf1cba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  progressBarPrefab: {fileID: 6865060584137632757, guid: b49d6c92050b87b4793c54c7269dbd3d, type: 3}
-  maxActiveProgressBars: 30
 --- !u!1 &5084882977589491775
 GameObject:
   m_ObjectHideFlags: 0
@@ -1181,6 +1181,7 @@ Transform:
   m_Children:
   - {fileID: 7729418689376073349}
   - {fileID: 1372251293783562068}
+  - {fileID: 5868074782510813078}
   m_Father: {fileID: 4686915863895893509}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6945657278055493532
@@ -1759,6 +1760,61 @@ MonoBehaviour:
     effect: {fileID: 11400000, guid: ce47b9855e546c446aa73e7717588dcb, type: 2}
   repairEffectMappings: []
   destructionEffectMappings: []
+--- !u!1 &8513753927899686475
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5868074782510813078}
+  - component: {fileID: 6911640048996044745}
+  m_Layer: 0
+  m_Name: EnemyManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5868074782510813078
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8513753927899686475}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 324688132105225691}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6911640048996044745
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8513753927899686475}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5e801130eee0134e8db2bdef69c412a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxSimultaneousAttackers: 2
+  attackStaggerDelay: 0.5
+  postAttackCooldown: 1
+  enableFlankingBehavior: 1
+  minAngleBetweenEnemies: 45
+  preferredAttackDistance: 3
+  positionUpdateInterval: 2
+  enableAggroSystem: 1
+  threatDecayRate: 5
+  threatPerDamage: 10
+  showDebug: 0
 --- !u!1 &8937295529231746835
 GameObject:
   m_ObjectHideFlags: 0

@@ -3034,6 +3034,17 @@ MonoBehaviour:
   obstacleBoundsOffset: 1
   rootMotionMultiplier: 1
   showCollisionDebug: 0
+  enableCooldownMovement: 1
+  cooldownMovementMinDistance: 2
+  cooldownMovementMaxDistance: 4
+  cooldownMovementMinDuration: 1
+  cooldownMovementMaxDuration: 3
+  enableHeadTracking: 1
+  headTrackingWeight: 0.8
+  headTrackingRotationWeight: 0.5
+  headTrackingLerpSpeed: 3
+  maxHeadTrackingAngle: 60
+  headTrackingDistance: 15
   health: 100
   maxHealth: 100
   poise: 50
@@ -3065,6 +3076,7 @@ MonoBehaviour:
   poiseDamage: 15
   attackType: 0
   attackOrigin: {fileID: 0}
+  allowRotationDuringAttack: 0
   attackElement: 0
   elementalDamageBonus: 0
   startEffect: {fileID: 0}
@@ -3085,7 +3097,7 @@ MonoBehaviour:
   beamVisual: {fileID: 3550279635202582810}
   headIKWeight: 1
   headIKRotationWeight: 1
-  headIKLerpSpeed: 3
+  headIKLerpSpeed: 0.5
   maxHeadRotationAngle: 90
 --- !u!1 &6616253873932381118
 GameObject:

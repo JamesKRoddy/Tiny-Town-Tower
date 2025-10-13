@@ -19,6 +19,14 @@ namespace Enemies{
             currentAttack = attack;
         }
 
+        /// <summary>
+        /// Override to provide current attack for IK forwarding
+        /// </summary>
+        protected override AttackBase GetCurrentAttackForIK()
+        {
+            return currentAttack;
+        }
+
         protected override void Awake()
         {
             base.Awake();

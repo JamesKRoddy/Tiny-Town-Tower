@@ -219,6 +219,12 @@ namespace Enemies
                 ApplyCharacterTypePoiseConfig();
             }
             
+            // Register with EnemyManager for group coordination
+            if (EnemyManager.Instance != null)
+            {
+                EnemyManager.Instance.RegisterEnemy(this);
+            }
+            
             // Find initial target
             FindNewTarget();
             
@@ -232,6 +238,12 @@ namespace Enemies
         protected virtual void OnDestroy()
         {
             OnTargetDestroyedEvent -= OnTargetDestroyed;
+            
+            // Unregister from EnemyManager
+            if (EnemyManager.Instance != null)
+            {
+                EnemyManager.Instance.UnregisterEnemy(this);
+            }
         }
 
         protected virtual void Update()
@@ -501,7 +513,141 @@ namespace Enemies
                 }
                 else
                 {
-                    // Normal movement toward target
+                    // Normal movement - check for flanking position from EnemyManager
+                    Vector3 flankingPosition = Vector3.zero;
+                    if (Managers.EnemyManager.Instance != null)
+                    {
+                        flankingPosition = Managers.EnemyManager.Instance.GetAssignedPosition(this);
+                    }
+                    
+                    // Prefer flanking position if available
+                    if (flankingPosition != Vector3.zero)
+                    {
+                        float distanceToFlankingPos = Vector3.Distance(transform.position, flankingPosition);
+                        
+                        // Use flanking position for movement
+                        agent.SetDestination(flankingPosition);
+                        
+                        // Check if we're at flanking position
+                        bool atFlankingPosition = distanceToFlankingPos < 1.5f;
+                        
+                        // For root motion, handle stopping
+                        if (useRootMotion)
+                        {
+                            // Only stop when actually attacking
+                            bool shouldStop = (isAttacking || isRotatingToAttack);
+                            
+                            if (shouldStop)
+                            {
+                                if (!agent.isStopped)
+                                {
+                                    agent.isStopped = true;
+                                    agent.velocity = Vector3.zero;
+                                }
+                            }
+                            else if (agent.isStopped && !atFlankingPosition)
+                            {
+                                agent.isStopped = false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // No flanking, move toward target
+                        agent.SetDestination(navMeshTarget.position);
+                        
+                        // For root motion zombies, check if we should stop the agent
+                        if (useRootMotion)
+                        {
+                            // Stop agent when at optimal distance or during attack phases
+                            bool shouldStop = (distanceToTarget <= optimalStoppingDistance) || isAttacking || isRotatingToAttack;
+                            
+                            if (shouldStop)
+                            {
+                                if (!agent.isStopped)
+                                {
+                                    if (showCollisionDebug)
+                                    {
+                                        Debug.Log($"[{gameObject.name}] Stopping agent - Distance: {distanceToTarget:F2} <= Optimal: {optimalStoppingDistance:F2} | " +
+                                                 $"isAttacking: {isAttacking} | isRotating: {isRotatingToAttack}");
+                                    }
+                                    agent.isStopped = true;
+                                    agent.velocity = Vector3.zero;
+                                }
+                            }
+                            else
+                            {
+                                // Resume movement when out of optimal distance
+                                if (agent.isStopped)
+                                {
+                                    if (showCollisionDebug)
+                                    {
+                                        Debug.Log($"[{gameObject.name}] Resuming agent - Distance: {distanceToTarget:F2} > Optimal: {optimalStoppingDistance:F2}");
+                                    }
+                                    agent.isStopped = false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Melee enemy (no minimum attack distance) - use coordinated movement
+                // Check for flanking position from EnemyManager
+                Vector3 flankingPosition = Vector3.zero;
+                if (Managers.EnemyManager.Instance != null)
+                {
+                    flankingPosition = Managers.EnemyManager.Instance.GetAssignedPosition(this);
+                }
+                
+                // Prefer flanking position if available
+                if (flankingPosition != Vector3.zero)
+                {
+                    float distanceToFlankingPos = Vector3.Distance(transform.position, flankingPosition);
+                    
+                    // Use flanking position for movement
+                    agent.SetDestination(flankingPosition);
+                    
+                    // Check if we're at flanking position and attacking
+                    bool atFlankingPosition = distanceToFlankingPos < 1.5f;
+                    
+                    // For root motion zombies, handle stopping
+                    if (useRootMotion)
+                    {
+                        // Only stop when actually attacking or rotating to attack
+                        // Allow movement to flanking position even when at attack range
+                        bool shouldStop = (isAttacking || isRotatingToAttack);
+                        
+                        if (shouldStop)
+                        {
+                            if (!agent.isStopped)
+                            {
+                                if (showCollisionDebug)
+                                {
+                                    Debug.Log($"[{gameObject.name}] Stopping for attack - isAttacking: {isAttacking} | isRotating: {isRotatingToAttack}");
+                                }
+                                agent.isStopped = true;
+                                agent.velocity = Vector3.zero;
+                            }
+                        }
+                        else
+                        {
+                            // Keep moving unless at exact flanking position
+                            if (agent.isStopped && !atFlankingPosition)
+                            {
+                                if (showCollisionDebug)
+                                {
+                                    Debug.Log($"[{gameObject.name}] Resuming movement to flanking position");
+                                }
+                                agent.isStopped = false;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    // No flanking position assigned, move toward target
                     agent.SetDestination(navMeshTarget.position);
                     
                     // For root motion zombies, check if we should stop the agent
@@ -534,44 +680,6 @@ namespace Enemies
                                 }
                                 agent.isStopped = false;
                             }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                // Melee enemy (no minimum attack distance) - use simple movement logic
-                agent.SetDestination(navMeshTarget.position);
-                
-                // For root motion zombies, check if we should stop the agent
-                if (useRootMotion)
-                {
-                    // Stop agent when at optimal distance or during attack phases
-                    bool shouldStop = (distanceToTarget <= optimalStoppingDistance) || isAttacking || isRotatingToAttack;
-                    
-                    if (shouldStop)
-                    {
-                        if (!agent.isStopped)
-                        {
-                            if (showCollisionDebug)
-                            {
-                                Debug.Log($"[{gameObject.name}] Stopping agent - Distance: {distanceToTarget:F2} <= Optimal: {optimalStoppingDistance:F2} | " +
-                                         $"isAttacking: {isAttacking} | isRotating: {isRotatingToAttack}");
-                            }
-                            agent.isStopped = true;
-                            agent.velocity = Vector3.zero;
-                        }
-                    }
-                    else
-                    {
-                        // Resume movement when out of optimal distance
-                        if (agent.isStopped)
-                        {
-                            if (showCollisionDebug)
-                            {
-                                Debug.Log($"[{gameObject.name}] Resuming agent - Distance: {distanceToTarget:F2} > Optimal: {optimalStoppingDistance:F2}");
-                            }
-                            agent.isStopped = false;
                         }
                     }
                 }
@@ -863,13 +971,37 @@ namespace Enemies
         }
 
         /// <summary>
+        /// Get the current attack component for IK forwarding
+        /// Override in child classes to provide the current attack
+        /// </summary>
+        /// <returns>The current attack component, or null if none</returns>
+        protected virtual AttackBase GetCurrentAttackForIK()
+        {
+            return null;
+        }
+
+        /// <summary>
         /// Called by Unity for IK (Inverse Kinematics) updates
         /// Implements general head tracking for all enemies when not attacking
         /// </summary>
         /// <param name="layerIndex">The IK layer index</param>
         protected virtual void OnAnimatorIK(int layerIndex)
         {
-            if (animator == null || !enableHeadTracking) return;
+            if (animator == null) return;
+            
+            // If attacking, forward IK to the current attack component (it may have custom IK behavior)
+            if (isAttacking)
+            {
+                AttackBase attack = GetCurrentAttackForIK();
+                if (attack != null)
+                {
+                    attack.OnAnimatorIK(layerIndex);
+                    return;
+                }
+            }
+            
+            // Otherwise, perform general head tracking if enabled
+            if (!enableHeadTracking) return;
             
             // Check if we should do head tracking
             bool shouldTrackHead = ShouldPerformHeadTracking();

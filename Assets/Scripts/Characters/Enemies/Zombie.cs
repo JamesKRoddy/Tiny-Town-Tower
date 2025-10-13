@@ -327,16 +327,37 @@ namespace Enemies
                 // After rotation, check if we're now ready to attack
                 if (!attack.ShouldRotateToAttack())
                 {
-                // Rotation complete, now execute the attack
-                isExecutingAttack = true;
-                attackExecutionStartTime = Time.time;
-                attack.StartAttack();
-                
-                // Update base class attack time for cooldown movement system
-                lastAttackTime = Time.time;
+                    // Rotation complete, now try to execute the attack
+                    // Request permission from EnemyManager before attacking
+                    if (Managers.EnemyManager.Instance != null)
+                    {
+                        if (!Managers.EnemyManager.Instance.RequestAttackPermission(this))
+                        {
+                            // Permission denied, keep circling and try again next frame
+                            return;
+                        }
+                    }
+                    
+                    // Permission granted, execute attack
+                    isExecutingAttack = true;
+                    attackExecutionStartTime = Time.time;
+                    attack.StartAttack();
+                    
+                    // Update base class attack time for cooldown movement system
+                    lastAttackTime = Time.time;
                 }
                 // If still need rotation, we'll try again next frame
                 return;
+            }
+            
+            // No rotation needed, request permission and execute
+            if (Managers.EnemyManager.Instance != null)
+            {
+                if (!Managers.EnemyManager.Instance.RequestAttackPermission(this))
+                {
+                    // Permission denied, keep circling and try again next frame
+                    return;
+                }
             }
             
             // Execute the attack (no rotation needed)
@@ -364,6 +385,12 @@ namespace Enemies
         protected override void EndAttack()
         {
             base.EndAttack();
+            
+            // Notify EnemyManager that attack is complete
+            if (Managers.EnemyManager.Instance != null)
+            {
+                Managers.EnemyManager.Instance.NotifyAttackComplete(this);
+            }
             
             // Resume movement after attack
             if (agent != null && agent.isOnNavMesh)
@@ -539,6 +566,14 @@ namespace Enemies
         /// </summary>
         /// <returns>Current attack component</returns>
         public AttackBase GetCurrentAttack()
+        {
+            return currentAttack;
+        }
+
+        /// <summary>
+        /// Override to provide current attack for IK forwarding
+        /// </summary>
+        protected override AttackBase GetCurrentAttackForIK()
         {
             return currentAttack;
         }

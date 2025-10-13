@@ -326,6 +326,12 @@ namespace Enemies
 
             // Deal damage with elemental type
             target.TakeDamage(totalDamage, poiseDamage, attackElement);
+            
+            // Add threat to target for aggro system
+            if (Managers.EnemyManager.Instance != null && this.target != null)
+            {
+                Managers.EnemyManager.Instance.AddThreat(this.target, totalDamage * 10f);
+            }
         }
 
         /// <summary>
@@ -353,6 +359,12 @@ namespace Enemies
             else
             {
                 target.TakeDamage(totalDamage, poiseAmount, attackElement, enemy.transform);
+            }
+            
+            // Add threat to target for aggro system
+            if (Managers.EnemyManager.Instance != null && this.target != null)
+            {
+                Managers.EnemyManager.Instance.AddThreat(this.target, totalDamage * 10f);
             }
         }
 
