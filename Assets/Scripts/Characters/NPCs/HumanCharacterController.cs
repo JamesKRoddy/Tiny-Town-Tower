@@ -160,6 +160,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public CharacterType CharacterType => characterType;
     
     public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
+    
+    // IDamageable hit reaction tracking
+    public Vector3 LastHitOrigin { get; set; } = Vector3.zero;
+    public float LastHitTime { get; set; } = -999f;
 
     protected virtual void Awake()
     {
@@ -2649,6 +2653,13 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         var (hitPoint, hitNormal) = DamageUtils.CalculateHitPointAndNormal(transform, damageSource);
         EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
 
+        // Track hit for procedural IK reactions
+        if (damageSource != null)
+        {
+            LastHitOrigin = damageSource.position;
+            LastHitTime = Time.time;
+        }
+
         if (health <= 0 && !isDead) Die();
     }
 
@@ -2674,8 +2685,14 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             }
         }
 
+        // Track hit for procedural IK reactions (skip if poise broken to avoid conflicts with stagger animations)
         if (damageSource != null)
         {
+            if (!poiseBroken)
+            {
+                LastHitOrigin = damageSource.position;
+                LastHitTime = Time.time;
+            }
             HandleDamageReaction(damageSource);
         }
 
@@ -2917,6 +2934,13 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         isDamaged = true;
         lastDamageTime = Time.time; // Update last damage time
 
+        // Track hit for procedural IK reactions
+        if (damageSource != null)
+        {
+            LastHitOrigin = damageSource.position;
+            LastHitTime = Time.time;
+        }
+
         if (health <= 0 && !isDead) Die();
     }
 
@@ -2956,12 +2980,35 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             }
         }
 
+        // Track hit for procedural IK reactions (skip if poise broken to avoid conflicts with stagger animations)
         if (damageSource != null)
         {
+            if (!poiseBroken)
+            {
+                LastHitOrigin = damageSource.position;
+                LastHitTime = Time.time;
+            }
             HandleDamageReaction(damageSource);
         }
 
         if (health <= 0 && !isDead) Die();
+    }
+
+    /// <summary>
+    /// Called by Unity for IK updates. This allows hit reactions to modify body part positions dynamically.
+    /// </summary>
+    /// <param name="layerIndex">The IK layer index</param>
+    protected virtual void OnAnimatorIK(int layerIndex)
+    {
+        if (animator == null) return;
+        
+        // Apply immediate hit reactions using stateless IK utility
+        if (animator.isHuman && LastHitOrigin != Vector3.zero)
+        {
+            IKReactionUtils.ApplyHitReactionIK(animator, transform, LastHitOrigin, LastHitTime);
+        }
+        
+        // Add other IK processing here as needed (e.g., look at targets, weapon IK, etc.)
     }
 
     #endregion

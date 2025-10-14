@@ -1,17 +1,13 @@
 *****Current Work*****
 
-Look at controlling group enemy behaviour. ie. staggering attacking, agro, have the ai kind of work together to make the game more challenging and engaging.
+Enemy procedural reactions to getting hit
 
 ****** Tomorrow work:
 
 
 ****** Next work:
 
-Camera shake effect for hitting/getting hit
-
 Charge up attacks by holding down buttons
-
-Enemy procedural reactions to getting hit
 
 Sweet spot for attack animations which grant extra bonus damage/effects
 

@@ -57,6 +57,10 @@ public interface IDamageable
     // Event that fires when the entity dies
     event System.Action OnDeath;
 
+    // Hit reaction tracking (for procedural IK reactions)
+    Vector3 LastHitOrigin { get; set; } // World position where last damage came from
+    float LastHitTime { get; set; } // Time when last damage was taken
+
     void TakeDamage(float amount, Transform damageSource = null); // Method to handle damage
     void TakeDamage(float amount, float poiseDamage, Transform damageSource = null); // Method to handle damage with poise
     void TakeDamage(float amount, AttackElement damageType, Transform damageSource = null); // Method to handle elemental damage

@@ -184,6 +184,10 @@ namespace Enemies
         public event Action<float, float> OnPoiseBroken;
         public event Action OnDeath;
         public static event System.Action<Transform> OnTargetDestroyedEvent;
+        
+        // IDamageable hit reaction tracking
+        public Vector3 LastHitOrigin { get; set; } = Vector3.zero;
+        public float LastHitTime { get; set; } = -999f;
 
         #endregion
 
@@ -1052,7 +1056,14 @@ namespace Enemies
         {
             if (animator == null) return;
             
-            // If attacking, forward IK to the current attack component (it may have custom IK behavior)
+            // Priority 1: Process hit reactions (immediate, stateless IK reactions)
+            if (animator.isHuman && LastHitOrigin != Vector3.zero)
+            {
+                IKReactionUtils.ApplyHitReactionIK(animator, transform, LastHitOrigin, LastHitTime);
+                // Hit reactions can blend with other IK, no return needed
+            }
+            
+            // Priority 2: If attacking, forward IK to the current attack component
             if (isAttacking)
             {
                 AttackBase attack = GetCurrentAttackForIK();
@@ -1063,7 +1074,7 @@ namespace Enemies
                 }
             }
             
-            // Otherwise, perform general head tracking if enabled
+            // Priority 3: Perform general head tracking if enabled
             if (!enableHeadTracking) return;
             
             // Check if we should do head tracking
@@ -1554,8 +1565,11 @@ namespace Enemies
             DamageUtils.ApplyDamage(this, amount, damageSource, animator, transform, 
                 OnDamageTaken, OnDeath, true);
 
+            // Track hit for procedural IK reactions
             if (damageSource != null)
             {
+                LastHitOrigin = damageSource.position;
+                LastHitTime = Time.time;
                 HandleDamageReaction(damageSource);
             }
 
@@ -1597,8 +1611,14 @@ namespace Enemies
                 }
             }
 
+            // Track hit for procedural IK reactions (skip if poise broken to avoid conflicts with stagger animations)
             if (damageSource != null)
             {
+                if (!poiseBroken)
+                {
+                    LastHitOrigin = damageSource.position;
+                    LastHitTime = Time.time;
+                }
                 HandleDamageReaction(damageSource);
             }
 
@@ -1987,8 +2007,11 @@ namespace Enemies
             Health -= finalDamage;
             OnDamageTaken?.Invoke(finalDamage, Health);
 
+            // Track hit for procedural IK reactions
             if (damageSource != null)
             {
+                LastHitOrigin = damageSource.position;
+                LastHitTime = Time.time;
                 HandleDamageReaction(damageSource);
             }
 
@@ -2032,8 +2055,14 @@ namespace Enemies
                 }
             }
 
+            // Track hit for procedural IK reactions (skip if poise broken to avoid conflicts with stagger animations)
             if (damageSource != null)
             {
+                if (!poiseBroken)
+                {
+                    LastHitOrigin = damageSource.position;
+                    LastHitTime = Time.time;
+                }
                 HandleDamageReaction(damageSource);
             }
 
