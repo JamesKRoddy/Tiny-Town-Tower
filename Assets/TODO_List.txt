@@ -1,6 +1,10 @@
 *****Current Work*****
 
-Enemy procedural reactions to getting hit
+Enemy procedural reactions to getting hit TEST!
+
+Set bat to normal element and test hit reactions
+
+Remove the part that makes enemies rotate towards the player when theyre hit
 
 ****** Tomorrow work:
 
@@ -20,6 +24,8 @@ VFX for player
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
 
 Recruitable NPCs in roguelike section shouldn't wander, get tired/sick etc. They should just hang out until the player talks to them. Have to create an animation state to just have idle animations
+
+Walls on room prefabs have one large collider, this needs to be broken into collides on the wall objects
 
 
 ****** Bugs and refactoring:
