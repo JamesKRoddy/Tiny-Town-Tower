@@ -22,7 +22,8 @@ public class RangedWeapon : WeaponBase
 
     public override void OnEquipped(Transform character)
     {
-        Debug.Log("UNIMPLEMENTED FUNCTION");
+        // Store character transform in base class
+        base.OnEquipped(character);
     }
 
     public override void Use()
@@ -62,8 +63,8 @@ public class RangedWeapon : WeaponBase
             var target = hit.collider.GetComponent<IDamageable>();
             if (target != null)
             {
-                // Use the new elemental damage system
-                DealDamage(target, firePoint);
+                // Use the new elemental damage system, passing character transform for proper camera shake
+                DealDamage(target, characterTransform);
             }
 
             if (impactEffect != null)

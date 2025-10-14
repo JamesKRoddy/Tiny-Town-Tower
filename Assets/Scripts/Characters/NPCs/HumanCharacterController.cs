@@ -2617,6 +2617,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void TakeDamage(float amount, Transform damageSource = null)
     {
+        // Prevent taking damage if already dead
+        if (isDead) return;
+        
         // Prevent taking damage if cooldown is active
         if (Time.time - lastDamageTime < damageCooldown)
         {
@@ -2652,6 +2655,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     // Overloaded TakeDamage method for poise damage
     public void TakeDamage(float amount, float poiseDamage, Transform damageSource = null)
     {
+        // Prevent taking damage if already dead
+        if (isDead) return;
+        
         // Use DamageUtils for consistent damage and poise handling
         var (hitDirection, poiseBroken) = DamageUtils.ApplyDamageWithPoise(this, amount, poiseDamage, 
             damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
@@ -2882,6 +2888,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
     public void TakeDamage(float amount, AttackElement damageType, Transform damageSource = null)
     {
+        // Prevent taking damage if already dead
+        if (isDead) return;
+        
         // Prevent taking damage if cooldown is active
         if (Time.time - lastDamageTime < damageCooldown)
         {
@@ -2920,6 +2929,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
     public void TakeDamage(float amount, float poiseDamage, AttackElement damageType, Transform damageSource = null)
     {
+        // Prevent taking damage if already dead
+        if (isDead) return;
+        
         // Use DamageUtils for elemental damage calculation with resistance
         var (hitDirection, finalDamage, poiseBroken) = DamageUtils.ApplyElementalDamageWithPoise(this, amount, poiseDamage, damageType, 
             damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);

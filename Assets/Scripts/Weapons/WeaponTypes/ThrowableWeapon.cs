@@ -8,7 +8,8 @@ public class ThrowableWeapon : WeaponBase
 
     public override void OnEquipped(Transform character)
     {
-        Debug.Log("UNIMPLEMENTED FUNCTION");
+        // Store character transform in base class
+        base.OnEquipped(character);
     }
 
     public override void StopUse()
@@ -38,17 +39,19 @@ public class ThrowableWeapon : WeaponBase
 
         // Add collision handler to deal damage
         var damageHandler = throwableInstance.AddComponent<ThrowableCollisionHandler>();
-        damageHandler.SetWeaponData(this);
+        damageHandler.SetWeaponData(this, characterTransform);
     }
 }
 
 public class ThrowableCollisionHandler : MonoBehaviour
 {
     private WeaponBase weaponData;
+    private Transform characterTransform; // Store who threw the projectile
 
-    public void SetWeaponData(WeaponBase weapon)
+    public void SetWeaponData(WeaponBase weapon, Transform character)
     {
         weaponData = weapon;
+        characterTransform = character;
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -56,8 +59,8 @@ public class ThrowableCollisionHandler : MonoBehaviour
         var target = collision.collider.GetComponent<IDamageable>();
         if (target != null && weaponData != null)
         {
-            // Use the weapon's elemental damage system
-            weaponData.DealDamage(target, transform);
+            // Use the weapon's elemental damage system, passing the character's transform for proper camera shake
+            weaponData.DealDamage(target, characterTransform);
             Debug.Log($"{collision.collider.name} took {weaponData.GetTotalDamage()} damage!");
         }
 

@@ -5,6 +5,9 @@ public abstract class WeaponBase : MonoBehaviour, IPickupableItem
     [Header("General Weapon Stats")]
     protected WeaponScriptableObj weaponData;
     
+    // Character reference for damage source and camera shake
+    protected Transform characterTransform;
+    
     // Store original values for mutation restoration
     private int originalDamage;
     private float originalPoiseDamage;
@@ -134,6 +137,34 @@ public abstract class WeaponBase : MonoBehaviour, IPickupableItem
         
         // Apply status effects
         ApplyStatusEffects(target, damageSource);
+        
+        // Trigger camera shake if the attacker is player-controlled
+        TriggerHitCameraShake(damageSource);
+    }
+    
+    /// <summary>
+    /// Triggers camera shake when hitting an enemy, but only if the attacker is player-controlled.
+    /// Provides subtle haptic-like feedback for successful hits.
+    /// </summary>
+    /// <param name="damageSource">The source of the damage</param>
+    protected virtual void TriggerHitCameraShake(Transform damageSource)
+    {
+        if (damageSource == null) return;
+        
+        // Check if this attack came from the player-controlled character
+        if (PlayerController.Instance != null && 
+            PlayerController.Instance._possessedNPC != null &&
+            PlayerCamera.Instance != null)
+        {
+            // Get the transform of the possessed NPC
+            Transform possessedTransform = PlayerController.Instance._possessedNPC.GetTransform();
+            
+            // If the damage source matches the possessed character, trigger camera shake
+            if (damageSource == possessedTransform)
+            {
+                PlayerCamera.Instance.ShakeFromHittingEnemy();
+            }
+        }
     }
     
     /// <summary>
@@ -193,7 +224,16 @@ public abstract class WeaponBase : MonoBehaviour, IPickupableItem
 
     public abstract void StopUse();
 
-    public abstract void OnEquipped(Transform character);
+    /// <summary>
+    /// Called when this weapon is equipped by a character.
+    /// Stores the character transform for damage calculations and camera shake.
+    /// Override in derived classes but call base.OnEquipped(character) first.
+    /// </summary>
+    /// <param name="character">The transform of the character equipping this weapon</param>
+    public virtual void OnEquipped(Transform character)
+    {
+        characterTransform = character;
+    }
 
     public string GetItemName() => weaponData?.objectName ?? "Unnamed Weapon";
 

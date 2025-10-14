@@ -1497,6 +1497,9 @@ namespace Enemies
 
         public void TakeDamage(float amount, Transform damageSource = null)
         {
+            // Prevent taking damage if already dead
+            if (Health <= 0) return;
+            
             float previousHealth = Health;
             Health -= amount;
 
@@ -1527,6 +1530,9 @@ namespace Enemies
         /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
         public void TakeDamage(float amount, float poiseDamage, Transform damageSource = null)
         {
+            // Prevent taking damage if already dead
+            if (Health <= 0) return;
+            
             float previousHealth = Health;
             Health -= amount;
 
@@ -1919,6 +1925,9 @@ namespace Enemies
         /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
         public void TakeDamage(float amount, AttackElement damageType, Transform damageSource = null)
         {
+            // Prevent taking damage if already dead
+            if (Health <= 0) return;
+            
             // Use DamageUtils for elemental damage calculation with resistance
             var (hitDirection, finalDamage) = DamageUtils.ApplyElementalDamage(this, amount, damageType, 
                 damageSource, animator, transform, OnDamageTaken, OnDeath, true);
@@ -1951,6 +1960,9 @@ namespace Enemies
         /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
         public void TakeDamage(float amount, float poiseDamage, AttackElement damageType, Transform damageSource = null)
         {
+            // Prevent taking damage if already dead
+            if (Health <= 0) return;
+            
             // Use DamageUtils for elemental damage calculation with resistance
             var (hitDirection, finalDamage, poiseBroken) = DamageUtils.ApplyElementalDamageWithPoise(this, amount, poiseDamage, damageType, 
                 damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
