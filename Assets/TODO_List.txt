@@ -7,6 +7,14 @@ Look at controlling group enemy behaviour. ie. staggering attacking, agro, have 
 
 ****** Next work:
 
+Camera shake effect for hitting/getting hit
+
+Charge up attacks by holding down buttons
+
+Enemy procedural reactions to getting hit
+
+Sweet spot for attack animations which grant extra bonus damage/effects
+
 Custom inspectors for NPC and their components, enemies, managers that need it
 
 Create the scriptable obj and prefabs for: Genetic mutations, weapons, world objects etc.
@@ -64,6 +72,8 @@ Combine the poise and elemental systems and add visual effects and animations fr
 Health system for settlers:
 Settlers not treated will die, recover or turn to zombies eventually (this is just based on their age and luck)
 They can increase chances of recovery by not working or even better receiving treatment.
+
+Finalise the difficulty system making enemies faster, more damage, more health, EnemyManager changes to change how the mobs behave, spawn different waves with harder zombies etc.
 
 *****Ideas*****
 

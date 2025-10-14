@@ -11,6 +11,22 @@ namespace Enemies
     /// Enemy base class that provides common functionality for all enemy types.
     /// Handles movement, targeting, health, and basic AI behaviors.
     /// 
+    /// ═══════════════════════════════════════════════════════════════════════════════════════
+    /// ENEMY MANAGER INTEGRATION:
+    /// ═══════════════════════════════════════════════════════════════════════════════════════
+    /// This class integrates with EnemyManager for group coordination:
+    /// 
+    /// • AUTO-REGISTRATION: Registers/unregisters in Start() and OnDestroy()
+    /// • PACK HUNTING: UpdateMovement() calls GetStrategicPosition() to get role-based destinations:
+    ///   - CHASER role → flanking position around player
+    ///   - INTERCEPTOR role → predicted player position (cuts off escape)
+    ///   - WANDERER role → random wander point
+    /// • ATTACK COORDINATION: Derived classes (e.g., Zombie) request attack permission
+    /// • AGGRO TRACKING: AttackBase reports damage dealt for threat system
+    /// 
+    /// Result: Individual enemy AI enhanced by shared group intelligence!
+    /// ═══════════════════════════════════════════════════════════════════════════════════════
+    /// 
     /// NAVIGATION SYSTEM:
     /// - Uses Unity's NavMesh for pathfinding and obstacle avoidance
     /// - Supports both traditional NavMesh movement and pure root motion
@@ -513,23 +529,23 @@ namespace Enemies
                 }
                 else
                 {
-                    // Normal movement - check for flanking position from EnemyManager
-                    Vector3 flankingPosition = Vector3.zero;
+                    // Normal movement - check for strategic position from EnemyManager (based on role)
+                    Vector3 strategicPosition = Vector3.zero;
                     if (Managers.EnemyManager.Instance != null)
                     {
-                        flankingPosition = Managers.EnemyManager.Instance.GetAssignedPosition(this);
+                        strategicPosition = Managers.EnemyManager.Instance.GetStrategicPosition(this);
                     }
                     
-                    // Prefer flanking position if available
-                    if (flankingPosition != Vector3.zero)
+                    // Prefer strategic position if available
+                    if (strategicPosition != Vector3.zero)
                     {
-                        float distanceToFlankingPos = Vector3.Distance(transform.position, flankingPosition);
+                        float distanceToStrategicPos = Vector3.Distance(transform.position, strategicPosition);
                         
-                        // Use flanking position for movement
-                        agent.SetDestination(flankingPosition);
+                        // Use strategic position for movement
+                        agent.SetDestination(strategicPosition);
                         
-                        // Check if we're at flanking position
-                        bool atFlankingPosition = distanceToFlankingPos < 1.5f;
+                        // Check if we're at strategic position
+                        bool atStrategicPosition = distanceToStrategicPos < 1.5f;
                         
                         // For root motion, handle stopping
                         if (useRootMotion)
@@ -545,7 +561,7 @@ namespace Enemies
                                     agent.velocity = Vector3.zero;
                                 }
                             }
-                            else if (agent.isStopped && !atFlankingPosition)
+                            else if (agent.isStopped && !atStrategicPosition)
                             {
                                 agent.isStopped = false;
                             }
@@ -553,7 +569,7 @@ namespace Enemies
                     }
                     else
                     {
-                        // No flanking, move toward target
+                        // No strategic position, move toward target
                         agent.SetDestination(navMeshTarget.position);
                         
                         // For root motion zombies, check if we should stop the agent
@@ -593,30 +609,30 @@ namespace Enemies
             }
             else
             {
-                // Melee enemy (no minimum attack distance) - use coordinated movement
-                // Check for flanking position from EnemyManager
-                Vector3 flankingPosition = Vector3.zero;
+                // Melee enemy (no minimum attack distance) - use coordinated movement with pack roles
+                // Check for strategic position from EnemyManager (based on role: chaser/interceptor/wanderer)
+                Vector3 strategicPosition = Vector3.zero;
                 if (Managers.EnemyManager.Instance != null)
                 {
-                    flankingPosition = Managers.EnemyManager.Instance.GetAssignedPosition(this);
+                    strategicPosition = Managers.EnemyManager.Instance.GetStrategicPosition(this);
                 }
                 
-                // Prefer flanking position if available
-                if (flankingPosition != Vector3.zero)
+                // Prefer strategic position if available
+                if (strategicPosition != Vector3.zero)
                 {
-                    float distanceToFlankingPos = Vector3.Distance(transform.position, flankingPosition);
+                    float distanceToStrategicPos = Vector3.Distance(transform.position, strategicPosition);
                     
-                    // Use flanking position for movement
-                    agent.SetDestination(flankingPosition);
+                    // Use strategic position for movement
+                    agent.SetDestination(strategicPosition);
                     
-                    // Check if we're at flanking position and attacking
-                    bool atFlankingPosition = distanceToFlankingPos < 1.5f;
+                    // Check if we're at strategic position
+                    bool atStrategicPosition = distanceToStrategicPos < 1.5f;
                     
                     // For root motion zombies, handle stopping
                     if (useRootMotion)
                     {
                         // Only stop when actually attacking or rotating to attack
-                        // Allow movement to flanking position even when at attack range
+                        // Allow movement to strategic position even when at attack range
                         bool shouldStop = (isAttacking || isRotatingToAttack);
                         
                         if (shouldStop)
@@ -633,12 +649,12 @@ namespace Enemies
                         }
                         else
                         {
-                            // Keep moving unless at exact flanking position
-                            if (agent.isStopped && !atFlankingPosition)
+                            // Keep moving unless at exact strategic position
+                            if (agent.isStopped && !atStrategicPosition)
                             {
                                 if (showCollisionDebug)
                                 {
-                                    Debug.Log($"[{gameObject.name}] Resuming movement to flanking position");
+                                    Debug.Log($"[{gameObject.name}] Resuming movement to strategic position");
                                 }
                                 agent.isStopped = false;
                             }
@@ -647,7 +663,7 @@ namespace Enemies
                 }
                 else
                 {
-                    // No flanking position assigned, move toward target
+                    // No strategic position assigned, move toward target
                     agent.SetDestination(navMeshTarget.position);
                     
                     // For root motion zombies, check if we should stop the agent

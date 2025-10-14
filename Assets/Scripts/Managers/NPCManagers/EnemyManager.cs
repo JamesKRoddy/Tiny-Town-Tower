@@ -7,11 +7,106 @@ using Enemies;
 namespace Managers
 {
     /// <summary>
-    /// Manages group enemy behavior coordination including:
-    /// - Attack staggering (prevents all enemies attacking at once)
-    /// - Aggro/threat management
-    /// - Flanking and positioning coordination
-    /// - Making combat more challenging and engaging
+    /// ═══════════════════════════════════════════════════════════════════════════════════════
+    /// ENEMY MANAGER - Group AI Coordination System
+    /// ═══════════════════════════════════════════════════════════════════════════════════════
+    /// 
+    /// OVERVIEW:
+    /// Provides "shared brain" coordination for all enemies in the game. Creates intelligent,
+    /// tactical encounters where enemies work together rather than acting independently.
+    /// 
+    /// ═══════════════════════════════════════════════════════════════════════════════════════
+    /// SETUP:
+    /// 1. Create empty GameObject in scene named "EnemyManager"
+    /// 2. Add this component
+    /// 3. Enemies auto-register in EnemyBase.Start()
+    /// 4. Tune settings in Inspector
+    /// ═══════════════════════════════════════════════════════════════════════════════════════
+    /// 
+    /// FEATURES:
+    /// 
+    /// ┌─ PACK HUNTING SYSTEM ─────────────────────────────────────────────────────────────┐
+    /// │ Enemies assigned different roles dynamically based on distance to player:         │
+    /// │                                                                                    │
+    /// │ • CHASER (maxActiveChasers closest enemies)                                       │
+    /// │   - Actively pursue and flank player                                              │
+    /// │   - Circle while waiting to attack                                                │
+    /// │   - Get attack priority                                                           │
+    /// │                                                                                    │
+    /// │ • INTERCEPTOR (next closest if enabled)                                           │
+    /// │   - Predict player movement using velocity                                        │
+    /// │   - Position ahead to cut off escape routes                                       │
+    /// │   - Block corridors and choke points                                              │
+    /// │                                                                                    │
+    /// │ • WANDERER (remaining enemies)                                                    │
+    /// │   - Roam around player's general area                                             │
+    /// │   - Create ambient threat                                                         │
+    /// │   - Can become chasers if player approaches                                       │
+    /// │                                                                                    │
+    /// │ RESULT: Not all enemies mindlessly chase - creates tactical challenge!            │
+    /// └────────────────────────────────────────────────────────────────────────────────────┘
+    /// 
+    /// ┌─ ATTACK COORDINATION ──────────────────────────────────────────────────────────────┐
+    /// │ Prevents overwhelming player with simultaneous attacks:                            │
+    /// │                                                                                    │
+    /// │ • Max simultaneous attackers (default: 2)                                         │
+    /// │ • Attack stagger delay between initiations (default: 0.5s)                        │
+    /// │ • Post-attack cooldown before next enemy can attack (default: 1.0s)               │
+    /// │ • Queue system for waiting enemies                                                │
+    /// │                                                                                    │
+    /// │ RESULT: Rhythmic combat with natural flow, not chaos!                             │
+    /// └────────────────────────────────────────────────────────────────────────────────────┘
+    /// 
+    /// ┌─ FLANKING & POSITIONING ───────────────────────────────────────────────────────────┐
+    /// │ Chasers spread around target in circle formation:                                 │
+    /// │                                                                                    │
+    /// │ • Dynamic angle assignment (min 45° apart)                                        │
+    /// │ • Circling behavior - rotate positions over time (30°/s)                          │
+    /// │ • Personal space enforcement (1.5m radius)                                        │
+    /// │ • Works for both melee AND ranged enemies                                         │
+    /// │                                                                                    │
+    /// │ RESULT: Enemies attack from multiple angles, must watch surroundings!             │
+    /// └────────────────────────────────────────────────────────────────────────────────────┘
+    /// 
+    /// ┌─ STAGGERED MOVEMENT (Fix for synchronized robot-like movement) ───────────────────┐
+    /// │ Each enemy updates position independently:                                        │
+    /// │                                                                                    │
+    /// │ • Individual update timers per enemy                                              │
+    /// │ • Random variance (±0.3s) prevents emergent synchronization                       │
+    /// │ • Faster update interval (1.0s vs 2.0s)                                           │
+    /// │                                                                                    │
+    /// │ BEFORE: All enemies stop/start together as a group (robotic)                      │
+    /// │ AFTER: Fluid continuous movement, always enemies repositioning                    │
+    /// │                                                                                    │
+    /// │ RESULT: Natural-looking mob behavior, no synchronized stopping!                   │
+    /// └────────────────────────────────────────────────────────────────────────────────────┘
+    /// 
+    /// ┌─ AGGRO / THREAT SYSTEM ────────────────────────────────────────────────────────────┐
+    /// │ Tracks damage dealt to prioritize targets:                                        │
+    /// │                                                                                    │
+    /// │ • Threat added when damage dealt (multiplied by 10)                               │
+    /// │ • Threat decays over time (default: 5/sec)                                        │
+    /// │ • Can query highest threat target                                                 │
+    /// │                                                                                    │
+    /// │ RESULT: Enemies remember who attacked them!                                       │
+    /// └────────────────────────────────────────────────────────────────────────────────────┘
+    /// 
+    /// ═══════════════════════════════════════════════════════════════════════════════════════
+    /// DIFFICULTY TUNING:
+    /// 
+    /// EASY MODE:
+    ///   Max Attackers: 1, Stagger Delay: 1.0s, Flanking: false
+    ///   → Classic "take turns" combat
+    /// 
+    /// NORMAL MODE (Default):
+    ///   Max Attackers: 2, Stagger Delay: 0.5s, Flanking: true, Circling: true
+    ///   → Dynamic, engaging encounters
+    /// 
+    /// HARD MODE:
+    ///   Max Attackers: 3-4, Stagger Delay: 0.3s, Circling Speed: 45°/s
+    ///   → High pressure, must manage multiple threats
+    /// 
+    /// ═══════════════════════════════════════════════════════════════════════════════════════
     /// </summary>
     public class EnemyManager : MonoBehaviour
     {
@@ -50,6 +145,16 @@ namespace Managers
 
         #region Serialized Fields
 
+        [Header("Pack Hunting Settings")]
+        [Tooltip("Maximum number of enemies actively chasing the player")]
+        [SerializeField] private int maxActiveChasers = 3;
+        
+        [Tooltip("Maximum distance for enemies to actively chase player")]
+        [SerializeField] private float maxChaseDistance = 30f;
+        
+        [Tooltip("How often to reassign roles (seconds)")]
+        [SerializeField] private float roleReassignmentInterval = 2f;
+
         [Header("Attack Coordination Settings")]
         [Tooltip("Maximum number of enemies that can attack simultaneously")]
         [SerializeField] private int maxSimultaneousAttackers = 2;
@@ -71,7 +176,7 @@ namespace Managers
         [SerializeField] private float preferredAttackDistance = 3f;
 
         [Tooltip("How often to update enemy positioning (seconds)")]
-        [SerializeField] private float positionUpdateInterval = 2f;
+        [SerializeField] private float positionUpdateInterval = 1f;
         
         [Tooltip("Enable circling behavior for enemies waiting to attack")]
         [SerializeField] private bool enableCirclingBehavior = true;
@@ -81,6 +186,28 @@ namespace Managers
         
         [Tooltip("Minimum personal space distance between enemies")]
         [SerializeField] private float personalSpaceRadius = 1.5f;
+        
+        [Tooltip("Stagger position updates across enemies to avoid synchronized movement")]
+        [SerializeField] private bool staggerPositionUpdates = true;
+        
+        [Tooltip("Random variance in update timing (prevents exact synchronization)")]
+        [SerializeField] private float updateVariance = 0.3f;
+        
+        [Header("Strategic Behavior Settings")]
+        [Tooltip("Enable interceptor behavior - enemies predict player movement")]
+        [SerializeField] private bool enableInterceptorBehavior = true;
+        
+        [Tooltip("How far ahead to predict player position (seconds)")]
+        [SerializeField] private float predictionTime = 2f;
+        
+        [Tooltip("Enable wandering for non-chasers")]
+        [SerializeField] private bool enableWanderingBehavior = true;
+        
+        [Tooltip("Wandering radius for non-active enemies")]
+        [SerializeField] private float wanderRadius = 15f;
+        
+        [Tooltip("How often wanderers pick new destination (seconds)")]
+        [SerializeField] private float wanderInterval = 5f;
 
         [Header("Aggro/Threat System Settings")]
         [Tooltip("Enable aggro/threat system")]
@@ -99,6 +226,24 @@ namespace Managers
 
         // Track all active enemies
         private List<EnemyBase> activeEnemies = new List<EnemyBase>();
+        
+        // Pack hunting roles
+        public enum EnemyRole
+        {
+            CHASER,      // Actively pursuing player
+            INTERCEPTOR, // Predicting and cutting off player
+            WANDERER     // Roaming, looking for opportunities
+        }
+        
+        private Dictionary<EnemyBase, EnemyRole> enemyRoles = new Dictionary<EnemyBase, EnemyRole>();
+        private Dictionary<EnemyBase, float> nextRoleCheckTime = new Dictionary<EnemyBase, float>();
+        private Dictionary<EnemyBase, Vector3> wanderDestinations = new Dictionary<EnemyBase, Vector3>();
+        private Dictionary<EnemyBase, float> nextWanderTime = new Dictionary<EnemyBase, float>();
+        private float lastRoleReassignmentTime = 0f;
+        
+        // Player tracking
+        private Vector3 lastPlayerPosition = Vector3.zero;
+        private Vector3 playerVelocity = Vector3.zero;
 
         // Attack coordination
         private List<EnemyBase> currentlyAttacking = new List<EnemyBase>();
@@ -108,6 +253,7 @@ namespace Managers
         // Positioning coordination
         private Dictionary<EnemyBase, Vector3> assignedPositions = new Dictionary<EnemyBase, Vector3>();
         private Dictionary<EnemyBase, float> assignedAngles = new Dictionary<EnemyBase, float>();
+        private Dictionary<EnemyBase, float> nextUpdateTimes = new Dictionary<EnemyBase, float>();
         private float lastPositionUpdateTime = 0f;
 
         // Aggro/Threat system
@@ -120,15 +266,28 @@ namespace Managers
         private void Update()
         {
             if (activeEnemies.Count == 0) return;
+            
+            // Track player movement
+            UpdatePlayerTracking();
+            
+            // Update pack hunting roles
+            UpdatePackRoles();
 
             // Update attack coordination
             UpdateAttackCoordination();
 
             // Update positioning coordination
-            if (enableFlankingBehavior && Time.time - lastPositionUpdateTime >= positionUpdateInterval)
+            if (enableFlankingBehavior)
             {
-                UpdatePositionCoordination();
-                lastPositionUpdateTime = Time.time;
+                if (staggerPositionUpdates)
+                {
+                    UpdatePositionCoordinationStaggered();
+                }
+                else if (Time.time - lastPositionUpdateTime >= positionUpdateInterval)
+                {
+                    UpdatePositionCoordination();
+                    lastPositionUpdateTime = Time.time;
+                }
             }
 
             // Update threat/aggro system
@@ -143,6 +302,261 @@ namespace Managers
 
         #endregion
 
+        #region Pack Hunting System
+        
+        // ═══════════════════════════════════════════════════════════════════════════════════════
+        // PACK HUNTING SYSTEM - "Shared Brain" Role-Based AI
+        // ═══════════════════════════════════════════════════════════════════════════════════════
+        // 
+        // PURPOSE:
+        // Give enemies a coordinated "mob brain" instead of independent mindless chasing.
+        // 
+        // HOW IT WORKS:
+        // 1. Track player position and velocity every frame
+        // 2. Every roleReassignmentInterval (2s), sort enemies by distance
+        // 3. Assign roles:
+        //    - Closest N → CHASER (actively pursue and flank)
+        //    - Next N   → INTERCEPTOR (predict movement, cut off)
+        //    - Rest     → WANDERER (roam, create ambient threat)
+        // 4. Roles dynamically shift as player moves
+        // 
+        // BENEFITS:
+        // • Player can't just run in circles - interceptors block escape
+        // • Not all enemies chase - prevents "zombie train"
+        // • Wanderers create unpredictable encounters
+        // • Scales naturally with enemy count
+        // 
+        // INTEGRATION:
+        // EnemyBase.UpdateMovement() calls GetStrategicPosition(this) which returns:
+        // • CHASER → flanking position around player
+        // • INTERCEPTOR → predicted future position
+        // • WANDERER → random wander point
+        // ═══════════════════════════════════════════════════════════════════════════════════════
+        
+        /// <summary>
+        /// Track player movement and calculate velocity for prediction
+        /// </summary>
+        private void UpdatePlayerTracking()
+        {
+            // Get player position
+            Transform playerTransform = null;
+            if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null)
+            {
+                playerTransform = PlayerController.Instance._possessedNPC.GetTransform();
+            }
+            
+            if (playerTransform == null) return;
+            
+            Vector3 currentPlayerPosition = playerTransform.position;
+            
+            // Calculate velocity
+            if (lastPlayerPosition != Vector3.zero)
+            {
+                playerVelocity = (currentPlayerPosition - lastPlayerPosition) / Time.deltaTime;
+            }
+            
+            lastPlayerPosition = currentPlayerPosition;
+        }
+        
+        private void UpdatePackRoles()
+        {
+            if (Time.time - lastRoleReassignmentTime < roleReassignmentInterval) return;
+            lastRoleReassignmentTime = Time.time;
+            
+            // Get player position
+            if (lastPlayerPosition == Vector3.zero) return;
+            
+            // Get all valid enemies
+            var validEnemies = activeEnemies
+                .Where(e => e != null && e.Health > 0)
+                .ToList();
+            
+            if (validEnemies.Count == 0) return;
+            
+            // Sort by distance to player
+            var sortedByDistance = validEnemies
+                .OrderBy(e => Vector3.Distance(e.transform.position, lastPlayerPosition))
+                .ToList();
+            
+            // Assign roles
+            int chaserCount = 0;
+            int interceptorCount = 0;
+            
+            foreach (var enemy in sortedByDistance)
+            {
+                float distanceToPlayer = Vector3.Distance(enemy.transform.position, lastPlayerPosition);
+                
+                // Closest enemies become chasers (up to max)
+                if (chaserCount < maxActiveChasers && distanceToPlayer < maxChaseDistance)
+                {
+                    SetEnemyRole(enemy, EnemyRole.CHASER);
+                    chaserCount++;
+                }
+                // Next closest become interceptors (if enabled)
+                else if (enableInterceptorBehavior && interceptorCount < maxActiveChasers && distanceToPlayer < maxChaseDistance * 1.5f)
+                {
+                    SetEnemyRole(enemy, EnemyRole.INTERCEPTOR);
+                    interceptorCount++;
+                }
+                // Rest become wanderers
+                else
+                {
+                    SetEnemyRole(enemy, EnemyRole.WANDERER);
+                }
+            }
+            
+            if (showDebug)
+            {
+                Debug.Log($"[EnemyManager] Pack Roles: {chaserCount} Chasers, {interceptorCount} Interceptors, {validEnemies.Count - chaserCount - interceptorCount} Wanderers");
+            }
+        }
+        
+        private void SetEnemyRole(EnemyBase enemy, EnemyRole newRole)
+        {
+            if (!enemyRoles.ContainsKey(enemy) || enemyRoles[enemy] != newRole)
+            {
+                enemyRoles[enemy] = newRole;
+                
+                // Initialize role-specific data
+                if (newRole == EnemyRole.WANDERER && !wanderDestinations.ContainsKey(enemy))
+                {
+                    AssignNewWanderDestination(enemy);
+                }
+                
+                if (showDebug)
+                {
+                    Debug.Log($"[EnemyManager] {enemy.name} assigned role: {newRole}");
+                }
+            }
+        }
+        
+        private void AssignNewWanderDestination(EnemyBase enemy)
+        {
+            if (lastPlayerPosition == Vector3.zero) return;
+            
+            // Wander in a radius around player's general area
+            Vector3 randomOffset = new Vector3(
+                Random.Range(-wanderRadius, wanderRadius),
+                0f,
+                Random.Range(-wanderRadius, wanderRadius)
+            );
+            
+            Vector3 wanderTarget = lastPlayerPosition + randomOffset;
+            
+            // Sample NavMesh
+            if (UnityEngine.AI.NavMesh.SamplePosition(wanderTarget, out UnityEngine.AI.NavMeshHit hit, wanderRadius, UnityEngine.AI.NavMesh.AllAreas))
+            {
+                wanderDestinations[enemy] = hit.position;
+                nextWanderTime[enemy] = Time.time + wanderInterval;
+                
+                if (showDebug && Time.frameCount % 60 == 0)
+                {
+                    Debug.Log($"[EnemyManager] {enemy.name} assigned wander destination at {hit.position}");
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Get the current role of an enemy
+        /// </summary>
+        public EnemyRole GetEnemyRole(EnemyBase enemy)
+        {
+            if (enemyRoles.TryGetValue(enemy, out EnemyRole role))
+            {
+                return role;
+            }
+            return EnemyRole.CHASER; // Default to chaser
+        }
+        
+        /// <summary>
+        /// Get strategic position for an enemy based on their role
+        /// </summary>
+        public Vector3 GetStrategicPosition(EnemyBase enemy)
+        {
+            if (!enemyRoles.ContainsKey(enemy))
+            {
+                return Vector3.zero;
+            }
+            
+            EnemyRole role = enemyRoles[enemy];
+            
+            switch (role)
+            {
+                case EnemyRole.CHASER:
+                    // Chasers use flanking positions
+                    return GetAssignedPosition(enemy);
+                    
+                case EnemyRole.INTERCEPTOR:
+                    // Interceptors predict player movement
+                    return CalculateInterceptPosition(enemy);
+                    
+                case EnemyRole.WANDERER:
+                    // Wanderers move to assigned wander points
+                    return GetWanderDestination(enemy);
+                    
+                default:
+                    return Vector3.zero;
+            }
+        }
+        
+        private Vector3 CalculateInterceptPosition(EnemyBase enemy)
+        {
+            if (lastPlayerPosition == Vector3.zero || playerVelocity.magnitude < 0.1f)
+            {
+                // Player not moving, use flanking position
+                return GetAssignedPosition(enemy);
+            }
+            
+            // Predict where player will be
+            Vector3 predictedPosition = lastPlayerPosition + playerVelocity * predictionTime;
+            
+            // Get direction from enemy to intercept point
+            Vector3 directionToIntercept = (predictedPosition - enemy.transform.position).normalized;
+            
+            // Position ahead of player on their path
+            Vector3 interceptPoint = predictedPosition + directionToIntercept * preferredAttackDistance;
+            
+            // Sample NavMesh
+            if (UnityEngine.AI.NavMesh.SamplePosition(interceptPoint, out UnityEngine.AI.NavMeshHit hit, 10f, UnityEngine.AI.NavMesh.AllAreas))
+            {
+                return hit.position;
+            }
+            
+            // Fallback to predicted position
+            if (UnityEngine.AI.NavMesh.SamplePosition(predictedPosition, out hit, 10f, UnityEngine.AI.NavMesh.AllAreas))
+            {
+                return hit.position;
+            }
+            
+            return Vector3.zero;
+        }
+        
+        private Vector3 GetWanderDestination(EnemyBase enemy)
+        {
+            // Check if it's time for a new wander destination
+            if (!nextWanderTime.ContainsKey(enemy) || Time.time >= nextWanderTime[enemy])
+            {
+                AssignNewWanderDestination(enemy);
+            }
+            
+            if (wanderDestinations.TryGetValue(enemy, out Vector3 destination))
+            {
+                // Check if we've reached the destination
+                float distanceToDestination = Vector3.Distance(enemy.transform.position, destination);
+                if (distanceToDestination < 2f)
+                {
+                    // Reached destination, assign new one soon
+                    nextWanderTime[enemy] = Time.time + Random.Range(2f, 5f);
+                }
+                
+                return destination;
+            }
+            
+            return Vector3.zero;
+        }
+        
+        #endregion
+
         #region Enemy Registration
 
         /// <summary>
@@ -153,6 +567,13 @@ namespace Managers
             if (enemy == null || activeEnemies.Contains(enemy)) return;
 
             activeEnemies.Add(enemy);
+            
+            // Assign initial update time with stagger
+            if (staggerPositionUpdates)
+            {
+                float staggerOffset = (activeEnemies.Count - 1) * (positionUpdateInterval / Mathf.Max(activeEnemies.Count, 1));
+                nextUpdateTimes[enemy] = Time.time + staggerOffset + Random.Range(0f, updateVariance);
+            }
 
             if (showDebug)
             {
@@ -295,6 +716,41 @@ namespace Managers
         #endregion
 
         #region Positioning Coordination
+        
+        // ═══════════════════════════════════════════════════════════════════════════════════════
+        // POSITIONING COORDINATION - Flanking & Staggered Updates
+        // ═══════════════════════════════════════════════════════════════════════════════════════
+        // 
+        // FLANKING SYSTEM:
+        // Chasers spread in a circle around target, maintaining angle separation and personal space.
+        // Circling enabled: positions rotate slowly (30°/s default) for dynamic combat.
+        // 
+        // STAGGERED UPDATES (Fix for synchronized movement):
+        // 
+        // PROBLEM:
+        // All enemies updating positions at once → all stop/start together → robotic movement
+        // 
+        // SOLUTION:
+        // Each enemy has individual update timer with random variance:
+        // 
+        // Old behavior (staggerPositionUpdates = false):
+        //   Time 0s:  ALL enemies update → all move
+        //   Time 2s:  ALL enemies update → all move
+        //   Result: Synchronized, stop-start as a group
+        // 
+        // New behavior (staggerPositionUpdates = true, default):
+        //   Time 0.0s: Enemy 1 updates → moves
+        //   Time 0.3s: Enemy 2 updates → moves
+        //   Time 0.6s: Enemy 3 updates → moves
+        //   Time 1.0s: Enemy 1 updates again → keeps moving
+        //   Result: Fluid, continuous movement, no group stopping
+        // 
+        // BENEFITS:
+        // • No synchronized stopping/starting
+        // • More responsive (1s interval vs 2s)
+        // • Better frame pacing (updates spread across frames)
+        // • Random variance prevents emergent synchronization
+        // ═══════════════════════════════════════════════════════════════════════════════════════
 
         /// <summary>
         /// Get the assigned position for an enemy, or Vector3.zero if none assigned
@@ -337,11 +793,51 @@ namespace Managers
                 Transform target = group.Key;
                 List<EnemyBase> enemies = group.ToList();
 
-                if (enemies.Count < 2) continue; // No need to coordinate single enemies
+                if (enemies.Count < 1) continue; // Need at least one enemy
 
                 // Calculate flanking positions around the target
                 AssignFlankingPositions(enemies, target);
             }
+        }
+        
+        private void UpdatePositionCoordinationStaggered()
+        {
+            // Check each enemy individually for updates
+            foreach (var enemy in activeEnemies)
+            {
+                if (enemy == null || enemy.Health <= 0 || enemy.NavMeshTarget == null) continue;
+                
+                // Check if it's time for this enemy's update
+                if (!nextUpdateTimes.ContainsKey(enemy))
+                {
+                    // First time - assign immediate update with small random offset
+                    nextUpdateTimes[enemy] = Time.time + Random.Range(0f, updateVariance);
+                }
+                
+                if (Time.time >= nextUpdateTimes[enemy])
+                {
+                    // Update this enemy's position
+                    UpdateSingleEnemyPosition(enemy);
+                    
+                    // Schedule next update with variance
+                    nextUpdateTimes[enemy] = Time.time + positionUpdateInterval + Random.Range(-updateVariance, updateVariance);
+                }
+            }
+        }
+        
+        private void UpdateSingleEnemyPosition(EnemyBase enemy)
+        {
+            if (enemy == null || enemy.NavMeshTarget == null) return;
+            
+            Transform target = enemy.NavMeshTarget;
+            
+            // Get all enemies targeting the same target
+            var allies = activeEnemies
+                .Where(e => e != null && e.Health > 0 && e.NavMeshTarget == target)
+                .ToList();
+            
+            // Update position for this group
+            AssignFlankingPositions(allies, target);
         }
 
         private void AssignFlankingPositions(List<EnemyBase> enemies, Transform target)
@@ -559,6 +1055,11 @@ namespace Managers
             {
                 assignedPositions.Remove(key);
                 assignedAngles.Remove(key);
+                nextUpdateTimes.Remove(key);
+                enemyRoles.Remove(key);
+                nextRoleCheckTime.Remove(key);
+                wanderDestinations.Remove(key);
+                nextWanderTime.Remove(key);
             }
         }
 
