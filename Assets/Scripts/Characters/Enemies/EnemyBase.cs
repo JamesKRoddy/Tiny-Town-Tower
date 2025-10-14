@@ -610,91 +610,138 @@ namespace Enemies
             else
             {
                 // Melee enemy (no minimum attack distance) - use coordinated movement with pack roles
-                // Check for strategic position from EnemyManager (based on role: chaser/interceptor/wanderer)
-                Vector3 strategicPosition = Vector3.zero;
-                if (Managers.EnemyManager.Instance != null)
-                {
-                    strategicPosition = Managers.EnemyManager.Instance.GetStrategicPosition(this);
-                }
                 
-                // Prefer strategic position if available
-                if (strategicPosition != Vector3.zero)
+                // ─────────────────────────────────────────────────────────────────────────────────
+                // COOLDOWN BEHAVIOR: Stop moving when in attack range but waiting for cooldown
+                // Prevents enemies from running around/circling player while waiting to attack
+                // ─────────────────────────────────────────────────────────────────────────────────
+                bool inAttackRangeButOnCooldown = false;
+                bool hasAnyValidAttack = false;
+                
+                if (distanceToTarget <= GetMaximumAttackRange())
                 {
-                    float distanceToStrategicPos = Vector3.Distance(transform.position, strategicPosition);
-                    
-                    // Use strategic position for movement
-                    agent.SetDestination(strategicPosition);
-                    
-                    // Check if we're at strategic position
-                    bool atStrategicPosition = distanceToStrategicPos < 1.5f;
-                    
-                    // For root motion zombies, handle stopping
-                    if (useRootMotion)
+                    // Check if any attack is on cooldown
+                    var attackComponents = GetComponents<AttackBase>();
+                    foreach (var attack in attackComponents)
                     {
-                        // Only stop when actually attacking or rotating to attack
-                        // Allow movement to strategic position even when at attack range
-                        bool shouldStop = (isAttacking || isRotatingToAttack);
-                        
-                        if (shouldStop)
+                        if (attack != null && attack.enabled)
                         {
-                            if (!agent.isStopped)
+                            hasAnyValidAttack = true;
+                            if (!attack.CanAttack())
                             {
+                                inAttackRangeButOnCooldown = true;
                                 if (showCollisionDebug)
                                 {
-                                    Debug.Log($"[{gameObject.name}] Stopping for attack - isAttacking: {isAttacking} | isRotating: {isRotatingToAttack}");
+                                    Debug.Log($"[{gameObject.name}] Attack {attack.GetType().Name} cannot attack (range: {attack.minRange}-{attack.maxRange}, distance: {distanceToTarget:F2})");
                                 }
-                                agent.isStopped = true;
-                                agent.velocity = Vector3.zero;
-                            }
-                        }
-                        else
-                        {
-                            // Keep moving unless at exact strategic position
-                            if (agent.isStopped && !atStrategicPosition)
-                            {
-                                if (showCollisionDebug)
-                                {
-                                    Debug.Log($"[{gameObject.name}] Resuming movement to strategic position");
-                                }
-                                agent.isStopped = false;
+                                break;
                             }
                         }
                     }
                 }
+                
+                // If in range but on cooldown, stay still (don't circle or move around)
+                // ONLY stop if we have valid attacks and they're on cooldown
+                if (inAttackRangeButOnCooldown && hasAnyValidAttack && !isAttacking)
+                {
+                    if (!agent.isStopped)
+                    {
+                        if (showCollisionDebug)
+                        {
+                            Debug.Log($"[{gameObject.name}] Stopping - in attack range but on cooldown");
+                        }
+                        agent.isStopped = true;
+                        agent.velocity = Vector3.zero;
+                    }
+                }
                 else
                 {
-                    // No strategic position assigned, move toward target
-                    agent.SetDestination(navMeshTarget.position);
-                    
-                    // For root motion zombies, check if we should stop the agent
-                    if (useRootMotion)
+                    // Check for strategic position from EnemyManager (based on role: chaser/interceptor/wanderer)
+                    Vector3 strategicPosition = Vector3.zero;
+                    if (Managers.EnemyManager.Instance != null)
                     {
-                        // Stop agent when at optimal distance or during attack phases
-                        bool shouldStop = (distanceToTarget <= optimalStoppingDistance) || isAttacking || isRotatingToAttack;
+                        strategicPosition = Managers.EnemyManager.Instance.GetStrategicPosition(this);
+                    }
+                    
+                    // Prefer strategic position if available
+                    if (strategicPosition != Vector3.zero)
+                    {
+                        float distanceToStrategicPos = Vector3.Distance(transform.position, strategicPosition);
                         
-                        if (shouldStop)
+                        // Use strategic position for movement
+                        agent.SetDestination(strategicPosition);
+                        
+                        // Check if we're at strategic position
+                        bool atStrategicPosition = distanceToStrategicPos < 1.5f;
+                        
+                        // For root motion zombies, handle stopping
+                        if (useRootMotion)
                         {
-                            if (!agent.isStopped)
+                            // Only stop when actually attacking or rotating to attack
+                            // Allow movement to strategic position even when at attack range
+                            bool shouldStop = (isAttacking || isRotatingToAttack);
+                            
+                            if (shouldStop)
                             {
-                                if (showCollisionDebug)
+                                if (!agent.isStopped)
                                 {
-                                    Debug.Log($"[{gameObject.name}] Stopping agent - Distance: {distanceToTarget:F2} <= Optimal: {optimalStoppingDistance:F2} | " +
-                                             $"isAttacking: {isAttacking} | isRotating: {isRotatingToAttack}");
+                                    if (showCollisionDebug)
+                                    {
+                                        Debug.Log($"[{gameObject.name}] Stopping for attack - isAttacking: {isAttacking} | isRotating: {isRotatingToAttack}");
+                                    }
+                                    agent.isStopped = true;
+                                    agent.velocity = Vector3.zero;
                                 }
-                                agent.isStopped = true;
-                                agent.velocity = Vector3.zero;
+                            }
+                            else
+                            {
+                                // Keep moving unless at exact strategic position
+                                if (agent.isStopped && !atStrategicPosition)
+                                {
+                                    if (showCollisionDebug)
+                                    {
+                                        Debug.Log($"[{gameObject.name}] Resuming movement to strategic position");
+                                    }
+                                    agent.isStopped = false;
+                                }
                             }
                         }
-                        else
+                    }
+                    else
+                    {
+                        // No strategic position assigned, move toward target
+                        agent.SetDestination(navMeshTarget.position);
+                        
+                        // For root motion zombies, check if we should stop the agent
+                        if (useRootMotion)
                         {
-                            // Resume movement when out of optimal distance
-                            if (agent.isStopped)
+                            // Stop agent when at optimal distance or during attack phases
+                            bool shouldStop = (distanceToTarget <= optimalStoppingDistance) || isAttacking || isRotatingToAttack;
+                            
+                            if (shouldStop)
                             {
-                                if (showCollisionDebug)
+                                if (!agent.isStopped)
                                 {
-                                    Debug.Log($"[{gameObject.name}] Resuming agent - Distance: {distanceToTarget:F2} > Optimal: {optimalStoppingDistance:F2}");
+                                    if (showCollisionDebug)
+                                    {
+                                        Debug.Log($"[{gameObject.name}] Stopping agent - Distance: {distanceToTarget:F2} <= Optimal: {optimalStoppingDistance:F2} | " +
+                                                 $"isAttacking: {isAttacking} | isRotating: {isRotatingToAttack}");
+                                    }
+                                    agent.isStopped = true;
+                                    agent.velocity = Vector3.zero;
                                 }
-                                agent.isStopped = false;
+                            }
+                            else
+                            {
+                                // Resume movement when out of optimal distance
+                                if (agent.isStopped)
+                                {
+                                    if (showCollisionDebug)
+                                    {
+                                        Debug.Log($"[{gameObject.name}] Resuming agent - Distance: {distanceToTarget:F2} > Optimal: {optimalStoppingDistance:F2}");
+                                    }
+                                    agent.isStopped = false;
+                                }
                             }
                         }
                     }
@@ -944,7 +991,7 @@ namespace Enemies
         /// Get the maximum attack range from all available attacks
         /// </summary>
         /// <returns>Maximum attack range</returns>
-        private float GetMaximumAttackRange()
+        public float GetMaximumAttackRange()
         {
             float maxRange = 0f;
 

@@ -28,9 +28,9 @@ namespace Managers
     /// ┌─ PACK HUNTING SYSTEM ─────────────────────────────────────────────────────────────┐
     /// │ Enemies assigned different roles dynamically based on distance to player:         │
     /// │                                                                                    │
-    /// │ • CHASER (maxActiveChasers closest enemies)                                       │
+    /// │ • CHASER (maxActiveChasers closest enemies, or ALL within alwaysAggroDistance)    │
     /// │   - Actively pursue and flank player                                              │
-    /// │   - Circle while waiting to attack                                                │
+    /// │   - Stop and wait when in attack range but on cooldown                            │
     /// │   - Get attack priority                                                           │
     /// │                                                                                    │
     /// │ • INTERCEPTOR (next closest if enabled)                                           │
@@ -43,6 +43,7 @@ namespace Managers
     /// │   - Create ambient threat                                                         │
     /// │   - Can become chasers if player approaches                                       │
     /// │                                                                                    │
+    /// │ NOTE: Enemies within alwaysAggroDistance (8m) ALWAYS become chasers!              │
     /// │ RESULT: Not all enemies mindlessly chase - creates tactical challenge!            │
     /// └────────────────────────────────────────────────────────────────────────────────────┘
     /// 
@@ -50,11 +51,17 @@ namespace Managers
     /// │ Prevents overwhelming player with simultaneous attacks:                            │
     /// │                                                                                    │
     /// │ • Max simultaneous attackers (default: 2)                                         │
-    /// │ • Attack stagger delay between initiations (default: 0.5s)                        │
-    /// │ • Post-attack cooldown before next enemy can attack (default: 1.0s)               │
+    /// │ • Attack stagger delay (default: 0 - uses AttackBase cooldowns only)              │
+    /// │ • Post-attack cooldown (default: 0 - uses AttackBase cooldowns only)              │
     /// │ • Queue system for waiting enemies                                                │
     /// │                                                                                    │
-    /// │ RESULT: Rhythmic combat with natural flow, not chaos!                             │
+    /// │ ⚡ PANIC ZONE: Enemies within their attack range BYPASS all limits!               │
+    /// │   → If zombie is in melee range, it attacks immediately                           │
+    /// │   → Creates intense pressure when surrounded                                      │
+    /// │   → Only distant enemies respect max attackers limit                              │
+    /// │                                                                                    │
+    /// │ NOTE: Set delays to 0 to rely only on AttackBase.cs cooldown timers               │
+    /// │ RESULT: Controlled enemy pressure, but panic when surrounded!                     │
     /// └────────────────────────────────────────────────────────────────────────────────────┘
     /// 
     /// ┌─ FLANKING & POSITIONING ───────────────────────────────────────────────────────────┐
@@ -95,16 +102,17 @@ namespace Managers
     /// DIFFICULTY TUNING:
     /// 
     /// EASY MODE:
-    ///   Max Attackers: 1, Stagger Delay: 1.0s, Flanking: false
-    ///   → Classic "take turns" combat
+    ///   Max Attackers: 1, Max Chasers: 2, Flanking: false
+    ///   → Classic "take turns" combat, fewer enemies engage
     /// 
     /// NORMAL MODE (Default):
-    ///   Max Attackers: 2, Stagger Delay: 0.5s, Flanking: true, Circling: true
-    ///   → Dynamic, engaging encounters
+    ///   Max Attackers: 2, Max Chasers: 3, Flanking: true, Always Aggro Distance: 8m
+    ///   → Dynamic, engaging encounters with controlled pressure
+    ///   → Relies on AttackBase.cs cooldowns (no extra delays)
     /// 
     /// HARD MODE:
-    ///   Max Attackers: 3-4, Stagger Delay: 0.3s, Circling Speed: 45°/s
-    ///   → High pressure, must manage multiple threats
+    ///   Max Attackers: 3-4, Max Chasers: 5, Always Aggro Distance: 12m, Circling Speed: 45°/s
+    ///   → High pressure, must manage multiple threats, more enemies engage quickly
     /// 
     /// ═══════════════════════════════════════════════════════════════════════════════════════
     /// </summary>
@@ -134,10 +142,18 @@ namespace Managers
             if (_instance != null && _instance != this)
             {
                 Destroy(gameObject);
+                return;
             }
-            else
+            
+            _instance = this;
+            Debug.Log($"[EnemyManager] Initialized - GameObject: {gameObject.name}");
+        }
+        
+        private void Start()
+        {
+            if (showDebug)
             {
-                _instance = this;
+                Debug.Log($"[EnemyManager] Started - Debug enabled, alwaysAggroDistance: {alwaysAggroDistance}m");
             }
         }
 
@@ -152,6 +168,9 @@ namespace Managers
         [Tooltip("Maximum distance for enemies to actively chase player")]
         [SerializeField] private float maxChaseDistance = 30f;
         
+        [Tooltip("Distance within which enemies ALWAYS become chasers (overrides max chasers limit)")]
+        [SerializeField] private float alwaysAggroDistance = 8f;
+        
         [Tooltip("How often to reassign roles (seconds)")]
         [SerializeField] private float roleReassignmentInterval = 2f;
 
@@ -159,11 +178,11 @@ namespace Managers
         [Tooltip("Maximum number of enemies that can attack simultaneously")]
         [SerializeField] private int maxSimultaneousAttackers = 2;
 
-        [Tooltip("Minimum time between attack initiations (seconds)")]
-        [SerializeField] private float attackStaggerDelay = 0.5f;
+        [Tooltip("Minimum time between attack initiations (seconds) - Set to 0 to use only AttackBase cooldowns")]
+        [SerializeField] private float attackStaggerDelay = 0f;
 
-        [Tooltip("Cooldown period after an enemy attacks before another can attack")]
-        [SerializeField] private float postAttackCooldown = 1.0f;
+        [Tooltip("Cooldown period after an enemy attacks before another can attack - Set to 0 to use only AttackBase cooldowns")]
+        [SerializeField] private float postAttackCooldown = 0f;
 
         [Header("Positioning Coordination Settings")]
         [Tooltip("Enable flanking behavior - enemies spread out around target")]
@@ -217,8 +236,20 @@ namespace Managers
         [SerializeField] private float threatDecayRate = 5f;
 
         [Header("Debug Settings")]
-        [Tooltip("Show debug information in console")]
+        [Tooltip("Show debug information in console - ENABLE THIS to troubleshoot aggro issues")]
         [SerializeField] private bool showDebug = false;
+        
+        // ═══════════════════════════════════════════════════════════════════════════════════════
+        // DEBUGGING AGGRO ISSUES:
+        // 1. Enable "Show Debug" above
+        // 2. Watch console for:
+        //    - "[EnemyManager] Player tracked at position: X" - confirms player is being tracked
+        //    - "[EnemyManager] ALWAYS AGGRO" - shows when enemies are within alwaysAggroDistance
+        //    - "[EnemyManager] Pack Roles: X Chasers..." - shows role distribution
+        // 3. If player not tracked: Check PlayerController._possessedNPC is set (in ROGUE_LITE mode)
+        // 4. If enemies not getting CHASER role: Check alwaysAggroDistance (default 8m)
+        // 5. If enemies are CHASERS but not moving: Check enemy's navMeshTarget is set
+        // ═══════════════════════════════════════════════════════════════════════════════════════
 
         #endregion
 
@@ -265,7 +296,20 @@ namespace Managers
 
         private void Update()
         {
-            if (activeEnemies.Count == 0) return;
+            // Debug: Log that EnemyManager is running
+            if (showDebug && Time.frameCount % 120 == 0)
+            {
+                Debug.Log($"[EnemyManager] Update running - Active enemies: {activeEnemies.Count}");
+            }
+            
+            if (activeEnemies.Count == 0)
+            {
+                if (showDebug && Time.frameCount % 300 == 0)
+                {
+                    Debug.LogWarning("[EnemyManager] No active enemies registered!");
+                }
+                return;
+            }
             
             // Track player movement
             UpdatePlayerTracking();
@@ -345,7 +389,14 @@ namespace Managers
                 playerTransform = PlayerController.Instance._possessedNPC.GetTransform();
             }
             
-            if (playerTransform == null) return;
+            if (playerTransform == null)
+            {
+                if (showDebug)
+                {
+                    Debug.LogWarning("[EnemyManager] Cannot track player - PlayerController or _possessedNPC is null");
+                }
+                return;
+            }
             
             Vector3 currentPlayerPosition = playerTransform.position;
             
@@ -356,6 +407,11 @@ namespace Managers
             }
             
             lastPlayerPosition = currentPlayerPosition;
+            
+            if (showDebug && Time.frameCount % 120 == 0) // Log occasionally
+            {
+                Debug.Log($"[EnemyManager] Player tracked at position: {lastPlayerPosition}");
+            }
         }
         
         private void UpdatePackRoles()
@@ -386,8 +442,18 @@ namespace Managers
             {
                 float distanceToPlayer = Vector3.Distance(enemy.transform.position, lastPlayerPosition);
                 
+                // ALWAYS aggro enemies that are very close to player (ignores max chasers limit)
+                if (distanceToPlayer < alwaysAggroDistance)
+                {
+                    SetEnemyRole(enemy, EnemyRole.CHASER);
+                    chaserCount++;
+                    if (showDebug)
+                    {
+                        Debug.Log($"[EnemyManager] {enemy.name} ALWAYS AGGRO (distance: {distanceToPlayer:F1}m < {alwaysAggroDistance}m)");
+                    }
+                }
                 // Closest enemies become chasers (up to max)
-                if (chaserCount < maxActiveChasers && distanceToPlayer < maxChaseDistance)
+                else if (chaserCount < maxActiveChasers && distanceToPlayer < maxChaseDistance)
                 {
                     SetEnemyRole(enemy, EnemyRole.CHASER);
                     chaserCount++;
@@ -605,6 +671,9 @@ namespace Managers
         /// <summary>
         /// Request permission for an enemy to attack
         /// Returns true if the enemy can attack now, false if they should wait
+        /// 
+        /// BYPASS RULE: If enemy is within their attack range, they can ALWAYS attack
+        /// (ignores max attackers limit and role restrictions)
         /// </summary>
         public bool RequestAttackPermission(EnemyBase enemy)
         {
@@ -614,6 +683,30 @@ namespace Managers
             if (currentlyAttacking.Contains(enemy))
             {
                 return true;
+            }
+
+            // ═══════════════════════════════════════════════════════════════════════════════════════
+            // BYPASS: If enemy is within attack range of player, grant immediate permission
+            // This creates a "panic zone" where surrounded player gets attacked by all nearby enemies
+            // ═══════════════════════════════════════════════════════════════════════════════════════
+            if (enemy.NavMeshTarget != null)
+            {
+                float distanceToTarget = Vector3.Distance(enemy.transform.position, enemy.NavMeshTarget.position);
+                float maxAttackRange = enemy.GetMaximumAttackRange();
+                
+                if (distanceToTarget <= maxAttackRange)
+                {
+                    // Within attack range - bypass all restrictions!
+                    currentlyAttacking.Add(enemy);
+                    lastAttackInitiationTime = Time.time;
+                    
+                    if (showDebug)
+                    {
+                        Debug.Log($"[EnemyManager] BYPASS - {enemy.name} in attack range ({distanceToTarget:F1}m <= {maxAttackRange:F1}m), permission granted! Currently attacking: {currentlyAttacking.Count}");
+                    }
+                    
+                    return true;
+                }
             }
 
             // Check if we've reached max simultaneous attackers
@@ -632,8 +725,8 @@ namespace Managers
                 return false;
             }
 
-            // Check stagger delay
-            if (Time.time - lastAttackInitiationTime < attackStaggerDelay)
+            // Check stagger delay (only if enabled)
+            if (attackStaggerDelay > 0 && Time.time - lastAttackInitiationTime < attackStaggerDelay)
             {
                 if (!attackQueue.Contains(enemy))
                 {
@@ -674,7 +767,15 @@ namespace Managers
 
         private IEnumerator ProcessAttackQueueAfterDelay()
         {
-            yield return new WaitForSeconds(postAttackCooldown);
+            // Only wait if cooldown is set
+            if (postAttackCooldown > 0)
+            {
+                yield return new WaitForSeconds(postAttackCooldown);
+            }
+            else
+            {
+                yield return null; // Wait one frame
+            }
 
             // Process queue
             if (attackQueue.Count > 0 && currentlyAttacking.Count < maxSimultaneousAttackers)

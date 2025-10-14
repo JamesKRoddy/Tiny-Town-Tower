@@ -317,6 +317,10 @@ PrefabInstance:
       propertyPath: _currentGameMode
       value: 200
       objectReference: {fileID: 0}
+    - target: {fileID: 6911640048996044745, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: showDebug
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
