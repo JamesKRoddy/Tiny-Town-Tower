@@ -2739,17 +2739,25 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     }
 
     /// <summary>
-    /// Handles damage reaction (rotation towards damage source)
+    /// Handles damage reaction (knockback away from damage source)
     /// </summary>
     /// <param name="damageSource">Transform of the damage source</param>
     protected virtual void HandleDamageReaction(Transform damageSource)
     {
-        Vector3 direction = (damageSource.position - transform.position).normalized;
+        // Calculate knockback direction (away from damage source)
+        Vector3 direction = (transform.position - damageSource.position).normalized;
         direction.y = 0;
+        
         if (direction != Vector3.zero)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(direction);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 10f);
+            // Apply knockback effect
+            float maxKnockbackDistance = 0.8f; // Slightly less knockback for NPCs
+            float distanceFromSource = Vector3.Distance(transform.position, damageSource.position);
+            float knockbackDistance = Mathf.Lerp(maxKnockbackDistance, maxKnockbackDistance * 0.3f, distanceFromSource / 5f);
+            Vector3 newPosition = transform.position + direction * knockbackDistance;
+            
+            // Simply move the character (no NavMesh needed for player-controlled characters)
+            transform.position = newPosition;
         }
     }
 

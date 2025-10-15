@@ -1630,19 +1630,17 @@ namespace Enemies
 
         protected virtual void HandleDamageReaction(Transform damageSource)
         {
-            Vector3 direction = (damageSource.position - transform.position).normalized;
+            // Calculate knockback direction (away from damage source)
+            Vector3 direction = (transform.position - damageSource.position).normalized;
             direction.y = 0;
+            
             if (direction != Vector3.zero)
             {
-                Quaternion targetRotation = Quaternion.LookRotation(direction);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 10f);
-
-                // Add knockback effect
-                Vector3 knockbackDirection = -direction;
+                // Apply knockback effect
                 float maxKnockbackDistance = 1.0f;
                 float distanceFromSource = Vector3.Distance(transform.position, damageSource.position);
                 float knockbackDistance = Mathf.Lerp(maxKnockbackDistance, maxKnockbackDistance * 0.3f, distanceFromSource / 5f);
-                Vector3 newPosition = transform.position + knockbackDirection * knockbackDistance;
+                Vector3 newPosition = transform.position + direction * knockbackDistance;
 
                 if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, knockbackDistance, NavMesh.AllAreas))
                 {
