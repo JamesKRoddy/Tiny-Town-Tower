@@ -31,6 +31,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public Animator Animator => animator;
     protected CharacterCombat characterCombat;
     protected NavMeshAgent agent; // Reference to NavMeshAgent
+    protected CharacterController characterController; // Reference to CharacterController for player movement
     protected CharacterInventory characterInventory;
 
     [Header("Vault Parameters")]
@@ -39,6 +40,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public float vaultHeight = 1.0f; // Height of the raycast to detect obstacles
     public float vaultOffset = 1.0f; // Distance to move beyond the obstacle after vaulting
     private Collider humanCollider;
+    
+    [Header("CharacterController Settings")]
+    public float stepOffset = 0.3f; // Maximum height the character can step up automatically
+    public float slopeLimit = 45f; // Maximum angle the character can walk up
+    public float skinWidth = 0.08f; // Slight collision penetration to prevent getting stuck (10% of radius recommended)
 
     [Header("Enhanced Obstacle Navigation")]
     public float maxVaultHeight = 1.2f; // Maximum height the player can vault over
@@ -55,16 +61,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     [Header("Gravity System")]
     public bool enableGravity = true; // Enable/disable gravity system
-    public float gravity = 9.81f; // Gravity strength
-    public float groundCheckDistance = 0.3f; // Distance to check for ground below (increased for platform detection)
-    public LayerMask groundLayers = 1; // Layers to consider as ground (default to default layer)
+    public float gravity = 20f; // Gravity acceleration (doubled for more responsive feel)
     public float terminalVelocity = 20f; // Maximum falling speed
     public float maxFallDistance = 100f; // Maximum distance to fall before stopping (prevents endless drops)
-    public float fallingMovementMultiplier = 0.2f; // Movement speed multiplier when falling (0.2 = 20% speed)
-    public float fallingMomentumMultiplier = 0.8f; // How much horizontal momentum to retain when falling (0.8 = 80% of original speed)
-    private Vector3 gravityVelocity = Vector3.zero; // Current gravity velocity
-    private bool isGrounded = true; // Whether character is currently grounded
-    private Vector3 fallingMomentum = Vector3.zero; // Horizontal momentum to apply when falling
+    public float fallingMovementMultiplier = 0.5f; // Movement speed multiplier when falling (0.5 = 50% speed)
+    private float verticalVelocity = 0f; // Current vertical velocity for gravity
+    private bool wasGroundedLastFrame = true; // Track grounded state from previous frame
 
     // Automatic obstacle navigation: analyzes height to determine WalkOver, Vault, or TooHigh
     // RollUnder and Block types only come from ObstacleVaultBehavior components
@@ -119,17 +121,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private float climbLandingDelay = 0.1f; // Brief delay after landing before returning control
     private bool isClimbLanding = false; // Whether we're in the landing delay phase
 
-    [Header("Collision Recovery")]
-    public float collisionCheckRadius = 0.6f; // Radius for checking if stuck in colliders
-    public int maxCollisionRecoveryAttempts = 5; // Maximum attempts to unstuck character
-    public float collisionRecoveryDistance = 0.1f; // Distance to move per recovery step
-    public float emergencyTeleportHeight = 2.0f; // Height to teleport up in emergency situations
-    private float lastCollisionCheckTime = 0f; // Last time we checked for collision issues
-    private float collisionCheckInterval = 0.5f; // How often to check for stuck collisions (in seconds)
-    private float lastCollisionRecoveryTime = 0f; // Last time we performed recovery
-    private float collisionRecoveryCooldown = 1.0f; // Cooldown after successful recovery to prevent spam
-    private int consecutiveRecoveryAttempts = 0; // Track consecutive recovery attempts
-
     [Header("Push State")]
     private PushableObject currentPushTarget = null; // The object currently being pushed
     private float pushHoldTime = 0f; // How long the player has been trying to push
@@ -168,12 +159,60 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     protected virtual void Awake()
     {
-        // Store the reference to NavMeshAgent once
+        // Store the references once
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         humanCollider = GetComponent<Collider>();
         characterCombat = GetComponent<CharacterCombat>();
         characterInventory = GetComponent<CharacterInventory>();
+        
+        // Get or add CharacterController component
+        characterController = GetComponent<CharacterController>();
+        if (characterController == null)
+        {
+            Debug.LogWarning($"{gameObject.name}: No CharacterController found, adding one automatically. Please add it manually in the Inspector for proper configuration.");
+            characterController = gameObject.AddComponent<CharacterController>();
+        }
+        
+        // Configure CharacterController for smooth movement
+        ConfigureCharacterController();
+    }
+    
+    /// <summary>
+    /// Configures the CharacterController with proper settings for smooth movement
+    /// </summary>
+    private void ConfigureCharacterController()
+    {
+        if (characterController == null) return;
+        
+        // Configure step offset (allows stepping up small obstacles automatically)
+        characterController.stepOffset = stepOffset;
+        
+        // Configure slope limit (prevents sliding on steep slopes)
+        characterController.slopeLimit = slopeLimit;
+        
+        // Configure skin width (prevents getting stuck on edges - should be ~10% of radius)
+        characterController.skinWidth = skinWidth;
+        
+        // Try to match the capsule size to existing collider if possible
+        CapsuleCollider capsule = humanCollider as CapsuleCollider;
+        if (capsule != null)
+        {
+            characterController.radius = capsule.radius;
+            characterController.height = capsule.height;
+            characterController.center = capsule.center;
+        }
+        else
+        {
+            // Default values for humanoid characters
+            characterController.radius = 0.5f;
+            characterController.height = 2f;
+            characterController.center = new Vector3(0, 1f, 0);
+        }
+        
+        // CharacterController starts disabled for AI-controlled characters
+        // It will be enabled when player possesses the character
+        characterController.enabled = false;
     }
 
     protected virtual void Start()
@@ -198,19 +237,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             animator.applyRootMotion = false;
         }
-        
-        // Log gravity system configuration
-        Debug.Log($"[Gravity] {gameObject.name}: Gravity system initialized - enableGravity: {enableGravity}");
-        Debug.Log($"[Gravity] {gameObject.name}: Ground layers: {groundLayers.value}");
-        Debug.Log($"[Gravity] {gameObject.name}: Obstacle layers count: {obstacleLayers?.Length ?? 0}");
-        if (obstacleLayers != null)
-        {
-            for (int i = 0; i < obstacleLayers.Length; i++)
-            {
-                Debug.Log($"[Gravity] {gameObject.name}: Obstacle layer {i}: {obstacleLayers[i].value}");
-            }
-        }
-        Debug.Log($"[Gravity] {gameObject.name}: Ground check distance: {groundCheckDistance}");
     }
 
     public virtual void PossessedUpdate()
@@ -234,18 +260,13 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             }
             else
             {
-                // During landing delay, only apply gravity and update animations, but no movement
-                ApplyGravity();
+                // During landing delay, only update animations, but no movement
                 UpdateAnimations();
                 return;
             }
         }
         
-        // Periodic check for collision penetration (respects interval to avoid performance impact)
-        CheckAndResolveCollisionPenetration(forceCheck: false);
-        
         HandleDash();
-        ApplyGravity(); // Apply gravity before movement
         UpdatePoiseRecovery(); // Update poise recovery
         MoveCharacter();
         UpdateActualMovementSpeed();
@@ -258,6 +279,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     /// </summary>
     private void ApplyProceduralKnockback()
     {
+        // Only apply knockback when using CharacterController (player-controlled)
+        if (characterController == null || !characterController.enabled) return;
+        
         // Scale knockback distance based on poise damage (heavier weapons = more knockback)
         float baseKnockback = 0.8f;
         float scaledKnockback = baseKnockback * Mathf.Clamp01(LastHitPoiseDamage / 15f); // Normalize: 15 poise = 1.0x knockback
@@ -266,8 +290,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         
         if (knockbackOffset.magnitude > 0.001f)
         {
-            Vector3 newPosition = transform.position + knockbackOffset * Time.deltaTime * 10f; // Scale by deltaTime for smooth movement
-            transform.position = newPosition; // Direct position update for player-controlled characters
+            Vector3 knockbackMovement = knockbackOffset * Time.deltaTime * 10f; // Scale by deltaTime for smooth movement
+            characterController.Move(knockbackMovement); // Use CharacterController.Move() for proper collision handling
         }
     }
 
@@ -275,31 +299,23 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void OnPossess()
     {
-        Debug.Log($"[Gravity] {gameObject.name}: OnPossess called");
         SetAIControl(false);
         transform.parent = PlayerController.Instance.transform;
         
-        // Initialize gravity system for player control
-        ResetGravityVelocity();
-        isGrounded = CheckGrounded(); // Check initial ground state
-        
-        // Check if character is stuck in any colliders (force check, important for spawn points)
-        CheckAndResolveCollisionPenetration(forceCheck: true);
-        
-        Debug.Log($"[Gravity] {gameObject.name}: OnPossess complete - isGrounded: {isGrounded}, agent.enabled: {(agent != null ? agent.enabled : false)}");
+        // Reset gravity state for player control
+        verticalVelocity = 0f;
+        wasGroundedLastFrame = characterController != null && characterController.isGrounded;
     }
 
     public void OnUnpossess()
     {
-        Debug.Log($"[Gravity] {gameObject.name}: OnUnpossess called");
         SetAIControl(true);
         transform.SetParent(null, true);
         SceneTransitionManager.Instance.MoveGameObjectBackToCurrent(gameObject);
         
-        // Reset gravity system when returning to AI control
-        ResetGravityVelocity();
-        isGrounded = true; // Assume grounded when NavMeshAgent takes over
-        Debug.Log($"[Gravity] {gameObject.name}: OnUnpossess complete - isGrounded: {isGrounded}, agent.enabled: {(agent != null ? agent.enabled : false)}");
+        // Reset gravity state for AI control
+        verticalVelocity = 0f;
+        wasGroundedLastFrame = true;
     }
 
     /// <summary>
@@ -309,9 +325,13 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private void SetAIControl(bool isAIControlled)
     {
         var navMeshAgent = GetComponent<NavMeshAgent>();
-        Debug.Log($"[Gravity] {gameObject.name}: SetAIControl({isAIControlled}) - NavMeshAgent was: {(navMeshAgent != null ? navMeshAgent.enabled : false)}");
         if (navMeshAgent != null) navMeshAgent.enabled = isAIControlled;
-        Debug.Log($"[Gravity] {gameObject.name}: NavMeshAgent now: {(navMeshAgent != null ? navMeshAgent.enabled : false)}");
+        
+        // Toggle CharacterController for player control (opposite of NavMeshAgent)
+        if (characterController != null) 
+        {
+            characterController.enabled = !isAIControlled;
+        }
 
         var narrativeInteractive = GetComponent<NarrativeInteractive>();
         if (narrativeInteractive != null) narrativeInteractive.enabled = isAIControlled;
@@ -568,15 +588,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         Vector3 rayStart = startPos + Vector3.up * 0.5f; // Start slightly above to ensure we hit the platform
         Vector3 rayDirection = Vector3.down;
         
-        // Combine all layers we want to check (obstacle layers + ground layers)
-        LayerMask allGroundLayers = groundLayers;
-        foreach (LayerMask layer in obstacleLayers)
-        {
-            allGroundLayers |= layer;
-        }
+        // Combine all obstacle layers for checking
+        LayerMask checkLayers = GetCombinedObstacleLayers();
         
         // Cast ray downward to find the platform surface
-        if (Physics.Raycast(rayStart, rayDirection, out RaycastHit hit, 2.0f, allGroundLayers, QueryTriggerInteraction.Ignore))
+        if (Physics.Raycast(rayStart, rayDirection, out RaycastHit hit, 2.0f, checkLayers, QueryTriggerInteraction.Ignore))
         {
             // Position the character on top of the platform with a small offset to ensure they're above the surface
             Vector3 exactPosition = hit.point + Vector3.up * 0.1f; // Small offset to ensure we're above the surface
@@ -645,9 +661,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Reset gravity velocity when finishing vault to prevent immediate falling
         ResetGravityVelocity();
         
-        // Check if we ended up inside a collider after vaulting (force check)
-        CheckAndResolveCollisionPenetration(forceCheck: true);
-        
         // Call obstacle component callback if present
         currentObstacleComponent?.OnVaultComplete(this);
         currentObstacleComponent = null; // Clear reference
@@ -666,9 +679,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         dashTime = 0f; // Reset dash timer
         dashCooldownTime = 0f; // Reset dash cooldown
         
-        // Reset gravity velocity when starting climb and mark as grounded to prevent falling
+        // Reset gravity velocity when starting climb
         ResetGravityVelocity();
-        isGrounded = true; // Prevent gravity from affecting us during climb
         
         climbTime = Time.time + climbDuration;
         climbStartPosition = transform.position; // Store starting position for lerp
@@ -710,12 +722,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         
         // Reset gravity velocity when finishing climb to prevent immediate falling
         ResetGravityVelocity();
-        
-        // Check if we ended up inside a collider after climbing (force check)
-        CheckAndResolveCollisionPenetration(forceCheck: true);
-        
-        // Force ground check to update immediately after climbing
-        isGrounded = CheckGrounded();
         
         // Re-enable root motion
         if (animator != null)
@@ -1393,12 +1399,18 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         }
         else if (!isClimbing && !isClimbLanding) // Only allow normal movement when not climbing or in landing delay
         {
+            // Skip movement if CharacterController is not enabled (AI-controlled)
+            if (characterController == null || !characterController.enabled)
+            {
+                return;
+            }
+            
             float inputMagnitude = movementInput.magnitude;
             float baseSpeed = isDashing ? dashSpeed : moveMaxSpeed;
             
             // Reduce movement speed when falling due to gravity
             float movementMultiplier = 1.0f;
-            if (enableGravity && !isGrounded && gravityVelocity.y < 0)
+            if (enableGravity && IsFalling())
             {
                 movementMultiplier = fallingMovementMultiplier;
             }
@@ -1450,7 +1462,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 }
                 else
                 {
-                    transform.position += targetMovement;
+                    // Apply gravity to movement vector
+                    ApplyGravityMovement(ref targetMovement);
+                    
+                    // Use CharacterController.Move() for proper collision handling
+                    characterController.Move(targetMovement);
 
                     // Rotate player towards the current direction
                     Quaternion targetRotation = Quaternion.LookRotation(currentDirection);
@@ -1467,7 +1483,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 {
                     ObstacleType obstacleType = AnalyzeObstacle(movementInput.normalized, out RaycastHit obstacleInfo);
                     
-                    Debug.Log($"[Climb] {gameObject.name}: Auto-navigation detected obstacle type: {obstacleType}");
+                        Debug.Log($"[Climb] {gameObject.name}: Auto-navigation detected obstacle type: {obstacleType}");
                     
                     switch (obstacleType)
                     {
@@ -1599,12 +1615,15 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                     }
                 }
 
-                // Check for traditional obstacles (non-vaultable) if we haven't handled it above
-                if (!IsObstacleInPath(targetMovement, out RaycastHit hitInfo))
+                // Apply movement with CharacterController (handles collision automatically)
+                if (!isAttacking && !isDamaged) // Only move if not attacking or damaged
                 {
-                    if (!isAttacking && !isDamaged) // Only move position if not attacking or damaged
-                    {
-                        transform.position += targetMovement;
+                    // Apply gravity to movement vector
+                    ApplyGravityMovement(ref targetMovement);
+                    
+                    // Use CharacterController.Move() for automatic collision handling
+                    // No need for IsObstacleInPath check - CharacterController handles it!
+                    characterController.Move(targetMovement);
                     }
 
                     // Rotate player towards the input direction
@@ -1612,12 +1631,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                     {
                         Quaternion targetRotation = Quaternion.LookRotation(movementInput);
                         transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
-                    }
-                }
-                else
-                {
-                    // Stop dashing if hitting any obstacle
-                    isDashing = false;
                 }
             }
         } // End of else if (!isClimbing) block
@@ -1650,39 +1663,54 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     #region Gravity System
 
     /// <summary>
-    /// Check if the character is currently grounded
+    /// Apply gravity using CharacterController's built-in ground detection
+    /// Much simpler and more reliable than custom raycasting!
     /// </summary>
-    /// <returns>True if grounded, false if in air</returns>
-    private bool CheckGrounded()
+    protected virtual void ApplyGravityMovement(ref Vector3 movement)
     {
-        // Don't check for ground during vaulting or when collider is disabled
-        if (isVaulting || (humanCollider != null && !humanCollider.enabled))
+        // Don't apply gravity if disabled or during certain states
+        if (!enableGravity || isVaulting || isDashing || isPushing || isClimbing || isDead)
         {
-            return false;
+            verticalVelocity = 0f;
+            return;
         }
 
-        // Use raycast to check for ground directly below character feet
-        Vector3 rayStart = transform.position;
-        Vector3 rayDirection = Vector3.down;
-        
-        // Combine all layers we want to check (obstacle layers + ground layers)
-        LayerMask allGroundLayers = groundLayers;
-        foreach (LayerMask layer in obstacleLayers)
+        // Only apply gravity when CharacterController is enabled (player-controlled)
+        // When NavMeshAgent is enabled, it handles positioning
+        if (characterController == null || !characterController.enabled)
         {
-            allGroundLayers |= layer;
+            verticalVelocity = 0f;
+            return;
+        }
+
+        // Use CharacterController's built-in ground detection (much more reliable!)
+        bool isGrounded = characterController.isGrounded;
+
+        if (isGrounded && verticalVelocity < 0)
+        {
+            // Keep character grounded with small downward force
+            // This prevents bouncing and ensures proper ground detection
+            verticalVelocity = -2f;
+        }
+        else if (!isGrounded)
+        {
+            // Safety check: don't fall into endless drops
+            if (!HasGroundWithinMaxFallDistance())
+            {
+                verticalVelocity = 0f;
+                movement.y = 0f;
+                return;
+            }
+            
+            // Apply gravity acceleration when in air
+            verticalVelocity -= gravity * Time.deltaTime;
+            
+            // Clamp to terminal velocity
+            verticalVelocity = Mathf.Max(verticalVelocity, -terminalVelocity);
         }
         
-        // Cast ray downward to check for ground within a small distance
-        // Use QueryTriggerInteraction.Ignore to skip trigger colliders
-        if (Physics.Raycast(rayStart, rayDirection, out RaycastHit hit, groundCheckDistance, allGroundLayers, QueryTriggerInteraction.Ignore))
-        {
-            // Check if the hit point is close enough to the character's feet
-            float distanceToGround = hit.distance;
-            bool isCloseEnough = distanceToGround <= groundCheckDistance;
-            return isCloseEnough;
-        }
-        
-        return false;
+        // Add vertical movement to the movement vector
+        movement.y = verticalVelocity * Time.deltaTime;
     }
 
     /// <summary>
@@ -1695,16 +1723,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         Vector3 rayStart = transform.position;
         Vector3 rayDirection = Vector3.down;
         
-        // Combine all layers we want to check (obstacle layers + ground layers)
-        LayerMask allGroundLayers = groundLayers;
-        foreach (LayerMask layer in obstacleLayers)
-        {
-            allGroundLayers |= layer;
-        }
+        // Combine all obstacle layers for checking
+        LayerMask checkLayers = GetCombinedObstacleLayers();
         
         // Cast ray to check for ground within max fall distance
         // Use QueryTriggerInteraction.Ignore to skip trigger colliders
-        if (Physics.Raycast(rayStart, rayDirection, out RaycastHit hit, maxFallDistance, allGroundLayers, QueryTriggerInteraction.Ignore))
+        if (Physics.Raycast(rayStart, rayDirection, out RaycastHit hit, maxFallDistance, checkLayers, QueryTriggerInteraction.Ignore))
         {
             return true; // Found ground within max fall distance
         }
@@ -1713,102 +1737,13 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     }
 
     /// <summary>
-    /// Apply gravity to the character when not grounded
-    /// </summary>
-    protected virtual void ApplyGravity()
-    {
-        // Don't apply gravity if disabled or during certain states
-        if (!enableGravity || isVaulting || isDashing || isPushing || isClimbing || isDead)
-        {
-            return;
-        }
-
-        // Only apply gravity when NavMeshAgent is disabled (player-controlled)
-        // When NavMeshAgent is enabled, it handles ground detection and positioning
-        if (agent != null && agent.enabled)
-        {
-            // Reset gravity velocity when NavMeshAgent is handling positioning
-            gravityVelocity = Vector3.zero;
-            isGrounded = true; // Assume grounded when NavMeshAgent is active
-            return;
-        }
-
-        // Check if grounded
-        bool wasGrounded = isGrounded;
-        isGrounded = CheckGrounded();
-
-        // If we just landed, reset gravity velocity and momentum
-        if (isGrounded && !wasGrounded)
-        {
-            gravityVelocity = Vector3.zero;
-            fallingMomentum = Vector3.zero;
-            return;
-        }
-        
-        // If we just became airborne, capture current movement momentum
-        if (!isGrounded && wasGrounded)
-        {
-            // Store the current movement input as falling momentum
-            fallingMomentum = movementInput * moveMaxSpeed * fallingMomentumMultiplier;
-            fallingMomentum.y = 0; // Only horizontal momentum
-            Debug.Log($"[Gravity] {gameObject.name}: Became airborne, captured momentum: {fallingMomentum}");
-        }
-
-        // Apply gravity when not grounded
-        if (!isGrounded)
-        {
-            // Safety check: don't fall into endless drops
-            if (!HasGroundWithinMaxFallDistance())
-            {
-                gravityVelocity = Vector3.zero;
-                fallingMomentum = Vector3.zero;
-                return;
-            }
-            
-            // Apply gravity acceleration
-            gravityVelocity.y -= gravity * Time.deltaTime;
-            
-            // Clamp to terminal velocity
-            gravityVelocity.y = Mathf.Max(gravityVelocity.y, -terminalVelocity);
-            
-            // Apply gravity movement and falling momentum
-            Vector3 gravityMovement = gravityVelocity * Time.deltaTime;
-            Vector3 momentumMovement = fallingMomentum * Time.deltaTime;
-            transform.position += gravityMovement + momentumMovement;
-            
-            // Gradually reduce falling momentum over time for more realistic physics
-            fallingMomentum *= 0.98f; // Reduce momentum by 2% each frame
-            
-            // Stop applying momentum if it becomes too small
-            if (fallingMomentum.magnitude < 0.1f)
-            {
-                fallingMomentum = Vector3.zero;
-            }
-            
-        }
-        else
-        {
-            // When grounded, reset gravity velocity to prevent accumulation
-            gravityVelocity = Vector3.zero;
-        }
-    }
-
-    /// <summary>
-    /// Get the current gravity velocity (for external systems that need to know falling state)
-    /// </summary>
-    /// <returns>Current gravity velocity vector</returns>
-    public Vector3 GetGravityVelocity()
-    {
-        return gravityVelocity;
-    }
-
-    /// <summary>
     /// Check if the character is currently falling
     /// </summary>
     /// <returns>True if falling (not grounded and has downward velocity)</returns>
     public bool IsFalling()
     {
-        return !isGrounded && gravityVelocity.y < 0;
+        if (characterController == null || !characterController.enabled) return false;
+        return !characterController.isGrounded && verticalVelocity < 0;
     }
 
     /// <summary>
@@ -1817,436 +1752,20 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     /// <returns>True if grounded</returns>
     public bool IsGrounded()
     {
-        return isGrounded;
+        if (characterController == null || !characterController.enabled) return true;
+        return characterController.isGrounded;
     }
 
     /// <summary>
-    /// Reset gravity velocity (useful for teleporting or special movement)
+    /// Reset vertical velocity (useful for teleporting or special movement)
     /// </summary>
     public void ResetGravityVelocity()
     {
-        gravityVelocity = Vector3.zero;
+        verticalVelocity = 0f;
     }
 
     #endregion
 
-    #region Collision Recovery
-
-    /// <summary>
-    /// Checks if the character is stuck inside any colliders and attempts to resolve the penetration
-    /// </summary>
-    /// <param name="forceCheck">If true, bypasses the interval check and performs immediate check</param>
-    /// <returns>True if character was stuck and has been moved, false otherwise</returns>
-    public bool CheckAndResolveCollisionPenetration(bool forceCheck = false)
-    {
-        // Skip check if collider is disabled (during vault/climb)
-        if (humanCollider == null || !humanCollider.enabled)
-        {
-            return false;
-        }
-
-        // Check if we're on cooldown from a recent recovery (unless forced)
-        if (!forceCheck && Time.time - lastCollisionRecoveryTime < collisionRecoveryCooldown)
-        {
-            return false;
-        }
-
-        // Check interval to avoid expensive checks every frame (unless forced)
-        if (!forceCheck && Time.time - lastCollisionCheckTime < collisionCheckInterval)
-        {
-            return false;
-        }
-
-        lastCollisionCheckTime = Time.time;
-
-        // Get the character's capsule collider bounds
-        CapsuleCollider capsule = humanCollider as CapsuleCollider;
-        if (capsule == null)
-        {
-            Debug.LogWarning($"[CollisionRecovery] {gameObject.name}: humanCollider is not a CapsuleCollider, using fallback sphere check");
-            return CheckAndResolveSphereCollision();
-        }
-
-        // Calculate capsule parameters for overlap check
-        Vector3 center = transform.TransformPoint(capsule.center);
-        float radius = capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z);
-        float height = capsule.height * transform.lossyScale.y;
-        
-        Vector3 point1 = center + Vector3.up * (height * 0.5f - radius);
-        Vector3 point2 = center - Vector3.up * (height * 0.5f - radius);
-
-        // Check for overlapping colliders
-        LayerMask checkLayers = GetCombinedObstacleLayers();
-        Collider[] overlappingColliders = Physics.OverlapCapsule(point1, point2, radius, checkLayers, QueryTriggerInteraction.Ignore);
-
-        // Filter out self
-        List<Collider> validOverlaps = new List<Collider>();
-        foreach (Collider col in overlappingColliders)
-        {
-            if (col != humanCollider && !col.isTrigger)
-            {
-                validOverlaps.Add(col);
-            }
-        }
-
-        if (validOverlaps.Count == 0)
-        {
-            // Not stuck anymore, reset consecutive attempts
-            consecutiveRecoveryAttempts = 0;
-            return false;
-        }
-
-        // Increment consecutive recovery attempts
-        consecutiveRecoveryAttempts++;
-        
-        Debug.LogWarning($"[CollisionRecovery] {gameObject.name}: Detected {validOverlaps.Count} overlapping colliders (attempt #{consecutiveRecoveryAttempts})");
-
-        // If we've had too many consecutive recovery attempts, use emergency teleport
-        if (consecutiveRecoveryAttempts >= 3)
-        {
-            Debug.LogError($"[CollisionRecovery] {gameObject.name}: Too many consecutive recovery attempts, using emergency teleport!");
-            return EmergencyTeleportToSurface();
-        }
-
-        // Try to resolve penetration with each overlapping collider
-        bool wasResolved = false;
-        int attempts = 0;
-
-        foreach (Collider overlappingCollider in validOverlaps)
-        {
-            if (attempts >= maxCollisionRecoveryAttempts)
-            {
-                break;
-            }
-
-            // Use Physics.ComputePenetration to find the separation direction
-            if (Physics.ComputePenetration(
-                capsule, center, transform.rotation,
-                overlappingCollider, overlappingCollider.transform.position, overlappingCollider.transform.rotation,
-                out Vector3 direction, out float distance))
-            {
-                Debug.Log($"[CollisionRecovery] {gameObject.name}: Penetrating {overlappingCollider.name} by {distance:F3}m, direction: {direction}");
-
-                // Calculate escape positions
-                Vector3 separationMove = direction * (distance + collisionRecoveryDistance);
-                Vector3 upwardMove = Vector3.up * (distance + collisionRecoveryDistance);
-                
-                // Determine which escape route is better
-                Vector3 escapeMove = ChooseBestEscapeDirection(separationMove, upwardMove, overlappingCollider);
-
-                // Apply the escape movement
-                transform.position += escapeMove;
-                
-                Debug.Log($"[CollisionRecovery] {gameObject.name}: Moved by {escapeMove} to escape collision");
-                
-                // Reset gravity velocity to prevent immediate falling
-                ResetGravityVelocity();
-                
-                wasResolved = true;
-                attempts++;
-            }
-        }
-
-        if (wasResolved)
-        {
-            // Force ground check after resolution
-            isGrounded = CheckGrounded();
-            lastCollisionRecoveryTime = Time.time; // Set recovery cooldown
-            Debug.Log($"[CollisionRecovery] {gameObject.name}: Collision resolved with ComputePenetration, isGrounded: {isGrounded}");
-        }
-        else
-        {
-            // ComputePenetration failed, use smart teleport instead of blind move
-            Debug.LogWarning($"[CollisionRecovery] {gameObject.name}: ComputePenetration failed, using smart surface teleport");
-            wasResolved = EmergencyTeleportToSurface();
-        }
-
-        return wasResolved;
-    }
-
-    /// <summary>
-    /// Finds the shortest escape route from current stuck position, checking all directions
-    /// </summary>
-    /// <returns>Best escape position with ground underneath, or Vector3.zero if none found</returns>
-    private (Vector3 position, float totalDistance, string direction) FindShortestEscapeRoute()
-    {
-        CapsuleCollider capsule = humanCollider as CapsuleCollider;
-        float radius = capsule != null ? capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z) : collisionCheckRadius;
-        float checkHeight = capsule != null ? capsule.height * transform.lossyScale.y : 2.0f;
-        
-        LayerMask checkLayers = GetCombinedObstacleLayers();
-        LayerMask allGroundLayers = groundLayers;
-        foreach (LayerMask layer in obstacleLayers)
-        {
-            allGroundLayers |= layer;
-        }
-        
-        Vector3 startPos = transform.position;
-        
-        // Define escape directions to check (8 horizontal + up + combinations)
-        List<(Vector3 direction, string name)> escapeDirections = new List<(Vector3, string)>
-        {
-            (Vector3.up, "Up"),
-            (Vector3.right, "Right"),
-            (Vector3.left, "Left"),
-            (Vector3.forward, "Forward"),
-            (Vector3.back, "Back"),
-            ((Vector3.right + Vector3.forward).normalized, "Right-Forward"),
-            ((Vector3.right + Vector3.back).normalized, "Right-Back"),
-            ((Vector3.left + Vector3.forward).normalized, "Left-Forward"),
-            ((Vector3.left + Vector3.back).normalized, "Left-Back"),
-        };
-        
-        Vector3 bestEscapePosition = Vector3.zero;
-        float bestTotalDistance = float.MaxValue;
-        string bestDirection = "None";
-        
-        foreach (var (direction, name) in escapeDirections)
-        {
-            // Find minimum distance needed to escape in this direction
-            float escapeDistance = FindMinimumEscapeDistance(startPos, direction, radius, checkHeight, checkLayers);
-            
-            if (escapeDistance < 0 || escapeDistance > emergencyTeleportHeight * 2f)
-            {
-                continue; // Too far or couldn't find escape
-            }
-            
-            Vector3 escapePosition = startPos + direction * escapeDistance;
-            
-            // Check if there's ground underneath this escape position
-            Vector3 rayStart = escapePosition + Vector3.up * 1f;
-            float maxGroundSearchDistance = emergencyTeleportHeight * 2f;
-            
-            if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit groundHit, maxGroundSearchDistance, allGroundLayers, QueryTriggerInteraction.Ignore))
-            {
-                // Found ground! Calculate total distance (escape + vertical drop)
-                Vector3 finalPosition = groundHit.point + Vector3.up * 0.2f;
-                float verticalDrop = Mathf.Max(0, escapePosition.y - finalPosition.y);
-                float totalDistance = escapeDistance + verticalDrop * 0.5f; // Weight vertical less than horizontal
-                
-                Debug.Log($"[CollisionRecovery] {gameObject.name}: {name} escape - distance: {escapeDistance:F2}, drop: {verticalDrop:F2}, total: {totalDistance:F2}");
-                
-                if (totalDistance < bestTotalDistance)
-                {
-                    bestTotalDistance = totalDistance;
-                    bestEscapePosition = finalPosition;
-                    bestDirection = name;
-                }
-            }
-        }
-        
-        return (bestEscapePosition, bestTotalDistance, bestDirection);
-    }
-    
-    /// <summary>
-    /// Finds the minimum distance needed to move in a direction to escape all colliders
-    /// </summary>
-    private float FindMinimumEscapeDistance(Vector3 startPos, Vector3 direction, float radius, float height, LayerMask checkLayers)
-    {
-        float maxSearchDistance = emergencyTeleportHeight * 2f;
-        float stepSize = 0.2f; // Check every 0.2 units
-        
-        for (float distance = stepSize; distance <= maxSearchDistance; distance += stepSize)
-        {
-            Vector3 testPosition = startPos + direction * distance;
-            Vector3 point1 = testPosition + Vector3.up * (height * 0.5f - radius);
-            Vector3 point2 = testPosition - Vector3.up * (height * 0.5f - radius);
-            
-            // Check if this position is clear
-            if (!Physics.CheckCapsule(point1, point2, radius * 0.9f, checkLayers, QueryTriggerInteraction.Ignore))
-            {
-                return distance;
-            }
-        }
-        
-        return -1f; // Couldn't find escape within max distance
-    }
-
-    /// <summary>
-    /// Emergency teleport to find the nearest valid surface, checking all directions
-    /// </summary>
-    /// <returns>True if teleport was successful</returns>
-    private bool EmergencyTeleportToSurface()
-    {
-        Debug.Log($"[CollisionRecovery] {gameObject.name}: Finding shortest escape route...");
-        
-        // Try to find the shortest escape route in any direction
-        var (escapePosition, totalDistance, direction) = FindShortestEscapeRoute();
-        
-        if (escapePosition != Vector3.zero)
-        {
-            // Found a good escape route!
-            Debug.Log($"[CollisionRecovery] {gameObject.name}: Best escape: {direction} direction, total distance: {totalDistance:F2}m");
-            Debug.Log($"[CollisionRecovery] {gameObject.name}: Emergency teleport from {transform.position} to {escapePosition}");
-            
-            transform.position = escapePosition;
-            ResetGravityVelocity();
-            isGrounded = CheckGrounded();
-            lastCollisionRecoveryTime = Time.time;
-            consecutiveRecoveryAttempts = 0; // Reset counter on successful teleport
-            
-            return true;
-        }
-        else
-        {
-            // Fallback: Try simple upward teleport as last resort
-            Debug.LogWarning($"[CollisionRecovery] {gameObject.name}: No escape route found, using fallback upward teleport");
-            
-            LayerMask checkLayers = GetCombinedObstacleLayers();
-            Vector3 startPos = transform.position;
-            Vector3 clearPosition = startPos + Vector3.up * emergencyTeleportHeight;
-            
-            CapsuleCollider capsule = humanCollider as CapsuleCollider;
-            float radius = capsule != null ? capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z) : collisionCheckRadius;
-            float checkHeight = capsule != null ? capsule.height * transform.lossyScale.y : 2.0f;
-            
-            Vector3 point1 = clearPosition + Vector3.up * (checkHeight * 0.5f - radius);
-            Vector3 point2 = clearPosition - Vector3.up * (checkHeight * 0.5f - radius);
-            
-            bool isClearAbove = !Physics.CheckCapsule(point1, point2, radius * 0.9f, checkLayers, QueryTriggerInteraction.Ignore);
-            
-            if (!isClearAbove)
-            {
-                // Try even higher
-                clearPosition = startPos + Vector3.up * emergencyTeleportHeight * 2f;
-            }
-            
-            // From clear position, raycast down to find ground
-            Vector3 rayStart = clearPosition + Vector3.up * 1f;
-            float maxRayDistance = emergencyTeleportHeight * 3f;
-            
-            LayerMask allGroundLayers = groundLayers;
-            foreach (LayerMask layer in obstacleLayers)
-            {
-                allGroundLayers |= layer;
-            }
-            
-            if (Physics.Raycast(rayStart, Vector3.down, out RaycastHit groundHit, maxRayDistance, allGroundLayers, QueryTriggerInteraction.Ignore))
-            {
-                Vector3 targetPosition = groundHit.point + Vector3.up * 0.2f;
-                Debug.Log($"[CollisionRecovery] {gameObject.name}: Fallback teleport to {targetPosition}");
-                
-                transform.position = targetPosition;
-                ResetGravityVelocity();
-                isGrounded = CheckGrounded();
-                lastCollisionRecoveryTime = Time.time;
-                consecutiveRecoveryAttempts = 0;
-                
-                return true;
-            }
-            else
-            {
-                // Last resort: just move to clear position
-                Debug.LogWarning($"[CollisionRecovery] {gameObject.name}: No ground found, teleporting to clear air: {clearPosition}");
-                
-                transform.position = clearPosition;
-                ResetGravityVelocity();
-                isGrounded = false;
-                lastCollisionRecoveryTime = Time.time;
-                
-                return true;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Fallback collision check using sphere overlap (for non-capsule colliders)
-    /// </summary>
-    private bool CheckAndResolveSphereCollision()
-    {
-        Vector3 checkPosition = transform.position + Vector3.up * 1f; // Check at waist height
-        LayerMask checkLayers = GetCombinedObstacleLayers();
-        
-        Collider[] overlappingColliders = Physics.OverlapSphere(checkPosition, collisionCheckRadius, checkLayers, QueryTriggerInteraction.Ignore);
-        
-        // Filter out self
-        List<Collider> validOverlaps = new List<Collider>();
-        foreach (Collider col in overlappingColliders)
-        {
-            if (col != humanCollider && !col.isTrigger)
-            {
-                validOverlaps.Add(col);
-            }
-        }
-
-        if (validOverlaps.Count == 0)
-        {
-            return false; // Not stuck
-        }
-
-        Debug.LogWarning($"[CollisionRecovery] {gameObject.name}: Sphere check detected {validOverlaps.Count} overlaps, using emergency teleport");
-        
-        // Use emergency teleport instead of blind move
-        return EmergencyTeleportToSurface();
-    }
-
-    /// <summary>
-    /// Choose the best escape direction based on proximity and obstacle type
-    /// </summary>
-    private Vector3 ChooseBestEscapeDirection(Vector3 separationMove, Vector3 upwardMove, Collider obstacle)
-    {
-        // If separation is mostly upward already (dot product > 0.7), use it
-        float upwardDot = Vector3.Dot(separationMove.normalized, Vector3.up);
-        if (upwardDot > 0.7f)
-        {
-            Debug.Log($"[CollisionRecovery] {gameObject.name}: Using separation direction (mostly upward: {upwardDot:F2})");
-            return separationMove;
-        }
-
-        // Check if moving upward would clear us from the obstacle
-        Vector3 upwardTestPosition = transform.position + upwardMove;
-        bool upwardIsClear = !Physics.CheckCapsule(
-            upwardTestPosition + Vector3.up * 0.3f, 
-            upwardTestPosition + Vector3.up * humanCollider.bounds.size.y,
-            capsuleCastRadius * 0.8f,
-            GetCombinedObstacleLayers(),
-            QueryTriggerInteraction.Ignore
-        );
-
-        // Check if moving in separation direction would clear us
-        Vector3 separationTestPosition = transform.position + separationMove;
-        bool separationIsClear = !Physics.CheckCapsule(
-            separationTestPosition + Vector3.up * 0.3f,
-            separationTestPosition + Vector3.up * humanCollider.bounds.size.y,
-            capsuleCastRadius * 0.8f,
-            GetCombinedObstacleLayers(),
-            QueryTriggerInteraction.Ignore
-        );
-
-        // Prefer the direction that's clear
-        if (upwardIsClear && !separationIsClear)
-        {
-            Debug.Log($"[CollisionRecovery] {gameObject.name}: Using upward move (separation blocked)");
-            return upwardMove;
-        }
-        else if (!upwardIsClear && separationIsClear)
-        {
-            Debug.Log($"[CollisionRecovery] {gameObject.name}: Using separation move (upward blocked)");
-            return separationMove;
-        }
-        else if (upwardIsClear && separationIsClear)
-        {
-            // Both are clear, choose the shorter distance
-            if (upwardMove.magnitude < separationMove.magnitude)
-            {
-                Debug.Log($"[CollisionRecovery] {gameObject.name}: Using upward move (shorter distance)");
-                return upwardMove;
-            }
-            else
-            {
-                Debug.Log($"[CollisionRecovery] {gameObject.name}: Using separation move (shorter distance)");
-                return separationMove;
-            }
-        }
-        else
-        {
-            // Neither is clear, use separation as it's computed by physics engine
-            Debug.Log($"[CollisionRecovery] {gameObject.name}: Both blocked, using separation move as fallback");
-            return separationMove;
-        }
-    }
-
-    #endregion
 
     #region Animation
 
@@ -2473,32 +1992,37 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 #endif
         }
         
-        // Gravity system visualization
-        if (Application.isPlaying)
+        // Gravity system visualization (CharacterController-based)
+        if (Application.isPlaying && characterController != null && characterController.enabled)
         {
             // Ground check visualization
+            bool isGrounded = characterController.isGrounded;
             Gizmos.color = isGrounded ? Color.green : Color.red;
-            Gizmos.DrawRay(transform.position, Vector3.down * groundCheckDistance);
+            Gizmos.DrawRay(transform.position, Vector3.down * 0.5f);
             
-            // Safety fall distance raycast visualization
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawRay(transform.position, Vector3.down * maxFallDistance);
+            // Max fall distance raycast visualization
+            if (!isGrounded)
+            {
+                bool hasGroundBelow = HasGroundWithinMaxFallDistance();
+                Gizmos.color = hasGroundBelow ? Color.yellow : Color.magenta;
+                Gizmos.DrawRay(transform.position, Vector3.down * maxFallDistance);
+            }
             
             // Gravity velocity visualization
-            if (gravityVelocity.magnitude > 0.1f)
+            if (Mathf.Abs(verticalVelocity) > 0.1f)
             {
-                Gizmos.color = Color.yellow;
+                Gizmos.color = verticalVelocity < 0 ? Color.red : Color.cyan;
                 Vector3 gravityArrowStart = transform.position + Vector3.up * 1.5f;
-                Vector3 gravityArrowEnd = gravityArrowStart + gravityVelocity * 0.5f;
+                Vector3 gravityArrowEnd = gravityArrowStart + Vector3.up * verticalVelocity * 0.1f;
                 Gizmos.DrawLine(gravityArrowStart, gravityArrowEnd);
                 Gizmos.DrawWireSphere(gravityArrowEnd, 0.1f);
                 
 #if UNITY_EDITOR
                 // Display gravity velocity text
                 Vector3 gravityTextPos = transform.position + Vector3.up * 2.5f;
-                string gravityText = $"Gravity: {gravityVelocity.y:F1} m/s";
+                string gravityText = $"Vertical Velocity: {verticalVelocity:F1} m/s\nGrounded: {isGrounded}";
                 var gravityStyle = new GUIStyle();
-                gravityStyle.normal.textColor = Color.yellow;
+                gravityStyle.normal.textColor = isGrounded ? Color.green : Color.yellow;
                 gravityStyle.fontSize = 10;
                 Handles.Label(gravityTextPos, gravityText, gravityStyle);
 #endif
@@ -2534,121 +2058,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             
             Handles.Label(pushTextPos, pushText, pushStyle);
 #endif
-        }
-        
-        // Collision recovery visualization
-        if (Application.isPlaying && humanCollider != null && humanCollider.enabled)
-        {
-            // Visualize the collision check volume (capsule for overlap detection)
-            CapsuleCollider capsule = humanCollider as CapsuleCollider;
-            if (capsule != null)
-            {
-                Vector3 center = transform.TransformPoint(capsule.center);
-                float radius = capsule.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z);
-                float height = capsule.height * transform.lossyScale.y;
-                
-                Vector3 point1 = center + Vector3.up * (height * 0.5f - radius);
-                Vector3 point2 = center - Vector3.up * (height * 0.5f - radius);
-                
-                // Check if currently overlapping with any obstacles
-                LayerMask checkLayers = GetCombinedObstacleLayers();
-                Collider[] overlaps = Physics.OverlapCapsule(point1, point2, radius, checkLayers, QueryTriggerInteraction.Ignore);
-                
-                bool hasOverlap = false;
-                foreach (Collider col in overlaps)
-                {
-                    if (col != humanCollider && !col.isTrigger)
-                    {
-                        hasOverlap = true;
-                        break;
-                    }
-                }
-                
-                // Color code based on collision state and consecutive attempts
-                if (hasOverlap)
-                {
-                    if (consecutiveRecoveryAttempts >= 3)
-                    {
-                        Gizmos.color = new Color(1f, 0f, 1f, 0.5f); // Magenta for emergency state
-                    }
-                    else if (consecutiveRecoveryAttempts > 0)
-                    {
-                        Gizmos.color = new Color(1f, 0.5f, 0f, 0.4f); // Orange for recovery attempts
-                    }
-                    else
-                    {
-                        Gizmos.color = new Color(1f, 0f, 0f, 0.3f); // Red for collision
-                    }
-                }
-                else
-                {
-                    Gizmos.color = new Color(0f, 1f, 0f, 0.1f); // Green for clear
-                }
-                
-                // Draw collision check capsule
-                Gizmos.DrawWireSphere(point1, radius);
-                Gizmos.DrawWireSphere(point2, radius);
-                Gizmos.DrawLine(point1 + Vector3.forward * radius, point2 + Vector3.forward * radius);
-                Gizmos.DrawLine(point1 - Vector3.forward * radius, point2 - Vector3.forward * radius);
-                Gizmos.DrawLine(point1 + Vector3.right * radius, point2 + Vector3.right * radius);
-                Gizmos.DrawLine(point1 - Vector3.right * radius, point2 - Vector3.right * radius);
-                
-#if UNITY_EDITOR
-                if (hasOverlap)
-                {
-                    // Display warning text if stuck
-                    Vector3 warningPos = transform.position + Vector3.up * 3f;
-                    var warningStyle = new GUIStyle();
-                    warningStyle.fontSize = 14;
-                    warningStyle.fontStyle = FontStyle.Bold;
-                    
-                    string warningText;
-                    if (consecutiveRecoveryAttempts >= 3)
-                    {
-                        warningStyle.normal.textColor = Color.magenta;
-                        warningText = $"EMERGENCY TELEPORT! (Attempt {consecutiveRecoveryAttempts})";
-                    }
-                    else if (consecutiveRecoveryAttempts > 0)
-                    {
-                        warningStyle.normal.textColor = new Color(1f, 0.5f, 0f);
-                        warningText = $"COLLISION - Recovering... (Attempt {consecutiveRecoveryAttempts})";
-                    }
-                    else
-                    {
-                        warningStyle.normal.textColor = Color.red;
-                        warningText = "COLLISION DETECTED!";
-                    }
-                    
-                    Handles.Label(warningPos, warningText, warningStyle);
-                    
-                    // Show escape route analysis if in emergency state
-                    if (consecutiveRecoveryAttempts >= 2)
-                    {
-                        // Visualize all escape directions being checked
-                        List<(Vector3 direction, string name)> escapeDirections = new List<(Vector3, string)>
-                        {
-                            (Vector3.up, "Up"),
-                            (Vector3.right, "Right"),
-                            (Vector3.left, "Left"),
-                            (Vector3.forward, "Forward"),
-                            (Vector3.back, "Back"),
-                            ((Vector3.right + Vector3.forward).normalized, "Right-Forward"),
-                            ((Vector3.right + Vector3.back).normalized, "Right-Back"),
-                            ((Vector3.left + Vector3.forward).normalized, "Left-Forward"),
-                            ((Vector3.left + Vector3.back).normalized, "Left-Back"),
-                        };
-                        
-                        foreach (var (direction, name) in escapeDirections)
-                        {
-                            Vector3 testPos = transform.position + direction * 1.0f;
-                            Gizmos.color = new Color(0f, 1f, 1f, 0.3f); // Cyan semi-transparent
-                            Gizmos.DrawLine(transform.position, testPos);
-                            Gizmos.DrawWireSphere(testPos, 0.1f);
-                        }
-                    }
-                }
-#endif
-            }
         }
     }
 

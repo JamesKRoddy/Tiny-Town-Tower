@@ -25,9 +25,6 @@ public class RobotCharacterController : HumanCharacterController, INarrativeTarg
             return;
         }
         
-        // Apply gravity before other updates
-        ApplyGravity();
-        
         // Update conversation rotation if in conversation
         UpdateConversationRotation();
         
