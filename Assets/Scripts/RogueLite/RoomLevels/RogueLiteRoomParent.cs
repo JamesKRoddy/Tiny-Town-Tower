@@ -344,6 +344,14 @@ public class RogueLiteRoomParent : MonoBehaviour
             
             int spawnIndex = availableSpawnIndices[0];
             
+            // CRITICAL: Validate that the spawn point still exists and is not destroyed
+            if (spawnIndex >= dynamicSpawnPoints.Count || dynamicSpawnPoints[spawnIndex] == null)
+            {
+                Debug.LogError($"[HierarchicalPlacement] Spawn point {spawnIndex} is invalid or destroyed! Skipping...");
+                availableSpawnIndices.RemoveAt(0);
+                continue;
+            }
+            
             // Check if this is an extender spawn point (index >= original spawn count)
             bool isExtenderSpawnPoint = spawnIndex >= originalSpawnCount;
             bool allowExtenders = !isExtenderSpawnPoint; // Don't allow extenders at extender spawn points
@@ -444,6 +452,13 @@ public class RogueLiteRoomParent : MonoBehaviour
                 Debug.LogWarning($"[HierarchicalPlacement] Attempting emergency fill for {emptySpawnIndices.Count} empty spawn points...");
                 foreach (int emptyIndex in emptySpawnIndices)
                 {
+                    // CRITICAL: Validate spawn point is still valid before attempting emergency fill
+                    if (emptyIndex >= dynamicSpawnPoints.Count || dynamicSpawnPoints[emptyIndex] == null)
+                    {
+                        Debug.LogError($"[HierarchicalPlacement] Emergency fill skipped - spawn point {emptyIndex} is invalid or destroyed");
+                        continue;
+                    }
+                    
                     // Try to get a basic room (non-extender) for emergency fill
                     GameObject[] allRooms = buildingScriptableObj.GetAllRooms(currentDifficulty, includeExtenders: false);
                     if (allRooms != null && allRooms.Length > 0)
@@ -979,6 +994,16 @@ public class RogueLiteRoomParent : MonoBehaviour
             var existingRoom = placedRoomsBySpawnIndex[spawnIndex];
             if (existingRoom.roomObject != null)
             {
+                // CRITICAL: Check if the room being removed is an extender
+                // Extenders add spawn points to the dynamic list, and removing them would orphan those spawn points
+                RoomExtender existingExtender = existingRoom.roomObject.GetComponent<RoomExtender>();
+                if (existingExtender != null)
+                {
+                    Debug.LogError($"[PlaceRoomAtSpawn] CANNOT replace extender at spawn {spawnIndex}! " +
+                                  $"Extenders add spawn points that would become orphaned. Keeping existing extender.");
+                    return false; // Refuse to replace the extender
+                }
+                
                 spawnedRooms.Remove(targetTransform.position);
                 Destroy(existingRoom.roomObject);
             }
@@ -1381,10 +1406,11 @@ public class RogueLiteRoomParent : MonoBehaviour
             }
         }
 
-        // If no valid doors found, fall back to using all doors (better than having no exits)
-        if (validDoors.Count == 0)
+        // CRITICAL FIX: If we don't have enough valid doors for EXIT + at least 1 ENTRANCE, use all doors
+        // We need minimum 2 doors: 1 for EXIT (player spawn) and 1 for ENTRANCE (exit to next room)
+        if (validDoors.Count < 2)
         {
-            Debug.LogWarning("[RogueLiteRoomParent] No doors with valid floors found! Using all doors as fallback.");
+            Debug.LogWarning($"[RogueLiteRoomParent] Only {validDoors.Count} valid doors found (need 2+ for EXIT and ENTRANCE)! Using all {allDoors.Count} doors as fallback.");
             validDoors = allDoors;
             invalidDoors.Clear();
         }
@@ -1399,7 +1425,8 @@ public class RogueLiteRoomParent : MonoBehaviour
         validDoors.RemoveAt(exitIndex);
 
         // Select 1-3 doors to be ENTRANCE doors (from remaining valid doors)
-        int entranceDoorsCount = Mathf.Clamp(Random.Range(1, 4), 1, validDoors.Count);
+        // Ensure we have at least 1 entrance door
+        int entranceDoorsCount = Mathf.Clamp(Random.Range(1, 4), 1, Mathf.Max(1, validDoors.Count));
 
         for (int i = 0; i < entranceDoorsCount; i++)
         {
