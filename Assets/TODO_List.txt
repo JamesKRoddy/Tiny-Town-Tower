@@ -1,12 +1,6 @@
 *****Current Work*****
 
-Fix:
-
-Player spawning into roguelike rooms spawns into the ground then pops up
-
-Roguelike rooms are able to spawn with no exits or player can spawn outside the room. Best guess for this is that the extender room is spawning rooms with doors then this room gets swapped out but the doors are still considered to be there.
-
-Controls feel super janky with the gravity system, player pops up in the air randomly, gets stuck on small objects, gets stuck in the ground etc. There should be a better fix for this
+Walls on room prefabs have one large collider, this needs to be broken into collides on the wall objects
 
 ****** Tomorrow work:
 
@@ -15,7 +9,6 @@ Controls feel super janky with the gravity system, player pops up in the air ran
 
 Pick up the hit reaction IKs on enemies again, enemies are no longer getting pushed back by the player
 
-Walls on room prefabs have one large collider, this needs to be broken into collides on the wall objects
 
 Charge up attacks by holding down buttons
 
