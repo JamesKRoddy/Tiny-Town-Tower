@@ -65,8 +65,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public float terminalVelocity = 20f; // Maximum falling speed
     public float maxFallDistance = 100f; // Maximum distance to fall before stopping (prevents endless drops)
     public float fallingMovementMultiplier = 0.5f; // Movement speed multiplier when falling (0.5 = 50% speed)
+    public float groundedBufferTime = 0.15f; // Time to remain "grounded" after leaving ground (prevents slope flickering)
     private float verticalVelocity = 0f; // Current vertical velocity for gravity
     private bool wasGroundedLastFrame = true; // Track grounded state from previous frame
+    private float lastGroundedTime = 0f; // Last time the character was grounded (for coyote time)
+    private bool isGroundedBuffered = true; // Buffered grounded state (smoother than raw CharacterController.isGrounded)
 
     // Automatic obstacle navigation: analyzes height to determine WalkOver, Vault, or TooHigh
     // RollUnder and Block types only come from ObstacleVaultBehavior components
@@ -1663,7 +1666,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     #region Gravity System
 
     /// <summary>
-    /// Apply gravity using CharacterController's built-in ground detection
+    /// Apply gravity using CharacterController's built-in ground detection with buffering for slopes
     /// Much simpler and more reliable than custom raycasting!
     /// </summary>
     protected virtual void ApplyGravityMovement(ref Vector3 movement)
@@ -1672,6 +1675,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         if (!enableGravity || isVaulting || isDashing || isPushing || isClimbing || isDead)
         {
             verticalVelocity = 0f;
+            isGroundedBuffered = true;
+            lastGroundedTime = Time.time;
             return;
         }
 
@@ -1680,19 +1685,31 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         if (characterController == null || !characterController.enabled)
         {
             verticalVelocity = 0f;
+            isGroundedBuffered = true;
+            lastGroundedTime = Time.time;
             return;
         }
 
-        // Use CharacterController's built-in ground detection (much more reliable!)
-        bool isGrounded = characterController.isGrounded;
+        // Get raw grounded state from CharacterController
+        bool isGroundedRaw = characterController.isGrounded;
+        
+        // Update last grounded time when we detect ground
+        if (isGroundedRaw)
+        {
+            lastGroundedTime = Time.time;
+        }
+        
+        // Buffered grounded state: remain "grounded" for a short time after leaving ground
+        // This prevents animation flickering on slopes and small bumps (coyote time)
+        isGroundedBuffered = isGroundedRaw || (Time.time - lastGroundedTime) < groundedBufferTime;
 
-        if (isGrounded && verticalVelocity < 0)
+        if (isGroundedBuffered && verticalVelocity < 0)
         {
             // Keep character grounded with small downward force
             // This prevents bouncing and ensures proper ground detection
             verticalVelocity = -2f;
         }
-        else if (!isGrounded)
+        else if (!isGroundedBuffered)
         {
             // Safety check: don't fall into endless drops
             if (!HasGroundWithinMaxFallDistance())
@@ -1743,7 +1760,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public bool IsFalling()
     {
         if (characterController == null || !characterController.enabled) return false;
-        return !characterController.isGrounded && verticalVelocity < 0;
+        // Use buffered grounded state for smoother detection on slopes
+        return !isGroundedBuffered && verticalVelocity < -3f; // Only count as falling if velocity is significant
     }
 
     /// <summary>
@@ -1753,7 +1771,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public bool IsGrounded()
     {
         if (characterController == null || !characterController.enabled) return true;
-        return characterController.isGrounded;
+        // Use buffered grounded state for smoother detection on slopes
+        return isGroundedBuffered;
     }
 
     /// <summary>
@@ -1762,6 +1781,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public void ResetGravityVelocity()
     {
         verticalVelocity = 0f;
+        isGroundedBuffered = true;
+        lastGroundedTime = Time.time;
     }
 
     #endregion
@@ -1995,13 +2016,20 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Gravity system visualization (CharacterController-based)
         if (Application.isPlaying && characterController != null && characterController.enabled)
         {
-            // Ground check visualization
-            bool isGrounded = characterController.isGrounded;
-            Gizmos.color = isGrounded ? Color.green : Color.red;
+            // Ground check visualization - show both raw and buffered states
+            bool isGroundedRaw = characterController.isGrounded;
+            Gizmos.color = isGroundedBuffered ? Color.green : Color.red;
             Gizmos.DrawRay(transform.position, Vector3.down * 0.5f);
             
+            // Show raw vs buffered difference
+            if (isGroundedRaw != isGroundedBuffered)
+            {
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawWireSphere(transform.position + Vector3.up * 0.2f, 0.3f);
+            }
+            
             // Max fall distance raycast visualization
-            if (!isGrounded)
+            if (!isGroundedBuffered)
             {
                 bool hasGroundBelow = HasGroundWithinMaxFallDistance();
                 Gizmos.color = hasGroundBelow ? Color.yellow : Color.magenta;
@@ -2020,9 +2048,14 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 #if UNITY_EDITOR
                 // Display gravity velocity text
                 Vector3 gravityTextPos = transform.position + Vector3.up * 2.5f;
-                string gravityText = $"Vertical Velocity: {verticalVelocity:F1} m/s\nGrounded: {isGrounded}";
+                float bufferTimeRemaining = Mathf.Max(0, groundedBufferTime - (Time.time - lastGroundedTime));
+                string gravityText = $"Vertical Velocity: {verticalVelocity:F1} m/s\nGrounded (Raw): {isGroundedRaw}\nGrounded (Buffered): {isGroundedBuffered}";
+                if (!isGroundedRaw && isGroundedBuffered)
+                {
+                    gravityText += $"\nBuffer: {bufferTimeRemaining:F2}s";
+                }
                 var gravityStyle = new GUIStyle();
-                gravityStyle.normal.textColor = isGrounded ? Color.green : Color.yellow;
+                gravityStyle.normal.textColor = isGroundedBuffered ? Color.green : Color.yellow;
                 gravityStyle.fontSize = 10;
                 Handles.Label(gravityTextPos, gravityText, gravityStyle);
 #endif
