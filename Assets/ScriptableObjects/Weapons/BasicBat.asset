@@ -23,7 +23,7 @@ MonoBehaviour:
   damage: 10
   poiseDamage: 10
   attackSpeed: 0.8
-  weaponElement: 2
+  weaponElement: 1
   elementalDamageBonus: 0
   isPureElemental: 0
   possibleStatusEffects: 

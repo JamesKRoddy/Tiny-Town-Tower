@@ -1764,7 +1764,7 @@ MonoBehaviour:
     vfxTransform: {fileID: 5049169135916888652}
   dashVfxTransform: {fileID: 2150085026169600938}
   meleeElementalEffects:
-  - element: 0
+  - element: 1
     meleeEffect: {fileID: 11400000, guid: ba3d531537432b34e85ed3b265a6eb06, type: 2}
   - element: 2
     meleeEffect: {fileID: 11400000, guid: 52c6fe2f7eb9a0844abd20061aa89584, type: 2}
@@ -1820,6 +1820,10 @@ MonoBehaviour:
   maxFallDistance: 100
   fallingMovementMultiplier: 0.2
   fallingMomentumMultiplier: 0.8
+  collisionCheckRadius: 0.6
+  maxCollisionRecoveryAttempts: 5
+  collisionRecoveryDistance: 0.1
+  emergencyTeleportHeight: 2
   health: 100
   maxHealth: 100
   damageCooldown: 0.5
