@@ -282,19 +282,27 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     /// </summary>
     private void ApplyProceduralKnockback()
     {
-        // Only apply knockback when using CharacterController (player-controlled)
-        if (characterController == null || !characterController.enabled) return;
-        
         // Scale knockback distance based on poise damage (heavier weapons = more knockback)
-        float baseKnockback = 0.8f;
-        float scaledKnockback = baseKnockback * Mathf.Clamp01(LastHitPoiseDamage / 15f); // Normalize: 15 poise = 1.0x knockback
+        float baseKnockback = 1.2f;
+        float poiseScale = Mathf.Clamp(LastHitPoiseDamage / 15f, 0.4f, 2.0f); // Min 0.4x, max 2.0x (ensures minimum knockback)
+        float scaledKnockback = baseKnockback * poiseScale;
         
-        Vector3 knockbackOffset = IKReactionUtils.CalculateKnockbackOffset(transform, LastHitOrigin, LastHitTime, scaledKnockback);
+        Vector3 knockbackOffset = IKReactionUtils.CalculateKnockbackOffset(transform, LastHitOrigin, LastHitTime, scaledKnockback, 0.2f);
         
         if (knockbackOffset.magnitude > 0.001f)
         {
-            Vector3 knockbackMovement = knockbackOffset * Time.deltaTime * 10f; // Scale by deltaTime for smooth movement
-            characterController.Move(knockbackMovement); // Use CharacterController.Move() for proper collision handling
+            // Apply knockback velocity-based (smoother and more visible)
+            Vector3 knockbackMovement = knockbackOffset * Time.deltaTime * 25f; // Increased multiplier for visible knockback
+            
+            // Use CharacterController if available (for player-controlled), otherwise direct transform
+            if (characterController != null && characterController.enabled)
+            {
+                characterController.Move(knockbackMovement);
+            }
+            else
+            {
+                transform.position += knockbackMovement;
+            }
         }
     }
 

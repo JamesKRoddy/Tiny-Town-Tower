@@ -319,15 +319,28 @@ namespace Enemies
         /// </summary>
         private void ApplyProceduralKnockback()
         {
-            // Scale knockback distance based on poise damage (heavier weapons = more knockback)
-            float baseKnockback = 1.0f;
-            float scaledKnockback = baseKnockback * Mathf.Clamp01(LastHitPoiseDamage / 15f); // Normalize: 15 poise = 1.0x knockback
+            // Check if we should apply knockback
+            float timeSinceHit = Time.time - LastHitTime;
+            if (timeSinceHit > 0.2f || LastHitOrigin == Vector3.zero) return;
             
-            Vector3 knockbackOffset = IKReactionUtils.CalculateKnockbackOffset(transform, LastHitOrigin, LastHitTime, scaledKnockback);
+            // Scale knockback distance based on poise damage (heavier weapons = more knockback)
+            float baseKnockback = 1.5f;
+            float poiseScale = Mathf.Clamp(LastHitPoiseDamage / 15f, 0.4f, 2.0f); // Min 0.4x, max 2.0x (ensures minimum knockback)
+            float scaledKnockback = baseKnockback * poiseScale;
+            
+            Vector3 knockbackOffset = IKReactionUtils.CalculateKnockbackOffset(transform, LastHitOrigin, LastHitTime, scaledKnockback, 0.2f);
             
             if (knockbackOffset.magnitude > 0.001f)
             {
-                Vector3 newPosition = transform.position + knockbackOffset * Time.deltaTime * 10f; // Scale by deltaTime for smooth movement
+                // Apply knockback velocity-based (smoother and more responsive)
+                Vector3 knockbackMovement = knockbackOffset * Time.deltaTime * 25f; // Increased multiplier for visible knockback
+                Vector3 newPosition = transform.position + knockbackMovement;
+                
+                if (showCollisionDebug && timeSinceHit < 0.05f)
+                {
+                    Debug.Log($"[{gameObject.name}] Knockback - Poise: {LastHitPoiseDamage}, Scale: {poiseScale:F2}, " +
+                             $"Offset magnitude: {knockbackOffset.magnitude:F3}, Movement: {knockbackMovement.magnitude:F3}");
+                }
                 
                 // Validate position is on NavMesh
                 if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 2f, NavMesh.AllAreas))

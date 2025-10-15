@@ -1,14 +1,11 @@
 *****Current Work*****
 
-Walls on room prefabs have one large collider, this needs to be broken into collides on the wall objects
+Pick up the hit reaction IKs on enemies again, enemies are no longer getting pushed back by the player
 
 ****** Tomorrow work:
 
 
 ****** Next work:
-
-Pick up the hit reaction IKs on enemies again, enemies are no longer getting pushed back by the player
-
 
 Charge up attacks by holding down buttons
 
