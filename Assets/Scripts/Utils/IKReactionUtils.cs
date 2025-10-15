@@ -7,15 +7,16 @@ using UnityEngine;
 public static class IKReactionUtils
 {
     // Configuration constants
-    private const float DEFAULT_REACTION_DURATION = 0.3f;
-    private const float DEFAULT_REACTION_INTENSITY = 0.8f; // Increased from 0.5 for more visible reactions
-    private const float DEFAULT_MAX_IK_OFFSET = 0.25f; // Increased from 0.15 for more visible movement
-    private const float HEAD_IK_WEIGHT = 1.0f; // Increased from 0.7 for stronger head reactions
-    private const float HAND_IK_WEIGHT = 0.8f; // Increased from 0.5 for stronger hand reactions
-    private const float HIT_DETECTION_RADIUS = 1.5f; // Increased from 0.8 for wider detection
+    private const float DEFAULT_REACTION_DURATION = 0.6f; // Increased from 0.3s - longer, more visible
+    private const float DEFAULT_REACTION_INTENSITY = 1.0f; // Max intensity for visible reactions
+    private const float DEFAULT_MAX_IK_OFFSET = 0.4f; // Increased from 0.25 - much more visible movement
+    private const float HEAD_IK_WEIGHT = 1.0f; // Full head reactions
+    private const float HAND_IK_WEIGHT = 1.0f; // Full hand reactions
+    private const float HIT_DETECTION_RADIUS = 2.0f; // Wide detection
     
     // Debug flag
     private static bool enableDebugLogs = true;
+    private static bool enableDebugGizmos = true;
 
     /// <summary>
     /// Applies immediate hit reaction IK to a character based on recent damage.
@@ -53,9 +54,27 @@ public static class IKReactionUtils
         float timeSinceHit = Time.time - lastHitTime;
         if (timeSinceHit > reactionDuration) return;
         
-        // Calculate reaction weight using smooth sine curve
+        // Calculate reaction weight using a curve that holds at peak longer
         float reactionProgress = Mathf.Clamp01(timeSinceHit / reactionDuration);
-        float weightCurve = Mathf.Sin(reactionProgress * Mathf.PI); // Smooth in/out
+        
+        // Custom curve: Quick ramp up, hold at peak, slow fall off
+        float weightCurve;
+        if (reactionProgress < 0.2f)
+        {
+            // Quick ramp up (0 to 1 in first 20% of duration)
+            weightCurve = reactionProgress / 0.2f;
+        }
+        else if (reactionProgress < 0.7f)
+        {
+            // Hold at peak (stay at 1.0 for middle 50% of duration)
+            weightCurve = 1.0f;
+        }
+        else
+        {
+            // Ease out (1 to 0 in last 30% of duration)
+            float falloffProgress = (reactionProgress - 0.7f) / 0.3f;
+            weightCurve = 1.0f - falloffProgress;
+        }
         
         if (enableDebugLogs && timeSinceHit < 0.05f) // Log once per hit (within first few frames)
         {
@@ -118,15 +137,15 @@ public static class IKReactionUtils
 
     private static void ApplyHeadReaction(Animator animator, Vector3 headPos, Vector3 hitOrigin, float intensity)
     {
-        // Head recoils away from hit
+        // Head recoils away from hit with dramatic upward snap
         Vector3 recoilDirection = (headPos - hitOrigin).normalized;
-        recoilDirection += Vector3.up * 0.3f; // Add upward component
+        recoilDirection += Vector3.up * 0.6f; // Stronger upward component for visible reaction
         recoilDirection.Normalize();
         
-        Vector3 targetPos = headPos + recoilDirection * DEFAULT_MAX_IK_OFFSET * intensity;
+        Vector3 targetPos = headPos + recoilDirection * DEFAULT_MAX_IK_OFFSET * 1.5f * intensity; // Increased range
         
         float weight = intensity * HEAD_IK_WEIGHT;
-        animator.SetLookAtWeight(weight, weight * 0.8f, weight * 0.5f);
+        animator.SetLookAtWeight(weight, weight * 0.9f, weight * 0.7f, weight * 0.5f, weight * 0.5f); // More body involvement
         animator.SetLookAtPosition(targetPos);
     }
 
@@ -147,15 +166,16 @@ public static class IKReactionUtils
         // Don't skip based on distance, let the intensity scale naturally
         // if (distanceToHit > HIT_DETECTION_RADIUS && !isHitSideHand) return;
         
-        // Calculate defensive hand position (move toward hit defensively)
+        // Calculate defensive hand position (move AWAY from hit - recoil)
         Vector3 reactionDirection = (handPos - hitOrigin).normalized;
-        Vector3 defensiveOffset = -reactionDirection * DEFAULT_MAX_IK_OFFSET * 0.5f;
+        Vector3 recoilOffset = reactionDirection * DEFAULT_MAX_IK_OFFSET * 0.8f; // Hands move away from hit
         
-        // Add outward spread
+        // Add upward and outward spread for dramatic effect
         Vector3 outwardDir = characterTransform.right * (isLeftHand ? -1f : 1f);
-        defensiveOffset += outwardDir * DEFAULT_MAX_IK_OFFSET * 0.3f;
+        recoilOffset += outwardDir * DEFAULT_MAX_IK_OFFSET * 0.5f;
+        recoilOffset += Vector3.up * DEFAULT_MAX_IK_OFFSET * 0.3f; // Slight upward lift
         
-        Vector3 targetPos = handPos + defensiveOffset * intensity;
+        Vector3 targetPos = handPos + recoilOffset * intensity;
         
         // Stronger reaction on hit side
         float handIntensity = isHitSideHand ? intensity : intensity * 0.6f;
@@ -185,7 +205,7 @@ public static class IKReactionUtils
     }
     
     /// <summary>
-    /// Calculates procedural knockback offset based on hit origin and time.
+    /// Calculates procedural knockback offset based on hit origin, time, and character poise.
     /// Returns a Vector3 offset that can be applied to character position for smooth knockback.
     /// This integrates with the IK reaction system for unified hit response.
     /// </summary>
@@ -193,14 +213,18 @@ public static class IKReactionUtils
     /// <param name="lastHitOrigin">Where the hit came from</param>
     /// <param name="lastHitTime">When the hit occurred</param>
     /// <param name="maxKnockbackDistance">Maximum knockback distance (default: 1.0)</param>
-    /// <param name="knockbackDuration">How long knockback lasts (default: 0.2s)</param>
+    /// <param name="knockbackDuration">How long knockback lasts (default: 0.3s)</param>
+    /// <param name="characterMaxPoise">Character's max poise (higher poise = more resistance to knockback)</param>
+    /// <param name="characterCurrentPoise">Character's current poise (lower poise = less resistance)</param>
     /// <returns>Knockback offset to apply to character position</returns>
     public static Vector3 CalculateKnockbackOffset(
         Transform characterTransform,
         Vector3 lastHitOrigin,
         float lastHitTime,
         float maxKnockbackDistance = 1.0f,
-        float knockbackDuration = 0.2f)
+        float knockbackDuration = 0.3f,
+        float characterMaxPoise = 50f,
+        float characterCurrentPoise = 50f)
     {
         if (lastHitOrigin == Vector3.zero) return Vector3.zero;
         
@@ -215,11 +239,17 @@ public static class IKReactionUtils
         float distanceFromSource = Vector3.Distance(characterTransform.position, lastHitOrigin);
         float distanceScale = Mathf.Lerp(1.0f, 0.3f, Mathf.Clamp01(distanceFromSource / 5f));
         
+        // Poise resistance: Higher max poise = more stable
+        // Characters with low current poise are more susceptible to knockback
+        float poiseRatio = Mathf.Clamp01(characterCurrentPoise / Mathf.Max(characterMaxPoise, 1f));
+        float poiseResistance = Mathf.Lerp(0.3f, 1.0f, 1f - (characterMaxPoise / 200f)); // Normalize: 200 maxPoise = 0.3x knockback, 0 = 1.0x
+        float poiseMultiplier = poiseResistance * Mathf.Lerp(0.5f, 1.0f, poiseRatio); // Reduced poise = more knockback
+        
         // Use a punch curve for knockback (quick push, then ease out)
         float progress = timeSinceHit / knockbackDuration;
         float knockbackCurve = 1f - Mathf.Pow(progress, 2f); // Quadratic ease-out
         
-        Vector3 knockbackOffset = knockbackDirection * maxKnockbackDistance * distanceScale * knockbackCurve;
+        Vector3 knockbackOffset = knockbackDirection * maxKnockbackDistance * distanceScale * knockbackCurve * poiseMultiplier;
         
         if (enableDebugLogs && timeSinceHit < 0.05f)
         {
@@ -227,8 +257,8 @@ public static class IKReactionUtils
                      $"maxDist: {maxKnockbackDistance:F2}m, " +
                      $"distScale: {distanceScale:F2}, " +
                      $"curve: {knockbackCurve:F2}, " +
-                     $"final: {maxKnockbackDistance * distanceScale * knockbackCurve:F3}m, " +
-                     $"dir: {knockbackDirection}");
+                     $"poiseResist: {poiseMultiplier:F2} (maxPoise: {characterMaxPoise}, currentPoise: {characterCurrentPoise:F1}), " +
+                     $"final: {maxKnockbackDistance * distanceScale * knockbackCurve * poiseMultiplier:F3}m");
         }
         
         return knockbackOffset;

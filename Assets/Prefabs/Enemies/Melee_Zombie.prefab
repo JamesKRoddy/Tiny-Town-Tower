@@ -3073,7 +3073,7 @@ MonoBehaviour:
   attackAngleThreshold: 30
   cooldown: 2
   damage: 10
-  poiseDamage: 15
+  poiseDamage: 5
   attackType: 0
   attackOrigin: {fileID: 0}
   allowRotationDuringAttack: 0

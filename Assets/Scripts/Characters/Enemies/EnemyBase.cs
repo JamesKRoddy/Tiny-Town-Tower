@@ -321,14 +321,14 @@ namespace Enemies
         {
             // Check if we should apply knockback
             float timeSinceHit = Time.time - LastHitTime;
-            if (timeSinceHit > 0.2f || LastHitOrigin == Vector3.zero) return;
+            if (timeSinceHit > 0.3f || LastHitOrigin == Vector3.zero) return; // Slightly longer for visible effect
             
             // Scale knockback distance based on poise damage (heavier weapons = more knockback)
-            float baseKnockback = 1.5f;
+            float baseKnockback = 0.75f; // Reduced from 1.5f
             float poiseScale = Mathf.Clamp(LastHitPoiseDamage / 15f, 0.4f, 2.0f); // Min 0.4x, max 2.0x (ensures minimum knockback)
             float scaledKnockback = baseKnockback * poiseScale;
             
-            Vector3 knockbackOffset = IKReactionUtils.CalculateKnockbackOffset(transform, LastHitOrigin, LastHitTime, scaledKnockback, 0.2f);
+            Vector3 knockbackOffset = IKReactionUtils.CalculateKnockbackOffset(transform, LastHitOrigin, LastHitTime, scaledKnockback, 0.3f, MaxPoise, Poise);
             
             if (knockbackOffset.magnitude > 0.001f)
             {
@@ -1106,14 +1106,20 @@ namespace Enemies
             
             // Check if currently reacting to a hit
             bool isReactingToHit = animator.isHuman && LastHitOrigin != Vector3.zero && 
-                                   (Time.time - LastHitTime) < 0.3f; // Within reaction duration
+                                   (Time.time - LastHitTime) < 0.6f; // Within reaction duration (matches IKReactionUtils)
             
             // Priority 1: Process hit reactions (immediate, stateless IK reactions)
             if (isReactingToHit)
             {
                 // Scale reaction intensity based on poise damage (typical weapon poise: 5-25)
-                float scaledIntensity = Mathf.Clamp01(LastHitPoiseDamage / 20f); // Normalize: 20 poise = 1.0 intensity
-                IKReactionUtils.ApplyHitReactionIK(animator, transform, LastHitOrigin, LastHitTime, 0.3f, scaledIntensity);
+                float scaledIntensity = Mathf.Clamp(LastHitPoiseDamage / 20f, 0.5f, 1.5f); // Min 0.5, max 1.5 (ensures visible reaction)
+                
+                if (showCollisionDebug && (Time.time - LastHitTime) < 0.05f)
+                {
+                    Debug.Log($"[{gameObject.name}] IK Reaction - Poise: {LastHitPoiseDamage}, Scaled Intensity: {scaledIntensity:F2}");
+                }
+                
+                IKReactionUtils.ApplyHitReactionIK(animator, transform, LastHitOrigin, LastHitTime, 0.6f, scaledIntensity);
                 // Hit reactions take full priority - return to avoid conflicts
                 return;
             }
@@ -1674,6 +1680,7 @@ namespace Enemies
                 {
                     LastHitOrigin = damageSource.position;
                     LastHitTime = Time.time;
+                    LastHitPoiseDamage = poiseDamage; // Use actual poise damage for reaction scaling
                 }
                 HandleDamageReaction(damageSource);
             }
@@ -2073,6 +2080,7 @@ namespace Enemies
                 {
                     LastHitOrigin = damageSource.position;
                     LastHitTime = Time.time;
+                    LastHitPoiseDamage = poiseDamage; // Use actual poise damage for reaction scaling
                 }
                 HandleDamageReaction(damageSource);
             }

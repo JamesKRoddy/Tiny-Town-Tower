@@ -615,7 +615,7 @@ namespace Enemies
             {
                 // Check if we're reacting to a hit - if so, let hit reactions take priority
                 bool isReactingToHit = animator.isHuman && LastHitOrigin != Vector3.zero && 
-                                       (Time.time - LastHitTime) < 0.3f;
+                                       (Time.time - LastHitTime) < 0.6f; // Match IKReactionUtils duration
                 
                 if (!isReactingToHit)
                 {

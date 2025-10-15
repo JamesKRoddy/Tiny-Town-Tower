@@ -283,11 +283,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private void ApplyProceduralKnockback()
     {
         // Scale knockback distance based on poise damage (heavier weapons = more knockback)
-        float baseKnockback = 1.2f;
+        float baseKnockback = 0.6f; // Reduced from 1.2f
         float poiseScale = Mathf.Clamp(LastHitPoiseDamage / 15f, 0.4f, 2.0f); // Min 0.4x, max 2.0x (ensures minimum knockback)
         float scaledKnockback = baseKnockback * poiseScale;
         
-        Vector3 knockbackOffset = IKReactionUtils.CalculateKnockbackOffset(transform, LastHitOrigin, LastHitTime, scaledKnockback, 0.2f);
+        Vector3 knockbackOffset = IKReactionUtils.CalculateKnockbackOffset(transform, LastHitOrigin, LastHitTime, scaledKnockback, 0.3f, MaxPoise, Poise);
         
         if (knockbackOffset.magnitude > 0.001f)
         {
@@ -2488,11 +2488,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         if (animator == null) return;
         
         // Apply immediate hit reactions using stateless IK utility (scaled by weapon poise damage)
-        if (animator.isHuman && LastHitOrigin != Vector3.zero && (Time.time - LastHitTime) < 0.3f)
+        if (animator.isHuman && LastHitOrigin != Vector3.zero && (Time.time - LastHitTime) < 0.6f)
         {
             // Scale reaction intensity based on poise damage (typical weapon poise: 5-25)
-            float scaledIntensity = Mathf.Clamp01(LastHitPoiseDamage / 20f); // Normalize: 20 poise = 1.0 intensity
-            IKReactionUtils.ApplyHitReactionIK(animator, transform, LastHitOrigin, LastHitTime, 0.3f, scaledIntensity);
+            float scaledIntensity = Mathf.Clamp(LastHitPoiseDamage / 20f, 0.5f, 1.5f); // Min 0.5, max 1.5 (ensures visible reaction)
+            IKReactionUtils.ApplyHitReactionIK(animator, transform, LastHitOrigin, LastHitTime, 0.6f, scaledIntensity);
         }
         
         // Add other IK processing here as needed (e.g., look at targets, weapon IK, etc.)
