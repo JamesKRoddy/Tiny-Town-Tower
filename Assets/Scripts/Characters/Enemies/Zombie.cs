@@ -605,16 +605,22 @@ namespace Enemies
         /// </summary>
         protected override void OnAnimatorIK(int layerIndex)
         {
-            // First, let the base class handle general head tracking (when not attacking)
-            if (currentAttack == null || !isExecutingAttack)
-            {
-                base.OnAnimatorIK(layerIndex);
-            }
+            // Always call base first - it handles hit reactions with proper priority
+            base.OnAnimatorIK(layerIndex);
             
-            // Then, let the current attack handle its own IK behavior (if attacking)
-            if (currentAttack != null && isExecutingAttack)
+            // Note: base.OnAnimatorIK already handles hit reactions and will return early if reacting
+            // If we're here, either no hit reaction is active, or base didn't return
+            // Only override with attack IK if actively executing an attack and have a current attack
+            if (currentAttack != null && isExecutingAttack && animator != null)
             {
-                currentAttack.OnAnimatorIK(layerIndex);
+                // Check if we're reacting to a hit - if so, let hit reactions take priority
+                bool isReactingToHit = animator.isHuman && LastHitOrigin != Vector3.zero && 
+                                       (Time.time - LastHitTime) < 0.3f;
+                
+                if (!isReactingToHit)
+                {
+                    currentAttack.OnAnimatorIK(layerIndex);
+                }
             }
         }
 

@@ -164,6 +164,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     // IDamageable hit reaction tracking
     public Vector3 LastHitOrigin { get; set; } = Vector3.zero;
     public float LastHitTime { get; set; } = -999f;
+    public float LastHitPoiseDamage { get; set; } = 0f;
 
     protected virtual void Awake()
     {
@@ -220,6 +221,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             return;
         }
         
+        // Apply procedural knockback from hit reactions
+        ApplyProceduralKnockback();
+        
         // Handle climb landing delay
         if (isClimbLanding)
         {
@@ -246,6 +250,25 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         MoveCharacter();
         UpdateActualMovementSpeed();
         UpdateAnimations();
+    }
+    
+    /// <summary>
+    /// Applies procedural knockback based on recent hits using the IK reaction system.
+    /// This creates smooth, physics-like knockback without coroutines.
+    /// </summary>
+    private void ApplyProceduralKnockback()
+    {
+        // Scale knockback distance based on poise damage (heavier weapons = more knockback)
+        float baseKnockback = 0.8f;
+        float scaledKnockback = baseKnockback * Mathf.Clamp01(LastHitPoiseDamage / 15f); // Normalize: 15 poise = 1.0x knockback
+        
+        Vector3 knockbackOffset = IKReactionUtils.CalculateKnockbackOffset(transform, LastHitOrigin, LastHitTime, scaledKnockback);
+        
+        if (knockbackOffset.magnitude > 0.001f)
+        {
+            Vector3 newPosition = transform.position + knockbackOffset * Time.deltaTime * 10f; // Scale by deltaTime for smooth movement
+            transform.position = newPosition; // Direct position update for player-controlled characters
+        }
     }
 
     #region IPossessable Interface
@@ -2670,6 +2693,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             LastHitOrigin = damageSource.position;
             LastHitTime = Time.time;
+            LastHitPoiseDamage = 10f; // Default poise damage for basic attacks
         }
 
         if (health <= 0 && !isDead) Die();
@@ -2704,6 +2728,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             {
                 LastHitOrigin = damageSource.position;
                 LastHitTime = Time.time;
+                LastHitPoiseDamage = poiseDamage; // Use actual poise damage for reaction scaling
             }
             HandleDamageReaction(damageSource);
         }
@@ -2744,21 +2769,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     /// <param name="damageSource">Transform of the damage source</param>
     protected virtual void HandleDamageReaction(Transform damageSource)
     {
-        // Calculate knockback direction (away from damage source)
-        Vector3 direction = (transform.position - damageSource.position).normalized;
-        direction.y = 0;
-        
-        if (direction != Vector3.zero)
-        {
-            // Apply knockback effect
-            float maxKnockbackDistance = 0.8f; // Slightly less knockback for NPCs
-            float distanceFromSource = Vector3.Distance(transform.position, damageSource.position);
-            float knockbackDistance = Mathf.Lerp(maxKnockbackDistance, maxKnockbackDistance * 0.3f, distanceFromSource / 5f);
-            Vector3 newPosition = transform.position + direction * knockbackDistance;
-            
-            // Simply move the character (no NavMesh needed for player-controlled characters)
-            transform.position = newPosition;
-        }
+        // Knockback is now handled procedurally via IKReactionUtils.CalculateKnockbackOffset()
+        // which is applied in PossessedUpdate() for smooth, continuous knockback
+        // No instant teleports needed!
     }
 
     public void Heal(float amount)
@@ -2959,6 +2972,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             LastHitOrigin = damageSource.position;
             LastHitTime = Time.time;
+            LastHitPoiseDamage = 10f; // Default poise damage for elemental attacks without poise
         }
 
         if (health <= 0 && !isDead) Die();
@@ -3007,6 +3021,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             {
                 LastHitOrigin = damageSource.position;
                 LastHitTime = Time.time;
+                LastHitPoiseDamage = poiseDamage; // Use actual poise damage for reaction scaling
             }
             HandleDamageReaction(damageSource);
         }
@@ -3022,10 +3037,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     {
         if (animator == null) return;
         
-        // Apply immediate hit reactions using stateless IK utility
-        if (animator.isHuman && LastHitOrigin != Vector3.zero)
+        // Apply immediate hit reactions using stateless IK utility (scaled by weapon poise damage)
+        if (animator.isHuman && LastHitOrigin != Vector3.zero && (Time.time - LastHitTime) < 0.3f)
         {
-            IKReactionUtils.ApplyHitReactionIK(animator, transform, LastHitOrigin, LastHitTime);
+            // Scale reaction intensity based on poise damage (typical weapon poise: 5-25)
+            float scaledIntensity = Mathf.Clamp01(LastHitPoiseDamage / 20f); // Normalize: 20 poise = 1.0 intensity
+            IKReactionUtils.ApplyHitReactionIK(animator, transform, LastHitOrigin, LastHitTime, 0.3f, scaledIntensity);
         }
         
         // Add other IK processing here as needed (e.g., look at targets, weapon IK, etc.)

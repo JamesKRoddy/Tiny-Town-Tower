@@ -1,15 +1,19 @@
 *****Current Work*****
 
-Enemy procedural reactions to getting hit TEST!
+Fix:
 
-Set bat to normal element and test hit reactions
+Player spawning into roguelike rooms spawns into the ground then pops up
 
-Remove the part that makes enemies rotate towards the player when theyre hit
+Roguelike rooms are able to spawn with no exits or player can spawn outside the room. Best guess for this is that the extender room is spawning rooms with doors then this room gets swapped out but the doors are still considered to be there.
+
+Controls feel super janky with the gravity system, player pops up in the air randomly, gets stuck on small objects, gets stuck in the ground etc. There should be a better fix for this
 
 ****** Tomorrow work:
 
 
 ****** Next work:
+
+Pick up the hit reaction IKs on enemies again, enemies are no longer getting pushed back by the player
 
 Walls on room prefabs have one large collider, this needs to be broken into collides on the wall objects
 
@@ -39,6 +43,8 @@ Buildings only take damage occasionally
 Npc get away from zombies too easily
 
 Size of the mutation grid UI is wrong
+
+So can possess npc right as they fall asleep and so no animations player on the possessed npc.
 
 ****** Errors:
 

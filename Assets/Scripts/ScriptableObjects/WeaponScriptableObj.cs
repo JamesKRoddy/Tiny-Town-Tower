@@ -5,8 +5,11 @@ public class WeaponScriptableObj : ResourceScriptableObj
 {
     [Header("Weapon Stats")]
     public WeaponAnimationType animationType;
+    [Range(0, 100)]
     public int damage = 10;
+    [Range(0, 100)]
     public float poiseDamage = 10f; // Poise damage dealt by this weapon
+    [Range(0, 3), Tooltip("Attack speed animator multiplier")]
     public float attackSpeed = 1f;
     
     [Header("Elemental Properties")]

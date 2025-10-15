@@ -14,11 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   objectName: Sign Post
   description: Sign Post Desc
+  sprite: {fileID: 0}
   category: 0
   rarity: 0
-  sprite: {fileID: 0}
+  isUnlocked: 1
   prefab: {fileID: 1033860218315092, guid: ffc021460e31bd444a0c04338d020c57, type: 3}
   animationType: 2
-  damage: 10
+  damage: 30
+  poiseDamage: 20
+  attackSpeed: 1
   weaponElement: 0
-  attackSpeed: 0.8
+  elementalDamageBonus: 0
+  isPureElemental: 0
+  possibleStatusEffects: 
+  statusEffectChance: 0.1
+  statusEffectDuration: 5

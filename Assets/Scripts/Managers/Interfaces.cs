@@ -60,6 +60,7 @@ public interface IDamageable
     // Hit reaction tracking (for procedural IK reactions)
     Vector3 LastHitOrigin { get; set; } // World position where last damage came from
     float LastHitTime { get; set; } // Time when last damage was taken
+    float LastHitPoiseDamage { get; set; } // Poise damage from last hit (used to scale reaction intensity)
 
     void TakeDamage(float amount, Transform damageSource = null); // Method to handle damage
     void TakeDamage(float amount, float poiseDamage, Transform damageSource = null); // Method to handle damage with poise

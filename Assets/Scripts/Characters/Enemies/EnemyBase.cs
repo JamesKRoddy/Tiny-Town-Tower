@@ -188,6 +188,7 @@ namespace Enemies
         // IDamageable hit reaction tracking
         public Vector3 LastHitOrigin { get; set; } = Vector3.zero;
         public float LastHitTime { get; set; } = -999f;
+        public float LastHitPoiseDamage { get; set; } = 0f;
 
         #endregion
 
@@ -277,6 +278,9 @@ namespace Enemies
                 }
                 return;
             }
+            
+            // Apply procedural knockback from hit reactions
+            ApplyProceduralKnockback();
 
             // If no target, periodically check for new targets
             if (navMeshTarget == null)
@@ -306,6 +310,37 @@ namespace Enemies
             if (!isAttacking)
             {
                 UpdateMovement();
+            }
+        }
+        
+        /// <summary>
+        /// Applies procedural knockback based on recent hits using the IK reaction system.
+        /// This creates smooth, physics-like knockback without coroutines.
+        /// </summary>
+        private void ApplyProceduralKnockback()
+        {
+            // Scale knockback distance based on poise damage (heavier weapons = more knockback)
+            float baseKnockback = 1.0f;
+            float scaledKnockback = baseKnockback * Mathf.Clamp01(LastHitPoiseDamage / 15f); // Normalize: 15 poise = 1.0x knockback
+            
+            Vector3 knockbackOffset = IKReactionUtils.CalculateKnockbackOffset(transform, LastHitOrigin, LastHitTime, scaledKnockback);
+            
+            if (knockbackOffset.magnitude > 0.001f)
+            {
+                Vector3 newPosition = transform.position + knockbackOffset * Time.deltaTime * 10f; // Scale by deltaTime for smooth movement
+                
+                // Validate position is on NavMesh
+                if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+                {
+                    if (useRootMotion)
+                    {
+                        transform.position = hit.position;
+                    }
+                    else if (agent != null && agent.isOnNavMesh)
+                    {
+                        agent.Warp(hit.position);
+                    }
+                }
             }
         }
 
@@ -1056,11 +1091,18 @@ namespace Enemies
         {
             if (animator == null) return;
             
+            // Check if currently reacting to a hit
+            bool isReactingToHit = animator.isHuman && LastHitOrigin != Vector3.zero && 
+                                   (Time.time - LastHitTime) < 0.3f; // Within reaction duration
+            
             // Priority 1: Process hit reactions (immediate, stateless IK reactions)
-            if (animator.isHuman && LastHitOrigin != Vector3.zero)
+            if (isReactingToHit)
             {
-                IKReactionUtils.ApplyHitReactionIK(animator, transform, LastHitOrigin, LastHitTime);
-                // Hit reactions can blend with other IK, no return needed
+                // Scale reaction intensity based on poise damage (typical weapon poise: 5-25)
+                float scaledIntensity = Mathf.Clamp01(LastHitPoiseDamage / 20f); // Normalize: 20 poise = 1.0 intensity
+                IKReactionUtils.ApplyHitReactionIK(animator, transform, LastHitOrigin, LastHitTime, 0.3f, scaledIntensity);
+                // Hit reactions take full priority - return to avoid conflicts
+                return;
             }
             
             // Priority 2: If attacking, forward IK to the current attack component
@@ -1570,6 +1612,7 @@ namespace Enemies
             {
                 LastHitOrigin = damageSource.position;
                 LastHitTime = Time.time;
+                LastHitPoiseDamage = 10f; // Default poise damage for basic attacks
                 HandleDamageReaction(damageSource);
             }
 
@@ -1630,53 +1673,9 @@ namespace Enemies
 
         protected virtual void HandleDamageReaction(Transform damageSource)
         {
-            // Calculate knockback direction (away from damage source)
-            Vector3 direction = (transform.position - damageSource.position).normalized;
-            direction.y = 0;
-            
-            if (direction != Vector3.zero)
-            {
-                // Apply knockback effect
-                float maxKnockbackDistance = 1.0f;
-                float distanceFromSource = Vector3.Distance(transform.position, damageSource.position);
-                float knockbackDistance = Mathf.Lerp(maxKnockbackDistance, maxKnockbackDistance * 0.3f, distanceFromSource / 5f);
-                Vector3 newPosition = transform.position + direction * knockbackDistance;
-
-                if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, knockbackDistance, NavMesh.AllAreas))
-                {
-                    StartCoroutine(KnockbackRoutine(hit.position));
-                }
-            }
-        }
-
-        private IEnumerator KnockbackRoutine(Vector3 targetPosition)
-        {
-            float duration = 0.2f;
-            float elapsed = 0f;
-            Vector3 startPosition = transform.position;
-            
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                float t = elapsed / duration;
-                Vector3 newPosition = Vector3.Lerp(startPosition, targetPosition, t);
-                
-                if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, KNOCKBACK_SAMPLE_DISTANCE, NavMesh.AllAreas))
-                {
-                    if (useRootMotion)
-                    {
-                        // For root motion, just move the transform - the agent will catch up
-                        transform.position = hit.position;
-                    }
-                    else
-                    {
-                        // For non-root motion, use agent.Warp
-                    agent.Warp(hit.position);
-                    }
-                }
-                
-                yield return null;
-            }
+            // Knockback is now handled procedurally via IKReactionUtils.CalculateKnockbackOffset()
+            // which is applied in Update() for smooth, continuous knockback
+            // No coroutines or instant teleports needed!
         }
 
         public virtual void Die()
@@ -2010,6 +2009,7 @@ namespace Enemies
             {
                 LastHitOrigin = damageSource.position;
                 LastHitTime = Time.time;
+                LastHitPoiseDamage = 10f; // Default poise damage for elemental attacks without poise
                 HandleDamageReaction(damageSource);
             }
 

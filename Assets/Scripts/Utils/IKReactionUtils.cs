@@ -8,11 +8,14 @@ public static class IKReactionUtils
 {
     // Configuration constants
     private const float DEFAULT_REACTION_DURATION = 0.3f;
-    private const float DEFAULT_REACTION_INTENSITY = 0.5f;
-    private const float DEFAULT_MAX_IK_OFFSET = 0.15f;
-    private const float HEAD_IK_WEIGHT = 0.7f;
-    private const float HAND_IK_WEIGHT = 0.5f;
-    private const float HIT_DETECTION_RADIUS = 0.8f;
+    private const float DEFAULT_REACTION_INTENSITY = 0.8f; // Increased from 0.5 for more visible reactions
+    private const float DEFAULT_MAX_IK_OFFSET = 0.25f; // Increased from 0.15 for more visible movement
+    private const float HEAD_IK_WEIGHT = 1.0f; // Increased from 0.7 for stronger head reactions
+    private const float HAND_IK_WEIGHT = 0.8f; // Increased from 0.5 for stronger hand reactions
+    private const float HIT_DETECTION_RADIUS = 1.5f; // Increased from 0.8 for wider detection
+    
+    // Debug flag
+    private static bool enableDebugLogs = true;
 
     /// <summary>
     /// Applies immediate hit reaction IK to a character based on recent damage.
@@ -32,7 +35,19 @@ public static class IKReactionUtils
         float reactionDuration = DEFAULT_REACTION_DURATION,
         float reactionIntensity = DEFAULT_REACTION_INTENSITY)
     {
-        if (animator == null || !animator.isHuman) return;
+        if (animator == null)
+        {
+            if (enableDebugLogs) Debug.LogWarning("[IKReactionUtils] Animator is null!");
+            return;
+        }
+        
+        if (!animator.isHuman)
+        {
+            if (enableDebugLogs && Time.frameCount % 300 == 0) // Log once every 5 seconds at 60fps
+                Debug.LogWarning($"[IKReactionUtils] {characterTransform.name} animator is not humanoid! IK reactions require humanoid rig.");
+            return;
+        }
+        
         if (lastHitOrigin == Vector3.zero) return;
         
         float timeSinceHit = Time.time - lastHitTime;
@@ -41,6 +56,12 @@ public static class IKReactionUtils
         // Calculate reaction weight using smooth sine curve
         float reactionProgress = Mathf.Clamp01(timeSinceHit / reactionDuration);
         float weightCurve = Mathf.Sin(reactionProgress * Mathf.PI); // Smooth in/out
+        
+        if (enableDebugLogs && timeSinceHit < 0.05f) // Log once per hit (within first few frames)
+        {
+            Debug.Log($"[IKReactionUtils] Applying hit reaction to {characterTransform.name} - " +
+                     $"timeSinceHit: {timeSinceHit:F3}s, intensity: {reactionIntensity:F2}, weightCurve: {weightCurve:F2}");
+        }
         
         // Get body part positions
         Vector3 headPos = GetBodyPartPosition(animator, HumanBodyBones.Head, characterTransform);
@@ -61,20 +82,24 @@ public static class IKReactionUtils
         // Apply head reaction for upper body hits
         bool isHeadLevel = hitHeight > 1.4f;
         bool isChestLevel = hitHeight > 0.8f && hitHeight <= 1.4f;
+        bool isLowHit = hitHeight <= 0.8f;
         
-        if (isHeadLevel)
-        {
-            ApplyHeadReaction(animator, headPos, lastHitOrigin, weightCurve * reactionIntensity);
-        }
+        // Always apply head reaction (recoil away from any hit)
+        ApplyHeadReaction(animator, headPos, lastHitOrigin, weightCurve * reactionIntensity);
         
-        // Apply hand reactions for upper body hits
-        if (isHeadLevel || isChestLevel)
+        // Apply hand reactions - more aggressive for all hit heights
+        ApplyHandReaction(animator, AvatarIKGoal.LeftHand, leftHandPos, lastHitOrigin, 
+            characterTransform, hitFromRight, !hitFromRight, weightCurve * reactionIntensity);
+        
+        ApplyHandReaction(animator, AvatarIKGoal.RightHand, rightHandPos, lastHitOrigin, 
+            characterTransform, hitFromRight, hitFromRight, weightCurve * reactionIntensity);
+        
+        if (enableDebugLogs && timeSinceHit < 0.05f)
         {
-            ApplyHandReaction(animator, AvatarIKGoal.LeftHand, leftHandPos, lastHitOrigin, 
-                characterTransform, hitFromRight, !hitFromRight, weightCurve * reactionIntensity);
-            
-            ApplyHandReaction(animator, AvatarIKGoal.RightHand, rightHandPos, lastHitOrigin, 
-                characterTransform, hitFromRight, hitFromRight, weightCurve * reactionIntensity);
+            Debug.Log($"[IKReactionUtils] {characterTransform.name} IK Details - " +
+                     $"Head weight: {weightCurve * reactionIntensity * HEAD_IK_WEIGHT:F2}, " +
+                     $"Hand weight: {weightCurve * reactionIntensity * HAND_IK_WEIGHT:F2}, " +
+                     $"Hit height: {hitHeight:F2}m");
         }
     }
 
@@ -118,8 +143,9 @@ public static class IKReactionUtils
         bool isLeftHand = handGoal == AvatarIKGoal.LeftHand;
         float distanceToHit = Vector3.Distance(handPos, hitOrigin);
         
-        // Only react if close to hit or on the hit side
-        if (distanceToHit > HIT_DETECTION_RADIUS && !isHitSideHand) return;
+        // React more aggressively - both hands react to any hit
+        // Don't skip based on distance, let the intensity scale naturally
+        // if (distanceToHit > HIT_DETECTION_RADIUS && !isHitSideHand) return;
         
         // Calculate defensive hand position (move toward hit defensively)
         Vector3 reactionDirection = (handPos - hitOrigin).normalized;
@@ -156,6 +182,64 @@ public static class IKReactionUtils
         }
         
         return fallback.position;
+    }
+    
+    /// <summary>
+    /// Calculates procedural knockback offset based on hit origin and time.
+    /// Returns a Vector3 offset that can be applied to character position for smooth knockback.
+    /// This integrates with the IK reaction system for unified hit response.
+    /// </summary>
+    /// <param name="characterTransform">Character's transform</param>
+    /// <param name="lastHitOrigin">Where the hit came from</param>
+    /// <param name="lastHitTime">When the hit occurred</param>
+    /// <param name="maxKnockbackDistance">Maximum knockback distance (default: 1.0)</param>
+    /// <param name="knockbackDuration">How long knockback lasts (default: 0.2s)</param>
+    /// <returns>Knockback offset to apply to character position</returns>
+    public static Vector3 CalculateKnockbackOffset(
+        Transform characterTransform,
+        Vector3 lastHitOrigin,
+        float lastHitTime,
+        float maxKnockbackDistance = 1.0f,
+        float knockbackDuration = 0.2f)
+    {
+        if (lastHitOrigin == Vector3.zero) return Vector3.zero;
+        
+        float timeSinceHit = Time.time - lastHitTime;
+        if (timeSinceHit > knockbackDuration) return Vector3.zero;
+        
+        // Calculate knockback direction (away from hit)
+        Vector3 knockbackDirection = (characterTransform.position - lastHitOrigin).normalized;
+        knockbackDirection.y = 0; // Keep horizontal
+        
+        // Scale knockback by distance from source (closer = stronger knockback)
+        float distanceFromSource = Vector3.Distance(characterTransform.position, lastHitOrigin);
+        float distanceScale = Mathf.Lerp(1.0f, 0.3f, Mathf.Clamp01(distanceFromSource / 5f));
+        
+        // Use a punch curve for knockback (quick push, then ease out)
+        float progress = timeSinceHit / knockbackDuration;
+        float knockbackCurve = 1f - Mathf.Pow(progress, 2f); // Quadratic ease-out
+        
+        Vector3 knockbackOffset = knockbackDirection * maxKnockbackDistance * distanceScale * knockbackCurve;
+        
+        if (enableDebugLogs && timeSinceHit < 0.05f)
+        {
+            Debug.Log($"[IKReactionUtils] Knockback - " +
+                     $"maxDist: {maxKnockbackDistance:F2}m, " +
+                     $"distScale: {distanceScale:F2}, " +
+                     $"curve: {knockbackCurve:F2}, " +
+                     $"final: {maxKnockbackDistance * distanceScale * knockbackCurve:F3}m, " +
+                     $"dir: {knockbackDirection}");
+        }
+        
+        return knockbackOffset;
+    }
+    
+    /// <summary>
+    /// Enables or disables debug logging for IK reactions.
+    /// </summary>
+    public static void SetDebugLogging(bool enabled)
+    {
+        enableDebugLogs = enabled;
     }
 }
 

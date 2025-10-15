@@ -86,6 +86,7 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
     // Hit reaction tracking (used for directional shake effects on buildings)
     public Vector3 LastHitOrigin { get; set; } = Vector3.zero;
     public float LastHitTime { get; set; } = -999f;
+    public float LastHitPoiseDamage { get; set; } = 0f;
 
     #endregion
 
