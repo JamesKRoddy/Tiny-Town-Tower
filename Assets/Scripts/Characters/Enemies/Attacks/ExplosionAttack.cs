@@ -12,16 +12,11 @@ namespace Enemies.Attacks
         [Header("Explosion Settings")]
         [Tooltip("Radius of the explosion")]
         public float explosionRadius = 5f;
-        [Tooltip("Damage dealt by the explosion")]
-        public float explosionDamage = 50f;
-        [Tooltip("Poise damage multiplier for explosion (multiplied by explosion damage)")]
+        [Tooltip("Poise damage multiplier for explosion (multiplied by base damage)")]
         public float poiseDamageMultiplier = 1.2f;
         [Tooltip("Whether the attacker should die after exploding")]
         public bool dieAfterExplosion = true;
         
-        [Header("Explosion Effects")]
-        [Tooltip("Effect played when the explosion occurs")]
-        public EffectDefinition explosionEffect;
         
         [Header("Explosion Triggers")]
         [Tooltip("Whether the explosion should trigger when the attacker dies")]
@@ -56,13 +51,13 @@ namespace Enemies.Attacks
             // Set default maxRange to explosion radius
             maxRange = explosionRadius;
             
-            // Validate explosion effect
-            if (explosionEffect == null)
+            // Validate attack effect
+            if (attackEffect == null)
             {
-                Debug.LogError("Explosion effect definition is not assigned to ExplosionAttack on " + enemy.gameObject.name);
+                Debug.LogError("Attack effect (explosion) definition is not assigned to ExplosionAttack on " + enemy.gameObject.name);
             }
             
-            Debug.Log($"[{enemy.gameObject.name}] ExplosionAttack initialized | ExplosionRadius: {explosionRadius} | ExplosionDamage: {explosionDamage}");
+            Debug.Log($"[{enemy.gameObject.name}] ExplosionAttack initialized | ExplosionRadius: {explosionRadius} | ExplosionDamage: {damage}");
         }
 
         public override bool CanAttack()
@@ -94,14 +89,14 @@ namespace Enemies.Attacks
             int targetsDamaged = DamageUtils.CreateInstantDamageArea(
                 enemy.transform.position, 
                 explosionRadius, 
-                explosionDamage, 
-                explosionDamage * poiseDamageMultiplier, 
+                damage, 
+                damage * poiseDamageMultiplier, 
                 enemy.transform, 
                 attackElement, 
-                explosionEffect
+                attackEffect
             );
             
-            Debug.Log($"[{enemy.gameObject.name}] Explosion executed | Damage: {explosionDamage} | Radius: {explosionRadius} | Targets: {targetsDamaged}");
+            Debug.Log($"[{enemy.gameObject.name}] Explosion executed | Damage: {damage} | Radius: {explosionRadius} | Targets: {targetsDamaged}");
         }
 
         public override void OnAttackEnd()
@@ -147,11 +142,11 @@ namespace Enemies.Attacks
             DamageUtils.CreateInstantDamageArea(
                 enemy.transform.position, 
                 explosionRadius, 
-                explosionDamage, 
-                explosionDamage * poiseDamageMultiplier, 
+                damage, 
+                damage * poiseDamageMultiplier, 
                 enemy.transform, 
                 attackElement, 
-                explosionEffect
+                attackEffect
             );
             
             // Kill the attacker if configured to do so

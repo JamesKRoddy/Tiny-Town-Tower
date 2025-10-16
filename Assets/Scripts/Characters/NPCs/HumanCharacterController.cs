@@ -259,7 +259,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             if (Time.time >= climbCooldownTime - climbCooldown + climbLandingDelay)
             {
                 isClimbLanding = false;
-                Debug.Log($"[Climb] {gameObject.name}: Landing delay complete - control returned to player");
             }
             else
             {
@@ -409,8 +408,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 if (obstacleType == ObstacleType.Climb)
                 {
                     // Handle climbing
-                    Debug.Log($"[Climb] {gameObject.name}: Dash detected climbable obstacle, starting climb");
-                    float obstacleHeight = AnalyzeObstacleHeight((hitInfo.point - transform.position).normalized, hitInfo.point, false);
+                    float obstacleHeight = AnalyzeObstacleHeight((hitInfo.point - transform.position).normalized, hitInfo.point);
                     CalculateClimbTarget(hitInfo, obstacleHeight);
                     StartClimb();
                 }
@@ -427,7 +425,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                     }
                     else
                     {
-                        Debug.Log("Dash: Vault target unsafe, falling back to dash");
                         StartDash();
                     }
                 }
@@ -534,9 +531,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             // Use movement direction instead of transform.forward for more accurate detection
             Vector3 movementDirection = movementInput.normalized;
-            obstacleType = AnalyzeObstacle(movementDirection, out hitInfo, enableLogs: false);
-            
-            Debug.Log($"[Climb] {gameObject.name}: CanVault detected obstacle type: {obstacleType}");
+            obstacleType = AnalyzeObstacle(movementDirection, out hitInfo);
             
             if (obstacleType == ObstacleType.Vault || obstacleType == ObstacleType.RollUnder)
             {
@@ -554,7 +549,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             else if (obstacleType == ObstacleType.Climb)
             {
                 // For climbing, we just need to check if we can climb (already validated in AnalyzeObstacle)
-                Debug.Log($"[Climb] {gameObject.name}: CanVault detected climbable obstacle");
                 return true;
             }
         }
@@ -582,8 +576,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         Vector3 direction = (hitInfo.point - transform.position).normalized;
         direction.y = 0; // Keep direction horizontal
         climbTargetPosition = climbTopPosition + direction * climbCheckDistance;
-        
-        Debug.Log($"[Climb] {gameObject.name}: Calculated climb target - obstacle height: {obstacleHeight:F2}, top position: {climbTopPosition}, final target: {climbTargetPosition}");
     }
 
     /// <summary>
@@ -607,7 +599,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             // Position the character on top of the platform with a small offset to ensure they're above the surface
             Vector3 exactPosition = hit.point + Vector3.up * 0.1f; // Small offset to ensure we're above the surface
-            Debug.Log($"[Climb] {gameObject.name}: Found platform surface at {hit.point}, final position: {exactPosition}");
             return exactPosition;
         }
         
@@ -682,8 +673,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Prevent climbing while damaged
         if (isDamaged) return;
         
-        Debug.Log($"[Climb] {gameObject.name}: STARTING CLIMB - from {transform.position} to {climbTargetPosition}");
-        
         isClimbing = true;
         isDashing = false; // Ensure dashing is stopped when starting a climb
         isVaulting = false; // Ensure vaulting is stopped when starting a climb
@@ -699,7 +688,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Calculate the exact final position we want to end up at
         // This ensures we land perfectly on the platform surface
         climbExactFinalPosition = CalculateExactClimbFinalPosition();
-        Debug.Log($"[Climb] {gameObject.name}: Calculated exact final position: {climbExactFinalPosition}");
         
         // Disable root motion during climb
         if (animator != null)
@@ -715,8 +703,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     private void FinishClimb()
     {
-        Debug.Log($"[Climb] {gameObject.name}: FINISHING CLIMB - teleporting from {transform.position} to {climbExactFinalPosition}");
-        
         // Teleport to the exact final position on the platform
         transform.position = climbExactFinalPosition;
         
@@ -739,8 +725,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             animator.applyRootMotion = true;
         }
-        
-        Debug.Log($"[Climb] {gameObject.name}: Landing delay started - will return control in {climbLandingDelay}s");
     }
 
     #endregion
@@ -890,9 +874,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     /// </summary>
     /// <param name="direction">Direction the player is moving</param>
     /// <param name="obstacleInfo">Information about the detected obstacle</param>
-    /// <param name="enableLogs">Whether to enable debug logging for this call</param>
     /// <returns>Type of obstacle and recommended navigation method</returns>
-    private ObstacleType AnalyzeObstacle(Vector3 direction, out RaycastHit obstacleInfo, bool enableLogs = true)
+    private ObstacleType AnalyzeObstacle(Vector3 direction, out RaycastHit obstacleInfo)
     {
         obstacleInfo = default;
         currentObstacleComponent = null;
@@ -900,11 +883,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         
         if (!autoNavigateObstacles || direction.magnitude < 0.1f)
         {
-            if (enableLogs) Debug.Log($"[Climb] {gameObject.name}: AnalyzeObstacle - autoNavigate disabled or no movement");
             return ObstacleType.None;
         }
-        
-        if (enableLogs) Debug.Log($"[Climb] {gameObject.name}: AnalyzeObstacle - checking direction: {direction}");
 
         // Check for obstacles in the movement direction using capsule cast (more reliable than single raycast)
         Vector3 capsuleBottom = transform.position + Vector3.up * 0.3f;
@@ -917,7 +897,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             if (Physics.CapsuleCast(capsuleBottom, capsuleTop, capsuleCastRadius, direction.normalized, out obstacleInfo, obstacleAnalysisRange, layer))
             {
                 foundObstacle = true;
-                if (enableLogs) Debug.Log($"[Climb] {gameObject.name}: Found obstacle with capsule cast: {obstacleInfo.collider.name} at distance {obstacleInfo.distance:F2}");
                 break;
             }
         }
@@ -928,12 +907,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             Vector3 chestRayOrigin = transform.position + Vector3.up * vaultHeight;
             if (!Physics.Raycast(chestRayOrigin, direction.normalized, out obstacleInfo, obstacleAnalysisRange, GetCombinedObstacleLayers()))
             {
-                if (enableLogs) Debug.Log($"[Climb] {gameObject.name}: No obstacle found with raycast either");
                 return ObstacleType.None;
-            }
-            else
-            {
-                if (enableLogs) Debug.Log($"[Climb] {gameObject.name}: Found obstacle with raycast: {obstacleInfo.collider.name} at distance {obstacleInfo.distance:F2}");
             }
         }
 
@@ -980,9 +954,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         }
 
         // Fallback: Use height-based analysis if no component is found
-        float obstacleHeight = AnalyzeObstacleHeight(direction, obstacleInfo.point, enableLogs);
-        
-        if (enableLogs) Debug.Log($"[Climb] {gameObject.name}: Obstacle height analysis: {obstacleHeight:F2} (minVault: {minVaultHeight:F2}, maxVault: {maxVaultHeight:F2}, maxClimb: {maxClimbHeight:F2})");
+        float obstacleHeight = AnalyzeObstacleHeight(direction, obstacleInfo.point);
         
         // Determine obstacle type based on height (roll vs vault only determined by component)
         if (obstacleHeight <= minVaultHeight)
@@ -1002,7 +974,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 Vector3 climbTopPosition = new Vector3(obstacleInfo.point.x, transform.position.y + obstacleHeight + 0.1f, obstacleInfo.point.z);
                 if (IsVaultPathSafe(transform.position, climbTopPosition))
                 {
-                    Debug.Log($"[Climb] {gameObject.name}: Vault unsafe, suggesting climb - height: {obstacleHeight:F2}, top position: {climbTopPosition}");
                     return ObstacleType.Climb;
                 }
             }
@@ -1016,12 +987,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             Vector3 climbTopPosition = new Vector3(obstacleInfo.point.x, transform.position.y + obstacleHeight + 0.1f, obstacleInfo.point.z);
             if (IsVaultPathSafe(transform.position, climbTopPosition))
             {
-                Debug.Log($"[Climb] {gameObject.name}: Too high to vault, suggesting climb - height: {obstacleHeight:F2}, top position: {climbTopPosition}");
                 return ObstacleType.Climb;
             }
             else
             {
-                Debug.Log($"[Climb] {gameObject.name}: No clear area on top for climb - height: {obstacleHeight:F2}, marking as TooHigh");
                 return ObstacleType.TooHigh; // No clear area on top
             }
         }
@@ -1036,9 +1005,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     /// </summary>
     /// <param name="direction">Direction toward the obstacle</param>
     /// <param name="obstaclePoint">Point where the obstacle was detected</param>
-    /// <param name="enableLogs">Whether to enable debug logging for this call</param>
     /// <returns>Height of the obstacle</returns>
-    private float AnalyzeObstacleHeight(Vector3 direction, Vector3 obstaclePoint, bool enableLogs = true)
+    private float AnalyzeObstacleHeight(Vector3 direction, Vector3 obstaclePoint)
     {
         float playerGroundLevel = transform.position.y;
         float highestHitPoint = playerGroundLevel;
@@ -1209,7 +1177,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 continue; // This is the obstacle we're climbing, ignore it
             }
             
-            Debug.Log($"[Climb] {gameObject.name}: IsClimbPathSafe - target position blocked by {col.name}");
             return false;
         }
         
@@ -1225,11 +1192,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 continue; // This is the obstacle we're climbing, ignore it
             }
             
-            Debug.Log($"[Climb] {gameObject.name}: IsClimbPathSafe - not enough clearance above target, blocked by {col.name}");
             return false;
         }
         
-        Debug.Log($"[Climb] {gameObject.name}: IsClimbPathSafe - path is clear for climbing");
         return true;
     }
     
@@ -1445,7 +1410,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 if (IsObstacleInPath(targetMovement, out RaycastHit hitInfo))
                 {
                     // Check if it's vaultable using height analysis instead of layer
-                    ObstacleType obstacleType = AnalyzeObstacle(currentDirection, out RaycastHit obstacleInfo, enableLogs: false);
+                    ObstacleType obstacleType = AnalyzeObstacle(currentDirection, out RaycastHit obstacleInfo);
                     if (obstacleType == ObstacleType.Vault || obstacleType == ObstacleType.RollUnder)
                     {
                         // Store the vault type and component for proper animation selection
@@ -1494,8 +1459,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 {
                     ObstacleType obstacleType = AnalyzeObstacle(movementInput.normalized, out RaycastHit obstacleInfo);
                     
-                        Debug.Log($"[Climb] {gameObject.name}: Auto-navigation detected obstacle type: {obstacleType}");
-                    
                     switch (obstacleType)
                     {
                         case ObstacleType.WalkOver:
@@ -1509,8 +1472,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                                 currentVaultType = obstacleType; // Store vault type for animation
                                 CalculateVaultTargetEnhanced(obstacleInfo, movementInput.normalized);
                                 
-                                Debug.Log($"[Climb] {gameObject.name}: Vault target safe: {isVaultTargetSafe}");
-                                
                                 if (isVaultTargetSafe)
                                 {
                                     StartVault();
@@ -1518,34 +1479,21 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                                 }
                                 else
                                 {
-                                    Debug.Log($"[Climb] {gameObject.name}: Vault unsafe, checking if we can climb instead");
                                     // Vault is unsafe, check if we can climb instead
-                                    float obstacleHeight = AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point, false);
-                                    Debug.Log($"[Climb] {gameObject.name}: Climb check - obstacle height: {obstacleHeight:F2}, maxClimbHeight: {maxClimbHeight:F2}");
+                                    float obstacleHeight = AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point);
                                     
                                     if (obstacleHeight <= maxClimbHeight)
                                     {
                                         Vector3 climbTopPosition = new Vector3(obstacleInfo.point.x, transform.position.y + obstacleHeight + 0.1f, obstacleInfo.point.z);
-                                        Debug.Log($"[Climb] {gameObject.name}: Climb top position: {climbTopPosition}");
                                         
                                         bool climbPathSafe = IsClimbPathSafe(transform.position, climbTopPosition);
-                                        Debug.Log($"[Climb] {gameObject.name}: Climb path safe: {climbPathSafe}");
                                         
                                         if (climbPathSafe)
                                         {
-                                            Debug.Log($"[Climb] {gameObject.name}: Can climb instead of vault, starting climb");
                                             CalculateClimbTarget(obstacleInfo, obstacleHeight);
                                             StartClimb();
                                             return; // Exit early since we're now climbing
                                         }
-                                        else
-                                        {
-                                            Debug.Log($"[Climb] {gameObject.name}: Climb path unsafe - no clear area on top");
-                                        }
-                                    }
-                                    else
-                                    {
-                                        Debug.Log($"[Climb] {gameObject.name}: Obstacle too high for climbing: {obstacleHeight:F2} > {maxClimbHeight:F2}");
                                     }
                                     
                                     // Calculate sliding movement along the obstacle
@@ -1563,7 +1511,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                             // Implement rolling under animation for lower obstacles
                             if (Time.time > vaultCooldownTime)
                             {
-                                if (AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point, enableLogs: false) <= maxVaultHeight)
+                                if (AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point) <= maxVaultHeight)
                                 {
                                     currentVaultType = obstacleType; // Store vault type for animation
                                     CalculateVaultTargetEnhanced(obstacleInfo, movementInput.normalized);
@@ -1591,8 +1539,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                             // Wall that can be climbed - automatically start climbing
                             if (Time.time > climbCooldownTime)
                             {
-                                Debug.Log($"[Climb] {gameObject.name}: Auto-navigation detected climbable obstacle, starting climb");
-                                float obstacleHeight = AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point, false);
+                                float obstacleHeight = AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point);
                                 CalculateClimbTarget(obstacleInfo, obstacleHeight);
                                 StartClimb();
                                 return; // Exit early since we're now climbing
@@ -1861,7 +1808,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             }
             
             // Show obstacle type if detected
-            ObstacleType obstacleType = AnalyzeObstacle(direction, out RaycastHit obstacleInfo, enableLogs: false);
+            ObstacleType obstacleType = AnalyzeObstacle(direction, out RaycastHit obstacleInfo);
             if (obstacleType != ObstacleType.None)
             {
                 // Color code based on obstacle type
@@ -1903,7 +1850,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 // Show calculated climb target if applicable
                 else if (obstacleType == ObstacleType.Climb)
                 {
-                    float obstacleHeight = AnalyzeObstacleHeight(direction, obstacleInfo.point, false);
+                    float obstacleHeight = AnalyzeObstacleHeight(direction, obstacleInfo.point);
                     Vector3 climbTopPosition = new Vector3(obstacleInfo.point.x, transform.position.y + obstacleHeight + 0.1f, obstacleInfo.point.z);
                     Vector3 climbTarget = climbTopPosition + direction * climbCheckDistance;
                     Gizmos.color = Color.cyan;
@@ -1969,7 +1916,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         if (autoNavigateObstacles && movementInput.magnitude > 0.1f)
         {
             Vector3 direction = movementInput.normalized;
-            ObstacleType obstacleType = AnalyzeObstacle(direction, out RaycastHit obstacleInfo, enableLogs: false);
+            ObstacleType obstacleType = AnalyzeObstacle(direction, out RaycastHit obstacleInfo);
             
             if (obstacleType == ObstacleType.Vault || obstacleType == ObstacleType.RollUnder)
             {
@@ -2112,7 +2059,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Prevent taking damage if cooldown is active
         if (Time.time - lastDamageTime < damageCooldown)
         {
-            Debug.Log($"{gameObject.name} damage cooldown active. Damage not applied.");
             return;
         }
 
@@ -2236,7 +2182,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         if (isDead) return;
         isDead = true;
         
-        Debug.Log($"{gameObject.name} has died!");
         OnDeath?.Invoke();
 
         // Notify all enemies that this NPC was destroyed
@@ -2394,7 +2339,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Prevent taking damage if cooldown is active
         if (Time.time - lastDamageTime < damageCooldown)
         {
-            Debug.Log($"{gameObject.name} damage cooldown active. Damage not applied.");
             return;
         }
 

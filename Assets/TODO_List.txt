@@ -1,6 +1,6 @@
 *****Current Work*****
 
-Pick up the hit reaction IKs on enemies again, enemies are no longer getting pushed back by the player
+Wire up enemy attack vfx that were changed, list in git
 
 ****** Tomorrow work:
 
@@ -78,13 +78,18 @@ Finalise the difficulty system making enemies faster, more damage, more health, 
 
 Enemies
 Slower animations for injured enemies
+Enemies throw other enemies at the player
 
 Mutations
 One that shows enemies life bars
+Increase poise damage
+Increase players poise
 
 Research
 Unlock vaulting and dash for roguelike to increase movement options
 Strength that allows you to push heavier objects to open new areas
+Vaulting over obstacles
+Vaulting over enemies?
 
 Buildings:
 An alarm that will alert NPCs of an incoming zombie attack

@@ -807,6 +807,17 @@ MonoBehaviour:
   obstacleBoundsOffset: 1
   rootMotionMultiplier: 1
   showCollisionDebug: 0
+  enableCooldownMovement: 1
+  cooldownMovementMinDistance: 2
+  cooldownMovementMaxDistance: 4
+  cooldownMovementMinDuration: 1
+  cooldownMovementMaxDuration: 3
+  enableHeadTracking: 1
+  headTrackingWeight: 0.8
+  headTrackingRotationWeight: 0.5
+  headTrackingLerpSpeed: 3
+  maxHeadTrackingAngle: 60
+  headTrackingDistance: 15
   health: 100
   maxHealth: 100
   poise: 50
@@ -837,10 +848,11 @@ MonoBehaviour:
   damage: 10
   poiseDamage: 15
   attackType: 1
-  attackOrigin: {fileID: 0}
+  attackOrigin: {fileID: 8384904350946220507}
+  allowRotationDuringAttack: 0
   attackElement: 0
   elementalDamageBonus: 0
-  startEffect: {fileID: 0}
+  startEffect: {fileID: 11400000, guid: fcf79a6a167279b4eae818ba6f5238fa, type: 2}
   startEffectDelay: 0
   attackEffect: {fileID: 0}
   attackEffectDelay: 0
@@ -869,17 +881,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   minRange: 0
   maxRange: 5
-  attackAngleThreshold: 30
+  attackAngleThreshold: 180
   cooldown: 2
   damage: 10
   poiseDamage: 15
   attackType: 2
   attackOrigin: {fileID: 0}
+  allowRotationDuringAttack: 0
   attackElement: 0
   elementalDamageBonus: 0
   startEffect: {fileID: 0}
   startEffectDelay: 0
-  attackEffect: {fileID: 0}
+  attackEffect: {fileID: 11400000, guid: f67d8cac14b3bd64eb6ca922af912f97, type: 2}
   attackEffectDelay: 0
   hitEffect: {fileID: 0}
   hitEffectDelay: 0
@@ -890,9 +903,6 @@ MonoBehaviour:
   maxShockwaveRadius: 10
   shockwaveSpeed: 15
   shockwaveWidth: 1
-  shockwaveDamage: 25
-  shockwavePoiseDamage: 15
-  shockwaveEffect: {fileID: 0}
 --- !u!114 &6988115495219620664
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -913,15 +923,16 @@ MonoBehaviour:
   poiseDamage: 15
   attackType: 3
   attackOrigin: {fileID: 0}
+  allowRotationDuringAttack: 0
   attackElement: 0
   elementalDamageBonus: 0
-  startEffect: {fileID: 0}
+  startEffect: {fileID: 11400000, guid: 34dd8713150ee7c4b93e486ac20fed3a, type: 2}
   startEffectDelay: 0
   attackEffect: {fileID: 0}
   attackEffectDelay: 0
   hitEffect: {fileID: 0}
   hitEffectDelay: 0
-  endEffect: {fileID: 0}
+  endEffect: {fileID: 11400000, guid: 7f3b9784e46c47e4faedf0ac585c4f17, type: 2}
   endEffectDelay: 0
   attackTrigger: Attack
   attackGameObjects: []
@@ -986,7 +997,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 8748892135801146194, guid: d49b38201864c18499b8825be849970e, type: 3}
+  - {fileID: 2100000, guid: 68021691667e41745913058504a1d954, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

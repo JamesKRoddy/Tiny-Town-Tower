@@ -20,9 +20,6 @@ namespace Enemies.Attacks
         [Tooltip("Poise damage dealt per tick")]
         public float poiseDamagePerTick = 5f;
         
-        [Header("Visual Effects")]
-        [Tooltip("Visual effect for the area of effect")]
-        public EffectDefinition aoeVisualEffect;
         
         protected override void Awake()
         {
@@ -81,7 +78,7 @@ namespace Enemies.Attacks
                 attackElement, 
                 aoeDuration, 
                 damageInterval, 
-                aoeVisualEffect
+                attackEffect
             );
             
             Debug.Log($"[{enemy.gameObject.name}] Area of effect attack executed | Position: {aoePosition} | Radius: {aoeRadius} | Duration: {aoeDuration}");

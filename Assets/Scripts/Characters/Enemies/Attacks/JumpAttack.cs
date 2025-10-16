@@ -98,6 +98,9 @@ namespace Enemies.Attacks
 
             jumpStartTime = Time.time;
             isJumping = true;
+            
+            // Play start effect
+            PlayStartEffect();
 
             // Disable NavMeshAgent and root motion during jump
             if (enemy != null)
@@ -241,11 +244,15 @@ namespace Enemies.Attacks
 
             // Deal damage on landing
             DamageUtils.CreateInstantDamageArea(transform.position, jumpRadius, damage, poiseDamage, enemy.transform, attackElement);
+            
+            // Play attack effect on landing
+            PlayAttackEffect(transform.position, Vector3.up);
         }
 
         public override void OnAttack()
         {
             // The actual damage is dealt when landing
+            // Play attack effect is called in EndJump when landing
         }
 
         private void OnDrawGizmos()

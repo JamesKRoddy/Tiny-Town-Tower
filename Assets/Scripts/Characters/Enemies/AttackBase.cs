@@ -69,9 +69,13 @@ namespace Enemies
         protected Animator animator;
         protected Transform target;
 
+        [Tooltip("VFX for the start of the attack")]
         private EffectPlayer startEffectPlayer;
+        [Tooltip("VFX for the attack")]
         private EffectPlayer attackEffectPlayer;
+        [Tooltip("VFX for when the attack hits its target")]
         private EffectPlayer hitEffectPlayer;
+        [Tooltip("VFX for the end of the attack")]
         private EffectPlayer endEffectPlayer;
 
         protected virtual void Awake()

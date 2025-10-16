@@ -232,25 +232,35 @@ namespace Enemies.Editor
             
             // Call child class specific settings
             DrawChildSpecificSettings();
+            
+            // Draw the visual graphics
+            EditorGUILayout.Space(5);
+            EditorGUILayout.LabelField("Visualization", EditorStyles.boldLabel);
+            EditorGUILayout.Space(5);
+            
+            // Get current values for visualization
+            float currentMinRange = minRange != null ? minRange.floatValue : 0f;
+            float currentMaxRange = maxRange != null ? maxRange.floatValue : 5f;
+            float currentAngle = attackAngleThreshold != null ? attackAngleThreshold.floatValue : 30f;
+            
+            // Use EditorGUILayout with proper height allocation
+            EditorGUILayout.BeginVertical(GUILayout.Height(160));
+            DrawAttackVisualization(currentMinRange, currentMaxRange, currentAngle);
+            EditorGUILayout.EndVertical();
         }
         
-        protected virtual void DrawChildSpecificSettings()
+        protected virtual void DrawAttackVisualization(float minRange, float maxRange, float attackAngleThreshold)
         {
-            // Override in child classes to add specific settings
-        }
-
-        private void DrawBaseAttackVisualization(float minRange, float maxRange, float attackAngleThreshold)
-        {
-            Rect rect = GUILayoutUtility.GetRect(18, 18, GUILayout.ExpandWidth(true));
-            rect.height = 100;
+            // Use EditorGUILayout for proper layout integration
+            Rect rect = GUILayoutUtility.GetRect(0, 140, GUILayout.ExpandWidth(true));
             
             // Background
             EditorGUI.DrawRect(rect, new Color(0.15f, 0.15f, 0.15f, 0.8f));
             
-            // Calculate positions
-            float centerX = rect.x + rect.width / 2;
+            // Calculate positions - adjust center to account for labels
+            float centerX = rect.x + rect.width / 2 + 60; // Move right to avoid left labels
             float centerY = rect.y + rect.height / 2;
-            float maxVisualRange = Mathf.Min(rect.width, rect.height) / 2 - 10;
+            float maxVisualRange = Mathf.Min((rect.width - 120), rect.height) / 2 - 15; // Account for label space
             
             // Scale factors for visualization
             float scale = maxVisualRange / Mathf.Max(maxRange, 1f);
@@ -290,22 +300,31 @@ namespace Enemies.Editor
             
             Handles.EndGUI();
             
-            // Labels
+            // Labels - positioned to avoid overlap
             GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
-            labelStyle.fontSize = 9;
+            labelStyle.fontSize = 8;
             labelStyle.normal.textColor = Color.white;
             
-            // Top labels
-            GUI.Label(new Rect(rect.x + 5, rect.y + 5, 150, 15), $"Min Range: {minRange:F1}m", labelStyle);
-            GUI.Label(new Rect(rect.x + 5, rect.y + 20, 150, 15), $"Max Range: {maxRange:F1}m", labelStyle);
-            GUI.Label(new Rect(rect.x + 5, rect.y + 35, 150, 15), $"Angle: ±{attackAngleThreshold:F0}°", labelStyle);
+            // Left side labels - positioned outside the circle
+            float labelX = rect.x + 5;
+            float labelY = rect.y + 5;
+            GUI.Label(new Rect(labelX, labelY, 120, 12), $"Min: {minRange:F1}m", labelStyle);
+            GUI.Label(new Rect(labelX, labelY + 12, 120, 12), $"Max: {maxRange:F1}m", labelStyle);
+            GUI.Label(new Rect(labelX, labelY + 24, 120, 12), $"Angle: ±{attackAngleThreshold:F0}°", labelStyle);
             
-            // Legend
-            float legendY = rect.y + rect.height - 30;
-            GUI.Label(new Rect(rect.x + 5, legendY, 80, 12), "Legend:", labelStyle);
-            GUI.Label(new Rect(rect.x + 5, legendY + 12, 80, 12), "Gray: Too Close", labelStyle);
-            GUI.Label(new Rect(rect.x + 80, legendY, 80, 12), "Red: Attack Range", labelStyle);
-            GUI.Label(new Rect(rect.x + 80, legendY + 12, 80, 12), "Cyan: Angle", labelStyle);
+            // Legend - positioned at bottom right with more space
+            float legendX = rect.x + rect.width - 120;
+            float legendY = rect.y + rect.height - 45;
+            GUI.Label(new Rect(legendX, legendY, 115, 10), "Legend:", labelStyle);
+            GUI.Label(new Rect(legendX, legendY + 10, 115, 10), "Gray: Too Close", labelStyle);
+            GUI.Label(new Rect(legendX, legendY + 20, 115, 10), "Red: Range", labelStyle);
+            GUI.Label(new Rect(legendX, legendY + 30, 115, 10), "Cyan: Angle", labelStyle);
         }
+        
+        protected virtual void DrawChildSpecificSettings()
+        {
+            // Override in child classes to add specific settings
+        }
+
     }
 }

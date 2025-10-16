@@ -16,14 +16,7 @@ namespace Enemies.Attacks
         public float shockwaveSpeed = 15f;
         [Tooltip("Width of the shockwave ring")]
         public float shockwaveWidth = 1f;
-        [Tooltip("Damage dealt by the shockwave")]
-        public float shockwaveDamage = 25f;
-        [Tooltip("Poise damage dealt by the shockwave")]
-        public float shockwavePoiseDamage = 15f;
         
-        [Header("Visual Effects")]
-        [Tooltip("Visual effect for the shockwave")]
-        public EffectDefinition shockwaveEffect;
         
         protected override void Awake()
         {
@@ -58,7 +51,7 @@ namespace Enemies.Attacks
                 attackElement = AttackElement.PHYSICAL;
             }
             
-            Debug.Log($"[{enemy.gameObject.name}] ShockwaveAttack initialized | MaxRadius: {maxShockwaveRadius} | Damage: {shockwaveDamage}");
+            Debug.Log($"[{enemy.gameObject.name}] ShockwaveAttack initialized | MaxRadius: {maxShockwaveRadius} | Damage: {damage}");
         }
 
         public override void OnAttack()
@@ -72,7 +65,7 @@ namespace Enemies.Attacks
             // Create the shockwave effect
             CreateShockwave();
             
-            Debug.Log($"[{enemy.gameObject.name}] Shockwave attack executed | Radius: {maxShockwaveRadius} | Damage: {shockwaveDamage}");
+            Debug.Log($"[{enemy.gameObject.name}] Shockwave attack executed | Radius: {maxShockwaveRadius} | Damage: {damage}");
         }
 
         /// <summary>
@@ -82,11 +75,8 @@ namespace Enemies.Attacks
         {
             Vector3 shockwaveCenter = enemy.transform.position;
             
-            // Play visual effect if provided
-            if (shockwaveEffect != null)
-            {
-                EffectManager.Instance.PlayEffect(shockwaveCenter, Vector3.up, Quaternion.identity, null, shockwaveEffect);
-            }
+            // Play attack effect if provided
+            PlayAttackEffect(shockwaveCenter, Vector3.up);
             
             // Create expanding shockwave using coroutine
             StartCoroutine(ExpandShockwave(shockwaveCenter));
@@ -125,7 +115,7 @@ namespace Enemies.Attacks
                         IDamageable damageable = collider.GetComponent<IDamageable>();
                         if (damageable != null && damageable.GetAllegiance() == Allegiance.FRIENDLY)
                         {
-                            DamageUtils.DealDamageToTarget(damageable, shockwaveDamage, shockwavePoiseDamage, enemy.transform, attackElement);
+                            DamageUtils.DealDamageToTarget(damageable, damage, poiseDamage, enemy.transform, attackElement);
                             hitTargets.Add(collider);
                         }
                     }
