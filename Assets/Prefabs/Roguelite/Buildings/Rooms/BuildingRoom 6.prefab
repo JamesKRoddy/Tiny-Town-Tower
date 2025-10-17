@@ -834,8 +834,8 @@ MonoBehaviour:
   doors: []
   chests: []
   roomBounds:
-    m_Center: {x: 1.4276304, y: 1.8750002, z: 40.32756}
-    m_Extent: {x: 12.927632, y: 3.8750002, z: 21.33001}
+    m_Center: {x: 1.6151342, y: 0.76, z: 40.15377}
+    m_Extent: {x: 12.740129, y: 2.76, z: 21.15622}
   autoCalculateBounds: 1
   boundsPadding: 2
   showRoomBounds: 1
@@ -3671,9 +3671,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ac61eeb8dae753499f78889a7857f47, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damage: 0
-  poiseDamage: 0
+  damage: 2
+  poiseDamage: 2
   damageInterval: 1
+  elementType: 0
+  elementalDamageBonus: 0
+  damageSource: {fileID: 0}
 --- !u!1001 &2060873913142937695
 PrefabInstance:
   m_ObjectHideFlags: 0

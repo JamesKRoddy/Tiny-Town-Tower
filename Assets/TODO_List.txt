@@ -13,6 +13,8 @@ Charge up attacks by holding down buttons
 
 Ladders for the player to reach secret areas
 
+Have to test turrets using the new damage system
+
 Sweet spot for attack animations which grant extra bonus damage/effects
 
 Custom inspectors for NPC and their components, enemies, managers that need it
