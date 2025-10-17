@@ -32,15 +32,16 @@ public class ZombieVomitPool : TemporaryDamageArea
         /// Full setup with damage, duration, and scaling
         /// </summary>
         public void Setup(float damage, float poiseDamage, float duration, float scaleDuration, Vector3 scale, 
-            AttackElement element = AttackElement.NONE, int elementalBonus = 0, Transform source = null)
+            AttackElement element = AttackElement.NONE, int elementalBonus = 0, Transform source = null, 
+            Allegiance allegiance = Allegiance.HOSTILE)
         {
-            // Call base setup for damage and duration
-            base.Setup(damage, poiseDamage, duration, element, elementalBonus, source);
+            // Call base setup for damage and duration (vomit pools are HOSTILE by default - enemy-created)
+            base.Setup(damage, poiseDamage, duration, element, elementalBonus, source, 1f, allegiance);
             
             scaleAnimationDuration = scaleDuration;
             targetScale = scale;
             
-            Debug.Log($"[ZombieVomitPool] Setup called - targetScale set to: {targetScale}, scaleDuration: {scaleDuration}");
+            Debug.Log($"[ZombieVomitPool] Setup called - targetScale set to: {targetScale}, scaleDuration: {scaleDuration}, allegiance: {allegiance}");
             
             // Set initial scale
             transform.localScale = new Vector3(0f, 0.3f, 0f);

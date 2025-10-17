@@ -42,6 +42,7 @@ public abstract class WeaponBase : MonoBehaviour, IPickupableItem, IDamageDealer
     public AttackElement ElementType => WeaponElement;
     public int ElementalDamageBonus => GetCurrentElementalDamageBonus();
     public Transform DamageSource => characterTransform;
+    public Allegiance DealerAllegiance => Allegiance.FRIENDLY; // Player weapons are friendly
 
     public virtual void Initialize(ResourceScriptableObj data, int count = 1)
     {

@@ -21,6 +21,11 @@ public class DamageArea : MonoBehaviour, IDamageDealer
     
     [Header("Source Settings")]
     [SerializeField] protected Transform damageSource; // Optional damage source (defaults to this transform)
+    [Tooltip("Allegiance of this damage dealer:\n" +
+        "- HOSTILE: Damages FRIENDLY targets (enemy-created areas like vomit pools)\n" +
+        "- FRIENDLY: Damages HOSTILE targets (player-created areas like grenades)\n" +
+        "- NEUTRAL: Damages ALL targets except NEUTRAL (environmental hazards like lava)")]
+    [SerializeField] protected Allegiance dealerAllegiance = Allegiance.NEUTRAL;
     
     protected Dictionary<IDamageable, float> lastDamageTimes = new Dictionary<IDamageable, float>(); // Track damage times per IDamageable
     
@@ -30,6 +35,7 @@ public class DamageArea : MonoBehaviour, IDamageDealer
     public AttackElement ElementType => elementType;
     public int ElementalDamageBonus => elementalDamageBonus;
     public Transform DamageSource => damageSource != null ? damageSource : transform;
+    public Allegiance DealerAllegiance => dealerAllegiance;
 
     void OnTriggerStay(Collider other)
     {
@@ -72,6 +78,11 @@ public class DamageArea : MonoBehaviour, IDamageDealer
     public void SetDamageSource(Transform source)
     {
         damageSource = source;
+    }
+    
+    public void SetAllegiance(Allegiance allegiance)
+    {
+        dealerAllegiance = allegiance;
     }
     
     // IDamageDealer interface implementation

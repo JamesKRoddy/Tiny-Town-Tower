@@ -28,28 +28,27 @@ public class RaycastTurret : BaseTurret
             );
         }
 
+        // Use the unified raycast damage system
         RaycastHit hit;
-        if (Physics.Raycast(firePoint.position, firePoint.forward, out hit, maxRaycastDistance))
+        bool didHit = DamageUtils.PerformRaycastDamage(
+            this,
+            firePoint.position,
+            firePoint.forward,
+            maxRaycastDistance,
+            -1, // All layers
+            out hit
+        );
+        
+        // Play hit effect if we hit something
+        if (didHit && hitEffect != null && Managers.EffectManager.Instance != null)
         {
-            IDamageable damageable = hit.collider.GetComponent<IDamageable>();
-
-            if (damageable != null)
-            {
-                // Use the unified damage system
-                DealDamage(damageable);
-                
-                // Play hit effect at impact point
-                if (hitEffect != null && Managers.EffectManager.Instance != null)
-                {
-                    Managers.EffectManager.Instance.PlayEffect(
-                        hit.point,
-                        hit.normal,
-                        Quaternion.LookRotation(hit.normal),
-                        hit.transform,
-                        hitEffect
-                    );
-                }
-            }
+            Managers.EffectManager.Instance.PlayEffect(
+                hit.point,
+                hit.normal,
+                Quaternion.LookRotation(hit.normal),
+                hit.transform,
+                hitEffect
+            );
         }
     }
 }

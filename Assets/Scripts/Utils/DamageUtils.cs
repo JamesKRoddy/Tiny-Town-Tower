@@ -549,10 +549,11 @@ public static class DamageUtils
     /// <param name="duration">How long the area lasts</param>
     /// <param name="damageInterval">How often damage is dealt (seconds)</param>
     /// <param name="visualEffect">Visual effect for the damage area</param>
+    /// <param name="allegiance">Allegiance of the damage area (auto-detected from attacker if not specified)</param>
     /// <returns>The created damage area GameObject</returns>
     public static GameObject CreateDamageArea(Vector3 position, float radius, float damage, float poiseDamage,
         Transform attacker, AttackElement element = AttackElement.PHYSICAL, float duration = 5f, 
-        float damageInterval = 0.5f, EffectDefinition visualEffect = null)
+        float damageInterval = 0.5f, EffectDefinition visualEffect = null, Allegiance? allegiance = null)
     {
         // Create the damage area GameObject
         GameObject damageAreaObj = new GameObject($"DamageArea_{element}");
@@ -568,9 +569,12 @@ public static class DamageUtils
         rb.isKinematic = true;
         rb.useGravity = false;
         
+        // Auto-detect allegiance from attacker if not specified
+        Allegiance areaAllegiance = allegiance ?? GetAllegianceFromTransform(attacker);
+        
         // Add the damage area component
         TemporaryDamageArea damageArea = damageAreaObj.AddComponent<TemporaryDamageArea>();
-        damageArea.Setup(damage, poiseDamage, duration, element, 0, attacker, damageInterval);
+        damageArea.Setup(damage, poiseDamage, duration, element, 0, attacker, damageInterval, areaAllegiance);
         
         // Add visual effect if provided
         if (visualEffect != null)
@@ -613,6 +617,322 @@ public static class DamageUtils
         }
         
         return targetsDamaged;
+    }
+
+    // ===== RANGE AND COOLDOWN UTILITIES =====
+    
+    /// <summary>
+    /// Check if a target is within attack range
+    /// </summary>
+    /// <param name="attackerPos">Position of the attacker</param>
+    /// <param name="targetPos">Position of the target</param>
+    /// <param name="minRange">Minimum attack range (0 = no minimum)</param>
+    /// <param name="maxRange">Maximum attack range</param>
+    /// <returns>True if target is within range</returns>
+    public static bool IsInRange(Vector3 attackerPos, Vector3 targetPos, float minRange, float maxRange)
+    {
+        float distance = Vector3.Distance(attackerPos, targetPos);
+        return distance >= minRange && distance <= maxRange;
+    }
+    
+    /// <summary>
+    /// Check if a target is too close (within minimum range)
+    /// </summary>
+    /// <param name="attackerPos">Position of the attacker</param>
+    /// <param name="targetPos">Position of the target</param>
+    /// <param name="minRange">Minimum attack range</param>
+    /// <returns>True if target is too close</returns>
+    public static bool IsTooClose(Vector3 attackerPos, Vector3 targetPos, float minRange)
+    {
+        if (minRange <= 0) return false;
+        
+        float distance = Vector3.Distance(attackerPos, targetPos);
+        return distance < minRange;
+    }
+    
+    /// <summary>
+    /// Check if a target is too far (beyond maximum range)
+    /// </summary>
+    /// <param name="attackerPos">Position of the attacker</param>
+    /// <param name="targetPos">Position of the target</param>
+    /// <param name="maxRange">Maximum attack range</param>
+    /// <returns>True if target is too far</returns>
+    public static bool IsTooFar(Vector3 attackerPos, Vector3 targetPos, float maxRange)
+    {
+        float distance = Vector3.Distance(attackerPos, targetPos);
+        return distance > maxRange;
+    }
+    
+    /// <summary>
+    /// Check if enough time has passed since the last attack (cooldown check)
+    /// </summary>
+    /// <param name="lastAttackTime">Time of the last attack</param>
+    /// <param name="cooldown">Cooldown duration in seconds</param>
+    /// <returns>True if cooldown has elapsed</returns>
+    public static bool IsCooldownReady(float lastAttackTime, float cooldown)
+    {
+        return Time.time - lastAttackTime >= cooldown;
+    }
+    
+    /// <summary>
+    /// Get remaining cooldown time
+    /// </summary>
+    /// <param name="lastAttackTime">Time of the last attack</param>
+    /// <param name="cooldown">Cooldown duration in seconds</param>
+    /// <returns>Remaining cooldown time (0 if ready)</returns>
+    public static float GetRemainingCooldown(float lastAttackTime, float cooldown)
+    {
+        return Mathf.Max(0f, cooldown - (Time.time - lastAttackTime));
+    }
+    
+    /// <summary>
+    /// Get cooldown progress as a percentage (0 to 1, where 1 = ready)
+    /// </summary>
+    /// <param name="lastAttackTime">Time of the last attack</param>
+    /// <param name="cooldown">Cooldown duration in seconds</param>
+    /// <returns>Cooldown progress (0 to 1)</returns>
+    public static float GetCooldownProgress(float lastAttackTime, float cooldown)
+    {
+        if (cooldown <= 0) return 1f;
+        return Mathf.Clamp01((Time.time - lastAttackTime) / cooldown);
+    }
+
+    // ===== HIT DETECTION UTILITIES =====
+    
+    /// <summary>
+    /// Perform a box cast to detect and damage targets in an area
+    /// </summary>
+    /// <param name="dealer">The damage dealer performing the attack</param>
+    /// <param name="origin">Origin point of the box cast</param>
+    /// <param name="boxSize">Size of the box (half extents)</param>
+    /// <param name="direction">Direction to cast the box</param>
+    /// <param name="rotation">Rotation of the box</param>
+    /// <param name="distance">Distance to cast the box</param>
+    /// <param name="layerMask">Layer mask for valid targets</param>
+    /// <param name="hitTargets">HashSet to track already hit targets (prevents double-hitting)</param>
+    /// <returns>Number of new targets hit</returns>
+    public static int PerformBoxCastDamage(IDamageDealer dealer, Vector3 origin, Vector3 boxSize, 
+        Vector3 direction, Quaternion rotation, float distance, LayerMask layerMask, 
+        System.Collections.Generic.HashSet<Collider> hitTargets = null)
+    {
+        if (dealer == null) return 0;
+        
+        int targetsHit = 0;
+        
+        // Perform the BoxCast
+        RaycastHit[] hits = Physics.BoxCastAll(origin, boxSize * 0.5f, direction, rotation, distance, layerMask);
+        
+        foreach (RaycastHit hit in hits)
+        {
+            // Skip if we've already hit this collider
+            if (hitTargets != null && hitTargets.Contains(hit.collider))
+                continue;
+            
+            IDamageable target = hit.collider.GetComponent<IDamageable>();
+            if (target != null && IsValidTarget(target, dealer))
+            {
+                // Deal damage using the unified system
+                DealDamage(dealer, target);
+                
+                // Track this target
+                if (hitTargets != null)
+                {
+                    hitTargets.Add(hit.collider);
+                }
+                
+                targetsHit++;
+            }
+        }
+        
+        return targetsHit;
+    }
+    
+    /// <summary>
+    /// Perform a sphere cast to detect and damage targets
+    /// </summary>
+    /// <param name="dealer">The damage dealer performing the attack</param>
+    /// <param name="origin">Origin point of the sphere cast</param>
+    /// <param name="radius">Radius of the sphere</param>
+    /// <param name="direction">Direction to cast the sphere</param>
+    /// <param name="distance">Distance to cast the sphere</param>
+    /// <param name="layerMask">Layer mask for valid targets</param>
+    /// <param name="hitTargets">HashSet to track already hit targets (prevents double-hitting)</param>
+    /// <returns>Number of new targets hit</returns>
+    public static int PerformSphereCastDamage(IDamageDealer dealer, Vector3 origin, float radius,
+        Vector3 direction, float distance, LayerMask layerMask,
+        System.Collections.Generic.HashSet<Collider> hitTargets = null)
+    {
+        if (dealer == null) return 0;
+        
+        int targetsHit = 0;
+        
+        // Perform the SphereCast
+        RaycastHit[] hits = Physics.SphereCastAll(origin, radius, direction, distance, layerMask);
+        
+        foreach (RaycastHit hit in hits)
+        {
+            // Skip if we've already hit this collider
+            if (hitTargets != null && hitTargets.Contains(hit.collider))
+                continue;
+            
+            IDamageable target = hit.collider.GetComponent<IDamageable>();
+            if (target != null && IsValidTarget(target, dealer))
+            {
+                // Deal damage using the unified system
+                DealDamage(dealer, target);
+                
+                // Track this target
+                if (hitTargets != null)
+                {
+                    hitTargets.Add(hit.collider);
+                }
+                
+                targetsHit++;
+            }
+        }
+        
+        return targetsHit;
+    }
+    
+    /// <summary>
+    /// Perform a single raycast to detect and damage a target
+    /// </summary>
+    /// <param name="dealer">The damage dealer performing the attack</param>
+    /// <param name="origin">Origin point of the raycast</param>
+    /// <param name="direction">Direction of the raycast</param>
+    /// <param name="maxDistance">Maximum distance of the raycast</param>
+    /// <param name="layerMask">Layer mask for valid targets</param>
+    /// <param name="hitInfo">Output hit information</param>
+    /// <returns>True if a valid target was hit and damaged</returns>
+    public static bool PerformRaycastDamage(IDamageDealer dealer, Vector3 origin, Vector3 direction,
+        float maxDistance, LayerMask layerMask, out RaycastHit hitInfo)
+    {
+        if (dealer == null)
+        {
+            hitInfo = default;
+            return false;
+        }
+        
+        if (Physics.Raycast(origin, direction, out hitInfo, maxDistance, layerMask))
+        {
+            IDamageable target = hitInfo.collider.GetComponent<IDamageable>();
+            if (target != null && IsValidTarget(target, dealer))
+            {
+                // Deal damage using the unified system
+                DealDamage(dealer, target);
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /// <summary>
+    /// Perform a capsule cast to detect and damage targets (useful for sweeping melee attacks)
+    /// </summary>
+    /// <param name="dealer">The damage dealer performing the attack</param>
+    /// <param name="point1">Start point of the capsule</param>
+    /// <param name="point2">End point of the capsule</param>
+    /// <param name="radius">Radius of the capsule</param>
+    /// <param name="direction">Direction to cast the capsule</param>
+    /// <param name="distance">Distance to cast the capsule</param>
+    /// <param name="layerMask">Layer mask for valid targets</param>
+    /// <param name="hitTargets">HashSet to track already hit targets (prevents double-hitting)</param>
+    /// <returns>Number of new targets hit</returns>
+    public static int PerformCapsuleCastDamage(IDamageDealer dealer, Vector3 point1, Vector3 point2,
+        float radius, Vector3 direction, float distance, LayerMask layerMask,
+        System.Collections.Generic.HashSet<Collider> hitTargets = null)
+    {
+        if (dealer == null) return 0;
+        
+        int targetsHit = 0;
+        
+        // Perform the CapsuleCast
+        RaycastHit[] hits = Physics.CapsuleCastAll(point1, point2, radius, direction, distance, layerMask);
+        
+        foreach (RaycastHit hit in hits)
+        {
+            // Skip if we've already hit this collider
+            if (hitTargets != null && hitTargets.Contains(hit.collider))
+                continue;
+            
+            IDamageable target = hit.collider.GetComponent<IDamageable>();
+            if (target != null && IsValidTarget(target, dealer))
+            {
+                // Deal damage using the unified system
+                DealDamage(dealer, target);
+                
+                // Track this target
+                if (hitTargets != null)
+                {
+                    hitTargets.Add(hit.collider);
+                }
+                
+                targetsHit++;
+            }
+        }
+        
+        return targetsHit;
+    }
+    
+    /// <summary>
+    /// Perform an overlap box check to detect and damage targets in a stationary area
+    /// </summary>
+    /// <param name="dealer">The damage dealer performing the attack</param>
+    /// <param name="center">Center of the box</param>
+    /// <param name="halfExtents">Half extents of the box</param>
+    /// <param name="rotation">Rotation of the box</param>
+    /// <param name="layerMask">Layer mask for valid targets</param>
+    /// <param name="hitTargets">HashSet to track already hit targets (prevents double-hitting)</param>
+    /// <returns>Number of new targets hit</returns>
+    public static int PerformOverlapBoxDamage(IDamageDealer dealer, Vector3 center, Vector3 halfExtents,
+        Quaternion rotation, LayerMask layerMask,
+        System.Collections.Generic.HashSet<Collider> hitTargets = null)
+    {
+        if (dealer == null) return 0;
+        
+        int targetsHit = 0;
+        
+        // Perform the OverlapBox
+        Collider[] colliders = Physics.OverlapBox(center, halfExtents, rotation, layerMask);
+        
+        foreach (Collider collider in colliders)
+        {
+            // Skip if we've already hit this collider
+            if (hitTargets != null && hitTargets.Contains(collider))
+                continue;
+            
+            IDamageable target = collider.GetComponent<IDamageable>();
+            if (target != null && IsValidTarget(target, dealer))
+            {
+                // Deal damage using the unified system
+                DealDamage(dealer, target);
+                
+                // Track this target
+                if (hitTargets != null)
+                {
+                    hitTargets.Add(collider);
+                }
+                
+                targetsHit++;
+            }
+        }
+        
+        return targetsHit;
+    }
+    
+    /// <summary>
+    /// Draw a box cast gizmo for visualization in the editor
+    /// </summary>
+    /// <param name="origin">Origin of the box cast</param>
+    /// <param name="boxSize">Size of the box</param>
+    /// <param name="rotation">Rotation of the box</param>
+    /// <param name="color">Color of the gizmo</param>
+    public static void DrawBoxCastGizmo(Vector3 origin, Vector3 boxSize, Quaternion rotation, Color color)
+    {
+        Gizmos.color = color;
+        Gizmos.matrix = Matrix4x4.TRS(origin, rotation, Vector3.one);
+        Gizmos.DrawWireCube(Vector3.zero, boxSize);
     }
 
     // ===== PROJECTILE UTILITIES =====
@@ -835,23 +1155,47 @@ public static class DamageUtils
     
     /// <summary>
     /// Check if a target is valid for this damage dealer
+    /// 
+    /// SIMPLIFIED DAMAGE RULES:
+    /// - HOSTILE dealers → Damage FRIENDLY targets (enemies attack players/NPCs/turrets)
+    /// - FRIENDLY dealers → Damage HOSTILE targets (players/turrets attack enemies)
+    /// - NEUTRAL dealers → Damage ALL targets except NEUTRAL (environmental hazards hurt everyone)
+    /// - ALL dealers → NEVER damage NEUTRAL targets (quest NPCs, invulnerable objects protected)
     /// </summary>
+    /// <param name="target">The target to check</param>
+    /// <param name="dealer">The damage dealer</param>
+    /// <returns>True if this dealer can damage this target</returns>
     private static bool IsValidTarget(IDamageable target, IDamageDealer dealer)
     {
-        // For enemy attacks, only damage friendly targets
-        if (dealer is AttackBase)
+        Allegiance targetAllegiance = target.GetAllegiance();
+        Allegiance dealerAllegiance = dealer.DealerAllegiance;
+        
+        // Rule 1: NEVER damage NEUTRAL entities (quest NPCs, invulnerable objects)
+        if (targetAllegiance == Allegiance.NEUTRAL)
         {
-            return target.GetAllegiance() == Allegiance.FRIENDLY;
+            return false;
         }
         
-        // For weapons, only damage non-friendly targets
-        if (dealer is WeaponBase)
+        // Rule 2: HOSTILE dealers (enemies) → Damage FRIENDLY targets only
+        if (dealerAllegiance == Allegiance.HOSTILE)
         {
-            return target.GetAllegiance() != Allegiance.FRIENDLY;
+            return targetAllegiance == Allegiance.FRIENDLY;
         }
         
-        // Default: allow all targets
-        return true;
+        // Rule 3: FRIENDLY dealers (players, turrets) → Damage HOSTILE targets only
+        if (dealerAllegiance == Allegiance.FRIENDLY)
+        {
+            return targetAllegiance == Allegiance.HOSTILE;
+        }
+        
+        // Rule 4: NEUTRAL dealers (environmental hazards) → Damage ALL except NEUTRAL
+        if (dealerAllegiance == Allegiance.NEUTRAL)
+        {
+            return targetAllegiance != Allegiance.NEUTRAL;
+        }
+        
+        // Fallback: No damage (shouldn't reach here)
+        return false;
     }
     
     /// <summary>
@@ -860,5 +1204,34 @@ public static class DamageUtils
     private static bool IsInLayerMask(GameObject obj, LayerMask layerMask)
     {
         return (layerMask.value & (1 << obj.layer)) != 0;
+    }
+    
+    /// <summary>
+    /// Get the allegiance from a transform by checking for IDamageable component
+    /// Used to auto-detect allegiance when creating damage areas
+    /// </summary>
+    /// <param name="source">The transform to check</param>
+    /// <returns>The allegiance (defaults to NEUTRAL if not found)</returns>
+    public static Allegiance GetAllegianceFromTransform(Transform source)
+    {
+        if (source == null)
+        {
+            return Allegiance.NEUTRAL; // No source = environmental hazard
+        }
+        
+        // Check for IDamageable on the source or its parents
+        IDamageable damageable = source.GetComponent<IDamageable>();
+        if (damageable == null)
+        {
+            damageable = source.GetComponentInParent<IDamageable>();
+        }
+        
+        if (damageable != null)
+        {
+            return damageable.GetAllegiance();
+        }
+        
+        // If no IDamageable found, default to NEUTRAL (environmental)
+        return Allegiance.NEUTRAL;
     }
 }

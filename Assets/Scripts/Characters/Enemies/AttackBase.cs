@@ -78,6 +78,7 @@ namespace Enemies
         public AttackElement ElementType => attackElement;
         public int ElementalDamageBonus => elementalDamageBonus;
         public Transform DamageSource => attackOrigin != null ? attackOrigin : enemy?.transform;
+        public Allegiance DealerAllegiance => Allegiance.HOSTILE; // Enemy attacks are hostile
 
         [Tooltip("VFX for the start of the attack")]
         private EffectPlayer startEffectPlayer;
@@ -125,13 +126,11 @@ namespace Enemies
             if (target == null || enemy == null) return false;
             if (enemy.Health <= 0) return false;
             
-            // Simple distance check - use raw distance without complex calculations
-            float distance = Vector3.Distance(enemy.transform.position, target.position);
+            // Use unified range and cooldown utilities
+            bool inRange = DamageUtils.IsInRange(enemy.transform.position, target.position, minRange, maxRange);
+            bool cooldownReady = DamageUtils.IsCooldownReady(lastAttackTime, cooldown);
             
-            // Check if within attack range (minRange to maxRange)
-            bool inRange = distance >= minRange && distance <= maxRange;
-            
-            return inRange && Time.time - lastAttackTime >= cooldown;
+            return inRange && cooldownReady;
         }
 
         /// <summary>
@@ -287,9 +286,7 @@ namespace Enemies
         protected virtual bool IsTargetInRange()
         {
             if (target == null) return false;
-            
-            float distance = Vector3.Distance(enemy.transform.position, target.position);
-            return distance >= minRange && distance <= maxRange;
+            return DamageUtils.IsInRange(enemy.transform.position, target.position, minRange, maxRange);
         }
 
         /// <summary>
@@ -298,10 +295,8 @@ namespace Enemies
         /// <returns>True if target is too close</returns>
         public virtual bool IsTargetTooClose()
         {
-            if (target == null || minRange <= 0) return false;
-            
-            float distance = Vector3.Distance(enemy.transform.position, target.position);
-            return distance < minRange;
+            if (target == null) return false;
+            return DamageUtils.IsTooClose(enemy.transform.position, target.position, minRange);
         }
 
         /// <summary>
@@ -311,9 +306,7 @@ namespace Enemies
         public virtual bool IsTargetTooFar()
         {
             if (target == null) return false;
-            
-            float distance = Vector3.Distance(enemy.transform.position, target.position);
-            return distance > maxRange;
+            return DamageUtils.IsTooFar(enemy.transform.position, target.position, maxRange);
         }
 
         /// <summary>

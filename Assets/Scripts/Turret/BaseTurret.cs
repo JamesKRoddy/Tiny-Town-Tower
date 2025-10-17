@@ -33,6 +33,7 @@ public abstract class BaseTurret : PlaceableStructure<TurretScriptableObject>, I
     public AttackElement ElementType => elementType;
     public int ElementalDamageBonus => elementalDamageBonus;
     public Transform DamageSource => firePoint != null ? firePoint : transform;
+    public Allegiance DealerAllegiance => Allegiance.FRIENDLY; // Turrets are friendly (defend the camp)
 
     protected override void Start()
     {

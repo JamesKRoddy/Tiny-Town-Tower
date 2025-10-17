@@ -28,11 +28,13 @@ public class TemporaryDamageArea : DamageArea
     /// Call this when spawning the area programmatically
     /// </summary>
     public virtual void Setup(float damage, float poiseDamage, float duration, 
-        AttackElement element = AttackElement.NONE, int elementalBonus = 0, Transform source = null, float interval = 1f)
+        AttackElement element = AttackElement.NONE, int elementalBonus = 0, Transform source = null, 
+        float interval = 1f, Allegiance allegiance = Allegiance.NEUTRAL)
     {
         SetDamage(damage, poiseDamage);
         SetElementalProperties(element, elementalBonus);
         SetDamageInterval(interval);
+        SetAllegiance(allegiance);
         
         if (source != null)
         {

@@ -1,8 +1,6 @@
 *****Current Work*****
 
-IDamagaeDealing (or equivalent) implementation. do it for enemy/player attacks, turrets, environmental (Damage area)
 
-Cool so Im looking at adding in gizmos for all attack colliders and raycast sphere that visability is controlled by a new @BaseDebugMenu.cs . I think what youll need is to find
 
 ****** Tomorrow work:
 
@@ -39,6 +37,10 @@ Npc get away from zombies too easily
 Size of the mutation grid UI is wrong
 
 So can possess npc right as they fall asleep and so no animations player on the possessed npc.
+
+Zombies cant walk through vomit pools
+
+Player doesn't spawn to spawn point when going into the roguelike overworld or into roguelike building
 
 ****** Errors:
 

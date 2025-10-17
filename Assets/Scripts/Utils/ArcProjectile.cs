@@ -176,30 +176,42 @@ public class ArcProjectile : MonoBehaviour
                     }
                 }
                 
-                vomitPool.Setup(damage, poiseDamage, damageAreaDuration, scaleDuration, scale, element, 0, attacker);
+                // Auto-detect allegiance from attacker (enemy projectiles are HOSTILE)
+                Allegiance vomitAllegiance = DamageUtils.GetAllegianceFromTransform(attacker);
                 
-                Debug.Log($"[ArcProjectile] Configured ZombieVomitPool with damage: {damage}, poise: {poiseDamage}, duration: {damageAreaDuration}, element: {element}, scale: {scale}");
+                vomitPool.Setup(damage, poiseDamage, damageAreaDuration, scaleDuration, scale, element, 0, attacker, vomitAllegiance);
+                
+                Debug.Log($"[ArcProjectile] Configured ZombieVomitPool with damage: {damage}, poise: {poiseDamage}, duration: {damageAreaDuration}, element: {element}, scale: {scale}, allegiance: {vomitAllegiance}");
             }
             // Check if this is a TemporaryDamageArea (but not ZombieVomitPool)
             else if (damageArea as TemporaryDamageArea != null)
             {
                 var tempArea = damageArea as TemporaryDamageArea;
-                // Call the full Setup method
-                tempArea.Setup(damage, poiseDamage, damageAreaDuration, element, 0, attacker);
                 
-                Debug.Log($"[ArcProjectile] Configured TemporaryDamageArea with damage: {damage}, poise: {poiseDamage}, duration: {damageAreaDuration}, element: {element}");
+                // Auto-detect allegiance from attacker
+                Allegiance areaAllegiance = DamageUtils.GetAllegianceFromTransform(attacker);
+                
+                // Call the full Setup method
+                tempArea.Setup(damage, poiseDamage, damageAreaDuration, element, 0, attacker, 1f, areaAllegiance);
+                
+                Debug.Log($"[ArcProjectile] Configured TemporaryDamageArea with damage: {damage}, poise: {poiseDamage}, duration: {damageAreaDuration}, element: {element}, allegiance: {areaAllegiance}");
             }
             else
             {
                 // For regular DamageArea, just set the damage and elemental properties
                 damageArea.SetDamage(damage, poiseDamage);
                 damageArea.SetElementalProperties(element, 0);
+                
+                // Auto-detect and set allegiance
+                Allegiance areaAllegiance = DamageUtils.GetAllegianceFromTransform(attacker);
+                damageArea.SetAllegiance(areaAllegiance);
+                
                 if (attacker != null)
                 {
                     damageArea.SetDamageSource(attacker);
                 }
                 
-                Debug.Log($"[ArcProjectile] Configured trigger-based damage component ({damageArea.GetType().Name}) with damage: {damage}, poise: {poiseDamage}, element: {element}");
+                Debug.Log($"[ArcProjectile] Configured trigger-based damage component ({damageArea.GetType().Name}) with damage: {damage}, poise: {poiseDamage}, element: {element}, allegiance: {areaAllegiance}");
             }
         }
         else
