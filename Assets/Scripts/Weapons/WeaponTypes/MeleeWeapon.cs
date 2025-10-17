@@ -70,8 +70,8 @@ public class MeleeWeapon : WeaponBase
                 var target = hit.collider.GetComponent<IDamageable>();
                 if (target != null && target.GetAllegiance() != Allegiance.FRIENDLY)
                 {
-                    // Use the new elemental damage system
-                    DealDamage(target, characterTransform);
+                    // Use the unified damage system
+                    DealDamage(target);
                 }
             }
         }

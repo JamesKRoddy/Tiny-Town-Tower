@@ -63,8 +63,8 @@ public class RangedWeapon : WeaponBase
             var target = hit.collider.GetComponent<IDamageable>();
             if (target != null)
             {
-                // Use the new elemental damage system, passing character transform for proper camera shake
-                DealDamage(target, characterTransform);
+                // Use the unified damage system
+                DealDamage(target);
             }
 
             if (impactEffect != null)

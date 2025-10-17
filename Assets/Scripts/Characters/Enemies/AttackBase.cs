@@ -9,7 +9,7 @@ namespace Enemies
     /// Base class for all enemy attack components.
     /// Contains common attack properties and functionality shared between boss and zombie attacks.
     /// </summary>
-    public abstract class AttackBase : MonoBehaviour
+    public abstract class AttackBase : MonoBehaviour, IDamageDealer
     {
         [Header("Attack Settings")]
         [Tooltip("Minimum range for this attack (0 = no minimum)")]
@@ -68,6 +68,16 @@ namespace Enemies
         protected EnemyBase enemy;
         protected Animator animator;
         protected Transform target;
+        
+        // Public property for external access
+        public Transform Target => target;
+        
+        // IDamageDealer implementation
+        public float BaseDamage => damage;
+        public float PoiseDamage => poiseDamage;
+        public AttackElement ElementType => attackElement;
+        public int ElementalDamageBonus => elementalDamageBonus;
+        public Transform DamageSource => attackOrigin != null ? attackOrigin : enemy?.transform;
 
         [Tooltip("VFX for the start of the attack")]
         private EffectPlayer startEffectPlayer;
@@ -317,59 +327,44 @@ namespace Enemies
         }
 
         /// <summary>
-        /// Deal damage to a target
+        /// Deal damage to a target (IDamageDealer interface implementation)
+        /// </summary>
+        /// <param name="target">The target to damage</param>
+        public virtual void DealDamage(IDamageable target)
+        {
+            DamageUtils.DealDamage(this, target);
+        }
+        
+        /// <summary>
+        /// Deal damage to a target with custom damage amounts (IDamageDealer interface implementation)
+        /// </summary>
+        /// <param name="target">The target to damage</param>
+        /// <param name="damageAmount">Custom damage amount</param>
+        /// <param name="poiseAmount">Custom poise damage amount</param>
+        public virtual void DealDamage(IDamageable target, float damageAmount, float poiseAmount)
+        {
+            DamageUtils.DealDamage(this, target, damageAmount, poiseAmount);
+        }
+        
+        /// <summary>
+        /// Deal damage to a target (legacy method for backward compatibility)
         /// </summary>
         /// <param name="target">The target to damage</param>
         /// <param name="damageAmount">Amount of damage to deal</param>
-        protected virtual void DealDamage(IDamageable target, float damageAmount)
+        protected virtual void DealDamageLegacy(IDamageable target, float damageAmount)
         {
-            if (target == null) return;
-
-            // Calculate total damage including elemental bonus
-            float totalDamage = damageAmount + elementalDamageBonus;
-
-            // Deal damage with elemental type
-            target.TakeDamage(totalDamage, poiseDamage, attackElement);
-            
-            // Add threat to target for aggro system
-            if (Managers.EnemyManager.Instance != null && this.target != null)
-            {
-                Managers.EnemyManager.Instance.AddThreat(this.target, totalDamage * 10f);
-            }
+            DealDamage(target, damageAmount, poiseDamage);
         }
 
         /// <summary>
-        /// Deal damage to a single target with enhanced parameters
+        /// Deal damage to a single target with enhanced parameters (legacy method)
         /// </summary>
         /// <param name="target">The target to damage</param>
         /// <param name="damageAmount">Amount of damage to deal</param>
         /// <param name="poiseAmount">Amount of poise damage to deal</param>
         protected virtual void DealDamageToTarget(IDamageable target, float damageAmount, float poiseAmount)
         {
-            if (target == null) return;
-            
-            // Calculate total damage including elemental bonus
-            float totalDamage = damageAmount;
-            if (attackElement != AttackElement.NONE)
-            {
-                totalDamage += elementalDamageBonus;
-            }
-            
-            // Apply damage with elemental type
-            if (attackElement == AttackElement.NONE || attackElement == AttackElement.PHYSICAL)
-            {
-                target.TakeDamage(totalDamage, poiseAmount, enemy.transform);
-            }
-            else
-            {
-                target.TakeDamage(totalDamage, poiseAmount, attackElement, enemy.transform);
-            }
-            
-            // Add threat to target for aggro system
-            if (Managers.EnemyManager.Instance != null && this.target != null)
-            {
-                Managers.EnemyManager.Instance.AddThreat(this.target, totalDamage * 10f);
-            }
+            DealDamage(target, damageAmount, poiseAmount);
         }
 
         /// <summary>
@@ -383,42 +378,13 @@ namespace Enemies
             // Use the attack origin's position if provided, otherwise use the given position
             Vector3 attackPosition = attackOrigin != null ? attackOrigin.position : position;
             
-            // Find all colliders in the radius
-            Collider[] hitColliders = Physics.OverlapSphere(attackPosition, radius);
+            // Use the unified damage system
+            int targetsDamaged = DamageUtils.DealDamageInRadius(this, attackPosition, radius, damageAmount, poiseDamage);
             
-            foreach (var hitCollider in hitColliders)
+            // Play hit effect for each target (simplified - could be enhanced to track individual hit points)
+            if (targetsDamaged > 0)
             {
-                IDamageable damageable = hitCollider.GetComponent<IDamageable>();
-                if (damageable != null && damageable.GetAllegiance() == Allegiance.FRIENDLY)
-                {
-                    // Check if the target is still active (this will catch NPCs in bunkers)
-                    if (!hitCollider.gameObject.activeInHierarchy)
-                    {
-                        continue; // Skip inactive targets (like NPCs in bunkers)
-                    }
-                    
-                    // Calculate total damage including elemental bonus
-                    float totalDamage = damageAmount;
-                    if (attackElement != AttackElement.NONE)
-                    {
-                        totalDamage += elementalDamageBonus;
-                    }
-                    
-                    // Apply damage with elemental type
-                    if (attackElement == AttackElement.NONE || attackElement == AttackElement.PHYSICAL)
-                    {
-                        damageable.TakeDamage(totalDamage, poiseDamage, enemy.transform);
-                    }
-                    else
-                    {
-                        damageable.TakeDamage(totalDamage, poiseDamage, attackElement, enemy.transform);
-                    }
-                    
-                    // Play hit effect at the point of impact
-                    Vector3 hitPoint = hitCollider.ClosestPoint(attackPosition);
-                    Vector3 hitNormal = (hitPoint - attackPosition).normalized;
-                    PlayHitEffect(hitPoint, hitNormal);
-                }
+                PlayHitEffect(attackPosition, Vector3.up);
             }
         }
 

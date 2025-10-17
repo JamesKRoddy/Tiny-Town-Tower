@@ -3114,7 +3114,7 @@ MonoBehaviour:
   poiseDamage: 7
   attackType: 5
   attackOrigin: {fileID: 0}
-  allowRotationDuringAttack: 0
+  allowRotationDuringAttack: 1
   attackElement: 0
   elementalDamageBonus: 0
   startEffect: {fileID: 0}

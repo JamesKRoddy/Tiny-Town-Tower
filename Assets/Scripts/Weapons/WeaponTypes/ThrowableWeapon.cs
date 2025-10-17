@@ -59,8 +59,8 @@ public class ThrowableCollisionHandler : MonoBehaviour
         var target = collision.collider.GetComponent<IDamageable>();
         if (target != null && weaponData != null)
         {
-            // Use the weapon's elemental damage system, passing the character's transform for proper camera shake
-            weaponData.DealDamage(target, characterTransform);
+            // Use the unified damage system
+            weaponData.DealDamage(target);
             Debug.Log($"{collision.collider.name} took {weaponData.GetTotalDamage()} damage!");
         }
 

@@ -1,5 +1,6 @@
 using Managers;
 using UnityEngine;
+using Enemies;
 
 /// <summary>
 /// Utility class for handling damage-related calculations and animations
@@ -650,5 +651,204 @@ public static class DamageUtils
         }
         
         return projectileObj;
+    }
+    
+    /// <summary>
+    /// Deal damage to a single target using the damage dealer's properties (unified system)
+    /// </summary>
+    /// <param name="dealer">The damage dealer</param>
+    /// <param name="target">The target to damage</param>
+    public static void DealDamage(IDamageDealer dealer, IDamageable target)
+    {
+        if (dealer == null || target == null) return;
+        
+        DealDamage(dealer, target, dealer.BaseDamage, dealer.PoiseDamage);
+    }
+    
+    /// <summary>
+    /// Deal damage to a single target with custom damage amounts (unified system)
+    /// </summary>
+    /// <param name="dealer">The damage dealer</param>
+    /// <param name="target">The target to damage</param>
+    /// <param name="damageAmount">Custom damage amount</param>
+    /// <param name="poiseAmount">Custom poise damage amount</param>
+    public static void DealDamage(IDamageDealer dealer, IDamageable target, float damageAmount, float poiseAmount)
+    {
+        if (dealer == null || target == null) return;
+        
+        // Calculate total damage including elemental bonus
+        float totalDamage = damageAmount;
+        if (dealer.ElementType != AttackElement.NONE)
+        {
+            totalDamage += dealer.ElementalDamageBonus;
+        }
+        
+        // Apply damage with elemental type
+        if (dealer.ElementType == AttackElement.NONE || dealer.ElementType == AttackElement.PHYSICAL)
+        {
+            target.TakeDamage(totalDamage, poiseAmount, dealer.DamageSource);
+        }
+        else
+        {
+            target.TakeDamage(totalDamage, poiseAmount, dealer.ElementType, dealer.DamageSource);
+        }
+        
+        // Apply additional effects based on dealer type
+        ApplyAdditionalEffects(dealer, target, totalDamage);
+    }
+    
+    /// <summary>
+    /// Deal damage to all targets in a radius using the unified system
+    /// </summary>
+    /// <param name="dealer">The damage dealer</param>
+    /// <param name="center">Center position of the damage area</param>
+    /// <param name="radius">Radius of the damage area</param>
+    /// <param name="damageAmount">Custom damage amount (optional)</param>
+    /// <param name="poiseAmount">Custom poise damage amount (optional)</param>
+    /// <param name="targetLayer">Layer mask for targets (optional)</param>
+    /// <returns>Number of targets damaged</returns>
+    public static int DealDamageInRadius(IDamageDealer dealer, Vector3 center, float radius, 
+        float? damageAmount = null, float? poiseAmount = null, LayerMask? targetLayer = null)
+    {
+        if (dealer == null) return 0;
+        
+        float actualDamage = damageAmount ?? dealer.BaseDamage;
+        float actualPoise = poiseAmount ?? dealer.PoiseDamage;
+        
+        // Find all colliders in the radius
+        Collider[] hitColliders = Physics.OverlapSphere(center, radius);
+        int targetsDamaged = 0;
+        
+        foreach (var hitCollider in hitColliders)
+        {
+            // Apply layer mask filter if provided
+            if (targetLayer.HasValue && !IsInLayerMask(hitCollider.gameObject, targetLayer.Value))
+                continue;
+                
+            IDamageable damageable = hitCollider.GetComponent<IDamageable>();
+            if (damageable != null && IsValidTarget(damageable, dealer))
+            {
+                // Check if the target is still active (this will catch NPCs in bunkers)
+                if (!hitCollider.gameObject.activeInHierarchy)
+                {
+                    continue; // Skip inactive targets (like NPCs in bunkers)
+                }
+                
+                DealDamage(dealer, damageable, actualDamage, actualPoise);
+                targetsDamaged++;
+            }
+        }
+        
+        return targetsDamaged;
+    }
+    
+    /// <summary>
+    /// Apply additional effects based on the dealer type
+    /// </summary>
+    private static void ApplyAdditionalEffects(IDamageDealer dealer, IDamageable target, float totalDamage)
+    {
+        // Apply threat for enemy attacks
+        if (dealer is AttackBase attackBase)
+        {
+            if (Managers.EnemyManager.Instance != null && attackBase.Target != null)
+            {
+                Managers.EnemyManager.Instance.AddThreat(attackBase.Target, totalDamage * 10f);
+            }
+        }
+        
+        // Apply status effects for weapons
+        if (dealer is WeaponBase weaponBase)
+        {
+            ApplyWeaponStatusEffects(weaponBase, target);
+        }
+        
+        // Trigger camera shake for player weapons
+        if (dealer is WeaponBase)
+        {
+            TriggerHitCameraShake(dealer.DamageSource);
+        }
+    }
+    
+    /// <summary>
+    /// Apply status effects from weapon
+    /// </summary>
+    private static void ApplyWeaponStatusEffects(WeaponBase weapon, IDamageable target)
+    {
+        if (weapon.PossibleStatusEffects == null || weapon.PossibleStatusEffects.Length == 0) return;
+        if (weapon.StatusEffectChance <= 0f) return;
+        
+        // Check if status effect should be applied
+        if (Random.Range(0f, 1f) <= weapon.StatusEffectChance)
+        {
+            // Select a random status effect from possible effects
+            StatusEffectType selectedEffect = weapon.PossibleStatusEffects[Random.Range(0, weapon.PossibleStatusEffects.Length)];
+            
+            // Apply the status effect
+            ApplyStatusEffect(target, selectedEffect, weapon.StatusEffectDuration);
+        }
+    }
+    
+    /// <summary>
+    /// Apply a specific status effect to a target
+    /// </summary>
+    private static void ApplyStatusEffect(IDamageable target, StatusEffectType effectType, float duration)
+    {
+        // This is a basic implementation - you may want to integrate with your status effect system
+        Debug.Log($"Applied {effectType} status effect to {target} for {duration} seconds");
+        
+        // TODO: Integrate with your status effect system here
+        // Example: StatusEffectManager.Instance.ApplyEffect(target, effectType, duration);
+    }
+    
+    /// <summary>
+    /// Trigger camera shake when hitting an enemy, but only if the attacker is player-controlled
+    /// </summary>
+    private static void TriggerHitCameraShake(Transform damageSource)
+    {
+        if (damageSource == null) return;
+        
+        // Check if this attack came from the player-controlled character
+        if (PlayerController.Instance != null && 
+            PlayerController.Instance._possessedNPC != null &&
+            PlayerCamera.Instance != null)
+        {
+            // Get the transform of the possessed NPC
+            Transform possessedTransform = PlayerController.Instance._possessedNPC.GetTransform();
+            
+            // If the damage source matches the possessed character, trigger camera shake
+            if (damageSource == possessedTransform)
+            {
+                PlayerCamera.Instance.ShakeFromHittingEnemy();
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Check if a target is valid for this damage dealer
+    /// </summary>
+    private static bool IsValidTarget(IDamageable target, IDamageDealer dealer)
+    {
+        // For enemy attacks, only damage friendly targets
+        if (dealer is AttackBase)
+        {
+            return target.GetAllegiance() == Allegiance.FRIENDLY;
+        }
+        
+        // For weapons, only damage non-friendly targets
+        if (dealer is WeaponBase)
+        {
+            return target.GetAllegiance() != Allegiance.FRIENDLY;
+        }
+        
+        // Default: allow all targets
+        return true;
+    }
+    
+    /// <summary>
+    /// Check if a GameObject is in the specified layer mask
+    /// </summary>
+    private static bool IsInLayerMask(GameObject obj, LayerMask layerMask)
+    {
+        return (layerMask.value & (1 << obj.layer)) != 0;
     }
 }

@@ -1,6 +1,8 @@
 *****Current Work*****
 
-Wire up enemy attack vfx that were changed, list in git
+IDamagaeDealing (or equivalent) implementation. do it for enemy/player attacks, turrets, environmental (Damage area)
+
+Cool so Im looking at adding in gizmos for all attack colliders and raycast sphere that visability is controlled by a new @BaseDebugMenu.cs . I think what youll need is to find
 
 ****** Tomorrow work:
 
@@ -78,7 +80,8 @@ Finalise the difficulty system making enemies faster, more damage, more health, 
 
 Enemies
 Slower animations for injured enemies
-Enemies throw other enemies at the player
+Enemies throw other enemies at the player 
+Occationally enemies with really low health will try to flee from the player
 
 Mutations
 One that shows enemies life bars
