@@ -558,9 +558,19 @@ public static class DamageUtils
         GameObject damageAreaObj = new GameObject($"DamageArea_{element}");
         damageAreaObj.transform.position = position;
         
+        // Add sphere collider for trigger detection
+        SphereCollider sphereCollider = damageAreaObj.AddComponent<SphereCollider>();
+        sphereCollider.isTrigger = true;
+        sphereCollider.radius = radius;
+        
+        // Add rigidbody (required for triggers)
+        Rigidbody rb = damageAreaObj.AddComponent<Rigidbody>();
+        rb.isKinematic = true;
+        rb.useGravity = false;
+        
         // Add the damage area component
-        PersistentDamageArea damageArea = damageAreaObj.AddComponent<PersistentDamageArea>();
-        damageArea.Setup(radius, damage, poiseDamage, attacker, element, duration, damageInterval);
+        TemporaryDamageArea damageArea = damageAreaObj.AddComponent<TemporaryDamageArea>();
+        damageArea.Setup(damage, poiseDamage, duration, element, 0, attacker, damageInterval);
         
         // Add visual effect if provided
         if (visualEffect != null)

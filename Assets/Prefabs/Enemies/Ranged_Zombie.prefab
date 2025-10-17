@@ -3673,6 +3673,17 @@ MonoBehaviour:
   obstacleBoundsOffset: 1
   rootMotionMultiplier: 1
   showCollisionDebug: 0
+  enableCooldownMovement: 1
+  cooldownMovementMinDistance: 2
+  cooldownMovementMaxDistance: 4
+  cooldownMovementMinDuration: 1
+  cooldownMovementMaxDuration: 3
+  enableHeadTracking: 1
+  headTrackingWeight: 0.8
+  headTrackingRotationWeight: 0.5
+  headTrackingLerpSpeed: 3
+  maxHeadTrackingAngle: 60
+  headTrackingDistance: 15
   health: 100
   maxHealth: 100
   poise: 50
@@ -3704,13 +3715,14 @@ MonoBehaviour:
   poiseDamage: 15
   attackType: 0
   attackOrigin: {fileID: 0}
+  allowRotationDuringAttack: 0
   attackElement: 0
   elementalDamageBonus: 0
   startEffect: {fileID: 0}
   startEffectDelay: 0
-  attackEffect: {fileID: 0}
+  attackEffect: {fileID: 11400000, guid: 94e6acf029b2a8e4f947c2e75662ee75, type: 2}
   attackEffectDelay: 0
-  hitEffect: {fileID: 0}
+  hitEffect: {fileID: 11400000, guid: 2f3ea51455a426f48b24456a8147c1f2, type: 2}
   hitEffectDelay: 0
   endEffect: {fileID: 0}
   endEffectDelay: 0
@@ -3720,10 +3732,9 @@ MonoBehaviour:
   projectileSpeed: 10
   projectileMaxHeight: 5
   createDamageAreaOnImpact: 1
-  impactDamageRadius: 2
   impactDamageDuration: 5
-  projectileEffect: {fileID: 11400000, guid: 94e6acf029b2a8e4f947c2e75662ee75, type: 2}
-  impactEffect: {fileID: 11400000, guid: 2f3ea51455a426f48b24456a8147c1f2, type: 2}
+  useTriggerBasedDamage: 1
+  fallbackDamageRadius: 2
 --- !u!1 &7944999906928915032
 GameObject:
   m_ObjectHideFlags: 0

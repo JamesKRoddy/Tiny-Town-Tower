@@ -130,10 +130,77 @@ public class ArcProjectile : MonoBehaviour
         
         if (damageArea != null)
         {
-            // Configure the damage area with our attack parameters
-            damageArea.SetDamage(damage, poiseDamage);
-            
-            Debug.Log($"[ArcProjectile] Configured trigger-based damage component ({damageArea.GetType().Name}) with damage: {damage}, poise: {poiseDamage}");
+            // Check if this is a ZombieVomitPool that needs special setup
+            var vomitPool = damageArea as ZombieVomitPool;
+            if (vomitPool != null)
+            {
+                // Call the full Setup method to trigger the scaling animation
+                float scaleDuration = damageAreaDuration > 0 ? Mathf.Min(0.5f, damageAreaDuration * 0.2f) : 0.5f;
+                
+                // Calculate scale based on radius or use prefab's collider size if radius is 0 (trigger-based)
+                Vector3 scale;
+                if (damageAreaRadius > 0)
+                {
+                    // Radius-based: use the provided radius
+                    scale = new Vector3(damageAreaRadius * 2f, 0.3f, damageAreaRadius * 2f);
+                }
+                else
+                {
+                    // Trigger-based: check if there's a serialized targetScale value on the prefab
+                    // First, try to get the target scale directly from the ZombieVomitPool component
+                    // This will use the value set in the Inspector on the prefab
+                    System.Reflection.FieldInfo targetScaleField = vomitPool.GetType().GetField("targetScale", 
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    
+                    if (targetScaleField != null)
+                    {
+                        Vector3 prefabTargetScale = (Vector3)targetScaleField.GetValue(vomitPool);
+                        // Only use it if it's not zero (meaning it was set in the prefab)
+                        if (prefabTargetScale != Vector3.zero && prefabTargetScale.x > 0.1f)
+                        {
+                            scale = prefabTargetScale;
+                            Debug.Log($"[ArcProjectile] Using prefab's targetScale: {scale}");
+                        }
+                        else
+                        {
+                            // Fallback to a default reasonable size
+                            scale = new Vector3(2f, 0.3f, 2f);
+                            Debug.Log($"[ArcProjectile] Prefab targetScale was zero, using default scale: {scale}");
+                        }
+                    }
+                    else
+                    {
+                        // Fallback to a default reasonable size
+                        scale = new Vector3(2f, 0.3f, 2f);
+                        Debug.LogWarning($"[ArcProjectile] Could not read targetScale from prefab, using default scale: {scale}");
+                    }
+                }
+                
+                vomitPool.Setup(damage, poiseDamage, damageAreaDuration, scaleDuration, scale, element, 0, attacker);
+                
+                Debug.Log($"[ArcProjectile] Configured ZombieVomitPool with damage: {damage}, poise: {poiseDamage}, duration: {damageAreaDuration}, element: {element}, scale: {scale}");
+            }
+            // Check if this is a TemporaryDamageArea (but not ZombieVomitPool)
+            else if (damageArea as TemporaryDamageArea != null)
+            {
+                var tempArea = damageArea as TemporaryDamageArea;
+                // Call the full Setup method
+                tempArea.Setup(damage, poiseDamage, damageAreaDuration, element, 0, attacker);
+                
+                Debug.Log($"[ArcProjectile] Configured TemporaryDamageArea with damage: {damage}, poise: {poiseDamage}, duration: {damageAreaDuration}, element: {element}");
+            }
+            else
+            {
+                // For regular DamageArea, just set the damage and elemental properties
+                damageArea.SetDamage(damage, poiseDamage);
+                damageArea.SetElementalProperties(element, 0);
+                if (attacker != null)
+                {
+                    damageArea.SetDamageSource(attacker);
+                }
+                
+                Debug.Log($"[ArcProjectile] Configured trigger-based damage component ({damageArea.GetType().Name}) with damage: {damage}, poise: {poiseDamage}, element: {element}");
+            }
         }
         else
         {
