@@ -1,8 +1,27 @@
 *****Current Work*****
 
-
+Size of the mutation grid UI is wrong
 
 ****** Tomorrow work:
+
+Custom inspector for npc scripts
+
+PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
+
+Spawning enemies to attack camp issues:
+If theres no npcs newly spawned in enemies dont attack buildings
+Buildings only take damage occasionally
+Npc get away from zombies too easily
+
+So can possess npc right as they fall asleep and so no animations player on the possessed npc.
+
+Zombies cant walk through vomit pools
+
+Player doesn't spawn to spawn point when going into the roguelike overworld or into roguelike building
+
+Clean up debug logs, also have to have a central debug manager to control what classes have enable logs enabled
+
+Hit detection for player interacting with object like doors is a bit off, could be better
 
 
 ****** Next work:
@@ -27,20 +46,7 @@ Recruitable NPCs in roguelike section shouldn't wander, get tired/sick etc. They
 
 ****** Bugs and refactoring:
 
-PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
 
-Spawning enemies to attack camp issues:
-If theres no npcs newly spawned in enemies dont attack buildings
-Buildings only take damage occasionally
-Npc get away from zombies too easily
-
-Size of the mutation grid UI is wrong
-
-So can possess npc right as they fall asleep and so no animations player on the possessed npc.
-
-Zombies cant walk through vomit pools
-
-Player doesn't spawn to spawn point when going into the roguelike overworld or into roguelike building
 
 ****** Errors:
 
@@ -86,6 +92,7 @@ Enemies
 Slower animations for injured enemies
 Enemies throw other enemies at the player 
 Occationally enemies with really low health will try to flee from the player
+Ghost enemies that you need to destroy a machine in order to damage them
 
 Mutations
 One that shows enemies life bars

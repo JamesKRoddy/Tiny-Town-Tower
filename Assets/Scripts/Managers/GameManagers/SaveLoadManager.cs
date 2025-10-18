@@ -83,7 +83,7 @@ public class NPCSaveData
     public float maxHealth;
     public float stamina;
     public float hunger;
-    public int additionalMutationSlots;
+    // NOTE: additionalMutationSlots is NOT saved - it's calculated from base value (3) + characteristics
     public string currentTaskType;
     public List<string> equippedCharacteristicIds = new List<string>();
     public List<ResourceItemData> inventory = new List<ResourceItemData>();
@@ -586,7 +586,6 @@ public class SaveLoadManager : MonoBehaviour
                 maxHealth = npc.MaxHealth,
                 stamina = npc.currentStamina,
                 hunger = npc.GetHungerPercentage() * 100f, // Convert percentage back to value
-                additionalMutationSlots = npc.additionalMutationSlots,
                 currentTaskType = npc.GetCurrentTaskType().ToString(),
                 npcDataObjName = null // SettlerNPC no longer uses NPCScriptableObj
             };

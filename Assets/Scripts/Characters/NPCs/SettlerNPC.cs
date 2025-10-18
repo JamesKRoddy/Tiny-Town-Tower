@@ -464,7 +464,9 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         MaxHealth = saveData.maxHealth;
         currentStamina = saveData.stamina;
         currentHunger = saveData.hunger;
-        additionalMutationSlots = saveData.additionalMutationSlots;
+        
+        // NOTE: additionalMutationSlots is NOT restored from save data
+        // It uses the base value (3) and characteristics will add their bonuses when equipped below
 
         // Restore position
         transform.position = saveData.position;
