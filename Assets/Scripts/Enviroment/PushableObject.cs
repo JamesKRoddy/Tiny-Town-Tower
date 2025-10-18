@@ -41,6 +41,7 @@ public class PushableObject : MonoBehaviour
     
     // Position tracking
     private Vector3 originalPosition;
+    private Quaternion originalRotation;
     
     // Components
     private AudioSource audioSource;
@@ -54,6 +55,7 @@ public class PushableObject : MonoBehaviour
     {
         audioSource = GetComponent<AudioSource>();
         originalPosition = transform.position;
+        originalRotation = transform.rotation;
     }
     
     private void Update()
@@ -71,8 +73,8 @@ public class PushableObject : MonoBehaviour
     /// <returns>True if should be pushed</returns>
     public bool ShouldBePushed(Vector3 direction)
     {
-        Vector3 pushDir = GetCardinalDirection(direction);
-        return pushDir != Vector3.zero && IsDirectionAllowed(pushDir) && CanPushInDirection(pushDir);
+        Vector3 localDir = GetLocalCardinalDirection(direction);
+        return localDir != Vector3.zero && IsDirectionAllowed(localDir) && CanPushInDirection(localDir);
     }
 
     /// <summary>
@@ -86,21 +88,22 @@ public class PushableObject : MonoBehaviour
         if (isBeingPushed)
             return false;
         
-        // Normalize and snap direction to cardinal directions
-        Vector3 pushDir = GetCardinalDirection(direction);
-        if (pushDir == Vector3.zero)
+        // Convert world direction to local space and snap to cardinal directions
+        Vector3 localDir = GetLocalCardinalDirection(direction);
+        if (localDir == Vector3.zero)
             return false;
         
         // Check if this direction is allowed
-        if (!IsDirectionAllowed(pushDir))
+        if (!IsDirectionAllowed(localDir))
             return false;
         
         // Check if we can push in this direction (within limits)
-        if (!CanPushInDirection(pushDir))
+        if (!CanPushInDirection(localDir))
             return false;
         
-        // Calculate target position
-        Vector3 targetPos = transform.position + pushDir * pushDistance;
+        // Convert local direction back to world space for actual movement
+        Vector3 worldDir = transform.TransformDirection(localDir);
+        Vector3 targetPos = transform.position + worldDir * pushDistance;
         
         // Check if target position is clear using the improved collision detection method
         if (!IsPositionClear(targetPos))
@@ -118,26 +121,22 @@ public class PushableObject : MonoBehaviour
     /// <summary>
     /// Checks if we can push in the given direction without exceeding limits
     /// </summary>
-    /// <param name="direction">Cardinal direction to check</param>
+    /// <param name="localDirection">Local cardinal direction to check</param>
     /// <returns>True if push is allowed</returns>
-    private bool CanPushInDirection(Vector3 direction)
+    private bool CanPushInDirection(Vector3 localDirection)
     {
-        // Calculate where we would be after this push
-        Vector3 futurePosition = transform.position + direction * pushDistance;
+        // Convert local direction to world space for position calculation
+        Vector3 worldDir = transform.TransformDirection(localDirection);
+        Vector3 futurePosition = transform.position + worldDir * pushDistance;
         
-        // Calculate net distance from original in this direction
+        // Calculate net distance from original in the local direction
+        // We project onto the original local axis (transformed by the original rotation)
         Vector3 toFuture = futurePosition - originalPosition;
-        float netDistance = 0f;
         
-        // Get the distance in the specific direction we're pushing
-        if (direction == Vector3.forward)
-            netDistance = toFuture.z;
-        else if (direction == Vector3.back)
-            netDistance = -toFuture.z; // Negative because we're going in opposite direction
-        else if (direction == Vector3.right)
-            netDistance = toFuture.x;
-        else if (direction == Vector3.left)
-            netDistance = -toFuture.x;
+        // Convert the local direction to world space using the ORIGINAL rotation
+        // This ensures we measure distance along the original axes, not current axes
+        Vector3 worldAxisDir = originalRotation * localDirection;
+        float netDistance = Vector3.Dot(toFuture, worldAxisDir);
         
         // Check if this would exceed our limit
         float maxDistance = maxPushesPerDirection * pushDistance;
@@ -238,9 +237,9 @@ public class PushableObject : MonoBehaviour
     }
     
     /// <summary>
-    /// Converts a world direction to the nearest cardinal direction
+    /// Converts a world direction to the nearest local cardinal direction
     /// </summary>
-    private Vector3 GetCardinalDirection(Vector3 worldDirection)
+    private Vector3 GetLocalCardinalDirection(Vector3 worldDirection)
     {
         worldDirection.y = 0; // Ignore vertical component
         worldDirection = worldDirection.normalized;
@@ -248,14 +247,22 @@ public class PushableObject : MonoBehaviour
         if (worldDirection.magnitude < 0.1f)
             return Vector3.zero;
         
-        // Find the closest cardinal direction
+        // Convert world direction to local space
+        Vector3 localDirection = transform.InverseTransformDirection(worldDirection);
+        localDirection.y = 0; // Ignore vertical component in local space too
+        localDirection = localDirection.normalized;
+        
+        if (localDirection.magnitude < 0.1f)
+            return Vector3.zero;
+        
+        // Find the closest local cardinal direction
         Vector3[] cardinals = { Vector3.forward, Vector3.back, Vector3.right, Vector3.left };
         Vector3 closest = Vector3.zero;
         float maxDot = 0.5f; // Minimum threshold for cardinal direction
         
         foreach (Vector3 cardinal in cardinals)
         {
-            float dot = Vector3.Dot(worldDirection, cardinal);
+            float dot = Vector3.Dot(localDirection, cardinal);
             if (dot > maxDot)
             {
                 maxDot = dot;
@@ -300,7 +307,7 @@ public class PushableObject : MonoBehaviour
         // This works well with different collider types (Box, Sphere, Capsule, etc.)
         
         // Get all colliders in the scene that could be obstacles
-        Collider[] allColliders = FindObjectsOfType<Collider>();
+        Collider[] allColliders = FindObjectsByType<Collider>(FindObjectsSortMode.None);
         
         foreach (Collider otherCollider in allColliders)
         {
@@ -347,6 +354,7 @@ public class PushableObject : MonoBehaviour
     public HumanCharacterController CurrentPusher => currentPusher;
     public float PushProgress => pushProgress;
     public Vector3 OriginalPosition => originalPosition;
+    public Quaternion OriginalRotation => originalRotation;
     public float DistanceFromOrigin => Vector3.Distance(transform.position, originalPosition);
     
     /// <summary>
@@ -393,35 +401,39 @@ public class PushableObject : MonoBehaviour
     
     private void OnDrawGizmos()
     {
-        // Draw allowed push directions
+        // Draw allowed push directions (in local space)
         Vector3 center = transform.position;
         
         if ((allowedDirections & PushDirection.North) != 0)
         {
             Gizmos.color = Color.green;
-            Gizmos.DrawLine(center, center + Vector3.forward * 1.5f);
-            Gizmos.DrawWireSphere(center + Vector3.forward * 1.5f, 0.2f);
+            Vector3 worldDir = transform.TransformDirection(Vector3.forward);
+            Gizmos.DrawLine(center, center + worldDir * 1.5f);
+            Gizmos.DrawWireSphere(center + worldDir * 1.5f, 0.2f);
         }
         
         if ((allowedDirections & PushDirection.South) != 0)
         {
             Gizmos.color = Color.green;
-            Gizmos.DrawLine(center, center + Vector3.back * 1.5f);
-            Gizmos.DrawWireSphere(center + Vector3.back * 1.5f, 0.2f);
+            Vector3 worldDir = transform.TransformDirection(Vector3.back);
+            Gizmos.DrawLine(center, center + worldDir * 1.5f);
+            Gizmos.DrawWireSphere(center + worldDir * 1.5f, 0.2f);
         }
         
         if ((allowedDirections & PushDirection.East) != 0)
         {
             Gizmos.color = Color.green;
-            Gizmos.DrawLine(center, center + Vector3.right * 1.5f);
-            Gizmos.DrawWireSphere(center + Vector3.right * 1.5f, 0.2f);
+            Vector3 worldDir = transform.TransformDirection(Vector3.right);
+            Gizmos.DrawLine(center, center + worldDir * 1.5f);
+            Gizmos.DrawWireSphere(center + worldDir * 1.5f, 0.2f);
         }
         
         if ((allowedDirections & PushDirection.West) != 0)
         {
             Gizmos.color = Color.green;
-            Gizmos.DrawLine(center, center + Vector3.left * 1.5f);
-            Gizmos.DrawWireSphere(center + Vector3.left * 1.5f, 0.2f);
+            Vector3 worldDir = transform.TransformDirection(Vector3.left);
+            Gizmos.DrawLine(center, center + worldDir * 1.5f);
+            Gizmos.DrawWireSphere(center + worldDir * 1.5f, 0.2f);
         }
         
         // Draw current push target if being pushed
@@ -437,91 +449,96 @@ public class PushableObject : MonoBehaviour
         Vector3 originPos = Application.isPlaying ? originalPosition : transform.position;
         Gizmos.DrawWireSphere(originPos, 0.3f);
         
-        // Show push limits (max distance in each direction)
+        // Show push limits (max distance in each direction) - using local space
         if (maxPushesPerDirection > 0 && showBoundaryArea)
         {
             float maxDistance = maxPushesPerDirection * pushDistance;
+            
+            // Get the rotation to use for boundary visualization (use original rotation to show the coordinate frame)
+            Quaternion rot = Application.isPlaying ? originalRotation : transform.rotation;
             
             // Show overall boundary area
             Gizmos.color = new Color(1f, 0.5f, 0.5f, 0.3f); // Semi-transparent red
             Vector3 boundarySize = Vector3.zero;
             
-            // Calculate boundary size based on allowed directions
+            // Calculate boundary size based on allowed directions (in local space)
             if ((allowedDirections & PushDirection.North) != 0 || (allowedDirections & PushDirection.South) != 0)
                 boundarySize.z = maxDistance * 2f; // Can go max distance in both directions
             if ((allowedDirections & PushDirection.East) != 0 || (allowedDirections & PushDirection.West) != 0)
                 boundarySize.x = maxDistance * 2f; // Can go max distance in both directions
             boundarySize.y = 0.1f; // Small height for visibility
             
-            // Draw boundary area as wire cube centered on original position
+            // Draw boundary area as wire cube centered on original position (rotated to local space)
             if (boundarySize.magnitude > 0)
             {
-                Gizmos.DrawWireCube(originPos, boundarySize);
+                Gizmos.matrix = Matrix4x4.TRS(originPos, rot, Vector3.one);
+                Gizmos.DrawWireCube(Vector3.zero, boundarySize);
+                Gizmos.matrix = Matrix4x4.identity;
             }
             
-            // Draw boundary lines connecting max positions
+            // Draw boundary lines connecting max positions (using original rotation's coordinate frame)
             Gizmos.color = new Color(1f, 0.3f, 0.3f, 0.8f); // Darker red for lines
             if ((allowedDirections & PushDirection.North) != 0)
             {
-                Vector3 northMax = originPos + Vector3.forward * maxDistance;
+                Vector3 northMax = originPos + rot * Vector3.forward * maxDistance;
                 Gizmos.DrawLine(originPos, northMax);
                 
                 // Connect to east/west if they exist
                 if ((allowedDirections & PushDirection.East) != 0)
-                    Gizmos.DrawLine(northMax, originPos + Vector3.forward * maxDistance + Vector3.right * maxDistance);
+                    Gizmos.DrawLine(northMax, originPos + rot * Vector3.forward * maxDistance + rot * Vector3.right * maxDistance);
                 if ((allowedDirections & PushDirection.West) != 0)
-                    Gizmos.DrawLine(northMax, originPos + Vector3.forward * maxDistance + Vector3.left * maxDistance);
+                    Gizmos.DrawLine(northMax, originPos + rot * Vector3.forward * maxDistance + rot * Vector3.left * maxDistance);
             }
             
             if ((allowedDirections & PushDirection.South) != 0)
             {
-                Vector3 southMax = originPos + Vector3.back * maxDistance;
+                Vector3 southMax = originPos + rot * Vector3.back * maxDistance;
                 Gizmos.DrawLine(originPos, southMax);
                 
                 // Connect to east/west if they exist
                 if ((allowedDirections & PushDirection.East) != 0)
-                    Gizmos.DrawLine(southMax, originPos + Vector3.back * maxDistance + Vector3.right * maxDistance);
+                    Gizmos.DrawLine(southMax, originPos + rot * Vector3.back * maxDistance + rot * Vector3.right * maxDistance);
                 if ((allowedDirections & PushDirection.West) != 0)
-                    Gizmos.DrawLine(southMax, originPos + Vector3.back * maxDistance + Vector3.left * maxDistance);
+                    Gizmos.DrawLine(southMax, originPos + rot * Vector3.back * maxDistance + rot * Vector3.left * maxDistance);
             }
             
             if ((allowedDirections & PushDirection.East) != 0)
             {
-                Vector3 eastMax = originPos + Vector3.right * maxDistance;
+                Vector3 eastMax = originPos + rot * Vector3.right * maxDistance;
                 Gizmos.DrawLine(originPos, eastMax);
             }
             
             if ((allowedDirections & PushDirection.West) != 0)
             {
-                Vector3 westMax = originPos + Vector3.left * maxDistance;
+                Vector3 westMax = originPos + rot * Vector3.left * maxDistance;
                 Gizmos.DrawLine(originPos, westMax);
             }
             
             // Show individual max positions as smaller cubes
             Gizmos.color = Color.red;
             if ((allowedDirections & PushDirection.North) != 0)
-                Gizmos.DrawWireCube(originPos + Vector3.forward * maxDistance, Vector3.one * 0.2f);
+                Gizmos.DrawWireCube(originPos + rot * Vector3.forward * maxDistance, Vector3.one * 0.2f);
             if ((allowedDirections & PushDirection.South) != 0)
-                Gizmos.DrawWireCube(originPos + Vector3.back * maxDistance, Vector3.one * 0.2f);
+                Gizmos.DrawWireCube(originPos + rot * Vector3.back * maxDistance, Vector3.one * 0.2f);
             if ((allowedDirections & PushDirection.East) != 0)
-                Gizmos.DrawWireCube(originPos + Vector3.right * maxDistance, Vector3.one * 0.2f);
+                Gizmos.DrawWireCube(originPos + rot * Vector3.right * maxDistance, Vector3.one * 0.2f);
             if ((allowedDirections & PushDirection.West) != 0)
-                Gizmos.DrawWireCube(originPos + Vector3.left * maxDistance, Vector3.one * 0.2f);
+                Gizmos.DrawWireCube(originPos + rot * Vector3.left * maxDistance, Vector3.one * 0.2f);
         }
         
-        // Show target position when selected (only if not at limit)
+        // Show target position when selected (only if not at limit) - using local space
         if (Application.isPlaying == false)
         {
-            // Preview where object would move in each allowed direction
+            // Preview where object would move in each allowed direction (in local space)
             Gizmos.color = Color.yellow;
             if ((allowedDirections & PushDirection.North) != 0)
-                Gizmos.DrawWireCube(center + Vector3.forward * pushDistance, Vector3.one * 0.3f);
+                Gizmos.DrawWireCube(center + transform.TransformDirection(Vector3.forward) * pushDistance, Vector3.one * 0.3f);
             if ((allowedDirections & PushDirection.South) != 0)
-                Gizmos.DrawWireCube(center + Vector3.back * pushDistance, Vector3.one * 0.3f);
+                Gizmos.DrawWireCube(center + transform.TransformDirection(Vector3.back) * pushDistance, Vector3.one * 0.3f);
             if ((allowedDirections & PushDirection.East) != 0)
-                Gizmos.DrawWireCube(center + Vector3.right * pushDistance, Vector3.one * 0.3f);
+                Gizmos.DrawWireCube(center + transform.TransformDirection(Vector3.right) * pushDistance, Vector3.one * 0.3f);
             if ((allowedDirections & PushDirection.West) != 0)
-                Gizmos.DrawWireCube(center + Vector3.left * pushDistance, Vector3.one * 0.3f);
+                Gizmos.DrawWireCube(center + transform.TransformDirection(Vector3.left) * pushDistance, Vector3.one * 0.3f);
         }
         
         // Show distance from original position in play mode

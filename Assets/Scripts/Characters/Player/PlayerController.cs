@@ -40,6 +40,9 @@ public class PlayerController : MonoBehaviour, IControllerInput
     [Header("Camera")]
     public PlayerCamera playerCamera;
 
+    // Track current possessed character's IDamageable for event subscriptions
+    private IDamageable currentDamageableNPC;
+
     private void Awake()
     {
         if (_instance != null && _instance != this)
@@ -78,6 +81,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
     private void OnDestroy()
     {
         PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
+        UnsubscribeFromDamageEvents();
     }
 
     /// <summary>
@@ -86,6 +90,9 @@ public class PlayerController : MonoBehaviour, IControllerInput
     /// <param name="npc">The NPC to possess.</param>
     public void PossessNPC(IPossessable npc = null)
     {
+        // Unsubscribe from previous NPC's damage events
+        UnsubscribeFromDamageEvents();
+
         // Unpossess current NPC if applicable
         _possessedNPC?.OnUnpossess();
 
@@ -96,6 +103,9 @@ public class PlayerController : MonoBehaviour, IControllerInput
         
         // Update cached inventory
         _cachedInventory = _possessedNPC?.GetTransform().GetComponent<CharacterInventory>();
+        
+        // Subscribe to new NPC's damage events
+        SubscribeToDamageEvents();
         
         // Invoke the event when an NPC is possessed
         OnNPCPossessed?.Invoke(oldNPC, _possessedNPC);
@@ -401,6 +411,40 @@ public class PlayerController : MonoBehaviour, IControllerInput
         {
             _possessedNPC.Movement(Vector3.zero);
         }
+    }
+
+    /// <summary>
+    /// Subscribe to damage events from the currently possessed NPC for camera shake feedback.
+    /// Camera shake automatically triggers through PlayerCamera when damage events fire.
+    /// </summary>
+    private void SubscribeToDamageEvents()
+    {
+        if (_possessedNPC == null) return;
+
+        // Try to get IDamageable from the possessed NPC
+        MonoBehaviour npcBehaviour = _possessedNPC as MonoBehaviour;
+        if (npcBehaviour != null)
+        {
+            currentDamageableNPC = npcBehaviour.GetComponent<IDamageable>();
+            if (currentDamageableNPC != null && playerCamera != null)
+            {
+                currentDamageableNPC.OnDamageTaken += playerCamera.ShakeFromDamage;
+                currentDamageableNPC.OnDeath += playerCamera.ShakeFromDeath;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Unsubscribe from damage events to prevent memory leaks
+    /// </summary>
+    private void UnsubscribeFromDamageEvents()
+    {
+        if (currentDamageableNPC != null && playerCamera != null)
+        {
+            currentDamageableNPC.OnDamageTaken -= playerCamera.ShakeFromDamage;
+            currentDamageableNPC.OnDeath -= playerCamera.ShakeFromDeath;
+        }
+        currentDamageableNPC = null;
     }
 
     #endregion

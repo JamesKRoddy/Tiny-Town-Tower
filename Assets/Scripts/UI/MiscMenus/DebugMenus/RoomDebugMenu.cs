@@ -16,9 +16,13 @@ public class RoomDebugMenu : BaseDebugMenu
     [SerializeField] private Slider difficultySlider;
     [SerializeField] private TMP_Text difficultyText;
     
+    [Header("Debug Settings")]
+    [SerializeField] private Toggle collisionDebugToggle;
+    
     private RogueLikeBuildingType currentBuildingType = RogueLikeBuildingType.NONE;
     private int currentDifficulty = 1;
     private List<GameObject> spawnedTestRooms = new List<GameObject>();
+    private bool showCollisionDebug = false;
     
     public override void RegisterMenu()
     {
@@ -44,8 +48,37 @@ public class RoomDebugMenu : BaseDebugMenu
         // Setup configuration controls
         SetupBuildingTypeDropdown();
         SetupDifficultySlider();
+        SetupCollisionDebugToggle();
         
         UpdateStatusDisplay();
+    }
+    
+    private void SetupCollisionDebugToggle()
+    {
+        if (collisionDebugToggle == null) return;
+        
+        collisionDebugToggle.isOn = showCollisionDebug;
+        collisionDebugToggle.onValueChanged.AddListener(OnCollisionDebugToggled);
+    }
+    
+    private void OnCollisionDebugToggled(bool isOn)
+    {
+        showCollisionDebug = isOn;
+        
+        // Apply to all spawned room parents
+        foreach (var testRoom in spawnedTestRooms)
+        {
+            if (testRoom != null)
+            {
+                RogueLiteRoomParent roomParent = testRoom.GetComponent<RogueLiteRoomParent>();
+                if (roomParent != null)
+                {
+                    roomParent.ShowCollisionDebug = showCollisionDebug;
+                }
+            }
+        }
+        
+        Debug.Log($"[RoomDebugMenu] Collision debug {(showCollisionDebug ? "enabled" : "disabled")}");
     }
     
     private void SetupBuildingTypeDropdown()
@@ -148,6 +181,14 @@ public class RoomDebugMenu : BaseDebugMenu
         if (buildingManager.CurrentRoomParent != null)
         {
             spawnedTestRooms.Add(buildingManager.CurrentRoomParent);
+            
+            // Apply collision debug setting to the newly spawned room
+            RogueLiteRoomParent roomParent = buildingManager.CurrentRoomParent.GetComponent<RogueLiteRoomParent>();
+            if (roomParent != null)
+            {
+                roomParent.ShowCollisionDebug = showCollisionDebug;
+            }
+            
             Debug.Log($"[RoomDebugMenu] Spawned building parent at {spawnPosition}");
         }
         else
@@ -191,6 +232,7 @@ public class RoomDebugMenu : BaseDebugMenu
         status += $"Building Type: {currentBuildingType}\n";
         status += $"Difficulty: {currentDifficulty}\n";
         status += $"Spawned Buildings: {spawnedTestRooms.Count}\n";
+        status += $"Collision Debug: {(showCollisionDebug ? "ON" : "OFF")}\n";
         
         if (RogueLiteManager.Instance.BuildingManager != null)
         {

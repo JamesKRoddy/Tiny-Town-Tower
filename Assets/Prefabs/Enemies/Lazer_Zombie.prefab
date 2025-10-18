@@ -2899,7 +2899,8 @@ GameObject:
   - component: {fileID: -6610119119996104940}
   - component: {fileID: 4816306560198809998}
   - component: {fileID: 5237491215696526443}
-  - component: {fileID: 5544021385977096053}
+  - component: {fileID: 1929164753014622273}
+  - component: {fileID: 8598843483662680964}
   m_Layer: 8
   m_Name: Lazer_Zombie
   m_TagString: Untagged
@@ -2977,7 +2978,7 @@ Animator:
   m_GameObject: {fileID: 6477775522615659138}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 0045ffb477e043a46950af7e617beb06, type: 3}
-  m_Controller: {fileID: 9100000, guid: 1a48bc8dfc6f7604baf7f6a550a4ad63, type: 2}
+  m_Controller: {fileID: 9100000, guid: c3207e38939cf1e428d075844965e796, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
   m_ApplyRootMotion: 1
@@ -3011,7 +3012,7 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &5544021385977096053
+--- !u!114 &1929164753014622273
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3020,7 +3021,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 6477775522615659138}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b7432697b8c23284ea4a4f6aed4e379e, type: 3}
+  m_Script: {fileID: 11500000, guid: d3ec8c7d65a0c974581ca471b6948708, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   characterType: 201
@@ -3032,20 +3033,72 @@ MonoBehaviour:
   angularSpeed: 120
   obstacleBoundsOffset: 1
   rootMotionMultiplier: 1
+  showCollisionDebug: 0
+  enableCooldownMovement: 1
+  cooldownMovementMinDistance: 2
+  cooldownMovementMaxDistance: 4
+  cooldownMovementMinDuration: 1
+  cooldownMovementMaxDuration: 3
+  enableHeadTracking: 1
+  headTrackingWeight: 0.8
+  headTrackingRotationWeight: 0.5
+  headTrackingLerpSpeed: 3
+  maxHeadTrackingAngle: 60
+  headTrackingDistance: 15
   health: 100
   maxHealth: 100
-  attackRange: 2
-  attackCooldown: 1.5
-  approachDistance: 3
-  laserDamage: 25
-  laserHitLayers:
+  poise: 50
+  maxPoise: 50
+  poiseRecoveryRate: 10
+  poiseRecoveryDelay: 2
+  animator: {fileID: 0}
+  isAttacking: 0
+  resistances: []
+  selectionStrategy: 2
+  attackSwitchCooldown: 0.5
+--- !u!114 &8598843483662680964
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6477775522615659138}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d23456cbfe1b284cad439382c8e263a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  minRange: 0
+  maxRange: 5
+  attackAngleThreshold: 30
+  cooldown: 2
+  damage: 1
+  poiseDamage: 15
+  attackType: 0
+  attackOrigin: {fileID: 0}
+  allowRotationDuringAttack: 0
+  attackElement: 0
+  elementalDamageBonus: 0
+  startEffect: {fileID: 0}
+  startEffectDelay: 0
+  attackEffect: {fileID: 0}
+  attackEffectDelay: 0
+  hitEffect: {fileID: 0}
+  hitEffectDelay: 0
+  endEffect: {fileID: 0}
+  endEffectDelay: 0
+  attackTrigger: Attack
+  attackGameObjects: []
+  beamHitLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  laserFirePoint: {fileID: 9031626134019856262}
-  laserBeam: {fileID: 3550279635202582810}
+  damageInterval: 0.1
+  beamFirePoint: {fileID: 6270375218561003132}
+  beamVisual: {fileID: 3550279635202582810}
   headIKWeight: 1
   headIKRotationWeight: 1
-  headIKLerpSpeed: 3
+  headIKLerpSpeed: 0.5
+  maxHeadRotationAngle: 90
 --- !u!1 &6616253873932381118
 GameObject:
   m_ObjectHideFlags: 0

@@ -8,7 +8,8 @@ public class ThrowableWeapon : WeaponBase
 
     public override void OnEquipped(Transform character)
     {
-        Debug.Log("UNIMPLEMENTED FUNCTION");
+        // Store character transform in base class
+        base.OnEquipped(character);
     }
 
     public override void StopUse()
@@ -38,26 +39,29 @@ public class ThrowableWeapon : WeaponBase
 
         // Add collision handler to deal damage
         var damageHandler = throwableInstance.AddComponent<ThrowableCollisionHandler>();
-        damageHandler.SetDamage(GetCurrentDamage());
+        damageHandler.SetWeaponData(this, characterTransform);
     }
 }
 
 public class ThrowableCollisionHandler : MonoBehaviour
 {
-    private float damage;
+    private WeaponBase weaponData;
+    private Transform characterTransform; // Store who threw the projectile
 
-    public void SetDamage(float damageAmount)
+    public void SetWeaponData(WeaponBase weapon, Transform character)
     {
-        damage = damageAmount;
+        weaponData = weapon;
+        characterTransform = character;
     }
 
     private void OnCollisionEnter(Collision collision)
     {
         var target = collision.collider.GetComponent<IDamageable>();
-        if (target != null)
+        if (target != null && weaponData != null)
         {
-            target.TakeDamage(damage);
-            Debug.Log($"{collision.collider.name} took {damage} damage!");
+            // Use the unified damage system
+            weaponData.DealDamage(target);
+            Debug.Log($"{collision.collider.name} took {weaponData.GetTotalDamage()} damage!");
         }
 
         // Destroy the throwable object after impact

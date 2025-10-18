@@ -1,8 +1,16 @@
 using UnityEngine;
 using Managers;
 
+/// <summary>
+/// Handles all camera functionality including following targets, panning, work detection, and screen shake effects.
+/// Camera shake automatically triggers on damage events through IDamageable interface integration.
+/// </summary>
 public class PlayerCamera : MonoBehaviour, IControllerInput
 {
+    public static PlayerCamera Instance { get; private set; }
+
+    #region Follow Camera Settings
+
     [Header("Follow Camera")]
     [SerializeField, ReadOnly] private Transform target; // The player or target to follow
     [SerializeField] private Vector3 offset = new Vector3(-8, 12, -8); // Side-angled offset position
@@ -10,24 +18,91 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
     [SerializeField] private float rotationSpeed = 5f; // Speed at which the camera rotates to match the target
     [SerializeField] private float cameraYAngle = 30f; // Y-axis rotation angle of the camera in degrees
 
+    #endregion
+
+    #region Panning Camera Settings
+
     [Header("Panning Camera")]
     [SerializeField] private Transform defaultTarget; // The default target to follow for camera panning
     [SerializeField] private float panSpeed = 20f; // Speed at which the camera pans
+
+    #endregion
+
+    #region Work Assignment Settings
 
     [Header("Work Assignment")]
     [SerializeField] private GameObject workDetectionPoint; // Point used to detect work buildings
     [SerializeField] private float workDetectionDistance = 5f; // Distance to check for work buildings
 
+    #endregion
+
+    #region Camera Shake Settings
+
+    [Header("Camera Shake - Default Settings")]
+    [Tooltip("How long the default shake lasts in seconds")]
+    [SerializeField] private float defaultShakeDuration = 0.2f;
+    [Tooltip("How strong the default shake is (higher = more intense)")]
+    [SerializeField] private float defaultShakeIntensity = 0.3f;
+    [Tooltip("How fast the shake oscillates (higher = faster/jittery)")]
+    [SerializeField] private float defaultShakeFrequency = 25f;
+
+    [Header("Camera Shake - Damage Scaling")]
+    [Tooltip("Minimum damage required to trigger a shake")]
+    [SerializeField] private float minDamageForShake = 5f;
+    [Tooltip("Damage amount that results in maximum shake intensity")]
+    [SerializeField] private float maxDamageForFullShake = 50f;
+    [Tooltip("Maximum shake intensity from taking damage")]
+    [SerializeField] private float maxDamageShakeIntensity = 1.0f;
+
+    [Header("Camera Shake - Hit Enemy")]
+    [Tooltip("Shake intensity when player hits an enemy")]
+    [SerializeField] private float hitEnemyIntensity = 0.15f;
+    [Tooltip("Shake duration when player hits an enemy")]
+    [SerializeField] private float hitEnemyDuration = 0.1f;
+
+    [Header("Camera Shake - Death")]
+    [Tooltip("Shake intensity when player dies")]
+    [SerializeField] private float deathShakeIntensity = 0.8f;
+    [Tooltip("Shake duration when player dies")]
+    [SerializeField] private float deathShakeDuration = 0.5f;
+
+    #endregion
+
+    #region Private Variables
+
     private Vector2 joystickInput; // Stores the current joystick input
+    
+    // Camera shake state
+    private Vector3 originalLocalPosition;
+    private Coroutine currentShakeCoroutine;
+    private bool isShaking;
+
+    #endregion
 
     private void Awake()
     {
+        // Singleton setup
+        if (Instance != null && Instance != this)
+        {
+            Destroy(this);
+            return;
+        }
+        Instance = this;
+
+        // Store original local position for shake calculations
+        originalLocalPosition = transform.localPosition;
+
         // Subscribe to control type updates
         PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
     }
 
     private void OnDestroy()
     {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+
         // Unsubscribe from all input events to prevent memory leaks
         PlayerInput.Instance.OnUpdatePlayerControls -= SetPlayerControlType;
         PlayerInput.Instance.OnLeftJoystick -= HandleLeftJoystickInput;
@@ -207,4 +282,135 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
             workDetectionPoint.transform.position = clampedPosition;
         }
     }
+
+    #region Camera Shake System
+
+    /// <summary>
+    /// Triggers camera shake based on damage amount received.
+    /// Called automatically through IDamageable.OnDamageTaken event.
+    /// Shake intensity scales with damage amount up to maxDamageForFullShake.
+    /// </summary>
+    /// <param name="damageAmount">Amount of damage taken</param>
+    /// <param name="remainingHealth">Remaining health after damage (unused but from event signature)</param>
+    public void ShakeFromDamage(float damageAmount, float remainingHealth)
+    {
+        if (damageAmount < minDamageForShake) return;
+
+        // Calculate intensity based on damage amount (normalized between min and max)
+        float normalizedDamage = Mathf.Clamp01((damageAmount - minDamageForShake) / (maxDamageForFullShake - minDamageForShake));
+        float intensity = Mathf.Lerp(defaultShakeIntensity, maxDamageShakeIntensity, normalizedDamage);
+        
+        // Duration scales slightly with damage for heavier hits
+        float duration = Mathf.Lerp(defaultShakeDuration, defaultShakeDuration * 1.5f, normalizedDamage);
+        
+        TriggerShake(duration, intensity, defaultShakeFrequency);
+    }
+
+    /// <summary>
+    /// Triggers a small shake when the player hits an enemy.
+    /// Provides subtle haptic-like feedback for successful hits.
+    /// </summary>
+    public void ShakeFromHittingEnemy()
+    {
+        TriggerShake(hitEnemyDuration, hitEnemyIntensity, defaultShakeFrequency);
+    }
+
+    /// <summary>
+    /// Triggers a strong shake when the player character dies.
+    /// Called automatically through IDamageable.OnDeath event.
+    /// </summary>
+    public void ShakeFromDeath()
+    {
+        TriggerShake(deathShakeDuration, deathShakeIntensity, defaultShakeFrequency * 0.5f);
+    }
+
+    /// <summary>
+    /// Triggers a camera shake with custom parameters.
+    /// Can be called manually for custom shake effects (explosions, impacts, etc).
+    /// </summary>
+    /// <param name="duration">How long the shake lasts in seconds</param>
+    /// <param name="intensity">How strong the shake is (position offset magnitude)</param>
+    /// <param name="frequency">How fast the shake oscillates</param>
+    public void TriggerShake(float duration, float intensity, float frequency)
+    {
+        // Stop any current shake before starting a new one
+        if (currentShakeCoroutine != null)
+        {
+            StopCoroutine(currentShakeCoroutine);
+        }
+        
+        currentShakeCoroutine = StartCoroutine(ShakeCoroutine(duration, intensity, frequency));
+    }
+
+    /// <summary>
+    /// Triggers a shake with default settings.
+    /// </summary>
+    public void TriggerShake()
+    {
+        TriggerShake(defaultShakeDuration, defaultShakeIntensity, defaultShakeFrequency);
+    }
+
+    /// <summary>
+    /// Coroutine that performs the actual camera shake using Perlin noise for smooth, natural movement.
+    /// The shake decays over time (starts strong, fades to zero) for a more polished feel.
+    /// </summary>
+    private System.Collections.IEnumerator ShakeCoroutine(float duration, float intensity, float frequency)
+    {
+        isShaking = true;
+        float elapsed = 0f;
+        
+        // Store the position before shake (in case camera has moved during shake)
+        Vector3 startPosition = transform.localPosition;
+        
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            
+            // Calculate decay over time (starts at 1.0, ends at 0.0)
+            float percentComplete = elapsed / duration;
+            float damper = 1.0f - Mathf.Clamp01(percentComplete);
+            
+            // Generate smooth random shake offset using Perlin noise
+            // Using Time.time with frequency creates continuous noise sampling
+            float x = (Mathf.PerlinNoise(Time.time * frequency, 0f) - 0.5f) * 2f;
+            float y = (Mathf.PerlinNoise(0f, Time.time * frequency) - 0.5f) * 2f;
+            float z = (Mathf.PerlinNoise(Time.time * frequency, Time.time * frequency) - 0.5f) * 2f;
+            
+            // Apply shake with decay (stronger at start, weaker at end)
+            Vector3 shakeOffset = new Vector3(x, y, z) * intensity * damper;
+            transform.localPosition = startPosition + shakeOffset;
+            
+            yield return null;
+        }
+        
+        // Reset to original position when complete
+        transform.localPosition = startPosition;
+        isShaking = false;
+        currentShakeCoroutine = null;
+    }
+
+    /// <summary>
+    /// Stops any ongoing shake immediately and resets camera position.
+    /// </summary>
+    public void StopShake()
+    {
+        if (currentShakeCoroutine != null)
+        {
+            StopCoroutine(currentShakeCoroutine);
+            currentShakeCoroutine = null;
+        }
+        
+        transform.localPosition = originalLocalPosition;
+        isShaking = false;
+    }
+
+    /// <summary>
+    /// Returns whether the camera is currently shaking.
+    /// </summary>
+    public bool IsShaking()
+    {
+        return isShaking;
+    }
+
+    #endregion
 }

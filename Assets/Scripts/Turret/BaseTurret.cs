@@ -3,21 +3,37 @@ using UnityEngine;
 using Enemies;
 using Managers;
 
+/// <summary>
+/// Base class for all turrets - now implements IDamageDealer for unified damage system
+/// </summary>
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(Rigidbody))]
-public abstract class BaseTurret : PlaceableStructure<TurretScriptableObject>
+public abstract class BaseTurret : PlaceableStructure<TurretScriptableObject>, IDamageDealer
 {
     [Header("Turret Settings")]
     public float damage = 10f;
+    public float poiseDamage = 5f;
     public float range = 10f; //TODO use this for the size of the collider
     public float fireRate = 1f;
     public float turretTurnSpeed = 5f;
     public Transform turretTop;
     public Transform firePoint;
+    
+    [Header("Elemental Damage")]
+    public AttackElement elementType = AttackElement.PHYSICAL;
+    public int elementalDamageBonus = 0;
 
     private float fireCooldown = 0f;
-    private EnemyBase target;
+    protected EnemyBase target;
     private List<EnemyBase> enemiesInRange = new List<EnemyBase>();
+    
+    // IDamageDealer implementation
+    public float BaseDamage => damage;
+    public float PoiseDamage => poiseDamage;
+    public AttackElement ElementType => elementType;
+    public int ElementalDamageBonus => elementalDamageBonus;
+    public Transform DamageSource => firePoint != null ? firePoint : transform;
+    public Allegiance DealerAllegiance => Allegiance.FRIENDLY; // Turrets are friendly (defend the camp)
 
     protected override void Start()
     {
@@ -98,8 +114,19 @@ public abstract class BaseTurret : PlaceableStructure<TurretScriptableObject>
     }
 
     protected abstract void Fire();
+    
+    // IDamageDealer interface implementation
+    public virtual void DealDamage(IDamageable target)
+    {
+        DamageUtils.DealDamage(this, target);
+    }
+    
+    public virtual void DealDamage(IDamageable target, float damageAmount, float poiseAmount)
+    {
+        DamageUtils.DealDamage(this, target, damageAmount, poiseAmount);
+    }
 
-    public virtual void SetupStructure(TurretScriptableObject scriptableObj)
+    public override void SetupStructure(TurretScriptableObject scriptableObj)
     {
         base.SetupStructure(scriptableObj);
         
@@ -107,6 +134,7 @@ public abstract class BaseTurret : PlaceableStructure<TurretScriptableObject>
         if (scriptableObj != null)
         {
             damage = scriptableObj.damage;
+            poiseDamage = damage * 0.5f; // Default poise damage is 50% of health damage
             range = scriptableObj.range;
             fireRate = scriptableObj.fireRate;
             turretTurnSpeed = scriptableObj.turretTurnSpeed;

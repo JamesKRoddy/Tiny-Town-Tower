@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using Managers;
@@ -30,6 +31,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public Animator Animator => animator;
     protected CharacterCombat characterCombat;
     protected NavMeshAgent agent; // Reference to NavMeshAgent
+    protected CharacterController characterController; // Reference to CharacterController for player movement
     protected CharacterInventory characterInventory;
 
     [Header("Vault Parameters")]
@@ -38,6 +40,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public float vaultHeight = 1.0f; // Height of the raycast to detect obstacles
     public float vaultOffset = 1.0f; // Distance to move beyond the obstacle after vaulting
     private Collider humanCollider;
+    
+    [Header("CharacterController Settings")]
+    public float stepOffset = 0.3f; // Maximum height the character can step up automatically
+    public float slopeLimit = 45f; // Maximum angle the character can walk up
+    public float skinWidth = 0.08f; // Slight collision penetration to prevent getting stuck (10% of radius recommended)
 
     [Header("Enhanced Obstacle Navigation")]
     public float maxVaultHeight = 1.2f; // Maximum height the player can vault over
@@ -45,6 +52,24 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public float obstacleAnalysisRange = 1.5f; // Range for analyzing obstacles ahead
     public int heightCheckRayCount = 5; // Number of raycasts for height analysis
     public bool autoNavigateObstacles = true; // Enable/disable automatic obstacle navigation
+
+    [Header("Climbing Parameters")]
+    public float maxClimbHeight = 1.8f; // Maximum height the player can climb onto
+    public float climbDuration = 1.0f; // How long a climb takes
+    public float climbCooldown = 0.5f; // Cooldown time between climbs
+    public float climbCheckDistance = 0.5f; // Distance to check for clear landing area when climbing
+
+    [Header("Gravity System")]
+    public bool enableGravity = true; // Enable/disable gravity system
+    public float gravity = 20f; // Gravity acceleration (doubled for more responsive feel)
+    public float terminalVelocity = 20f; // Maximum falling speed
+    public float maxFallDistance = 100f; // Maximum distance to fall before stopping (prevents endless drops)
+    public float fallingMovementMultiplier = 0.5f; // Movement speed multiplier when falling (0.5 = 50% speed)
+    public float groundedBufferTime = 0.15f; // Time to remain "grounded" after leaving ground (prevents slope flickering)
+    private float verticalVelocity = 0f; // Current vertical velocity for gravity
+    private bool wasGroundedLastFrame = true; // Track grounded state from previous frame
+    private float lastGroundedTime = 0f; // Last time the character was grounded (for coyote time)
+    private bool isGroundedBuffered = true; // Buffered grounded state (smoother than raw CharacterController.isGrounded)
 
     // Automatic obstacle navigation: analyzes height to determine WalkOver, Vault, or TooHigh
     // RollUnder and Block types only come from ObstacleVaultBehavior components
@@ -55,6 +80,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         WalkOver,    // Too low, just walk over
         Vault,       // Perfect height for vaulting
         RollUnder,   // Medium height, could roll under
+        Climb,       // Wall that can be climbed up onto
         TooHigh,     // Too high to navigate
         Block,       // Cannot be vaulted (from component override)
         Pushable     // Can be pushed to move it
@@ -88,6 +114,16 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private Collider currentObstacleCollider = null; // Reference to the collider being vaulted (for safety checks)
     private bool isVaultTargetSafe = false; // Whether the calculated vault target is safe
 
+    [Header("Climb State")]
+    private bool isClimbing = false; // Whether the player is currently climbing
+    private float climbTime = 0f; // Timer for the current climb
+    private Vector3 climbStartPosition; // Starting position of the climb
+    private Vector3 climbTargetPosition; // Target position for climbing (top of obstacle)
+    private Vector3 climbExactFinalPosition; // Exact final position on the platform surface
+    private float climbCooldownTime = 0f; // Timer for climb cooldown
+    private float climbLandingDelay = 0.1f; // Brief delay after landing before returning control
+    private bool isClimbLanding = false; // Whether we're in the landing delay phase
+
     [Header("Push State")]
     private PushableObject currentPushTarget = null; // The object currently being pushed
     private float pushHoldTime = 0f; // How long the player has been trying to push
@@ -103,21 +139,83 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private bool isDead = false;
     private float lastDamageTime = 0f; // Track when damage was last taken
 
+    [Header("Poise Settings")]
+    [SerializeField] private float poise = 40f;
+    [SerializeField] private float maxPoise = 40f;
+    [SerializeField] private float poiseRecoveryRate = 8f; // Poise recovered per second
+    [SerializeField] private float poiseRecoveryDelay = 2f; // Delay before poise starts recovering
+    private float lastPoiseDamageTime = 0f; // Track when poise damage was last taken
+    private bool isPoiseBroken = false; // Track if poise is currently broken
+
     public event Action<float, float> OnDamageTaken;
     public event Action<float, float> OnHeal;
+    public event Action<float, float> OnPoiseBroken;
     public event Action OnDeath;
     public CharacterType CharacterType => characterType;
     
     public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
+    
+    // IDamageable hit reaction tracking
+    public Vector3 LastHitOrigin { get; set; } = Vector3.zero;
+    public float LastHitTime { get; set; } = -999f;
+    public float LastHitPoiseDamage { get; set; } = 0f;
 
     protected virtual void Awake()
     {
-        // Store the reference to NavMeshAgent once
+        // Store the references once
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         humanCollider = GetComponent<Collider>();
         characterCombat = GetComponent<CharacterCombat>();
         characterInventory = GetComponent<CharacterInventory>();
+        
+        // Get or add CharacterController component
+        characterController = GetComponent<CharacterController>();
+        if (characterController == null)
+        {
+            Debug.LogWarning($"{gameObject.name}: No CharacterController found, adding one automatically. Please add it manually in the Inspector for proper configuration.");
+            characterController = gameObject.AddComponent<CharacterController>();
+        }
+        
+        // Configure CharacterController for smooth movement
+        ConfigureCharacterController();
+    }
+    
+    /// <summary>
+    /// Configures the CharacterController with proper settings for smooth movement
+    /// </summary>
+    private void ConfigureCharacterController()
+    {
+        if (characterController == null) return;
+        
+        // Configure step offset (allows stepping up small obstacles automatically)
+        characterController.stepOffset = stepOffset;
+        
+        // Configure slope limit (prevents sliding on steep slopes)
+        characterController.slopeLimit = slopeLimit;
+        
+        // Configure skin width (prevents getting stuck on edges - should be ~10% of radius)
+        characterController.skinWidth = skinWidth;
+        
+        // Try to match the capsule size to existing collider if possible
+        CapsuleCollider capsule = humanCollider as CapsuleCollider;
+        if (capsule != null)
+        {
+            characterController.radius = capsule.radius;
+            characterController.height = capsule.height;
+            characterController.center = capsule.center;
+        }
+        else
+        {
+            // Default values for humanoid characters
+            characterController.radius = 0.5f;
+            characterController.height = 2f;
+            characterController.center = new Vector3(0, 1f, 0);
+        }
+        
+        // CharacterController starts disabled for AI-controlled characters
+        // It will be enabled when player possesses the character
+        characterController.enabled = false;
     }
 
     protected virtual void Start()
@@ -134,6 +232,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         lastPosition = transform.position;
         actualMovementSpeed = 0f;
         
+        // Initialize poise
+        Poise = maxPoise;
+        
         // Ensure root motion is disabled by default
         if (animator != null)
         {
@@ -149,10 +250,59 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             return;
         }
         
+        // Apply procedural knockback from hit reactions
+        ApplyProceduralKnockback();
+        
+        // Handle climb landing delay
+        if (isClimbLanding)
+        {
+            if (Time.time >= climbCooldownTime - climbCooldown + climbLandingDelay)
+            {
+                isClimbLanding = false;
+            }
+            else
+            {
+                // During landing delay, only update animations, but no movement
+                UpdateAnimations();
+                return;
+            }
+        }
+        
         HandleDash();
+        UpdatePoiseRecovery(); // Update poise recovery
         MoveCharacter();
         UpdateActualMovementSpeed();
         UpdateAnimations();
+    }
+    
+    /// <summary>
+    /// Applies procedural knockback based on recent hits using the IK reaction system.
+    /// This creates smooth, physics-like knockback without coroutines.
+    /// </summary>
+    private void ApplyProceduralKnockback()
+    {
+        // Scale knockback distance based on poise damage (heavier weapons = more knockback)
+        float baseKnockback = 0.6f; // Reduced from 1.2f
+        float poiseScale = Mathf.Clamp(LastHitPoiseDamage / 15f, 0.4f, 2.0f); // Min 0.4x, max 2.0x (ensures minimum knockback)
+        float scaledKnockback = baseKnockback * poiseScale;
+        
+        Vector3 knockbackOffset = IKReactionUtils.CalculateKnockbackOffset(transform, LastHitOrigin, LastHitTime, scaledKnockback, 0.3f, MaxPoise, Poise);
+        
+        if (knockbackOffset.magnitude > 0.001f)
+        {
+            // Apply knockback velocity-based (smoother and more visible)
+            Vector3 knockbackMovement = knockbackOffset * Time.deltaTime * 25f; // Increased multiplier for visible knockback
+            
+            // Use CharacterController if available (for player-controlled), otherwise direct transform
+            if (characterController != null && characterController.enabled)
+            {
+                characterController.Move(knockbackMovement);
+            }
+            else
+            {
+                transform.position += knockbackMovement;
+            }
+        }
     }
 
     #region IPossessable Interface
@@ -161,6 +311,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     {
         SetAIControl(false);
         transform.parent = PlayerController.Instance.transform;
+        
+        // Reset gravity state for player control
+        verticalVelocity = 0f;
+        wasGroundedLastFrame = characterController != null && characterController.isGrounded;
     }
 
     public void OnUnpossess()
@@ -168,6 +322,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         SetAIControl(true);
         transform.SetParent(null, true);
         SceneTransitionManager.Instance.MoveGameObjectBackToCurrent(gameObject);
+        
+        // Reset gravity state for AI control
+        verticalVelocity = 0f;
+        wasGroundedLastFrame = true;
     }
 
     /// <summary>
@@ -178,6 +336,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     {
         var navMeshAgent = GetComponent<NavMeshAgent>();
         if (navMeshAgent != null) navMeshAgent.enabled = isAIControlled;
+        
+        // Toggle CharacterController for player control (opposite of NavMeshAgent)
+        if (characterController != null) 
+        {
+            characterController.enabled = !isAIControlled;
+        }
 
         var narrativeInteractive = GetComponent<NarrativeInteractive>();
         if (narrativeInteractive != null) narrativeInteractive.enabled = isAIControlled;
@@ -195,7 +359,21 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         }
         else
         {
-            settlerNPC?.ChangeState(null);            
+            // Clean up work animations and tasks when possessed
+            if (settlerNPC != null)
+            {
+                // Stop any work animations on the work layer
+                settlerNPC.StopWorkAnimation();
+                
+                // Clear any assigned work tasks
+                if (settlerNPC.HasAssignedWork())
+                {
+                    settlerNPC.ClearAssignedWork();
+                }
+                
+                // Set state to null to disable AI behavior
+                settlerNPC.ChangeState(null);
+            }
         }
     }
 
@@ -206,33 +384,49 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void Attack()
     {
-        if (!isDashing && !isVaulting && !isPushing && characterInventory.equippedWeaponScriptObj != null)
+        if (!isDashing && !isVaulting && !isPushing && !isClimbing && !isClimbLanding && characterInventory.equippedWeaponScriptObj != null)
         {
             isAttacking = true;
             animator.SetBool("LightAttack", true);
+            
+            // Enable root motion for attack animations
+            if (animator != null)
+            {
+                animator.applyRootMotion = true;
+            }
         }
     }
 
     public void Dash()
     {
-        if (!isDashing && !isVaulting && !isPushing && Time.time > dashCooldownTime && Time.time > vaultCooldownTime && movementInput.magnitude > 0.1f)
+        if (!isDashing && !isVaulting && !isPushing && !isClimbing && !isClimbLanding && Time.time > dashCooldownTime && Time.time > vaultCooldownTime && movementInput.magnitude > 0.1f)
         {
             StopAttacking(); // Ensure player stops attacking when dashing
 
             if (CanVault(out RaycastHit hitInfo, out ObstacleType obstacleType))
             {
-                currentVaultType = obstacleType; // Store the vault type for animation
-                CalculateVaultTarget(hitInfo);
-                
-                // Only start vault if a safe target was found
-                if (isVaultTargetSafe)
+                if (obstacleType == ObstacleType.Climb)
                 {
-                    StartVault();
+                    // Handle climbing
+                    float obstacleHeight = AnalyzeObstacleHeight((hitInfo.point - transform.position).normalized, hitInfo.point);
+                    CalculateClimbTarget(hitInfo, obstacleHeight);
+                    StartClimb();
                 }
-                else
+                else if (obstacleType == ObstacleType.Vault || obstacleType == ObstacleType.RollUnder)
                 {
-                    Debug.Log("Dash: Vault target unsafe, falling back to dash");
-                    StartDash();
+                    // Handle vaulting
+                    currentVaultType = obstacleType; // Store the vault type for animation
+                    CalculateVaultTarget(hitInfo);
+                    
+                    // Only start vault if a safe target was found
+                    if (isVaultTargetSafe)
+                    {
+                        StartVault();
+                    }
+                    else
+                    {
+                        StartDash();
+                    }
                 }
             }
             else
@@ -286,6 +480,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         isAttacking = false;
         if(characterCombat != null)
             characterCombat.StopAttacking();
+        
+        // Disable root motion after attack completes
+        if (animator != null)
+        {
+            animator.applyRootMotion = false;
+        }
     }
 
     #endregion
@@ -331,7 +531,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             // Use movement direction instead of transform.forward for more accurate detection
             Vector3 movementDirection = movementInput.normalized;
-            obstacleType = AnalyzeObstacle(movementDirection, out hitInfo, enableLogs: false);
+            obstacleType = AnalyzeObstacle(movementDirection, out hitInfo);
             
             if (obstacleType == ObstacleType.Vault || obstacleType == ObstacleType.RollUnder)
             {
@@ -345,6 +545,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                                      IsVaultPathSafe(transform.position, new Vector3(proposedTarget.x - movementDirection.x * vaultOffset * 0.5f, transform.position.y, proposedTarget.z - movementDirection.z * vaultOffset * 0.5f));
                 
                 return canVaultSafely;
+            }
+            else if (obstacleType == ObstacleType.Climb)
+            {
+                // For climbing, we just need to check if we can climb (already validated in AnalyzeObstacle)
+                return true;
             }
         }
         
@@ -360,6 +565,48 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         CalculateVaultTargetEnhanced(hitInfo, direction);
     }
 
+    private void CalculateClimbTarget(RaycastHit hitInfo, float obstacleHeight)
+    {
+        // Calculate the top of the obstacle as the climb target using the provided height
+        // Add extra clearance to ensure we land well above the platform surface
+        // Handle negative Y values properly by adding clearance relative to current position
+        Vector3 climbTopPosition = new Vector3(hitInfo.point.x, transform.position.y + obstacleHeight + 0.3f, hitInfo.point.z);
+        
+        // Move slightly forward from the wall to land on top
+        Vector3 direction = (hitInfo.point - transform.position).normalized;
+        direction.y = 0; // Keep direction horizontal
+        climbTargetPosition = climbTopPosition + direction * climbCheckDistance;
+    }
+
+    /// <summary>
+    /// Calculate the exact final position for climbing by raycasting down from the target position to find the platform surface
+    /// </summary>
+    /// <returns>Exact position on the platform surface</returns>
+    private Vector3 CalculateExactClimbFinalPosition()
+    {
+        // Start from our calculated climb target position
+        Vector3 startPos = climbTargetPosition;
+        
+        // Cast a ray downward to find the exact platform surface
+        Vector3 rayStart = startPos + Vector3.up * 0.5f; // Start slightly above to ensure we hit the platform
+        Vector3 rayDirection = Vector3.down;
+        
+        // Combine all obstacle layers for checking
+        LayerMask checkLayers = GetCombinedObstacleLayers();
+        
+        // Cast ray downward to find the platform surface
+        if (Physics.Raycast(rayStart, rayDirection, out RaycastHit hit, 2.0f, checkLayers, QueryTriggerInteraction.Ignore))
+        {
+            // Position the character on top of the platform with a small offset to ensure they're above the surface
+            Vector3 exactPosition = hit.point + Vector3.up * 0.1f; // Small offset to ensure we're above the surface
+            return exactPosition;
+        }
+        
+        // Fallback to the original calculated position if we can't find the platform
+        Debug.LogWarning($"[Climb] {gameObject.name}: Could not find platform surface, using fallback position: {climbTargetPosition}");
+        return climbTargetPosition;
+    }
+
     private void StartVault()
     {
         // Prevent vaulting while damaged
@@ -369,6 +616,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         isDashing = false; // Ensure dashing is stopped when starting a vault
         dashTime = 0f; // Reset dash timer
         dashCooldownTime = 0f; // Reset dash cooldown to allow immediate subsequent vaults
+        
+        // Reset gravity velocity when starting vault
+        ResetGravityVelocity();
         
         // Use custom duration if obstacle component specifies it
         float duration = currentObstacleComponent != null ? 
@@ -410,9 +660,71 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         vaultCooldownTime = Time.time + vaultCooldown; // Set vault cooldown
         humanCollider.enabled = true; // Re-enable the player's collider
         
+        // Reset gravity velocity when finishing vault to prevent immediate falling
+        ResetGravityVelocity();
+        
         // Call obstacle component callback if present
         currentObstacleComponent?.OnVaultComplete(this);
         currentObstacleComponent = null; // Clear reference
+    }
+
+    private void StartClimb()
+    {
+        // Prevent climbing while damaged
+        if (isDamaged) return;
+        
+        isClimbing = true;
+        isDashing = false; // Ensure dashing is stopped when starting a climb
+        isVaulting = false; // Ensure vaulting is stopped when starting a climb
+        dashTime = 0f; // Reset dash timer
+        dashCooldownTime = 0f; // Reset dash cooldown
+        
+        // Reset gravity velocity when starting climb
+        ResetGravityVelocity();
+        
+        climbTime = Time.time + climbDuration;
+        climbStartPosition = transform.position; // Store starting position for lerp
+        
+        // Calculate the exact final position we want to end up at
+        // This ensures we land perfectly on the platform surface
+        climbExactFinalPosition = CalculateExactClimbFinalPosition();
+        
+        // Disable root motion during climb
+        if (animator != null)
+        {
+            animator.applyRootMotion = false;
+        }
+        
+        // Trigger climb animation (use vault animation as fallback since climb animation might not exist)
+        animator.SetTrigger("IsClimbing");
+        
+        humanCollider.enabled = false; // Disable the player's collider to avoid collision during climbing
+    }
+
+    private void FinishClimb()
+    {
+        // Teleport to the exact final position on the platform
+        transform.position = climbExactFinalPosition;
+        
+        // Move slightly forward to ensure we're well positioned on the platform
+        Vector3 forwardDirection = (climbTargetPosition - climbStartPosition).normalized;
+        forwardDirection.y = 0; // Keep movement horizontal
+        Vector3 landingPosition = climbExactFinalPosition + forwardDirection * 0.2f; // Move 0.2 units forward
+        transform.position = landingPosition;
+        
+        isClimbing = false;
+        isClimbLanding = true; // Start landing delay phase
+        climbCooldownTime = Time.time + climbCooldown; // Set climb cooldown
+        humanCollider.enabled = true; // Re-enable the player's collider
+        
+        // Reset gravity velocity when finishing climb to prevent immediate falling
+        ResetGravityVelocity();
+        
+        // Re-enable root motion
+        if (animator != null)
+        {
+            animator.applyRootMotion = true;
+        }
     }
 
     #endregion
@@ -562,9 +874,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     /// </summary>
     /// <param name="direction">Direction the player is moving</param>
     /// <param name="obstacleInfo">Information about the detected obstacle</param>
-    /// <param name="enableLogs">Whether to enable debug logging for this call</param>
     /// <returns>Type of obstacle and recommended navigation method</returns>
-    private ObstacleType AnalyzeObstacle(Vector3 direction, out RaycastHit obstacleInfo, bool enableLogs = true)
+    private ObstacleType AnalyzeObstacle(Vector3 direction, out RaycastHit obstacleInfo)
     {
         obstacleInfo = default;
         currentObstacleComponent = null;
@@ -643,7 +954,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         }
 
         // Fallback: Use height-based analysis if no component is found
-        float obstacleHeight = AnalyzeObstacleHeight(direction, obstacleInfo.point, enableLogs);
+        float obstacleHeight = AnalyzeObstacleHeight(direction, obstacleInfo.point);
         
         // Determine obstacle type based on height (roll vs vault only determined by component)
         if (obstacleHeight <= minVaultHeight)
@@ -652,7 +963,36 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         }
         else if (obstacleHeight <= maxVaultHeight)
         {
+            // Check if vault would be unsafe - if so, try climbing instead
+            Vector3 proposedVaultTarget = obstacleInfo.point + direction.normalized * vaultOffset;
+            Vector3 vaultTargetPosition = new Vector3(proposedVaultTarget.x, transform.position.y, proposedVaultTarget.z);
+            
+            // If vault path is unsafe and obstacle is within climbing range, suggest climbing
+            if (!IsVaultPathSafe(transform.position, vaultTargetPosition) && obstacleHeight <= maxClimbHeight)
+            {
+                // Additional check: ensure there's a clear area on top to climb onto
+                Vector3 climbTopPosition = new Vector3(obstacleInfo.point.x, transform.position.y + obstacleHeight + 0.1f, obstacleInfo.point.z);
+                if (IsVaultPathSafe(transform.position, climbTopPosition))
+                {
+                    return ObstacleType.Climb;
+                }
+            }
+            
             return ObstacleType.Vault; // Default to vault for all vaultable heights
+        }
+        else if (obstacleHeight <= maxClimbHeight)
+        {
+            // Too high to vault but within climbing range
+            // Check if there's a clear area on top to climb onto
+            Vector3 climbTopPosition = new Vector3(obstacleInfo.point.x, transform.position.y + obstacleHeight + 0.1f, obstacleInfo.point.z);
+            if (IsVaultPathSafe(transform.position, climbTopPosition))
+            {
+                return ObstacleType.Climb;
+            }
+            else
+            {
+                return ObstacleType.TooHigh; // No clear area on top
+            }
         }
         else
         {
@@ -665,14 +1005,15 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     /// </summary>
     /// <param name="direction">Direction toward the obstacle</param>
     /// <param name="obstaclePoint">Point where the obstacle was detected</param>
-    /// <param name="enableLogs">Whether to enable debug logging for this call</param>
     /// <returns>Height of the obstacle</returns>
-    private float AnalyzeObstacleHeight(Vector3 direction, Vector3 obstaclePoint, bool enableLogs = true)
+    private float AnalyzeObstacleHeight(Vector3 direction, Vector3 obstaclePoint)
     {
         float playerGroundLevel = transform.position.y;
         float highestHitPoint = playerGroundLevel;
         
         // Cast rays at different heights to find the top of the obstacle
+        // Handle negative Y values by ensuring we check a reasonable range above the player
+        float maxCheckHeight = playerGroundLevel + maxVaultHeight + 1f;
         for (int i = 0; i < heightCheckRayCount; i++)
         {
             float checkHeight = playerGroundLevel + (maxVaultHeight + 1f) * ((float)i / (heightCheckRayCount - 1));
@@ -707,7 +1048,8 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         Vector3 horizontalTarget = hitInfo.point + direction.normalized * vaultOffset;
         
         // Keep the player at the same Y level but add a small buffer to avoid ground detection issues
-        float targetY = Mathf.Max(transform.position.y, 0.3f); // Ensure minimum height of 0.3f above ground
+        // Handle negative Y values properly by adding clearance relative to current position
+        float targetY = transform.position.y + 0.3f; // Add 0.3f clearance above current position
         Vector3 primaryTarget = new Vector3(horizontalTarget.x, targetY, horizontalTarget.z);
         
         // Safety check: Ensure target position and path are clear
@@ -754,9 +1096,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     {
         // Check 1: Target position isn't inside an obstacle (but be more lenient with ground-level checks)
         Vector3 checkPos = targetPos;
-        if (targetPos.y < 0.5f) // If target is close to ground, check slightly above
+        // Handle negative Y values by checking slightly above the target position
+        if (targetPos.y < startPos.y + 0.2f) // If target is close to or below start level, check slightly above
         {
-            checkPos = new Vector3(targetPos.x, 0.5f, targetPos.z);
+            checkPos = new Vector3(targetPos.x, startPos.y + 0.5f, targetPos.z);
         }
         
         if (Physics.CheckSphere(checkPos, capsuleCastRadius * 0.8f, GetCombinedObstacleLayers())) // Use smaller radius for more lenient checking
@@ -805,6 +1148,55 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         
         return true; // Path is clear
     }
+
+    /// <summary>
+    /// Checks if a climb path to the target position is safe (specifically for climbing)
+    /// </summary>
+    /// <param name="startPos">Starting position (ground level)</param>
+    /// <param name="targetPos">Target position (top of obstacle)</param>
+    /// <returns>True if climb path is safe, false if blocked</returns>
+    private bool IsClimbPathSafe(Vector3 startPos, Vector3 targetPos)
+    {
+        // For climbing, we only need to check if there's a clear area on top of the obstacle
+        // We don't need to check the path since we're going straight up
+        
+        // Check if target position has enough clearance for the character
+        Vector3 checkPos = targetPos;
+        
+        // Use a smaller radius for climbing since we're landing on a surface
+        float climbCheckRadius = capsuleCastRadius * 0.6f;
+        
+        // Check if there's enough space at the target position, but exclude the obstacle we're climbing
+        Collider[] collidersAtTarget = Physics.OverlapSphere(checkPos, climbCheckRadius, GetCombinedObstacleLayers());
+        
+        foreach (Collider col in collidersAtTarget)
+        {
+            // Skip the obstacle we're climbing (currentObstacleCollider)
+            if (currentObstacleCollider != null && col == currentObstacleCollider)
+            {
+                continue; // This is the obstacle we're climbing, ignore it
+            }
+            
+            return false;
+        }
+        
+        // Additional check: ensure there's space above the target for the character's full height
+        Vector3 aboveCheckPos = checkPos + Vector3.up * (humanCollider.bounds.size.y * 0.5f);
+        Collider[] collidersAbove = Physics.OverlapSphere(aboveCheckPos, climbCheckRadius, GetCombinedObstacleLayers());
+        
+        foreach (Collider col in collidersAbove)
+        {
+            // Skip the obstacle we're climbing (currentObstacleCollider)
+            if (currentObstacleCollider != null && col == currentObstacleCollider)
+            {
+                continue; // This is the obstacle we're climbing, ignore it
+            }
+            
+            return false;
+        }
+        
+        return true;
+    }
     
     #endregion
 
@@ -812,7 +1204,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     /// <summary>
     /// Handles root motion from animations, particularly during attack animations
-    /// This prevents the character from moving through walls during root motion
+    /// This prevents the character from moving through walls and pushing enemies during root motion
     /// </summary>
     private void OnAnimatorMove()
     {
@@ -831,31 +1223,22 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             return;
         }
 
-        // Check if the root motion movement would cause a collision
-        Vector3 proposedPosition = transform.position + rootMotionDelta;
+        // Use the centralized root motion utility
+        LayerMask collisionLayers = GetCombinedObstacleLayers();
+        collisionLayers |= (1 << 8); // Add enemy layer
         
-        // Use capsule cast to check for collisions in the root motion direction
-        Vector3 capsuleBottom = transform.position + Vector3.up * 0.3f;
-        Vector3 capsuleTop = transform.position + Vector3.up * humanCollider.bounds.size.y;
+        bool movementApplied = RootMotionUtils.ApplyRootMotion(
+            transform, 
+            rootMotionDelta, 
+            null, // No NavMeshAgent for HumanCharacterController
+            collisionLayers, 
+            null, // No specific target to maintain distance from
+            0.2f, // Standard safe distance
+            false // Debug logging disabled for NPCs
+        );
         
-        bool collisionDetected = false;
-        foreach (LayerMask layer in obstacleLayers)
-        {
-            if (Physics.CapsuleCast(capsuleBottom, capsuleTop, capsuleCastRadius * 0.8f, 
-                rootMotionDelta.normalized, out RaycastHit hitInfo, rootMotionDelta.magnitude, layer))
-            {
-                collisionDetected = true;
-                break;
-            }
-        }
-
-        // If no collision detected, apply the root motion movement
-        if (!collisionDetected)
-        {
-            transform.position = proposedPosition;
-        }
-        // If collision detected, don't apply the movement (character stays in place)
-        // This prevents the character from moving through walls during attack animations
+        // If movement was blocked, character stays in place
+        // This prevents the character from moving through walls and pushing enemies during attack animations
     }
 
     #endregion
@@ -963,10 +1346,52 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 FinishVault();
             }
         }
-        else
+        else if (isClimbing)
         {
+            // Time-based climb movement - move upward to the exact final position on the platform
+            float timeElapsed = climbDuration - (climbTime - Time.time);
+            float climbProgress = timeElapsed / climbDuration;
+            climbProgress = Mathf.Clamp01(climbProgress); // Ensure progress stays between 0 and 1
+            
+            // Lerp position from start to the exact final position (upward movement)
+            // This is purely time-based and ignores any input movement
+            transform.position = Vector3.Lerp(climbStartPosition, climbExactFinalPosition, climbProgress);
+            
+            // Rotate to face the climb direction during climb (same as vaulting)
+            Vector3 climbDirection = (climbTargetPosition - climbStartPosition).normalized;
+            climbDirection.y = 0; // Keep rotation horizontal
+            if (climbDirection != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(climbDirection);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            }
+            
+            // End climb when duration is complete
+            if (Time.time >= climbTime)
+            {
+                transform.position = climbExactFinalPosition; // Snap to exact final position
+                FinishClimb();
+            }
+        }
+        else if (!isClimbing && !isClimbLanding) // Only allow normal movement when not climbing or in landing delay
+        {
+            // Skip movement if CharacterController is not enabled (AI-controlled)
+            if (characterController == null || !characterController.enabled)
+            {
+                return;
+            }
+            
             float inputMagnitude = movementInput.magnitude;
-            float speed = isDashing ? dashSpeed : moveMaxSpeed;
+            float baseSpeed = isDashing ? dashSpeed : moveMaxSpeed;
+            
+            // Reduce movement speed when falling due to gravity
+            float movementMultiplier = 1.0f;
+            if (enableGravity && IsFalling())
+            {
+                movementMultiplier = fallingMovementMultiplier;
+            }
+            
+            float speed = baseSpeed * movementMultiplier;
             float currentRotationSpeed = (isAttacking || isDamaged) ? attackRotationSpeed : rotationSpeed;
 
             // If dashing, smoothly change direction
@@ -985,7 +1410,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 if (IsObstacleInPath(targetMovement, out RaycastHit hitInfo))
                 {
                     // Check if it's vaultable using height analysis instead of layer
-                    ObstacleType obstacleType = AnalyzeObstacle(currentDirection, out RaycastHit obstacleInfo, enableLogs: false);
+                    ObstacleType obstacleType = AnalyzeObstacle(currentDirection, out RaycastHit obstacleInfo);
                     if (obstacleType == ObstacleType.Vault || obstacleType == ObstacleType.RollUnder)
                     {
                         // Store the vault type and component for proper animation selection
@@ -1013,7 +1438,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 }
                 else
                 {
-                    transform.position += targetMovement;
+                    // Apply gravity to movement vector
+                    ApplyGravityMovement(ref targetMovement);
+                    
+                    // Use CharacterController.Move() for proper collision handling
+                    characterController.Move(targetMovement);
 
                     // Rotate player towards the current direction
                     Quaternion targetRotation = Quaternion.LookRotation(currentDirection);
@@ -1050,6 +1479,23 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                                 }
                                 else
                                 {
+                                    // Vault is unsafe, check if we can climb instead
+                                    float obstacleHeight = AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point);
+                                    
+                                    if (obstacleHeight <= maxClimbHeight)
+                                    {
+                                        Vector3 climbTopPosition = new Vector3(obstacleInfo.point.x, transform.position.y + obstacleHeight + 0.1f, obstacleInfo.point.z);
+                                        
+                                        bool climbPathSafe = IsClimbPathSafe(transform.position, climbTopPosition);
+                                        
+                                        if (climbPathSafe)
+                                        {
+                                            CalculateClimbTarget(obstacleInfo, obstacleHeight);
+                                            StartClimb();
+                                            return; // Exit early since we're now climbing
+                                        }
+                                    }
+                                    
                                     // Calculate sliding movement along the obstacle
                                     targetMovement = CalculateWallSlide(targetMovement, obstacleInfo.normal);
                                 }
@@ -1065,7 +1511,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                             // Implement rolling under animation for lower obstacles
                             if (Time.time > vaultCooldownTime)
                             {
-                                if (AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point, enableLogs: false) <= maxVaultHeight)
+                                if (AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point) <= maxVaultHeight)
                                 {
                                     currentVaultType = obstacleType; // Store vault type for animation
                                     CalculateVaultTargetEnhanced(obstacleInfo, movementInput.normalized);
@@ -1081,6 +1527,22 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                                         targetMovement = CalculateWallSlide(targetMovement, obstacleInfo.normal);
                                     }
                                 }
+                            }
+                            else
+                            {
+                                // Calculate sliding movement while waiting for cooldown
+                                targetMovement = CalculateWallSlide(targetMovement, obstacleInfo.normal);
+                            }
+                            break;
+                            
+                        case ObstacleType.Climb:
+                            // Wall that can be climbed - automatically start climbing
+                            if (Time.time > climbCooldownTime)
+                            {
+                                float obstacleHeight = AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point);
+                                CalculateClimbTarget(obstacleInfo, obstacleHeight);
+                                StartClimb();
+                                return; // Exit early since we're now climbing
                             }
                             else
                             {
@@ -1111,12 +1573,15 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                     }
                 }
 
-                // Check for traditional obstacles (non-vaultable) if we haven't handled it above
-                if (!IsObstacleInPath(targetMovement, out RaycastHit hitInfo))
+                // Apply movement with CharacterController (handles collision automatically)
+                if (!isAttacking && !isDamaged) // Only move if not attacking or damaged
                 {
-                    if (!isAttacking && !isDamaged) // Only move position if not attacking or damaged
-                    {
-                        transform.position += targetMovement;
+                    // Apply gravity to movement vector
+                    ApplyGravityMovement(ref targetMovement);
+                    
+                    // Use CharacterController.Move() for automatic collision handling
+                    // No need for IsObstacleInPath check - CharacterController handles it!
+                    characterController.Move(targetMovement);
                     }
 
                     // Rotate player towards the input direction
@@ -1124,15 +1589,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                     {
                         Quaternion targetRotation = Quaternion.LookRotation(movementInput);
                         transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
-                    }
-                }
-                else
-                {
-                    // Stop dashing if hitting any obstacle
-                    isDashing = false;
                 }
             }
-        }
+        } // End of else if (!isClimbing) block
         
         // Reset push state if player stops trying to push
         ResetPushState();
@@ -1158,6 +1617,131 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     }
 
     #endregion
+
+    #region Gravity System
+
+    /// <summary>
+    /// Apply gravity using CharacterController's built-in ground detection with buffering for slopes
+    /// Much simpler and more reliable than custom raycasting!
+    /// </summary>
+    protected virtual void ApplyGravityMovement(ref Vector3 movement)
+    {
+        // Don't apply gravity if disabled or during certain states
+        if (!enableGravity || isVaulting || isDashing || isPushing || isClimbing || isDead)
+        {
+            verticalVelocity = 0f;
+            isGroundedBuffered = true;
+            lastGroundedTime = Time.time;
+            return;
+        }
+
+        // Only apply gravity when CharacterController is enabled (player-controlled)
+        // When NavMeshAgent is enabled, it handles positioning
+        if (characterController == null || !characterController.enabled)
+        {
+            verticalVelocity = 0f;
+            isGroundedBuffered = true;
+            lastGroundedTime = Time.time;
+            return;
+        }
+
+        // Get raw grounded state from CharacterController
+        bool isGroundedRaw = characterController.isGrounded;
+        
+        // Update last grounded time when we detect ground
+        if (isGroundedRaw)
+        {
+            lastGroundedTime = Time.time;
+        }
+        
+        // Buffered grounded state: remain "grounded" for a short time after leaving ground
+        // This prevents animation flickering on slopes and small bumps (coyote time)
+        isGroundedBuffered = isGroundedRaw || (Time.time - lastGroundedTime) < groundedBufferTime;
+
+        if (isGroundedBuffered && verticalVelocity < 0)
+        {
+            // Keep character grounded with small downward force
+            // This prevents bouncing and ensures proper ground detection
+            verticalVelocity = -2f;
+        }
+        else if (!isGroundedBuffered)
+        {
+            // Safety check: don't fall into endless drops
+            if (!HasGroundWithinMaxFallDistance())
+            {
+                verticalVelocity = 0f;
+                movement.y = 0f;
+                return;
+            }
+            
+            // Apply gravity acceleration when in air
+            verticalVelocity -= gravity * Time.deltaTime;
+            
+            // Clamp to terminal velocity
+            verticalVelocity = Mathf.Max(verticalVelocity, -terminalVelocity);
+        }
+        
+        // Add vertical movement to the movement vector
+        movement.y = verticalVelocity * Time.deltaTime;
+    }
+
+    /// <summary>
+    /// Check if there's ground within the maximum fall distance below the character
+    /// </summary>
+    /// <returns>True if there's ground within maxFallDistance, false if it's an endless drop</returns>
+    private bool HasGroundWithinMaxFallDistance()
+    {
+        // Cast a ray downward to check for ground within maxFallDistance
+        Vector3 rayStart = transform.position;
+        Vector3 rayDirection = Vector3.down;
+        
+        // Combine all obstacle layers for checking
+        LayerMask checkLayers = GetCombinedObstacleLayers();
+        
+        // Cast ray to check for ground within max fall distance
+        // Use QueryTriggerInteraction.Ignore to skip trigger colliders
+        if (Physics.Raycast(rayStart, rayDirection, out RaycastHit hit, maxFallDistance, checkLayers, QueryTriggerInteraction.Ignore))
+        {
+            return true; // Found ground within max fall distance
+        }
+        
+        return false; // No ground found within max fall distance (endless drop)
+    }
+
+    /// <summary>
+    /// Check if the character is currently falling
+    /// </summary>
+    /// <returns>True if falling (not grounded and has downward velocity)</returns>
+    public bool IsFalling()
+    {
+        if (characterController == null || !characterController.enabled) return false;
+        // Use buffered grounded state for smoother detection on slopes
+        return !isGroundedBuffered && verticalVelocity < -3f; // Only count as falling if velocity is significant
+    }
+
+    /// <summary>
+    /// Check if the character is currently grounded
+    /// </summary>
+    /// <returns>True if grounded</returns>
+    public bool IsGrounded()
+    {
+        if (characterController == null || !characterController.enabled) return true;
+        // Use buffered grounded state for smoother detection on slopes
+        return isGroundedBuffered;
+    }
+
+    /// <summary>
+    /// Reset vertical velocity (useful for teleporting or special movement)
+    /// </summary>
+    public void ResetGravityVelocity()
+    {
+        verticalVelocity = 0f;
+        isGroundedBuffered = true;
+        lastGroundedTime = Time.time;
+    }
+
+    #endregion
+
 
     #region Animation
 
@@ -1224,7 +1808,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             }
             
             // Show obstacle type if detected
-            ObstacleType obstacleType = AnalyzeObstacle(direction, out RaycastHit obstacleInfo, enableLogs: false);
+            ObstacleType obstacleType = AnalyzeObstacle(direction, out RaycastHit obstacleInfo);
             if (obstacleType != ObstacleType.None)
             {
                 // Color code based on obstacle type
@@ -1238,6 +1822,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                         break;
                     case ObstacleType.RollUnder:
                         Gizmos.color = Color.blue; // Only from component override
+                        break;
+                    case ObstacleType.Climb:
+                        Gizmos.color = Color.cyan; // Light blue for climbing
                         break;
                     case ObstacleType.Block:
                         Gizmos.color = Color.gray; // Component-defined block
@@ -1259,6 +1846,16 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                     targetPos.y = transform.position.y;
                     Gizmos.color = Color.magenta;
                     Gizmos.DrawWireSphere(targetPos, 0.2f);
+                }
+                // Show calculated climb target if applicable
+                else if (obstacleType == ObstacleType.Climb)
+                {
+                    float obstacleHeight = AnalyzeObstacleHeight(direction, obstacleInfo.point);
+                    Vector3 climbTopPosition = new Vector3(obstacleInfo.point.x, transform.position.y + obstacleHeight + 0.1f, obstacleInfo.point.z);
+                    Vector3 climbTarget = climbTopPosition + direction * climbCheckDistance;
+                    Gizmos.color = Color.cyan;
+                    Gizmos.DrawWireSphere(climbTarget, 0.2f);
+                    Gizmos.DrawLine(obstacleInfo.point, climbTarget);
                 }
             }
         }
@@ -1289,6 +1886,19 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             Gizmos.DrawWireSphere(transform.position + currentVaultDirection * 2f, 0.1f);
         }
 
+        // Climb target position visualization
+        if (isClimbing)
+        {
+            Gizmos.color = Color.cyan;
+            
+            // Show climb target
+            Gizmos.DrawWireSphere(climbTargetPosition, 0.15f);
+            
+            // Show climb path
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawLine(transform.position, climbTargetPosition);
+        }
+
         // Capsule cast for collision detection visualization
         Gizmos.color = Color.red;
 
@@ -1306,7 +1916,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         if (autoNavigateObstacles && movementInput.magnitude > 0.1f)
         {
             Vector3 direction = movementInput.normalized;
-            ObstacleType obstacleType = AnalyzeObstacle(direction, out RaycastHit obstacleInfo, enableLogs: false);
+            ObstacleType obstacleType = AnalyzeObstacle(direction, out RaycastHit obstacleInfo);
             
             if (obstacleType == ObstacleType.Vault || obstacleType == ObstacleType.RollUnder)
             {
@@ -1358,6 +1968,55 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 #endif
         }
         
+        // Gravity system visualization (CharacterController-based)
+        if (Application.isPlaying && characterController != null && characterController.enabled)
+        {
+            // Ground check visualization - show both raw and buffered states
+            bool isGroundedRaw = characterController.isGrounded;
+            Gizmos.color = isGroundedBuffered ? Color.green : Color.red;
+            Gizmos.DrawRay(transform.position, Vector3.down * 0.5f);
+            
+            // Show raw vs buffered difference
+            if (isGroundedRaw != isGroundedBuffered)
+            {
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawWireSphere(transform.position + Vector3.up * 0.2f, 0.3f);
+            }
+            
+            // Max fall distance raycast visualization
+            if (!isGroundedBuffered)
+            {
+                bool hasGroundBelow = HasGroundWithinMaxFallDistance();
+                Gizmos.color = hasGroundBelow ? Color.yellow : Color.magenta;
+                Gizmos.DrawRay(transform.position, Vector3.down * maxFallDistance);
+            }
+            
+            // Gravity velocity visualization
+            if (Mathf.Abs(verticalVelocity) > 0.1f)
+            {
+                Gizmos.color = verticalVelocity < 0 ? Color.red : Color.cyan;
+                Vector3 gravityArrowStart = transform.position + Vector3.up * 1.5f;
+                Vector3 gravityArrowEnd = gravityArrowStart + Vector3.up * verticalVelocity * 0.1f;
+                Gizmos.DrawLine(gravityArrowStart, gravityArrowEnd);
+                Gizmos.DrawWireSphere(gravityArrowEnd, 0.1f);
+                
+#if UNITY_EDITOR
+                // Display gravity velocity text
+                Vector3 gravityTextPos = transform.position + Vector3.up * 2.5f;
+                float bufferTimeRemaining = Mathf.Max(0, groundedBufferTime - (Time.time - lastGroundedTime));
+                string gravityText = $"Vertical Velocity: {verticalVelocity:F1} m/s\nGrounded (Raw): {isGroundedRaw}\nGrounded (Buffered): {isGroundedBuffered}";
+                if (!isGroundedRaw && isGroundedBuffered)
+                {
+                    gravityText += $"\nBuffer: {bufferTimeRemaining:F2}s";
+                }
+                var gravityStyle = new GUIStyle();
+                gravityStyle.normal.textColor = isGroundedBuffered ? Color.green : Color.yellow;
+                gravityStyle.fontSize = 10;
+                Handles.Label(gravityTextPos, gravityText, gravityStyle);
+#endif
+            }
+        }
+        
         // Show push state visualization
         if (currentPushTarget != null && Application.isPlaying)
         {
@@ -1394,10 +2053,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void TakeDamage(float amount, Transform damageSource = null)
     {
+        // Prevent taking damage if already dead
+        if (isDead) return;
+        
         // Prevent taking damage if cooldown is active
         if (Time.time - lastDamageTime < damageCooldown)
         {
-            Debug.Log($"{gameObject.name} damage cooldown active. Damage not applied.");
             return;
         }
 
@@ -1423,7 +2084,52 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         var (hitPoint, hitNormal) = DamageUtils.CalculateHitPointAndNormal(transform, damageSource);
         EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
 
+        // Track hit for procedural IK reactions
+        if (damageSource != null)
+        {
+            LastHitOrigin = damageSource.position;
+            LastHitTime = Time.time;
+            LastHitPoiseDamage = 10f; // Default poise damage for basic attacks
+        }
+
         if (health <= 0 && !isDead) Die();
+    }
+
+    // Overloaded TakeDamage method for poise damage
+    public void TakeDamage(float amount, float poiseDamage, Transform damageSource = null)
+    {
+        // Prevent taking damage if already dead
+        if (isDead) return;
+        
+        // Use DamageUtils for consistent damage and poise handling
+        var (hitDirection, poiseBroken) = DamageUtils.ApplyDamageWithPoise(this, amount, poiseDamage, 
+            damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
+
+        // Update poise damage tracking
+        if (poiseDamage > 0)
+        {
+            lastPoiseDamageTime = Time.time;
+            if (poiseBroken)
+            {
+                isPoiseBroken = true;
+                // Reset poise to max when broken to prevent repeated staggering
+                Poise = MaxPoise;
+            }
+        }
+
+        // Track hit for procedural IK reactions (skip if poise broken to avoid conflicts with stagger animations)
+        if (damageSource != null)
+        {
+            if (!poiseBroken)
+            {
+                LastHitOrigin = damageSource.position;
+                LastHitTime = Time.time;
+                LastHitPoiseDamage = poiseDamage; // Use actual poise damage for reaction scaling
+            }
+            HandleDamageReaction(damageSource);
+        }
+
+        if (Health <= 0 && !isDead) Die();
     }
 
     /// <summary>
@@ -1432,6 +2138,36 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public void StopDamage()
     {
         isDamaged = false;
+    }
+
+    /// <summary>
+    /// Updates poise recovery over time
+    /// </summary>
+    private void UpdatePoiseRecovery()
+    {
+        // Only recover poise if enough time has passed since last poise damage
+        if (Time.time - lastPoiseDamageTime > poiseRecoveryDelay && Poise < MaxPoise)
+        {
+            float recoveryAmount = poiseRecoveryRate * Time.deltaTime;
+            DamageUtils.RestorePoise(this, recoveryAmount);
+            
+            // Reset poise broken state if we've recovered enough
+            if (isPoiseBroken && Poise > MaxPoise * 0.5f)
+            {
+                isPoiseBroken = false;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Handles damage reaction (knockback away from damage source)
+    /// </summary>
+    /// <param name="damageSource">Transform of the damage source</param>
+    protected virtual void HandleDamageReaction(Transform damageSource)
+    {
+        // Knockback is now handled procedurally via IKReactionUtils.CalculateKnockbackOffset()
+        // which is applied in PossessedUpdate() for smooth, continuous knockback
+        // No instant teleports needed!
     }
 
     public void Heal(float amount)
@@ -1446,7 +2182,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         if (isDead) return;
         isDead = true;
         
-        Debug.Log($"{gameObject.name} has died!");
         OnDeath?.Invoke();
 
         // Notify all enemies that this NPC was destroyed
@@ -1534,6 +2269,18 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public float MaxHealth { get => maxHealth; set => maxHealth = value; }
     public float DamageCooldown { get => damageCooldown; set => damageCooldown = value; }
 
+    // Poise properties
+    public float Poise 
+    { 
+        get => poise; 
+        set => poise = Mathf.Clamp(value, 0, maxPoise); 
+    }
+    public float MaxPoise 
+    { 
+        get => maxPoise; 
+        set => maxPoise = value; 
+    }
+
     protected virtual void OnDestroy()
     {
         // Unregister from CampManager target tracking
@@ -1542,4 +2289,158 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             Managers.CampManager.Instance.UnregisterTarget(this);
         }
     }
+
+    #region Elemental Damage System
+
+    [Header("Elemental Resistances")]
+    [SerializeField] private ElementalResistance[] resistances = new ElementalResistance[0];
+
+    /// <summary>
+    /// Gets the character's resistance to a specific damage type
+    /// </summary>
+    /// <param name="damageType">The damage type to check resistance for</param>
+    /// <returns>The resistance level for this damage type</returns>
+    public DamageResistance GetResistance(AttackElement damageType)
+    {
+        if (resistances != null)
+        {
+            foreach (var resistance in resistances)
+            {
+                if (resistance != null && resistance.damageType == damageType)
+                {
+                    return resistance.resistance;
+                }
+            }
+        }
+        return DamageResistance.NORMAL;
+    }
+    
+    /// <summary>
+    /// Gets the damage multiplier for a specific damage type
+    /// </summary>
+    /// <param name="damageType">The damage type to check multiplier for</param>
+    /// <returns>The damage multiplier (0.0 to 3.0)</returns>
+    public float GetDamageMultiplier(AttackElement damageType)
+    {
+        return DamageUtils.GetDamageMultiplier(GetResistance(damageType));
+    }
+
+    /// <summary>
+    /// Take damage with elemental type consideration
+    /// </summary>
+    /// <param name="amount">Base amount of damage to take</param>
+    /// <param name="damageType">Type of elemental damage</param>
+    /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
+    public void TakeDamage(float amount, AttackElement damageType, Transform damageSource = null)
+    {
+        // Prevent taking damage if already dead
+        if (isDead) return;
+        
+        // Prevent taking damage if cooldown is active
+        if (Time.time - lastDamageTime < damageCooldown)
+        {
+            return;
+        }
+
+        // Use DamageUtils for elemental damage calculation with resistance
+        var (hitDirection, finalDamage) = DamageUtils.ApplyElementalDamage(this, amount, damageType, 
+            damageSource, animator, transform, OnDamageTaken, OnDeath, true);
+
+        // Skip if immune to this damage type
+        if (finalDamage <= 0) return;
+
+        // Apply the calculated damage
+        float previousHealth = health;
+        health = Mathf.Max(0, health - finalDamage);
+        OnDamageTaken?.Invoke(finalDamage, health);
+
+        // Check if already damaged to prevent unnecessary animation calls
+        bool wasAlreadyDamaged = isDamaged;
+        
+        // Set damaged state to prevent movement
+        isDamaged = true;
+        lastDamageTime = Time.time; // Update last damage time
+
+        // Track hit for procedural IK reactions
+        if (damageSource != null)
+        {
+            LastHitOrigin = damageSource.position;
+            LastHitTime = Time.time;
+            LastHitPoiseDamage = 10f; // Default poise damage for elemental attacks without poise
+        }
+
+        if (health <= 0 && !isDead) Die();
+    }
+
+    /// <summary>
+    /// Take damage with poise damage and elemental type consideration
+    /// </summary>
+    /// <param name="amount">Base amount of damage to take</param>
+    /// <param name="poiseDamage">Amount of poise damage to take</param>
+    /// <param name="damageType">Type of elemental damage</param>
+    /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
+    public void TakeDamage(float amount, float poiseDamage, AttackElement damageType, Transform damageSource = null)
+    {
+        // Prevent taking damage if already dead
+        if (isDead) return;
+        
+        // Use DamageUtils for elemental damage calculation with resistance
+        var (hitDirection, finalDamage, poiseBroken) = DamageUtils.ApplyElementalDamageWithPoise(this, amount, poiseDamage, damageType, 
+            damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
+
+        // Skip if immune to this damage type
+        if (finalDamage <= 0) return;
+
+        // Apply the calculated damage
+        float previousHealth = health;
+        health = Mathf.Max(0, health - finalDamage);
+        OnDamageTaken?.Invoke(finalDamage, health);
+
+        // Update poise damage tracking
+        if (poiseDamage > 0)
+        {
+            lastPoiseDamageTime = Time.time;
+            if (poiseBroken)
+            {
+                isPoiseBroken = true;
+                // Reset poise to max when broken to prevent repeated staggering
+                Poise = MaxPoise;
+            }
+        }
+
+        // Track hit for procedural IK reactions (skip if poise broken to avoid conflicts with stagger animations)
+        if (damageSource != null)
+        {
+            if (!poiseBroken)
+            {
+                LastHitOrigin = damageSource.position;
+                LastHitTime = Time.time;
+                LastHitPoiseDamage = poiseDamage; // Use actual poise damage for reaction scaling
+            }
+            HandleDamageReaction(damageSource);
+        }
+
+        if (health <= 0 && !isDead) Die();
+    }
+
+    /// <summary>
+    /// Called by Unity for IK updates. This allows hit reactions to modify body part positions dynamically.
+    /// </summary>
+    /// <param name="layerIndex">The IK layer index</param>
+    protected virtual void OnAnimatorIK(int layerIndex)
+    {
+        if (animator == null) return;
+        
+        // Apply immediate hit reactions using stateless IK utility (scaled by weapon poise damage)
+        if (animator.isHuman && LastHitOrigin != Vector3.zero && (Time.time - LastHitTime) < 0.6f)
+        {
+            // Scale reaction intensity based on poise damage (typical weapon poise: 5-25)
+            float scaledIntensity = Mathf.Clamp(LastHitPoiseDamage / 20f, 0.5f, 1.5f); // Min 0.5, max 1.5 (ensures visible reaction)
+            IKReactionUtils.ApplyHitReactionIK(animator, transform, LastHitOrigin, LastHitTime, 0.6f, scaledIntensity);
+        }
+        
+        // Add other IK processing here as needed (e.g., look at targets, weapon IK, etc.)
+    }
+
+    #endregion
 }

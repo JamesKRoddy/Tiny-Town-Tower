@@ -11,12 +11,11 @@ public class MeleeWeapon : WeaponBase
 
     private bool isAttacking = false;
     private HashSet<Collider> hitTargets = new HashSet<Collider>();
-    private Transform characterTransform; //Used for the box trigger for hitting
 
     public override void OnEquipped(Transform character)
     {
-        // Initialize the character's Transform
-        characterTransform = character;
+        // Store character transform in base class
+        base.OnEquipped(character);
 
         if (characterTransform == null)
         {
@@ -59,36 +58,29 @@ public class MeleeWeapon : WeaponBase
 
         Vector3 boxDirection = characterTransform.forward;
 
-        // Perform the BoxCast
-        RaycastHit[] hits = Physics.BoxCastAll(boxOrigin, boxSize * 0.5f, boxDirection, characterTransform.rotation, 0, targetLayer);
-
-        foreach (RaycastHit hit in hits)
-        {
-            if (!hitTargets.Contains(hit.collider))
-            {
-                hitTargets.Add(hit.collider);
-
-                var target = hit.collider.GetComponent<IDamageable>();
-                if (target != null && target.GetAllegiance() != Allegiance.FRIENDLY)
-                {
-                    target.TakeDamage(GetCurrentDamage(), characterTransform);
-                }
-            }
-        }
+        // Use the unified box cast damage system
+        int targetsHit = DamageUtils.PerformBoxCastDamage(
+            this,
+            boxOrigin,
+            boxSize,
+            boxDirection,
+            characterTransform.rotation,
+            0f, // Distance (0 for immediate area)
+            targetLayer,
+            hitTargets
+        );
     }
 
     private void OnDrawGizmos()
     {
         if (characterTransform == null) return;
 
-        // Visualize the BoxCast in the Scene view
-        Gizmos.color = Color.red;
-
+        // Calculate the BoxCast origin
         Vector3 boxOrigin = characterTransform.position +
                             characterTransform.forward * boxCastDistance +
                             characterTransform.TransformDirection(boxOffset);
 
-        Gizmos.matrix = Matrix4x4.TRS(boxOrigin, characterTransform.rotation, Vector3.one);
-        Gizmos.DrawWireCube(Vector3.zero, boxSize);
+        // Use the unified gizmo drawing utility
+        DamageUtils.DrawBoxCastGizmo(boxOrigin, boxSize, characterTransform.rotation, Color.red);
     }
 }

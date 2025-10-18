@@ -241,7 +241,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 887053364}
   m_OnClick:
     m_PersistentCalls:
@@ -1943,6 +1943,42 @@ PrefabInstance:
       propertyPath: autoSaveEnabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7451046357896141963, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: buildingHitEffects.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7451046357896141963, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: universalStatusEffects.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7451046357896141963, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: universalElementalEffects.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7451046357896141963, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: 'universalStatusEffects.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 2c012f144f2c04a48bb8399843f48081, type: 2}
+    - target: {fileID: 7451046357896141963, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: universalElementalEffects.Array.data[0].elementType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7451046357896141963, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: universalElementalEffects.Array.data[0].hitEffects.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7451046357896141963, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: 'universalElementalEffects.Array.data[0].hitEffects.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 3cbd6347900155e489f00fba0e6c94fd, type: 2}
+    - target: {fileID: 7451046357896141963, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: universalElementalEffects.Array.data[0].impactEffects.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7451046357896141963, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: 'universalElementalEffects.Array.data[0].impactEffects.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 3cbd6347900155e489f00fba0e6c94fd, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

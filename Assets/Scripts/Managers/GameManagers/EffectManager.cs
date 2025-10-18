@@ -25,6 +25,14 @@ namespace Managers
         [Tooltip("Hit effects for different building categories")]
         public BuildingHitEffects[] buildingHitEffects;
 
+        [Header("Universal Elemental Effects")]
+        [Tooltip("Elemental effects that apply to all character types")]
+        public ElementalEffects[] universalElementalEffects;
+
+        [Header("Universal Status Effects")]
+        [Tooltip("Status effect definitions that apply to all character types")]
+        public StatusEffectDefinition[] universalStatusEffects;
+
         [Tooltip("Number of instances of each effect to keep in the object pool")]
         public int poolSize = 20;
 
@@ -52,6 +60,8 @@ namespace Managers
         {
             InitializeCharacterEffectPools();
             InitializeBuildingEffectPools();
+            InitializeUniversalElementalEffectPools();
+            InitializeUniversalStatusEffectPools();
         }
 
         private void InitializeCharacterEffectPools()
@@ -81,6 +91,33 @@ namespace Managers
                 if (buildingEffect == null) continue;
 
                 InitializeEffectPool(buildingEffect.impactEffects);
+            }
+        }
+
+        private void InitializeUniversalElementalEffectPools()
+        {
+            if (universalElementalEffects == null) return;
+
+            foreach (var elementalEffect in universalElementalEffects)
+            {
+                if (elementalEffect != null)
+                {
+                    InitializeEffectPool(elementalEffect.hitEffects);
+                    InitializeEffectPool(elementalEffect.impactEffects);
+                }
+            }
+        }
+
+        private void InitializeUniversalStatusEffectPools()
+        {
+            if (universalStatusEffects == null) return;
+
+            foreach (var statusEffect in universalStatusEffects)
+            {
+                if (statusEffect != null && statusEffect.visualEffect != null)
+                {
+                    InitializeEffectPool(new[] { statusEffect.visualEffect });
+                }
             }
         }
 
@@ -141,6 +178,84 @@ namespace Managers
             }
 
             PlayEffect(position, normal, Quaternion.LookRotation(normal), null, buildingHitEffects.impactEffects[Random.Range(0, buildingHitEffects.impactEffects.Length)]);
+        }
+
+        /// <summary>
+        /// Plays elemental hit effects based on damage type
+        /// </summary>
+        /// <param name="position">Position where the hit occurred</param>
+        /// <param name="normal">Surface normal at hit point</param>
+        /// <param name="damageable">The character being hit</param>
+        /// <param name="damageType">Type of elemental damage</param>
+        public void PlayElementalHitEffect(Vector3 position, Vector3 normal, IDamageable damageable, AttackElement damageType)
+        {
+            if (damageable == null) return;
+            
+            // First play the base hit effect
+            PlayHitEffect(position, normal, damageable);
+            
+            // Then play universal elemental-specific effects
+            // Play elemental hit effect on the character
+            EffectDefinition elementalHitEffect = GetElementalHitEffect(damageType);
+            if (elementalHitEffect != null)
+            {
+                PlayEffect(position, normal, Quaternion.LookRotation(normal), null, elementalHitEffect);
+            }
+            
+            // Play elemental impact effect on the ground/impact point
+            EffectDefinition elementalImpactEffect = GetElementalImpactEffect(damageType);
+            if (elementalImpactEffect != null)
+            {
+                // Play impact effect at ground level (slightly below hit position)
+                Vector3 impactPosition = new Vector3(position.x, position.y - 0.1f, position.z);
+                PlayEffect(impactPosition, Vector3.up, Quaternion.identity, null, elementalImpactEffect);
+            }
+        }
+
+        /// <summary>
+        /// Gets the appropriate elemental hit effect for a damage type
+        /// </summary>
+        /// <param name="damageType">Type of elemental damage</param>
+        /// <returns>Effect definition for the elemental hit effect, or null if none found</returns>
+        private EffectDefinition GetElementalHitEffect(AttackElement damageType)
+        {
+            if (universalElementalEffects == null) return null;
+            
+            foreach (var elementalEffect in universalElementalEffects)
+            {
+                if (elementalEffect != null && elementalEffect.elementType == damageType)
+                {
+                    if (elementalEffect.hitEffects != null && elementalEffect.hitEffects.Length > 0)
+                    {
+                        return elementalEffect.hitEffects[Random.Range(0, elementalEffect.hitEffects.Length)];
+                    }
+                }
+            }
+            
+            return null; // No elemental effect found
+        }
+
+        /// <summary>
+        /// Gets the appropriate elemental impact effect for a damage type
+        /// </summary>
+        /// <param name="damageType">Type of elemental damage</param>
+        /// <returns>Effect definition for the elemental impact effect, or null if none found</returns>
+        private EffectDefinition GetElementalImpactEffect(AttackElement damageType)
+        {
+            if (universalElementalEffects == null) return null;
+            
+            foreach (var elementalEffect in universalElementalEffects)
+            {
+                if (elementalEffect != null && elementalEffect.elementType == damageType)
+                {
+                    if (elementalEffect.impactEffects != null && elementalEffect.impactEffects.Length > 0)
+                    {
+                        return elementalEffect.impactEffects[Random.Range(0, elementalEffect.impactEffects.Length)];
+                    }
+                }
+            }
+            
+            return null; // No elemental impact effect found
         }
 
         public void PlayDeathEffect(Vector3 position, Vector3 normal, IDamageable damageable)
@@ -489,7 +604,7 @@ namespace Managers
                 return;
             }
             
-            var statusDefinition = GetStatusEffectDefinition(target.GetCharacterType(), statusType);
+            var statusDefinition = GetStatusEffectDefinition(statusType);
             if (statusDefinition == null)
             {
                 Debug.LogWarning($"[EffectManager] No status effect definition found for {statusType} on {target.GetCharacterType()}");
@@ -623,16 +738,15 @@ namespace Managers
         }
         
         /// <summary>
-        /// Get the status effect definition for a character type and status type
+        /// Get the status effect definition for a status type
         /// </summary>
-        private StatusEffectDefinition GetStatusEffectDefinition(CharacterType characterType, StatusEffectType statusType)
+        private StatusEffectDefinition GetStatusEffectDefinition(StatusEffectType statusType)
         {
-            var characterEffects = GetCharacterEffects(characterType);
-            if (characterEffects?.statusEffects == null) return null;
+            if (universalStatusEffects == null) return null;
             
-            foreach (var statusEffect in characterEffects.statusEffects)
+            foreach (var statusEffect in universalStatusEffects)
             {
-                if (statusEffect.statusType == statusType)
+                if (statusEffect != null && statusEffect.statusType == statusType)
                 {
                     return statusEffect;
                 }
@@ -862,7 +976,9 @@ namespace Managers
                 if (definition.damagePerSecond > 0f)
                 {
                     var damageable = targetComponent.GetComponent<IDamageable>();
-                    damageable?.TakeDamage(definition.damagePerSecond);
+                    // Status effect damage deals minimal poise damage
+                    float poiseDamage = definition.damagePerSecond * 0.2f; // 20% of health damage as poise damage
+                    damageable?.TakeDamage(definition.damagePerSecond, poiseDamage);
                 }
                 
                 if (definition.healingPerSecond > 0f)
@@ -1002,37 +1118,20 @@ namespace Managers
             return statusType switch
             {
                 // Error states (damaging/harmful)
-                StatusEffectType.POISONED => FloatingTextType.Error,
                 StatusEffectType.BURNING => FloatingTextType.Error,
                 StatusEffectType.ON_FIRE => FloatingTextType.Error,
-                StatusEffectType.BLEEDING => FloatingTextType.Error,
                 StatusEffectType.SICK => FloatingTextType.Error,
                 StatusEffectType.STARVING => FloatingTextType.Error,
                 StatusEffectType.EXHAUSTED => FloatingTextType.Error,
-                StatusEffectType.CORRODED => FloatingTextType.Error,
                 StatusEffectType.ELECTROCUTED => FloatingTextType.Error,
                 StatusEffectType.SHOCKED => FloatingTextType.Error,
                 
                 // Warning states (temporary issues)
                 StatusEffectType.FROZEN => FloatingTextType.Warning,
-                StatusEffectType.STUNNED => FloatingTextType.Warning,
-                StatusEffectType.CONFUSED => FloatingTextType.Warning,
-                StatusEffectType.FEARED => FloatingTextType.Warning,
                 StatusEffectType.HUNGRY => FloatingTextType.Warning,
                 StatusEffectType.TIRED => FloatingTextType.Warning,
-                StatusEffectType.WET => FloatingTextType.Warning,
-                StatusEffectType.VULNERABLE => FloatingTextType.Warning,
-                StatusEffectType.WEAKENED => FloatingTextType.Warning,
-                StatusEffectType.SLOWED => FloatingTextType.Warning,
                 
                 // Success states (beneficial)
-                StatusEffectType.HEALING => FloatingTextType.Success,
-                StatusEffectType.REGENERATING => FloatingTextType.Success,
-                StatusEffectType.HASTENED => FloatingTextType.Success,
-                StatusEffectType.STRENGTHENED => FloatingTextType.Success,
-                StatusEffectType.PROTECTED => FloatingTextType.Success,
-                StatusEffectType.BUFFED => FloatingTextType.Success,
-                StatusEffectType.SHIELDED => FloatingTextType.Success,
                 StatusEffectType.HEALTHY => FloatingTextType.Success,
                 
                 // Normal states

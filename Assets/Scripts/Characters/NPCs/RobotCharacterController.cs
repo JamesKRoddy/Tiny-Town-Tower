@@ -95,7 +95,7 @@ public class RobotCharacterController : HumanCharacterController, INarrativeTarg
         }
     }
 
-    public void StopWork()
+    public override void StopWork()
     {
         if (isWorking)
         {

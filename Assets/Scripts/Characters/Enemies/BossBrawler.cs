@@ -1,7 +1,7 @@
 using UnityEngine;
 using Managers;
 using UnityEngine.AI;
-using Enemies.BossAttacks;
+using Enemies.Attacks;
 
 namespace Enemies
 {
@@ -28,7 +28,7 @@ namespace Enemies
                         
                         // Use sophisticated distance checking that considers obstacles
                         float effectiveAttackDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, stoppingDistance, obstacleBoundsOffset);
-                        agent.stoppingDistance = Mathf.Max(attack.range, effectiveAttackDistance);
+                        agent.stoppingDistance = Mathf.Max(attack.maxRange, effectiveAttackDistance);
                         
                         BeginAttackSequence();
                         // Speed will be set to 0 by UpdateAnimationParameters when attacking
@@ -49,7 +49,7 @@ namespace Enemies
                     {
                         // Draw attack range
                         Gizmos.color = new Color(1f, 0f, 0f, 0.3f); // Red with transparency
-                        Gizmos.DrawWireSphere(transform.position, attack.range);
+                        Gizmos.DrawWireSphere(transform.position, attack.maxRange);
                     }
                 }
             }

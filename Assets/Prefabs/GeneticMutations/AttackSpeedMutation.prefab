@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7634659490291347626}
-  - component: {fileID: -2313421188216403780}
+  - component: {fileID: 2979767987061546220}
   m_Layer: 0
   m_Name: AttackSpeedMutation
   m_TagString: Untagged
@@ -32,7 +32,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &-2313421188216403780
+--- !u!114 &2979767987061546220
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,8 +41,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 4430960853319998083}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 35d4eda2d53608141a4e46141fb961ca, type: 3}
+  m_Script: {fileID: 11500000, guid: 2c9665ebeb44fba4a8fac858615ca12c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attackSpeedMultiplier: 1.5
-  damageReductionMultiplier: 0.8
+  damageMultiplier: 0.9
+  attackSpeedMultiplier: 1.2
+  poiseDamageMultiplier: 0.8
+  elementalDamageMultiplier: 1

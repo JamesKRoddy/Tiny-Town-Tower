@@ -11,6 +11,22 @@ namespace Enemies
     /// Enemy base class that provides common functionality for all enemy types.
     /// Handles movement, targeting, health, and basic AI behaviors.
     /// 
+    /// ═══════════════════════════════════════════════════════════════════════════════════════
+    /// ENEMY MANAGER INTEGRATION:
+    /// ═══════════════════════════════════════════════════════════════════════════════════════
+    /// This class integrates with EnemyManager for group coordination:
+    /// 
+    /// • AUTO-REGISTRATION: Registers/unregisters in Start() and OnDestroy()
+    /// • PACK HUNTING: UpdateMovement() calls GetStrategicPosition() to get role-based destinations:
+    ///   - CHASER role → flanking position around player
+    ///   - INTERCEPTOR role → predicted player position (cuts off escape)
+    ///   - WANDERER role → random wander point
+    /// • ATTACK COORDINATION: Derived classes (e.g., Zombie) request attack permission
+    /// • AGGRO TRACKING: AttackBase reports damage dealt for threat system
+    /// 
+    /// Result: Individual enemy AI enhanced by shared group intelligence!
+    /// ═══════════════════════════════════════════════════════════════════════════════════════
+    /// 
     /// NAVIGATION SYSTEM:
     /// - Uses Unity's NavMesh for pathfinding and obstacle avoidance
     /// - Supports both traditional NavMesh movement and pure root motion
@@ -53,9 +69,9 @@ namespace Enemies
         [SerializeField] protected CharacterType characterType = CharacterType.ZOMBIE_MELEE;
 
         [Header("Movement Settings")]
-        [SerializeField] protected bool useRootMotion = false;
-        [SerializeField] protected float stoppingDistance = 1.5f;
-        [SerializeField] protected float rotationSpeed = 10f; // Only used for non-root motion
+        [SerializeField] public bool useRootMotion = false; // Made public for attack components
+        [SerializeField] protected float stoppingDistance = 1.0f;
+        [SerializeField] public float rotationSpeed = 10f; // Only used for non-root motion, made public for attack components
         [SerializeField] protected float movementSpeed = 3.5f;
         [SerializeField] protected float acceleration = 8f;
         [SerializeField] protected float angularSpeed = 120f;
@@ -64,11 +80,32 @@ namespace Enemies
         // Add these fields for better root motion control
         [Header("Root Motion Settings")]
         [SerializeField] protected float rootMotionMultiplier = 1f;
-        [SerializeField] protected bool showCollisionDebug = false; // Debug visualization for collision detection
+        [SerializeField] public bool showCollisionDebug = false; // Debug visualization for collision detection
+
+        [Header("Cooldown Movement Settings")]
+        [SerializeField] protected bool enableCooldownMovement = true;
+        [SerializeField] protected float cooldownMovementMinDistance = 2f;
+        [SerializeField] protected float cooldownMovementMaxDistance = 4f;
+        [SerializeField] protected float cooldownMovementMinDuration = 1f;
+        [SerializeField] protected float cooldownMovementMaxDuration = 3f;
+
+        [Header("Head Tracking Settings")]
+        [SerializeField] protected bool enableHeadTracking = true;
+        [SerializeField] protected float headTrackingWeight = 0.8f;
+        [SerializeField] protected float headTrackingRotationWeight = 0.5f;
+        [SerializeField] protected float headTrackingLerpSpeed = 3f;
+        [SerializeField] protected float maxHeadTrackingAngle = 60f;
+        [SerializeField] protected float headTrackingDistance = 15f;
 
         [Header("Health Settings")]
         [SerializeField] private float health = 100f;
         [SerializeField] private float maxHealth = 100f;
+
+        [Header("Poise Settings")]
+        [SerializeField] private float poise = 50f;
+        [SerializeField] private float maxPoise = 50f;
+        [SerializeField] private float poiseRecoveryRate = 10f; // Poise recovered per second
+        [SerializeField] private float poiseRecoveryDelay = 2f; // Delay before poise starts recovering
 
 
 
@@ -77,11 +114,35 @@ namespace Enemies
         #region Protected Fields
         
         protected NavMeshAgent agent;
-        protected Animator animator;
+        public Animator animator; // Made public for attack components
         protected Transform navMeshTarget;        
-        protected bool isAttacking = false;
+        public bool isAttacking = false; // Made public for attack components
         protected bool isRotatingToAttack = false; // New state for rotation phase before attack
         protected float damage;
+        protected float lastAttackTime = -999f;
+        
+        // Back-away state management
+        private bool isBackingAway = false;
+        private float backAwayStartTime = 0f;
+        private const float BACK_AWAY_DURATION = 1.5f; // Minimum time to spend backing away
+        private const float BACK_AWAY_COOLDOWN = 2.0f; // Cooldown before backing away again
+
+        // Cooldown movement state management
+        private bool isMovingDuringCooldown = false;
+        private bool isWaitingAtTarget = false; // New: Track if we're waiting at target position
+        private float cooldownMovementStartTime = 0f;
+        private float lastCooldownMovementEndTime = 0f; // Track when cooldown movement ended
+        private float lastTargetChangeTime = 0f; // Track when we last changed the strafe target
+        private float targetReachedTime = 0f; // New: Track when we reached the current target
+        private Vector3 cooldownMovementTarget = Vector3.zero;
+        private const float COOLDOWN_MOVEMENT_COOLDOWN = 1.0f; // Cooldown before starting new cooldown movement
+        private const float TARGET_CHANGE_COOLDOWN = 2.5f; // Minimum time between target changes (increased for more deliberate movement)
+        private const float WAIT_AT_TARGET_DURATION = 1.5f; // How long to wait at target before finding next one (increased for more deliberate behavior)
+
+        // Head tracking state management
+        private bool isHeadTrackingActive = false;
+        private float currentHeadTrackingWeight = 0f;
+        private Vector3 currentLookAtTarget = Vector3.zero;
 
         // Material flash effect
         protected SkinnedMeshRenderer skinnedMeshRenderer;
@@ -105,13 +166,29 @@ namespace Enemies
             get => maxHealth;
             set => maxHealth = value;
         }
+        public float Poise
+        {
+            get => poise;
+            set => poise = Mathf.Clamp(value, 0, maxPoise);
+        }
+        public float MaxPoise
+        {
+            get => maxPoise;
+            set => maxPoise = value;
+        }
         public CharacterType CharacterType => characterType;
         public Allegiance GetAllegiance() => Allegiance.HOSTILE;
 
         public event Action<float, float> OnDamageTaken;
         public event Action<float, float> OnHeal;
+        public event Action<float, float> OnPoiseBroken;
         public event Action OnDeath;
         public static event System.Action<Transform> OnTargetDestroyedEvent;
+        
+        // IDamageable hit reaction tracking
+        public Vector3 LastHitOrigin { get; set; } = Vector3.zero;
+        public float LastHitTime { get; set; } = -999f;
+        public float LastHitPoiseDamage { get; set; } = 0f;
 
         #endregion
 
@@ -127,6 +204,10 @@ namespace Enemies
 
         private float lastTargetSearchTime = 0f;
         private float targetSearchInterval = 3f; // Check for new targets every 3 seconds
+
+        // Poise recovery fields
+        private float lastPoiseDamageTime = 0f;
+        private bool isPoiseBroken = false;
 
         #endregion
 
@@ -149,8 +230,21 @@ namespace Enemies
             // Subscribe to target destroyed events
             OnTargetDestroyedEvent += OnTargetDestroyed;
             
-            // Initialize health
+            // Initialize health and poise
             Health = maxHealth;
+            Poise = maxPoise;
+            
+            // Apply character type-specific poise configuration if using defaults
+            if (Mathf.Approximately(maxPoise, 50f)) // Check if using default value
+            {
+                ApplyCharacterTypePoiseConfig();
+            }
+            
+            // Register with EnemyManager for group coordination
+            if (EnemyManager.Instance != null)
+            {
+                EnemyManager.Instance.RegisterEnemy(this);
+            }
             
             // Find initial target
             FindNewTarget();
@@ -165,6 +259,12 @@ namespace Enemies
         protected virtual void OnDestroy()
         {
             OnTargetDestroyedEvent -= OnTargetDestroyed;
+            
+            // Unregister from EnemyManager
+            if (EnemyManager.Instance != null)
+            {
+                EnemyManager.Instance.UnregisterEnemy(this);
+            }
         }
 
         protected virtual void Update()
@@ -178,6 +278,9 @@ namespace Enemies
                 }
                 return;
             }
+            
+            // Apply procedural knockback from hit reactions
+            ApplyProceduralKnockback();
 
             // If no target, periodically check for new targets
             if (navMeshTarget == null)
@@ -186,19 +289,71 @@ namespace Enemies
                 return;
             }
 
-            // Check if current target is still valid
-            if (!IsTargetStillValid(navMeshTarget))
+            // Don't validate or switch targets while actively attacking
+            // This prevents glitchy rotation when player moves out of range during attack
+            if (!isAttacking)
             {
-                FindNewTarget();
-                return;
+                // Check if current target is still valid
+                if (!IsTargetStillValid(navMeshTarget))
+                {
+                    FindNewTarget();
+                    return;
+                }
+
+                // Periodically check if current target is still reachable
+                CheckTargetReachability();
             }
 
-            // Periodically check if current target is still reachable
-            CheckTargetReachability();
+            // Update poise recovery
+            UpdatePoiseRecovery();
 
             if (!isAttacking)
             {
                 UpdateMovement();
+            }
+        }
+        
+        /// <summary>
+        /// Applies procedural knockback based on recent hits using the IK reaction system.
+        /// This creates smooth, physics-like knockback without coroutines.
+        /// </summary>
+        private void ApplyProceduralKnockback()
+        {
+            // Check if we should apply knockback
+            float timeSinceHit = Time.time - LastHitTime;
+            if (timeSinceHit > 0.3f || LastHitOrigin == Vector3.zero) return; // Slightly longer for visible effect
+            
+            // Scale knockback distance based on poise damage (heavier weapons = more knockback)
+            float baseKnockback = 0.75f; // Reduced from 1.5f
+            float poiseScale = Mathf.Clamp(LastHitPoiseDamage / 15f, 0.4f, 2.0f); // Min 0.4x, max 2.0x (ensures minimum knockback)
+            float scaledKnockback = baseKnockback * poiseScale;
+            
+            Vector3 knockbackOffset = IKReactionUtils.CalculateKnockbackOffset(transform, LastHitOrigin, LastHitTime, scaledKnockback, 0.3f, MaxPoise, Poise);
+            
+            if (knockbackOffset.magnitude > 0.001f)
+            {
+                // Apply knockback velocity-based (smoother and more responsive)
+                Vector3 knockbackMovement = knockbackOffset * Time.deltaTime * 25f; // Increased multiplier for visible knockback
+                Vector3 newPosition = transform.position + knockbackMovement;
+                
+                if (showCollisionDebug && timeSinceHit < 0.05f)
+                {
+                    Debug.Log($"[{gameObject.name}] Knockback - Poise: {LastHitPoiseDamage}, Scale: {poiseScale:F2}, " +
+                             $"Offset magnitude: {knockbackOffset.magnitude:F3}, Movement: {knockbackMovement.magnitude:F3}");
+                }
+                
+                // Validate position is on NavMesh
+                if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+                {
+                    if (useRootMotion)
+                    {
+                        transform.position = hit.position;
+                    }
+                    else if (agent != null && agent.isOnNavMesh)
+                    {
+                        agent.Warp(hit.position);
+                    }
+                }
             }
         }
 
@@ -220,143 +375,32 @@ namespace Enemies
                 return;
             }
 
-            // Calculate new position based purely on root motion
-            Vector3 newPosition = transform.position + rootMotion;
-
-            // Check for collisions before applying root motion
-            Vector3 adjustedRootMotion = IsRootMotionCollisionSafe(rootMotion, out bool collisionDetected);
-            
-            if (!collisionDetected)
-            {
-                // No collision detected, apply full root motion
-                Vector3 finalPosition = transform.position + adjustedRootMotion;
-                
-                // Only ensure we stay on the NavMesh - don't constrain to agent position
-                if (NavMesh.SamplePosition(finalPosition, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
-                {
-                    transform.position = hit.position;
-                    
-                    // Update the agent's position to follow the character (not the other way around)
-                    agent.nextPosition = hit.position;
-                }
-                else
-                {
-                    // If we can't find a valid NavMesh position, try a smaller step
-                    Vector3 smallerStep = transform.position + adjustedRootMotion * 0.5f;
-                    if (NavMesh.SamplePosition(smallerStep, out NavMeshHit smallerHit, 1.0f, NavMesh.AllAreas))
-                    {
-                        transform.position = smallerHit.position;
-                        agent.nextPosition = smallerHit.position;
-                    }
-                    // If still no valid position, don't move this frame (stay where we are)
-                }
-            }
-            else
-            {
-                // Collision detected, apply reduced movement if possible
-                if (adjustedRootMotion.magnitude > 0.001f)
-                {
-                    Vector3 finalPosition = transform.position + adjustedRootMotion;
-                    
-                    if (NavMesh.SamplePosition(finalPosition, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
-                    {
-                        transform.position = hit.position;
-                        agent.nextPosition = hit.position;
-                    }
-                }
-                // If no adjusted movement possible, zombie stays in place
-                // This prevents the zombie from moving through the player during attack animations
-            }
-        }
-
-        /// <summary>
-        /// Checks if the root motion movement would cause a collision with the player or other obstacles
-        /// Returns an adjusted root motion vector that prevents overlapping
-        /// </summary>
-        /// <param name="rootMotion">The root motion delta to check</param>
-        /// <param name="collisionDetected">Output parameter indicating if a collision was detected</param>
-        /// <returns>Adjusted root motion vector that prevents overlapping</returns>
-        protected virtual Vector3 IsRootMotionCollisionSafe(Vector3 rootMotion, out bool collisionDetected)
-        {
-            collisionDetected = false;
-            
-            // Get the character's collider for collision detection
-            Collider characterCollider = GetComponent<Collider>();
-            if (characterCollider == null)
-            {
-                return rootMotion; // No collider, assume safe
-            }
-
-            // Use capsule cast to check for collisions in the root motion direction
-            // This is similar to how HumanCharacterController handles it
-            Vector3 capsuleBottom = transform.position + Vector3.up * 0.3f;
-            Vector3 capsuleTop = transform.position + Vector3.up * characterCollider.bounds.size.y;
-            float capsuleRadius = characterCollider.bounds.extents.x; // Use X extent as radius
-
-            // Check for collisions with player and other obstacles
-            // Layer mask for player (Default layer) and obstacles (ObstacleLayer)
+            // Use the centralized root motion utility
             LayerMask collisionLayers = LayerMask.GetMask("Default", "ObstacleLayer");
-
-            if (Physics.CapsuleCast(capsuleBottom, capsuleTop, capsuleRadius * 0.8f, 
-                rootMotion.normalized, out RaycastHit hitInfo, rootMotion.magnitude, collisionLayers))
+            
+            // Determine minimum distance based on attack state and recent attack history
+            // Keep zombie within attack range (0-1.5f) by preventing getting too close
+            // Use larger buffer for a short time after attacking to prevent root motion from pushing too close
+            float timeSinceLastAttack = Time.time - lastAttackTime;
+            bool recentlyAttacked = timeSinceLastAttack < 2.0f; // 2 seconds after attack
+            float minDistance = (isAttacking || recentlyAttacked) ? 1.2f : 0.2f;
+            
+            bool movementApplied = RootMotionUtils.ApplyRootMotion(
+                transform, 
+                rootMotion, 
+                agent, 
+                collisionLayers, 
+                navMeshTarget, 
+                minDistance, 
+                showCollisionDebug
+            );
+            
+            if (!movementApplied && showCollisionDebug)
             {
-                collisionDetected = true;
-                
-                // Debug visualization
-                if (showCollisionDebug)
-                {
-                    Debug.DrawLine(transform.position, hitInfo.point, Color.red, 0.1f);
-                    Debug.Log($"[{gameObject.name}] Root motion collision detected with {hitInfo.collider.name}");
-                }
-                
-                // Check if we hit the player specifically
-                if (hitInfo.collider.CompareTag("Player") || hitInfo.collider.GetComponent<PlayerController>() != null)
-                {
-                    // Allow partial movement towards player but prevent complete overlap
-                    float playerSafeDistance = hitInfo.distance - 0.2f; // Leave a buffer
-                    if (playerSafeDistance > 0)
-                    {
-                        if (showCollisionDebug)
-                            Debug.Log($"[{gameObject.name}] Partial movement towards player: {playerSafeDistance:F2} units");
-                        return rootMotion.normalized * playerSafeDistance;
-                    }
-                    
-                    if (showCollisionDebug)
-                        Debug.Log($"[{gameObject.name}] Blocked by player collision");
-                    return Vector3.zero;
-                }
-
-                // Check if we hit an NPC (HumanCharacterController)
-                if (hitInfo.collider.GetComponent<HumanCharacterController>() != null)
-                {
-                    // Allow partial movement towards NPCs but prevent complete overlap
-                    float npcSafeDistance = hitInfo.distance - 0.2f; // Leave a buffer
-                    if (npcSafeDistance > 0)
-                    {
-                        if (showCollisionDebug)
-                            Debug.Log($"[{gameObject.name}] Partial movement towards NPC: {npcSafeDistance:F2} units");
-                        return rootMotion.normalized * npcSafeDistance;
-                    }
-                    
-                    if (showCollisionDebug)
-                        Debug.Log($"[{gameObject.name}] Blocked by NPC collision");
-                    return Vector3.zero;
-                }
-
-                // For other obstacles (walls, etc.), allow partial movement up to the collision point
-                float safeDistance = hitInfo.distance - 0.1f; // Leave a small buffer
-                if (safeDistance > 0)
-                {
-                    if (showCollisionDebug)
-                        Debug.Log($"[{gameObject.name}] Partial movement allowed: {safeDistance:F2} units");
-                    return rootMotion.normalized * safeDistance;
-                }
-                
-                return Vector3.zero; // No safe movement possible
+                Debug.Log($"[{gameObject.name}] Root motion blocked - staying in place");
             }
-
-            return rootMotion; // No collision detected, return original root motion
         }
+
 
         #endregion
 
@@ -429,59 +473,331 @@ namespace Enemies
 
         #region Movement & Targeting
 
+        /// <summary>
+        /// Calculate the optimal stopping distance based on available attacks.
+        /// Override this method in derived classes to provide attack-specific logic.
+        /// </summary>
+        /// <returns>Optimal stopping distance from target</returns>
+        protected virtual float CalculateOptimalStoppingDistance()
+        {
+            // Default behavior: use the configured stopping distance
+            return stoppingDistance;
+        }
+
+        /// <summary>
+        /// Get the minimum distance at which the enemy can attack.
+        /// Override this method in derived classes to provide attack-specific logic.
+        /// Returns 0 if there's no minimum (can attack at any close distance).
+        /// </summary>
+        /// <returns>Minimum attack distance (0 if none)</returns>
+        protected virtual float GetMinimumAttackDistance()
+        {
+            // Default: no minimum distance, can attack when close
+            return 0f;
+        }
+
         private void UpdateMovement()
         {
-            if (navMeshTarget == null) return;
+            // Handle cooldown movement for ranged enemies (this takes priority over regular movement)
+            UpdateCooldownMovement();
             
-            string logPrefix = $"[{gameObject.name}] EnemyBase.UpdateMovement";
-            
-            // For root motion zombies, check if we should stop the agent
-            if (useRootMotion)
+            // If we're moving during cooldown, don't let regular movement override it
+            if (isMovingDuringCooldown)
             {
-                float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
-                float effectiveAttackDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, stoppingDistance, obstacleBoundsOffset);
+                return; // Skip ALL regular movement logic
+            }
+            
+            // If no target, try to find one first
+            if (navMeshTarget == null)
+            {
+                FindNewTarget();
+                if (navMeshTarget == null)
+                {
+                    // Still no target, can't move
+                    return;
+                }
+            }
+            
+            float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
+            float optimalStoppingDistance = CalculateOptimalStoppingDistance();
+            float minAttackDistance = GetMinimumAttackDistance();
+            
+            // Only use back-away logic for enemies with a minimum attack distance (ranged enemies)
+            if (minAttackDistance > 0)
+            {
+                // Check if we should initiate or continue backing away
+                bool currentlyTooClose = distanceToTarget < minAttackDistance;
+                float timeSinceBackAwayStart = Time.time - backAwayStartTime;
                 
-                // Stop agent when in attack range or during attack phases
-                // But maintain a minimum distance to prevent spinning
-                float minDistance = 1.0f;
-                bool shouldStop = (distanceToTarget <= effectiveAttackDistance && distanceToTarget >= minDistance) || isAttacking || isRotatingToAttack;
+                // Debug logging for back-away system
+                if (showCollisionDebug && Time.frameCount % 60 == 0) // Log once per second at 60fps
+                {
+                    Debug.Log($"[{gameObject.name}] BackAway State | isBackingAway: {isBackingAway} | Distance: {distanceToTarget:F2} | " +
+                             $"MinAttackDist: {minAttackDistance:F2} | OptimalStop: {optimalStoppingDistance:F2} | " +
+                             $"TooClose: {currentlyTooClose} | TimeSinceStart: {timeSinceBackAwayStart:F2}");
+                }
                 
-                bool wasStoppedBefore = agent.isStopped;
+                // State machine for backing away
+                if (isBackingAway)
+                {
+                    // Continue backing away until duration expires AND we're beyond minimum attack distance
+                    if (timeSinceBackAwayStart < BACK_AWAY_DURATION || distanceToTarget < minAttackDistance)
+                    {
+                        // Keep backing away to optimal distance (which should be >= minAttackDistance)
+                        Vector3 directionAway = (transform.position - navMeshTarget.position).normalized;
+                        Vector3 backAwayPoint = navMeshTarget.position + directionAway * (optimalStoppingDistance + 1f);
+                        
+                        UnityEngine.AI.NavMeshHit hit;
+                        if (UnityEngine.AI.NavMesh.SamplePosition(backAwayPoint, out hit, 5f, UnityEngine.AI.NavMesh.AllAreas))
+                        {
+                            agent.SetDestination(hit.position);
+                            agent.isStopped = false;
+                        }
+                    }
+                    else
+                    {
+                        // Done backing away - now beyond minimum attack distance
+                        Debug.Log($"[{gameObject.name}] Finished backing away - Distance: {distanceToTarget:F2} >= MinDist: {minAttackDistance:F2}");
+                        isBackingAway = false;
+                    }
+                }
+                else if (currentlyTooClose && timeSinceBackAwayStart > BACK_AWAY_COOLDOWN)
+                {
+                    // Initiate new back-away
+                    Debug.Log($"[{gameObject.name}] Starting back-away - Distance: {distanceToTarget:F2} < MinDist: {minAttackDistance:F2}");
+                    isBackingAway = true;
+                    backAwayStartTime = Time.time;
+                    
+                    // Calculate back-away destination
+                    Vector3 directionAway = (transform.position - navMeshTarget.position).normalized;
+                    Vector3 backAwayPoint = navMeshTarget.position + directionAway * (optimalStoppingDistance + 1f);
+                    
+                    UnityEngine.AI.NavMeshHit hit;
+                    if (UnityEngine.AI.NavMesh.SamplePosition(backAwayPoint, out hit, 5f, UnityEngine.AI.NavMesh.AllAreas))
+                    {
+                        agent.SetDestination(hit.position);
+                        agent.isStopped = false;
+                    }
+                }
+                else
+                {
+                    // Normal movement - check for strategic position from EnemyManager (based on role)
+                    Vector3 strategicPosition = Vector3.zero;
+                    if (Managers.EnemyManager.Instance != null)
+                    {
+                        strategicPosition = Managers.EnemyManager.Instance.GetStrategicPosition(this);
+                    }
+                    
+                    // Prefer strategic position if available
+                    if (strategicPosition != Vector3.zero)
+                    {
+                        float distanceToStrategicPos = Vector3.Distance(transform.position, strategicPosition);
+                        
+                        // Use strategic position for movement
+                        agent.SetDestination(strategicPosition);
+                        
+                        // Check if we're at strategic position
+                        bool atStrategicPosition = distanceToStrategicPos < 1.5f;
+                        
+                        // For root motion, handle stopping
+                        if (useRootMotion)
+                        {
+                            // Only stop when actually attacking
+                            bool shouldStop = (isAttacking || isRotatingToAttack);
+                            
+                            if (shouldStop)
+                            {
+                                if (!agent.isStopped)
+                                {
+                                    agent.isStopped = true;
+                                    agent.velocity = Vector3.zero;
+                                }
+                            }
+                            else if (agent.isStopped && !atStrategicPosition)
+                            {
+                                agent.isStopped = false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // No strategic position, move toward target
+                        agent.SetDestination(navMeshTarget.position);
+                        
+                        // For root motion zombies, check if we should stop the agent
+                        if (useRootMotion)
+                        {
+                            // Stop agent when at optimal distance or during attack phases
+                            bool shouldStop = (distanceToTarget <= optimalStoppingDistance) || isAttacking || isRotatingToAttack;
+                            
+                            if (shouldStop)
+                            {
+                                if (!agent.isStopped)
+                                {
+                                    if (showCollisionDebug)
+                                    {
+                                        Debug.Log($"[{gameObject.name}] Stopping agent - Distance: {distanceToTarget:F2} <= Optimal: {optimalStoppingDistance:F2} | " +
+                                                 $"isAttacking: {isAttacking} | isRotating: {isRotatingToAttack}");
+                                    }
+                                    agent.isStopped = true;
+                                    agent.velocity = Vector3.zero;
+                                }
+                            }
+                            else
+                            {
+                                // Resume movement when out of optimal distance
+                                if (agent.isStopped)
+                                {
+                                    if (showCollisionDebug)
+                                    {
+                                        Debug.Log($"[{gameObject.name}] Resuming agent - Distance: {distanceToTarget:F2} > Optimal: {optimalStoppingDistance:F2}");
+                                    }
+                                    agent.isStopped = false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Melee enemy (no minimum attack distance) - use coordinated movement with pack roles
                 
-                if (shouldStop)
+                // ─────────────────────────────────────────────────────────────────────────────────
+                // COOLDOWN BEHAVIOR: Stop moving when in attack range but waiting for cooldown
+                // Prevents enemies from running around/circling player while waiting to attack
+                // ─────────────────────────────────────────────────────────────────────────────────
+                bool inAttackRangeButOnCooldown = false;
+                bool hasAnyValidAttack = false;
+                
+                if (distanceToTarget <= GetMaximumAttackRange())
+                {
+                    // Check if any attack is on cooldown
+                    var attackComponents = GetComponents<AttackBase>();
+                    foreach (var attack in attackComponents)
+                    {
+                        if (attack != null && attack.enabled)
+                        {
+                            hasAnyValidAttack = true;
+                            if (!attack.CanAttack())
+                            {
+                                inAttackRangeButOnCooldown = true;
+                                if (showCollisionDebug)
+                                {
+                                    Debug.Log($"[{gameObject.name}] Attack {attack.GetType().Name} cannot attack (range: {attack.minRange}-{attack.maxRange}, distance: {distanceToTarget:F2})");
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // If in range but on cooldown, stay still (don't circle or move around)
+                // ONLY stop if we have valid attacks and they're on cooldown
+                if (inAttackRangeButOnCooldown && hasAnyValidAttack && !isAttacking)
                 {
                     if (!agent.isStopped)
                     {
-                        Debug.Log($"{logPrefix} - STOPPING AGENT | Distance: {distanceToTarget:F2} | EffectiveAttackDist: {effectiveAttackDistance:F2} | MinDist: {minDistance:F2} | isAttacking: {isAttacking} | isRotatingToAttack: {isRotatingToAttack}");
+                        if (showCollisionDebug)
+                        {
+                            Debug.Log($"[{gameObject.name}] Stopping - in attack range but on cooldown");
+                        }
                         agent.isStopped = true;
                         agent.velocity = Vector3.zero;
                     }
                 }
                 else
                 {
-                    // Resume movement when out of attack range or too close
-                    if (agent.isStopped)
+                    // Check for strategic position from EnemyManager (based on role: chaser/interceptor/wanderer)
+                    Vector3 strategicPosition = Vector3.zero;
+                    if (Managers.EnemyManager.Instance != null)
                     {
-                        Debug.Log($"{logPrefix} - RESUMING AGENT | Distance: {distanceToTarget:F2} | EffectiveAttackDist: {effectiveAttackDistance:F2} | Reason: {(distanceToTarget > effectiveAttackDistance ? "OUT_OF_RANGE" : "TOO_CLOSE")}");
-                        agent.isStopped = false;
+                        strategicPosition = Managers.EnemyManager.Instance.GetStrategicPosition(this);
+                    }
+                    
+                    // Prefer strategic position if available
+                    if (strategicPosition != Vector3.zero)
+                    {
+                        float distanceToStrategicPos = Vector3.Distance(transform.position, strategicPosition);
+                        
+                        // Use strategic position for movement
+                        agent.SetDestination(strategicPosition);
+                        
+                        // Check if we're at strategic position
+                        bool atStrategicPosition = distanceToStrategicPos < 1.5f;
+                        
+                        // For root motion zombies, handle stopping
+                        if (useRootMotion)
+                        {
+                            // Only stop when actually attacking or rotating to attack
+                            // Allow movement to strategic position even when at attack range
+                            bool shouldStop = (isAttacking || isRotatingToAttack);
+                            
+                            if (shouldStop)
+                            {
+                                if (!agent.isStopped)
+                                {
+                                    if (showCollisionDebug)
+                                    {
+                                        Debug.Log($"[{gameObject.name}] Stopping for attack - isAttacking: {isAttacking} | isRotating: {isRotatingToAttack}");
+                                    }
+                                    agent.isStopped = true;
+                                    agent.velocity = Vector3.zero;
+                                }
+                            }
+                            else
+                            {
+                                // Keep moving unless at exact strategic position
+                                if (agent.isStopped && !atStrategicPosition)
+                                {
+                                    if (showCollisionDebug)
+                                    {
+                                        Debug.Log($"[{gameObject.name}] Resuming movement to strategic position");
+                                    }
+                                    agent.isStopped = false;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // No strategic position assigned, move toward target
+                        agent.SetDestination(navMeshTarget.position);
+                        
+                        // For root motion zombies, check if we should stop the agent
+                        if (useRootMotion)
+                        {
+                            // Stop agent when at optimal distance or during attack phases
+                            bool shouldStop = (distanceToTarget <= optimalStoppingDistance) || isAttacking || isRotatingToAttack;
+                            
+                            if (shouldStop)
+                            {
+                                if (!agent.isStopped)
+                                {
+                                    if (showCollisionDebug)
+                                    {
+                                        Debug.Log($"[{gameObject.name}] Stopping agent - Distance: {distanceToTarget:F2} <= Optimal: {optimalStoppingDistance:F2} | " +
+                                                 $"isAttacking: {isAttacking} | isRotating: {isRotatingToAttack}");
+                                    }
+                                    agent.isStopped = true;
+                                    agent.velocity = Vector3.zero;
+                                }
+                            }
+                            else
+                            {
+                                // Resume movement when out of optimal distance
+                                if (agent.isStopped)
+                                {
+                                    if (showCollisionDebug)
+                                    {
+                                        Debug.Log($"[{gameObject.name}] Resuming agent - Distance: {distanceToTarget:F2} > Optimal: {optimalStoppingDistance:F2}");
+                                    }
+                                    agent.isStopped = false;
+                                }
+                            }
+                        }
                     }
                 }
-                
-                // Log significant state changes
-                if (Time.frameCount % 60 == 0) // Every 60 frames
-                {
-                    Debug.Log($"{logPrefix} - Root Motion State | Distance: {distanceToTarget:F2} | ShouldStop: {shouldStop} | isStopped: {agent.isStopped} | Velocity: {agent.velocity.magnitude:F2} | Position: {transform.position} | Target: {navMeshTarget.position}");
-                }
-            }
-            
-            // Update the destination continuously
-            Vector3 previousDestination = agent.destination;
-            agent.SetDestination(navMeshTarget.position);
-            
-            // Log destination changes
-            if (Time.frameCount % 90 == 0) // Every 90 frames to reduce spam
-            {
-                Debug.Log($"{logPrefix} - Destination Update | Target: {navMeshTarget.name} | Pos: {navMeshTarget.position} | PrevDest: {previousDestination} | DestChanged: {Vector3.Distance(previousDestination, navMeshTarget.position) > 0.1f} | PathStatus: {agent.pathStatus} | RemainingDistance: {agent.remainingDistance:F2}");
             }
             
             // Update animation parameters
@@ -496,6 +812,257 @@ namespace Enemies
             {
                 UpdateRotation();
             }
+        }
+
+        /// <summary>
+        /// Handle movement during attack cooldowns for ranged enemies to make them feel more natural
+        /// </summary>
+        private void UpdateCooldownMovement()
+        {
+            // Check if cooldown movement is enabled
+            if (!enableCooldownMovement)
+            {
+                return;
+            }
+
+            // Only apply to ranged enemies (those with minimum attack distance)
+            float minAttackDistance = GetMinimumAttackDistance();
+            if (minAttackDistance <= 0)
+            {
+                return; // Not a ranged enemy
+            }
+
+            // Only move during cooldowns when not attacking
+            if (isAttacking || navMeshTarget == null)
+            {
+                return;
+            }
+
+            // Check if we're in a cooldown state (can't attack due to cooldown, not distance/angle)
+            bool inCooldown = IsInAttackCooldown();
+            if (!inCooldown)
+            {
+                // Reset cooldown movement state when not in cooldown
+                if (isMovingDuringCooldown)
+                {
+                    isMovingDuringCooldown = false;
+                    lastCooldownMovementEndTime = Time.time;
+                }
+                return;
+            }
+
+            float timeSinceCooldownMovementStart = Time.time - cooldownMovementStartTime;
+
+            // State machine for cooldown movement
+            if (isMovingDuringCooldown)
+            {
+                // Continue moving until duration expires
+                if (timeSinceCooldownMovementStart < cooldownMovementMaxDuration)
+                {
+                    // Check if we're too close to the player - but with very strict conditions
+                    // Only interrupt if we're in immediate danger (very close) and have been at this target long enough
+                    float distanceToPlayer = Vector3.Distance(transform.position, navMeshTarget.position);
+                    float minDistance = GetMinimumAttackDistance();
+                    float timeSinceLastTargetChange = Time.time - lastTargetChangeTime;
+                    
+                    // Only find new target if CRITICALLY too close (within 50% of minDistance) AND enough time has passed
+                    // This prevents constant repositioning and allows movement to complete
+                    if (distanceToPlayer < (minDistance * 0.5f) && timeSinceLastTargetChange > TARGET_CHANGE_COOLDOWN)
+                    {
+                        FindNewCooldownMovementTarget();
+                        lastTargetChangeTime = Time.time;
+                        isWaitingAtTarget = false; // Reset waiting state
+                    }
+                    
+                    // Check if we've reached the target
+                    float distanceToCooldownTarget = Vector3.Distance(transform.position, cooldownMovementTarget);
+                    
+                    // Check if we've reached the target and should start waiting
+                    // Only consider "reached" if we've been moving for at least 1 second AND we're close to the target
+                    if (!isWaitingAtTarget && 
+                        distanceToCooldownTarget < agent.stoppingDistance + 0.3f && 
+                        timeSinceLastTargetChange > 1.0f)
+                    {
+                        // We've reached the target, start waiting
+                        isWaitingAtTarget = true;
+                        targetReachedTime = Time.time;
+                        agent.isStopped = true; // Stop the agent while waiting
+                    }
+                    
+                    // If we're waiting at the target
+                    if (isWaitingAtTarget)
+                    {
+                        float timeSpentWaiting = Time.time - targetReachedTime;
+                        
+                        // Check if we've waited long enough
+                        if (timeSpentWaiting >= WAIT_AT_TARGET_DURATION && timeSinceLastTargetChange > TARGET_CHANGE_COOLDOWN)
+                        {
+                            // Wait period complete, find a new target
+                            FindNewCooldownMovementTarget();
+                            lastTargetChangeTime = Time.time;
+                            isWaitingAtTarget = false;
+                            agent.isStopped = false;
+                        }
+                    }
+                    else
+                    {
+                        // Keep moving towards cooldown movement target
+                        agent.SetDestination(cooldownMovementTarget);
+                        agent.isStopped = false;
+                        
+                        // Update animation parameters to ensure Speed parameter is set for root motion
+                        UpdateAnimationParameters();
+                    }
+                }
+                else
+                {
+                    // Cooldown movement duration expired
+                    isMovingDuringCooldown = false;
+                    isWaitingAtTarget = false;
+                    lastCooldownMovementEndTime = Time.time;
+                }
+            }
+            else
+            {
+                // Start new cooldown movement if enough time has passed since last movement ended
+                float timeSinceLastCooldownMovement = Time.time - lastCooldownMovementEndTime;
+                
+                if (timeSinceLastCooldownMovement > COOLDOWN_MOVEMENT_COOLDOWN)
+                {
+                    StartCooldownMovement();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Check if the enemy is in an attack cooldown by checking actual attack components
+        /// </summary>
+        /// <returns>True if in cooldown</returns>
+        private bool IsInAttackCooldown()
+        {
+            if (navMeshTarget == null) return false;
+
+            float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
+            float minAttackDistance = GetMinimumAttackDistance();
+            float maxAttackRange = GetMaximumAttackRange();
+            
+            // Must be in range to potentially attack
+            if (distanceToTarget < minAttackDistance || distanceToTarget > maxAttackRange)
+            {
+                return false; // Not in range, so not in cooldown
+            }
+
+            // Check if any attack component is on cooldown
+            bool anyAttackOnCooldown = false;
+            var zombieComponent = GetComponent<Zombie>();
+            if (zombieComponent != null)
+            {
+                var attackComponents = GetComponents<AttackBase>();
+                foreach (var attack in attackComponents)
+                {
+                    if (attack != null && attack.enabled && !attack.CanAttack())
+                    {
+                        anyAttackOnCooldown = true;
+                        break;
+                    }
+                }
+            }
+            
+            return anyAttackOnCooldown;
+        }
+
+        /// <summary>
+        /// Start a new cooldown movement sequence
+        /// </summary>
+        private void StartCooldownMovement()
+        {
+            if (navMeshTarget == null) return;
+
+            FindNewCooldownMovementTarget();
+            isMovingDuringCooldown = true;
+            cooldownMovementStartTime = Time.time;
+            lastTargetChangeTime = Time.time; // Initialize the target change timer
+        }
+
+        /// <summary>
+        /// Find a new target position for cooldown movement - strafe around the player at optimal range
+        /// </summary>
+        private void FindNewCooldownMovementTarget()
+        {
+            if (navMeshTarget == null) return;
+
+            Vector3 currentPos = transform.position;
+            Vector3 targetPos = navMeshTarget.position;
+            float minAttackDistance = GetMinimumAttackDistance();
+            
+            // Calculate the desired distance (add significant buffer beyond min distance)
+            float desiredDistance = minAttackDistance + UnityEngine.Random.Range(2f, 5f);
+            
+            // Get direction to target
+            Vector3 directionToTarget = (targetPos - currentPos).normalized;
+            
+            // Choose a random strafe angle (left or right, 60-120 degrees)
+            float strafeAngle = UnityEngine.Random.Range(-120f, 120f);
+            if (Mathf.Abs(strafeAngle) < 60f)
+            {
+                strafeAngle += strafeAngle < 0 ? -60f : 60f; // Ensure minimum 60 degree angle
+            }
+            
+            // Calculate strafe direction
+            Vector3 strafeDirection = Quaternion.AngleAxis(strafeAngle, Vector3.up) * directionToTarget;
+            
+            // Calculate target position at desired distance from player
+            Vector3 strafePosition = targetPos + strafeDirection * desiredDistance;
+            
+            // Sample NavMesh to find valid position
+            UnityEngine.AI.NavMeshHit hit;
+            if (UnityEngine.AI.NavMesh.SamplePosition(strafePosition, out hit, 5f, UnityEngine.AI.NavMesh.AllAreas))
+            {
+                cooldownMovementTarget = hit.position;
+            }
+            else
+            {
+                // Fallback: try a simpler position - just move to the side
+                Vector3 rightVector = Vector3.Cross(directionToTarget, Vector3.up);
+                float sideDirection = UnityEngine.Random.value > 0.5f ? 1f : -1f;
+                Vector3 sidePosition = currentPos + rightVector * sideDirection * 3f;
+                
+                if (UnityEngine.AI.NavMesh.SamplePosition(sidePosition, out hit, 5f, UnityEngine.AI.NavMesh.AllAreas))
+                {
+                    cooldownMovementTarget = hit.position;
+                }
+                else
+                {
+                    // Ultimate fallback: move slightly forward
+                    cooldownMovementTarget = currentPos + directionToTarget * 2f;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get the maximum attack range from all available attacks
+        /// </summary>
+        /// <returns>Maximum attack range</returns>
+        public float GetMaximumAttackRange()
+        {
+            float maxRange = 0f;
+
+            // Check Zombie attack components
+            var zombieComponent = GetComponent<Zombie>();
+            if (zombieComponent != null)
+            {
+                var attackComponents = GetComponents<AttackBase>();
+                foreach (var attack in attackComponents)
+                {
+                    if (attack != null && attack.enabled)
+                    {
+                        maxRange = Mathf.Max(maxRange, attack.maxRange);
+                    }
+                }
+            }
+
+            // Fallback to a reasonable default
+            return maxRange > 0 ? maxRange : 10f;
         }
 
         private void UpdateAnimationParameters()
@@ -516,6 +1083,130 @@ namespace Enemies
             
             // Use centralized rotation utility
             NavigationUtils.HandleMovementRotation(transform, navMeshTarget, agent.velocity, rotationSpeed, MOVEMENT_VELOCITY_THRESHOLD);
+        }
+
+        /// <summary>
+        /// Get the current attack component for IK forwarding
+        /// Override in child classes to provide the current attack
+        /// </summary>
+        /// <returns>The current attack component, or null if none</returns>
+        protected virtual AttackBase GetCurrentAttackForIK()
+        {
+            return null;
+        }
+
+        /// <summary>
+        /// Called by Unity for IK (Inverse Kinematics) updates
+        /// Implements general head tracking for all enemies when not attacking
+        /// </summary>
+        /// <param name="layerIndex">The IK layer index</param>
+        protected virtual void OnAnimatorIK(int layerIndex)
+        {
+            if (animator == null) return;
+            
+            // Check if currently reacting to a hit
+            bool isReactingToHit = animator.isHuman && LastHitOrigin != Vector3.zero && 
+                                   (Time.time - LastHitTime) < 0.6f; // Within reaction duration (matches IKReactionUtils)
+            
+            // Priority 1: Process hit reactions (immediate, stateless IK reactions)
+            if (isReactingToHit)
+            {
+                // Scale reaction intensity based on poise damage (typical weapon poise: 5-25)
+                float scaledIntensity = Mathf.Clamp(LastHitPoiseDamage / 20f, 0.5f, 1.5f); // Min 0.5, max 1.5 (ensures visible reaction)
+                
+                if (showCollisionDebug && (Time.time - LastHitTime) < 0.05f)
+                {
+                    Debug.Log($"[{gameObject.name}] IK Reaction - Poise: {LastHitPoiseDamage}, Scaled Intensity: {scaledIntensity:F2}");
+                }
+                
+                IKReactionUtils.ApplyHitReactionIK(animator, transform, LastHitOrigin, LastHitTime, 0.6f, scaledIntensity);
+                // Hit reactions take full priority - return to avoid conflicts
+                return;
+            }
+            
+            // Priority 2: If attacking, forward IK to the current attack component
+            if (isAttacking)
+            {
+                AttackBase attack = GetCurrentAttackForIK();
+                if (attack != null)
+                {
+                    attack.OnAnimatorIK(layerIndex);
+                    return;
+                }
+            }
+            
+            // Priority 3: Perform general head tracking if enabled
+            if (!enableHeadTracking) return;
+            
+            // Check if we should do head tracking
+            bool shouldTrackHead = ShouldPerformHeadTracking();
+            
+            if (shouldTrackHead && navMeshTarget != null && Health > 0)
+            {
+                // Calculate target position with Y offset for head height
+                Vector3 targetPosition = navMeshTarget.position + Vector3.up * 1.5f; // Assume target head height
+                
+                // Calculate direction from current position to target
+                Vector3 directionToTarget = (targetPosition - transform.position).normalized;
+                
+                // Check if target is within head rotation limits
+                float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
+                float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
+                
+                if (angleToTarget <= maxHeadTrackingAngle && distanceToTarget <= headTrackingDistance)
+                {
+                    // Enable head tracking
+                    isHeadTrackingActive = true;
+                    
+                    // Smoothly lerp the look-at target position to prevent snappy head movements
+                    currentLookAtTarget = Vector3.Lerp(currentLookAtTarget, targetPosition, headTrackingLerpSpeed * Time.deltaTime);
+                    
+                    currentHeadTrackingWeight = Mathf.Lerp(currentHeadTrackingWeight, headTrackingWeight, headTrackingLerpSpeed * Time.deltaTime);
+                }
+                else
+                {
+                    // Target is outside head tracking limits
+                    isHeadTrackingActive = false;
+                    currentHeadTrackingWeight = Mathf.Lerp(currentHeadTrackingWeight, 0f, headTrackingLerpSpeed * Time.deltaTime);
+                }
+            }
+            else
+            {
+                // No target or shouldn't track, disable head tracking
+                isHeadTrackingActive = false;
+                currentHeadTrackingWeight = Mathf.Lerp(currentHeadTrackingWeight, 0f, headTrackingLerpSpeed * Time.deltaTime);
+            }
+            
+            // Apply head IK weights
+            if (currentHeadTrackingWeight > 0.01f)
+            {
+                animator.SetLookAtWeight(currentHeadTrackingWeight, headTrackingRotationWeight, 0f, 0f, 0f);
+                animator.SetLookAtPosition(currentLookAtTarget);
+            }
+            else
+            {
+                animator.SetLookAtWeight(0f);
+            }
+        }
+
+        /// <summary>
+        /// Determine if the enemy should perform head tracking
+        /// Override in child classes to customize when head tracking should occur
+        /// </summary>
+        /// <returns>True if head tracking should be performed</returns>
+        protected virtual bool ShouldPerformHeadTracking()
+        {
+            // Don't track head when attacking (let attack components handle their own IK)
+            if (isAttacking) return false;
+            
+            // Don't track head when dead
+            if (Health <= 0) return false;
+            
+            // Don't track head when stunned/poise broken
+            if (IsPoiseBroken()) return false;
+            
+            // Track head when we have a target and are moving or idle
+            return navMeshTarget != null;
         }
 
         private void CheckIfStuck()
@@ -605,12 +1296,18 @@ namespace Enemies
                     if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null)
                     {
                         newTarget = PlayerController.Instance._possessedNPC.GetTransform();
+                        Debug.Log($"[{gameObject.name}] Found player target in ROGUE_LITE mode: {newTarget.name}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[{gameObject.name}] PlayerController.Instance or _possessedNPC is null in ROGUE_LITE mode");
                     }
                     break;
                     
                 case GameMode.CAMP:
                 case GameMode.CAMP_ATTACK:
                     newTarget = FindCampTarget();
+                    Debug.Log($"[{gameObject.name}] Found camp target: {(newTarget != null ? newTarget.name : "null")}");
                     break;
                     
                 default:
@@ -621,6 +1318,7 @@ namespace Enemies
             if (newTarget != null)
             {
                 navMeshTarget = newTarget;
+                Debug.Log($"[{gameObject.name}] Target set to: {navMeshTarget.name}");
                 // Speed will be set by UpdateAnimationParameters based on agent velocity
             }
             else
@@ -761,6 +1459,54 @@ namespace Enemies
             return NavigationUtils.RotateTowardsTargetForAction(transform, navMeshTarget, rotationSpeed, ROTATION_TOWARDS_TARGET_SPEED_MULTIPLIER, ATTACK_READY_ANGLE_THRESHOLD, true);
         }
 
+        /// <summary>
+        /// Checks if the enemy is currently in a poise-broken state
+        /// </summary>
+        /// <returns>True if poise is broken and enemy should be stunned</returns>
+        protected bool IsPoiseBroken()
+        {
+            return isPoiseBroken || Poise <= 0;
+        }
+
+        /// <summary>
+        /// Gets the poise damage this enemy deals with its attacks
+        /// </summary>
+        /// <returns>Poise damage amount for this enemy's attacks</returns>
+        public float GetAttackPoiseDamage()
+        {
+            // Base poise damage based on character type
+            float basePoiseDamage = 0f;
+            
+            switch (characterType)
+            {
+                case CharacterType.ZOMBIE_MELEE:
+                    basePoiseDamage = 15f;
+                    break;
+                case CharacterType.ZOMBIE_SPITTER:
+                    basePoiseDamage = 8f; // Lower poise damage for ranged attacks
+                    break;
+                case CharacterType.ZOMBIE_TANK:
+                    basePoiseDamage = 25f; // Higher poise damage for tank
+                    break;
+                case CharacterType.MACHINE_DRONE:
+                    basePoiseDamage = 12f;
+                    break;
+                case CharacterType.MACHINE_ROBOT:
+                    basePoiseDamage = 20f;
+                    break;
+                case CharacterType.BOSS_1:
+                case CharacterType.BOSS_2:
+                case CharacterType.BOSS_3:
+                    basePoiseDamage = 30f; // High poise damage for bosses
+                    break;
+                default:
+                    basePoiseDamage = 10f; // Default poise damage
+                    break;
+            }
+            
+            return basePoiseDamage;
+        }
+
         #endregion
 
         #region Attack Validation
@@ -780,6 +1526,12 @@ namespace Enemies
 
             // Basic target validation
             if (navMeshTarget == null || !IsTargetStillValid(navMeshTarget))
+            {
+                return false;
+            }
+
+            // Don't attack if poise is broken (enemy is stunned)
+            if (IsPoiseBroken())
             {
                 return false;
             }
@@ -804,9 +1556,31 @@ namespace Enemies
 
         #region Combat & Damage
 
+
         public virtual void Attack()
         {
             Debug.LogWarning($"Attack not overridden for {gameObject.name}");
+        }
+        
+        /// <summary>
+        /// Deals damage to a target (legacy method - use AttackBase for new implementations)
+        /// </summary>
+        /// <param name="target">The target to damage</param>
+        /// <param name="baseDamage">Base damage amount</param>
+        /// <param name="poiseDamage">Poise damage amount</param>
+        protected virtual void DealDamageToTarget(IDamageable target, float baseDamage, float poiseDamage = 0f)
+        {
+            if (target == null) return;
+            
+            // Legacy method - new attack components should use AttackBase.DealDamage instead
+            if (poiseDamage > 0)
+            {
+                target.TakeDamage(baseDamage, poiseDamage, transform);
+            }
+            else
+            {
+                target.TakeDamage(baseDamage, transform);
+            }
         }
 
         protected virtual void BeginAttackSequence()
@@ -842,26 +1616,22 @@ namespace Enemies
 
         public void TakeDamage(float amount, Transform damageSource = null)
         {
+            // Prevent taking damage if already dead
+            if (Health <= 0) return;
+            
             float previousHealth = Health;
             Health -= amount;
 
-            // Calculate hit direction and trigger damaged animation
-            DamageUtils.TriggerDamagedAnimation(animator, DamageUtils.CalculateHitDirection(transform, damageSource));
+            // Use DamageUtils for consistent damage handling
+            DamageUtils.ApplyDamage(this, amount, damageSource, animator, transform, 
+                OnDamageTaken, OnDeath, true);
 
-            if (animator != null)
-            {
-                animator.ResetTrigger("Attack");
-                animator.Play("Default", 1, 0);
-                animator.SetTrigger("Damaged");
-            }
-
-            OnDamageTaken?.Invoke(amount, Health);
-
+            // Track hit for procedural IK reactions
             if (damageSource != null)
             {
-                var (hitPoint, hitNormal) = DamageUtils.CalculateHitPointAndNormal(transform, damageSource);
-                EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
-                
+                LastHitOrigin = damageSource.position;
+                LastHitTime = Time.time;
+                LastHitPoiseDamage = 10f; // Default poise damage for basic attacks
                 HandleDamageReaction(damageSource);
             }
 
@@ -875,35 +1645,43 @@ namespace Enemies
 
 
 
-            /// <summary>
-        /// Overloaded TakeDamage method that allows explicit hit direction specification
+        /// <summary>
+        /// Overloaded TakeDamage method that handles both health and poise damage
         /// </summary>
         /// <param name="amount">Amount of damage to take</param>
-        /// <param name="hitDirection">Explicit hit direction value (-1 = back, 0 = side, 1 = front)</param>
+        /// <param name="poiseDamage">Amount of poise damage to take</param>
         /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
-        public void TakeDamage(float amount, float hitDirection, Transform damageSource = null)
+        public void TakeDamage(float amount, float poiseDamage, Transform damageSource = null)
         {
+            // Prevent taking damage if already dead
+            if (Health <= 0) return;
+            
             float previousHealth = Health;
             Health -= amount;
 
-            // Convert 1D hit direction to 2D for the blend tree
-            Vector2 hitDirection2D = new Vector2(0f, hitDirection); // X = 0 (center), Y = forward/back
-            DamageUtils.TriggerDamagedAnimation(animator, hitDirection2D);
+            // Use DamageUtils for consistent damage and poise handling
+            var (hitDirection, poiseBroken) = DamageUtils.ApplyDamageWithPoise(this, amount, poiseDamage, 
+                damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
 
-            if (animator != null)
+            // Update poise damage tracking
+            if (poiseDamage > 0)
             {
-                animator.ResetTrigger("Attack");
-                animator.Play("Default", 1, 0);
-                animator.SetTrigger("Damaged");
+                lastPoiseDamageTime = Time.time;
+                if (poiseBroken)
+                {
+                    isPoiseBroken = true;
+                }
             }
 
-            OnDamageTaken?.Invoke(amount, Health);
-
+            // Track hit for procedural IK reactions (skip if poise broken to avoid conflicts with stagger animations)
             if (damageSource != null)
             {
-                var (hitPoint, hitNormal) = DamageUtils.CalculateHitPointAndNormal(transform, damageSource);
-                EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
-                
+                if (!poiseBroken)
+                {
+                    LastHitOrigin = damageSource.position;
+                    LastHitTime = Time.time;
+                    LastHitPoiseDamage = poiseDamage; // Use actual poise damage for reaction scaling
+                }
                 HandleDamageReaction(damageSource);
             }
 
@@ -915,55 +1693,9 @@ namespace Enemies
 
         protected virtual void HandleDamageReaction(Transform damageSource)
         {
-            Vector3 direction = (damageSource.position - transform.position).normalized;
-            direction.y = 0;
-            if (direction != Vector3.zero)
-            {
-                Quaternion targetRotation = Quaternion.LookRotation(direction);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 10f);
-
-                // Add knockback effect
-                Vector3 knockbackDirection = -direction;
-                float maxKnockbackDistance = 1.0f;
-                float distanceFromSource = Vector3.Distance(transform.position, damageSource.position);
-                float knockbackDistance = Mathf.Lerp(maxKnockbackDistance, maxKnockbackDistance * 0.3f, distanceFromSource / 5f);
-                Vector3 newPosition = transform.position + knockbackDirection * knockbackDistance;
-
-                if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, knockbackDistance, NavMesh.AllAreas))
-                {
-                    StartCoroutine(KnockbackRoutine(hit.position));
-                }
-            }
-        }
-
-        private IEnumerator KnockbackRoutine(Vector3 targetPosition)
-        {
-            float duration = 0.2f;
-            float elapsed = 0f;
-            Vector3 startPosition = transform.position;
-            
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                float t = elapsed / duration;
-                Vector3 newPosition = Vector3.Lerp(startPosition, targetPosition, t);
-                
-                if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, KNOCKBACK_SAMPLE_DISTANCE, NavMesh.AllAreas))
-                {
-                    if (useRootMotion)
-                    {
-                        // For root motion, just move the transform - the agent will catch up
-                        transform.position = hit.position;
-                    }
-                    else
-                    {
-                        // For non-root motion, use agent.Warp
-                    agent.Warp(hit.position);
-                    }
-                }
-                
-                yield return null;
-            }
+            // Knockback is now handled procedurally via IKReactionUtils.CalculateKnockbackOffset()
+            // which is applied in Update() for smooth, continuous knockback
+            // No coroutines or instant teleports needed!
         }
 
         public virtual void Die()
@@ -1053,6 +1785,93 @@ namespace Enemies
             }
         }
 
+        private void UpdatePoiseRecovery()
+        {
+            // Only recover poise if enough time has passed since last poise damage
+            if (Time.time - lastPoiseDamageTime > poiseRecoveryDelay && Poise < MaxPoise)
+            {
+                float recoveryAmount = poiseRecoveryRate * Time.deltaTime;
+                DamageUtils.RestorePoise(this, recoveryAmount);
+                
+                // Reset poise broken state if we've recovered enough
+                if (isPoiseBroken && Poise > MaxPoise * 0.5f)
+                {
+                    isPoiseBroken = false;
+                }
+            }
+        }
+
+        private void ApplyCharacterTypePoiseConfig()
+        {
+            switch (characterType)
+            {
+                // Human types - moderate poise
+                case CharacterType.HUMAN_MALE_1:
+                case CharacterType.HUMAN_MALE_2:
+                case CharacterType.HUMAN_FEMALE_1:
+                case CharacterType.HUMAN_FEMALE_2:
+                    MaxPoise = 40f;
+                    Poise = MaxPoise;
+                    poiseRecoveryRate = 8f;
+                    poiseRecoveryDelay = 2f;
+                    break;
+
+                // Zombie types - varying poise based on size/strength
+                case CharacterType.ZOMBIE_MELEE:
+                    MaxPoise = 60f;
+                    Poise = MaxPoise;
+                    poiseRecoveryRate = 5f;
+                    poiseRecoveryDelay = 3f;
+                    break;
+                case CharacterType.ZOMBIE_SPITTER:
+                    MaxPoise = 30f;
+                    Poise = MaxPoise;
+                    poiseRecoveryRate = 5f;
+                    poiseRecoveryDelay = 3f;
+                    break;
+                case CharacterType.ZOMBIE_TANK:
+                    MaxPoise = 120f;
+                    Poise = MaxPoise;
+                    poiseRecoveryRate = 5f;
+                    poiseRecoveryDelay = 3f;
+                    break;
+
+                // Machine types - high poise resistance
+                case CharacterType.MACHINE_DRONE:
+                    MaxPoise = 80f;
+                    Poise = MaxPoise;
+                    poiseRecoveryRate = 12f;
+                    poiseRecoveryDelay = 1f;
+                    break;
+                case CharacterType.MACHINE_TURRET_BASE_TARGET:
+                    MaxPoise = 200f;
+                    Poise = MaxPoise;
+                    poiseRecoveryRate = 15f;
+                    poiseRecoveryDelay = 1f;
+                    break;
+                case CharacterType.MACHINE_ROBOT:
+                    MaxPoise = 100f;
+                    Poise = MaxPoise;
+                    poiseRecoveryRate = 12f;
+                    poiseRecoveryDelay = 1f;
+                    break;
+
+                // Boss types - very high poise
+                case CharacterType.BOSS_1:
+                case CharacterType.BOSS_2:
+                case CharacterType.BOSS_3:
+                    MaxPoise = 300f;
+                    Poise = MaxPoise;
+                    poiseRecoveryRate = 10f;
+                    poiseRecoveryDelay = 2.5f;
+                    break;
+
+                default:
+                    // Keep default values
+                    break;
+            }
+        }
+
         #endregion
 
         #region Debug Visualization
@@ -1092,6 +1911,183 @@ namespace Enemies
                 Gizmos.color = Color.magenta;
                 Vector3 obstacleSize = obstacle.size;
                 Gizmos.DrawWireCube(navMeshTarget.position, obstacleSize);
+            }
+
+            // Draw cooldown movement visualization
+            if (isMovingDuringCooldown && cooldownMovementTarget != Vector3.zero)
+            {
+                // Draw cooldown movement target
+                Gizmos.color = Color.cyan;
+                Gizmos.DrawWireSphere(cooldownMovementTarget, 0.5f);
+                
+                // Draw line to cooldown movement target
+                Gizmos.color = Color.cyan;
+                Gizmos.DrawLine(transform.position, cooldownMovementTarget);
+                
+                // Draw arrow indicating direction
+                Vector3 direction = (cooldownMovementTarget - transform.position).normalized;
+                Vector3 arrowHead = cooldownMovementTarget - direction * 0.5f;
+                Vector3 arrowLeft = arrowHead + Quaternion.AngleAxis(45f, Vector3.up) * -direction * 0.3f;
+                Vector3 arrowRight = arrowHead + Quaternion.AngleAxis(-45f, Vector3.up) * -direction * 0.3f;
+                
+                Gizmos.DrawLine(arrowHead, arrowLeft);
+                Gizmos.DrawLine(arrowHead, arrowRight);
+            }
+
+            // Draw head tracking visualization
+            if (enableHeadTracking && isHeadTrackingActive && currentLookAtTarget != Vector3.zero)
+            {
+                // Draw line from enemy head to look-at target
+                Vector3 headPosition = transform.position + Vector3.up * 1.6f; // Approximate head height
+                Gizmos.color = Color.white;
+                Gizmos.DrawLine(headPosition, currentLookAtTarget);
+                
+                // Draw head tracking target position
+                Gizmos.color = Color.white;
+                Gizmos.DrawWireSphere(currentLookAtTarget, 0.2f);
+                
+                // Draw head tracking angle limits
+                if (navMeshTarget != null)
+                {
+                    Vector3 targetPos = navMeshTarget.position + Vector3.up * 1.5f;
+                    Vector3 directionToTarget = (targetPos - transform.position).normalized;
+                    
+                    // Draw left angle limit
+                    Vector3 leftLimit = Quaternion.AngleAxis(-maxHeadTrackingAngle, Vector3.up) * transform.forward;
+                    Gizmos.color = new Color(1f, 1f, 1f, 0.3f);
+                    Gizmos.DrawRay(transform.position + Vector3.up * 1.6f, leftLimit * headTrackingDistance);
+                    
+                    // Draw right angle limit
+                    Vector3 rightLimit = Quaternion.AngleAxis(maxHeadTrackingAngle, Vector3.up) * transform.forward;
+                    Gizmos.DrawRay(transform.position + Vector3.up * 1.6f, rightLimit * headTrackingDistance);
+                }
+            }
+        }
+
+        #endregion
+
+        #region Elemental Damage System
+
+        [Header("Elemental Resistances")]
+        [SerializeField] private ElementalResistance[] resistances = new ElementalResistance[0];
+
+        /// <summary>
+        /// Gets the character's resistance to a specific damage type
+        /// </summary>
+        /// <param name="damageType">The damage type to check resistance for</param>
+        /// <returns>The resistance level for this damage type</returns>
+        public DamageResistance GetResistance(AttackElement damageType)
+        {
+            if (resistances != null)
+            {
+                foreach (var resistance in resistances)
+                {
+                    if (resistance != null && resistance.damageType == damageType)
+                    {
+                        return resistance.resistance;
+                    }
+                }
+            }
+            return DamageResistance.NORMAL;
+        }
+        
+        /// <summary>
+        /// Gets the damage multiplier for a specific damage type
+        /// </summary>
+        /// <param name="damageType">The damage type to check multiplier for</param>
+        /// <returns>The damage multiplier (0.0 to 3.0)</returns>
+        public float GetDamageMultiplier(AttackElement damageType)
+        {
+            return DamageUtils.GetDamageMultiplier(GetResistance(damageType));
+        }
+
+        /// <summary>
+        /// Take damage with elemental type consideration
+        /// </summary>
+        /// <param name="amount">Base amount of damage to take</param>
+        /// <param name="damageType">Type of elemental damage</param>
+        /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
+        public void TakeDamage(float amount, AttackElement damageType, Transform damageSource = null)
+        {
+            // Prevent taking damage if already dead
+            if (Health <= 0) return;
+            
+            // Use DamageUtils for elemental damage calculation with resistance
+            var (hitDirection, finalDamage) = DamageUtils.ApplyElementalDamage(this, amount, damageType, 
+                damageSource, animator, transform, OnDamageTaken, OnDeath, true);
+
+            // Skip if immune to this damage type
+            if (finalDamage <= 0) return;
+
+            // Apply the calculated damage
+            float previousHealth = Health;
+            Health -= finalDamage;
+            OnDamageTaken?.Invoke(finalDamage, Health);
+
+            // Track hit for procedural IK reactions
+            if (damageSource != null)
+            {
+                LastHitOrigin = damageSource.position;
+                LastHitTime = Time.time;
+                LastHitPoiseDamage = 10f; // Default poise damage for elemental attacks without poise
+                HandleDamageReaction(damageSource);
+            }
+
+            if (Health <= 0)
+            {
+                Die();
+            }
+        }
+
+        /// <summary>
+        /// Take damage with poise damage and elemental type consideration
+        /// </summary>
+        /// <param name="amount">Base amount of damage to take</param>
+        /// <param name="poiseDamage">Amount of poise damage to take</param>
+        /// <param name="damageType">Type of elemental damage</param>
+        /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
+        public void TakeDamage(float amount, float poiseDamage, AttackElement damageType, Transform damageSource = null)
+        {
+            // Prevent taking damage if already dead
+            if (Health <= 0) return;
+            
+            // Use DamageUtils for elemental damage calculation with resistance
+            var (hitDirection, finalDamage, poiseBroken) = DamageUtils.ApplyElementalDamageWithPoise(this, amount, poiseDamage, damageType, 
+                damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
+
+            // Skip if immune to this damage type
+            if (finalDamage <= 0) return;
+
+            // Apply the calculated damage
+            float previousHealth = Health;
+            Health -= finalDamage;
+            OnDamageTaken?.Invoke(finalDamage, Health);
+
+            // Update poise damage tracking
+            if (poiseDamage > 0)
+            {
+                lastPoiseDamageTime = Time.time;
+                if (poiseBroken)
+                {
+                    isPoiseBroken = true;
+                }
+            }
+
+            // Track hit for procedural IK reactions (skip if poise broken to avoid conflicts with stagger animations)
+            if (damageSource != null)
+            {
+                if (!poiseBroken)
+                {
+                    LastHitOrigin = damageSource.position;
+                    LastHitTime = Time.time;
+                    LastHitPoiseDamage = poiseDamage; // Use actual poise damage for reaction scaling
+                }
+                HandleDamageReaction(damageSource);
+            }
+
+            if (Health <= 0)
+            {
+                Die();
             }
         }
 

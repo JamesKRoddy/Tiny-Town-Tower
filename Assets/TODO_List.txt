@@ -1,44 +1,54 @@
 *****Current Work*****
 
-Finalizing game loops:
-
-Camp management:
-
-Clean system:
-Next ppl get sick, stop working completely
-Buildings to work on:
-Check cleaning station still works
-Toilet
-
-Health system for settlers:
-Settlers not treated will die, recover or turn to zombies eventually (this is just based on their age and luck)
-They can increase chances of recovery by not working or even better receiving treatment.
 
 
-Tomorrow work:
+****** Tomorrow work:
 
-Enviromental hazzards in the roguelike section enviromental hazzards, electrical/acid etc.
 
-Add in some poise damage for enemy and player attacks which dictate if knockback animation should play
+****** Next work:
 
-Need some close range attacks for ranged zombies
+Charge up attacks by holding down buttons
 
-Visual effects from elemental weapons eg. zombies get shocked by electrical weapon, they freeze and particles are emitted.
+Ladders for the player to reach secret areas
+
+Have to test turrets using the new damage system
+
+Sweet spot for attack animations which grant extra bonus damage/effects
+
+Custom inspectors for NPC and their components, enemies, managers that need it
+
+Create the scriptable obj and prefabs for: Genetic mutations, weapons, world objects etc.
 
 VFX for player
 
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
 
+Recruitable NPCs in roguelike section shouldn't wander, get tired/sick etc. They should just hang out until the player talks to them. Have to create an animation state to just have idle animations
 
-Bugs and refactoring:
+****** Bugs and refactoring:
+
 PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
 
-Errors:
+Spawning enemies to attack camp issues:
+If theres no npcs newly spawned in enemies dont attack buildings
+Buildings only take damage occasionally
+Npc get away from zombies too easily
+
+Size of the mutation grid UI is wrong
+
+So can possess npc right as they fall asleep and so no animations player on the possessed npc.
+
+Zombies cant walk through vomit pools
+
+Player doesn't spawn to spawn point when going into the roguelike overworld or into roguelike building
+
+****** Errors:
 
 
 
 
-Add to save load manager:
+****** Add to save load manager:
+
 Construction, repair and destruction sites
 Time of day
 
@@ -62,18 +72,31 @@ Status effects, adding sleep, work etc effects to npcs Also damage ones like fir
 
 Test upgrade and destruction effects for buildings
 
+Combine the poise and elemental systems and add visual effects and animations from elemental weapons eg. zombies get shocked by electrical weapon, they freeze and particles are emitted.
+
+Health system for settlers:
+Settlers not treated will die, recover or turn to zombies eventually (this is just based on their age and luck)
+They can increase chances of recovery by not working or even better receiving treatment.
+
+Finalise the difficulty system making enemies faster, more damage, more health, EnemyManager changes to change how the mobs behave, spawn different waves with harder zombies etc.
 
 *****Ideas*****
 
 Enemies
 Slower animations for injured enemies
+Enemies throw other enemies at the player 
+Occationally enemies with really low health will try to flee from the player
 
 Mutations
 One that shows enemies life bars
+Increase poise damage
+Increase players poise
 
 Research
 Unlock vaulting and dash for roguelike to increase movement options
 Strength that allows you to push heavier objects to open new areas
+Vaulting over obstacles
+Vaulting over enemies?
 
 Buildings:
 An alarm that will alert NPCs of an incoming zombie attack

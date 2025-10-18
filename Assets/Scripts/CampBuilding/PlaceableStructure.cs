@@ -60,6 +60,19 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
         get => structureScriptableObj != null ? structureScriptableObj.maxHealth : 100f;
         set { /* Override in derived classes if needed */ }
     }
+
+    // Poise properties - buildings don't use poise, so return default values
+    public float Poise 
+    { 
+        get => 0f; 
+        set { /* Buildings don't use poise */ } 
+    }
+    
+    public float MaxPoise 
+    { 
+        get => 0f; 
+        set { /* Buildings don't use poise */ } 
+    }
     
     // IDamageable implementation - for compatibility with existing systems
     public CharacterType CharacterType => CharacterType.NONE;
@@ -69,6 +82,11 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
     
     public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
     public WorkTask GetCurrentWorkTask() => currentWorkTask;
+    
+    // Hit reaction tracking (used for directional shake effects on buildings)
+    public Vector3 LastHitOrigin { get; set; } = Vector3.zero;
+    public float LastHitTime { get; set; } = -999f;
+    public float LastHitPoiseDamage { get; set; } = 0f;
 
     #endregion
 
@@ -312,6 +330,13 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
         OnDamageTaken?.Invoke(amount, currentHealth);
         OnHealthChanged?.Invoke(currentHealth / MaxHealth);
         
+        // Track hit origin for directional shake effects
+        if (damageSource != null)
+        {
+            LastHitOrigin = damageSource.position;
+            LastHitTime = Time.time;
+        }
+        
         // Calculate actual hit point and surface normal
         Vector3 hitPoint;
         Vector3 hitNormal;
@@ -333,13 +358,56 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
         // Play hit VFX using building effects at actual hit point
         EffectManager.Instance?.PlayHitEffect(hitPoint, hitNormal, buildingCategory);
         
-        // Trigger damage shake effect
+        // Trigger damage shake effect (now uses LastHitOrigin for direction)
         TriggerDamageShake(amount);
         
         if (currentHealth <= 0)
         {
             Die();
         }
+    }
+
+    // Overloaded TakeDamage method for poise damage - buildings don't use poise
+    public virtual void TakeDamage(float amount, float poiseDamage, Transform damageSource = null)
+    {
+        // Buildings don't use poise, so just call the regular TakeDamage method
+        TakeDamage(amount, damageSource);
+    }
+
+    // Elemental damage methods - buildings have normal resistance to all elements
+    public virtual void TakeDamage(float amount, AttackElement damageType, Transform damageSource = null)
+    {
+        // Buildings have normal resistance to all elemental damage types
+        TakeDamage(amount, damageSource);
+    }
+
+    public virtual void TakeDamage(float amount, float poiseDamage, AttackElement damageType, Transform damageSource = null)
+    {
+        // Buildings don't use poise, so just call the elemental damage method
+        TakeDamage(amount, damageType, damageSource);
+    }
+
+    [Header("Elemental Resistances")]
+    [SerializeField] private ElementalResistance[] resistances = new ElementalResistance[0];
+
+    public virtual DamageResistance GetResistance(AttackElement damageType)
+    {
+        if (resistances != null)
+        {
+            foreach (var resistance in resistances)
+            {
+                if (resistance != null && resistance.damageType == damageType)
+                {
+                    return resistance.resistance;
+                }
+            }
+        }
+        return DamageResistance.NORMAL;
+    }
+    
+    public virtual float GetDamageMultiplier(AttackElement damageType)
+    {
+        return DamageUtils.GetDamageMultiplier(GetResistance(damageType));
     }
 
     /// <summary>
@@ -367,29 +435,63 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
     }
 
     /// <summary>
-    /// Coroutine that shakes all mesh renderers for the specified duration
+    /// Coroutine that shakes all mesh renderers for the specified duration.
+    /// Uses LastHitOrigin to apply directional shake - child objects closer to hit shake more.
     /// </summary>
     private IEnumerator ShakeMeshRenderers(float intensity)
     {
         float elapsed = 0f;
+        
+        // Calculate hit direction for directional displacement
+        Vector3 hitDirection = Vector3.zero;
+        bool hasHitDirection = LastHitOrigin != Vector3.zero;
+        
+        if (hasHitDirection)
+        {
+            // Direction away from hit (for displacement)
+            hitDirection = (transform.position - LastHitOrigin).normalized;
+            hitDirection.y *= 0.5f; // Reduce vertical component for more natural shake
+        }
         
         while (elapsed < shakeDuration)
         {
             float progress = elapsed / shakeDuration;
             float currentIntensity = intensity * shakeDecay.Evaluate(progress);
             
-            // Apply random shake to each mesh renderer
+            // Apply shake to each mesh renderer, stronger for parts closer to hit
             for (int i = 0; i < meshRenderers.Length; i++)
             {
                 if (meshRenderers[i] != null)
                 {
-                    Vector3 randomOffset = new Vector3(
+                    Vector3 randomShake = new Vector3(
                         UnityEngine.Random.Range(-currentIntensity, currentIntensity),
                         UnityEngine.Random.Range(-currentIntensity, currentIntensity),
                         UnityEngine.Random.Range(-currentIntensity, currentIntensity)
                     );
                     
-                    meshRenderers[i].transform.localPosition = originalMeshPositions[i] + randomOffset;
+                    Vector3 finalOffset = randomShake;
+                    
+                    // Add directional displacement if we have hit data
+                    if (hasHitDirection)
+                    {
+                        Vector3 worldPos = meshRenderers[i].transform.position;
+                        float distanceToHit = Vector3.Distance(worldPos, LastHitOrigin);
+                        
+                        // Parts closer to hit point shake more intensely
+                        float proximityFactor = Mathf.Clamp01(1f - (distanceToHit / 10f)); // Max influence within 10 units
+                        
+                        // Add directional push away from hit
+                        Vector3 directionalPush = hitDirection * (currentIntensity * 2f * proximityFactor);
+                        
+                        // Transform to local space for application
+                        Vector3 localDirectionalPush = meshRenderers[i].transform.parent != null 
+                            ? meshRenderers[i].transform.parent.InverseTransformDirection(directionalPush)
+                            : directionalPush;
+                        
+                        finalOffset += localDirectionalPush;
+                    }
+                    
+                    meshRenderers[i].transform.localPosition = originalMeshPositions[i] + finalOffset;
                 }
             }
             
@@ -656,6 +758,7 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
     public event Action<float> OnHealthChanged;
     public event Action<float, float> OnDamageTaken;
     public event Action<float, float> OnHeal;
+    public event Action<float, float> OnPoiseBroken; // Buildings don't use poise, but required by interface
     public event Action OnDeath;
     public event Action OnDestroyed;
 
