@@ -2,17 +2,22 @@ using Managers;
 using UnityEngine;
 
 /// <summary>
-/// Replaced with overworld door, keeping it here for now
+/// Replaced with OverWorldDoor - kept for backward compatibility.
+/// Updated to use new spawn point system.
 /// </summary>
 public class BuildingEntranceTrigger : SceneTransitionTrigger
 {
     [SerializeField] private Transform playerSpawnPoint;
     [SerializeField] private RogueLikeBuildingType buildingType;
 
-    RogueLikeBuildingDataScriptableObj buildingData;
-
     protected override void OnTriggerEnter(Collider other)
     {
+        // Prevent multiple scene loads (check parent's flag)
+        if (hasTriggeredTransition)
+        {
+            return;
+        }
+        
         IPossessable npc = other.GetComponent<IPossessable>();
         if (npc != null && npc == PlayerController.Instance._possessedNPC)
         {
@@ -28,25 +33,22 @@ public class BuildingEntranceTrigger : SceneTransitionTrigger
                 return;
             }
 
-            RogueLiteManager.Instance.OverworldManager.EnteredBuilding(playerSpawnPoint);  
-            buildingData = RogueLiteManager.Instance.BuildingManager.SetBuildingData(buildingType);
+            hasTriggeredTransition = true;
 
-            SceneTransitionManager.Instance.LoadScene(targetScene, nextSceneGameMode, keepPossessedNPC, OnSceneLoaded);
-        }
-    }
+            // Store player spawn point for when they exit the building and return to overworld
+            RogueLiteManager.Instance.OverworldManager.EnteredBuilding(playerSpawnPoint);
+            
+            // Set up building data (this prepares the building but doesn't instantiate it yet)
+            RogueLikeBuildingDataScriptableObj buildingData = RogueLiteManager.Instance.BuildingManager.SetBuildingData(buildingType);
 
-    protected override void OnSceneLoaded()
-    {
-        if (buildingData != null)
-        {
-            Transform buildingEntrance = buildingData.buildingEntrance.GetComponent<RogueLikeBuildingEntrance>().PlayerSpawnPoint;
-            if (buildingEntrance == null)
+            if (buildingData == null)
             {
-                Debug.LogError($"No buildingEntranceSpawnPoint found on gameobject: {buildingData.buildingEntrance.name}");
+                Debug.LogError($"[BuildingEntranceTrigger] Failed to set building data for {buildingType}");
                 return;
             }
-        }
 
-        Instantiate(buildingData.buildingEntrance, Vector3.zero, Quaternion.identity);
+            // Load the scene - building entrance will be instantiated automatically in GetPlayerSpawnPoint()
+            SceneTransitionManager.Instance.LoadScene(targetScene, nextSceneGameMode, keepPossessedNPC);
+        }
     }
 }

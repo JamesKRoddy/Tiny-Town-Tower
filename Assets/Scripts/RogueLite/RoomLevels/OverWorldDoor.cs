@@ -24,6 +24,7 @@ public class OverWorldDoor : RogueLiteDoor
     [SerializeField] private float textOffset = 0.5f;
 
     private RogueLikeBuildingDataScriptableObj buildingData;
+    private bool hasTriggeredTransition = false;
 
     protected override void Awake()
     {
@@ -33,6 +34,11 @@ public class OverWorldDoor : RogueLiteDoor
     public override void OnDoorEntered()
     {
         if (isLocked) return;
+        
+        // Prevent multiple scene loads
+        if (hasTriggeredTransition) return;
+
+        hasTriggeredTransition = true;
 
         // Initialize the difficulty manager with this building's difficulty
         GameManager.Instance.DifficultyManager.InitializeBuildingDifficulty(buildingType, buildingDifficulty);
@@ -41,6 +47,11 @@ public class OverWorldDoor : RogueLiteDoor
         HandleBuildingEntry();
     }
 
+    /// <summary>
+    /// Handles the transition into a building from the overworld.
+    /// Stores the door's spawn point and initiates scene load.
+    /// Building entrance is instantiated automatically during scene transition.
+    /// </summary>
     private void HandleBuildingEntry()
     {
         if (nextSceneGameMode == GameMode.NONE)
@@ -55,31 +66,28 @@ public class OverWorldDoor : RogueLiteDoor
             return;
         }
 
-        // Store player spawn point and set building data
-        RogueLiteManager.Instance.OverworldManager.EnteredBuilding(playerSpawnPoint);
+        // Store player spawn point for when they exit the building and return to overworld
+        if (playerSpawnPoint != null)
+        {
+            RogueLiteManager.Instance.OverworldManager.EnteredBuilding(playerSpawnPoint);
+        }
+        else
+        {
+            Debug.LogError($"[OverWorldDoor] Player spawn point is null on door: {gameObject.name}");
+        }
+        
+        // Set up building data (this prepares the building but doesn't instantiate it yet)
         buildingData = RogueLiteManager.Instance.BuildingManager.SetBuildingData(buildingType);
 
-        // Load the scene with transition
-        SceneTransitionManager.Instance.LoadScene(targetScene, nextSceneGameMode, keepPossessedNPC, OnSceneLoaded);
-    }
-
-    private void OnSceneLoaded()
-    {
-        if (buildingData != null)
+        if (buildingData == null)
         {
-            Transform buildingEntrance = buildingData.buildingEntrance.GetComponent<RogueLikeBuildingEntrance>().PlayerSpawnPoint;
-            if (buildingEntrance == null)
-            {
-                Debug.LogError($"No buildingEntranceSpawnPoint found on gameobject: {buildingData.buildingEntrance.name}");
-                return;
-            }
+            Debug.LogError($"[OverWorldDoor] Failed to set building data for {buildingType}");
+            return;
         }
 
-        // Instantiate the building entrance
-        if (buildingData != null && buildingData.buildingEntrance != null)
-        {
-            Instantiate(buildingData.buildingEntrance, Vector3.zero, Quaternion.identity);
-        }
+        // Load the scene - building entrance will be instantiated automatically in GetPlayerSpawnPoint()
+        Debug.Log($"[OverWorldDoor] Loading scene: {targetScene} with game mode: {nextSceneGameMode}");
+        SceneTransitionManager.Instance.LoadScene(targetScene, nextSceneGameMode, keepPossessedNPC);
     }
 
     public int GetBuildingDifficulty()

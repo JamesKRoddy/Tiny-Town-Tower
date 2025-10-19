@@ -31,6 +31,19 @@ public class OverworldReferences : MonoBehaviour
         {
             Destroy(gameObject); // Destroy duplicate instances
         }
+        else
+        {
+            _instance = this; // Set the instance
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Clear the static instance when this scene-specific singleton is destroyed
+        if (_instance == this)
+        {
+            _instance = null;
+        }
     }
 
     [SerializeField] private Transform overWorldSpawnPoint;

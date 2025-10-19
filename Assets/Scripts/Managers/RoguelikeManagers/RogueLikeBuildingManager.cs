@@ -27,7 +27,14 @@ namespace Managers
         
         private RogueLikeBuildingDataScriptableObj currentBuilding;
         private Transform rogueLikeBuildingSpawn;
+        private GameObject instantiatedBuildingEntrance; // Track the instantiated entrance
+        
+        /// <summary>
+        /// Returns the spawn point position from the instantiated building entrance.
+        /// If not yet instantiated, returns Vector3.zero.
+        /// </summary>
         public Transform RogueLikeBuildingSpawn => rogueLikeBuildingSpawn;
+        
         private GameObject currentRoomParent;  
         private RogueLiteRoomParent currentRoomParentComponent;
         private int currentMaxRooms;
@@ -44,6 +51,10 @@ namespace Managers
         public int CurrentRoom => GameManager.Instance.DifficultyManager.GetCurrentRoomNumber();
         public int CurrentRoomDifficulty => GameManager.Instance.DifficultyManager.GetCurrentRoomDifficulty();
 
+        /// <summary>
+        /// Sets up building data for the specified building type and prepares for scene transition.
+        /// The actual building entrance is instantiated after scene load via the callback.
+        /// </summary>
         public RogueLikeBuildingDataScriptableObj SetBuildingData(RogueLikeBuildingType buildingType){
             // Find all buildings matching the door's building type
             List<RogueLikeBuildingDataScriptableObj> matchingBuildings = rogueLikeBuildingDataScriptableObjs.FindAll(
@@ -64,17 +75,82 @@ namespace Managers
             // Note: Difficulty is now initialized by the OverWorldDoor before this method is called
             currentMaxRooms = currentBuilding.GetMaxRoomsForDifficulty(GameManager.Instance.DifficultyManager.GetCurrentWaveDifficulty());
 
-            rogueLikeBuildingSpawn = matchingBuildings[randomIndex].buildingEntrance.GetComponent<RogueLikeBuildingEntrance>().PlayerSpawnPoint;
-            if (rogueLikeBuildingSpawn == null)
+            // Verify the building entrance prefab has the required component
+            if (matchingBuildings[randomIndex].buildingEntrance == null)
             {
-                Debug.LogError($"No buildingEntranceSpawnPoint found on gameobject: {matchingBuildings[0].buildingEntrance.name}");
+                Debug.LogError($"Building entrance prefab is null for {buildingType}");
                 return null;
             }
+
+            RogueLikeBuildingEntrance entranceComponent = matchingBuildings[randomIndex].buildingEntrance.GetComponent<RogueLikeBuildingEntrance>();
+            if (entranceComponent == null || entranceComponent.PlayerSpawnPoint == null)
+            {
+                Debug.LogError($"No RogueLikeBuildingEntrance or PlayerSpawnPoint found on prefab: {matchingBuildings[randomIndex].buildingEntrance.name}");
+                return null;
+            }
+
+            Debug.Log($"[RogueLikeBuildingManager] Building data set for {buildingType}. Entrance will be instantiated after scene load.");
 
             // Track building progression milestone
             GameManager.Instance.GameProgressionManager.OnBuildingTypeReached(buildingType);
 
             return currentBuilding;
+        }
+
+        /// <summary>
+        /// Instantiates the building entrance and sets up the spawn point.
+        /// Called after the RogueLike scene has loaded.
+        /// </summary>
+        public void InstantiateBuildingEntrance()
+        {
+            Debug.Log("[RogueLikeBuildingManager] InstantiateBuildingEntrance called");
+            
+            if (currentBuilding == null)
+            {
+                Debug.LogError("[RogueLikeBuildingManager] Cannot instantiate building entrance - currentBuilding is null!");
+                return;
+            }
+
+            if (currentBuilding.buildingEntrance == null)
+            {
+                Debug.LogError($"[RogueLikeBuildingManager] Cannot instantiate building entrance - buildingEntrance prefab is null on {currentBuilding.name}!");
+                return;
+            }
+
+            Debug.Log($"[RogueLikeBuildingManager] Building: {currentBuilding.name}, Entrance Prefab: {currentBuilding.buildingEntrance.name}");
+
+            // Clean up any existing entrance
+            if (instantiatedBuildingEntrance != null)
+            {
+                Debug.Log("[RogueLikeBuildingManager] Cleaning up existing building entrance");
+                Destroy(instantiatedBuildingEntrance);
+            }
+
+            // Instantiate the building entrance
+            Debug.Log("[RogueLikeBuildingManager] Instantiating building entrance at Vector3.zero");
+            instantiatedBuildingEntrance = Instantiate(currentBuilding.buildingEntrance, Vector3.zero, Quaternion.identity);
+            Debug.Log($"[RogueLikeBuildingManager] Instantiated entrance GameObject: {instantiatedBuildingEntrance.name}");
+            
+            // Get the spawn point from the instantiated object (not the prefab)
+            RogueLikeBuildingEntrance entrance = instantiatedBuildingEntrance.GetComponent<RogueLikeBuildingEntrance>();
+            if (entrance == null)
+            {
+                Debug.LogError("[RogueLikeBuildingManager] No RogueLikeBuildingEntrance component found on instantiated entrance!");
+                return;
+            }
+
+            Debug.Log($"[RogueLikeBuildingManager] Found RogueLikeBuildingEntrance component");
+
+            if (entrance.PlayerSpawnPoint == null)
+            {
+                Debug.LogError("[RogueLikeBuildingManager] PlayerSpawnPoint is null on RogueLikeBuildingEntrance!");
+                return;
+            }
+
+            rogueLikeBuildingSpawn = entrance.PlayerSpawnPoint;
+            Debug.Log($"[RogueLikeBuildingManager] Building entrance instantiated successfully!");
+            Debug.Log($"[RogueLikeBuildingManager] Spawn Transform: {rogueLikeBuildingSpawn.name}");
+            Debug.Log($"[RogueLikeBuildingManager] Spawn Position: {rogueLikeBuildingSpawn.position}");
         }
 
         public bool EnterRoomCheck(RogueLikeRoomDoor rogueLiteDoor)
@@ -234,8 +310,16 @@ namespace Managers
                 GameManager.Instance.GameProgressionManager.OnBuildingTypeCleared(currentBuilding.buildingType);
             }
 
+            // Clean up instantiated building entrance
+            if (instantiatedBuildingEntrance != null)
+            {
+                Destroy(instantiatedBuildingEntrance);
+                instantiatedBuildingEntrance = null;
+            }
+
             currentBuilding = null;
             currentRoomParent = null;
+            rogueLikeBuildingSpawn = null;
             lastPlayerSpawnPoint = Vector3.zero;
             placedRooms.Clear();
             GameManager.Instance.DifficultyManager.ResetDifficulty();
@@ -243,7 +327,14 @@ namespace Managers
 
         public void ClearDebugState()
         {
+            if (instantiatedBuildingEntrance != null)
+            {
+                Destroy(instantiatedBuildingEntrance);
+                instantiatedBuildingEntrance = null;
+            }
+            
             currentRoomParent = null;
+            rogueLikeBuildingSpawn = null;
             spawnedRooms.Clear();
             placedRooms.Clear();
             Debug.Log("[BuildingManager] Debug state cleared");

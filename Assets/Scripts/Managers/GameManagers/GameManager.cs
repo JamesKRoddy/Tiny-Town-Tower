@@ -108,17 +108,46 @@ namespace Managers
             OnGameModeChanged?.Invoke(_currentGameMode);
         }
 
+        /// <summary>
+        /// Gets the appropriate player spawn point for the next scene being loaded.
+        /// Handles instantiation of building entrances if needed and manages spawn tracking.
+        /// </summary>
         public Vector3 GetPlayerSpawnPoint()
         {
             SceneNames sceneName = SceneTransitionManager.Instance.NextScene;
+            SceneNames previousScene = SceneTransitionManager.Instance.PreviousScene;
 
             switch (sceneName)
             {
                 case SceneNames.OverworldScene:
+                    // Reset spawn tracking when entering overworld from camp (not from a building)
+                    if (previousScene == SceneNames.CampScene)
+                    {
+                        RogueLiteManager.Instance.OverworldManager.ResetSpawnTracking();
+                    }
+                    
                     return RogueLiteManager.Instance.OverworldManager.GetOverWorldSpawnPoint();
+                    
                 case SceneNames.RogueLikeScene:
-                    return RogueLiteManager.Instance.BuildingManager.RogueLikeBuildingSpawn.position;
+                    // Ensure building entrance is instantiated before getting spawn point
+                    if (RogueLiteManager.Instance.BuildingManager.RogueLikeBuildingSpawn == null)
+                    {
+                        RogueLiteManager.Instance.BuildingManager.InstantiateBuildingEntrance();
+                    }
+                    
+                    // Verify spawn point is valid
+                    if (RogueLiteManager.Instance.BuildingManager.RogueLikeBuildingSpawn != null)
+                    {
+                        return RogueLiteManager.Instance.BuildingManager.RogueLikeBuildingSpawn.position;
+                    }
+                    else
+                    {
+                        Debug.LogError("[GameManager] Failed to get building spawn point after instantiation!");
+                        return Vector3.zero;
+                    }
+                    
                 default:
+                    Debug.LogWarning($"[GameManager] Unknown scene: {sceneName} - returning Vector3.zero");
                     return Vector3.zero;
             }
         }

@@ -1,8 +1,10 @@
 *****Current Work*****
 
-So can possess npc right as they fall asleep and so no animations player on the possessed npc.
+Player doesn't spawn to spawn point when going into the roguelike overworld or into roguelike building
 
 ****** Tomorrow work:
+
+Enemies are working on distance if they should move which doesn't consider walls, this means ranged enemies are within attacking distance but cant actually attack the player
 
 PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
 
@@ -12,8 +14,6 @@ Buildings only take damage occasionally
 Npc get away from zombies too easily
 
 Zombies cant walk through vomit pools
-
-Player doesn't spawn to spawn point when going into the roguelike overworld or into roguelike building
 
 Clean up debug logs, also have to have a central debug manager to control what classes have enable logs enabled
 

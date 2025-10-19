@@ -9,9 +9,18 @@ public class SceneTransitionTrigger : MonoBehaviour
     [SerializeField] protected SceneNames targetScene;
     [SerializeField] protected GameMode nextSceneGameMode;
     [SerializeField] protected bool keepPossessedNPC;
+    
+    // Prevent multiple scene loads from the same trigger
+    protected bool hasTriggeredTransition = false;
 
     protected virtual void OnTriggerEnter(Collider other)
     {
+        // Prevent multiple scene loads
+        if (hasTriggeredTransition)
+        {
+            return;
+        }
+        
         // Try to get an IPossessable component from the object entering the trigger.
         IPossessable npc = other.GetComponent<IPossessable>();
         if (npc != null && npc == PlayerController.Instance._possessedNPC)
@@ -26,6 +35,7 @@ public class SceneTransitionTrigger : MonoBehaviour
                 Debug.LogWarning($"{gameObject.name} has no next scene");
             }
 
+            hasTriggeredTransition = true;
             SceneTransitionManager.Instance.LoadScene(targetScene, nextSceneGameMode, keepPossessedNPC, OnSceneLoaded);
         }
     }
@@ -33,6 +43,12 @@ public class SceneTransitionTrigger : MonoBehaviour
     protected virtual void OnSceneLoaded()
     {
         
+    }
+    
+    // Reset the trigger when the object is enabled (for reusability)
+    protected virtual void OnEnable()
+    {
+        hasTriggeredTransition = false;
     }
 }
 
