@@ -4,9 +4,7 @@
 
 ****** Tomorrow work:
 
-Enemies are working on distance if they should move which doesn't consider walls, this means ranged enemies are within attacking distance but cant actually attack the player
-
-Pushing obstacles isn't working again in the actual game, seems to either be using world space or the prefabs are rotated wrong
+Staris causing issues for enemies and player
 
 PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
 

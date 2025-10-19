@@ -716,26 +716,27 @@ public class NarrativeManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Find the current conversation target using player interaction detection
+    /// Find the current conversation target by reusing PlayerInventory's detection system.
+    /// This avoids duplicate raycast logic and ensures consistency with interaction detection.
     /// </summary>
     private INarrativeTarget FindConversationTarget()
     {
-        if (PlayerInventory.Instance == null || PlayerController.Instance?._possessedNPC == null)
+        if (PlayerInventory.Instance == null)
         {
             return null;
         }
 
-        // Use the same detection logic as PlayerInventory
-        RaycastHit hit;
-        Vector3 startPos = PlayerController.Instance._possessedNPC.GetTransform().position + Vector3.up;
-        Vector3 direction = PlayerController.Instance._possessedNPC.GetTransform().forward;
-        Vector3 boxCastSize = new Vector3(0.5f, 0.5f, 0.5f);
-        float interactionRange = 3f;
-        
-        if (Physics.BoxCast(startPos, boxCastSize * 0.5f, direction, out hit, 
-            PlayerController.Instance._possessedNPC.GetTransform().rotation, interactionRange))
+        // Use the interactive object that PlayerInventory already detected
+        var currentInteractive = PlayerInventory.Instance.CurrentInteractive;
+        if (currentInteractive == null)
         {
-            return hit.collider.GetComponent<INarrativeTarget>();
+            return null;
+        }
+
+        // Get the GameObject and check if it has an INarrativeTarget component
+        if (currentInteractive is MonoBehaviour monoBehaviour)
+        {
+            return monoBehaviour.GetComponent<INarrativeTarget>();
         }
 
         return null;
