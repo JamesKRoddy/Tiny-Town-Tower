@@ -15,12 +15,14 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     [SerializeField] protected CharacterType characterType = CharacterType.HUMAN_MALE_1;
 
     [Header("Movement Parameters")]
-    public float moveMaxSpeed = 10f; // Speed at which the player moves normally
-    public float rotationSpeed = 720f; // Speed at which the player rotates
-    public float attackRotationSpeed = 360f; // Speed at which the player rotates while attacking
-    public float dashSpeed = 20f; // Speed during a dash
-    public float dashDuration = 0.2f; // How long a dash lasts
-    public float dashCooldown = 1.0f; // Cooldown time between dashes
+    // Core movement stats now use ModifyStats system (see Character Stats section)
+    public float moveMaxSpeed => currentStats.moveMaxSpeed; // Speed at which the character moves normally
+    public float rotationSpeed => currentStats.rotationSpeed; // Speed at which the character rotates
+    public float dashSpeed => currentStats.dashSpeed; // Speed during a dash
+    public float dashCooldown => currentStats.dashCooldown; // Cooldown time between dashes
+    
+    [SerializeField] private float attackRotationSpeed = 360f; // Speed at which the player rotates while attacking
+    [SerializeField] private float dashDuration = 0.2f; // How long a dash lasts
     public float vaultDuration = 0.4f; // How long a vault lasts
     public float vaultCooldown = 0.3f; // Short cooldown between vaults to prevent rapid firing
 
@@ -132,16 +134,21 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private Vector3 pushOffsetFromObject = Vector3.zero; // Player's offset from the pushed object
     private Vector3 lastPushObjectPosition = Vector3.zero; // Last position of the pushed object
 
+    [Header("Character Stats")]
+    [Tooltip("Base stats - saved and restored from save file")]
+    [SerializeField] protected CharacterModifiableStats baseStats = new CharacterModifiableStats(100f, 40f, 10f, 720f, 20f, 1f);
+    
+    [Tooltip("Current stats - calculated from base stats + characteristics/mutations (not saved)")]
+    [SerializeField, ReadOnly] protected CharacterModifiableStats currentStats;
+    
     [Header("Health")]
     [SerializeField] private float health = 100f;
-    [SerializeField] private float maxHealth = 100f;
     [SerializeField] private float damageCooldown = 0.5f; // Time before TakeDamage can be called again
     private bool isDead = false;
     private float lastDamageTime = 0f; // Track when damage was last taken
 
     [Header("Poise Settings")]
     [SerializeField] private float poise = 40f;
-    [SerializeField] private float maxPoise = 40f;
     [SerializeField] private float poiseRecoveryRate = 8f; // Poise recovered per second
     [SerializeField] private float poiseRecoveryDelay = 2f; // Delay before poise starts recovering
     private float lastPoiseDamageTime = 0f; // Track when poise damage was last taken
@@ -162,6 +169,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     protected virtual void Awake()
     {
+        // Initialize current stats from base stats
+        currentStats = baseStats;
+        
         // Store the references once
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
@@ -233,7 +243,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         actualMovementSpeed = 0f;
         
         // Initialize poise
-        Poise = maxPoise;
+        Poise = MaxPoise;
         
         // Ensure root motion is disabled by default
         if (animator != null)
@@ -2172,7 +2182,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void Heal(float amount)
     {
-        health = Mathf.Min(maxHealth, health + amount);
+        health = Mathf.Min(MaxHealth, health + amount);
         OnHeal?.Invoke(amount, health);
     }
 
@@ -2266,19 +2276,54 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     #endregion
 
     public float Health { get => health; set => health = value; }
-    public float MaxHealth { get => maxHealth; set => maxHealth = value; }
+    public float MaxHealth { get => currentStats.maxHealth; set => currentStats.maxHealth = value; }
     public float DamageCooldown { get => damageCooldown; set => damageCooldown = value; }
 
     // Poise properties
     public float Poise 
     { 
         get => poise; 
-        set => poise = Mathf.Clamp(value, 0, maxPoise); 
+        set => poise = Mathf.Clamp(value, 0, currentStats.maxPoise); 
     }
     public float MaxPoise 
     { 
-        get => maxPoise; 
-        set => maxPoise = value; 
+        get => currentStats.maxPoise; 
+        set => currentStats.maxPoise = value; 
+    }
+    
+    /// <summary>
+    /// Modify character stats (called by characteristics/mutations)
+    /// Base method for all character types - override in derived classes for additional stats
+    /// </summary>
+    public virtual void ModifyStats(float maxHealthModifier = 0f, float maxPoiseModifier = 0f, 
+                                     float moveMaxSpeedModifier = 0f, float rotationSpeedModifier = 0f, 
+                                     float dashSpeedModifier = 0f, float dashCooldownModifier = 0f)
+    {
+        currentStats.maxHealth += maxHealthModifier;
+        currentStats.maxPoise += maxPoiseModifier;
+        currentStats.moveMaxSpeed += moveMaxSpeedModifier;
+        currentStats.rotationSpeed += rotationSpeedModifier;
+        currentStats.dashSpeed += dashSpeedModifier;
+        currentStats.dashCooldown += dashCooldownModifier;
+    }
+    
+    /// <summary>
+    /// Get current modifiable stats (for debugging/UI/save system)
+    /// </summary>
+    public CharacterModifiableStats GetCurrentStats() => currentStats;
+    
+    /// <summary>
+    /// Get base modifiable stats (for debugging/UI/save system)
+    /// </summary>
+    public CharacterModifiableStats GetBaseStats() => baseStats;
+    
+    /// <summary>
+    /// Set base modifiable stats (for load system)
+    /// </summary>
+    public virtual void SetBaseStats(CharacterModifiableStats stats)
+    {
+        baseStats = stats;
+        currentStats = stats;
     }
 
     protected virtual void OnDestroy()

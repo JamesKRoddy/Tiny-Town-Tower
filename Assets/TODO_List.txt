@@ -1,8 +1,10 @@
 *****Current Work*****
 
-Size of the mutation grid UI is wrong
+Test out the new save file generated
 
 ****** Tomorrow work:
+
+Have to sort out recruiting npcs from the camp, randomly knocking and asking to join
 
 Custom inspector for npc scripts
 

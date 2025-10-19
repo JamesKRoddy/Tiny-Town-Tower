@@ -22,6 +22,65 @@ public class NarrativeFlagData
     }
 }
 
+/// <summary>
+/// Base class containing all character stats that can be modified by characteristics and mutations
+/// Applies to all character types (Player, NPCs, etc.)
+/// Base stats are saved, current stats are recalculated from base + modifiers on load
+/// </summary>
+[System.Serializable]
+public class CharacterModifiableStats
+{
+    // Health and Defense
+    public float maxHealth;
+    public float maxPoise;
+    
+    // Movement
+    public float moveMaxSpeed;
+    public float rotationSpeed;
+    public float dashSpeed;
+    public float dashCooldown;
+    
+    public CharacterModifiableStats()
+    {
+        // Default constructor for serialization
+    }
+    
+    public CharacterModifiableStats(float health, float poise, float moveSpeed, float rotSpeed, float dashSpd, float dashCD)
+    {
+        maxHealth = health;
+        maxPoise = poise;
+        moveMaxSpeed = moveSpeed;
+        rotationSpeed = rotSpeed;
+        dashSpeed = dashSpd;
+        dashCooldown = dashCD;
+    }
+}
+
+/// <summary>
+/// NPC-specific stats that extend the base character stats
+/// Only applies to NPCs (SettlerNPC, etc.)
+/// </summary>
+[System.Serializable]
+public class NPCModifiableStats : CharacterModifiableStats
+{
+    // NPC-specific stats
+    public float maxStamina;
+    public int additionalMutationSlots;
+    // Add more NPC-specific stats here as needed
+    
+    public NPCModifiableStats()
+    {
+        // Default constructor for serialization
+    }
+    
+    public NPCModifiableStats(float health, float poise, float moveSpeed, float rotSpeed, float dashSpd, float dashCD, float stamina, int mutationSlots)
+        : base(health, poise, moveSpeed, rotSpeed, dashSpd, dashCD)
+    {
+        maxStamina = stamina;
+        additionalMutationSlots = mutationSlots;
+    }
+}
+
 [Serializable]
 public class GameData
 {
@@ -77,13 +136,11 @@ public class NPCData
 public class NPCSaveData
 {
     public string uuid; // Universal unique identifier
-    public string npcId; // Legacy identifier (for compatibility)
     public Vector3 position;
     public float health;
-    public float maxHealth;
     public float stamina;
     public float hunger;
-    // NOTE: additionalMutationSlots is NOT saved - it's calculated from base value (3) + characteristics
+    public NPCModifiableStats baseStats; // Base stats (maxHealth, maxStamina, additionalMutationSlots, etc.)
     public string currentTaskType;
     public List<string> equippedCharacteristicIds = new List<string>();
     public List<ResourceItemData> inventory = new List<ResourceItemData>();
@@ -144,7 +201,6 @@ public class BuildingData
 public class BuildingSaveData
 {
     public string uuid; // Universal unique identifier
-    public string buildingId; // Legacy identifier (for compatibility)
     public Vector3 position;
     public float health;
     public bool isOperational;
@@ -580,12 +636,11 @@ public class SaveLoadManager : MonoBehaviour
             var npcSaveData = new NPCSaveData
             {
                 uuid = saveableObj.UUID, // Use persistent UUID
-                npcId = npc.gameObject.GetInstanceID().ToString(), // Keep legacy ID for compatibility
                 position = npc.transform.position,
                 health = npc.Health,
-                maxHealth = npc.MaxHealth,
                 stamina = npc.currentStamina,
                 hunger = npc.GetHungerPercentage() * 100f, // Convert percentage back to value
+                baseStats = npc.GetBaseStats() as NPCModifiableStats, // Save base stats (current stats will be recalculated from characteristics on load)
                 currentTaskType = npc.GetCurrentTaskType().ToString(),
                 npcDataObjName = null // SettlerNPC no longer uses NPCScriptableObj
             };
@@ -759,9 +814,9 @@ public class SaveLoadManager : MonoBehaviour
         // Check for critical corruption only - be more lenient with settler data
         
         // Check for invalid health values (critical)
-        if (npcSaveData.maxHealth <= 0)
+        if (npcSaveData.baseStats.maxHealth <= 0)
         {
-            Debug.LogWarning($"[SaveLoadManager] Invalid max health: {npcSaveData.maxHealth} for NPC: {npcSaveData.settlerName}");
+            Debug.LogWarning($"[SaveLoadManager] Invalid max health: {npcSaveData.baseStats.maxHealth} for NPC: {npcSaveData.settlerName}");
             return false;
         }
         
@@ -1056,12 +1111,11 @@ public class SaveLoadManager : MonoBehaviour
         {
             buildingData.buildings.Add(new BuildingSaveData
             {
-                buildingId = building.gameObject.GetInstanceID().ToString(),
                 position = building.transform.position,
                 health = building.Health,
                 isOperational = building.IsOperational(),
-                                 isUnderConstruction = building.IsUnderConstruction(),
-                 buildingScriptableObjName = building.GetStructureScriptableObj()?.name
+                isUnderConstruction = building.IsUnderConstruction(),
+                buildingScriptableObjName = building.GetStructureScriptableObj()?.name
             });
         }
     }

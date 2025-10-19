@@ -16,11 +16,11 @@ namespace Characters.NPC.Characteristic
                 return;
             }
 
-            // Store original max slots
+            // Store original max slots (before modification)
             originalMaxSlots = settlerNPC.additionalMutationSlots;
             
-            // Increase max slots
-            settlerNPC.additionalMutationSlots = originalMaxSlots + additionalMutationSlots;
+            // Modify NPC-specific stats
+            settlerNPC.ModifyNPCStats(additionalMutationSlotsModifier: additionalMutationSlots);
         }
 
         protected override void RemoveEffect()
@@ -31,8 +31,8 @@ namespace Characters.NPC.Characteristic
                 return;
             }
 
-            // Revert to original max slots
-            settlerNPC.additionalMutationSlots = originalMaxSlots;
+            // Revert the modification (subtract what we added)
+            settlerNPC.ModifyNPCStats(additionalMutationSlotsModifier: -additionalMutationSlots);
         }
 
         public override void OnUnequip()

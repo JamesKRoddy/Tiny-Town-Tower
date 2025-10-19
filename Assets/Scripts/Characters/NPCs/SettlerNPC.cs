@@ -38,10 +38,11 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     private NPCAppearanceData recruitedAppearanceData;
 
     [Header("NPC Stats")]
-    public int additionalMutationSlots = 3; //Additional mutation slots
+    // Public accessors for NPC-specific stats (polymorphism handles the type)
+    public int additionalMutationSlots => ((NPCModifiableStats)currentStats).additionalMutationSlots;
+    public float maxStamina => ((NPCModifiableStats)currentStats).maxStamina;
 
     [Header("Stamina")]
-    public float maxStamina = 100f;
     [ReadOnly] public float currentStamina = 100f;
     [SerializeField] private float baseStaminaDrainInGameHours = 36f; // How many game hours to go from full to exhausted (default: 36 game hours)
     [SerializeField] private float baseStaminaRegenInGameHours = 8f; // How many game hours to go from exhausted to full while resting (default: 8 game hours)
@@ -97,6 +98,9 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
 
     protected override void Awake()
     {
+        // Initialize NPC-specific stats (health, poise, moveSpeed, rotSpeed, dashSpd, dashCD, stamina, mutationSlots)
+        baseStats = new NPCModifiableStats(100f, 40f, 10f, 720f, 20f, 1f, 100f, 3);
+        
         base.Awake();
 
         // Initialize characteristic system
@@ -461,12 +465,12 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
 
         // Restore basic stats
         Health = saveData.health;
-        MaxHealth = saveData.maxHealth;
         currentStamina = saveData.stamina;
         currentHunger = saveData.hunger;
         
-        // NOTE: additionalMutationSlots is NOT restored from save data
-        // It uses the base value (3) and characteristics will add their bonuses when equipped below
+        // Restore base stats from save data (polymorphism handles NPCModifiableStats)
+        baseStats = saveData.baseStats;
+        currentStats = saveData.baseStats;
 
         // Restore position
         transform.position = saveData.position;
@@ -1393,6 +1397,28 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     public string GetSettlerDescription()
     {
         return !string.IsNullOrEmpty(settlerDescription) ? settlerDescription : "A mysterious settler.";
+    }
+    
+    /// <summary>
+    /// Override ModifyStats to include NPC-specific parameters (maxStamina, additionalMutationSlots)
+    /// </summary>
+    public override void ModifyStats(float maxHealthModifier = 0f, float maxPoiseModifier = 0f, 
+                                      float moveMaxSpeedModifier = 0f, float rotationSpeedModifier = 0f, 
+                                      float dashSpeedModifier = 0f, float dashCooldownModifier = 0f)
+    {
+        // Call base implementation for common stats
+        base.ModifyStats(maxHealthModifier, maxPoiseModifier, moveMaxSpeedModifier, rotationSpeedModifier, dashSpeedModifier, dashCooldownModifier);
+    }
+    
+    /// <summary>
+    /// Modify NPC-specific stats (maxStamina, additionalMutationSlots)
+    /// </summary>
+    public void ModifyNPCStats(float maxStaminaModifier = 0f, int additionalMutationSlotsModifier = 0)
+    {
+        // Access NPC stats directly via polymorphism
+        NPCModifiableStats npcStats = (NPCModifiableStats)currentStats;
+        npcStats.maxStamina += maxStaminaModifier;
+        npcStats.additionalMutationSlots += additionalMutationSlotsModifier;
     }
 
     /// <summary>
