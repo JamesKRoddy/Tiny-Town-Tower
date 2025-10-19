@@ -1,12 +1,8 @@
 *****Current Work*****
 
-Test out the new save file generated
+So can possess npc right as they fall asleep and so no animations player on the possessed npc.
 
 ****** Tomorrow work:
-
-Have to sort out recruiting npcs from the camp, randomly knocking and asking to join
-
-Custom inspector for npc scripts
 
 PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
 
@@ -14,8 +10,6 @@ Spawning enemies to attack camp issues:
 If theres no npcs newly spawned in enemies dont attack buildings
 Buildings only take damage occasionally
 Npc get away from zombies too easily
-
-So can possess npc right as they fall asleep and so no animations player on the possessed npc.
 
 Zombies cant walk through vomit pools
 
@@ -45,6 +39,8 @@ VFX for player
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
 
 Recruitable NPCs in roguelike section shouldn't wander, get tired/sick etc. They should just hang out until the player talks to them. Have to create an animation state to just have idle animations
+
+Situation when the last npc dies in the game, you load back to the camp. A length of time passes and more npcs stumble across your camp. The punishment for this is that during this time the camp will be messy, buildings will be damaged or completely broken. You do still get to keep all of your research though.
 
 ****** Bugs and refactoring:
 

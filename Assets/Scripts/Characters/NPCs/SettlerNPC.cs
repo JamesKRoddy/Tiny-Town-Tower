@@ -22,6 +22,10 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     [SerializeField, ReadOnly] internal NPCCharacteristicSystem characteristicSystem;
     [SerializeField] internal NPCAppearanceSystem appearanceSystem;
     
+    // Public accessors for editor
+    public NPCCharacteristicSystem CharacteristicSystem => characteristicSystem;
+    public NPCAppearanceSystem AppearanceSystem => appearanceSystem;
+    
     [Header("Task Management")]
     private _TaskState currentState;
     private WorkTask assignedWorkTask; // Track the assigned work task
