@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - Vaultable
+  - Enemy
   layers:
   - Default
   - TransparentFX

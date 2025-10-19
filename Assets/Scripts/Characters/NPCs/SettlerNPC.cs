@@ -790,6 +790,16 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
             return;
         }
         
+        // Skip AI updates when possessed by player
+        // NavMeshAgent is disabled when possessed, CharacterController is enabled
+        bool isPossessed = agent != null && !agent.enabled;
+        if (isPossessed)
+        {
+            // Only update conversation rotation when possessed
+            UpdateConversationRotation();
+            return;
+        }
+        
         // Update conversation rotation if in conversation
         UpdateConversationRotation();
         

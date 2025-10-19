@@ -344,35 +344,42 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     /// <param name="isAIControlled">True if the NPC should act autonomously, False if player-controlled.</param>
     private void SetAIControl(bool isAIControlled)
     {
-        var navMeshAgent = GetComponent<NavMeshAgent>();
-        if (navMeshAgent != null) navMeshAgent.enabled = isAIControlled;
-        
-        // Toggle CharacterController for player control (opposite of NavMeshAgent)
-        if (characterController != null) 
-        {
-            characterController.enabled = !isAIControlled;
-        }
-
-        var narrativeInteractive = GetComponent<NarrativeInteractive>();
-        if (narrativeInteractive != null) narrativeInteractive.enabled = isAIControlled;
-
         var settlerNPC = GetComponent<SettlerNPC>();
-
-        foreach (var task in GetComponents<_TaskState>())
-        {
-            task.enabled = isAIControlled;
-        }
 
         if (isAIControlled)
         {
+            // Re-enable AI control
+            var navMeshAgent = GetComponent<NavMeshAgent>();
+            if (navMeshAgent != null) navMeshAgent.enabled = true;
+            
+            // Toggle CharacterController for player control (opposite of NavMeshAgent)
+            if (characterController != null) 
+            {
+                characterController.enabled = false;
+            }
+
+            var narrativeInteractive = GetComponent<NarrativeInteractive>();
+            if (narrativeInteractive != null) narrativeInteractive.enabled = true;
+
+            // Re-enable task states
+            foreach (var task in GetComponents<_TaskState>())
+            {
+                task.enabled = true;
+            }
+
+            // Return to wander state
             settlerNPC?.ChangeTask(TaskType.WANDER);
         }
         else
         {
-            // Clean up work animations and tasks when possessed
+            // Taking player control - clean up AI state FIRST before disabling components
             if (settlerNPC != null)
             {
-                // Stop any work animations on the work layer
+                // IMPORTANT: Exit current state properly BEFORE disabling task components
+                // This ensures OnExitState is called and animations are stopped
+                settlerNPC.ChangeState(null);
+                
+                // Stop any work animations on the work layer (redundant but safe)
                 settlerNPC.StopWorkAnimation();
                 
                 // Clear any assigned work tasks
@@ -380,10 +387,26 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 {
                     settlerNPC.ClearAssignedWork();
                 }
-                
-                // Set state to null to disable AI behavior
-                settlerNPC.ChangeState(null);
             }
+            
+            // NOW disable task states after proper cleanup
+            foreach (var task in GetComponents<_TaskState>())
+            {
+                task.enabled = false;
+            }
+            
+            // Disable NavMeshAgent
+            var navMeshAgent = GetComponent<NavMeshAgent>();
+            if (navMeshAgent != null) navMeshAgent.enabled = false;
+            
+            // Toggle CharacterController for player control (opposite of NavMeshAgent)
+            if (characterController != null) 
+            {
+                characterController.enabled = true;
+            }
+
+            var narrativeInteractive = GetComponent<NarrativeInteractive>();
+            if (narrativeInteractive != null) narrativeInteractive.enabled = false;
         }
     }
 
