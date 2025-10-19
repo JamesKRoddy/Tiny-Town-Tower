@@ -1,10 +1,12 @@
 *****Current Work*****
 
-Player doesn't spawn to spawn point when going into the roguelike overworld or into roguelike building
+
 
 ****** Tomorrow work:
 
 Enemies are working on distance if they should move which doesn't consider walls, this means ranged enemies are within attacking distance but cant actually attack the player
+
+Pushing obstacles isn't working again in the actual game, seems to either be using world space or the prefabs are rotated wrong
 
 PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
 
@@ -18,6 +20,12 @@ Zombies cant walk through vomit pools
 Clean up debug logs, also have to have a central debug manager to control what classes have enable logs enabled
 
 Hit detection for player interacting with object like doors is a bit off, could be better
+
+RuntimeNavMeshBuilder: Source mesh SM_Bld_Bunker_Floor_Stone_01 does not allow read access. This will work in playmode in the editor but not in player
+UnityEngine.AI.NavMeshBuilder:BuildNavMeshData (UnityEngine.AI.NavMeshBuildSettings,System.Collections.Generic.List`1<UnityEngine.AI.NavMeshBuildSource>,UnityEngine.Bounds,UnityEngine.Vector3,UnityEngine.Quaternion)
+Unity.AI.Navigation.NavMeshSurface:BuildNavMesh () (at ./Library/PackageCache/com.unity.ai.navigation@9f76b145f0a8/Runtime/NavMeshSurface.cs:272)
+RogueLiteRoomParent/<DelayedBakeNavMesh>d__53:MoveNext () (at Assets/Scripts/RogueLite/RoomLevels/RogueLiteRoomParent.cs:1373)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
 
 
 ****** Next work:

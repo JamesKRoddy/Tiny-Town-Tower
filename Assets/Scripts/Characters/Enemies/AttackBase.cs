@@ -64,7 +64,11 @@ namespace Enemies
         [Tooltip("Game objects that will be enabled when this attack is active")]
         public GameObject[] attackGameObjects;
 
-        protected float lastAttackTime;
+        /// <summary>
+        /// Time when this attack was last executed (used for cooldown calculations)
+        /// Made public so EnemyBase can check actual cooldown status
+        /// </summary>
+        public float lastAttackTime;
         protected EnemyBase enemy;
         protected Animator animator;
         protected Transform target;
@@ -130,7 +134,15 @@ namespace Enemies
             bool inRange = DamageUtils.IsInRange(enemy.transform.position, target.position, minRange, maxRange);
             bool cooldownReady = DamageUtils.IsCooldownReady(lastAttackTime, cooldown);
             
-            return inRange && cooldownReady;
+            // For ranged attacks (attacks with minimum range > 0), check line of sight
+            // Melee attacks don't need line of sight since they're close-range
+            bool hasLineOfSight = true;
+            if (minRange > 0) // Ranged attack
+            {
+                hasLineOfSight = enemy.HasLineOfSight(target.position);
+            }
+            
+            return inRange && cooldownReady && hasLineOfSight;
         }
 
         /// <summary>

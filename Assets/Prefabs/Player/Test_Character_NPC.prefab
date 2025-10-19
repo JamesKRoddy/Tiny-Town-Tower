@@ -1567,7 +1567,7 @@ GameObject:
   - component: {fileID: 4085220502539234452}
   - component: {fileID: -8929434300327028580}
   - component: {fileID: 2837077326474312093}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: Test_Character_NPC
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1785,12 +1785,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   characterType: 101
-  moveMaxSpeed: 10
-  rotationSpeed: 720
   attackRotationSpeed: 120
-  dashSpeed: 30
   dashDuration: 0.4
-  dashCooldown: 1
   vaultDuration: 0.4
   vaultCooldown: 0.3
   obstacleLayers:
@@ -1801,6 +1797,9 @@ MonoBehaviour:
   capsuleCastRadius: 0.2
   vaultHeight: 1
   vaultOffset: 1
+  stepOffset: 0.3
+  slopeLimit: 45
+  skinWidth: 0.08
   maxVaultHeight: 1.2
   minVaultHeight: 0.3
   obstacleAnalysisRange: 1.5
@@ -1812,23 +1811,27 @@ MonoBehaviour:
   climbCheckDistance: 0.5
   enableGravity: 1
   gravity: 9.81
-  groundCheckDistance: 0.1
-  groundLayers:
-    serializedVersion: 2
-    m_Bits: 1
   terminalVelocity: 20
   maxFallDistance: 100
   fallingMovementMultiplier: 0.2
-  fallingMomentumMultiplier: 0.8
-  collisionCheckRadius: 0.6
-  maxCollisionRecoveryAttempts: 5
-  collisionRecoveryDistance: 0.1
-  emergencyTeleportHeight: 2
+  groundedBufferTime: 0.15
+  baseStats:
+    maxHealth: 100
+    maxPoise: 40
+    moveMaxSpeed: 10
+    rotationSpeed: 720
+    dashSpeed: 20
+    dashCooldown: 1
+  currentStats:
+    maxHealth: 0
+    maxPoise: 0
+    moveMaxSpeed: 0
+    rotationSpeed: 0
+    dashSpeed: 0
+    dashCooldown: 0
   health: 100
-  maxHealth: 100
   damageCooldown: 0.5
   poise: 40
-  maxPoise: 40
   poiseRecoveryRate: 8
   poiseRecoveryDelay: 2
   resistances: []
@@ -1876,8 +1879,6 @@ MonoBehaviour:
     handAccessoryChance: 0.5
   initializationContext: 0
   hasBeenInitialized: 0
-  additionalMutationSlots: 3
-  maxStamina: 100
   currentStamina: 100
   baseStaminaDrainInGameHours: 36
   baseStaminaRegenInGameHours: 8

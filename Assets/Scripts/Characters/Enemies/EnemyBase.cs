@@ -668,31 +668,54 @@ namespace Enemies
                 // Prevents enemies from running around/circling player while waiting to attack
                 // ─────────────────────────────────────────────────────────────────────────────────
                 bool inAttackRangeButOnCooldown = false;
+                bool inAttackRangeButNoLOS = false;
                 bool hasAnyValidAttack = false;
                 
                 if (distanceToTarget <= GetMaximumAttackRange())
                 {
-                    // Check if any attack is on cooldown
+                    // Check if any attack is on cooldown or blocked by LOS
                     var attackComponents = GetComponents<AttackBase>();
                     foreach (var attack in attackComponents)
                     {
                         if (attack != null && attack.enabled)
                         {
                             hasAnyValidAttack = true;
-                            if (!attack.CanAttack())
+                            
+                            // Check range and cooldown separately from LOS
+                            bool inRange = DamageUtils.IsInRange(transform.position, navMeshTarget.position, attack.minRange, attack.maxRange);
+                            bool cooldownReady = DamageUtils.IsCooldownReady(attack.lastAttackTime, attack.cooldown);
+                            
+                            if (inRange && !cooldownReady)
                             {
+                                // Actually on cooldown
                                 inAttackRangeButOnCooldown = true;
                                 if (showCollisionDebug)
                                 {
-                                    Debug.Log($"[{gameObject.name}] Attack {attack.GetType().Name} cannot attack (range: {attack.minRange}-{attack.maxRange}, distance: {distanceToTarget:F2})");
+                                    Debug.Log($"[{gameObject.name}] Attack {attack.GetType().Name} on cooldown");
                                 }
                                 break;
+                            }
+                            else if (inRange && cooldownReady)
+                            {
+                                // In range and cooldown ready, but check LOS for ranged attacks
+                                if (attack.minRange > 0) // Ranged attack
+                                {
+                                    if (!HasLineOfSight(navMeshTarget.position))
+                                    {
+                                        inAttackRangeButNoLOS = true;
+                                        if (showCollisionDebug)
+                                        {
+                                            Debug.Log($"[{gameObject.name}] Attack {attack.GetType().Name} blocked by LOS - need to reposition");
+                                        }
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }
                 }
                 
-                // If in range but on cooldown, stay still (don't circle or move around)
+                // If in range but on actual cooldown, stay still (don't circle or move around)
                 // ONLY stop if we have valid attacks and they're on cooldown
                 if (inAttackRangeButOnCooldown && hasAnyValidAttack && !isAttacking)
                 {
@@ -704,6 +727,34 @@ namespace Enemies
                         }
                         agent.isStopped = true;
                         agent.velocity = Vector3.zero;
+                    }
+                }
+                // If in range but no LOS, try to reposition to get a clear shot
+                else if (inAttackRangeButNoLOS && hasAnyValidAttack && !isAttacking)
+                {
+                    // Try to find a position with clear LOS
+                    Vector3 repositionTarget = FindPositionWithLineOfSight();
+                    
+                    if (repositionTarget != Vector3.zero)
+                    {
+                        agent.SetDestination(repositionTarget);
+                        if (agent.isStopped)
+                        {
+                            if (showCollisionDebug)
+                            {
+                                Debug.Log($"[{gameObject.name}] Repositioning to find clear line of sight");
+                            }
+                            agent.isStopped = false;
+                        }
+                    }
+                    else
+                    {
+                        // Can't find a good position, just move towards target to get closer
+                        agent.SetDestination(navMeshTarget.position);
+                        if (agent.isStopped)
+                        {
+                            agent.isStopped = false;
+                        }
                     }
                 }
                 else
@@ -936,6 +987,7 @@ namespace Enemies
 
         /// <summary>
         /// Check if the enemy is in an attack cooldown by checking actual attack components
+        /// This specifically checks for cooldown timers, NOT line of sight or range issues
         /// </summary>
         /// <returns>True if in cooldown</returns>
         private bool IsInAttackCooldown()
@@ -952,7 +1004,7 @@ namespace Enemies
                 return false; // Not in range, so not in cooldown
             }
 
-            // Check if any attack component is on cooldown
+            // Check if any attack component is on actual cooldown (not just unable to attack)
             bool anyAttackOnCooldown = false;
             var zombieComponent = GetComponent<Zombie>();
             if (zombieComponent != null)
@@ -960,10 +1012,18 @@ namespace Enemies
                 var attackComponents = GetComponents<AttackBase>();
                 foreach (var attack in attackComponents)
                 {
-                    if (attack != null && attack.enabled && !attack.CanAttack())
+                    if (attack != null && attack.enabled)
                     {
-                        anyAttackOnCooldown = true;
-                        break;
+                        // Check specifically for cooldown, not other factors like LOS
+                        bool inRange = DamageUtils.IsInRange(transform.position, navMeshTarget.position, attack.minRange, attack.maxRange);
+                        bool cooldownReady = DamageUtils.IsCooldownReady(attack.lastAttackTime, attack.cooldown);
+                        
+                        // If in range but cooldown is NOT ready, then we're actually in cooldown
+                        if (inRange && !cooldownReady)
+                        {
+                            anyAttackOnCooldown = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -984,6 +1044,66 @@ namespace Enemies
             lastTargetChangeTime = Time.time; // Initialize the target change timer
         }
 
+        /// <summary>
+        /// Find a position with clear line of sight to the target
+        /// Tries multiple positions around the current location to find one with LOS
+        /// </summary>
+        /// <returns>A valid position with LOS, or Vector3.zero if none found</returns>
+        private Vector3 FindPositionWithLineOfSight()
+        {
+            if (navMeshTarget == null) return Vector3.zero;
+            
+            Vector3 currentPos = transform.position;
+            Vector3 targetPos = navMeshTarget.position;
+            float maxAttackRange = GetMaximumAttackRange();
+            float minAttackDistance = GetMinimumAttackDistance();
+            
+            // Try multiple positions around the current location
+            // Start with positions at a comfortable attack distance
+            float[] testDistances = { minAttackDistance + 2f, minAttackDistance + 4f, maxAttackRange * 0.7f };
+            float[] testAngles = { -90f, -45f, 0f, 45f, 90f, -135f, 135f, 180f }; // Try various angles
+            
+            foreach (float distance in testDistances)
+            {
+                foreach (float angle in testAngles)
+                {
+                    // Calculate test position relative to target
+                    Vector3 directionFromTarget = (currentPos - targetPos).normalized;
+                    Vector3 rotatedDirection = Quaternion.AngleAxis(angle, Vector3.up) * directionFromTarget;
+                    Vector3 testPosition = targetPos + rotatedDirection * distance;
+                    
+                    // Check if position is valid on NavMesh
+                    UnityEngine.AI.NavMeshHit navHit;
+                    if (UnityEngine.AI.NavMesh.SamplePosition(testPosition, out navHit, 3f, UnityEngine.AI.NavMesh.AllAreas))
+                    {
+                        // Check if this position has LOS to target
+                        Vector3 rayOrigin = navHit.position + Vector3.up * 1.5f;
+                        Vector3 rayTarget = targetPos + Vector3.up * 1.5f;
+                        Vector3 direction = rayTarget - rayOrigin;
+                        float rayDistance = direction.magnitude;
+                        
+                        // Use same layer mask as HasLineOfSight - ignore Player and Enemy layers
+                        LayerMask ignoreMask = LayerMask.GetMask("Player", "Enemy", "Ignore Raycast");
+                        LayerMask obstacleMask = ~ignoreMask;
+                        RaycastHit hit;
+                        
+                        if (!Physics.Raycast(rayOrigin, direction.normalized, out hit, rayDistance, obstacleMask))
+                        {
+                            // Found a position with clear LOS!
+                            if (showCollisionDebug)
+                            {
+                                Debug.Log($"[{gameObject.name}] Found clear position at angle {angle}° and distance {distance:F2}");
+                            }
+                            return navHit.position;
+                        }
+                    }
+                }
+            }
+            
+            // No clear position found
+            return Vector3.zero;
+        }
+        
         /// <summary>
         /// Find a new target position for cooldown movement - strafe around the player at optimal range
         /// </summary>
@@ -1512,14 +1632,58 @@ namespace Enemies
         #region Attack Validation
 
         /// <summary>
-        /// Validates if an attack can be performed on the current target
+        /// Checks if there is a clear line of sight from this enemy to the target.
+        /// Uses raycasting to detect walls and obstacles that would block ranged attacks.
+        /// </summary>
+        /// <param name="targetPosition">The target position to check line of sight to</param>
+        /// <param name="checkHeight">Height offset for the raycast origin (default: 1.5f for center mass)</param>
+        /// <returns>True if there's a clear line of sight, false if blocked by obstacles</returns>
+        public bool HasLineOfSight(Vector3 targetPosition, float checkHeight = 1.5f)
+        {
+            if (navMeshTarget == null) return false;
+
+            // Start raycast from enemy's center mass height
+            Vector3 rayOrigin = transform.position + Vector3.up * checkHeight;
+            Vector3 rayTarget = targetPosition + Vector3.up * checkHeight;
+            Vector3 direction = rayTarget - rayOrigin;
+            float distance = direction.magnitude;
+
+            // Layer mask: Ignore Settler and Enemy layers - we only want to detect walls/obstacles
+            // Using inverse mask (~) to ignore specific layers instead of specifying which to hit
+            LayerMask ignoreMask = LayerMask.GetMask("Settler", "Enemy", "Ignore Raycast");
+            LayerMask obstacleMask = ~ignoreMask; // Invert to hit everything EXCEPT these layers
+            
+            // Perform the raycast
+            RaycastHit hit;
+            bool hasLineOfSight = !Physics.Raycast(rayOrigin, direction.normalized, out hit, distance, obstacleMask);
+            
+            // Debug visualization if enabled
+            if (showCollisionDebug)
+            {
+                Color rayColor = hasLineOfSight ? Color.green : Color.red;
+                Debug.DrawLine(rayOrigin, rayTarget, rayColor, 0.1f);
+                
+                if (!hasLineOfSight && hit.collider != null)
+                {
+                    Debug.DrawLine(rayOrigin, hit.point, Color.yellow, 0.1f);
+                    Debug.Log($"[{gameObject.name}] Line of sight blocked by {hit.collider.gameObject.name} at distance {hit.distance:F2}");
+                }
+            }
+            
+            return hasLineOfSight;
+        }
+
+        /// <summary>
+        /// Validates if an attack can be performed on the current target.
+        /// Includes distance, angle, and line-of-sight checks.
         /// </summary>
         /// <param name="attackRange">The range for this specific attack</param>
         /// <param name="angleThreshold">Maximum angle deviation for attack</param>
         /// <param name="distanceToTarget">Current distance to target (output)</param>
         /// <param name="angleToTarget">Current angle to target (output)</param>
+        /// <param name="requireLineOfSight">Whether to check for line of sight (default: true for ranged attacks)</param>
         /// <returns>True if attack is valid</returns>
-        protected bool ValidateAttack(float attackRange, float angleThreshold, out float distanceToTarget, out float angleToTarget)
+        protected bool ValidateAttack(float attackRange, float angleThreshold, out float distanceToTarget, out float angleToTarget, bool requireLineOfSight = true)
         {
             distanceToTarget = 0f;
             angleToTarget = 0f;
@@ -1549,7 +1713,22 @@ namespace Enemies
             Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
             angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
             
-            return angleToTarget <= angleThreshold;
+            if (angleToTarget > angleThreshold)
+            {
+                return false;
+            }
+
+            // Line of sight validation (especially important for ranged attacks)
+            if (requireLineOfSight && !HasLineOfSight(navMeshTarget.position))
+            {
+                if (showCollisionDebug)
+                {
+                    Debug.Log($"[{gameObject.name}] Attack blocked: No line of sight to target");
+                }
+                return false;
+            }
+            
+            return true;
         }
 
         #endregion
