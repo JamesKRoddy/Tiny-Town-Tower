@@ -1,10 +1,10 @@
 *****Current Work*****
 
-
+When a possessed npc goes up to a task and starts it unpossesses them and make them do the task.
 
 ****** Tomorrow work:
 
-Staris causing issues for enemies and player
+Stairs causing issues for enemies and player
 
 PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
 
@@ -17,13 +17,15 @@ Zombies cant walk through vomit pools
 
 Clean up debug logs, also have to have a central debug manager to control what classes have enable logs enabled
 
-Hit detection for player interacting with object like doors is a bit off, could be better
-
 RuntimeNavMeshBuilder: Source mesh SM_Bld_Bunker_Floor_Stone_01 does not allow read access. This will work in playmode in the editor but not in player
 UnityEngine.AI.NavMeshBuilder:BuildNavMeshData (UnityEngine.AI.NavMeshBuildSettings,System.Collections.Generic.List`1<UnityEngine.AI.NavMeshBuildSource>,UnityEngine.Bounds,UnityEngine.Vector3,UnityEngine.Quaternion)
 Unity.AI.Navigation.NavMeshSurface:BuildNavMesh () (at ./Library/PackageCache/com.unity.ai.navigation@9f76b145f0a8/Runtime/NavMeshSurface.cs:272)
 RogueLiteRoomParent/<DelayedBakeNavMesh>d__53:MoveNext () (at Assets/Scripts/RogueLite/RoomLevels/RogueLiteRoomParent.cs:1373)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+Go through an move all stings to a single file ie. physics masks, tags etc.
+
+Go through and remove all legacy code
 
 
 ****** Next work:
@@ -97,18 +99,24 @@ Slower animations for injured enemies
 Enemies throw other enemies at the player 
 Occationally enemies with really low health will try to flee from the player
 Ghost enemies that you need to destroy a machine in order to damage them
+Gimic boss fights based around some feature like eg. breaking pipes that buff the enemy or something
 
 Mutations
 One that shows enemies life bars
 Increase poise damage
 Increase players poise
+Be able to hit ghost enemies without destroying machine
 
 Research
 Unlock vaulting and dash for roguelike to increase movement options
 Strength that allows you to push heavier objects to open new areas
 Vaulting over obstacles
 Vaulting over enemies?
+Unlock better weapons avalible at the start of runs
 
 Buildings:
 An alarm that will alert NPCs of an incoming zombie attack
+
+Weapons:
+All weapons should have versions from lvl 1 to 5 all originating from the same scriptable obj
 

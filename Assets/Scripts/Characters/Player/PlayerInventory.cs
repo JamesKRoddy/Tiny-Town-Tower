@@ -305,6 +305,16 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                     {
                         robot.StartWork(task);
                     }
+                    else if (task != null && PlayerController.Instance._possessedNPC is SettlerNPC settler)
+                    {
+                        // Unpossess the player from the settler
+                        PlayerController.Instance.PossessNPC(null);
+                        
+                        // Assign the selected task to the settler
+                        settler.StartWork(task);
+                        
+                        Debug.Log($"[PlayerInventory] Unpossessed player from {settler.name} and assigned work task {task.GetType().Name}");
+                    }
                     CampManager.Instance.WorkManager.CloseSelectionPopup();
                 });
                 break;
@@ -314,6 +324,16 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                     {
                         robot.StartWork(task);
                     }
+                    else if (task != null && PlayerController.Instance._possessedNPC is SettlerNPC settler)
+                    {
+                        // Unpossess the player from the settler
+                        PlayerController.Instance.PossessNPC(null);
+                        
+                        // Assign the selected task to the settler
+                        settler.StartWork(task);
+                        
+                        Debug.Log($"[PlayerInventory] Unpossessed player from {settler.name} and assigned work task {task.GetType().Name}");
+                    }
                     CampManager.Instance.WorkManager.CloseSelectionPopup();
                 });
                 break;
@@ -322,6 +342,16 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 {
                     PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.ROBOT_WORKING);
                     robot.StartWork(workTask);
+                }
+                else if (PlayerController.Instance._possessedNPC is SettlerNPC settler)
+                {
+                    // Unpossess the player from the settler
+                    PlayerController.Instance.PossessNPC(null);
+                    
+                    // Assign the task to the settler
+                    settler.StartWork(workTask);
+                    
+                    Debug.Log($"[PlayerInventory] Unpossessed player from {settler.name} and assigned work task {workTask.GetType().Name}");
                 }
                 break;
             default:
