@@ -71,6 +71,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private float verticalVelocity = 0f; // Current vertical velocity for gravity
     private bool wasGroundedLastFrame = true; // Track grounded state from previous frame
     private float lastGroundedTime = 0f; // Last time the character was grounded (for coyote time)
+    private Vector3 lastGroundedPosition = Vector3.zero; // Position when last grounded (for fall distance check)
     private bool isGroundedBuffered = true; // Buffered grounded state (smoother than raw CharacterController.isGrounded)
 
     // Automatic obstacle navigation: analyzes height to determine WalkOver, Vault, or TooHigh
@@ -325,6 +326,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Reset gravity state for player control
         verticalVelocity = 0f;
         wasGroundedLastFrame = characterController != null && characterController.isGrounded;
+        lastGroundedPosition = transform.position;
     }
 
     public void OnUnpossess()
@@ -336,6 +338,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Reset gravity state for AI control
         verticalVelocity = 0f;
         wasGroundedLastFrame = true;
+        lastGroundedPosition = transform.position;
     }
 
     /// <summary>
@@ -942,6 +945,15 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             {
                 return ObstacleType.None;
             }
+        }
+
+        // Check if this is a walkable slope/ramp/stair by examining the surface normal
+        // CharacterController can handle slopes within slopeLimit automatically
+        float surfaceAngle = Vector3.Angle(obstacleInfo.normal, Vector3.up);
+        if (surfaceAngle <= slopeLimit)
+        {
+            // This is a walkable slope/ramp/stair - let CharacterController handle it naturally
+            return ObstacleType.WalkOver;
         }
 
         // Store reference to the obstacle collider for safety checks
@@ -1681,21 +1693,26 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Get raw grounded state from CharacterController
         bool isGroundedRaw = characterController.isGrounded;
         
-        // Update last grounded time when we detect ground
+        // Update last grounded time and position when we detect ground
         if (isGroundedRaw)
         {
             lastGroundedTime = Time.time;
+            lastGroundedPosition = transform.position;
         }
         
         // Buffered grounded state: remain "grounded" for a short time after leaving ground
         // This prevents animation flickering on slopes and small bumps (coyote time)
-        isGroundedBuffered = isGroundedRaw || (Time.time - lastGroundedTime) < groundedBufferTime;
+        // Allow buffer for small drops like stair transitions
+        bool withinBufferTime = (Time.time - lastGroundedTime) < groundedBufferTime;
+        bool hasNotFallenFar = (lastGroundedPosition.y - transform.position.y) <= (stepOffset * 1.5f); // 1.5x for small bumps
+        
+        isGroundedBuffered = isGroundedRaw || (withinBufferTime && hasNotFallenFar);
 
         if (isGroundedBuffered && verticalVelocity < 0)
         {
-            // Keep character grounded with small downward force
-            // This prevents bouncing and ensures proper ground detection
-            verticalVelocity = -2f;
+            // Apply stronger downward force to stick to slopes/stairs
+            // This prevents floating off slopes when walking down
+            verticalVelocity = -8f; // Increased from -2f to better stick to downward slopes
         }
         else if (!isGroundedBuffered)
         {
@@ -1742,14 +1759,20 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     }
 
     /// <summary>
-    /// Check if the character is currently falling
+    /// Check if the character is currently falling (actual fall, not just stepping down stairs/curbs)
     /// </summary>
-    /// <returns>True if falling (not grounded and has downward velocity)</returns>
+    /// <returns>True if falling (not grounded and has fallen beyond step height)</returns>
     public bool IsFalling()
     {
         if (characterController == null || !characterController.enabled) return false;
-        // Use buffered grounded state for smoother detection on slopes
-        return !isGroundedBuffered && verticalVelocity < -3f; // Only count as falling if velocity is significant
+        
+        // Only count as "falling" if we've dropped more than the buffer threshold
+        // This prevents movement penalties when walking down stairs, slopes, or small ledges
+        // Now that slope adhesion is fixed, we can be more responsive to actual falls
+        float fallDistance = lastGroundedPosition.y - transform.position.y;
+        bool hasActuallyFallen = fallDistance > (stepOffset * 2f); // 2x step height (0.6 units)
+        
+        return !isGroundedBuffered && hasActuallyFallen && verticalVelocity < -3f;
     }
 
     /// <summary>
@@ -1771,6 +1794,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         verticalVelocity = 0f;
         isGroundedBuffered = true;
         lastGroundedTime = Time.time;
+        lastGroundedPosition = transform.position;
     }
 
     #endregion
