@@ -1,7 +1,5 @@
 *****Current Work*****
 
-When a possessed npc goes up to a task and starts it unpossesses them and make them do the task.
-
 ****** Tomorrow work:
 
 Stairs causing issues for enemies and player
