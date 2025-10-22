@@ -1,15 +1,15 @@
 *****Current Work*****
 
-****** Tomorrow work:
-
-Stairs causing issues for enemies and player
-
-PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
+Alarm building
 
 Spawning enemies to attack camp issues:
 If theres no npcs newly spawned in enemies dont attack buildings
 Buildings only take damage occasionally
-Npc get away from zombies too easily
+Npc get away from zombies too easily, drain stamina from npcs as they flee. If stamina is too low they slow down.
+
+****** Tomorrow work:
+
+PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
 
 Zombies cant walk through vomit pools
 
@@ -25,6 +25,7 @@ Go through an move all stings to a single file ie. physics masks, tags etc.
 
 Go through and remove all legacy code
 
+EffectSpawnData which has both the Effectdefinion and Transform. This may be subbed into a few place where Effectdefinion has a spawn point.
 
 ****** Next work:
 

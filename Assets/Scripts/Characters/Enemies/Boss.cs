@@ -92,9 +92,9 @@ namespace Enemies{
             }
         }
 
-        public new void TakeDamage(float amount, Transform damageSource = null)
+        public new void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null)
         {
-            base.TakeDamage(amount, damageSource);
+            base.TakeDamage(amount, poiseDamage, damageType, damageSource);
             UpdateHealthUI();
         }
 

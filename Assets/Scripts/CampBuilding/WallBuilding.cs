@@ -55,13 +55,13 @@ public class WallBuilding : Building
         }
     }
     
-    public override void TakeDamage(float amount, Transform damageSource = null)
+    public override void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null)
     {
         // Apply damage reduction
         float reducedDamage = amount * (1f - damageReduction);
         
-        // Call base TakeDamage with reduced damage
-        base.TakeDamage(reducedDamage, damageSource);
+        // Call base TakeDamage with reduced damage (buildings don't take poise damage)
+        base.TakeDamage(reducedDamage, 0f, damageType, damageSource);
         
         // Update visuals based on health state
         UpdateWallVisuals();

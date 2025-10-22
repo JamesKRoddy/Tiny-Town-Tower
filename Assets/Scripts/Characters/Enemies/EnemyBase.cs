@@ -1752,14 +1752,8 @@ namespace Enemies
             if (target == null) return;
             
             // Legacy method - new attack components should use AttackBase.DealDamage instead
-            if (poiseDamage > 0)
-            {
-                target.TakeDamage(baseDamage, poiseDamage, transform);
-            }
-            else
-            {
-                target.TakeDamage(baseDamage, transform);
-            }
+            // Use unified TakeDamage method (poise is 0 if not specified)
+            target.TakeDamage(baseDamage, poiseDamage, damageSource: transform);
         }
 
         protected virtual void BeginAttackSequence()
@@ -1793,57 +1787,63 @@ namespace Enemies
             // For non-root motion, rotation will resume automatically in update logic
         }
 
-        public void TakeDamage(float amount, Transform damageSource = null)
-        {
-            // Prevent taking damage if already dead
-            if (Health <= 0) return;
-            
-            float previousHealth = Health;
-            Health -= amount;
-
-            // Use DamageUtils for consistent damage handling
-            DamageUtils.ApplyDamage(this, amount, damageSource, animator, transform, 
-                OnDamageTaken, OnDeath, true);
-
-            // Track hit for procedural IK reactions
-            if (damageSource != null)
-            {
-                LastHitOrigin = damageSource.position;
-                LastHitTime = Time.time;
-                LastHitPoiseDamage = 10f; // Default poise damage for basic attacks
-                HandleDamageReaction(damageSource);
-            }
-
-            if (Health <= 0)
-            {
-                Die();
-            }
-        }
-
-
-
-
-
         /// <summary>
-        /// Overloaded TakeDamage method that handles both health and poise damage
+        /// Unified method to handle all types of damage (basic, poise, elemental, or combined)
         /// </summary>
-        /// <param name="amount">Amount of damage to take</param>
-        /// <param name="poiseDamage">Amount of poise damage to take</param>
-        /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
-        public void TakeDamage(float amount, float poiseDamage, Transform damageSource = null)
+        public void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null)
         {
             // Prevent taking damage if already dead
             if (Health <= 0) return;
             
-            float previousHealth = Health;
-            Health -= amount;
+            bool hasPoiseDamage = poiseDamage > 0f;
+            bool hasElementalDamage = damageType != AttackElement.NONE;
+            bool poiseBroken = false;
+            float finalDamage = amount;
 
-            // Use DamageUtils for consistent damage and poise handling
-            var (hitDirection, poiseBroken) = DamageUtils.ApplyDamageWithPoise(this, amount, poiseDamage, 
-                damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
+            // Handle different damage types with appropriate utilities
+            if (hasPoiseDamage && hasElementalDamage)
+            {
+                // Full damage: poise + elemental
+                var result = DamageUtils.ApplyElementalDamageWithPoise(this, amount, poiseDamage, damageType, 
+                    damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
+                finalDamage = result.Item2;
+                poiseBroken = result.Item3;
+                
+                // Skip if immune to this damage type
+                if (finalDamage <= 0) return;
+                
+                Health -= finalDamage;
+            }
+            else if (hasElementalDamage)
+            {
+                // Elemental damage only
+                var result = DamageUtils.ApplyElementalDamage(this, amount, damageType, 
+                    damageSource, animator, transform, OnDamageTaken, OnDeath, true);
+                finalDamage = result.Item2;
+                
+                // Skip if immune to this damage type
+                if (finalDamage <= 0) return;
+                
+                Health -= finalDamage;
+            }
+            else if (hasPoiseDamage)
+            {
+                // Poise damage only
+                var result = DamageUtils.ApplyDamageWithPoise(this, amount, poiseDamage, 
+                    damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
+                poiseBroken = result.Item2;
+                Health -= amount;
+            }
+            else
+            {
+                // Basic damage only
+                Health -= amount;
+                DamageUtils.ApplyDamage(this, amount, damageSource, animator, transform, 
+                    OnDamageTaken, OnDeath, true);
+            }
 
             // Update poise damage tracking
-            if (poiseDamage > 0)
+            if (hasPoiseDamage)
             {
                 lastPoiseDamageTime = Time.time;
                 if (poiseBroken)
@@ -1852,18 +1852,20 @@ namespace Enemies
                 }
             }
 
-            // Track hit for procedural IK reactions (skip if poise broken to avoid conflicts with stagger animations)
+            // Track hit for procedural IK reactions
             if (damageSource != null)
             {
-                if (!poiseBroken)
+                // Skip IK reactions if poise broken (to avoid conflicts with stagger animations)
+                if (!poiseBroken || !hasPoiseDamage)
                 {
                     LastHitOrigin = damageSource.position;
                     LastHitTime = Time.time;
-                    LastHitPoiseDamage = poiseDamage; // Use actual poise damage for reaction scaling
+                    LastHitPoiseDamage = hasPoiseDamage ? poiseDamage : 10f; // Use actual poise or default
                 }
                 HandleDamageReaction(damageSource);
             }
 
+            // Check for death
             if (Health <= 0)
             {
                 Die();
@@ -2180,95 +2182,6 @@ namespace Enemies
             return DamageUtils.GetDamageMultiplier(GetResistance(damageType));
         }
 
-        /// <summary>
-        /// Take damage with elemental type consideration
-        /// </summary>
-        /// <param name="amount">Base amount of damage to take</param>
-        /// <param name="damageType">Type of elemental damage</param>
-        /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
-        public void TakeDamage(float amount, AttackElement damageType, Transform damageSource = null)
-        {
-            // Prevent taking damage if already dead
-            if (Health <= 0) return;
-            
-            // Use DamageUtils for elemental damage calculation with resistance
-            var (hitDirection, finalDamage) = DamageUtils.ApplyElementalDamage(this, amount, damageType, 
-                damageSource, animator, transform, OnDamageTaken, OnDeath, true);
-
-            // Skip if immune to this damage type
-            if (finalDamage <= 0) return;
-
-            // Apply the calculated damage
-            float previousHealth = Health;
-            Health -= finalDamage;
-            OnDamageTaken?.Invoke(finalDamage, Health);
-
-            // Track hit for procedural IK reactions
-            if (damageSource != null)
-            {
-                LastHitOrigin = damageSource.position;
-                LastHitTime = Time.time;
-                LastHitPoiseDamage = 10f; // Default poise damage for elemental attacks without poise
-                HandleDamageReaction(damageSource);
-            }
-
-            if (Health <= 0)
-            {
-                Die();
-            }
-        }
-
-        /// <summary>
-        /// Take damage with poise damage and elemental type consideration
-        /// </summary>
-        /// <param name="amount">Base amount of damage to take</param>
-        /// <param name="poiseDamage">Amount of poise damage to take</param>
-        /// <param name="damageType">Type of elemental damage</param>
-        /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
-        public void TakeDamage(float amount, float poiseDamage, AttackElement damageType, Transform damageSource = null)
-        {
-            // Prevent taking damage if already dead
-            if (Health <= 0) return;
-            
-            // Use DamageUtils for elemental damage calculation with resistance
-            var (hitDirection, finalDamage, poiseBroken) = DamageUtils.ApplyElementalDamageWithPoise(this, amount, poiseDamage, damageType, 
-                damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
-
-            // Skip if immune to this damage type
-            if (finalDamage <= 0) return;
-
-            // Apply the calculated damage
-            float previousHealth = Health;
-            Health -= finalDamage;
-            OnDamageTaken?.Invoke(finalDamage, Health);
-
-            // Update poise damage tracking
-            if (poiseDamage > 0)
-            {
-                lastPoiseDamageTime = Time.time;
-                if (poiseBroken)
-                {
-                    isPoiseBroken = true;
-                }
-            }
-
-            // Track hit for procedural IK reactions (skip if poise broken to avoid conflicts with stagger animations)
-            if (damageSource != null)
-            {
-                if (!poiseBroken)
-                {
-                    LastHitOrigin = damageSource.position;
-                    LastHitTime = Time.time;
-                    LastHitPoiseDamage = poiseDamage; // Use actual poise damage for reaction scaling
-                }
-                HandleDamageReaction(damageSource);
-            }
-
-            if (Health <= 0)
-            {
-                Die();
-            }
-        }
 
         #endregion
     }

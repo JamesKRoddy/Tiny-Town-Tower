@@ -40,19 +40,19 @@ namespace Enemies
 
         [Header("Attack Effects")]
         [Tooltip("Effect played when the attack starts")]
-        public EffectDefinition startEffect;
+        public EffectSpawnData startEffect;
         [Tooltip("Delay in seconds before playing the start effect")]
         public float startEffectDelay = 0f;
         [Tooltip("Effect played when the enemy attacks")]
-        public EffectDefinition attackEffect;
+        public EffectSpawnData attackEffect;
         [Tooltip("Delay in seconds before playing the attack effect")]
         public float attackEffectDelay = 0f;
         [Tooltip("Effect played when the attack hits")]
-        public EffectDefinition hitEffect;
+        public EffectSpawnData hitEffect;
         [Tooltip("Delay in seconds before playing the hit effect")]
         public float hitEffectDelay = 0f;
         [Tooltip("Effect played when the attack ends")]
-        public EffectDefinition endEffect;
+        public EffectSpawnData endEffect;
         [Tooltip("Delay in seconds before playing the end effect")]
         public float endEffectDelay = 0f;
 
@@ -114,11 +114,11 @@ namespace Enemies
                 attackOrigin = enemy.transform;
             }
 
-            // Initialize effect players
-            startEffectPlayer = new EffectPlayer(this, startEffect, startEffectDelay);
-            attackEffectPlayer = new EffectPlayer(this, attackEffect, attackEffectDelay);
-            hitEffectPlayer = new EffectPlayer(this, hitEffect, hitEffectDelay);
-            endEffectPlayer = new EffectPlayer(this, endEffect, endEffectDelay);
+            // Initialize effect players - convert EffectSpawnData to EffectDefinition for EffectPlayer
+            startEffectPlayer = new EffectPlayer(this, startEffect?.effectDefinition, startEffectDelay);
+            attackEffectPlayer = new EffectPlayer(this, attackEffect?.effectDefinition, attackEffectDelay);
+            hitEffectPlayer = new EffectPlayer(this, hitEffect?.effectDefinition, hitEffectDelay);
+            endEffectPlayer = new EffectPlayer(this, endEffect?.effectDefinition, endEffectDelay);
         }
 
         /// <summary>
@@ -430,35 +430,76 @@ namespace Enemies
         }
 
         /// <summary>
-        /// Play start effect
+        /// Play start effect using EffectSpawnData configuration
         /// </summary>
         protected virtual void PlayStartEffect(Vector3? position = null, Vector3? direction = null, Quaternion? rotation = null, Transform parent = null)
         {
-            startEffectPlayer.Play(position, direction, rotation, parent);
+            if (startEffect != null && startEffect.IsValid())
+            {
+                PlayEffectSpawnData(startEffect, startEffectDelay, attackOrigin ?? enemy?.transform);
+            }
         }
 
         /// <summary>
-        /// Play attack effect
+        /// Play attack effect using EffectSpawnData configuration
         /// </summary>
         protected virtual void PlayAttackEffect(Vector3? position = null, Vector3? direction = null, Quaternion? rotation = null, Transform parent = null)
         {
-            attackEffectPlayer.Play(position, direction, rotation, parent);
+            if (attackEffect != null && attackEffect.IsValid())
+            {
+                PlayEffectSpawnData(attackEffect, attackEffectDelay, attackOrigin ?? enemy?.transform);
+            }
         }
 
         /// <summary>
-        /// Play hit effect
+        /// Play hit effect using EffectSpawnData configuration
         /// </summary>
         protected virtual void PlayHitEffect(Vector3? position = null, Vector3? direction = null, Quaternion? rotation = null, Transform parent = null)
         {
-            hitEffectPlayer.Play(position, direction, rotation, parent);
+            if (hitEffect != null && hitEffect.IsValid())
+            {
+                PlayEffectSpawnData(hitEffect, hitEffectDelay, attackOrigin ?? enemy?.transform);
+            }
         }
 
         /// <summary>
-        /// Play end effect
+        /// Play end effect using EffectSpawnData configuration
         /// </summary>
         protected virtual void PlayEndEffect(Vector3? position = null, Vector3? direction = null, Quaternion? rotation = null, Transform parent = null)
         {
-            endEffectPlayer.Play(position, direction, rotation, parent);
+            if (endEffect != null && endEffect.IsValid())
+            {
+                PlayEffectSpawnData(endEffect, endEffectDelay, attackOrigin ?? enemy?.transform);
+            }
+        }
+        
+        /// <summary>
+        /// Play an EffectSpawnData with optional delay
+        /// </summary>
+        protected virtual void PlayEffectSpawnData(EffectSpawnData effectData, float delay, Transform fallbackTransform)
+        {
+            if (effectData == null || !effectData.IsValid()) return;
+            
+            if (delay > 0)
+            {
+                StartCoroutine(PlayEffectSpawnDataDelayed(effectData, delay, fallbackTransform));
+            }
+            else
+            {
+                effectData.SpawnEffect(fallbackTransform);
+            }
+        }
+        
+        /// <summary>
+        /// Coroutine to play an EffectSpawnData after a delay
+        /// </summary>
+        private IEnumerator PlayEffectSpawnDataDelayed(EffectSpawnData effectData, float delay, Transform fallbackTransform)
+        {
+            yield return new WaitForSeconds(delay);
+            if (effectData != null && effectData.IsValid())
+            {
+                effectData.SpawnEffect(fallbackTransform);
+            }
         }
 
         /// <summary>

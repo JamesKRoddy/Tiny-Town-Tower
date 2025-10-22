@@ -852,16 +852,41 @@ MonoBehaviour:
   allowRotationDuringAttack: 0
   attackElement: 0
   elementalDamageBonus: 0
-  startEffect: {fileID: 11400000, guid: fcf79a6a167279b4eae818ba6f5238fa, type: 2}
+  startEffect:
+    effectDefinition: {fileID: 11400000, guid: fcf79a6a167279b4eae818ba6f5238fa, type: 2}
+    spawnPoint: {fileID: 8384904350946220507}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   startEffectDelay: 0
-  attackEffect: {fileID: 0}
+  attackEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   attackEffectDelay: 0
-  hitEffect: {fileID: 0}
+  hitEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   hitEffectDelay: 0
-  endEffect: {fileID: 0}
+  endEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   endEffectDelay: 0
   attackTrigger: Attack
   attackGameObjects: []
+  lastAttackTime: 0
   attackRadius: 1.5
   targetLayer:
     serializedVersion: 2
@@ -890,16 +915,41 @@ MonoBehaviour:
   allowRotationDuringAttack: 0
   attackElement: 0
   elementalDamageBonus: 0
-  startEffect: {fileID: 0}
+  startEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   startEffectDelay: 0
-  attackEffect: {fileID: 11400000, guid: f67d8cac14b3bd64eb6ca922af912f97, type: 2}
+  attackEffect:
+    effectDefinition: {fileID: 11400000, guid: f67d8cac14b3bd64eb6ca922af912f97, type: 2}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   attackEffectDelay: 0
-  hitEffect: {fileID: 0}
+  hitEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   hitEffectDelay: 0
-  endEffect: {fileID: 0}
+  endEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   endEffectDelay: 0
   attackTrigger: Attack
   attackGameObjects: []
+  lastAttackTime: 0
   maxShockwaveRadius: 10
   shockwaveSpeed: 15
   shockwaveWidth: 1
@@ -926,16 +976,41 @@ MonoBehaviour:
   allowRotationDuringAttack: 0
   attackElement: 0
   elementalDamageBonus: 0
-  startEffect: {fileID: 11400000, guid: 34dd8713150ee7c4b93e486ac20fed3a, type: 2}
+  startEffect:
+    effectDefinition: {fileID: 11400000, guid: 34dd8713150ee7c4b93e486ac20fed3a, type: 2}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   startEffectDelay: 0
-  attackEffect: {fileID: 0}
+  attackEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   attackEffectDelay: 0
-  hitEffect: {fileID: 0}
+  hitEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   hitEffectDelay: 0
-  endEffect: {fileID: 11400000, guid: 7f3b9784e46c47e4faedf0ac585c4f17, type: 2}
+  endEffect:
+    effectDefinition: {fileID: 11400000, guid: 7f3b9784e46c47e4faedf0ac585c4f17, type: 2}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   endEffectDelay: 0
   attackTrigger: Attack
   attackGameObjects: []
+  lastAttackTime: 0
   jumpRadius: 3
   jumpHeight: 5
   jumpDuration: 1

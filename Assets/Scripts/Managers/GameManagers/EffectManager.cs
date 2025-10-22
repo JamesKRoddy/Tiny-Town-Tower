@@ -976,9 +976,9 @@ namespace Managers
                 if (definition.damagePerSecond > 0f)
                 {
                     var damageable = targetComponent.GetComponent<IDamageable>();
-                    // Status effect damage deals minimal poise damage
+                    // Status effect damage deals minimal poise damage (no elemental type)
                     float poiseDamage = definition.damagePerSecond * 0.2f; // 20% of health damage as poise damage
-                    damageable?.TakeDamage(definition.damagePerSecond, poiseDamage);
+                    damageable?.TakeDamage(definition.damagePerSecond, poiseDamage, AttackElement.NONE, null);
                 }
                 
                 if (definition.healingPerSecond > 0f)

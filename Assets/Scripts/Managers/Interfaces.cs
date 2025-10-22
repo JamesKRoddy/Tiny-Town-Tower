@@ -62,10 +62,14 @@ public interface IDamageable
     float LastHitTime { get; set; } // Time when last damage was taken
     float LastHitPoiseDamage { get; set; } // Poise damage from last hit (used to scale reaction intensity)
 
-    void TakeDamage(float amount, Transform damageSource = null); // Method to handle damage
-    void TakeDamage(float amount, float poiseDamage, Transform damageSource = null); // Method to handle damage with poise
-    void TakeDamage(float amount, AttackElement damageType, Transform damageSource = null); // Method to handle elemental damage
-    void TakeDamage(float amount, float poiseDamage, AttackElement damageType, Transform damageSource = null); // Method to handle elemental damage with poise
+    /// <summary>
+    /// Unified method to handle all types of damage
+    /// </summary>
+    /// <param name="amount">Base damage amount</param>
+    /// <param name="poiseDamage">Poise damage (0 = no poise damage)</param>
+    /// <param name="damageType">Elemental damage type (NONE = physical damage)</param>
+    /// <param name="damageSource">Transform of the damage source (optional, for VFX and positioning)</param>
+    void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null);
     void Heal(float amount);       // Optional: Method to handle healing
     void Die();
     Allegiance GetAllegiance(); // Method to get the allegiance of the entity

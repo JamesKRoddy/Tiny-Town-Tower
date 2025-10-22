@@ -1752,6 +1752,39 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     
     #endregion
     
+    #region Combat Response
+    
+    /// <summary>
+    /// Override TakeDamage to wake up NPCs when attacked while sleeping
+    /// Unified method handles all damage types (basic, poise, elemental, or combined)
+    /// </summary>
+    public new void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null)
+    {
+        // Wake up if sleeping and taking damage
+        if (GetCurrentTaskType() == TaskType.SLEEP)
+        {
+            Debug.Log($"[SettlerNPC] {name} was attacked while sleeping! Waking up and responding to threat.");
+            WakeUpFromAttack(damageSource);
+        }
+        
+        // Call base damage handling (handles all damage types)
+        base.TakeDamage(amount, poiseDamage, damageType, damageSource);
+    }
+    
+    /// <summary>
+    /// Wake up from sleep when attacked and respond to the threat
+    /// </summary>
+    private void WakeUpFromAttack(Transform attacker)
+    {
+        // Immediately change from sleep to flee state
+        // This will interrupt sleep and make the NPC respond to the threat
+        ChangeTask(TaskType.FLEE);
+        
+        // The SleepState.OnExitState will handle cleanup
+    }
+    
+    #endregion
+    
     #region IStatusEffectTarget Implementation
     
     /// <summary>

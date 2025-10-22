@@ -3718,16 +3718,41 @@ MonoBehaviour:
   allowRotationDuringAttack: 0
   attackElement: 0
   elementalDamageBonus: 0
-  startEffect: {fileID: 0}
+  startEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   startEffectDelay: 0
-  attackEffect: {fileID: 11400000, guid: 94e6acf029b2a8e4f947c2e75662ee75, type: 2}
+  attackEffect:
+    effectDefinition: {fileID: 11400000, guid: 94e6acf029b2a8e4f947c2e75662ee75, type: 2}
+    spawnPoint: {fileID: 4526171563111948445}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   attackEffectDelay: 0
-  hitEffect: {fileID: 11400000, guid: 2f3ea51455a426f48b24456a8147c1f2, type: 2}
+  hitEffect:
+    effectDefinition: {fileID: 11400000, guid: 2f3ea51455a426f48b24456a8147c1f2, type: 2}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   hitEffectDelay: 0
-  endEffect: {fileID: 0}
+  endEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   endEffectDelay: 0
   attackTrigger: Attack
   attackGameObjects: []
+  lastAttackTime: 0
   projectileSpawnHeight: 1.5
   projectileSpeed: 10
   projectileMaxHeight: 5

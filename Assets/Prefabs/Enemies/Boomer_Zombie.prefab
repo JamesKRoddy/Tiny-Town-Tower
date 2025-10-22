@@ -3078,16 +3078,41 @@ MonoBehaviour:
   allowRotationDuringAttack: 0
   attackElement: 0
   elementalDamageBonus: 0
-  startEffect: {fileID: 0}
+  startEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   startEffectDelay: 0
-  attackEffect: {fileID: 0}
+  attackEffect:
+    effectDefinition: {fileID: 11400000, guid: ce058444ab7d3b24ebc0ffb7c961e39e, type: 2}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   attackEffectDelay: 0
-  hitEffect: {fileID: 0}
+  hitEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   hitEffectDelay: 0
-  endEffect: {fileID: 0}
+  endEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   endEffectDelay: 0
   attackTrigger: Attack
   attackGameObjects: []
+  lastAttackTime: 0
   explosionRadius: 5
   poiseDamageMultiplier: 1.2
   dieAfterExplosion: 1

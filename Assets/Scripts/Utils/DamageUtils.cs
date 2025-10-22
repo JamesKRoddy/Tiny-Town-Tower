@@ -496,15 +496,8 @@ public static class DamageUtils
                     continue;
                 }
                 
-                // Apply damage with elemental type
-                if (element == AttackElement.NONE || element == AttackElement.PHYSICAL)
-                {
-                    damageable.TakeDamage(damageAmount, poiseDamage, attacker);
-                }
-                else
-                {
-                    damageable.TakeDamage(damageAmount, poiseDamage, element, attacker);
-                }
+                // Apply damage with elemental type (using unified method)
+                damageable.TakeDamage(damageAmount, poiseDamage, element, attacker);
                 
                 targetsDamaged++;
             }
@@ -526,15 +519,8 @@ public static class DamageUtils
     {
         if (target == null) return;
         
-        // Apply damage with elemental type
-        if (element == AttackElement.NONE || element == AttackElement.PHYSICAL)
-        {
-            target.TakeDamage(damageAmount, poiseDamage, attacker);
-        }
-        else
-        {
-            target.TakeDamage(damageAmount, poiseDamage, element, attacker);
-        }
+        // Apply damage with elemental type (using unified method)
+        target.TakeDamage(damageAmount, poiseDamage, element, attacker);
     }
 
     /// <summary>
@@ -1013,15 +999,8 @@ public static class DamageUtils
             totalDamage += dealer.ElementalDamageBonus;
         }
         
-        // Apply damage with elemental type
-        if (dealer.ElementType == AttackElement.NONE || dealer.ElementType == AttackElement.PHYSICAL)
-        {
-            target.TakeDamage(totalDamage, poiseAmount, dealer.DamageSource);
-        }
-        else
-        {
-            target.TakeDamage(totalDamage, poiseAmount, dealer.ElementType, dealer.DamageSource);
-        }
+        // Apply damage with elemental type (using unified method)
+        target.TakeDamage(totalDamage, poiseAmount, dealer.ElementType, dealer.DamageSource);
         
         // Apply additional effects based on dealer type
         ApplyAdditionalEffects(dealer, target, totalDamage);
