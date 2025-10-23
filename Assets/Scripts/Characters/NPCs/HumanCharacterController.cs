@@ -2110,8 +2110,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     /// <summary>
     /// Unified method to handle all types of damage (basic, poise, elemental, or combined)
+    /// Made virtual so SettlerNPC can override to add wake-up behavior
     /// </summary>
-    public void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null)
+    public virtual void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null)
     {
         // Prevent taking damage if already dead
         if (isDead) return;

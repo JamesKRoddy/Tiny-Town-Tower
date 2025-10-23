@@ -167,7 +167,20 @@ public class FleeState : _TaskState
         }
         else
         {
-            // No immediate threats, but check cooldown before returning to normal behavior
+            // No immediate threats detected
+            // Check if camp is under attack - if so, stay in FLEE state until attack ends (morning or all waves cleared)
+            if (CampManager.Instance != null && CampManager.Instance.IsCampUnderAttack)
+            {
+                // Camp is under attack, stay vigilant - don't return to normal activities
+                if (!isFleeing && !isSeekingBunker)
+                {
+                    // Not actively fleeing, but stay alert during the attack
+                    Debug.Log($"{npc.name} no immediate threats but camp is under attack, staying in FLEE state");
+                }
+                return;
+            }
+            
+            // Camp is peaceful, check cooldown before returning to normal behavior
             if ((isFleeing || isSeekingBunker) && Time.time - lastThreatTime >= threatCooldown)
             {
                 Debug.Log($"{npc.name} no longer threatened after {threatCooldown}s cooldown, returning to normal behavior");

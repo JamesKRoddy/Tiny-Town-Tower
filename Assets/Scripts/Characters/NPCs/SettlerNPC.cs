@@ -184,6 +184,13 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         // Check if NPC should sleep based on sleep chance
         if (UnityEngine.Random.value < GameManager.Instance.TimeManager.SleepChance)
         {
+            // Don't sleep during active attacks - NPCs must stay alert until morning or all waves cleared
+            if (CampManager.Instance != null && CampManager.Instance.IsCampUnderAttack)
+            {
+                Debug.Log($"[SettlerNPC] {name} skipping night sleep - camp is under attack");
+                return;
+            }
+            
             // Only transition if not already sleeping and not in critical states
             var currentTask = GetCurrentTaskType();
             if (currentTask != TaskType.SLEEP && 
@@ -348,6 +355,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     /// </summary>
     private void RegisterWithManagers()
     {
+        Debug.Log($"[SettlerNPC] {name} RegisterWithManagers called");
+        
         // Register with NPCManager
         NPCManager.Instance.RegisterNPC(this);
         
@@ -355,6 +364,10 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         if (CampManager.Instance != null)
         {
             CampManager.Instance.AddNPC(this);
+        }
+        else
+        {
+            Debug.LogWarning($"[SettlerNPC] {name} could not register with CampManager - Instance is null");
         }
     }
 
@@ -522,6 +535,10 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
             }
         }
 
+        // Register with managers (must be done after restoration but before Start() check)
+        // This is needed because hasBeenInitialized will prevent Start() from calling InitializeForContext
+        RegisterWithManagers();
+        
         hasBeenInitialized = true;
     }
 
@@ -996,6 +1013,13 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
             return;
         }
         
+        // Don't fall asleep during active attacks - NPCs must stay alert until morning or all waves cleared
+        if (CampManager.Instance != null && CampManager.Instance.IsCampUnderAttack)
+        {
+            Debug.Log($"[SettlerNPC] {name} is exhausted but camp is under attack - staying awake");
+            return;
+        }
+        
         // Fall asleep if stamina is critically low (very tired threshold)
         if (IsVeryTired())
         {
@@ -1219,9 +1243,12 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     public void ChangeTask(TaskType newTask)
     {
         TaskType currentTaskType = currentState != null ? currentState.GetTaskType() : TaskType.WANDER;
+        Debug.Log($"[SettlerNPC] {name} ChangeTask called: {currentTaskType} -> {newTask}");
         
         if (taskStates.ContainsKey(newTask))
         {
+            Debug.Log($"[SettlerNPC] {name} task {newTask} found in dictionary, changing state");
+            
             // If we're changing from work to eat, set isOnBreak
             if (currentState != null && currentState.GetTaskType() == TaskType.WORK && newTask == TaskType.EAT)
             {
@@ -1242,7 +1269,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         }
         else
         {
-            Debug.LogWarning($"TaskType {newTask} does not exist in taskStates dictionary.");
+            Debug.LogWarning($"[SettlerNPC] {name} TaskType {newTask} does not exist in taskStates dictionary. Available tasks: {string.Join(", ", taskStates.Keys)}");
         }
     }
 
@@ -1758,7 +1785,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     /// Override TakeDamage to wake up NPCs when attacked while sleeping
     /// Unified method handles all damage types (basic, poise, elemental, or combined)
     /// </summary>
-    public new void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null)
+    public override void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null)
     {
         // Wake up if sleeping and taking damage
         if (GetCurrentTaskType() == TaskType.SLEEP)
@@ -1776,6 +1803,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     /// </summary>
     private void WakeUpFromAttack(Transform attacker)
     {
+        Debug.Log($"[SettlerNPC] {name} WakeUpFromAttack called - changing to FLEE state");
+        
         // Immediately change from sleep to flee state
         // This will interrupt sleep and make the NPC respond to the threat
         ChangeTask(TaskType.FLEE);

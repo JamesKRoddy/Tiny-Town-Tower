@@ -226,6 +226,15 @@ public enum EnemySetupState
     ALL_WAVES_CLEARED // enemies are all dea, player is free the move around and choose the next path
 }
 
+/// <summary>
+/// Overall camp attack state - tracks whether the camp is under attack (entire wave cycle) or peaceful
+/// </summary>
+public enum CampAttackState
+{
+    PEACEFUL,        // No attack happening, NPCs can do normal activities
+    UNDER_ATTACK     // Camp is under attack (wave cycle active), NPCs should flee/hide until morning or all waves cleared
+}
+
 public enum WallType
 {
     ENABLED, // Model can be seen, collider enabled
