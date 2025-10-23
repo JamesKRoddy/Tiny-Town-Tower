@@ -243,3 +243,4 @@ Potential additions:
 
 This system is **backward compatible**. Existing code using `EffectDefinition` directly continues to work. `EffectSpawnData` is purely additive and optional.
 
+

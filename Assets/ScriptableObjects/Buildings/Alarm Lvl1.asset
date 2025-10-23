@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d7f097ca34a0eb45a8b2d5ba0c3d616, type: 3}
+  m_Name: Alarm Lvl1
+  m_EditorClassIdentifier: 
+  objectName: Alarm Lvl1
+  description: Alarm Lvl1 Desc
+  sprite: {fileID: 0}
+  category: 0
+  rarity: 0
+  isUnlocked: 1
+  _resourceCost: []
+  prefab: {fileID: 1613525548882470145, guid: 2c7fce4b132f65b429f43fa2eb7ac307, type: 3}
+  size: {x: 1, y: 1}
+  placeableObjectCategory: 0
+  maxHealth: 100
+  repairTimeInGameHours: 2
+  healthRestoredPerRepair: 50
+  repairResources: []
+  constructionTimeInGameHours: 1
+  upgradeTarget: {fileID: 0}
+  upgradeResources: []
+  destructionTimeInGameHours: 0.5
+  reclaimedResources: []

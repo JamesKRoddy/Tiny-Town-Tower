@@ -1735,6 +1735,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c840ac2f3395a094ea4caf317d1c34a3, type: 2}
   - {fileID: 11400000, guid: b07b1e4cd868230488fd0ac28d951247, type: 2}
   - {fileID: 11400000, guid: 6d48670bd26ffa141ab488a31d2ed45f, type: 2}
+  - {fileID: 11400000, guid: d2d08aee94f820b40a205dcb5dfb83d6, type: 2}
   turretScriptableObjs:
   - {fileID: 11400000, guid: 391b823efa03ef347a229805acbb73fe, type: 2}
   constructionSiteMappings:
@@ -1804,6 +1805,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5e801130eee0134e8db2bdef69c412a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  maxActiveChasers: 3
+  maxChaseDistance: 30
+  alwaysAggroDistance: 8
+  roleReassignmentInterval: 2
   maxSimultaneousAttackers: 2
   attackStaggerDelay: 0.5
   postAttackCooldown: 1
@@ -1811,9 +1816,18 @@ MonoBehaviour:
   minAngleBetweenEnemies: 45
   preferredAttackDistance: 3
   positionUpdateInterval: 2
+  enableCirclingBehavior: 1
+  circlingSpeed: 30
+  personalSpaceRadius: 1.5
+  staggerPositionUpdates: 1
+  updateVariance: 0.3
+  enableInterceptorBehavior: 1
+  predictionTime: 2
+  enableWanderingBehavior: 1
+  wanderRadius: 15
+  wanderInterval: 5
   enableAggroSystem: 1
   threatDecayRate: 5
-  threatPerDamage: 10
   showDebug: 0
 --- !u!1 &8937295529231746835
 GameObject:
