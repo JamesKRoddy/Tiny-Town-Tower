@@ -1901,12 +1901,16 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: buildingScriptableObjs.Array.size
-      value: 14
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: 'buildingScriptableObjs.Array.data[13]'
       value: 
       objectReference: {fileID: 11400000, guid: 6d48670bd26ffa141ab488a31d2ed45f, type: 2}
+    - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: 'buildingScriptableObjs.Array.data[14]'
+      value: 
+      objectReference: {fileID: 11400000, guid: d2d08aee94f820b40a205dcb5dfb83d6, type: 2}
     - target: {fileID: 5302720283086380226, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: constructionCompleteEffectMappings.Array.size
       value: 3

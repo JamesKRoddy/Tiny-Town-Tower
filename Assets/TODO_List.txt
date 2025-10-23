@@ -25,7 +25,7 @@ Go through an move all stings to a single file ie. physics masks, tags etc.
 
 Go through and remove all legacy code
 
-EffectSpawnData which has both the Effectdefinion and Transform. This may be subbed into a few place where Effectdefinion has a spawn point.
+EffectSpawnData which has both the Effectdefinion and Transform. This may be subbed into a few place where Effectdefinion has a spawn point. Character animations i think is the one where work vfx is assigned to IK points, can def sub that out.
 
 ****** Next work:
 
