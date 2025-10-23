@@ -722,6 +722,9 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         // Update visual status
         UpdateSicknessVisualStatus();
         
+        // Update movement speed (sickness slows down NPCs)
+        UpdateMovementSpeed();
+        
         // Check for available medical treatment
         CheckForMedicalTreatment();
     }
@@ -741,6 +744,9 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         
         // Update visual status
         UpdateSicknessVisualStatus();
+        
+        // Update movement speed (recovery restores normal speed)
+        UpdateMovementSpeed();
     }
     
     /// <summary>
@@ -962,6 +968,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
             (oldStamina <= veryLowStaminaThreshold && currentStamina > veryLowStaminaThreshold))
         {
             UpdateStaminaVisualStatus();
+            // Update movement speed when crossing stamina thresholds
+            UpdateMovementSpeed();
         }
         
         // Enhanced debug logging for stamina changes
@@ -1048,9 +1056,75 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         {
             currentState.OnEnterState(); // Enter the new state
 
-            // Adjust the agent's speed according to the new state's requirements
-            agent.speed = currentState.MaxSpeed();
+            // Adjust the agent's speed according to the new state's requirements with debuff modifiers
+            UpdateMovementSpeed();
         }
+    }
+    
+    /// <summary>
+    /// Update movement speed based on current state and health conditions (stamina, hunger, sickness)
+    /// Call this whenever stamina, hunger, or sickness status changes
+    /// </summary>
+    public void UpdateMovementSpeed()
+    {
+        if (currentState == null || agent == null) return;
+        
+        // Get base speed from current state
+        float baseSpeed = currentState.MaxSpeed();
+        
+        // Calculate speed modifier based on health conditions
+        float speedModifier = CalculateSpeedModifier();
+        
+        // Apply modified speed to agent
+        float finalSpeed = baseSpeed * speedModifier;
+        agent.speed = finalSpeed;
+        
+        // Log speed changes when significantly debuffed
+        if (speedModifier < 0.9f)
+        {
+            Debug.Log($"[SettlerNPC] {name} movement speed: {finalSpeed:F1} (base: {baseSpeed:F1}, modifier: {speedModifier:F2}x) - Stamina: {GetStaminaPercentage():F0}%, Hunger: {GetHungerPercentage():F0}%, Sick: {isSick}");
+        }
+    }
+    
+    /// <summary>
+    /// Calculate speed modifier based on stamina, hunger, and sickness
+    /// Returns a value between 0.3 and 1.0 (30% to 100% speed)
+    /// </summary>
+    private float CalculateSpeedModifier()
+    {
+        float modifier = 1.0f;
+        
+        // Stamina penalty (low stamina = slower movement)
+        float staminaPercent = GetStaminaPercentage();
+        if (staminaPercent < veryLowStaminaThreshold) // Below 10%
+        {
+            modifier *= 0.5f; // 50% speed at very low stamina
+        }
+        else if (staminaPercent < lowStaminaThreshold) // Below 30%
+        {
+            modifier *= 0.75f; // 75% speed at low stamina
+        }
+        
+        // Hunger penalty (starving = slower movement)
+        if (IsStarving())
+        {
+            modifier *= 0.6f; // 60% speed when starving
+        }
+        else if (IsHungry())
+        {
+            modifier *= 0.85f; // 85% speed when hungry
+        }
+        
+        // Sickness penalty
+        if (isSick)
+        {
+            modifier *= 0.7f; // 70% speed when sick
+        }
+        
+        // Ensure minimum speed of 30%
+        modifier = Mathf.Max(modifier, 0.3f);
+        
+        return modifier;
     }
 
     public override void PlayWorkAnimation(string animationName)
@@ -1327,8 +1401,12 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
             // For now, we'll just use the recipe's hunger restoration
         }
         
+        float previousHunger = currentHunger;
         currentHunger = Mathf.Min(maxHunger, currentHunger + hungerRestore);
         OnHungerChanged?.Invoke(currentHunger, maxHunger);
+        
+        // Update visual and movement speed after eating
+        UpdateHungerVisualStatus(previousHunger);
     }
 
     public float GetWorkSpeedMultiplier()
@@ -1613,6 +1691,9 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
             
             // Check if overall healthy status needs updating
             UpdateOverallHealthyStatus();
+            
+            // Update movement speed when hunger status changes
+            UpdateMovementSpeed();
         }
     }
     
