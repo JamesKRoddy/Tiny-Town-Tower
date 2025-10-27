@@ -11,6 +11,7 @@ public class WorkState : _TaskState
     private bool hasReachedTask = false;
     private float timeAtTaskLocation = 0f;
     private bool needsPrecisePositioning = false;
+    private Vector3 distributedDestination; // Store the actual distributed destination we're navigating to
     #endregion
 
     #region Movement Parameters
@@ -26,6 +27,9 @@ public class WorkState : _TaskState
     protected override void Awake()
     {
         base.Awake();
+        
+        // WorkState-specific stopping distance - NPCs need to be closer for work tasks
+        stoppingDistance = 0.2f;
     }
 
     public override void OnEnterState()
@@ -48,20 +52,37 @@ public class WorkState : _TaskState
 
     private void SetupNavMeshPath()
     {
-        Vector3 taskPosition = assignedTask.GetNavMeshDestination().position;
+        // Get distributed work position to prevent NPCs from clustering
+        distributedDestination = assignedTask.GetDistributedWorkPosition(npc.transform.position);
         
-        // Use base class method for consistent NavMesh setup
-        SetupNavMeshForWorkTask(assignedTask.GetNavMeshDestination(), 0.5f);
+        Debug.Log($"[WorkState] {npc.name} setting up path to construction site at {distributedDestination}");
+        
+        // Set destination to the distributed position
+        if (agent != null && agent.enabled && agent.isOnNavMesh)
+        {
+            // Set the agent's stopping distance for work tasks
+            agent.stoppingDistance = stoppingDistance;
+            
+            // Make sure the agent is not stopped from a previous state
+            agent.isStopped = false;
+            agent.SetDestination(distributedDestination);
+            Debug.Log($"[WorkState] {npc.name} NavMeshAgent destination set to {distributedDestination}, stopping distance: {agent.stoppingDistance}");
+        }
+        else
+        {
+            Debug.LogWarning($"[WorkState] {npc.name} cannot set destination - agent null: {agent == null}, enabled: {agent?.enabled}, onNavMesh: {agent?.isOnNavMesh}");
+        }
+        
         needsPrecisePositioning = false;
         
         // Check if the path is valid
-        if (agent.pathStatus == UnityEngine.AI.NavMeshPathStatus.PathInvalid)
+        if (agent != null && agent.pathStatus == UnityEngine.AI.NavMeshPathStatus.PathInvalid)
         {
-            Debug.LogWarning($"[WorkState] NavMesh path is invalid for {npc.name} to {taskPosition}");
+            Debug.LogWarning($"[WorkState] NavMesh path is invalid for {npc.name} to {distributedDestination}");
         }
-        else if (agent.pathStatus == UnityEngine.AI.NavMeshPathStatus.PathPartial)
+        else if (agent != null && agent.pathStatus == UnityEngine.AI.NavMeshPathStatus.PathPartial)
         {
-            Debug.LogWarning($"[WorkState] NavMesh path is partial for {npc.name} to {taskPosition}");
+            Debug.LogWarning($"[WorkState] NavMesh path is partial for {npc.name} to {distributedDestination}");
         }
     }
 
@@ -102,12 +123,19 @@ public class WorkState : _TaskState
     {
         if (assignedTask == null) return;
 
-        Transform taskDestination = assignedTask.GetNavMeshDestination();
-        
-        // Use base class helper for destination reached checking
-        bool hasReachedDestination = HasReachedDestination(taskDestination, 0.5f);
+        // Check against the actual distributed destination we're navigating to
+        // Use the agent's stopping distance plus a small buffer to account for NavMesh behavior
+        // and distributed positioning around obstacles. This ensures the threshold is always
+        // achievable by the agent.
+        float distanceToDestination = Vector3.Distance(npc.transform.position, distributedDestination);
+        float reachThreshold = agent != null ? agent.stoppingDistance + 0.5f : stoppingDistance + 0.5f;
+        bool hasReachedDestination = distanceToDestination <= reachThreshold;
 
-
+        // Debug log every 2 seconds to track movement
+        if (Time.frameCount % 120 == 0)
+        {
+            Debug.Log($"[WorkState] {npc.name} distance to work destination: {distanceToDestination:F2}, threshold: {reachThreshold:F2}, destination: {distributedDestination}, hasReached: {hasReachedDestination}");
+        }
 
         if (hasReachedDestination)
         {

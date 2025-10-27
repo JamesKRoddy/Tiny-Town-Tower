@@ -27,6 +27,14 @@ public class SleepState : _TaskState
     
     #region Task State Implementation
     
+    protected override void Awake()
+    {
+        base.Awake();
+        
+        // SleepState-specific stopping distance - need to be very close to bed
+        stoppingDistance = 0.5f;
+    }
+    
     public override TaskType GetTaskType()
     {
         return TaskType.SLEEP;

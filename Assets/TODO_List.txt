@@ -1,8 +1,8 @@
 *****Current Work*****
 
+New nav logic has broken the npcs moving to construction sites
+
 Spawning enemies to attack camp issues:
-Buildings only take damage occasionally
-Npc get away from zombies too easily, drain stamina from npcs as they flee. If stamina is too low they slow down.
 Have to add in something to end the waves after a period of time  and rest the scene to kill zombies and return npcs to work
 
 ****** Tomorrow work:
@@ -24,6 +24,10 @@ Go through an move all stings to a single file ie. physics masks, tags etc.
 Go through and remove all legacy code
 
 EffectSpawnData which has both the Effectdefinion and Transform. This may be subbed into a few place where Effectdefinion has a spawn point. Character animations i think is the one where work vfx is assigned to IK points, can def sub that out.
+
+Snooze effect on npcs
+
+Building menu buttons dont wrap
 
 ****** Next work:
 

@@ -24,6 +24,9 @@ public class WanderState : _TaskState
     protected override void Awake()
     {
         base.Awake();
+        
+        // WanderState-specific stopping distance - can be more relaxed for wandering
+        stoppingDistance = 2.0f;
     }
 
     private void OnDisable()

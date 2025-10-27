@@ -622,7 +622,9 @@ namespace Enemies
                     else
                     {
                         // No strategic position, move toward target
-                        agent.SetDestination(navMeshTarget.position);
+                        // For buildings with NavMeshObstacle, use distributed positions to avoid clustering
+                        Vector3 targetDestination = GetDistributedDestination(navMeshTarget, optimalStoppingDistance);
+                        agent.SetDestination(targetDestination);
                         
                         // For root motion zombies, check if we should stop the agent
                         if (useRootMotion)
@@ -667,47 +669,40 @@ namespace Enemies
                 // COOLDOWN BEHAVIOR: Stop moving when in attack range but waiting for cooldown
                 // Prevents enemies from running around/circling player while waiting to attack
                 // ─────────────────────────────────────────────────────────────────────────────────
-                bool inAttackRangeButOnCooldown = false;
-                bool inAttackRangeButNoLOS = false;
-                bool hasAnyValidAttack = false;
+                bool inRangeButOnCooldown = false;
+                bool inRangeButNoLOS = false;
                 
-                if (distanceToTarget <= GetMaximumAttackRange())
+                // Check all attacks to determine movement behavior
+                // Uses obstacle-aware range checking for consistency with AttackBase.CanAttack()
+                var attackComponents = GetComponents<AttackBase>();
+                foreach (var attack in attackComponents)
                 {
-                    // Check if any attack is on cooldown or blocked by LOS
-                    var attackComponents = GetComponents<AttackBase>();
-                    foreach (var attack in attackComponents)
+                    if (attack != null && attack.enabled)
                     {
-                        if (attack != null && attack.enabled)
+                        // Check if in range using obstacle-aware logic (handles buildings with NavMeshObstacle)
+                        bool inRange = DamageUtils.IsInRangeWithObstacles(transform.position, navMeshTarget, attack.minRange, attack.maxRange);
+                        
+                        if (inRange)
                         {
-                            hasAnyValidAttack = true;
-                            
-                            // Check range and cooldown separately from LOS
-                            bool inRange = DamageUtils.IsInRange(transform.position, navMeshTarget.position, attack.minRange, attack.maxRange);
                             bool cooldownReady = DamageUtils.IsCooldownReady(attack.lastAttackTime, attack.cooldown);
                             
-                            if (inRange && !cooldownReady)
+                            if (!cooldownReady)
                             {
-                                // Actually on cooldown
-                                inAttackRangeButOnCooldown = true;
+                                inRangeButOnCooldown = true;
                                 if (showCollisionDebug)
                                 {
                                     Debug.Log($"[{gameObject.name}] Attack {attack.GetType().Name} on cooldown");
                                 }
-                                break;
                             }
-                            else if (inRange && cooldownReady)
+                            else if (attack.minRange > 0) // Ranged attack
                             {
-                                // In range and cooldown ready, but check LOS for ranged attacks
-                                if (attack.minRange > 0) // Ranged attack
+                                // In range and cooldown ready, so check if LOS is blocking
+                                if (!HasLineOfSight(navMeshTarget.position))
                                 {
-                                    if (!HasLineOfSight(navMeshTarget.position))
+                                    inRangeButNoLOS = true;
+                                    if (showCollisionDebug)
                                     {
-                                        inAttackRangeButNoLOS = true;
-                                        if (showCollisionDebug)
-                                        {
-                                            Debug.Log($"[{gameObject.name}] Attack {attack.GetType().Name} blocked by LOS - need to reposition");
-                                        }
-                                        break;
+                                        Debug.Log($"[{gameObject.name}] Attack {attack.GetType().Name} blocked by LOS - need to reposition");
                                     }
                                 }
                             }
@@ -716,8 +711,7 @@ namespace Enemies
                 }
                 
                 // If in range but on actual cooldown, stay still (don't circle or move around)
-                // ONLY stop if we have valid attacks and they're on cooldown
-                if (inAttackRangeButOnCooldown && hasAnyValidAttack && !isAttacking)
+                if (inRangeButOnCooldown && !isAttacking)
                 {
                     if (!agent.isStopped)
                     {
@@ -730,7 +724,7 @@ namespace Enemies
                     }
                 }
                 // If in range but no LOS, try to reposition to get a clear shot
-                else if (inAttackRangeButNoLOS && hasAnyValidAttack && !isAttacking)
+                else if (inRangeButNoLOS && !isAttacking)
                 {
                     // Try to find a position with clear LOS
                     Vector3 repositionTarget = FindPositionWithLineOfSight();
@@ -813,7 +807,9 @@ namespace Enemies
                     else
                     {
                         // No strategic position assigned, move toward target
-                        agent.SetDestination(navMeshTarget.position);
+                        // For buildings with NavMeshObstacle, use distributed positions to avoid clustering
+                        Vector3 targetDestination = GetDistributedDestination(navMeshTarget, optimalStoppingDistance);
+                        agent.SetDestination(targetDestination);
                         
                         // For root motion zombies, check if we should stop the agent
                         if (useRootMotion)
@@ -994,36 +990,23 @@ namespace Enemies
         {
             if (navMeshTarget == null) return false;
 
-            float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
-            float minAttackDistance = GetMinimumAttackDistance();
-            float maxAttackRange = GetMaximumAttackRange();
-            
-            // Must be in range to potentially attack
-            if (distanceToTarget < minAttackDistance || distanceToTarget > maxAttackRange)
-            {
-                return false; // Not in range, so not in cooldown
-            }
-
             // Check if any attack component is on actual cooldown (not just unable to attack)
             bool anyAttackOnCooldown = false;
-            var zombieComponent = GetComponent<Zombie>();
-            if (zombieComponent != null)
+            var attackComponents = GetComponents<AttackBase>();
+            
+            foreach (var attack in attackComponents)
             {
-                var attackComponents = GetComponents<AttackBase>();
-                foreach (var attack in attackComponents)
+                if (attack != null && attack.enabled)
                 {
-                    if (attack != null && attack.enabled)
+                    // Check if in range using obstacle-aware logic (consistent with CanAttack)
+                    bool inRange = DamageUtils.IsInRangeWithObstacles(transform.position, navMeshTarget, attack.minRange, attack.maxRange);
+                    bool cooldownReady = DamageUtils.IsCooldownReady(attack.lastAttackTime, attack.cooldown);
+                    
+                    // If in range but cooldown is NOT ready, then we're actually in cooldown
+                    if (inRange && !cooldownReady)
                     {
-                        // Check specifically for cooldown, not other factors like LOS
-                        bool inRange = DamageUtils.IsInRange(transform.position, navMeshTarget.position, attack.minRange, attack.maxRange);
-                        bool cooldownReady = DamageUtils.IsCooldownReady(attack.lastAttackTime, attack.cooldown);
-                        
-                        // If in range but cooldown is NOT ready, then we're actually in cooldown
-                        if (inRange && !cooldownReady)
-                        {
-                            anyAttackOnCooldown = true;
-                            break;
-                        }
+                        anyAttackOnCooldown = true;
+                        break;
                     }
                 }
             }
@@ -1183,6 +1166,50 @@ namespace Enemies
 
             // Fallback to a reasonable default
             return maxRange > 0 ? maxRange : 10f;
+        }
+
+        /// <summary>
+        /// Get a distributed destination around a target to prevent clustering.
+        /// Uses crowd avoidance for buildings with NavMeshObstacles, direct position otherwise.
+        /// 
+        /// HOW IT WORKS:
+        /// 1. For buildings: Creates a ring of positions around the building at attack range
+        /// 2. Tests each position for nearby agents (crowding)
+        /// 3. Scores positions: closer to enemy + fewer nearby agents = better score
+        /// 4. Returns the best position, naturally spreading enemies around the building
+        /// 
+        /// TUNING:
+        /// - positionCount (12): More positions = smoother distribution, but slower
+        /// - crowdingRadius (2.5f): Larger = more spread out, smaller = tighter grouping
+        /// </summary>
+        /// <param name="target">The target to move toward</param>
+        /// <param name="attackRange">The desired attack range/stopping distance</param>
+        /// <returns>A position to path to around the target</returns>
+        private Vector3 GetDistributedDestination(Transform target, float attackRange)
+        {
+            if (target == null) return transform.position;
+            
+            // Check if target has a NavMeshObstacle (typically buildings/structures)
+            NavMeshObstacle obstacle = target.GetComponent<NavMeshObstacle>();
+            
+            if (obstacle != null)
+            {
+                // Target is a building/structure - use distributed positioning with crowd avoidance
+                return NavigationUtils.FindDistributedPositionAroundTarget(
+                    transform.position, 
+                    target, 
+                    attackRange, 
+                    obstacleBoundsOffset,
+                    12,  // Test 12 positions around the building (every 30 degrees)
+                    2.5f // Crowding radius - consider positions crowded if 2.5 units from other agents
+                );
+            }
+            else
+            {
+                // Target is a character (NPC/player) - path directly to them
+                // NavMesh agent avoidance will handle avoiding other agents
+                return target.position;
+            }
         }
 
         private void UpdateAnimationParameters()

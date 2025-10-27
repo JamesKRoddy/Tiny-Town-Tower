@@ -622,6 +622,35 @@ public static class DamageUtils
     }
     
     /// <summary>
+    /// Check if a target is within attack range, accounting for NavMesh obstacles
+    /// This is crucial for attacking buildings and other structures with NavMesh obstacles,
+    /// as enemies cannot path directly to their center point.
+    /// </summary>
+    /// <param name="attackerPos">Position of the attacker</param>
+    /// <param name="target">Target transform to check</param>
+    /// <param name="minRange">Minimum attack range (0 = no minimum)</param>
+    /// <param name="maxRange">Maximum attack range</param>
+    /// <param name="obstacleBoundsOffset">Additional offset for obstacle bounds (default: 1f)</param>
+    /// <returns>True if target is within effective attack range</returns>
+    public static bool IsInRangeWithObstacles(Vector3 attackerPos, Transform target, float minRange, float maxRange, float obstacleBoundsOffset = 1f)
+    {
+        if (target == null) return false;
+        
+        float distance = Vector3.Distance(attackerPos, target.position);
+        
+        // For minimum range, use simple distance (enemies need to stay away regardless of obstacles)
+        if (minRange > 0 && distance < minRange)
+        {
+            return false;
+        }
+        
+        // For maximum range, calculate effective reach distance considering obstacles
+        float effectiveMaxRange = NavigationUtils.CalculateEffectiveReachDistance(attackerPos, target, maxRange, obstacleBoundsOffset);
+        
+        return distance <= effectiveMaxRange;
+    }
+    
+    /// <summary>
     /// Check if a target is too close (within minimum range)
     /// </summary>
     /// <param name="attackerPos">Position of the attacker</param>

@@ -130,8 +130,9 @@ namespace Enemies
             if (target == null || enemy == null) return false;
             if (enemy.Health <= 0) return false;
             
-            // Use unified range and cooldown utilities
-            bool inRange = DamageUtils.IsInRange(enemy.transform.position, target.position, minRange, maxRange);
+            // Use obstacle-aware range check for targets with NavMesh obstacles (like buildings)
+            // This ensures enemies can attack buildings even though they can't path directly to the center
+            bool inRange = DamageUtils.IsInRangeWithObstacles(enemy.transform.position, target, minRange, maxRange);
             bool cooldownReady = DamageUtils.IsCooldownReady(lastAttackTime, cooldown);
             
             // For ranged attacks (attacks with minimum range > 0), check line of sight
@@ -298,7 +299,7 @@ namespace Enemies
         protected virtual bool IsTargetInRange()
         {
             if (target == null) return false;
-            return DamageUtils.IsInRange(enemy.transform.position, target.position, minRange, maxRange);
+            return DamageUtils.IsInRangeWithObstacles(enemy.transform.position, target, minRange, maxRange);
         }
 
         /// <summary>
