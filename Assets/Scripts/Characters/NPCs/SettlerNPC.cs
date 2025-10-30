@@ -166,6 +166,12 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
             // Calculate hunger rate based on day/night length
             CalculateHungerRate();
         }
+        
+        // Subscribe to camp attack state changes to respond appropriately based on current state
+        if (CampManager.Instance != null)
+        {
+            CampManager.Instance.OnCampAttackStateChanged += OnCampAttackStateChanged;
+        }
     }
     
     /// <summary>
@@ -220,6 +226,81 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     }
     
     // Removed OnDayStarted method - wake-up logic is handled by SleepState
+    
+    /// <summary>
+    /// Handle camp attack state changes - NPCs decide their behavior based on their current state
+    /// </summary>
+    private void OnCampAttackStateChanged(CampAttackState newState)
+    {
+        Debug.Log($"[SettlerNPC] {name} received OnCampAttackStateChanged: {newState}");
+        
+        TaskType currentTask = GetCurrentTaskType();
+        
+        switch (newState)
+        {
+            case CampAttackState.UNDER_ATTACK:
+                // Camp is under attack - decide what to do based on current state
+                Debug.Log($"[SettlerNPC] {name} responding to UNDER_ATTACK (current task: {currentTask})");
+                
+                // IMPORTANT: Don't wake up sleeping NPCs - only AlarmBuilding should do that
+                if (currentTask == TaskType.SLEEP)
+                {
+                    Debug.Log($"[SettlerNPC] {name} is sleeping - staying asleep (AlarmBuilding will wake if needed)");
+                    return;
+                }
+                
+                // If already fleeing or attacking, continue
+                if (currentTask == TaskType.FLEE || currentTask == TaskType.ATTACK)
+                {
+                    Debug.Log($"[SettlerNPC] {name} already in {currentTask} state - continuing");
+                    return;
+                }
+                
+                // Otherwise, flee to safety
+                Debug.Log($"[SettlerNPC] {name} changing from {currentTask} to FLEE due to attack");
+                ChangeTask(TaskType.FLEE);
+                break;
+                
+            case CampAttackState.PEACEFUL:
+                // Attack ended - return to normal behavior based on current state
+                Debug.Log($"[SettlerNPC] {name} responding to PEACEFUL (current task: {currentTask})");
+                
+                // Leave sleeping NPCs alone - they'll wake naturally or when told
+                if (currentTask == TaskType.SLEEP)
+                {
+                    Debug.Log($"[SettlerNPC] {name} is sleeping - staying asleep");
+                    return;
+                }
+                
+                // If not fleeing, no need to change state
+                if (currentTask != TaskType.FLEE)
+                {
+                    Debug.Log($"[SettlerNPC] {name} is not fleeing, continuing {currentTask}");
+                    return;
+                }
+                
+                // Was fleeing, now return to work or wander
+                Debug.Log($"[SettlerNPC] {name} attack ended, returning to normal from FLEE");
+                
+                // Try to assign work, otherwise wander
+                bool taskAssigned = false;
+                if (CampManager.Instance?.WorkManager != null)
+                {
+                    taskAssigned = CampManager.Instance.WorkManager.AssignNextAvailableTask(this);
+                }
+                
+                if (taskAssigned)
+                {
+                    Debug.Log($"[SettlerNPC] {name} assigned to work task");
+                }
+                else
+                {
+                    Debug.Log($"[SettlerNPC] {name} no work available, wandering");
+                    ChangeTask(TaskType.WANDER);
+                }
+                break;
+        }
+    }
     
     /// <summary>
     /// Initialize stamina rates from base values (before characteristics modify them)
@@ -568,6 +649,12 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         {
             TimeManager.OnNightStarted -= OnNightStarted;
             // Removed OnDayStarted unsubscribe - not using that event
+        }
+        
+        // Unsubscribe from camp attack state changes
+        if (CampManager.Instance != null)
+        {
+            CampManager.Instance.OnCampAttackStateChanged -= OnCampAttackStateChanged;
         }
         
         // Call base class cleanup
@@ -1868,11 +1955,19 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     /// </summary>
     public override void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null)
     {
-        // Wake up if sleeping and taking damage
-        if (GetCurrentTaskType() == TaskType.SLEEP)
+        TaskType currentTask = GetCurrentTaskType();
+        
+        // If attacked while sleeping, wake up and flee
+        if (currentTask == TaskType.SLEEP)
         {
-            Debug.Log($"[SettlerNPC] {name} was attacked while sleeping! Waking up and responding to threat.");
+            Debug.Log($"[SettlerNPC] {name} was attacked while sleeping! Waking up and fleeing.");
             WakeUpFromAttack(damageSource);
+        }
+        // If attacked while doing non-combat activities, immediately flee
+        else if (currentTask != TaskType.FLEE && currentTask != TaskType.ATTACK && currentTask != TaskType.SHELTERED)
+        {
+            Debug.Log($"[SettlerNPC] {name} was attacked while {currentTask}! Fleeing from danger.");
+            ChangeTask(TaskType.FLEE);
         }
         
         // Call base damage handling (handles all damage types)

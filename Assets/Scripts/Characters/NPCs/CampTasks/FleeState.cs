@@ -35,11 +35,32 @@ public class FleeState : _TaskState
             agent = npc.GetAgent();
         }
         
+        // Ensure NavMeshAgent is enabled (could be disabled from sleep state)
+        if (agent != null && !agent.enabled)
+        {
+            agent.enabled = true;
+            Debug.Log($"{npc.name} re-enabled NavMeshAgent for fleeing");
+        }
+        
+        // CRITICAL: Ensure agent can move (agent.isStopped could be true from sleep state)
+        if (agent != null && agent.enabled)
+        {
+            agent.isStopped = false;
+            Debug.Log($"{npc.name} set agent.isStopped = false to enable movement");
+        }
+        
+        // Note: Speed is set by SettlerNPC.UpdateMovementSpeed() based on MaxSpeed() and health modifiers
+        
         isFleeing = false;
         isSeekingBunker = false;
         targetBunker = null;
         
         Debug.Log($"{npc.name} entering Flee state");
+        
+        // IMPORTANT: Immediately check for threats when entering flee state
+        // This is crucial for NPCs woken by attacks - they need to flee right away!
+        lastThreatCheck = Time.time;
+        CheckForThreats();
     }
     
     public override void OnExitState()
@@ -59,6 +80,30 @@ public class FleeState : _TaskState
     
     public override void UpdateState()
     {
+        // Check if NPC is completely exhausted (no stamina)
+        if (npc is SettlerNPC settler && settler.currentStamina <= 0)
+        {
+            // NPC is too exhausted to flee - collapse in place
+            if (isFleeing || isSeekingBunker)
+            {
+                Debug.Log($"{npc.name} is completely exhausted (stamina: 0) - cannot flee anymore!");
+                
+                // Stop movement
+                if (agent != null && agent.enabled)
+                {
+                    agent.isStopped = true;
+                    agent.velocity = Vector3.zero;
+                }
+                
+                isFleeing = false;
+                isSeekingBunker = false;
+                
+                // NPC stays in flee state but can't move (too exhausted)
+                // They're still vulnerable to attacks but physically can't run
+            }
+            return;
+        }
+        
         if (Time.time - lastThreatCheck >= threatCheckInterval)
         {
             lastThreatCheck = Time.time;
@@ -103,6 +148,23 @@ public class FleeState : _TaskState
     
     private void CheckForThreats()
     {
+        // Check if NPC is too exhausted to flee
+        if (npc is SettlerNPC settler && settler.currentStamina <= 0)
+        {
+            Debug.Log($"{npc.name} detected threat but is too exhausted to flee (stamina: 0)");
+            
+            // Stop any movement
+            if (agent != null && agent.enabled)
+            {
+                agent.isStopped = true;
+                agent.velocity = Vector3.zero;
+            }
+            
+            isFleeing = false;
+            isSeekingBunker = false;
+            return; // Can't flee when exhausted
+        }
+        
         // Check for nearby enemies using FindObjectsByType instead of layer-based detection
         EnemyBase[] nearbyEnemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
         
@@ -148,20 +210,39 @@ public class FleeState : _TaskState
                 // Set flee target
                 fleeTarget = npc.transform.position + fleeDirection * fleeDistance;
                 
+                Debug.Log($"{npc.name} detected threat at {closestDistance:F2}m away, calculating flee target: {fleeTarget}");
+                
                 // Try to find a bunker first
                 BunkerBuilding nearestBunker = FindNearestBunker();
                 if (nearestBunker != null && nearestBunker.HasSpace)
                 {
                     isSeekingBunker = true;
                     targetBunker = nearestBunker;
-                    agent.SetDestination(nearestBunker.transform.position);
-                    Debug.Log($"{npc.name} seeking shelter in bunker");
+                    
+                    if (agent != null && agent.enabled)
+                    {
+                        agent.SetDestination(nearestBunker.transform.position);
+                        Debug.Log($"{npc.name} seeking shelter in bunker at {nearestBunker.transform.position}, agent enabled: {agent.enabled}, agent on NavMesh: {agent.isOnNavMesh}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"{npc.name} cannot seek bunker - agent null or disabled!");
+                    }
                 }
                 else
                 {
                     // No bunker available, flee to safe location
                     isFleeing = true;
-                    agent.SetDestination(fleeTarget);
+                    
+                    if (agent != null && agent.enabled)
+                    {
+                        agent.SetDestination(fleeTarget);
+                        Debug.Log($"{npc.name} fleeing to {fleeTarget}, agent enabled: {agent.enabled}, agent on NavMesh: {agent.isOnNavMesh}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"{npc.name} cannot flee - agent null or disabled!");
+                    }
                 }
             }
         }

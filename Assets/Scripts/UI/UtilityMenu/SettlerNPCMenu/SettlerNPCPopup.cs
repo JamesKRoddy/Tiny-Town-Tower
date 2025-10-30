@@ -26,6 +26,18 @@ public class SettlerNPCPopup : PreviewPopupBase<HumanCharacterController, string
     public override void DisplayPopup(HumanCharacterController npc, PreviewListMenuBase<string, HumanCharacterController> menu, GameObject element)
     {
         base.DisplayPopup(npc, menu, element);
+        
+        // Disable possess button if camp is under attack
+        if (possessButton != null && CampManager.Instance != null)
+        {
+            bool canPossess = !CampManager.Instance.IsCampUnderAttack;
+            possessButton.interactable = canPossess;
+            
+            if (!canPossess)
+            {
+                Debug.Log("[SettlerNPCPopup] Possess button disabled - camp is under attack");
+            }
+        }
     }
 
     protected override void SetupInitialSelection()
@@ -40,6 +52,15 @@ public class SettlerNPCPopup : PreviewPopupBase<HumanCharacterController, string
     {
         if (currentItem != null)
         {
+            // Check if camp is under attack
+            if (CampManager.Instance != null && CampManager.Instance.IsCampUnderAttack)
+            {
+                Debug.Log("[SettlerNPCPopup] Cannot possess NPC - camp is under attack!");
+                PlayerUIManager.Instance.DisplayNotification("Cannot possess NPCs during an attack!");
+                OnCloseClicked();
+                return;
+            }
+            
             PlayerController.Instance.PossessNPC(currentItem);
             PlayerUIManager.Instance.settlerNPCMenu.SetScreenActive(false, 0.05f);
             PlayerUIManager.Instance.utilityMenu.ReturnToGame();

@@ -12,6 +12,14 @@ public class SettlerPreviewBtn : PreviewButtonBase<HumanCharacterController>
         
         if (data is RobotCharacterController robot)
         {
+            // Check if camp is under attack before possessing robot
+            if (CampManager.Instance != null && CampManager.Instance.IsCampUnderAttack)
+            {
+                Debug.Log("[SettlerPreviewBtn] Cannot possess robot - camp is under attack!");
+                PlayerUIManager.Instance.DisplayNotification("Cannot possess characters during an attack!");
+                return;
+            }
+            
             Debug.Log("[SettlerPreviewBtn] Robot clicked - possessing robot");
             // Immediately possess the robot
             PlayerController.Instance.PossessNPC(robot);

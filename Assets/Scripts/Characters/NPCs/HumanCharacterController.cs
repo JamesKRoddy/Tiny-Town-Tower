@@ -2115,13 +2115,21 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public virtual void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null)
     {
         // Prevent taking damage if already dead
-        if (isDead) return;
+        if (isDead)
+        {
+            Debug.Log($"[{name}] TakeDamage blocked - already dead");
+            return;
+        }
         
         // Prevent taking damage if cooldown is active
         if (Time.time - lastDamageTime < damageCooldown)
         {
+            float cooldownRemaining = damageCooldown - (Time.time - lastDamageTime);
+            Debug.Log($"[{name}] TakeDamage blocked by cooldown - {cooldownRemaining:F2}s remaining (takes damage every {damageCooldown}s)");
             return;
         }
+        
+        Debug.Log($"[{name}] TakeDamage ACCEPTED - Amount: {amount}, Poise: {poiseDamage}, Element: {damageType}, Health before: {health:F1}/{MaxHealth:F1}");
 
         bool hasPoiseDamage = poiseDamage > 0f;
         bool hasElementalDamage = damageType != AttackElement.NONE;
@@ -2131,37 +2139,50 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Handle different damage types with appropriate utilities
         if (hasPoiseDamage && hasElementalDamage)
         {
+            Debug.Log($"[{name}] Applying ELEMENTAL + POISE damage");
             // Full damage: poise + elemental
             var result = DamageUtils.ApplyElementalDamageWithPoise(this, amount, poiseDamage, damageType, 
                 damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
             finalDamage = result.Item2;
             poiseBroken = result.Item3;
             
+            Debug.Log($"[{name}] Final damage after elemental calculation: {finalDamage:F1}, Poise broken: {poiseBroken}, Health after: {health:F1}/{MaxHealth:F1}");
+            
             // Skip if immune to this damage type
             if (finalDamage <= 0) return;
         }
         else if (hasElementalDamage)
         {
+            Debug.Log($"[{name}] Applying ELEMENTAL damage only");
             // Elemental damage only
             var result = DamageUtils.ApplyElementalDamage(this, amount, damageType, 
                 damageSource, animator, transform, OnDamageTaken, OnDeath, true);
             finalDamage = result.Item2;
+            
+            Debug.Log($"[{name}] Final damage after elemental calculation: {finalDamage:F1}, Health after: {health:F1}/{MaxHealth:F1}");
             
             // Skip if immune to this damage type
             if (finalDamage <= 0) return;
         }
         else if (hasPoiseDamage)
         {
+            Debug.Log($"[{name}] Applying POISE damage only");
             // Poise damage only
             var result = DamageUtils.ApplyDamageWithPoise(this, amount, poiseDamage, 
                 damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
             poiseBroken = result.Item2;
+            
+            Debug.Log($"[{name}] Poise broken: {poiseBroken}, Health after: {health:F1}/{MaxHealth:F1}");
         }
         else
         {
             // Basic damage only
+            float healthBefore = health;
             health = Mathf.Max(0, health - amount);
+            float actualDamage = healthBefore - health;
             OnDamageTaken?.Invoke(amount, health);
+            
+            Debug.Log($"[{name}] Health reduced by {actualDamage:F1} - Health after: {health:F1}/{MaxHealth:F1}");
 
             // Check if already damaged to prevent unnecessary animation calls
             bool wasAlreadyDamaged = isDamaged;

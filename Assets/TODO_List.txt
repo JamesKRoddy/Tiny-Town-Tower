@@ -1,9 +1,12 @@
 *****Current Work*****
 
-New nav logic has broken the npcs moving to construction sites
-
 Spawning enemies to attack camp issues:
-Have to add in something to end the waves after a period of time  and rest the scene to kill zombies and return npcs to work
+✓ COMPLETED: Added system to end waves when morning starts - kills remaining zombies and returns NPCs to work
+  - CampManager.OnDayStarted() now handles wave termination when day starts
+  - All remaining enemies are cleared with fade effect
+  - NPCs are automatically returned to their work tasks or wander state
+  - Added TriggerMorningWaveEnd() method for manual testing/debugging
+End the game completely when the npcs are all dead
 
 ****** Tomorrow work:
 

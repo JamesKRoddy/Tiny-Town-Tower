@@ -388,6 +388,17 @@ public class SleepState : _TaskState
         
         StopSleeping();
         
+        // Check if camp is under attack - if so, flee immediately instead of wandering
+        if (CampManager.Instance != null && CampManager.Instance.IsCampUnderAttack)
+        {
+            Debug.Log($"[SleepState] {npc.name} woke up during attack - immediately fleeing!");
+            if (npc is SettlerNPC settler)
+            {
+                settler.ChangeTask(TaskType.FLEE);
+            }
+            return;
+        }
+        
         // Return to work or wander
         TryAssignWorkOrWander();
     }

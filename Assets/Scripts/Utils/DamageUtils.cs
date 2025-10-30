@@ -338,6 +338,16 @@ public static class DamageUtils
         // Calculate 2D hit direction
         Vector2 hitDirection = CalculateHitDirection(characterTransform, damageSource);
         
+        // CRITICAL: Actually apply the health damage!
+        float healthBefore = character.Health;
+        character.Health = Mathf.Max(0, character.Health - finalDamage);
+        float actualDamage = healthBefore - character.Health;
+        
+        Debug.Log($"[DamageUtils] ApplyElementalDamage - Health: {healthBefore:F1} -> {character.Health:F1} (damage: {actualDamage:F1})");
+        
+        // Invoke damage taken callback
+        onDamageTaken?.Invoke(actualDamage, character.Health);
+        
         // Set damage type parameter for animations
         TriggerElementalDamagedAnimation(animator, hitDirection, damageType);
         
@@ -346,6 +356,12 @@ public static class DamageUtils
         {
             var (hitPoint, hitNormal) = CalculateHitPointAndNormal(characterTransform, damageSource);
             EffectManager.Instance.PlayElementalHitEffect(hitPoint, hitNormal, character, damageType);
+        }
+        
+        // Check for death
+        if (character.Health <= 0)
+        {
+            onDeath?.Invoke();
         }
         
         return (hitDirection, finalDamage);
@@ -392,6 +408,16 @@ public static class DamageUtils
         // Calculate 2D hit direction
         Vector2 hitDirection = CalculateHitDirection(characterTransform, damageSource);
         
+        // CRITICAL: Actually apply the health damage!
+        float healthBefore = character.Health;
+        character.Health = Mathf.Max(0, character.Health - finalDamage);
+        float actualDamage = healthBefore - character.Health;
+        
+        Debug.Log($"[DamageUtils] ApplyElementalDamageWithPoise - Health: {healthBefore:F1} -> {character.Health:F1} (damage: {actualDamage:F1})");
+        
+        // Invoke damage taken callback
+        onDamageTaken?.Invoke(actualDamage, character.Health);
+        
         // Apply poise damage and check if poise is broken
         bool poiseBroken = ApplyPoiseDamage(character, poiseDamage, onPoiseBroken);
         
@@ -410,6 +436,12 @@ public static class DamageUtils
         {
             var (hitPoint, hitNormal) = CalculateHitPointAndNormal(characterTransform, damageSource);
             EffectManager.Instance.PlayElementalHitEffect(hitPoint, hitNormal, character, damageType);
+        }
+        
+        // Check for death
+        if (character.Health <= 0)
+        {
+            onDeath?.Invoke();
         }
         
         return (hitDirection, finalDamage, poiseBroken);
@@ -476,33 +508,53 @@ public static class DamageUtils
     {
         int targetsDamaged = 0;
         
+        Debug.Log($"[DamageUtils] DealDamageInRadius called - Center: {center}, Radius: {radius}, Damage: {damageAmount}, Poise: {poiseDamage}");
+        
         // Find all colliders in the radius
         Collider[] hitColliders = Physics.OverlapSphere(center, radius, layerMask);
+        Debug.Log($"[DamageUtils] Found {hitColliders.Length} colliders in radius");
         
         foreach (var hitCollider in hitColliders)
         {
             IDamageable damageable = hitCollider.GetComponent<IDamageable>();
-            if (damageable != null && damageable.GetAllegiance() == Allegiance.FRIENDLY)
+            
+            if (damageable == null)
             {
-                // Check if the target is still active (this will catch NPCs in bunkers)
-                if (!hitCollider.gameObject.activeInHierarchy)
-                {
-                    continue; // Skip inactive targets
-                }
-                
-                // Exclude self if requested
-                if (excludeSelf && hitCollider.transform == attacker)
-                {
-                    continue;
-                }
-                
-                // Apply damage with elemental type (using unified method)
-                damageable.TakeDamage(damageAmount, poiseDamage, element, attacker);
-                
-                targetsDamaged++;
+                Debug.Log($"[DamageUtils] Skipping {hitCollider.name} - no IDamageable component");
+                continue;
             }
+            
+            Allegiance allegiance = damageable.GetAllegiance();
+            Debug.Log($"[DamageUtils] Found damageable: {hitCollider.name}, Allegiance: {allegiance}");
+            
+            if (allegiance != Allegiance.FRIENDLY)
+            {
+                Debug.Log($"[DamageUtils] Skipping {hitCollider.name} - not FRIENDLY allegiance");
+                continue;
+            }
+            
+            // Check if the target is still active (this will catch NPCs in bunkers)
+            if (!hitCollider.gameObject.activeInHierarchy)
+            {
+                Debug.Log($"[DamageUtils] Skipping {hitCollider.name} - not active in hierarchy");
+                continue;
+            }
+            
+            // Exclude self if requested
+            if (excludeSelf && hitCollider.transform == attacker)
+            {
+                Debug.Log($"[DamageUtils] Skipping {hitCollider.name} - is attacker (excludeSelf)");
+                continue;
+            }
+            
+            // Apply damage with elemental type (using unified method)
+            Debug.Log($"[DamageUtils] Calling TakeDamage on {hitCollider.name} - Damage: {damageAmount}, Poise: {poiseDamage}, Element: {element}");
+            damageable.TakeDamage(damageAmount, poiseDamage, element, attacker);
+            
+            targetsDamaged++;
         }
         
+        Debug.Log($"[DamageUtils] DealDamageInRadius complete - Targets damaged: {targetsDamaged}");
         return targetsDamaged;
     }
     
