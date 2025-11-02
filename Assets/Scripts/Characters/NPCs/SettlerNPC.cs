@@ -459,6 +459,12 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         switch (context)
         {
             case NPCInitializationContext.FRESH_SPAWN:
+                // Roguelike spawn - do NOT register with camp managers yet
+                InitializeAsFreshSpawn();
+                break;
+            case NPCInitializationContext.CAMP_SPAWN:
+                // Direct camp spawn (game start/restart) - register with camp managers
+                RegisterWithManagers();
                 InitializeAsFreshSpawn();
                 break;
             case NPCInitializationContext.RECRUITED:
@@ -652,6 +658,36 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         InitializeStatusEffects();
     }
 
+    /// <summary>
+    /// Override Die to properly unregister from managers immediately
+    /// (OnDestroy happens later when GameObject is destroyed)
+    /// </summary>
+    public override void Die()
+    {
+        // Prevent multiple calls to Die()
+        if (isDead) return;
+        
+        Debug.Log($"[SettlerNPC] {name} Die() called - unregistering from managers");
+        
+        // Unregister from CampManager directly with isDead=true for proper tracking
+        // CampManager will add this NPC to the dead list for later cleanup
+        if (Managers.CampManager.Instance != null)
+        {
+            Managers.CampManager.Instance.RemoveNPC(this, isDead: true);
+        }
+        
+        // Notify NPCManager about death (which updates TotalNPCs and triggers game restart if needed)
+        // NPCManager will also call CampManager.RemoveNPC, but since we already removed it above,
+        // the Contains check will fail and it won't do anything
+        if (Managers.NPCManager.Instance != null)
+        {
+            Managers.NPCManager.Instance.UnregisterNPC(this);
+        }
+        
+        // Call base die logic (sets isDead flag, plays death animation, etc)
+        base.Die();
+    }
+
     protected override void OnDestroy()
     {
         // Clean up appearance models
@@ -661,9 +697,11 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
             appearanceSystem.ClearCurrentAppearance();
         }
         
-        // Unregister from NPCManager
-        if (NPCManager.Instance != null)
+        // NOTE: Unregistration now happens in Die() for immediate effect
+        // OnDestroy only handles cleanup if NPC is destroyed without dying first
+        if (!isDead && NPCManager.Instance != null)
         {
+            Debug.LogWarning($"[SettlerNPC] {name} OnDestroy called without Die() - unregistering now");
             NPCManager.Instance.UnregisterNPC(this);
         }
         

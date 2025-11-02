@@ -65,6 +65,7 @@ namespace Managers
 
         // Camp wave management
         private List<HumanCharacterController> campNPCs = new List<HumanCharacterController>();
+        private List<HumanCharacterController> deadNPCs = new List<HumanCharacterController>(); // Dead NPCs awaiting cleanup
         private float lastWaveEndCheck = 0f;
         private float waveStartTime = 0f;
         private float currentWaveDuration = 60f;
@@ -118,6 +119,11 @@ namespace Managers
         public CampAttackState CampAttackState => campAttackState;
         public bool IsCampUnderAttack => campAttackState == CampAttackState.UNDER_ATTACK;
         public int GetCurrentWaveNumber() => currentWaveNumber;
+        
+        // NPC tracking
+        public int GetTotalLivingNPCs() => campNPCs.Count;
+        public int GetTotalDeadNPCs() => deadNPCs.Count;
+        public List<HumanCharacterController> GetLivingNPCs() => new List<HumanCharacterController>(campNPCs);
         
         public int GetCurrentMaxWaves()
         {
@@ -747,13 +753,57 @@ namespace Managers
             }
         }
 
-        public void RemoveNPC(HumanCharacterController npc)
+        /// <summary>
+        /// Remove an NPC from the camp and optionally track as dead for later cleanup
+        /// </summary>
+        /// <param name="npc">The NPC to remove</param>
+        /// <param name="isDead">Whether this NPC is dead and should be tracked for cleanup</param>
+        public void RemoveNPC(HumanCharacterController npc, bool isDead = false)
         {
             if (campNPCs.Contains(npc))
             {
                 campNPCs.Remove(npc);
+                
+                // Add to dead NPCs list if marked as dead
+                if (isDead && !deadNPCs.Contains(npc))
+                {
+                    deadNPCs.Add(npc);
+                    Debug.Log($"[CampManager] Moved {npc.name} to dead NPCs list. Living: {campNPCs.Count}, Dead: {deadNPCs.Count}");
+                }
+                else
+                {
+                    Debug.Log($"[CampManager] Removed NPC {npc.name} from camp. Total living NPCs: {campNPCs.Count}");
+                }
+                
                 UnregisterTarget(npc);
-                Debug.Log($"[CampManager] Removed NPC {npc.name} from wave manager. Total NPCs: {campNPCs.Count}");
+            }
+        }
+        
+        /// <summary>
+        /// Clean up all dead NPC GameObjects
+        /// </summary>
+        public void CleanupDeadNPCs()
+        {
+            int cleanedCount = 0;
+            foreach (var deadNPC in deadNPCs)
+            {
+                if (deadNPC != null)
+                {
+                    Debug.Log($"[CampManager] Destroying dead NPC GameObject: {deadNPC.name}");
+                    Destroy(deadNPC.gameObject);
+                    cleanedCount++;
+                }
+            }
+            
+            deadNPCs.Clear();
+            
+            if (cleanedCount > 0)
+            {
+                Debug.Log($"[CampManager] Cleaned up {cleanedCount} dead NPC GameObject(s)");
+            }
+            else
+            {
+                Debug.Log("[CampManager] No dead NPCs to clean up");
             }
         }
 

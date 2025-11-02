@@ -214,8 +214,8 @@ namespace Managers
                             settler.ApplySettlerData(settlerData);
                         }
                         
-                        // Set initialization context to FRESH_SPAWN
-                        settler.SetInitializationContext(NPCInitializationContext.FRESH_SPAWN);
+                        // Set initialization context to CAMP_SPAWN (spawned directly in camp, not from roguelike)
+                        settler.SetInitializationContext(NPCInitializationContext.CAMP_SPAWN);
                         
                         startupNPCs.Add(settler);
                         
@@ -305,6 +305,9 @@ namespace Managers
         {
             Log("Resetting camp state...");
 
+            // 0. Clean up dead NPCs first
+            CleanupDeadNPCs();
+
             // 1. Damage all buildings
             DamageAllBuildings();
 
@@ -330,6 +333,24 @@ namespace Managers
             ResetCleanliness();
 
             Log("Camp state reset complete.");
+        }
+
+        /// <summary>
+        /// Clean up all dead NPC GameObjects from the scene during restart
+        /// Delegates to CampManager which tracks dead NPCs
+        /// </summary>
+        private void CleanupDeadNPCs()
+        {
+            if (CampManager.Instance != null)
+            {
+                int deadCount = CampManager.Instance.GetTotalDeadNPCs();
+                Log($"Cleaning up {deadCount} dead NPC(s)...");
+                CampManager.Instance.CleanupDeadNPCs();
+            }
+            else
+            {
+                Log("CampManager not available for dead NPC cleanup");
+            }
         }
 
         private void DamageAllBuildings()

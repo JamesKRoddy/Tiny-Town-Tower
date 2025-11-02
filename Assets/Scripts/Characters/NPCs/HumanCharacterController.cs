@@ -145,7 +145,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     [Header("Health")]
     [SerializeField] private float health = 100f;
     [SerializeField] private float damageCooldown = 0.5f; // Time before TakeDamage can be called again
-    private bool isDead = false;
+    protected bool isDead = false; // Protected so subclasses can check death state
     private float lastDamageTime = 0f; // Track when damage was last taken
 
     [Header("Poise Settings")]
@@ -2287,7 +2287,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         OnHeal?.Invoke(amount, health);
     }
 
-    public void Die()
+    public virtual void Die()
     {
         // Prevent multiple calls to Die()
         if (isDead) return;

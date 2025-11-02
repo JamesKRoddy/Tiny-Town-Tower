@@ -379,7 +379,8 @@ public enum CharacterType
 /// </summary>
 public enum NPCInitializationContext
 {
-    FRESH_SPAWN,      // New NPC spawned in roguelike rooms, needs full random initialization
+    FRESH_SPAWN,      // New NPC spawned in roguelike rooms, needs full random initialization (NO camp registration)
+    CAMP_SPAWN,       // New NPC spawned directly in camp (game start/restart), registers with camp managers
     RECRUITED,        // NPC recruited from roguelike, may have predetermined characteristics  
     LOADED_FROM_SAVE  // NPC loaded from save file, should restore previous state
 }

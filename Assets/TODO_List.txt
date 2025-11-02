@@ -1,10 +1,8 @@
 *****Current Work*****
 
-Setup game start, turning on the computer by a random group of npcs between 2-4
-
-Check buttons are not interactable when the player in under attack
 End the game completely when the npcs are all dead
 
+Go through an move all stings to a single file ie. physics masks, tags etc.
 
 ****** Tomorrow work:
 
@@ -19,8 +17,6 @@ UnityEngine.AI.NavMeshBuilder:BuildNavMeshData (UnityEngine.AI.NavMeshBuildSetti
 Unity.AI.Navigation.NavMeshSurface:BuildNavMesh () (at ./Library/PackageCache/com.unity.ai.navigation@9f76b145f0a8/Runtime/NavMeshSurface.cs:272)
 RogueLiteRoomParent/<DelayedBakeNavMesh>d__53:MoveNext () (at Assets/Scripts/RogueLite/RoomLevels/RogueLiteRoomParent.cs:1373)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
-
-Go through an move all stings to a single file ie. physics masks, tags etc.
 
 Go through and remove all legacy code
 

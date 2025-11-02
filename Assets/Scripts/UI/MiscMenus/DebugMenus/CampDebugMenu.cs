@@ -17,6 +17,11 @@ public class CampDebugMenu : BaseDebugMenu
     [SerializeField] private Toggle sicknessToggle;
     [SerializeField] private Toggle sleepToggle;
     
+    [Header("NPC Testing Buttons")]
+    [SerializeField] private Button addRandomNPCButton;
+    [SerializeField] private Button killRandomNPCButton;
+    [SerializeField] private Button killAllNPCsButton;
+    
     // Static debug flags for controlling NPC features
     public static bool DisableHungerSystem = false;
     public static bool DisableStaminaSystem = false;
@@ -44,6 +49,51 @@ public class CampDebugMenu : BaseDebugMenu
         
         // Setup toggle listeners
         SetupToggleListeners();
+        
+        // Setup button listeners
+        SetupButtonListeners();
+    }
+    
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+        
+        // Clean up button listeners
+        if (addRandomNPCButton != null)
+        {
+            addRandomNPCButton.onClick.RemoveListener(OnAddRandomNPC);
+        }
+        
+        if (killRandomNPCButton != null)
+        {
+            killRandomNPCButton.onClick.RemoveListener(OnKillRandomNPC);
+        }
+        
+        if (killAllNPCsButton != null)
+        {
+            killAllNPCsButton.onClick.RemoveListener(OnKillAllNPCs);
+        }
+        
+        // Clean up toggle listeners
+        if (hungerToggle != null)
+        {
+            hungerToggle.onValueChanged.RemoveListener(OnHungerToggleChanged);
+        }
+        
+        if (staminaToggle != null)
+        {
+            staminaToggle.onValueChanged.RemoveListener(OnStaminaToggleChanged);
+        }
+        
+        if (sicknessToggle != null)
+        {
+            sicknessToggle.onValueChanged.RemoveListener(OnSicknessToggleChanged);
+        }
+        
+        if (sleepToggle != null)
+        {
+            sleepToggle.onValueChanged.RemoveListener(OnSleepToggleChanged);
+        }
     }
     
     private void SetupToggleListeners()
@@ -95,6 +145,165 @@ public class CampDebugMenu : BaseDebugMenu
     {
         DisableSleepSystem = !isEnabled;
         Debug.Log($"[CampDebugMenu] Sleep system {(isEnabled ? "enabled" : "disabled")}");
+    }
+    
+    private void SetupButtonListeners()
+    {
+        if (addRandomNPCButton != null)
+        {
+            addRandomNPCButton.onClick.AddListener(OnAddRandomNPC);
+        }
+        
+        if (killRandomNPCButton != null)
+        {
+            killRandomNPCButton.onClick.AddListener(OnKillRandomNPC);
+        }
+        
+        if (killAllNPCsButton != null)
+        {
+            killAllNPCsButton.onClick.AddListener(OnKillAllNPCs);
+        }
+    }
+    
+    private void OnAddRandomNPC()
+    {
+        if (NPCManager.Instance == null)
+        {
+            Debug.LogWarning("[CampDebugMenu] NPCManager not available");
+            return;
+        }
+        
+        // Get settler prefab
+        GameObject settlerPrefab = NPCManager.Instance.GetSettlerPrefab();
+        if (settlerPrefab == null)
+        {
+            Debug.LogError("[CampDebugMenu] Settler prefab not available");
+            return;
+        }
+        
+        // Generate random settler data
+        var settlerData = NPCManager.Instance.GenerateRandomSettlerData();
+        if (settlerData == null)
+        {
+            Debug.LogError("[CampDebugMenu] Failed to generate settler data");
+            return;
+        }
+        
+        // Spawn the NPC at origin or near other NPCs
+        Vector3 spawnPosition = Vector3.zero;
+        var existingNPCs = NPCManager.Instance.GetAllNPCs();
+        if (existingNPCs.Count > 0)
+        {
+            // Spawn near a random existing NPC
+            var randomNPC = existingNPCs[Random.Range(0, existingNPCs.Count)];
+            spawnPosition = randomNPC.transform.position + new Vector3(Random.Range(-2f, 2f), 0, Random.Range(-2f, 2f));
+        }
+        
+        // Instantiate the settler
+        GameObject npcObj = Instantiate(settlerPrefab, spawnPosition, Quaternion.identity);
+        SettlerNPC settler = npcObj.GetComponent<SettlerNPC>();
+        
+        if (settler != null)
+        {
+            // Apply settler data
+            settler.ApplySettlerData(settlerData);
+            
+            // Set initialization context to CAMP_SPAWN (spawned directly in camp for testing)
+            settler.SetInitializationContext(NPCInitializationContext.CAMP_SPAWN);
+            
+            Debug.Log($"[CampDebugMenu] Spawned new NPC: {settlerData.name} at {spawnPosition}");
+        }
+        else
+        {
+            Debug.LogError("[CampDebugMenu] Failed to get SettlerNPC component");
+            Destroy(npcObj);
+        }
+    }
+    
+    private void OnKillRandomNPC()
+    {
+        if (NPCManager.Instance == null)
+        {
+            Debug.LogWarning("[CampDebugMenu] NPCManager not available");
+            return;
+        }
+        
+        var npcs = NPCManager.Instance.GetAllNPCs();
+        if (npcs.Count == 0)
+        {
+            Debug.LogWarning("[CampDebugMenu] No NPCs available to kill");
+            return;
+        }
+        
+        // Pick a random ALIVE NPC
+        var aliveNPCs = npcs.FindAll(npc => npc != null && npc.Health > 0);
+        if (aliveNPCs.Count == 0)
+        {
+            Debug.LogWarning("[CampDebugMenu] No alive NPCs to kill");
+            return;
+        }
+        
+        var randomNPC = aliveNPCs[Random.Range(0, aliveNPCs.Count)];
+        string npcName = randomNPC.GetSettlerName();
+        if (string.IsNullOrEmpty(npcName) || npcName == "Unknown Settler")
+        {
+            npcName = randomNPC.name;
+        }
+        
+        Debug.Log($"[CampDebugMenu] Killing NPC: {npcName} (Health: {randomNPC.Health})");
+        
+        // Kill the NPC
+        if (randomNPC is SettlerNPC settler)
+        {
+            settler.Die(); // Call Die() directly for clean unregistration
+        }
+        else
+        {
+            randomNPC.Die();
+        }
+        
+        Debug.Log($"[CampDebugMenu] Killed {npcName}. Remaining NPCs: {NPCManager.Instance.TotalNPCs}");
+    }
+    
+    private void OnKillAllNPCs()
+    {
+        if (NPCManager.Instance == null)
+        {
+            Debug.LogWarning("[CampDebugMenu] NPCManager not available");
+            return;
+        }
+        
+        var npcs = NPCManager.Instance.GetAllNPCs();
+        if (npcs.Count == 0)
+        {
+            Debug.LogWarning("[CampDebugMenu] No NPCs available to kill");
+            return;
+        }
+        
+        // Filter to only alive NPCs
+        var aliveNPCs = npcs.FindAll(npc => npc != null && npc.Health > 0);
+        if (aliveNPCs.Count == 0)
+        {
+            Debug.LogWarning("[CampDebugMenu] No alive NPCs to kill");
+            return;
+        }
+        
+        int npcCount = aliveNPCs.Count;
+        Debug.Log($"[CampDebugMenu] Killing all {npcCount} alive NPCs...");
+        
+        // Kill all NPCs (create a copy of the list since it will be modified during iteration)
+        var npcsCopy = new System.Collections.Generic.List<SettlerNPC>(aliveNPCs);
+        foreach (var npc in npcsCopy)
+        {
+            if (npc != null && npc.Health > 0)
+            {
+                string npcName = npc.GetSettlerName();
+                Debug.Log($"[CampDebugMenu] Killing {npcName}...");
+                npc.Die(); // Call Die() directly for clean unregistration
+            }
+        }
+        
+        Debug.Log($"[CampDebugMenu] All NPCs killed. This should trigger game restart!");
     }
     
     private void Update()
