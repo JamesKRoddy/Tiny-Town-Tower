@@ -95,5 +95,25 @@ namespace Managers
         {
             return currentElectricity >= requiredAmount;
         }
+
+        /// <summary>
+        /// Set pause state for electricity system
+        /// Note: Electricity consumption is already handled by WorkTasks which won't be running during pause
+        /// This method is provided for consistency with other managers
+        /// </summary>
+        public void SetPaused(bool paused)
+        {
+            // Electricity is only consumed by WorkTasks during active work
+            // Since no work happens during game start pause, no action needed
+            // This method exists for consistency with other managers
+            if (paused)
+            {
+                Debug.Log("[ElectricityManager] Paused (consumption already handled by WorkTasks)");
+            }
+            else
+            {
+                Debug.Log("[ElectricityManager] Resumed");
+            }
+        }
     }
 }

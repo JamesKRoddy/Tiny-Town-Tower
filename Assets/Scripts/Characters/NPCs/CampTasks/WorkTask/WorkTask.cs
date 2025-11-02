@@ -64,6 +64,31 @@ public abstract class WorkTask : MonoBehaviour
     protected float baseWorkTime = 5f;
     protected int resourceAmount = 1;
 
+    /// <summary>
+    /// Reset work progress to 0 (used for game restart)
+    /// </summary>
+    public virtual void ResetProgress()
+    {
+        workProgress = 0f;
+    }
+
+    /// <summary>
+    /// Stop all workers and reset task (used for game restart)
+    /// </summary>
+    public virtual void StopAllWork()
+    {
+        var workersToStop = new List<HumanCharacterController>(currentWorkers);
+        foreach (var worker in workersToStop)
+        {
+            if (worker != null)
+            {
+                worker.StopWork();
+            }
+        }
+        currentWorkers.Clear();
+        ResetProgress();
+    }
+
     // Progress bar settings
     [Header("Progress Display")]
     [SerializeField] protected bool showProgressBar = true; // Whether to show progress bar for this task

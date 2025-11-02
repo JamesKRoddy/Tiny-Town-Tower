@@ -127,5 +127,14 @@ namespace Managers
 
             return true;
         }
+
+        /// <summary>
+        /// Clear all currently researching items (used for game restart)
+        /// </summary>
+        public void ClearCurrentlyResearching()
+        {
+            currentlyResearching.Clear();
+            Debug.Log("[ResearchManager] Cleared all currently researching items");
+        }
     } 
 }

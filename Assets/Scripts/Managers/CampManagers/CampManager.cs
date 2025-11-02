@@ -156,6 +156,30 @@ namespace Managers
             {
                 TimeManager.OnDayStarted += OnDayStarted;
             }
+
+            // Subscribe to scene loaded event to detect when CampScene loads
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+        {
+            // Only initialize game start system when CampScene is loaded
+            if (scene.name == "CampScene")
+            {
+                StartCoroutine(InitializeGameStartSystem());
+            }
+        }
+
+        private System.Collections.IEnumerator InitializeGameStartSystem()
+        {
+            // Wait for save system to finish loading
+            yield return new WaitForSeconds(0.5f);
+
+            // Initialize the game start manager
+            if (GameStartManager.Instance != null)
+            {
+                GameStartManager.Instance.InitializeGame();
+            }
         }
         
         protected override void OnDestroy()
@@ -164,6 +188,9 @@ namespace Managers
             
             // Unsubscribe from time events
             TimeManager.OnDayStarted -= OnDayStarted;
+            
+            // Unsubscribe from scene loaded event
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
         private void Update()

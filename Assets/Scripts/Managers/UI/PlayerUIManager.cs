@@ -59,6 +59,7 @@ public class PlayerUIManager : MonoBehaviour
     [SerializeField] public TransitionMenu transitionMenu;
     [SerializeField] TMP_Text errorMessage;
     public DeathMenu deathMenu;
+    public GameStartMenu gameStartMenu;
     [SerializeField] UIPanelController interactionPromptUI; // UI text for interactionPromptUI
     [SerializeField] TextPopup textPopup; //Used for notifications that require input from the player
     public NarrativeMenu narrativeMenu;

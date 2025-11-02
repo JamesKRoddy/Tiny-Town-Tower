@@ -1,12 +1,10 @@
 *****Current Work*****
 
-Spawning enemies to attack camp issues:
-✓ COMPLETED: Added system to end waves when morning starts - kills remaining zombies and returns NPCs to work
-  - CampManager.OnDayStarted() now handles wave termination when day starts
-  - All remaining enemies are cleared with fade effect
-  - NPCs are automatically returned to their work tasks or wander state
-  - Added TriggerMorningWaveEnd() method for manual testing/debugging
+Setup game start, turning on the computer by a random group of npcs between 2-4
+
+Check buttons are not interactable when the player in under attack
 End the game completely when the npcs are all dead
+
 
 ****** Tomorrow work:
 
@@ -96,6 +94,8 @@ They can increase chances of recovery by not working or even better receiving tr
 
 Finalise the difficulty system making enemies faster, more damage, more health, EnemyManager changes to change how the mobs behave, spawn different waves with harder zombies etc.
 
+
+
 *****Ideas*****
 
 Enemies
@@ -120,6 +120,7 @@ Unlock better weapons avalible at the start of runs
 
 Buildings:
 An alarm that will alert NPCs of an incoming zombie attack
+Implement water and thirst mechanics, water buildings etc.
 
 Weapons:
 All weapons should have versions from lvl 1 to 5 all originating from the same scriptable obj

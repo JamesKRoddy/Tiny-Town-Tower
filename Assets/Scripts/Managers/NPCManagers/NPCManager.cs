@@ -23,12 +23,13 @@ namespace Managers
         private List<string> availableNames = new List<string>();
         private List<string> availableDescriptions = new List<string>();
 
-        [Header("NPC Tracking")]
-        private List<SettlerNPC> activeNPCs = new List<SettlerNPC>();
-        public int TotalNPCs => activeNPCs.Count;
+    [Header("NPC Tracking")]
+    private List<SettlerNPC> activeNPCs = new List<SettlerNPC>();
+    public int TotalNPCs => activeNPCs.Count;
 
-        // Event for NPC count changes
-        public event Action<int> OnNPCCountChanged;
+    // Event for NPC count changes
+    public event Action<int> OnNPCCountChanged;
+    public event Action OnAllNPCsLost;
 
         [Header("NPC Transfer Settings")]
         [SerializeField] private float transferDelay = 2f; // Delay before transferring NPCs to allow scene setup
@@ -100,6 +101,19 @@ namespace Managers
             if (activeNPCs.Remove(npc))
             {
                 OnNPCCountChanged?.Invoke(TotalNPCs);
+                
+                // Check if all NPCs are lost
+                if (TotalNPCs == 0)
+                {
+                    Debug.LogWarning("[NPCManager] All NPCs have been lost!");
+                    OnAllNPCsLost?.Invoke();
+                    
+                    // Trigger game restart if GameStartManager exists
+                    if (GameStartManager.Instance != null)
+                    {
+                        GameStartManager.Instance.TriggerGameRestart();
+                    }
+                }
             }
         }
 

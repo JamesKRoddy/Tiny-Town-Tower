@@ -71,6 +71,16 @@ namespace Managers
             return null;
         }
 
+        /// <summary>
+        /// Clear all work tasks from the queue (used for game restart)
+        /// </summary>
+        public void ClearAllTasks()
+        {
+            workQueue.Clear();
+            previousWorkers.Clear();
+            Debug.Log("[WorkManager] Cleared all work tasks from queue");
+        }
+
             // Method to automatically assign the next available task to an NPC
         public bool AssignNextAvailableTask(HumanCharacterController npc)
         {
