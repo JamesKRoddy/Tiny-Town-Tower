@@ -910,8 +910,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -860, y: 484}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: -721.4232, y: 484}
+  m_SizeDelta: {x: 477.154, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5319424146862643700
 CanvasRenderer:
@@ -3246,6 +3246,7 @@ MonoBehaviour:
 
     Rebooting... New survivors
     inbound.'
+  dotAnimationSpeed: 0.5
 --- !u!225 &1009446752646034771
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -15691,10 +15692,10 @@ RectTransform:
   - {fileID: 1136493023226433139}
   - {fileID: 5975421680587219381}
   - {fileID: 5752140015668570264}
-  - {fileID: 3137620341796456065}
   - {fileID: 1431444886911558966}
   - {fileID: 6384767701831919441}
   - {fileID: 2276157439060703214}
+  - {fileID: 3137620341796456065}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -18047,17 +18048,17 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 875998024329305233}
   - {fileID: 9012700415113449569}
-  - {fileID: 1655448658074000784}
-  - {fileID: 4100686685623380512}
   - {fileID: 2387261833893726021}
   - {fileID: 5962305348229191947}
   - {fileID: 3988356301326867633}
   - {fileID: 5148067046697050023}
   - {fileID: 6256222548942765826}
   - {fileID: 6271473585932242960}
+  - {fileID: 875998024329305233}
   - {fileID: 678287096674286187}
+  - {fileID: 4100686685623380512}
+  - {fileID: 1655448658074000784}
   m_Father: {fileID: 393952194566369977}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
