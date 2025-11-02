@@ -46,7 +46,7 @@ namespace Enemies
     /// </summary>
     [RequireComponent(typeof(NavMeshAgent))]
     [RequireComponent(typeof(Animator))]
-    public class EnemyBase : MonoBehaviour, IDamageable
+    public class EnemyBase : MonoBehaviour, IDamageable, IStatusEffectTarget
     {
         #region Constants
         
@@ -150,6 +150,10 @@ namespace Enemies
         protected Material flashMaterial;
         protected float flashDuration = 0.5f;
         protected Color flashColor = new Color(1f, 0.1f, 0.1f);
+
+        // Status Effect System - Enemy owns its gameplay status effect data (source of truth)
+        // EffectManager handles VFX/presentation layer only
+        protected HashSet<StatusEffectType> activeStatusEffects = new HashSet<StatusEffectType>();
 
         #endregion
 
@@ -1817,7 +1821,12 @@ namespace Enemies
         /// <summary>
         /// Unified method to handle all types of damage (basic, poise, elemental, or combined)
         /// </summary>
-        public void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null)
+        /// <param name="amount">Base damage amount</param>
+        /// <param name="poiseDamage">Poise damage (0 = no poise damage)</param>
+        /// <param name="damageType">Elemental damage type (NONE = physical damage)</param>
+        /// <param name="damageSource">Transform of the damage source (optional, for VFX and positioning)</param>
+        /// <param name="playHitVFX">Whether to play hit visual effects (set to false for status effect damage)</param>
+        public void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null, bool playHitVFX = true)
         {
             // Prevent taking damage if already dead
             if (Health <= 0) return;
@@ -1832,7 +1841,7 @@ namespace Enemies
             {
                 // Full damage: poise + elemental
                 var result = DamageUtils.ApplyElementalDamageWithPoise(this, amount, poiseDamage, damageType, 
-                    damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
+                    damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, playHitVFX);
                 finalDamage = result.Item2;
                 poiseBroken = result.Item3;
                 
@@ -1845,7 +1854,7 @@ namespace Enemies
             {
                 // Elemental damage only
                 var result = DamageUtils.ApplyElementalDamage(this, amount, damageType, 
-                    damageSource, animator, transform, OnDamageTaken, OnDeath, true);
+                    damageSource, animator, transform, OnDamageTaken, OnDeath, playHitVFX);
                 finalDamage = result.Item2;
                 
                 // Skip if immune to this damage type
@@ -1857,7 +1866,7 @@ namespace Enemies
             {
                 // Poise damage only
                 var result = DamageUtils.ApplyDamageWithPoise(this, amount, poiseDamage, 
-                    damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
+                    damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, playHitVFX);
                 poiseBroken = result.Item2;
                 Health -= amount;
             }
@@ -1866,7 +1875,7 @@ namespace Enemies
                 // Basic damage only
                 Health -= amount;
                 DamageUtils.ApplyDamage(this, amount, damageSource, animator, transform, 
-                    OnDamageTaken, OnDeath, true);
+                    OnDamageTaken, OnDeath, playHitVFX);
             }
 
             // Update poise damage tracking
@@ -2209,7 +2218,154 @@ namespace Enemies
             return DamageUtils.GetDamageMultiplier(GetResistance(damageType));
         }
 
-
+        #endregion
+        
+        #region IStatusEffectTarget Implementation
+        
+        // ========================================
+        // GAMEPLAY DATA (Source of Truth)
+        // This enemy owns its status effect data
+        // ========================================
+        
+        /// <summary>
+        /// Add a status effect to this enemy (gameplay data)
+        /// This is the source of truth for active effects
+        /// </summary>
+        /// <param name="effectType">The type of status effect to add</param>
+        /// <returns>True if added, false if already present</returns>
+        public bool AddStatusEffect(StatusEffectType effectType)
+        {
+            return activeStatusEffects.Add(effectType);
+        }
+        
+        /// <summary>
+        /// Remove a status effect from this enemy (gameplay data)
+        /// </summary>
+        /// <param name="effectType">The type of status effect to remove</param>
+        /// <returns>True if removed, false if not present</returns>
+        public bool RemoveStatusEffect(StatusEffectType effectType)
+        {
+            return activeStatusEffects.Remove(effectType);
+        }
+        
+        /// <summary>
+        /// Check if this enemy has a specific status effect
+        /// </summary>
+        /// <param name="effectType">The type of status effect to check</param>
+        /// <returns>True if the effect is active</returns>
+        public bool HasStatusEffect(StatusEffectType effectType)
+        {
+            return activeStatusEffects.Contains(effectType);
+        }
+        
+        /// <summary>
+        /// Get all active status effects on this enemy
+        /// </summary>
+        /// <returns>Read-only collection of active status effect types</returns>
+        public IReadOnlyCollection<StatusEffectType> GetActiveStatusEffects()
+        {
+            return activeStatusEffects;
+        }
+        
+        /// <summary>
+        /// Gets the character type for status effect configuration lookups
+        /// Required by IStatusEffectTarget interface
+        /// </summary>
+        /// <returns>The CharacterType for this enemy</returns>
+        public CharacterType GetCharacterType()
+        {
+            return characterType;
+        }
+        
+        // ========================================
+        // GAMEPLAY CALLBACKS (Effect Behavior)
+        // Called by EffectManager after data changes
+        // ========================================
+        
+        /// <summary>
+        /// Called when a status effect is applied (after AddStatusEffect)
+        /// Handle gameplay logic like movement penalties, AI behavior changes, etc.
+        /// </summary>
+        public virtual void OnStatusEffectApplied(StatusEffectType effectType, float duration)
+        {
+            Debug.Log($"[{gameObject.name}] Status effect applied: {effectType} for {duration}s");
+            
+            // Handle specific gameplay effects
+            switch (effectType)
+            {
+                case StatusEffectType.ON_FIRE:
+                    Debug.Log($"[{gameObject.name}] is on fire! Taking damage over time.");
+                    // Could add panic/aggro behavior
+                    break;
+                    
+                case StatusEffectType.FROZEN:
+                    Debug.Log($"[{gameObject.name}] is frozen! Movement slowed.");
+                    // Could reduce movement speed, animation speed
+                    if (agent != null)
+                    {
+                        // Example: Reduce speed by 50%
+                        agent.speed *= 0.5f;
+                    }
+                    break;
+                    
+                case StatusEffectType.ELECTROCUTED:
+                    Debug.Log($"[{gameObject.name}] is electrocuted!");
+                    // Could add stun behavior, interrupt attacks
+                    break;
+            }
+        }
+        
+        /// <summary>
+        /// Called when a status effect is removed (after RemoveStatusEffect)
+        /// Handle cleanup logic for gameplay effects
+        /// </summary>
+        public virtual void OnStatusEffectRemoved(StatusEffectType effectType)
+        {
+            Debug.Log($"[{gameObject.name}] Status effect removed: {effectType}");
+            
+            // Handle specific cleanup
+            switch (effectType)
+            {
+                case StatusEffectType.FROZEN:
+                    Debug.Log($"[{gameObject.name}] is no longer frozen.");
+                    // Restore movement speed
+                    if (agent != null)
+                    {
+                        // Example: Restore speed
+                        agent.speed = movementSpeed;
+                    }
+                    break;
+                    
+                case StatusEffectType.ELECTROCUTED:
+                    Debug.Log($"[{gameObject.name}] is no longer electrocuted.");
+                    break;
+            }
+        }
+        
+        /// <summary>
+        /// Utility: Apply a status effect with VFX through EffectManager
+        /// For external systems that want both gameplay AND visual effects
+        /// </summary>
+        public void ApplyStatusEffectWithVFX(StatusEffectType effectType, float duration = 0f)
+        {
+            if (EffectManager.Instance != null)
+            {
+                EffectManager.Instance.ApplyStatusEffect(this, effectType, duration);
+            }
+        }
+        
+        /// <summary>
+        /// Utility: Remove a status effect with VFX through EffectManager
+        /// For external systems that want both gameplay AND visual effects
+        /// </summary>
+        public void RemoveStatusEffectWithVFX(StatusEffectType effectType)
+        {
+            if (EffectManager.Instance != null)
+            {
+                EffectManager.Instance.RemoveStatusEffect(this, effectType);
+            }
+        }
+        
         #endregion
     }
 }

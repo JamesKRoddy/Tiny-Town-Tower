@@ -322,7 +322,15 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
 
     #region Damage & Health
 
-    public virtual void TakeDamage(float amount, Transform damageSource = null)
+    /// <summary>
+    /// Unified method to handle all types of damage (buildings don't use poise or elemental resistances)
+    /// </summary>
+    /// <param name="amount">Base damage amount</param>
+    /// <param name="poiseDamage">Poise damage (ignored for buildings)</param>
+    /// <param name="damageType">Elemental damage type (ignored for buildings)</param>
+    /// <param name="damageSource">Transform of the damage source (optional, for VFX and positioning)</param>
+    /// <param name="playHitVFX">Whether to play hit visual effects (set to false for status effect damage)</param>
+    public virtual void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null, bool playHitVFX = true)
     {
         float previousHealth = currentHealth;
         currentHealth = Mathf.Max(0, currentHealth - amount);
@@ -355,8 +363,11 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
             hitNormal = Vector3.up;
         }
         
-        // Play hit VFX using building effects at actual hit point
-        EffectManager.Instance?.PlayHitEffect(hitPoint, hitNormal, buildingCategory);
+        // Play hit VFX only if requested (skip for status effect damage)
+        if (playHitVFX)
+        {
+            EffectManager.Instance?.PlayHitEffect(hitPoint, hitNormal, buildingCategory);
+        }
         
         // Trigger damage shake effect (now uses LastHitOrigin for direction)
         TriggerDamageShake(amount);
@@ -365,26 +376,6 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
         {
             Die();
         }
-    }
-
-    // Overloaded TakeDamage method for poise damage - buildings don't use poise
-    public virtual void TakeDamage(float amount, float poiseDamage, Transform damageSource = null)
-    {
-        // Buildings don't use poise, so just call the regular TakeDamage method
-        TakeDamage(amount, damageSource);
-    }
-
-    // Elemental damage methods - buildings have normal resistance to all elements
-    public virtual void TakeDamage(float amount, AttackElement damageType, Transform damageSource = null)
-    {
-        // Buildings have normal resistance to all elemental damage types
-        TakeDamage(amount, damageSource);
-    }
-
-    public virtual void TakeDamage(float amount, float poiseDamage, AttackElement damageType, Transform damageSource = null)
-    {
-        // Buildings don't use poise, so just call the elemental damage method
-        TakeDamage(amount, damageType, damageSource);
     }
 
     [Header("Elemental Resistances")]

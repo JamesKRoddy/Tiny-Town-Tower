@@ -39,7 +39,9 @@ namespace Managers
         private Dictionary<EffectDefinition, Queue<GameObject>> effectPools = new Dictionary<EffectDefinition, Queue<GameObject>>();
         private Dictionary<EffectDefinition, List<GameObject>> activeEffects = new Dictionary<EffectDefinition, List<GameObject>>();
         
-        // Status effect tracking
+        // VFX/Presentation tracking for status effects
+        // Note: Gameplay data (active effects) is owned by target objects (IStatusEffectTarget)
+        // This only tracks VFX instances and coroutines for presentation layer
         private Dictionary<IStatusEffectTarget, Dictionary<StatusEffectType, ActiveStatusEffect>> activeStatusEffects = 
             new Dictionary<IStatusEffectTarget, Dictionary<StatusEffectType, ActiveStatusEffect>>();
 
@@ -596,6 +598,10 @@ namespace Managers
         /// <summary>
         /// Apply a status effect to a character
         /// </summary>
+        /// <summary>
+        /// Apply a status effect to a target (gameplay + VFX)
+        /// Objects own their gameplay data, EffectManager handles VFX/presentation
+        /// </summary>
         public void ApplyStatusEffect(IStatusEffectTarget target, StatusEffectType statusType, float duration = 0f)
         {
             if (target == null)
@@ -604,15 +610,26 @@ namespace Managers
                 return;
             }
             
+            // ========================================
+            // STEP 1: Update gameplay data on target object (source of truth)
+            // This happens regardless of whether VFX exists (some effects are gameplay-only)
+            // ========================================
+            bool effectAdded = target.AddStatusEffect(statusType);
+            
+            // Get the status definition for VFX (may be null for gameplay-only effects)
             var statusDefinition = GetStatusEffectDefinition(statusType);
             if (statusDefinition == null)
             {
-                Debug.LogWarning($"[EffectManager] No status effect definition found for {statusType} on {target.GetCharacterType()}");
+                // No VFX for this effect (e.g., HUNGRY, TIRED, SICK) - gameplay-only effect
+                // Still notify the target about the effect application
+                if (effectAdded)
+                {
+                    target.OnStatusEffectApplied(statusType, duration);
+                }
                 return;
-            } else{
             }
             
-            // Initialize status effects dictionary for this target if needed
+            // Initialize VFX tracking dictionary for this target if needed
             if (!activeStatusEffects.ContainsKey(target))
             {
                 activeStatusEffects[target] = new Dictionary<StatusEffectType, ActiveStatusEffect>();
@@ -621,33 +638,49 @@ namespace Managers
             var targetEffects = activeStatusEffects[target];
             
             // Handle existing effect based on behavior
-            if (targetEffects.ContainsKey(statusType))
+            if (!effectAdded)
             {
-                var existingEffect = targetEffects[statusType];
-                
-                switch (statusDefinition.behavior)
+                // Effect already exists on target - check behavior
+                if (!targetEffects.ContainsKey(statusType))
                 {
-                    case StatusEffectBehavior.IGNORE_IF_EXISTS:
-                        return;
-                        
-                    case StatusEffectBehavior.REFRESH_DURATION:
-                        if (statusDefinition.canRefreshDuration)
-                        {
-                            existingEffect.duration = duration > 0 ? duration : statusDefinition.defaultDuration;
-                            existingEffect.startTime = Time.time;
+                    // VFX doesn't exist but gameplay does - this shouldn't happen, but handle gracefully
+                    Debug.LogWarning($"[EffectManager] VFX missing for existing effect {statusType} on {target}");
+                }
+                else
+                {
+                    var existingEffect = targetEffects[statusType];
+                    
+                    switch (statusDefinition.behavior)
+                    {
+                        case StatusEffectBehavior.IGNORE_IF_EXISTS:
                             return;
-                        }
-                        break;
-                        
-                    case StatusEffectBehavior.REPLACE_EXISTING:
-                    case StatusEffectBehavior.STACK:
-                    default:
-                        RemoveStatusEffect(target, statusType);
-                        break;
+                            
+                        case StatusEffectBehavior.REFRESH_DURATION:
+                            if (statusDefinition.canRefreshDuration)
+                            {
+                                existingEffect.duration = duration > 0 ? duration : statusDefinition.defaultDuration;
+                                existingEffect.startTime = Time.time;
+                                // Notify target of refresh
+                                target.OnStatusEffectApplied(statusType, existingEffect.duration);
+                                return;
+                            }
+                            break;
+                            
+                        case StatusEffectBehavior.REPLACE_EXISTING:
+                        case StatusEffectBehavior.STACK:
+                        default:
+                            // Remove both gameplay and VFX, then re-add
+                            target.RemoveStatusEffect(statusType);
+                            RemoveStatusEffectVFXOnly(target, statusType);
+                            target.AddStatusEffect(statusType);
+                            break;
+                    }
                 }
             }
             
-            // Create new status effect
+            // ========================================
+            // STEP 2: Apply VFX/presentation layer
+            // ========================================
             var activeEffect = new ActiveStatusEffect
             {
                 statusType = statusType,
@@ -660,7 +693,7 @@ namespace Managers
             // Apply visual effect
             ApplyStatusVisualEffect(target, activeEffect);
             
-            // Apply gameplay effects
+            // Apply gameplay effects (damage over time, etc.)
             ApplyStatusGameplayEffects(target, activeEffect);
             
             // Set up duration handling
@@ -677,15 +710,44 @@ namespace Managers
             
             targetEffects[statusType] = activeEffect;
             
-            // Notify target
+            // ========================================
+            // STEP 3: Notify target for gameplay callbacks
+            // ========================================
             target.OnStatusEffectApplied(statusType, activeEffect.duration);
-            
         }
         
         /// <summary>
-        /// Remove a status effect from a character
+        /// Remove a status effect from a target (gameplay + VFX)
+        /// Objects own their gameplay data, EffectManager handles VFX/presentation
         /// </summary>
         public void RemoveStatusEffect(IStatusEffectTarget target, StatusEffectType statusType)
+        {
+            if (target == null) return;
+            
+            // ========================================
+            // STEP 1: Remove VFX/presentation layer
+            // ========================================
+            RemoveStatusEffectVFXOnly(target, statusType);
+            
+            // ========================================
+            // STEP 2: Remove gameplay data from target object (source of truth)
+            // ========================================
+            bool removed = target.RemoveStatusEffect(statusType);
+            
+            // ========================================
+            // STEP 3: Notify target for gameplay callbacks
+            // ========================================
+            if (removed)
+            {
+                target.OnStatusEffectRemoved(statusType);
+            }
+        }
+        
+        /// <summary>
+        /// Remove only the VFX/presentation layer (internal helper)
+        /// Does NOT touch gameplay data on the target object
+        /// </summary>
+        private void RemoveStatusEffectVFXOnly(IStatusEffectTarget target, StatusEffectType statusType)
         {
             if (target == null || !activeStatusEffects.ContainsKey(target)) return;
             
@@ -697,16 +759,12 @@ namespace Managers
             // Remove visual effects
             RemoveStatusVisualEffect(target, activeEffect);
             
-            // Remove gameplay effects
+            // Remove gameplay effects (coroutines, etc.)
             RemoveStatusGameplayEffects(target, activeEffect);
             
-            // Cleanup
+            // Cleanup coroutines and VFX
             activeEffect.Cleanup();
             targetEffects.Remove(statusType);
-            
-            // Notify target
-            target.OnStatusEffectRemoved(statusType);
-            
         }
         
         /// <summary>
@@ -730,11 +788,53 @@ namespace Managers
         
         /// <summary>
         /// Check if a character has a specific status effect
+        /// Delegates to target object (source of truth for gameplay data)
         /// </summary>
         public bool HasStatusEffect(IStatusEffectTarget target, StatusEffectType statusType)
         {
-            return activeStatusEffects.ContainsKey(target) && 
-                   activeStatusEffects[target].ContainsKey(statusType);
+            if (target == null) return false;
+            return target.HasStatusEffect(statusType);
+        }
+        
+        /// <summary>
+        /// Get all active status effects for a target
+        /// Delegates to target object (source of truth for gameplay data)
+        /// </summary>
+        /// <param name="target">The target to get status effects for</param>
+        /// <returns>List of active status effect types (empty list if none)</returns>
+        public List<StatusEffectType> GetActiveStatusEffects(IStatusEffectTarget target)
+        {
+            if (target == null) return new List<StatusEffectType>();
+            return new List<StatusEffectType>(target.GetActiveStatusEffects());
+        }
+        
+        /// <summary>
+        /// Get all active status effects with their VFX/presentation details for a target
+        /// This returns VFX data (coroutines, durations, etc.) tracked by EffectManager
+        /// For gameplay queries, use target.GetActiveStatusEffects() directly
+        /// </summary>
+        /// <param name="target">The target to get status effects for</param>
+        /// <returns>Dictionary of active status effects with their ActiveStatusEffect VFX data (empty if none)</returns>
+        public Dictionary<StatusEffectType, ActiveStatusEffect> GetActiveStatusEffectDetails(IStatusEffectTarget target)
+        {
+            if (target != null && activeStatusEffects.ContainsKey(target))
+            {
+                return new Dictionary<StatusEffectType, ActiveStatusEffect>(activeStatusEffects[target]);
+            }
+            
+            return new Dictionary<StatusEffectType, ActiveStatusEffect>();
+        }
+        
+        /// <summary>
+        /// Get the count of active status effects on a target
+        /// Delegates to target object (source of truth for gameplay data)
+        /// </summary>
+        /// <param name="target">The target to count status effects for</param>
+        /// <returns>Number of active status effects</returns>
+        public int GetActiveStatusEffectCount(IStatusEffectTarget target)
+        {
+            if (target == null) return 0;
+            return target.GetActiveStatusEffects().Count;
         }
         
         /// <summary>
@@ -977,8 +1077,9 @@ namespace Managers
                 {
                     var damageable = targetComponent.GetComponent<IDamageable>();
                     // Status effect damage deals minimal poise damage (no elemental type)
+                    // Don't play hit VFX for status effect damage (hunger, sickness, etc) - only for combat damage
                     float poiseDamage = definition.damagePerSecond * 0.2f; // 20% of health damage as poise damage
-                    damageable?.TakeDamage(definition.damagePerSecond, poiseDamage, AttackElement.NONE, null);
+                    damageable?.TakeDamage(definition.damagePerSecond, poiseDamage, AttackElement.NONE, null, false);
                 }
                 
                 if (definition.healingPerSecond > 0f)

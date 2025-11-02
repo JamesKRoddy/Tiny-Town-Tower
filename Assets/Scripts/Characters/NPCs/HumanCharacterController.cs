@@ -2112,7 +2112,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     /// Unified method to handle all types of damage (basic, poise, elemental, or combined)
     /// Made virtual so SettlerNPC can override to add wake-up behavior
     /// </summary>
-    public virtual void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null)
+    /// <param name="amount">Base damage amount</param>
+    /// <param name="poiseDamage">Poise damage (0 = no poise damage)</param>
+    /// <param name="damageType">Elemental damage type (NONE = physical damage)</param>
+    /// <param name="damageSource">Transform of the damage source (optional, for VFX and positioning)</param>
+    /// <param name="playHitVFX">Whether to play hit visual effects (set to false for status effect damage like hunger/sickness)</param>
+    public virtual void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null, bool playHitVFX = true)
     {
         // Prevent taking damage if already dead
         if (isDead)
@@ -2142,7 +2147,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             Debug.Log($"[{name}] Applying ELEMENTAL + POISE damage");
             // Full damage: poise + elemental
             var result = DamageUtils.ApplyElementalDamageWithPoise(this, amount, poiseDamage, damageType, 
-                damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
+                damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, playHitVFX);
             finalDamage = result.Item2;
             poiseBroken = result.Item3;
             
@@ -2156,7 +2161,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             Debug.Log($"[{name}] Applying ELEMENTAL damage only");
             // Elemental damage only
             var result = DamageUtils.ApplyElementalDamage(this, amount, damageType, 
-                damageSource, animator, transform, OnDamageTaken, OnDeath, true);
+                damageSource, animator, transform, OnDamageTaken, OnDeath, playHitVFX);
             finalDamage = result.Item2;
             
             Debug.Log($"[{name}] Final damage after elemental calculation: {finalDamage:F1}, Health after: {health:F1}/{MaxHealth:F1}");
@@ -2169,7 +2174,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             Debug.Log($"[{name}] Applying POISE damage only");
             // Poise damage only
             var result = DamageUtils.ApplyDamageWithPoise(this, amount, poiseDamage, 
-                damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
+                damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, playHitVFX);
             poiseBroken = result.Item2;
             
             Debug.Log($"[{name}] Poise broken: {poiseBroken}, Health after: {health:F1}/{MaxHealth:F1}");
@@ -2197,9 +2202,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 DamageUtils.TriggerDamagedAnimation(animator, DamageUtils.CalculateHitDirection(transform, damageSource));
             }
 
-            // Play hit VFX
-            var (hitPoint, hitNormal) = DamageUtils.CalculateHitPointAndNormal(transform, damageSource);
-            EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
+            // Play hit VFX only if requested (skip for status effect damage like hunger/sickness)
+            if (playHitVFX)
+            {
+                var (hitPoint, hitNormal) = DamageUtils.CalculateHitPointAndNormal(transform, damageSource);
+                EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
+            }
         }
 
         // Update poise damage tracking

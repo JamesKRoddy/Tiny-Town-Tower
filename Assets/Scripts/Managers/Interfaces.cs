@@ -69,7 +69,8 @@ public interface IDamageable
     /// <param name="poiseDamage">Poise damage (0 = no poise damage)</param>
     /// <param name="damageType">Elemental damage type (NONE = physical damage)</param>
     /// <param name="damageSource">Transform of the damage source (optional, for VFX and positioning)</param>
-    void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null);
+    /// <param name="playHitVFX">Whether to play hit visual effects (set to false for status effect damage)</param>
+    void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null, bool playHitVFX = true);
     void Heal(float amount);       // Optional: Method to handle healing
     void Die();
     Allegiance GetAllegiance(); // Method to get the allegiance of the entity
@@ -150,20 +151,51 @@ public interface INarrativeTarget
 }
 
 /// <summary>
-/// Interface for objects that can receive status effect notifications
-/// Used by EffectManager to apply and remove visual/gameplay status effects
+/// Interface for objects that can receive status effects
+/// Objects implementing this interface own their status effect data (gameplay)
+/// EffectManager handles VFX/presentation layer
 /// </summary>
 public interface IStatusEffectTarget
 {
     /// <summary>
-    /// Called when a status effect is applied to this target
+    /// Add a status effect to this target (gameplay data)
+    /// Objects are the source of truth for their active effects
+    /// </summary>
+    /// <param name="effectType">The type of status effect to add</param>
+    /// <returns>True if added, false if already present</returns>
+    bool AddStatusEffect(StatusEffectType effectType);
+    
+    /// <summary>
+    /// Remove a status effect from this target (gameplay data)
+    /// </summary>
+    /// <param name="effectType">The type of status effect to remove</param>
+    /// <returns>True if removed, false if not present</returns>
+    bool RemoveStatusEffect(StatusEffectType effectType);
+    
+    /// <summary>
+    /// Check if this target has a specific status effect
+    /// </summary>
+    /// <param name="effectType">The type of status effect to check</param>
+    /// <returns>True if the effect is active</returns>
+    bool HasStatusEffect(StatusEffectType effectType);
+    
+    /// <summary>
+    /// Get all active status effects on this target
+    /// </summary>
+    /// <returns>Collection of active status effect types</returns>
+    System.Collections.Generic.IReadOnlyCollection<StatusEffectType> GetActiveStatusEffects();
+    
+    /// <summary>
+    /// Called when a status effect is applied (after AddStatusEffect)
+    /// Used for custom gameplay logic (movement penalties, behavior changes, etc.)
     /// </summary>
     /// <param name="effectType">The type of status effect being applied</param>
     /// <param name="duration">Duration of the effect in seconds (0 = permanent until removed)</param>
     void OnStatusEffectApplied(StatusEffectType effectType, float duration);
     
     /// <summary>
-    /// Called when a status effect is removed from this target
+    /// Called when a status effect is removed (after RemoveStatusEffect)
+    /// Used for custom gameplay logic cleanup
     /// </summary>
     /// <param name="effectType">The type of status effect being removed</param>
     void OnStatusEffectRemoved(StatusEffectType effectType);

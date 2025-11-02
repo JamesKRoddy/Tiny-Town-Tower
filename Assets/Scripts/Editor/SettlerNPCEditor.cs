@@ -251,8 +251,101 @@ public class SettlerNPCEditor : HumanCharacterControllerEditor
             EditorGUILayout.LabelField("Hunger", $"{hungerPercent:F0}%");
             GUI.color = Color.white;
             
-            // Health status enum
-            EditorGUILayout.LabelField("Status", settler.GetHealthStatus().ToString());
+            // Health status enum (legacy)
+            EditorGUILayout.LabelField("Health Status", settler.GetHealthStatus().ToString());
+            
+            // Active status effects (from EffectManager)
+            if (Managers.EffectManager.Instance != null)
+            {
+                var activeEffects = settler.GetActiveStatusEffects();
+                if (activeEffects != null && activeEffects.Count > 0)
+                {
+                    // Use new slot-based organization system
+                    var organized = StatusEffectUtils.OrganizeForDisplay(activeEffects);
+                    
+                    EditorGUILayout.Space(3);
+                    EditorGUILayout.LabelField($"Active Status Effects ({activeEffects.Count} total, organized by slot):", EditorStyles.miniBoldLabel);
+                    
+                    // PRIMARY CONDITIONS (Combat, Elementals) - Most urgent
+                    if (organized.PrimaryConditions.Count > 0)
+                    {
+                        EditorGUILayout.Space(2);
+                        GUI.color = new Color(1f, 0.9f, 0.9f);
+                        EditorGUILayout.LabelField("⚠ Critical:", EditorStyles.miniLabel);
+                        GUI.color = Color.white;
+                        
+                        foreach (var effectType in organized.PrimaryConditions)
+                        {
+                            Color effectColor = StatusEffectUtils.GetEffectColor(effectType);
+                            GUI.color = effectColor;
+                            string description = StatusEffectUtils.GetEffectDescription(effectType);
+                            EditorGUILayout.LabelField($"  • {description}", EditorStyles.miniBoldLabel);
+                            GUI.color = Color.white;
+                        }
+                    }
+                    
+                    // HEALTH STATUS (Hunger, Fatigue, Sickness)
+                    if (organized.HealthStatus.Count > 0)
+                    {
+                        EditorGUILayout.Space(2);
+                        GUI.color = new Color(1f, 1f, 0.9f);
+                        EditorGUILayout.LabelField("❤ Health:", EditorStyles.miniLabel);
+                        GUI.color = Color.white;
+                        
+                        foreach (var effectType in organized.HealthStatus)
+                        {
+                            Color effectColor = StatusEffectUtils.GetEffectColor(effectType);
+                            GUI.color = effectColor;
+                            string description = StatusEffectUtils.GetEffectDescription(effectType);
+                            EditorGUILayout.LabelField($"  • {description}", EditorStyles.miniLabel);
+                            GUI.color = Color.white;
+                        }
+                    }
+                    
+                    // ACTIVITY STATUS (Working, Sleeping, etc.)
+                    if (organized.ActivityStatus.Count > 0)
+                    {
+                        EditorGUILayout.Space(2);
+                        GUI.color = new Color(0.9f, 0.9f, 1f);
+                        EditorGUILayout.LabelField("⚙ Activity:", EditorStyles.miniLabel);
+                        GUI.color = Color.white;
+                        
+                        foreach (var effectType in organized.ActivityStatus)
+                        {
+                            Color effectColor = StatusEffectUtils.GetEffectColor(effectType);
+                            GUI.color = effectColor;
+                            string description = StatusEffectUtils.GetEffectDescription(effectType);
+                            EditorGUILayout.LabelField($"  • {description}", EditorStyles.miniLabel);
+                            GUI.color = Color.white;
+                        }
+                    }
+                    
+                    // SPECIAL STATUS (Medical, Healthy)
+                    if (organized.SpecialStatus.Count > 0)
+                    {
+                        EditorGUILayout.Space(2);
+                        GUI.color = new Color(0.9f, 1f, 0.9f);
+                        EditorGUILayout.LabelField("✓ Special:", EditorStyles.miniLabel);
+                        GUI.color = Color.white;
+                        
+                        foreach (var effectType in organized.SpecialStatus)
+                        {
+                            Color effectColor = StatusEffectUtils.GetEffectColor(effectType);
+                            GUI.color = effectColor;
+                            string description = StatusEffectUtils.GetEffectDescription(effectType);
+                            EditorGUILayout.LabelField($"  • {description}", EditorStyles.miniLabel);
+                            GUI.color = Color.white;
+                        }
+                    }
+                }
+                else
+                {
+                    EditorGUILayout.Space(3);
+                    GUI.color = Color.green;
+                    EditorGUILayout.LabelField("Active Status Effects: None (Healthy)", EditorStyles.miniLabel);
+                    GUI.color = Color.white;
+                }
+            }
             
             // Characteristics
             if (settler.CharacteristicSystem?.EquippedCharacteristics != null && settler.CharacteristicSystem.EquippedCharacteristics.Count > 0)
@@ -381,5 +474,10 @@ public class SettlerNPCEditor : HumanCharacterControllerEditor
         
         return false;
     }
+    
+    /// <summary>
+    /// Get color based on status effect type for visual coding
+    /// </summary>
+    // Removed GetStatusEffectColor() - now using centralized StatusEffectUtils.GetEffectColor()
 }
 

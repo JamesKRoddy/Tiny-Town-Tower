@@ -73,7 +73,6 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     public event Action OnNoLongerStarving;
 
     [Header("Sickness System")]
-    [SerializeField] private bool isSick = false;
     [SerializeField] private float baseSicknessChance = 0.001f; // Base chance per second (very low)
     [SerializeField] private float sicknessCheckInterval = 5f; // Check every 5 seconds
     [SerializeField] private float baseSicknessDurationInGameHours = 6f; // How long being sick lasts in game hours (default: 6 game hours)
@@ -82,18 +81,18 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     [SerializeField] private float lowStaminaThreshold = 30f; // Stamina level below which NPCs are considered tired
     [SerializeField] private float veryLowStaminaThreshold = 10f; // Stamina level for severe tiredness
     private float lastSicknessCheck = 0f;
-    private float sicknessStartTime = 0f;
+    private float sicknessStartTime = 0f; // Track when sickness started for recovery timing
 
     public event Action OnBecameSick;
     public event Action OnRecoveredFromSickness;
-    public bool IsSick => isSick;
+    // Use status effect HashSet as source of truth for sickness state
+    public bool IsSick => HasStatusEffect(StatusEffectType.SICK);
 
-    // Status effect state tracking to prevent redundant updates
-    private StatusEffectType currentHungerStatus = StatusEffectType.HEALTHY;
-    private StatusEffectType currentStaminaStatus = StatusEffectType.HEALTHY;
-    private bool currentSickStatus = false;
-    private bool currentHealthyStatus = false;
-    private TaskType lastTaskStatus = TaskType.WANDER;
+    [Header("Status Effect System")]
+    // This NPC owns its gameplay status effect data (source of truth)
+    // EffectManager handles VFX/presentation layer only
+    // No need for separate tracking variables - the HashSet IS the source of truth!
+    private HashSet<StatusEffectType> activeStatusEffects = new HashSet<StatusEffectType>();
 
     private int workLayerIndex;
 
@@ -472,6 +471,33 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         }
         
         hasBeenInitialized = true;
+        
+        // Initialize status effects based on current state
+        InitializeStatusEffects();
+    }
+    
+    /// <summary>
+    /// Initialize all status effects based on the NPC's current state
+    /// Called after NPC initialization to set up initial visual status
+    /// </summary>
+    private void InitializeStatusEffects()
+    {
+        if (EffectManager.Instance == null) return;
+        
+        // Initialize hunger status
+        UpdateHungerVisualStatus(currentHunger); // Pass current as previous to force check
+        
+        // Initialize stamina status
+        UpdateStaminaVisualStatus();
+        
+        // Initialize sickness status (if sick)
+        if (sicknessStartTime > 0)
+        {
+            UpdateSicknessVisualStatus();
+        }
+        
+        // Initialize overall healthy status
+        UpdateOverallHealthyStatus();
     }
 
     /// <summary>
@@ -621,6 +647,9 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         RegisterWithManagers();
         
         hasBeenInitialized = true;
+        
+        // Initialize status effects based on restored state
+        InitializeStatusEffects();
     }
 
     protected override void OnDestroy()
@@ -685,8 +714,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         
         lastSicknessCheck = Time.time;
         
-        // If already sick, check for recovery
-        if (isSick)
+        // If already sick, check for recovery (check HashSet, not boolean field)
+        if (HasStatusEffect(StatusEffectType.SICK))
         {
             float effectiveSicknessDuration = sicknessDuration;
             
@@ -798,16 +827,20 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     /// </summary>
     private void BecomeSick()
     {
-        if (isSick) return;
+        // Check HashSet instead of boolean field
+        if (HasStatusEffect(StatusEffectType.SICK)) return;
         
-        isSick = true;
+        // Track when sickness started for recovery timing
         sicknessStartTime = Time.time;
         
         Debug.Log($"[SettlerNPC] {name} has become sick!");
         OnBecameSick?.Invoke();
         
-        // Update visual status
-        UpdateSicknessVisualStatus();
+        // Apply status effect (updates HashSet and triggers VFX)
+        if (EffectManager.Instance != null)
+        {
+            EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.SICK);
+        }
         
         // Update movement speed (sickness slows down NPCs)
         UpdateMovementSpeed();
@@ -821,16 +854,21 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     /// </summary>
     private void RecoverFromSickness()
     {
-        if (!isSick) return;
+        // Check HashSet instead of boolean field
+        if (!HasStatusEffect(StatusEffectType.SICK)) return;
         
-        isSick = false;
+        // Clear sickness timing
         sicknessStartTime = 0f;
         
         Debug.Log($"[SettlerNPC] {name} has recovered from sickness!");
         OnRecoveredFromSickness?.Invoke();
         
-        // Update visual status
-        UpdateSicknessVisualStatus();
+        // Remove status effect (updates HashSet and removes VFX)
+        if (EffectManager.Instance != null)
+        {
+            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.SICK);
+            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.RECEIVING_MEDICAL_TREATMENT);
+        }
         
         // Update movement speed (recovery restores normal speed)
         UpdateMovementSpeed();
@@ -867,7 +905,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     /// </summary>
     private void CheckForMedicalTreatment()
     {
-        if (!isSick) return;
+        // Check HashSet instead of boolean field
+        if (!HasStatusEffect(StatusEffectType.SICK)) return;
         
         // Don't interrupt critical states
         if (GetCurrentTaskType() == TaskType.FLEE || 
@@ -938,7 +977,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         }
         
         // Check for medical treatment if sick (periodically)
-        if (isSick && Time.frameCount % 300 == 0) // Check every 5 seconds at 60fps
+        // Check HashSet instead of boolean field
+        if (HasStatusEffect(StatusEffectType.SICK) && Time.frameCount % 300 == 0) // Check every 5 seconds at 60fps
         {
             CheckForMedicalTreatment();
         }
@@ -973,7 +1013,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
             }
             else if (currentHunger <= hungerThreshold)
             {
-                workSpeedMultiplier = isSick ? (0.5f * sickWorkSpeedPenalty) : 0.5f;
+                // Check HashSet instead of boolean field
+                workSpeedMultiplier = HasStatusEffect(StatusEffectType.SICK) ? (0.5f * sickWorkSpeedPenalty) : 0.5f;
                 
                 // If we're hungry and not already eating, and not in cooldown, and food is available, change to eat state
                 if (GetCurrentTaskType() != TaskType.EAT && 
@@ -985,7 +1026,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
             }
             else
             {
-                workSpeedMultiplier = isSick ? sickWorkSpeedPenalty : 1f;
+                // Check HashSet instead of boolean field
+                workSpeedMultiplier = HasStatusEffect(StatusEffectType.SICK) ? sickWorkSpeedPenalty : 1f;
                 OnNoLongerStarving?.Invoke();
             }
         }
@@ -1169,7 +1211,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         // Log speed changes when significantly debuffed
         if (speedModifier < 0.9f)
         {
-            Debug.Log($"[SettlerNPC] {name} movement speed: {finalSpeed:F1} (base: {baseSpeed:F1}, modifier: {speedModifier:F2}x) - Stamina: {GetStaminaPercentage():F0}%, Hunger: {GetHungerPercentage():F0}%, Sick: {isSick}");
+            // Check HashSet instead of boolean field
+            Debug.Log($"[SettlerNPC] {name} movement speed: {finalSpeed:F1} (base: {baseSpeed:F1}, modifier: {speedModifier:F2}x) - Stamina: {GetStaminaPercentage():F0}%, Hunger: {GetHungerPercentage():F0}%, Sick: {HasStatusEffect(StatusEffectType.SICK)}");
         }
     }
     
@@ -1202,8 +1245,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
             modifier *= 0.85f; // 85% speed when hungry
         }
         
-        // Sickness penalty
-        if (isSick)
+        // Sickness penalty (check HashSet instead of boolean field)
+        if (HasStatusEffect(StatusEffectType.SICK))
         {
             modifier *= 0.7f; // 70% speed when sick
         }
@@ -1511,7 +1554,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     /// </summary>
     public string GetSicknessStatusDescription()
     {
-        if (isSick)
+        // Check HashSet instead of boolean field
+        if (HasStatusEffect(StatusEffectType.SICK))
         {
             float remainingTime = sicknessDuration - (Time.time - sicknessStartTime);
             return $"Sick (recovering in {remainingTime:F0}s)";
@@ -1532,15 +1576,11 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
 
     /// <summary>
     /// Get a simple health status for UI purposes
+    /// Uses StatusEffectUtils for centralized priority logic
     /// </summary>
     public HealthStatus GetHealthStatus()
     {
-        if (isSick) return HealthStatus.Sick;
-        if (IsStarving()) return HealthStatus.Starving;
-        if (IsHungry()) return HealthStatus.Hungry;
-        if (IsVeryTired()) return HealthStatus.Exhausted;
-        if (IsTired()) return HealthStatus.Tired;
-        return HealthStatus.Healthy;
+        return StatusEffectUtils.GetHealthStatus(GetActiveStatusEffects());
     }
 
     /// <summary>
@@ -1759,27 +1799,30 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
             newHungerStatus = StatusEffectType.HEALTHY;
         }
         
-        // Only update if hunger status changed
-        if (newHungerStatus != currentHungerStatus)
+        // Remove old hunger statuses (check against HashSet, not a tracking variable)
+        bool statusChanged = false;
+        if (newHungerStatus != StatusEffectType.STARVING && HasStatusEffect(StatusEffectType.STARVING))
         {
-            // Remove old hunger status
-            if (currentHungerStatus != StatusEffectType.HEALTHY)
-            {
-                EffectManager.Instance.RemoveStatusEffect(this, currentHungerStatus);
-            }
-            
-            // Apply new hunger status (but not HEALTHY here, we'll handle that in UpdateOverallHealthyStatus)
-            if (newHungerStatus != StatusEffectType.HEALTHY)
-            {
-                EffectManager.Instance.ApplyStatusEffect(this, newHungerStatus);
-            }
-            
-            currentHungerStatus = newHungerStatus;
-            
-            // Check if overall healthy status needs updating
+            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.STARVING);
+            statusChanged = true;
+        }
+        if (newHungerStatus != StatusEffectType.HUNGRY && HasStatusEffect(StatusEffectType.HUNGRY))
+        {
+            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.HUNGRY);
+            statusChanged = true;
+        }
+        
+        // Apply new hunger status if not already active (skip HEALTHY, handled in UpdateOverallHealthyStatus)
+        if (newHungerStatus != StatusEffectType.HEALTHY && !HasStatusEffect(newHungerStatus))
+        {
+            EffectManager.Instance.ApplyStatusEffect(this, newHungerStatus);
+            statusChanged = true;
+        }
+        
+        // Only trigger updates if status actually changed
+        if (statusChanged)
+        {
             UpdateOverallHealthyStatus();
-            
-            // Update movement speed when hunger status changes
             UpdateMovementSpeed();
         }
     }
@@ -1806,53 +1849,45 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
             newStaminaStatus = StatusEffectType.HEALTHY;
         }
         
-        // Only update if stamina status changed
-        if (newStaminaStatus != currentStaminaStatus)
+        // Remove old stamina statuses (check against HashSet, not a tracking variable)
+        bool statusChanged = false;
+        if (newStaminaStatus != StatusEffectType.EXHAUSTED && HasStatusEffect(StatusEffectType.EXHAUSTED))
         {
-            // Remove old stamina status
-            if (currentStaminaStatus != StatusEffectType.HEALTHY)
-            {
-                EffectManager.Instance.RemoveStatusEffect(this, currentStaminaStatus);
-            }
-            
-            // Apply new stamina status (but not HEALTHY here, we'll handle that in UpdateOverallHealthyStatus)
-            if (newStaminaStatus != StatusEffectType.HEALTHY)
-            {
-                EffectManager.Instance.ApplyStatusEffect(this, newStaminaStatus);
-            }
-            
-            currentStaminaStatus = newStaminaStatus;
-            
-            // Check if overall healthy status needs updating
+            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.EXHAUSTED);
+            statusChanged = true;
+        }
+        if (newStaminaStatus != StatusEffectType.TIRED && HasStatusEffect(StatusEffectType.TIRED))
+        {
+            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.TIRED);
+            statusChanged = true;
+        }
+        
+        // Apply new stamina status if not already active (skip HEALTHY, handled in UpdateOverallHealthyStatus)
+        if (newStaminaStatus != StatusEffectType.HEALTHY && !HasStatusEffect(newStaminaStatus))
+        {
+            EffectManager.Instance.ApplyStatusEffect(this, newStaminaStatus);
+            statusChanged = true;
+        }
+        
+        // Only trigger updates if status actually changed
+        if (statusChanged)
+        {
             UpdateOverallHealthyStatus();
         }
     }
     
     /// <summary>
     /// Update visual status based on sickness changes
+    /// NOTE: BecomeSick() and RecoverFromSickness() now handle status effect application/removal directly
+    /// This method primarily ensures the overall healthy status is updated
     /// </summary>
     private void UpdateSicknessVisualStatus()
     {
         if (EffectManager.Instance == null) return;
         
-        // Only update if sickness status changed
-        if (isSick != currentSickStatus)
-        {
-            if (isSick)
-            {
-                EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.SICK);
-            }
-            else
-            {
-                EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.SICK);
-                EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.RECEIVING_MEDICAL_TREATMENT);
-            }
-            
-            currentSickStatus = isSick;
-            
-            // Check if overall healthy status needs updating
-            UpdateOverallHealthyStatus();
-        }
+        // Status effects are now managed by BecomeSick()/RecoverFromSickness()
+        // Just update overall healthy status
+        UpdateOverallHealthyStatus();
     }
     
     /// <summary>
@@ -1862,85 +1897,61 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     {
         if (EffectManager.Instance == null) return;
         
-        // Only update if task status changed
-        if (newTask != lastTaskStatus)
+        // Remove all task-related statuses that shouldn't be active (use HashSet as source of truth)
+        var taskStatuses = new[]
         {
-            // Remove old task-related status
-            switch (lastTaskStatus)
+            (TaskType.SLEEP, StatusEffectType.SLEEPING),
+            (TaskType.WORK, StatusEffectType.WORKING),
+            (TaskType.EAT, StatusEffectType.EATING),
+            (TaskType.ATTACK, StatusEffectType.FIGHTING),
+            (TaskType.FLEE, StatusEffectType.FLEEING),
+            (TaskType.MEDICAL_TREATMENT, StatusEffectType.RECEIVING_MEDICAL_TREATMENT)
+        };
+        
+        foreach (var (taskType, statusEffect) in taskStatuses)
+        {
+            if (newTask == taskType)
             {
-                case TaskType.SLEEP:
-                    EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.SLEEPING);
-                    break;
-                case TaskType.WORK:
-                    EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.WORKING);
-                    break;
-                case TaskType.EAT:
-                    EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.EATING);
-                    break;
-                case TaskType.ATTACK:
-                    EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.FIGHTING);
-                    break;
-                case TaskType.FLEE:
-                    EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.FLEEING);
-                    break;
-                case TaskType.MEDICAL_TREATMENT:
-                    EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.RECEIVING_MEDICAL_TREATMENT);
-                    break;
+                // Should have this status - add if missing
+                if (!HasStatusEffect(statusEffect))
+                {
+                    EffectManager.Instance.ApplyStatusEffect(this, statusEffect);
+                }
             }
-            
-            // Apply new task status
-            switch (newTask)
+            else
             {
-                case TaskType.SLEEP:
-                    EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.SLEEPING);
-                    break;
-                case TaskType.WORK:
-                    EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.WORKING);
-                    break;
-                case TaskType.EAT:
-                    EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.EATING);
-                    break;
-                case TaskType.ATTACK:
-                    EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.FIGHTING);
-                    break;
-                case TaskType.FLEE:
-                    EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.FLEEING);
-                    break;
-                case TaskType.MEDICAL_TREATMENT:
-                    EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.RECEIVING_MEDICAL_TREATMENT);
-                    break;
+                // Shouldn't have this status - remove if present
+                if (HasStatusEffect(statusEffect))
+                {
+                    EffectManager.Instance.RemoveStatusEffect(this, statusEffect);
+                }
             }
-            
-            lastTaskStatus = newTask;
         }
     }
     
     /// <summary>
     /// Update overall healthy status based on all health conditions
-    /// Only applies HEALTHY when no other status effects are active
+    /// Only applies HEALTHY when no other negative status effects are active
+    /// Uses StatusEffectUtils for centralized negative condition checking
     /// </summary>
     private void UpdateOverallHealthyStatus()
     {
         if (EffectManager.Instance == null) return;
         
-        // Calculate if settler should be considered healthy
-        bool shouldBeHealthy = (currentHungerStatus == StatusEffectType.HEALTHY) && 
-                              (currentStaminaStatus == StatusEffectType.HEALTHY) && 
-                              !currentSickStatus;
+        // Use centralized utility to check for negative health conditions
+        bool hasNegativeStatus = StatusEffectUtils.HasNegativeHealthCondition(GetActiveStatusEffects());
         
-        // Only update if healthy status changed
-        if (shouldBeHealthy != currentHealthyStatus)
+        bool shouldBeHealthy = !hasNegativeStatus;
+        bool isCurrentlyHealthy = HasStatusEffect(StatusEffectType.HEALTHY);
+        
+        // Only update if healthy status needs to change
+        if (shouldBeHealthy && !isCurrentlyHealthy)
         {
-            if (shouldBeHealthy)
-            {
-                EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.HEALTHY);
-            }
-            else
-            {
-                EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.HEALTHY);
-            }
-            
-            currentHealthyStatus = shouldBeHealthy;
+            EffectManager.Instance.ApplyStatusEffect(this, StatusEffectType.HEALTHY);
+        }
+        else if (!shouldBeHealthy && isCurrentlyHealthy)
+        {
+            EffectManager.Instance.RemoveStatusEffect(this, StatusEffectType.HEALTHY);
         }
     }
     
@@ -1953,7 +1964,12 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     /// Override TakeDamage to wake up NPCs when attacked while sleeping
     /// Unified method handles all damage types (basic, poise, elemental, or combined)
     /// </summary>
-    public override void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null)
+    /// <param name="amount">Base damage amount</param>
+    /// <param name="poiseDamage">Poise damage (0 = no poise damage)</param>
+    /// <param name="damageType">Elemental damage type (NONE = physical damage)</param>
+    /// <param name="damageSource">Transform of the damage source (optional, for VFX and positioning)</param>
+    /// <param name="playHitVFX">Whether to play hit visual effects (set to false for status effect damage like hunger/sickness)</param>
+    public override void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null, bool playHitVFX = true)
     {
         TaskType currentTask = GetCurrentTaskType();
         
@@ -1971,7 +1987,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         }
         
         // Call base damage handling (handles all damage types)
-        base.TakeDamage(amount, poiseDamage, damageType, damageSource);
+        base.TakeDamage(amount, poiseDamage, damageType, damageSource, playHitVFX);
     }
     
     /// <summary>
@@ -1992,47 +2008,113 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     
     #region IStatusEffectTarget Implementation
     
+    // ========================================
+    // GAMEPLAY DATA (Source of Truth)
+    // This NPC owns its status effect data
+    // ========================================
+    
+    /// <summary>
+    /// Add a status effect to this NPC (gameplay data)
+    /// This is the source of truth for active effects
+    /// </summary>
+    /// <param name="effectType">The type of status effect to add</param>
+    /// <returns>True if added, false if already present</returns>
+    public bool AddStatusEffect(StatusEffectType effectType)
+    {
+        return activeStatusEffects.Add(effectType);
+    }
+    
+    /// <summary>
+    /// Remove a status effect from this NPC (gameplay data)
+    /// </summary>
+    /// <param name="effectType">The type of status effect to remove</param>
+    /// <returns>True if removed, false if not present</returns>
+    public bool RemoveStatusEffect(StatusEffectType effectType)
+    {
+        return activeStatusEffects.Remove(effectType);
+    }
+    
+    /// <summary>
+    /// Check if this NPC has a specific status effect
+    /// </summary>
+    /// <param name="effectType">The type of status effect to check</param>
+    /// <returns>True if the effect is active</returns>
+    public bool HasStatusEffect(StatusEffectType effectType)
+    {
+        return activeStatusEffects.Contains(effectType);
+    }
+    
+    /// <summary>
+    /// Get all active status effects on this NPC
+    /// </summary>
+    /// <returns>Read-only collection of active status effect types</returns>
+    public IReadOnlyCollection<StatusEffectType> GetActiveStatusEffects()
+    {
+        return activeStatusEffects;
+    }
+    
     /// <summary>
     /// Get the character type for status effect lookups
     /// </summary>
     public CharacterType GetCharacterType()
     {
-        return CharacterType.HUMAN_MALE_1; // Settlers are human characters - using existing enum value
+        return CharacterType.HUMAN_MALE_1; // Settlers are human characters
     }
     
+    // ========================================
+    // GAMEPLAY CALLBACKS (Effect Behavior)
+    // Called by EffectManager after data changes
+    // ========================================
+    
     /// <summary>
-    /// Called when a status effect is applied to this NPC
+    /// Called when a status effect is applied (after AddStatusEffect)
+    /// Handle gameplay logic like movement penalties, behavior changes, etc.
     /// </summary>
     public void OnStatusEffectApplied(StatusEffectType effectType, float duration)
     {
         Debug.Log($"[SettlerNPC] {name} status effect applied: {effectType} for {duration}s");
         
-        // Handle specific effects that might need additional logic
+        // Handle specific gameplay effects
         switch (effectType)
         {
             case StatusEffectType.ON_FIRE:
                 Debug.Log($"[SettlerNPC] {name} is on fire! Taking damage over time.");
+                // Could add panic behavior, movement penalties, etc.
                 break;
+                
             case StatusEffectType.FROZEN:
                 Debug.Log($"[SettlerNPC] {name} is frozen! Movement slowed.");
+                // Could reduce movement speed, animation speed, etc.
                 break;
+                
             case StatusEffectType.SICK:
                 Debug.Log($"[SettlerNPC] {name} is sick! Seeking medical treatment.");
                 CheckForMedicalTreatment();
+                break;
+                
+            case StatusEffectType.ELECTROCUTED:
+                Debug.Log($"[SettlerNPC] {name} is electrocuted!");
+                // Could add stun behavior, damage ticks, etc.
                 break;
         }
     }
     
     /// <summary>
-    /// Called when a status effect is removed from this NPC
+    /// Called when a status effect is removed (after RemoveStatusEffect)
+    /// Handle cleanup logic for gameplay effects
     /// </summary>
     public void OnStatusEffectRemoved(StatusEffectType effectType)
     {
         Debug.Log($"[SettlerNPC] {name} status effect removed: {effectType}");
         
-        // Handle specific effects that might need cleanup logic
+        // Handle specific cleanup
         switch (effectType)
         {
+            case StatusEffectType.FROZEN:
+                Debug.Log($"[SettlerNPC] {name} is no longer frozen.");
+                // Restore movement speed
+                break;
+                
             case StatusEffectType.SICK:
                 Debug.Log($"[SettlerNPC] {name} has recovered from sickness.");
                 break;
@@ -2040,9 +2122,10 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     }
     
     /// <summary>
-    /// Apply a status effect using the EffectManager (utility method for external systems)
+    /// Utility: Apply a status effect with VFX through EffectManager
+    /// For external systems that want both gameplay AND visual effects
     /// </summary>
-    public void ApplyStatusEffect(StatusEffectType effectType, float duration = 0f)
+    public void ApplyStatusEffectWithVFX(StatusEffectType effectType, float duration = 0f)
     {
         if (EffectManager.Instance != null)
         {
@@ -2051,9 +2134,10 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     }
     
     /// <summary>
-    /// Remove a status effect using the EffectManager (utility method for external systems)
+    /// Utility: Remove a status effect with VFX through EffectManager
+    /// For external systems that want both gameplay AND visual effects
     /// </summary>
-    public void RemoveStatusEffect(StatusEffectType effectType)
+    public void RemoveStatusEffectWithVFX(StatusEffectType effectType)
     {
         if (EffectManager.Instance != null)
         {
@@ -2062,11 +2146,11 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     }
     
     /// <summary>
-    /// Check if this settler has a specific status effect
+    /// Get count of active status effects (utility method)
     /// </summary>
-    public bool HasStatusEffect(StatusEffectType effectType)
+    public int GetActiveStatusEffectCount()
     {
-        return EffectManager.Instance != null && EffectManager.Instance.HasStatusEffect(this, effectType);
+        return activeStatusEffects.Count;
     }
     
     #endregion
@@ -2119,7 +2203,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         statusText += $"Hunger:{hungerPercent:F0}% Stamina:{staminaPercent:F0}%\n";
         statusText += $"Work: {workSpeed:F0}%";
         
-        if (isSick)
+        // Check HashSet instead of boolean field
+        if (HasStatusEffect(StatusEffectType.SICK))
         {
             float remainingTime = sicknessDuration - (Time.time - sicknessStartTime);
             statusText += $"\nSick: {remainingTime:F0}s";
@@ -2181,7 +2266,8 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         Gizmos.DrawSphere(gizmoPosition, 0.1f);
         
         // Draw additional indicators for specific conditions
-        if (isSick)
+        // Check HashSet instead of boolean field
+        if (HasStatusEffect(StatusEffectType.SICK))
         {
             // Draw a red cross for sick NPCs
             Gizmos.color = Color.red;
