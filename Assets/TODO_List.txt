@@ -1,10 +1,10 @@
 *****Current Work*****
 
-Zombies cant walk through vomit pools, hitting the trigger collider and wont walk through guess its something to do with enemy hit detection not excluding triggers
-
-Go through and remove all legacy code
-
 Building menu buttons dont wrap
+Put in canvas groups to help organize menus
+Menu refactor, list menus all to have a prefab base w/ prefab buttons.
+Replace all buttons in pause, utility and main menu with a prefab.
+Remove all read me files
 
 Continue button on start is not getting first selected
 
@@ -38,7 +38,9 @@ Custom inspectors for NPC and their components, enemies, managers that need it
 
 Create the scriptable obj and prefabs for: Genetic mutations, weapons, world objects etc.
 
-VFX for player
+VFX for player, attacks, hits etc.
+
+UI refactor, try to reuse buttons, place in graphics to use for the real ui in the game
 
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
 
