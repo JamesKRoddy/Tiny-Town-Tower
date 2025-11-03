@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: f02e73249d9dea04a815745a70d2e9a8
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 159547
+  packageName: 90's Desktop OS UI
+  packageVersion: 1.0
+  assetPath: Assets/Desktop90_UI/Examples/Scripts/AudioClipPlayer.cs
+  uploadId: 345207

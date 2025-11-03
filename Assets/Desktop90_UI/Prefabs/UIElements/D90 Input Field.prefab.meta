@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d3fa38805b806bc4a9082035ffb959eb
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 159547
+  packageName: 90's Desktop OS UI
+  packageVersion: 1.0
+  assetPath: Assets/Desktop90_UI/Prefabs/UIElements/D90 Input Field.prefab
+  uploadId: 345207

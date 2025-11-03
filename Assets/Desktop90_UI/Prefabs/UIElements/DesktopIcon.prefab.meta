@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: cb605a3989cf5af429457abeae2d40b7
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 159547
+  packageName: 90's Desktop OS UI
+  packageVersion: 1.0
+  assetPath: Assets/Desktop90_UI/Prefabs/UIElements/DesktopIcon.prefab
+  uploadId: 345207

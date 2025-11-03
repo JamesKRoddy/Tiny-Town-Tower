@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: ee845786b8339a1449d76e30fbb97a5a
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 159547
+  packageName: 90's Desktop OS UI
+  packageVersion: 1.0
+  assetPath: Assets/Desktop90_UI/Prefabs/UIElements/D90 Toggle.prefab
+  uploadId: 345207

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 9db61089b0d60454798d95db225f6a23
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 159547
+  packageName: 90's Desktop OS UI
+  packageVersion: 1.0
+  assetPath: Assets/Desktop90_UI/Prefabs/UIElements/Window.prefab
+  uploadId: 345207

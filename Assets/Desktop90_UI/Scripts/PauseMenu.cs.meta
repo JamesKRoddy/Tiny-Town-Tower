@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 04d1d661e92805a4bb11da69e4b3d96a
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 159547
+  packageName: 90's Desktop OS UI
+  packageVersion: 1.0
+  assetPath: Assets/Desktop90_UI/Scripts/PauseMenu.cs
+  uploadId: 345207
