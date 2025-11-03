@@ -1,9 +1,9 @@
 *****Current Work*****
 
-Building menu buttons dont wrap
 Put in canvas groups to help organize menus
 Menu refactor, list menus all to have a prefab base w/ prefab buttons.
-Replace all buttons in pause, utility and main menu with a prefab.
+Replace panels and option button in preview list menus
+
 Remove all read me files
 
 Continue button on start is not getting first selected
