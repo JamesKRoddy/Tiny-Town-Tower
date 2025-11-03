@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 8499675349403038571}
   - component: {fileID: 1664155228235971516}
   m_Layer: 5
-  m_Name: Genetic_Mutation_Preview_Screen
+  m_Name: List_Preview_Screen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -58,5 +58,5 @@ MonoBehaviour:
   m_StartAxis: 1
   m_CellSize: {x: 200, y: 200}
   m_Spacing: {x: 0, y: 0}
-  m_Constraint: 0
-  m_ConstraintCount: 2
+  m_Constraint: 1
+  m_ConstraintCount: 4

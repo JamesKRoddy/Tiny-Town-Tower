@@ -29188,7 +29188,7 @@ MonoBehaviour:
   rightScreenBtn: {fileID: 4579862660289060613}
   leftScreenBtn: {fileID: 4809347651708755087}
   screenParent: {fileID: 6904882110844215385}
-  screenPrefab: {fileID: 5063337512277586178, guid: e53801123846c60428191f692e09ef07, type: 3}
+  screenPrefab: {fileID: 5063337512277586178, guid: aedb0920186f7dc4f9e6e957156c6c5b, type: 3}
   itemButtonPrefab: {fileID: 6478322886510079522, guid: a677cacf3a7475248a853c3d073fba9f, type: 3}
   previewImage: {fileID: 8053230902449463200}
   previewName: {fileID: 1438632104067709192}
@@ -29470,7 +29470,7 @@ MonoBehaviour:
   rightScreenBtn: {fileID: 1354371027691947308}
   leftScreenBtn: {fileID: 8069181284993697446}
   screenParent: {fileID: 8256875096034228848}
-  screenPrefab: {fileID: 5063337512277586178, guid: e244441540e60dc4fb15af70b96c1a42, type: 3}
+  screenPrefab: {fileID: 5063337512277586178, guid: aedb0920186f7dc4f9e6e957156c6c5b, type: 3}
   itemButtonPrefab: {fileID: 6478322886510079522, guid: 936a6aee7750d354a848d88609be9f51, type: 3}
   previewImage: {fileID: 7616117269699673831}
   previewName: {fileID: 4517758948335395617}
@@ -29769,7 +29769,7 @@ MonoBehaviour:
   rightScreenBtn: {fileID: 1405945305078504933}
   leftScreenBtn: {fileID: 7976480943134891631}
   screenParent: {fileID: 8349403982524736185}
-  screenPrefab: {fileID: 5063337512277586178, guid: 7f0ff43c10123164bb099e86e26564d2, type: 3}
+  screenPrefab: {fileID: 5063337512277586178, guid: aedb0920186f7dc4f9e6e957156c6c5b, type: 3}
   itemButtonPrefab: {fileID: 6478322886510079522, guid: 041889269f37d2f408d5acf68d4a5e43, type: 3}
   previewImage: {fileID: 1991916368773309101}
   previewName: {fileID: 4610304325789580264}
@@ -30094,7 +30094,7 @@ MonoBehaviour:
   rightScreenBtn: {fileID: 4647913620680094832}
   leftScreenBtn: {fileID: 4445184952735725562}
   screenParent: {fileID: 2368143188119341868}
-  screenPrefab: {fileID: 5063337512277586178, guid: 5ac26e5b12bdffb449950d79480fd90b, type: 3}
+  screenPrefab: {fileID: 5063337512277586178, guid: aedb0920186f7dc4f9e6e957156c6c5b, type: 3}
   itemButtonPrefab: {fileID: 6478322886510079522, guid: dc6e00231d7e03f45a9aaf1e394f9f79, type: 3}
   previewImage: {fileID: 5235129330447141688}
   previewName: {fileID: 7852386977698632317}
