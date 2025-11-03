@@ -1484,6 +1484,13 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     // Method to change task and update state
     public void ChangeTask(TaskType newTask)
     {
+        // Don't allow task changes when possessed by the player
+        if (IsPossessed())
+        {
+            Debug.Log($"[SettlerNPC] {name} is possessed - ignoring task change request to {newTask}");
+            return;
+        }
+        
         TaskType currentTaskType = currentState != null ? currentState.GetTaskType() : TaskType.WANDER;
         Debug.Log($"[SettlerNPC] {name} ChangeTask called: {currentTaskType} -> {newTask}");
         
@@ -1523,6 +1530,16 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     public Animator GetAnimator()
     {
         return animator;
+    }
+
+    /// <summary>
+    /// Check if this NPC is currently possessed by the player
+    /// </summary>
+    /// <returns>True if possessed, false otherwise</returns>
+    public bool IsPossessed()
+    {
+        // When possessed, the NavMeshAgent is disabled
+        return agent != null && !agent.enabled;
     }
 
     public TaskType GetCurrentTaskType()
