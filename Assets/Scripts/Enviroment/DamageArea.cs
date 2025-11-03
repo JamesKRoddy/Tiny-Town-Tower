@@ -37,6 +37,64 @@ public class DamageArea : MonoBehaviour, IDamageDealer
     public Transform DamageSource => damageSource != null ? damageSource : transform;
     public Allegiance DealerAllegiance => dealerAllegiance;
 
+    protected virtual void Awake()
+    {
+        // Ensure collider and rigidbody are properly configured for trigger-based detection
+        // This prevents NavMeshAgents from treating this as a physical obstacle
+        ConfigureColliderAndRigidbody();
+    }
+
+    /// <summary>
+    /// Ensures the collider and rigidbody are properly configured as triggers
+    /// This allows enemies/NPCs to walk through damage areas like vomit pools
+    /// </summary>
+    private void ConfigureColliderAndRigidbody()
+    {
+        // Set the GameObject layer to "Ignore Raycast" to prevent NavMesh and root motion collision
+        // This is critical - enemies use collision detection on "Default" and "ObstacleLayer" 
+        // to avoid obstacles, so we need to be on a different layer
+        if (gameObject.layer != GameConstants.Layers.IgnoreRaycastLayer)
+        {
+            gameObject.layer = GameConstants.Layers.IgnoreRaycastLayer;
+            Debug.Log($"[DamageArea] Set layer to '{GameConstants.Layers.IgnoreRaycast}' on {gameObject.name}");
+        }
+        
+        // Get all colliders on this GameObject (there might be multiple)
+        Collider[] colliders = GetComponents<Collider>();
+        foreach (Collider col in colliders)
+        {
+            if (!col.isTrigger)
+            {
+                col.isTrigger = true;
+                Debug.Log($"[DamageArea] Set collider to trigger on {gameObject.name}");
+            }
+            
+            // For mesh colliders, ensure they're convex (required for triggers with kinematic rigidbodies)
+            MeshCollider meshCol = col as MeshCollider;
+            if (meshCol != null && !meshCol.convex)
+            {
+                meshCol.convex = true;
+                Debug.Log($"[DamageArea] Set mesh collider to convex on {gameObject.name}");
+            }
+        }
+        
+        // Ensure rigidbody is kinematic and has no gravity
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            if (!rb.isKinematic)
+            {
+                rb.isKinematic = true;
+                Debug.Log($"[DamageArea] Set rigidbody to kinematic on {gameObject.name}");
+            }
+            if (rb.useGravity)
+            {
+                rb.useGravity = false;
+                Debug.Log($"[DamageArea] Disabled gravity on {gameObject.name}");
+            }
+        }
+    }
+
     void OnTriggerStay(Collider other)
     {
         IDamageable damageable = other.gameObject.GetComponent<IDamageable>();

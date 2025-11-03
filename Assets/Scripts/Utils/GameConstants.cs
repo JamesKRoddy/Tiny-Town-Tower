@@ -21,10 +21,12 @@ public static class GameConstants
     {
         public const string Enemy = "Enemy";
         public const string Weapon = "Weapon";
+        public const string IgnoreRaycast = "Ignore Raycast";
 
         // Layer mask integers (cached for performance)
         public static readonly int EnemyLayer = LayerMask.NameToLayer(Enemy);
         public static readonly int WeaponLayer = LayerMask.NameToLayer(Weapon);
+        public static readonly int IgnoreRaycastLayer = LayerMask.NameToLayer(IgnoreRaycast);
     }
     #endregion
 

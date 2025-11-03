@@ -1,7 +1,5 @@
 *****Current Work*****
 
-Go through an move all stings to a single file ie. physics masks, tags etc.
-
 Zombies cant walk through vomit pools, hitting the trigger collider and wont walk through guess its something to do with enemy hit detection not excluding triggers
 
 Go through and remove all legacy code
