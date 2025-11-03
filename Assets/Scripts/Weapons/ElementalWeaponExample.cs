@@ -55,7 +55,7 @@ public class ElementalWeaponExample : MonoBehaviour
         // Play attack animation
         if (animator != null)
         {
-            animator.SetTrigger("Attack");
+            animator.SetTrigger(GameConstants.AnimatorParams.AttackHash);
         }
     }
     

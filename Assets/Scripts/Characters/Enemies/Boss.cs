@@ -141,7 +141,7 @@ namespace Enemies{
                 EndAttack();
                 currentAttack.OnAttackEnd();
                 currentAttack = null;
-                animator.SetInteger("AttackType", 0);
+                animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, 0);
                 // Speed will be set by UpdateAnimationParameters based on agent velocity
             }
         }

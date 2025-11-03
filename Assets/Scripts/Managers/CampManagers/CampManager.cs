@@ -1309,7 +1309,7 @@ namespace Managers
                     originalMaterials[enemy] = renderer.material;
                     
                     Material fadeMaterial = new Material(renderer.material);
-                    fadeMaterial.SetFloat("_Mode", 3);
+                    fadeMaterial.SetFloat(GameConstants.ShaderProperties.Mode, 3);
                     fadeMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
                     fadeMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
                     fadeMaterial.SetInt("_ZWrite", 0);

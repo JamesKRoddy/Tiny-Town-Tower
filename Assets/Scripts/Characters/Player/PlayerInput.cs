@@ -241,17 +241,17 @@ public class PlayerInput : MonoBehaviour
     private bool IsControllerInputDetected()
     {
         // Check for controller button presses
-        if (Input.GetButtonDown("A") || Input.GetButtonDown("B") || Input.GetButtonDown("X") || Input.GetButtonDown("Y") ||
-            Input.GetButtonDown("Start") || Input.GetButtonDown("Select") || Input.GetButtonDown("LeftStickPress") || Input.GetButtonDown("RightStickPress") ||
-            Input.GetButtonDown("LB") || Input.GetButtonDown("RB") ||
-            Input.GetAxis("RT") > 0.1f || Input.GetAxis("LT") > 0.1f)
+        if (Input.GetButtonDown(GameConstants.InputButtons.A) || Input.GetButtonDown(GameConstants.InputButtons.B) || Input.GetButtonDown(GameConstants.InputButtons.X) || Input.GetButtonDown(GameConstants.InputButtons.Y) ||
+            Input.GetButtonDown(GameConstants.InputButtons.Start) || Input.GetButtonDown(GameConstants.InputButtons.Select) || Input.GetButtonDown(GameConstants.InputButtons.LeftStickPress) || Input.GetButtonDown(GameConstants.InputButtons.RightStickPress) ||
+            Input.GetButtonDown(GameConstants.InputButtons.LB) || Input.GetButtonDown(GameConstants.InputButtons.RB) ||
+            Input.GetAxis(GameConstants.InputAxes.RT) > 0.1f || Input.GetAxis(GameConstants.InputAxes.LT) > 0.1f)
         {
             return true;
         }
         
         // Check for joystick movement
-        Vector2 leftStick = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
-        Vector2 rightStick = new Vector2(Input.GetAxis("RightStickHorizontal"), Input.GetAxis("RightStickVertical"));
+        Vector2 leftStick = new Vector2(Input.GetAxis(GameConstants.InputAxes.Horizontal), Input.GetAxis(GameConstants.InputAxes.Vertical));
+        Vector2 rightStick = new Vector2(Input.GetAxis(GameConstants.InputAxes.RightStickHorizontal), Input.GetAxis(GameConstants.InputAxes.RightStickVertical));
         
         if (leftStick.magnitude > 0.1f || rightStick.magnitude > 0.1f)
         {
@@ -266,7 +266,7 @@ public class PlayerInput : MonoBehaviour
         // Check for mouse input
         if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1) || Input.GetMouseButtonDown(2) ||
             Input.GetMouseButton(0) || Input.GetMouseButton(1) || Input.GetMouseButton(2) ||
-            Input.GetAxis("Mouse X") != 0 || Input.GetAxis("Mouse Y") != 0)
+            Input.GetAxis(GameConstants.InputAxes.MouseX) != 0 || Input.GetAxis(GameConstants.InputAxes.MouseY) != 0)
         {
             return true;
         }
@@ -397,8 +397,8 @@ public class PlayerInput : MonoBehaviour
 
     private void ProcessJoystickInput()
     {
-        Vector2 leftJoystick = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
-        Vector2 rightJoystick = new Vector2(Input.GetAxis("RightStickHorizontal"), Input.GetAxis("RightStickVertical"));
+        Vector2 leftJoystick = new Vector2(Input.GetAxis(GameConstants.InputAxes.Horizontal), Input.GetAxis(GameConstants.InputAxes.Vertical));
+        Vector2 rightJoystick = new Vector2(Input.GetAxis(GameConstants.InputAxes.RightStickHorizontal), Input.GetAxis(GameConstants.InputAxes.RightStickVertical));
         
         OnLeftJoystick?.Invoke(leftJoystick);
         OnRightJoystick?.Invoke(rightJoystick);
@@ -406,19 +406,19 @@ public class PlayerInput : MonoBehaviour
 
     private void ProcessFaceButtons()
     {
-        if (Input.GetButtonDown("Y")) OnYPressed?.Invoke();
-        if (Input.GetButtonDown("X")) OnXPressed?.Invoke();
-        if (Input.GetButtonDown("A")) OnAPressed?.Invoke();
-        if (Input.GetButtonDown("B")) OnBPressed?.Invoke();
+        if (Input.GetButtonDown(GameConstants.InputButtons.Y)) OnYPressed?.Invoke();
+        if (Input.GetButtonDown(GameConstants.InputButtons.X)) OnXPressed?.Invoke();
+        if (Input.GetButtonDown(GameConstants.InputButtons.A)) OnAPressed?.Invoke();
+        if (Input.GetButtonDown(GameConstants.InputButtons.B)) OnBPressed?.Invoke();
     }
 
     private void ProcessShoulderButtons()
     {
-        if (Input.GetButtonDown("RB")) OnRBPressed?.Invoke();
-        if (Input.GetButtonDown("LB")) OnLBPressed?.Invoke();
+        if (Input.GetButtonDown(GameConstants.InputButtons.RB)) OnRBPressed?.Invoke();
+        if (Input.GetButtonDown(GameConstants.InputButtons.LB)) OnLBPressed?.Invoke();
 
-        float rtValue = Input.GetAxis("RT");
-        float ltValue = Input.GetAxis("LT");
+        float rtValue = Input.GetAxis(GameConstants.InputAxes.RT);
+        float ltValue = Input.GetAxis(GameConstants.InputAxes.LT);
         
         if (rtValue > 0.1f) OnRTPressed?.Invoke(rtValue);
         if (ltValue > 0.1f) OnLTPressed?.Invoke(ltValue);
@@ -426,10 +426,10 @@ public class PlayerInput : MonoBehaviour
 
     private void ProcessSystemButtons()
     {
-        if (Input.GetButtonDown("LeftStickPress")) OnLeftStickPressed?.Invoke();
-        if (Input.GetButtonDown("RightStickPress")) OnRightStickPressed?.Invoke();
-        if (Input.GetButtonDown("Start")) OnStartPressed?.Invoke();
-        if (Input.GetButtonDown("Select")) OnSelectPressed?.Invoke();
+        if (Input.GetButtonDown(GameConstants.InputButtons.LeftStickPress)) OnLeftStickPressed?.Invoke();
+        if (Input.GetButtonDown(GameConstants.InputButtons.RightStickPress)) OnRightStickPressed?.Invoke();
+        if (Input.GetButtonDown(GameConstants.InputButtons.Start)) OnStartPressed?.Invoke();
+        if (Input.GetButtonDown(GameConstants.InputButtons.Select)) OnSelectPressed?.Invoke();
     }
 
     private void ProcessQuickAccessButtons()

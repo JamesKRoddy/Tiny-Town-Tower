@@ -1225,7 +1225,7 @@ namespace Enemies
             float normalizedSpeed = Mathf.Clamp01(velocity / movementSpeed);
             
             // Set Speed parameter (0-1 range) based on normalized velocity
-            animator.SetFloat("Speed", normalizedSpeed);
+            animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, normalizedSpeed);
         }
 
         private void UpdateRotation()
@@ -1789,7 +1789,7 @@ namespace Enemies
 
         protected virtual void BeginAttackSequence()
         {
-            animator.SetBool("Attack", true);
+            animator.SetBool(GameConstants.AnimatorParams.AttackHash, true);
             isAttacking = true;
             isRotatingToAttack = false; // Stop rotation phase
 
@@ -1806,7 +1806,7 @@ namespace Enemies
         /// </summary>
         protected virtual void EndAttack()
         {
-            animator.SetBool("Attack", false);
+            animator.SetBool(GameConstants.AnimatorParams.AttackHash, false);
             isAttacking = false;
             isRotatingToAttack = false; // Reset rotation state
 
@@ -1928,7 +1928,7 @@ namespace Enemies
             if (animator != null)
             {
                 Debug.Log($"[{gameObject.name}] Setting death animation and disabling root motion. applyRootMotion before: {animator.applyRootMotion}");
-                animator.SetTrigger("Dead");
+                animator.SetTrigger(GameConstants.AnimatorParams.DeadHash);
                 // Disable root motion to prevent dead zombies from rotating
                 animator.applyRootMotion = false;
                 Debug.Log($"[{gameObject.name}] applyRootMotion after: {animator.applyRootMotion}");

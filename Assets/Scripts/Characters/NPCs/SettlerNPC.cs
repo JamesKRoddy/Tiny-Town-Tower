@@ -992,7 +992,7 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
         
         if (currentState != null)
         {
-            animator.SetFloat("Speed", agent.velocity.magnitude / 3.5f);
+            animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, agent.velocity.magnitude / 3.5f);
             currentState.UpdateState(); // Call UpdateState on the current state
         }
 

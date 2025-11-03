@@ -1,0 +1,138 @@
+using UnityEngine;
+
+/// <summary>
+/// Centralized constants for all hardcoded strings in the game.
+/// This prevents typos and makes it easier to refactor string literals.
+/// </summary>
+public static class GameConstants
+{
+    #region Tags
+    public static class Tags
+    {
+        public const string Enemy = "Enemy";
+        public const string Player = "Player";
+        public const string NPCSpawn = "NPCSpawn";
+        public const string Destructible = "Destructible";
+    }
+    #endregion
+
+    #region Layers
+    public static class Layers
+    {
+        public const string Enemy = "Enemy";
+        public const string Weapon = "Weapon";
+
+        // Layer mask integers (cached for performance)
+        public static readonly int EnemyLayer = LayerMask.NameToLayer(Enemy);
+        public static readonly int WeaponLayer = LayerMask.NameToLayer(Weapon);
+    }
+    #endregion
+
+    #region Animator Parameters
+    public static class AnimatorParams
+    {
+        // Triggers
+        public const string Attack = "Attack";
+        public const string IsDashing = "IsDashing";
+        public const string IsVaulting = "IsVaulting";
+        public const string IsRolling = "IsRolling";
+        public const string IsClimbing = "IsClimbing";
+        public const string Damaged = "Damaged";
+        public const string Knockback = "Knockback";
+        public const string Dead = "Dead";
+        public const string IsEating = "IsEating";
+
+        // Bools
+        public const string LightAttack = "LightAttack";
+        public const string IsPushing = "IsPushing";
+
+        // Floats
+        public const string Speed = "Speed";
+        public const string AttackSpeed = "AttackSpeed";
+        public const string HitDirectionX = "HitDirectionX";
+        public const string HitDirectionY = "HitDirectionY";
+
+        // Integers
+        public const string Equipped = "Equipped";
+        public const string DamageType = "DamageType";
+        public const string AttackType = "AttackType";
+
+        // Hash IDs for performance (prevents string lookups every frame)
+        public static readonly int SpeedHash = Animator.StringToHash(Speed);
+        public static readonly int AttackSpeedHash = Animator.StringToHash(AttackSpeed);
+        public static readonly int HitDirectionXHash = Animator.StringToHash(HitDirectionX);
+        public static readonly int HitDirectionYHash = Animator.StringToHash(HitDirectionY);
+        public static readonly int EquippedHash = Animator.StringToHash(Equipped);
+        public static readonly int DamageTypeHash = Animator.StringToHash(DamageType);
+        public static readonly int AttackTypeHash = Animator.StringToHash(AttackType);
+        public static readonly int AttackHash = Animator.StringToHash(Attack);
+        public static readonly int IsDashingHash = Animator.StringToHash(IsDashing);
+        public static readonly int IsVaultingHash = Animator.StringToHash(IsVaulting);
+        public static readonly int IsRollingHash = Animator.StringToHash(IsRolling);
+        public static readonly int IsClimbingHash = Animator.StringToHash(IsClimbing);
+        public static readonly int DamagedHash = Animator.StringToHash(Damaged);
+        public static readonly int KnockbackHash = Animator.StringToHash(Knockback);
+        public static readonly int DeadHash = Animator.StringToHash(Dead);
+        public static readonly int IsEatingHash = Animator.StringToHash(IsEating);
+        public static readonly int LightAttackHash = Animator.StringToHash(LightAttack);
+        public static readonly int IsPushingHash = Animator.StringToHash(IsPushing);
+    }
+    #endregion
+
+    #region Input Axes
+    public static class InputAxes
+    {
+        // Movement axes
+        public const string Horizontal = "Horizontal";
+        public const string Vertical = "Vertical";
+        public const string RightStickHorizontal = "RightStickHorizontal";
+        public const string RightStickVertical = "RightStickVertical";
+
+        // Trigger axes
+        public const string RT = "RT";
+        public const string LT = "LT";
+
+        // Mouse axes
+        public const string MouseX = "Mouse X";
+        public const string MouseY = "Mouse Y";
+        public const string MouseScrollWheel = "Mouse ScrollWheel";
+    }
+    #endregion
+
+    #region Input Buttons
+    public static class InputButtons
+    {
+        // Face buttons
+        public const string A = "A";
+        public const string B = "B";
+        public const string X = "X";
+        public const string Y = "Y";
+
+        // Shoulder buttons
+        public const string LB = "LB";
+        public const string RB = "RB";
+
+        // Stick presses
+        public const string LeftStickPress = "LeftStickPress";
+        public const string RightStickPress = "RightStickPress";
+
+        // Menu buttons
+        public const string Start = "Start";
+        public const string Select = "Select";
+    }
+    #endregion
+
+    #region Shader Properties
+    public static class ShaderProperties
+    {
+        public const string Mode = "_Mode";
+        public const string NoiseScale = "_NoiseScale";
+        public const string MaskCutOut = "_MaskCutOut";
+
+        // Property IDs for performance
+        public static readonly int ModeID = Shader.PropertyToID(Mode);
+        public static readonly int NoiseScaleID = Shader.PropertyToID(NoiseScale);
+        public static readonly int MaskCutOutID = Shader.PropertyToID(MaskCutOut);
+    }
+    #endregion
+}

@@ -153,7 +153,7 @@ namespace Enemies
         {
             if (enemy != null && animator != null)
             {
-                animator.SetInteger("AttackType", attackType);
+                animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, attackType);
                 animator.SetTrigger(attackTrigger);
             }
             lastAttackTime = Time.time;
@@ -230,7 +230,7 @@ namespace Enemies
             // Reset animation parameters
             if (enemy != null && animator != null)
             {
-                animator.SetInteger("AttackType", 0);
+                animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, 0);
             }
             
             // Note: NavMeshAgent rotation is handled by EnemyBase.EndAttack()

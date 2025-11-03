@@ -145,7 +145,7 @@ public class EatState : _TaskState
         // Start eating animation
         if (animator != null)
         {
-            animator.SetTrigger("IsEating");
+            animator.SetTrigger(GameConstants.AnimatorParams.IsEatingHash);
         }
 
         eatingCoroutine = npc.StartCoroutine(EatingCoroutine());

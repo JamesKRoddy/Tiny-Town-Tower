@@ -423,7 +423,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         if (!isDashing && !isVaulting && !isPushing && !isClimbing && !isClimbLanding && characterInventory.equippedWeaponScriptObj != null)
         {
             isAttacking = true;
-            animator.SetBool("LightAttack", true);
+            animator.SetBool(GameConstants.AnimatorParams.LightAttackHash, true);
             
             // Enable root motion for attack animations
             if (animator != null)
@@ -497,7 +497,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     }
     public void EquipMeleeWeapon(int equipped)
     {
-        animator.SetInteger("Equipped", equipped);
+        animator.SetInteger(GameConstants.AnimatorParams.EquippedHash, equipped);
         UpdateAnimationSpeed();
     }
 
@@ -506,7 +506,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         if (characterInventory.equippedWeaponBase != null)
         {
             // Update the speed of all attack animations in the Attacking Layer
-            animator.SetFloat("AttackSpeed", characterInventory.equippedWeaponBase.GetCurrentAttackSpeed());
+            animator.SetFloat(GameConstants.AnimatorParams.AttackSpeedHash, characterInventory.equippedWeaponBase.GetCurrentAttackSpeed());
         }
     }
 
@@ -546,7 +546,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         dashTime = Time.time + dashDuration;
         dashCooldownTime = Time.time + dashCooldown;
         currentDirection = movementInput.normalized; // Initialize dash direction based on input
-        animator.SetTrigger("IsDashing");
+        animator.SetTrigger(GameConstants.AnimatorParams.IsDashingHash);
 
         // Disable root motion during dash
         if (animator != null)
@@ -674,13 +674,13 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         switch (currentVaultType)
         {
             case ObstacleType.Vault:
-                animator.SetTrigger("IsVaulting"); // High vault animation
+                animator.SetTrigger(GameConstants.AnimatorParams.IsVaultingHash); // High vault animation
                 break;
             case ObstacleType.RollUnder:
-                animator.SetTrigger("IsRolling"); // Low vault/roll animation
+                animator.SetTrigger(GameConstants.AnimatorParams.IsRollingHash); // Low vault/roll animation
                 break;
             default:
-                animator.SetTrigger("IsVaulting"); // Default vault animation
+                animator.SetTrigger(GameConstants.AnimatorParams.IsVaultingHash); // Default vault animation
                 break;
         }
         
@@ -732,7 +732,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         }
         
         // Trigger climb animation (use vault animation as fallback since climb animation might not exist)
-        animator.SetTrigger("IsClimbing");
+        animator.SetTrigger(GameConstants.AnimatorParams.IsClimbingHash);
         
         humanCollider.enabled = false; // Disable the player's collider to avoid collision during climbing
     }
@@ -821,7 +821,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 lastPushObjectPosition = pushableObject.transform.position;
                 
                 // Trigger push animation if you have one
-                animator.SetBool("IsPushing", true);
+                animator.SetBool(GameConstants.AnimatorParams.IsPushingHash, true);
                 
                 // Reset push state
                 pushHoldTime = 0f;
@@ -855,7 +855,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     {
         isPushing = false;
         currentPushTarget = null;
-        animator.SetBool("IsPushing", false);
+        animator.SetBool(GameConstants.AnimatorParams.IsPushingHash, false);
         
         // Ensure root motion is disabled after push
         if (animator != null)
@@ -1818,7 +1818,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         float maxSpeed = isDashing ? dashSpeed : moveMaxSpeed;
         float currentSpeedNormalized = actualMovementSpeed / maxSpeed;
 
-        animator.SetFloat("Speed", currentSpeedNormalized);
+        animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, currentSpeedNormalized);
     }
 
     public virtual void PlayWorkAnimation(string animationName)
@@ -2303,7 +2303,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
         characterInventory.ClearInventory();
 
-        animator.SetBool("Dead", true);
+        animator.SetBool(GameConstants.AnimatorParams.DeadHash, true);
 
         // Disable movement and AI components to prevent dead NPCs from moving
         isAttacking = false;

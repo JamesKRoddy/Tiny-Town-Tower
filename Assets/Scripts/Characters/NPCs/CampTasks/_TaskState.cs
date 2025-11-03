@@ -258,7 +258,7 @@ public abstract class _TaskState : MonoBehaviour
         
         float maxSpeed = MaxSpeed();
         float currentSpeedNormalized = agent.velocity.magnitude / maxSpeed;
-        animator.SetFloat("Speed", currentSpeedNormalized);
+        animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, currentSpeedNormalized);
     }
 
     /// <summary>

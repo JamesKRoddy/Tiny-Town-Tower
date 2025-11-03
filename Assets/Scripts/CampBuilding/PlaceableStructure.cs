@@ -534,9 +534,9 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
         foreach (var collider in nearbyColliders)
         {
             // Look for enemy colliders or weapon colliders
-            if (collider.gameObject.layer == LayerMask.NameToLayer("Enemy") ||
-                collider.gameObject.layer == LayerMask.NameToLayer("Weapon") ||
-                collider.CompareTag("Enemy") ||
+            if (collider.gameObject.layer == GameConstants.Layers.EnemyLayer ||
+                collider.gameObject.layer == GameConstants.Layers.WeaponLayer ||
+                collider.CompareTag(GameConstants.Tags.Enemy) ||
                 collider.name.Contains("Attack") ||
                 collider.name.Contains("Weapon"))
             {

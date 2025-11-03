@@ -53,11 +53,11 @@ public static class DamageUtils
         if (animator == null) return;
 
         // Set the 2D hit direction parameters for the blend tree
-        animator.SetFloat("HitDirectionX", hitDirection.x);  // Left/Right component
-        animator.SetFloat("HitDirectionY", hitDirection.y);  // Forward/Back component
+        animator.SetFloat(GameConstants.AnimatorParams.HitDirectionXHash, hitDirection.x);  // Left/Right component
+        animator.SetFloat(GameConstants.AnimatorParams.HitDirectionYHash, hitDirection.y);  // Forward/Back component
         
         // Trigger the damaged animation
-        animator.SetTrigger("Damaged");
+        animator.SetTrigger(GameConstants.AnimatorParams.DamagedHash);
     }
 
     /// <summary>
@@ -70,11 +70,11 @@ public static class DamageUtils
         if (animator == null) return;
 
         // Set the 2D hit direction parameters for the blend tree
-        animator.SetFloat("HitDirectionX", hitDirection.x);  // Left/Right component
-        animator.SetFloat("HitDirectionY", hitDirection.y);  // Forward/Back component
+        animator.SetFloat(GameConstants.AnimatorParams.HitDirectionXHash, hitDirection.x);  // Left/Right component
+        animator.SetFloat(GameConstants.AnimatorParams.HitDirectionYHash, hitDirection.y);  // Forward/Back component
         
         // Trigger the knockback animation
-        animator.SetTrigger("Knockback");
+        animator.SetTrigger(GameConstants.AnimatorParams.KnockbackHash);
     }
 
     /// <summary>
@@ -458,14 +458,14 @@ public static class DamageUtils
         if (animator == null) return;
 
         // Set the 2D hit direction parameters for the blend tree
-        animator.SetFloat("HitDirectionX", hitDirection.x);  // Left/Right component
-        animator.SetFloat("HitDirectionY", hitDirection.y);  // Forward/Back component
+        animator.SetFloat(GameConstants.AnimatorParams.HitDirectionXHash, hitDirection.x);  // Left/Right component
+        animator.SetFloat(GameConstants.AnimatorParams.HitDirectionYHash, hitDirection.y);  // Forward/Back component
         
         // Set the damage type parameter for elemental animations
-        animator.SetInteger("DamageType", (int)damageType);
+        animator.SetInteger(GameConstants.AnimatorParams.DamageTypeHash, (int)damageType);
         
         // Trigger the damaged animation
-        animator.SetTrigger("Damaged");
+        animator.SetTrigger(GameConstants.AnimatorParams.DamagedHash);
     }
 
     /// <summary>
@@ -479,14 +479,14 @@ public static class DamageUtils
         if (animator == null) return;
 
         // Set the 2D hit direction parameters for the blend tree
-        animator.SetFloat("HitDirectionX", hitDirection.x);  // Left/Right component
-        animator.SetFloat("HitDirectionY", hitDirection.y);  // Forward/Back component
+        animator.SetFloat(GameConstants.AnimatorParams.HitDirectionXHash, hitDirection.x);  // Left/Right component
+        animator.SetFloat(GameConstants.AnimatorParams.HitDirectionYHash, hitDirection.y);  // Forward/Back component
         
         // Set the damage type parameter for elemental animations
-        animator.SetInteger("DamageType", (int)damageType);
+        animator.SetInteger(GameConstants.AnimatorParams.DamageTypeHash, (int)damageType);
         
         // Trigger the knockback animation
-        animator.SetTrigger("Knockback");
+        animator.SetTrigger(GameConstants.AnimatorParams.KnockbackHash);
     }
 
     // ===== AREA DAMAGE UTILITIES =====

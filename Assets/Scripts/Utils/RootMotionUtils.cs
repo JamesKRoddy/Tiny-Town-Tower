@@ -102,7 +102,7 @@ public static class RootMotionUtils
             }
             
             // Check if we hit the player specifically
-            if (hitInfo.collider.CompareTag("Player") || hitInfo.collider.GetComponent<PlayerController>() != null)
+            if (hitInfo.collider.CompareTag(GameConstants.Tags.Player) || hitInfo.collider.GetComponent<PlayerController>() != null)
             {
                 // Allow partial movement towards player but prevent complete overlap
                 float playerSafeDistance = hitInfo.distance - minDistance;
@@ -136,7 +136,7 @@ public static class RootMotionUtils
             }
 
             // Check if we hit an enemy (from HumanCharacterController logic)
-            if (hitInfo.collider.CompareTag("Enemy") || hitInfo.collider.GetComponent<EnemyBase>() != null)
+            if (hitInfo.collider.CompareTag(GameConstants.Tags.Enemy) || hitInfo.collider.GetComponent<EnemyBase>() != null)
             {
                 // Allow partial movement towards enemies but prevent complete overlap
                 float enemySafeDistance = hitInfo.distance - minDistance;

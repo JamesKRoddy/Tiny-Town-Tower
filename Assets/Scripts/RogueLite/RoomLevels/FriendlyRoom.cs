@@ -30,7 +30,7 @@ public class FriendlyRoom : RogueLiteRoom
             
             foreach (Transform child in allChildren)
             {
-                if (child != transform && (child.name.ToLower().Contains("npcspawn") || child.CompareTag("NPCSpawn")))
+                if (child != transform && (child.name.ToLower().Contains("npcspawn") || child.CompareTag(GameConstants.Tags.NPCSpawn)))
                 {
                     foundSpawnPoints.Add(child);
                 }
