@@ -123,27 +123,44 @@ public class NarrativeManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Start a conversation with a specific narrative asset (legacy support)
+    /// Start a conversation with a specific dialogue file
     /// </summary>
-    public void StartConversation(NarrativeAsset narrativeAsset, NarrativeInteractive sourceComponent = null)
+    public void StartConversation(TextAsset dialogueFile, INarrativeTarget conversationTarget = null, NarrativeInteractive sourceComponent = null)
     {
-        currentConversationTarget = FindConversationTarget();
+        // Set the conversation target
+        currentConversationTarget = conversationTarget ?? FindConversationTarget();
         
-        if (narrativeAsset?.dialogueFile != null)
+        if (currentConversationTarget == null)
         {
-            DialogueData dialogue = LoadDialogueFromAsset(narrativeAsset.dialogueFile);
-            if (dialogue != null)
+            Debug.LogWarning("[NarrativeManager] No conversation target found!");
+            return;
+        }
+
+        // Set the source component for progression tracking
+        currentNarrativeComponent = sourceComponent;
+        
+        if (currentNarrativeComponent == null)
+        {
+            // Try to find the narrative component
+            var narrativeComponent = currentConversationTarget as MonoBehaviour;
+            currentNarrativeComponent = narrativeComponent?.GetComponent<NarrativeInteractive>();
+            
+            if (currentNarrativeComponent == null)
             {
-                // Set the source component for progression tracking
-                currentNarrativeComponent = sourceComponent;
-                
-                StartConversationWithDialogue(dialogue);
+                Debug.LogWarning("[NarrativeManager] No NarrativeInteractive component found - progression tracking disabled!");
             }
         }
-        else
+
+        // Load dialogue from the provided file
+        DialogueData dialogue = LoadDialogueFromAsset(dialogueFile);
+        
+        if (dialogue == null)
         {
-            Debug.LogError("[NarrativeManager] NarrativeAsset or dialogue file is null!");
+            Debug.LogError($"[NarrativeManager] Failed to load dialogue from file: {dialogueFile?.name}");
+            return;
         }
+
+        StartConversationWithDialogue(dialogue);
     }
 
     private void StartConversationWithDialogue(DialogueData dialogue)
@@ -1036,7 +1053,6 @@ public class NarrativeManager : MonoBehaviour
                 {
                     text = SubstituteVariablesInText(option.text),
                     nextLine = option.nextLine,
-                    requiredItem = option.requiredItem,
                     recruitNPC = option.recruitNPC,
                     requiredInventoryItems = option.requiredInventoryItems,
                     requiredFlags = option.requiredFlags,
@@ -1065,18 +1081,7 @@ public class NarrativeManager : MonoBehaviour
             return true;
         }
 
-        // Check legacy requiredItem field for backwards compatibility
-        if (!string.IsNullOrEmpty(option.requiredItem))
-        {
-            if (!PlayerInventory.Instance.HasItemByName(option.requiredItem))
-            {
-                if (debugLogging)
-                    Debug.Log($"[NarrativeManager] Missing legacy item: {option.requiredItem}");
-                return false;
-            }
-        }
-
-        // Check new inventory requirements system
+        // Check inventory requirements
         if (option.requiredInventoryItems != null && option.requiredInventoryItems.Count > 0)
         {
             bool result = CheckInventoryRequirementsList(option.requiredInventoryItems);
@@ -1211,11 +1216,6 @@ public class NarrativeManager : MonoBehaviour
     {
         if (option?.requiredInventoryItems == null || option.requiredInventoryItems.Count == 0)
         {
-            // Check legacy requiredItem field
-            if (!string.IsNullOrEmpty(option.requiredItem))
-            {
-                return $"Requires: {option.requiredItem}";
-            }
             return string.Empty;
         }
 

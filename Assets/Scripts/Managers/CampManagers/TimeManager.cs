@@ -650,14 +650,6 @@ namespace Managers
             };
         }
         
-        /// <summary>
-        /// Get formatted time string with progress (legacy method for compatibility)
-        /// </summary>
-        public string GetFormattedTimeString()
-        {
-            return GetFormattedTime12Hour();
-        }
-        
         #endregion
         
         #region Time Conversion Utilities

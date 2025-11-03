@@ -1771,21 +1771,6 @@ namespace Enemies
         {
             Debug.LogWarning($"Attack not overridden for {gameObject.name}");
         }
-        
-        /// <summary>
-        /// Deals damage to a target (legacy method - use AttackBase for new implementations)
-        /// </summary>
-        /// <param name="target">The target to damage</param>
-        /// <param name="baseDamage">Base damage amount</param>
-        /// <param name="poiseDamage">Poise damage amount</param>
-        protected virtual void DealDamageToTarget(IDamageable target, float baseDamage, float poiseDamage = 0f)
-        {
-            if (target == null) return;
-            
-            // Legacy method - new attack components should use AttackBase.DealDamage instead
-            var damageInfo = DamageInfo.Create(baseDamage, poiseDamage, AttackElement.NONE, transform, playHitVFX: true, isEnvironmental: false);
-            target.TakeDamage(damageInfo);
-        }
 
         protected virtual void BeginAttackSequence()
         {

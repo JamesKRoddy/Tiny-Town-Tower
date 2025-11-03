@@ -351,27 +351,6 @@ namespace Enemies
         {
             DamageUtils.DealDamage(this, target, damageAmount, poiseAmount);
         }
-        
-        /// <summary>
-        /// Deal damage to a target (legacy method for backward compatibility)
-        /// </summary>
-        /// <param name="target">The target to damage</param>
-        /// <param name="damageAmount">Amount of damage to deal</param>
-        protected virtual void DealDamageLegacy(IDamageable target, float damageAmount)
-        {
-            DealDamage(target, damageAmount, poiseDamage);
-        }
-
-        /// <summary>
-        /// Deal damage to a single target with enhanced parameters (legacy method)
-        /// </summary>
-        /// <param name="target">The target to damage</param>
-        /// <param name="damageAmount">Amount of damage to deal</param>
-        /// <param name="poiseAmount">Amount of poise damage to deal</param>
-        protected virtual void DealDamageToTarget(IDamageable target, float damageAmount, float poiseAmount)
-        {
-            DealDamage(target, damageAmount, poiseAmount);
-        }
 
         /// <summary>
         /// Deal damage to all targets in a radius
