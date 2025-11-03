@@ -58,13 +58,23 @@ public class WallBuilding : Building
     /// <summary>
     /// Override TakeDamage to apply damage reduction for walls
     /// </summary>
-    public override void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null, bool playHitVFX = true)
+    public override void TakeDamage(DamageInfo damageInfo)
     {
         // Apply damage reduction
-        float reducedDamage = amount * (1f - damageReduction);
+        float reducedDamage = damageInfo.Amount * (1f - damageReduction);
         
-        // Call base TakeDamage with reduced damage (buildings don't take poise damage)
-        base.TakeDamage(reducedDamage, 0f, damageType, damageSource, playHitVFX);
+        // Create new DamageInfo with reduced damage
+        var reducedDamageInfo = DamageInfo.Create(
+            reducedDamage, 
+            damageInfo.PoiseDamage, 
+            damageInfo.ElementType, 
+            damageInfo.SourceTransform, 
+            damageInfo.PlayHitVFX, 
+            damageInfo.IsEnvironmentalDamage
+        );
+        
+        // Call base TakeDamage with reduced damage
+        base.TakeDamage(reducedDamageInfo);
         
         // Update visuals based on health state
         UpdateWallVisuals();

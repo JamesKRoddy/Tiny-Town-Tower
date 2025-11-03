@@ -1073,14 +1073,13 @@ namespace Managers
             
             while (activeEffect.isActive && targetComponent != null)
             {
-                if (definition.damagePerSecond > 0f)
-                {
-                    var damageable = targetComponent.GetComponent<IDamageable>();
-                    // Status effect damage deals minimal poise damage (no elemental type)
-                    // Don't play hit VFX for status effect damage (hunger, sickness, etc) - only for combat damage
-                    float poiseDamage = definition.damagePerSecond * 0.2f; // 20% of health damage as poise damage
-                    damageable?.TakeDamage(definition.damagePerSecond, poiseDamage, AttackElement.NONE, null, false);
-                }
+            if (definition.damagePerSecond > 0f)
+            {
+                var damageable = targetComponent.GetComponent<IDamageable>();
+                // Status effect damage (hunger, sickness, etc.) is environmental - no VFX, no flee behavior, no poise
+                var damageInfo = DamageInfo.Environmental(definition.damagePerSecond, playHitVFX: false);
+                damageable?.TakeDamage(damageInfo);
+            }
                 
                 if (definition.healingPerSecond > 0f)
                 {

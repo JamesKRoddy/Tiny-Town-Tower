@@ -1783,8 +1783,8 @@ namespace Enemies
             if (target == null) return;
             
             // Legacy method - new attack components should use AttackBase.DealDamage instead
-            // Use unified TakeDamage method (poise is 0 if not specified)
-            target.TakeDamage(baseDamage, poiseDamage, damageSource: transform);
+            var damageInfo = DamageInfo.Create(baseDamage, poiseDamage, AttackElement.NONE, transform, playHitVFX: true, isEnvironmental: false);
+            target.TakeDamage(damageInfo);
         }
 
         protected virtual void BeginAttackSequence()
@@ -1819,17 +1819,20 @@ namespace Enemies
         }
 
         /// <summary>
-        /// Unified method to handle all types of damage (basic, poise, elemental, or combined)
+        /// Unified method to handle all types of damage using DamageInfo struct
         /// </summary>
-        /// <param name="amount">Base damage amount</param>
-        /// <param name="poiseDamage">Poise damage (0 = no poise damage)</param>
-        /// <param name="damageType">Elemental damage type (NONE = physical damage)</param>
-        /// <param name="damageSource">Transform of the damage source (optional, for VFX and positioning)</param>
-        /// <param name="playHitVFX">Whether to play hit visual effects (set to false for status effect damage)</param>
-        public void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null, bool playHitVFX = true)
+        /// <param name="damageInfo">Complete damage information including source, type, and flags</param>
+        public void TakeDamage(DamageInfo damageInfo)
         {
             // Prevent taking damage if already dead
             if (Health <= 0) return;
+            
+            // Extract parameters from DamageInfo
+            float amount = damageInfo.Amount;
+            float poiseDamage = damageInfo.PoiseDamage;
+            AttackElement damageType = damageInfo.ElementType;
+            Transform damageSource = damageInfo.SourceTransform;
+            bool playHitVFX = damageInfo.PlayHitVFX;
             
             bool hasPoiseDamage = poiseDamage > 0f;
             bool hasElementalDamage = damageType != AttackElement.NONE;

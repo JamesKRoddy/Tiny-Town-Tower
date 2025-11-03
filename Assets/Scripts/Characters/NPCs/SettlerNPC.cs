@@ -1999,33 +1999,38 @@ public class SettlerNPC : HumanCharacterController, INarrativeTarget, IStatusEff
     #region Combat Response
     
     /// <summary>
-    /// Override TakeDamage to wake up NPCs when attacked while sleeping
-    /// Unified method handles all damage types (basic, poise, elemental, or combined)
+    /// Override to handle hostile attacks vs environmental damage
+    /// Only hostile attacks (from enemies) should trigger flee behavior
+    /// Environmental damage (cleanliness, hunger, status effects) should not cause fleeing
     /// </summary>
-    /// <param name="amount">Base damage amount</param>
-    /// <param name="poiseDamage">Poise damage (0 = no poise damage)</param>
-    /// <param name="damageType">Elemental damage type (NONE = physical damage)</param>
-    /// <param name="damageSource">Transform of the damage source (optional, for VFX and positioning)</param>
-    /// <param name="playHitVFX">Whether to play hit visual effects (set to false for status effect damage like hunger/sickness)</param>
-    public override void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null, bool playHitVFX = true)
+    public override void TakeDamage(DamageInfo damageInfo)
     {
         TaskType currentTask = GetCurrentTaskType();
         
-        // If attacked while sleeping, wake up and flee
-        if (currentTask == TaskType.SLEEP)
+        // Only respond to HOSTILE damage (not environmental damage like cleanliness/hunger)
+        if (damageInfo.IsHostileDamage())
         {
-            Debug.Log($"[SettlerNPC] {name} was attacked while sleeping! Waking up and fleeing.");
-            WakeUpFromAttack(damageSource);
+            // If attacked while sleeping, wake up and flee
+            if (currentTask == TaskType.SLEEP)
+            {
+                Debug.Log($"[SettlerNPC] {name} was attacked while sleeping! Waking up and fleeing.");
+                WakeUpFromAttack(damageInfo.SourceTransform);
+            }
+            // If attacked while doing non-combat activities, immediately flee
+            else if (currentTask != TaskType.FLEE && currentTask != TaskType.ATTACK && currentTask != TaskType.SHELTERED)
+            {
+                Debug.Log($"[SettlerNPC] {name} was attacked while {currentTask}! Fleeing from danger.");
+                ChangeTask(TaskType.FLEE);
+            }
         }
-        // If attacked while doing non-combat activities, immediately flee
-        else if (currentTask != TaskType.FLEE && currentTask != TaskType.ATTACK && currentTask != TaskType.SHELTERED)
+        // Environmental damage doesn't trigger flee behavior
+        else if (damageInfo.IsEnvironmentalDamage)
         {
-            Debug.Log($"[SettlerNPC] {name} was attacked while {currentTask}! Fleeing from danger.");
-            ChangeTask(TaskType.FLEE);
+            // Just take the damage silently (no flee response)
         }
         
         // Call base damage handling (handles all damage types)
-        base.TakeDamage(amount, poiseDamage, damageType, damageSource, playHitVFX);
+        base.TakeDamage(damageInfo);
     }
     
     /// <summary>

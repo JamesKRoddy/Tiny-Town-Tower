@@ -95,9 +95,9 @@ namespace Enemies{
         /// <summary>
         /// Override TakeDamage to update boss health UI
         /// </summary>
-        public new void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null, bool playHitVFX = true)
+        public new void TakeDamage(DamageInfo damageInfo)
         {
-            base.TakeDamage(amount, poiseDamage, damageType, damageSource, playHitVFX);
+            base.TakeDamage(damageInfo);
             UpdateHealthUI();
         }
 

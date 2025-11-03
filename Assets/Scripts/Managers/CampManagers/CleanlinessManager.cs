@@ -527,19 +527,23 @@ namespace Managers
         
         /// <summary>
         /// Apply health drain to all NPCs when camp is very dirty
+        /// Called every 1 second from HealthEffectsCoroutine
         /// </summary>
         private void ApplyHealthDrain()
         {
             if (NPCManager.Instance == null) return;
             
-            float healthDrain = healthDrainRate * Time.deltaTime;
+            // Damage per second (this runs every 1 second, not every frame)
+            // healthDrainRate is defined as "health lost per second" so we use it directly
+            float healthDrain = healthDrainRate * 1f;
             
             foreach (var npc in NPCManager.Instance.GetAllNPCs())
             {
                 if (npc is SettlerNPC settler && settler.Health > 0)
                 {
-                    // Environmental damage doesn't deal poise or elemental damage
-                    settler.TakeDamage(healthDrain, poiseDamage: 0f);
+                    // Use environmental damage info - no VFX, no flee behavior
+                    var damageInfo = DamageInfo.Environmental(healthDrain, playHitVFX: false);
+                    settler.TakeDamage(damageInfo);
                     
                     // Log occasionally for feedback
                     if (Time.time - lastHealthDrainTime >= 10f)

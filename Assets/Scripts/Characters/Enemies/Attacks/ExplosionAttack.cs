@@ -106,7 +106,9 @@ namespace Enemies.Attacks
             // Attacker dies after exploding
             if (dieAfterExplosion && enemy != null)
             {
-                enemy.TakeDamage(enemy.Health, damageSource: enemy.transform); // Kill the attacker
+                // Kill the attacker with environmental damage (no VFX needed for self-destruction)
+                var damageInfo = DamageInfo.Environmental(enemy.Health, playHitVFX: false);
+                enemy.TakeDamage(damageInfo);
             }
         }
 
@@ -152,7 +154,9 @@ namespace Enemies.Attacks
             // Kill the attacker if configured to do so
             if (dieAfterExplosion && enemy != null)
             {
-                enemy.TakeDamage(enemy.Health, damageSource: enemy.transform); // Kill the attacker
+                // Kill the attacker with environmental damage (no VFX needed for self-destruction)
+                var damageInfo = DamageInfo.Environmental(enemy.Health, playHitVFX: false);
+                enemy.TakeDamage(damageInfo);
             }
             
             Debug.Log($"[{enemy.gameObject.name}] Explosion force triggered!");

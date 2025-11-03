@@ -77,8 +77,9 @@ public class ElementalWeaponExample : MonoBehaviour
         // Deal the elemental damage
         if (finalDamage > 0)
         {
-            // Use the new elemental damage method
-            target.TakeDamage(baseDamage, poiseDamage, weaponElement, transform);
+            // Create damage info with elemental type
+            var damageInfo = DamageInfo.Create(baseDamage, poiseDamage, weaponElement, transform, playHitVFX: true);
+            target.TakeDamage(damageInfo);
             
             Debug.Log($"Dealt {finalDamage:F1} {weaponElement} damage to {targetTransform.name}");
         }

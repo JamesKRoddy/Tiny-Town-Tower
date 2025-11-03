@@ -364,7 +364,8 @@ namespace Managers
                     continue;
 
                 float damageAmount = building.GetMaxHealth() * buildingDamagePercent;
-                building.TakeDamage(damageAmount, playHitVFX: false);
+                var damageInfo = DamageInfo.Environmental(damageAmount, playHitVFX: false);
+                building.TakeDamage(damageInfo);
                 damagedCount++;
             }
 

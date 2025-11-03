@@ -547,9 +547,10 @@ public static class DamageUtils
                 continue;
             }
             
-            // Apply damage with elemental type (using unified method)
+            // Apply damage with elemental type (using DamageInfo)
             Debug.Log($"[DamageUtils] Calling TakeDamage on {hitCollider.name} - Damage: {damageAmount}, Poise: {poiseDamage}, Element: {element}");
-            damageable.TakeDamage(damageAmount, poiseDamage, element, attacker);
+            var damageInfo = DamageInfo.Create(damageAmount, poiseDamage, element, attacker, playHitVFX: true, isEnvironmental: false);
+            damageable.TakeDamage(damageInfo);
             
             targetsDamaged++;
         }
@@ -571,8 +572,9 @@ public static class DamageUtils
     {
         if (target == null) return;
         
-        // Apply damage with elemental type (using unified method)
-        target.TakeDamage(damageAmount, poiseDamage, element, attacker);
+        // Apply damage with elemental type (using DamageInfo)
+        var damageInfo = DamageInfo.Create(damageAmount, poiseDamage, element, attacker, playHitVFX: true, isEnvironmental: false);
+        target.TakeDamage(damageInfo);
     }
 
     /// <summary>
@@ -1080,8 +1082,9 @@ public static class DamageUtils
             totalDamage += dealer.ElementalDamageBonus;
         }
         
-        // Apply damage with elemental type (using unified method)
-        target.TakeDamage(totalDamage, poiseAmount, dealer.ElementType, dealer.DamageSource);
+        // Apply damage using DamageInfo from dealer
+        var damageInfo = new DamageInfo(dealer, amount: totalDamage, poiseDamage: poiseAmount);
+        target.TakeDamage(damageInfo);
         
         // Apply additional effects based on dealer type
         ApplyAdditionalEffects(dealer, target, totalDamage);

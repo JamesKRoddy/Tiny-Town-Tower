@@ -323,15 +323,17 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
     #region Damage & Health
 
     /// <summary>
-    /// Unified method to handle all types of damage (buildings don't use poise or elemental resistances)
+    /// Unified method to handle all types of damage using DamageInfo struct
+    /// Buildings don't use poise or elemental resistances
     /// </summary>
-    /// <param name="amount">Base damage amount</param>
-    /// <param name="poiseDamage">Poise damage (ignored for buildings)</param>
-    /// <param name="damageType">Elemental damage type (ignored for buildings)</param>
-    /// <param name="damageSource">Transform of the damage source (optional, for VFX and positioning)</param>
-    /// <param name="playHitVFX">Whether to play hit visual effects (set to false for status effect damage)</param>
-    public virtual void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null, bool playHitVFX = true)
+    /// <param name="damageInfo">Complete damage information including source, type, and flags</param>
+    public virtual void TakeDamage(DamageInfo damageInfo)
     {
+        // Extract parameters from DamageInfo
+        float amount = damageInfo.Amount;
+        Transform damageSource = damageInfo.SourceTransform;
+        bool playHitVFX = damageInfo.PlayHitVFX;
+        
         float previousHealth = currentHealth;
         currentHealth = Mathf.Max(0, currentHealth - amount);
         

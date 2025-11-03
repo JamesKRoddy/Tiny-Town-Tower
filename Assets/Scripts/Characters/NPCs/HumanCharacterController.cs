@@ -2109,15 +2109,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 #region IDamageable Interface
 
     /// <summary>
-    /// Unified method to handle all types of damage (basic, poise, elemental, or combined)
-    /// Made virtual so SettlerNPC can override to add wake-up behavior
+    /// Unified method to handle all types of damage using DamageInfo struct
+    /// Made virtual so SettlerNPC can override to add behavior like fleeing from hostile attacks
     /// </summary>
-    /// <param name="amount">Base damage amount</param>
-    /// <param name="poiseDamage">Poise damage (0 = no poise damage)</param>
-    /// <param name="damageType">Elemental damage type (NONE = physical damage)</param>
-    /// <param name="damageSource">Transform of the damage source (optional, for VFX and positioning)</param>
-    /// <param name="playHitVFX">Whether to play hit visual effects (set to false for status effect damage like hunger/sickness)</param>
-    public virtual void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null, bool playHitVFX = true)
+    /// <param name="damageInfo">Complete damage information including source, type, and flags</param>
+    public virtual void TakeDamage(DamageInfo damageInfo)
     {
         // Prevent taking damage if already dead
         if (isDead)
@@ -2133,6 +2129,13 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             Debug.Log($"[{name}] TakeDamage blocked by cooldown - {cooldownRemaining:F2}s remaining (takes damage every {damageCooldown}s)");
             return;
         }
+        
+        // Extract parameters from DamageInfo
+        float amount = damageInfo.Amount;
+        float poiseDamage = damageInfo.PoiseDamage;
+        AttackElement damageType = damageInfo.ElementType;
+        Transform damageSource = damageInfo.SourceTransform;
+        bool playHitVFX = damageInfo.PlayHitVFX;
         
         Debug.Log($"[{name}] TakeDamage ACCEPTED - Amount: {amount}, Poise: {poiseDamage}, Element: {damageType}, Health before: {health:F1}/{MaxHealth:F1}");
 

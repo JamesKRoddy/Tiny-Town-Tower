@@ -63,14 +63,10 @@ public interface IDamageable
     float LastHitPoiseDamage { get; set; } // Poise damage from last hit (used to scale reaction intensity)
 
     /// <summary>
-    /// Unified method to handle all types of damage
+    /// Unified method to handle all types of damage using DamageInfo struct
     /// </summary>
-    /// <param name="amount">Base damage amount</param>
-    /// <param name="poiseDamage">Poise damage (0 = no poise damage)</param>
-    /// <param name="damageType">Elemental damage type (NONE = physical damage)</param>
-    /// <param name="damageSource">Transform of the damage source (optional, for VFX and positioning)</param>
-    /// <param name="playHitVFX">Whether to play hit visual effects (set to false for status effect damage)</param>
-    void TakeDamage(float amount, float poiseDamage = 0f, AttackElement damageType = AttackElement.NONE, Transform damageSource = null, bool playHitVFX = true);
+    /// <param name="damageInfo">Complete damage information including source, type, and flags</param>
+    void TakeDamage(DamageInfo damageInfo);
     void Heal(float amount);       // Optional: Method to handle healing
     void Die();
     Allegiance GetAllegiance(); // Method to get the allegiance of the entity
