@@ -16,7 +16,13 @@ public abstract class MenuBase : MonoBehaviour, IControllerInput
             {
                 PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
                 PlayerInput.Instance.OnUpdatePlayerControls += SetPlayerControlType;
-                PlayerUIManager.Instance.SetSelectedGameObject(_firstSelected.gameObject);
+                
+                // Try to find a button to select for controller navigation
+                Button buttonToSelect = GetFirstSelectableButton();
+                if (buttonToSelect != null)
+                {
+                    PlayerUIManager.Instance.SetSelectedGameObject(buttonToSelect.gameObject);
+                }
             }
             else
             {
@@ -24,6 +30,32 @@ public abstract class MenuBase : MonoBehaviour, IControllerInput
             }
             onDone?.Invoke();
         });
+    }
+
+    /// <summary>
+    /// Gets the first selectable button for controller navigation.
+    /// First tries the explicitly set _firstSelected, then searches children.
+    /// </summary>
+    protected virtual Button GetFirstSelectableButton()
+    {
+        // First, try the explicitly set button
+        if (_firstSelected != null && _firstSelected.interactable && _firstSelected.gameObject.activeInHierarchy)
+        {
+            return _firstSelected;
+        }
+
+        // Fallback: search for the first active and interactable button in children
+        Button[] buttons = GetComponentsInChildren<Button>(false); // false = only active objects
+        foreach (Button button in buttons)
+        {
+            if (button.interactable)
+            {
+                Debug.Log($"[MenuBase] Auto-selected first button: {button.gameObject.name} for menu: {gameObject.name}");
+                return button;
+            }
+        }
+
+        return null;
     }
 
     public virtual void DisplayErrorMessage(string message)

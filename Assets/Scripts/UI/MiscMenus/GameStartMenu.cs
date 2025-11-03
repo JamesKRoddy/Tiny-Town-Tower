@@ -94,11 +94,8 @@ public class GameStartMenu : MenuBase
                 SetNewGameText();
             }
 
-            // Update player controls to IN_MENU
-            if (PlayerInput.Instance != null)
-            {
-                PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
-            }
+            // Don't set IN_MENU yet - wait until the continue button is shown
+            // This prevents controller from selecting random UI elements before button appears
 
             // Fade in
             StartCoroutine(FadeIn(onDone));
@@ -107,6 +104,12 @@ public class GameStartMenu : MenuBase
         {
             // Stop dot animation when closing
             StopDotAnimation();
+            
+            // Return to camp camera controls
+            if (PlayerInput.Instance != null)
+            {
+                PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_CAMERA_MOVEMENT);
+            }
             
             // Fade out then deactivate
             StartCoroutine(FadeOut(() => {
@@ -228,6 +231,18 @@ public class GameStartMenu : MenuBase
         if (continueButton != null)
         {
             continueButton.gameObject.SetActive(true);
+            
+            // Now that button is visible, set IN_MENU mode
+            if (PlayerInput.Instance != null)
+            {
+                PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
+            }
+            
+            // Select the button for controller navigation
+            if (PlayerUIManager.Instance != null)
+            {
+                PlayerUIManager.Instance.SetSelectedGameObject(continueButton.gameObject);
+            }
         }
     }
 
