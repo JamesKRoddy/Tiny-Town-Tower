@@ -84,6 +84,7 @@ public abstract class PreviewPopupBase<TItem, TCategory> : MonoBehaviour
     public virtual void OnCloseClicked()
     {
         // Re-enable parent UI buttons and close popup
+        Debug.Log($"OnCloseClicked called");
         SetParentUIButtonsInteractable(true);
         gameObject.SetActive(false);
         isActive = false;
