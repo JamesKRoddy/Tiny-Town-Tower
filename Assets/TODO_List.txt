@@ -6,8 +6,6 @@ Replace panels and option button in preview list menus
 
 Remove all read me files
 
-Continue button on start is not getting first selected
-
 ****** Tomorrow work:
 
 PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
