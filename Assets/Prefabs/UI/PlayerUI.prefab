@@ -24588,8 +24588,8 @@ MonoBehaviour:
   rightScreenBtn: {fileID: 6701192659494571014}
   leftScreenBtn: {fileID: 2436350497222709132}
   screenParent: {fileID: 4369206703811097434}
-  screenPrefab: {fileID: 5063337512277586178, guid: ba35c47f642dada408e94aa99f97a257, type: 3}
-  itemButtonPrefab: {fileID: 6478322886510079522, guid: d16e8e4cd6517264b99be90e36ea2478, type: 3}
+  screenPrefab: {fileID: 5063337512277586178, guid: aedb0920186f7dc4f9e6e957156c6c5b, type: 3}
+  itemButtonPrefab: {fileID: 6478322886510079522, guid: dc6e00231d7e03f45a9aaf1e394f9f79, type: 3}
   previewImage: {fileID: 6113976880068621134}
   previewName: {fileID: 8108334952293493259}
   previewDesc: {fileID: 800368982607576090}

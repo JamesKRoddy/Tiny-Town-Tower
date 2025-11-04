@@ -269,6 +269,12 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
 
     private void OnItemButtonClicked(ScriptableObject item, GameObject button)
     {
+        if (item == null)
+        {
+            Debug.LogWarning("[SelectionPreviewList] Item is null after cast");
+            return;
+        }
+
         WorkTask workTask = buttonToTaskMap.ContainsKey(button) ? buttonToTaskMap[button] : null;
         
         if (workTask == null)
@@ -338,16 +344,16 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
 
     private void UpdateButtonCount(GameObject button)
     {
+        if (button == null) return;
+
         var buttonComponent = button.GetComponent<PreviewButtonBase>();
-        if (buttonComponent != null && buttonToTaskMap.ContainsKey(button))
-        {
-            var data = buttonComponent.Data as ScriptableObject;
-            if (data != null)
-            {
-                string countDisplay = GetItemCount(data, buttonToTaskMap[button]);
-                buttonComponent.UpdateCountText(countDisplay);
-            }
-        }
+        if (buttonComponent == null || !buttonToTaskMap.ContainsKey(button)) return;
+
+        var data = buttonComponent.Data as ScriptableObject;
+        if (data == null) return;
+
+        string countDisplay = GetItemCount(data, buttonToTaskMap[button]);
+        buttonComponent.UpdateCountText(countDisplay);
     }
 
     private void OnTaskCompleted(GameObject button)

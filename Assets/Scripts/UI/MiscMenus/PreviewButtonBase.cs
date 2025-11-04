@@ -65,12 +65,7 @@ public class PreviewButtonBase : MonoBehaviour
     {
         if (customClickHandler != null)
         {
-            Debug.Log($"[PreviewButtonBase] Using custom click handler for {data}");
             customClickHandler(data);
-        }
-        else
-        {
-            Debug.Log($"[PreviewButtonBase] No click handler assigned for {data}");
         }
     }
 
