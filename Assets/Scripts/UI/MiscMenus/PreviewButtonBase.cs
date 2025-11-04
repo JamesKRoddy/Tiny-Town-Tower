@@ -3,38 +3,62 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public abstract class PreviewButtonBase<T> : MonoBehaviour
+public class PreviewButtonBase : MonoBehaviour
 {
     [SerializeField] protected Button button;
     [SerializeField] protected Image previewImage;
     [SerializeField] protected TMP_Text nameText;
+    
+    // Optional UI elements that can be assigned in inspector
+    [SerializeField] protected TMP_Text countText;
 
-    protected T data;
-    protected Action<T> customClickHandler = null;
+    protected object data;
+    protected Action<object> customClickHandler = null;
+
+    public object Data => data;
 
     void OnDestroy()
     {
         button.onClick.RemoveAllListeners();
     }
 
-    public virtual void SetupButton(T dataObject, Sprite image = null, string displayName = "Unknown")
+    public virtual void SetupButton(object dataObject, Sprite image = null, string displayName = "Unknown", string countDisplay = "")
     {
         data = dataObject;
 
-        if (image != null)
+        if (image != null && previewImage != null)
         {
             previewImage.sprite = image;
         }
 
-        nameText.text = displayName;
+        if (nameText != null)
+        {
+            nameText.text = displayName;
+        }
 
+        // Handle optional count text
+        if (countText != null)
+        {
+            if (!string.IsNullOrEmpty(countDisplay))
+            {
+                countText.text = countDisplay;
+                countText.gameObject.SetActive(true);
+            }
+            else
+            {
+                countText.gameObject.SetActive(false);
+            }
+        }
+
+        // Remove previous listeners before adding new one
+        button.onClick.RemoveAllListeners();
         button.onClick.AddListener(OnButtonClicked);
     }
 
-    public virtual void SetupButton(T dataObject, Action<T> onClickHandler, Sprite image = null, string displayName = "Unknown")
+    public virtual void SetupButton(object dataObject, Action<object> onClickHandler, Sprite image = null, string displayName = "Unknown", string countDisplay = "")
     {
         customClickHandler = onClickHandler;
-        SetupButton(dataObject, image, displayName);
+        SetupButton(dataObject, image, displayName, countDisplay);
     }
 
     protected virtual void OnButtonClicked()
@@ -46,10 +70,30 @@ public abstract class PreviewButtonBase<T> : MonoBehaviour
         }
         else
         {
-            Debug.Log($"[PreviewButtonBase] Using default click handler for {data}");
-            OnDefaultButtonClicked();
+            Debug.Log($"[PreviewButtonBase] No click handler assigned for {data}");
         }
     }
 
-    protected abstract void OnDefaultButtonClicked();
+    // Method to update count text without re-setting up the entire button
+    public void UpdateCountText(string countDisplay)
+    {
+        if (countText != null)
+        {
+            if (!string.IsNullOrEmpty(countDisplay))
+            {
+                countText.text = countDisplay;
+                countText.gameObject.SetActive(true);
+            }
+            else
+            {
+                countText.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    // Helper method to get typed data
+    public T GetData<T>() where T : class
+    {
+        return data as T;
+    }
 }

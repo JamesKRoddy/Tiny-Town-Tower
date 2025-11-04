@@ -7,6 +7,7 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
 {
     private WorkTask currentTask;
     private HumanCharacterController characterToAssign;
+    private Dictionary<GameObject, WorkTask> buttonToTaskMap = new Dictionary<GameObject, WorkTask>();
 
     public void Setup(WorkTask task, HumanCharacterController characterToAssign)
     {
@@ -162,8 +163,208 @@ public class SelectionPreviewList : PreviewListMenuBase<string, ScriptableObject
 
     public override void SetupItemButton(ScriptableObject item, GameObject button)
     {
-        var buttonComponent = button.GetComponent<SelectionPreviewButton>();
-        buttonComponent.SetupButton(item, currentTask, characterToAssign);
+        var buttonComponent = button.GetComponent<PreviewButtonBase>();
+        if (buttonComponent == null) return;
+
+        string name = string.Empty;
+        Sprite sprite = null;
+        string countDisplay = "";
+
+        // Unsubscribe from previous task if it exists
+        if (currentTask != null)
+        {
+            currentTask.OnTaskCompleted -= () => OnTaskCompleted(button);
+        }
+
+        // Setup based on task type
+        switch (currentTask)
+        {
+            case ResearchTask researchTask:
+                var research = item as ResearchScriptableObj;
+                if (research != null)
+                {
+                    name = research.objectName;
+                    sprite = research.sprite;
+                }
+                break;
+
+            case CookingTask cookingTask:
+                var recipe = item as CookingRecipeScriptableObj;
+                if (recipe != null)
+                {
+                    name = recipe.objectName;
+                    sprite = recipe.sprite;
+                    cookingTask.OnTaskCompleted += () => OnTaskCompleted(button);
+                    countDisplay = GetItemCount(item, currentTask);
+                }
+                break;
+
+            case ResourceUpgradeTask upgradeTask:
+                var upgrade = item as ResourceUpgradeScriptableObj;
+                if (upgrade != null)
+                {
+                    name = upgrade.objectName;
+                    sprite = upgrade.sprite;
+                    upgradeTask.OnTaskCompleted += () => OnTaskCompleted(button);
+                    countDisplay = GetItemCount(item, currentTask);
+                }
+                break;
+
+            case FarmingTask farmingTask:
+                var seed = item as ResourceScriptableObj;
+                if (seed != null)
+                {
+                    name = seed.objectName;
+                    sprite = seed.sprite;
+                    countDisplay = GetItemCount(item, currentTask);
+                }
+                break;
+        }
+
+        buttonComponent.SetupButton(item, (obj) => OnItemButtonClicked(obj as ScriptableObject, button), sprite, name, countDisplay);
+        buttonToTaskMap[button] = currentTask;
+    }
+
+    private string GetItemCount(ScriptableObject item, WorkTask task)
+    {
+        int count = 0;
+        
+        switch (task)
+        {
+            case CookingTask cookingTask:
+                var recipe = item as CookingRecipeScriptableObj;
+                if (recipe != null)
+                {
+                    if (cookingTask.currentRecipe == recipe) count++;
+                    foreach (var queuedRecipe in cookingTask.taskQueue)
+                    {
+                        if (queuedRecipe is CookingRecipeScriptableObj r && r == recipe) count++;
+                    }
+                }
+                break;
+
+            case ResourceUpgradeTask upgradeTask:
+                var upgrade = item as ResourceUpgradeScriptableObj;
+                if (upgrade != null)
+                {
+                    if (upgradeTask.currentUpgrade == upgrade) count++;
+                    foreach (var queuedUpgrade in upgradeTask.taskQueue)
+                    {
+                        if (queuedUpgrade is ResourceUpgradeScriptableObj u && u == upgrade) count++;
+                    }
+                }
+                break;
+
+            case FarmingTask farmingTask:
+                var seed = item as ResourceScriptableObj;
+                if (seed != null)
+                {
+                    count = PlayerInventory.Instance.GetItemCount(seed);
+                }
+                break;
+        }
+
+        return count > 0 ? count.ToString() : "";
+    }
+
+    private void OnItemButtonClicked(ScriptableObject item, GameObject button)
+    {
+        WorkTask workTask = buttonToTaskMap.ContainsKey(button) ? buttonToTaskMap[button] : null;
+        
+        if (workTask == null)
+        {
+            Debug.LogWarning("[SelectionPreviewList] No work task assigned");
+            return;
+        }
+
+        // Handle task assignment
+        if (characterToAssign != null && !workTask.IsOccupied)
+        {
+            CampManager.Instance.WorkManager.SetNPCForAssignment(characterToAssign);
+            CampManager.Instance.WorkManager.AssignWorkToBuilding(workTask);
+        }
+
+        // Set task data based on type
+        switch (workTask)
+        {
+            case ResearchTask researchTask:
+                var research = item as ResearchScriptableObj;
+                if (research != null)
+                {
+                    if (!CampManager.Instance.ResearchManager.CanStartResearch(research, out string errorMessage))
+                    {
+                        PlayerUIManager.Instance.DisplayUIErrorMessage(errorMessage);
+                        return;
+                    }
+                    researchTask.SetResearch(research);
+                }
+                break;
+
+            case CookingTask cookingTask:
+                var recipe = item as CookingRecipeScriptableObj;
+                if (recipe != null)
+                {
+                    cookingTask.SetRecipe(recipe);
+                }
+                break;
+
+            case ResourceUpgradeTask upgradeTask:
+                var upgrade = item as ResourceUpgradeScriptableObj;
+                if (upgrade != null)
+                {
+                    upgradeTask.SetUpgrade(upgrade);
+                }
+                break;
+
+            case FarmingTask farmingTask:
+                var seed = item as ResourceScriptableObj;
+                if (seed != null)
+                {
+                    if (PlayerInventory.Instance.GetItemCount(seed) < 1)
+                    {
+                        PlayerUIManager.Instance.DisplayUIErrorMessage($"Not enough {seed.objectName} seeds");
+                        return;
+                    }
+                    farmingTask.requiredResources = new ResourceItemCount[] { new ResourceItemCount(seed, 1) };
+                    ReturnToGame();
+                }
+                break;
+        }
+        
+        // Update preview without closing menu
+        UpdatePreview(item);
+        UpdateButtonCount(button);
+    }
+
+    private void UpdateButtonCount(GameObject button)
+    {
+        var buttonComponent = button.GetComponent<PreviewButtonBase>();
+        if (buttonComponent != null && buttonToTaskMap.ContainsKey(button))
+        {
+            var data = buttonComponent.Data as ScriptableObject;
+            if (data != null)
+            {
+                string countDisplay = GetItemCount(data, buttonToTaskMap[button]);
+                buttonComponent.UpdateCountText(countDisplay);
+            }
+        }
+    }
+
+    private void OnTaskCompleted(GameObject button)
+    {
+        UpdateButtonCount(button);
+    }
+
+    public override void OnDestroy()
+    {
+        base.OnDestroy();
+        
+        // Unsubscribe from all task completion events
+        if (currentTask != null)
+        {
+            currentTask.OnTaskCompleted -= () => OnTaskCompleted(null);
+        }
+        buttonToTaskMap.Clear();
     }
 
     public override void UpdatePreviewSpecifics(ScriptableObject item)

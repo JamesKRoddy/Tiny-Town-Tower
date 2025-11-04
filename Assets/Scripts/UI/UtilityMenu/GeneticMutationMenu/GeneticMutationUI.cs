@@ -133,7 +133,9 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
 
     public override void SetupItemButton(GeneticMutationObj mutation, GameObject button)
     {
-        var buttonComponent = button.GetComponent<GeneticMutationBtn>();
+        var buttonComponent = button.GetComponent<PreviewButtonBase>();
+        if (buttonComponent == null) return;
+
         int quantity = 0;
         foreach (var entry in PlayerInventory.Instance.availableMutations)
         {
@@ -143,7 +145,25 @@ public class GeneticMutationUI : PreviewListMenuBase<GeneticMutation, GeneticMut
                 break;
             }
         }
-        buttonComponent.SetupButton(mutation, quantity);
+        
+        buttonComponent.SetupButton(mutation, (obj) => OnMutationButtonClicked(obj as GeneticMutationObj), mutation.sprite, mutation.objectName, quantity.ToString());
+    }
+
+    private void OnMutationButtonClicked(GeneticMutationObj mutation)
+    {
+        if (mutation == null)
+        {
+            Debug.LogWarning("Genetic Mutation Btn clicked, but item is null.");
+            return;
+        }
+
+        // Update preview
+        UpdatePreview(mutation);
+
+        // Select mutation for placement
+        SelectMutation(mutation);
+
+        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.GENETIC_MUTATION_MOVEMENT);
     }
 
     public override string GetPreviewName(GeneticMutationObj mutation)

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using Managers;
 
 public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterController>, IControllerInput
 {
@@ -73,30 +74,99 @@ public class SettlerNPCMenu : PreviewListMenuBase<string, HumanCharacterControll
 
     public override void SetupItemButton(HumanCharacterController item, GameObject button)
     {
-        var buttonComponent = button.GetComponent<SettlerPreviewBtn>();
+        var buttonComponent = button.GetComponent<PreviewButtonBase>();
+        if (buttonComponent == null) return;
         
         if (customClickHandler != null)
         {
             if (item is RobotCharacterController robot)
             {
-                buttonComponent.SetupButton(robot, customClickHandler, null, "Robot");
+                buttonComponent.SetupButton(robot, (obj) => customClickHandler(obj as HumanCharacterController), null, "Robot");
             }
             else if (item is SettlerNPC settler)
             {
-                buttonComponent.SetupButton(settler, customClickHandler, null, settler.SettlerName);
+                buttonComponent.SetupButton(settler, (obj) => customClickHandler(obj as HumanCharacterController), null, settler.SettlerName);
             }
         }
         else
         {
+            // Capture button in closure for click handler
             if (item is RobotCharacterController robot)
             {
-                // Special setup for robot
-                buttonComponent.SetupButton(robot);
+                buttonComponent.SetupButton(robot, (obj) => OnCharacterClicked(obj as HumanCharacterController, button), null, "Robot");
             }
             else if (item is SettlerNPC settler)
             {
-                buttonComponent.SetupButton(settler);
+                buttonComponent.SetupButton(settler, (obj) => OnCharacterClicked(obj as HumanCharacterController, button), null, settler.SettlerName);
             }
+        }
+    }
+
+    private void OnCharacterClicked(HumanCharacterController character, GameObject buttonObj)
+    {
+        Debug.Log($"[SettlerNPCMenu] OnCharacterClicked called for: {character?.name}");
+        
+        if (character is RobotCharacterController robot)
+        {
+            // Check if camp is under attack before possessing robot
+            if (CampManager.Instance != null && CampManager.Instance.IsCampUnderAttack)
+            {
+                Debug.Log("[SettlerNPCMenu] Cannot possess robot - camp is under attack!");
+                PlayerUIManager.Instance.DisplayNotification("Cannot possess characters during an attack!");
+                return;
+            }
+            
+            Debug.Log("[SettlerNPCMenu] Robot clicked - possessing robot");
+            // Immediately possess the robot
+            PlayerController.Instance.PossessNPC(robot);
+            SetScreenActive(false);
+            PlayerUIManager.Instance.utilityMenu.ReturnToGame(PlayerControlType.ROBOT_MOVEMENT);
+        }
+        else if (character is SettlerNPC settler)
+        {
+            Debug.Log($"[SettlerNPCMenu] Settler NPC clicked: {settler.name}");
+            
+            // Check if we're in building assignment mode
+            var buildingForAssignment = CampManager.Instance.WorkManager.buildingForAssignment;
+            Debug.Log($"[SettlerNPCMenu] buildingForAssignment: {buildingForAssignment?.ToString() ?? "null"}");
+            
+            if (buildingForAssignment != null)
+            {
+                Debug.Log($"[SettlerNPCMenu] Building assignment mode detected - bypassing popup for building: {buildingForAssignment}");
+                // Directly assign work without showing the popup
+                SetScreenActive(false, 0.05f);
+                CampManager.Instance.WorkManager.SetNPCForAssignment(settler);
+                
+                // Handle both IPlaceableStructure (buildings/turrets) and WorkTask (construction sites)
+                if (buildingForAssignment is IPlaceableStructure structure)
+                {
+                    Debug.Log($"[SettlerNPCMenu] Showing work task options for IPlaceableStructure: {structure}");
+                    CampManager.Instance.WorkManager.ShowWorkTaskOptions(structure, settler, (task) => {
+                        CampManager.Instance.WorkManager.AssignWorkToBuilding(task);
+                    });
+                }
+                else if (buildingForAssignment is StructureConstructionTask constructionTask)
+                {
+                    Debug.Log($"[SettlerNPCMenu] Showing work task options for StructureConstructionTask: {constructionTask}");
+                    CampManager.Instance.WorkManager.ShowWorkTaskOptions(constructionTask, settler, (task) => {
+                        CampManager.Instance.WorkManager.AssignWorkToBuilding(task);
+                    });
+                }
+                else
+                {
+                    Debug.LogWarning($"[SettlerNPCMenu] Unknown buildingForAssignment type: {buildingForAssignment.GetType()}");
+                }
+            }
+            else
+            {
+                Debug.Log("[SettlerNPCMenu] Normal mode - showing NPC popup");
+                // Show popup for settler NPCs (normal behavior)
+                DisplayPopup(character, buttonObj);
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[SettlerNPCMenu] Unknown data type: {character?.GetType()}");
         }
     }
 

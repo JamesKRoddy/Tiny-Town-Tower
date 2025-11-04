@@ -13,21 +13,16 @@ public class BuildMenu : PreviewListMenuBase<CampPlaceableObjectCategory, Placea
     [SerializeField] GameObject previewResourceCostPrefab;
     [SerializeField] RectTransform previewResourceCostParent;
 
-    private BuildingPreviewBtn selectedButton;
-
     public override void SetPlayerControls(PlayerControlType controlType)
     {
         base.SetPlayerControls(controlType);
         switch (controlType)
         {
             case PlayerControlType.BUILDING_PLACEMENT:
-                if (selectedButton != null)
-                {
-                    PlayerInput.Instance.OnBPressed += () => {
-                        EnableBuildMenu();
-                        PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
-                    };
-                }
+                PlayerInput.Instance.OnBPressed += () => {
+                    EnableBuildMenu();
+                    PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.IN_MENU);
+                };
                 break;
             default:
                 break;
@@ -60,10 +55,34 @@ public class BuildMenu : PreviewListMenuBase<CampPlaceableObjectCategory, Placea
 
     public override void SetupItemButton(PlaceableObjectParent item, GameObject button)
     {
-        var buttonComponent = button.GetComponent<BuildingPreviewBtn>();
+        var buttonComponent = button.GetComponent<PreviewButtonBase>();
         if (buttonComponent != null)
         {
-            buttonComponent.SetupButton(item);
+            buttonComponent.SetupButton(item, (obj) => OnBuildingButtonClicked(obj as PlaceableObjectParent), item.sprite, item.objectName);
+        }
+    }
+
+    private void OnBuildingButtonClicked(PlaceableObjectParent placeableObject)
+    {
+        bool canBuild = true;
+
+        foreach (var requiredItem in placeableObject._resourceCost)
+        {
+            int playerCount = PlayerInventory.Instance.GetItemCount(requiredItem.resourceScriptableObj);
+            if (playerCount < requiredItem.count)
+            {
+                canBuild = false;
+                break;
+            }
+        }
+
+        if (canBuild)
+        {
+            StartBuildingPlacement(placeableObject);
+        }
+        else
+        {
+            DisplayErrorMessage($"Not enough resources to build this structure!");
         }
     }
 
@@ -120,10 +139,9 @@ public class BuildMenu : PreviewListMenuBase<CampPlaceableObjectCategory, Placea
     {
         if (item != null)
         {
-            var buttonComponent = EventSystem.current.currentSelectedGameObject?.GetComponent<BuildingPreviewBtn>();
+            var buttonComponent = EventSystem.current.currentSelectedGameObject?.GetComponent<PreviewButtonBase>();
             if (buttonComponent != null)
             {
-                selectedButton = buttonComponent;
                 PlayerUIManager.Instance.buildMenu.SetScreenActive(false, 0.1f, () => EnableBuildMenu());
             }
         }
