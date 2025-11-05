@@ -496,10 +496,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   centerPiece: {fileID: 0}
-  frontTransform: {fileID: 0}
-  backTransform: {fileID: 0}
-  leftTransform: {fileID: 0}
-  rightTransform: {fileID: 0}
+  roomSpawnPointsParent: {fileID: 0}
+  maxAcceptableOverlapVolume: 100
+  minRoomDistance: 5
+  spawnPointExclusionRadius: 3
+  showPlacedRoomBounds: 1
+  maxSwapRetries: 5
+  showSwapDebug: 1
+  showDirectionArrows: 1
+  arrowLength: 5
+  arrowHeadLength: 1.5
+  arrowHeadAngle: 20
+  arrowColor: {r: 0, g: 1, b: 1, a: 1}
+  roomType: 1
 --- !u!64 &160089010
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -4698,7 +4707,7 @@ MonoBehaviour:
   m_Center: {x: 0, y: 2, z: 0}
   m_LayerMask:
     serializedVersion: 2
-    m_Bits: 192
+    m_Bits: 64
   m_UseGeometry: 1
   m_DefaultArea: 0
   m_GenerateLinks: 0
@@ -4709,7 +4718,7 @@ MonoBehaviour:
   m_OverrideVoxelSize: 0
   m_VoxelSize: 0.16666667
   m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 0}
+  m_NavMeshData: {fileID: 23800000, guid: c85bd1f74e10648499a031027bd395cc, type: 2}
   m_BuildHeightMesh: 0
 --- !u!4 &1492674782
 Transform:

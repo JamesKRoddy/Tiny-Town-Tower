@@ -1337,11 +1337,11 @@ public class RogueLiteRoomParent : MonoBehaviour
             settingsChanged = true;
         }
 
-        // Ensure Use Geometry is set to Render Meshes (best for most room setups)
-        if (navMeshSurface.useGeometry != NavMeshCollectGeometry.RenderMeshes)
+        // Ensure Use Geometry is set to Physics Colliders (doesn't require mesh read/write, works in builds)
+        if (navMeshSurface.useGeometry != NavMeshCollectGeometry.PhysicsColliders)
         {
-            Debug.Log($"[RogueLiteRoomParent] Changing NavMeshSurface 'Use Geometry' from '{navMeshSurface.useGeometry}' to 'RenderMeshes' for proper floor detection");
-            navMeshSurface.useGeometry = NavMeshCollectGeometry.RenderMeshes;
+            Debug.Log($"[RogueLiteRoomParent] Changing NavMeshSurface 'Use Geometry' from '{navMeshSurface.useGeometry}' to 'PhysicsColliders' for proper floor detection");
+            navMeshSurface.useGeometry = NavMeshCollectGeometry.PhysicsColliders;
             settingsChanged = true;
         }
 

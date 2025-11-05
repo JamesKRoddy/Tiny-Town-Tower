@@ -1,22 +1,18 @@
 *****Current Work*****
 
-Put in canvas groups to help organize menus
-Menu refactor, list menus all to have a prefab base w/ prefab buttons.
-Replace panels and option button in preview list menus
-
 Remove all read me files
-
-****** Tomorrow work:
-
-PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
-
-Clean up debug logs, also have to have a central debug manager to control what classes have enable logs enabled
 
 RuntimeNavMeshBuilder: Source mesh SM_Bld_Bunker_Floor_Stone_01 does not allow read access. This will work in playmode in the editor but not in player
 UnityEngine.AI.NavMeshBuilder:BuildNavMeshData (UnityEngine.AI.NavMeshBuildSettings,System.Collections.Generic.List`1<UnityEngine.AI.NavMeshBuildSource>,UnityEngine.Bounds,UnityEngine.Vector3,UnityEngine.Quaternion)
 Unity.AI.Navigation.NavMeshSurface:BuildNavMesh () (at ./Library/PackageCache/com.unity.ai.navigation@9f76b145f0a8/Runtime/NavMeshSurface.cs:272)
 RogueLiteRoomParent/<DelayedBakeNavMesh>d__53:MoveNext () (at Assets/Scripts/RogueLite/RoomLevels/RogueLiteRoomParent.cs:1373)
 UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+
+****** Tomorrow work:
+
+PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
+
+Clean up debug logs, also have to have a central debug manager to control what classes have enable logs enabled
 
 EffectSpawnData which has both the Effectdefinion and Transform. This may be subbed into a few place where Effectdefinion has a spawn point. Character animations i think is the one where work vfx is assigned to IK points, can def sub that out.
 
@@ -91,6 +87,9 @@ Finalise the difficulty system making enemies faster, more damage, more health, 
 
 
 *****Ideas*****
+
+Story
+Are you looking after the npcs or are you really using them to gain some sort of directive, the idea of whos really in control?
 
 Enemies
 Slower animations for injured enemies
