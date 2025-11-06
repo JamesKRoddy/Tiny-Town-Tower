@@ -10,12 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8ccf30521a69cb741ad56958e7173ea0, type: 3}
-  m_Name: BossPunchStart
+  m_Name: Work_HittingHammer
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 1380329679129358, guid: 24206d8a9ca2a5c409e2de653d14d07d, type: 3}
+  - {fileID: 1643851402782444, guid: ea5f61d0cb4f3ba4086449c103b0a9df, type: 3}
+  - {fileID: 1348244303774095024, guid: e0724c87fbc01bb45a8dbaeff7071bdc, type: 3}
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1
   volume: 1
   duration: 0
+  looping: 0
+  loopInterval: 5
+  spatialBlend: 1
+  playMode: 1

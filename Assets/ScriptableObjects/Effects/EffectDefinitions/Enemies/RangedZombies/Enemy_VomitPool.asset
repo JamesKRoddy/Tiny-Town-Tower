@@ -10,16 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8ccf30521a69cb741ad56958e7173ea0, type: 3}
-  m_Name: MeleeAttackSlash_Basic
+  m_Name: Enemy_VomitPool
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 7280600254614374205, guid: 0ffb72f529e5db34c8e2301eb0ce0697, type: 3}
+  - {fileID: 5463006163525327907, guid: 939d8c9032b9deb4f93ed8d2a0b94d39, type: 3}
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1
   volume: 1
   duration: 0
-  looping: 0
-  loopInterval: 5
   spatialBlend: 1
-  playMode: 0
+  playMode: 1

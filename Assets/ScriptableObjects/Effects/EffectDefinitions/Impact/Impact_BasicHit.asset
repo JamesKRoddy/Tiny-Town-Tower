@@ -10,14 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8ccf30521a69cb741ad56958e7173ea0, type: 3}
-  m_Name: VomitProjectile
-  m_EditorClassIdentifier: 
-  prefabs:
-  - {fileID: 6065242573691159738, guid: 7e578001f97bebc49b72fa440fc01405, type: 3}
+  m_Name: Impact_BasicHit
+  m_EditorClassIdentifier: Assembly-CSharp:Managers:EffectDefinition
+  prefabs: []
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1
   volume: 1
   duration: 0
-  spatialBlend: 1
-  playMode: 1
