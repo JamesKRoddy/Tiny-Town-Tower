@@ -2,23 +2,15 @@
 
 Remove all read me files
 
-RuntimeNavMeshBuilder: Source mesh SM_Bld_Bunker_Floor_Stone_01 does not allow read access. This will work in playmode in the editor but not in player
-UnityEngine.AI.NavMeshBuilder:BuildNavMeshData (UnityEngine.AI.NavMeshBuildSettings,System.Collections.Generic.List`1<UnityEngine.AI.NavMeshBuildSource>,UnityEngine.Bounds,UnityEngine.Vector3,UnityEngine.Quaternion)
-Unity.AI.Navigation.NavMeshSurface:BuildNavMesh () (at ./Library/PackageCache/com.unity.ai.navigation@9f76b145f0a8/Runtime/NavMeshSurface.cs:272)
-RogueLiteRoomParent/<DelayedBakeNavMesh>d__53:MoveNext () (at Assets/Scripts/RogueLite/RoomLevels/RogueLiteRoomParent.cs:1373)
-UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr)
+Create a new branch
 
 ****** Tomorrow work:
 
 PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
 
-Clean up debug logs, also have to have a central debug manager to control what classes have enable logs enabled
-
-EffectSpawnData which has both the Effectdefinion and Transform. This may be subbed into a few place where Effectdefinion has a spawn point. Character animations i think is the one where work vfx is assigned to IK points, can def sub that out.
-
-Snooze effect on npcs
-
 ****** Next work:
+
+VFX and sounds for footsteps
 
 Charge up attacks by holding down buttons
 
@@ -32,7 +24,7 @@ Custom inspectors for NPC and their components, enemies, managers that need it
 
 Create the scriptable obj and prefabs for: Genetic mutations, weapons, world objects etc.
 
-VFX for player, attacks, hits etc.
+VFX for player, npc, attacks, hits, status effects etc.
 
 UI refactor, try to reuse buttons, place in graphics to use for the real ui in the game
 
@@ -41,6 +33,8 @@ Setup some new enemies: Zombie that when its killed splits into smaller enemies.
 Recruitable NPCs in roguelike section shouldn't wander, get tired/sick etc. They should just hang out until the player talks to them. Have to create an animation state to just have idle animations
 
 Situation when the last npc dies in the game, you load back to the camp. A length of time passes and more npcs stumble across your camp. The punishment for this is that during this time the camp will be messy, buildings will be damaged or completely broken. You do still get to keep all of your research though.
+
+Clean up debug logs, also have to have a central debug manager to control what classes have enable logs enabled
 
 ****** Bugs and refactoring:
 
