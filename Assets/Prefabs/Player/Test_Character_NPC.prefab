@@ -1710,21 +1710,37 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   taskEffects:
   - taskAnimation: 6
-    effect: {fileID: 11400000, guid: 42781ed0b7fd7e942adea3ed0df0a09e, type: 2}
-    ikPoint: 2
-    parentToIK: 0
+    effectSpawnData:
+      effectDefinition: {fileID: 11400000, guid: 42781ed0b7fd7e942adea3ed0df0a09e, type: 2}
+      spawnPoint: {fileID: 1887953391499806068}
+      positionOffset: {x: 0, y: 0, z: 0}
+      rotationOffset: {x: 0, y: 0, z: 0}
+      parentToTransform: 0
+      durationOverride: 0
   - taskAnimation: 7
-    effect: {fileID: 11400000, guid: 039aff3216736a04283b756edaf67064, type: 2}
-    ikPoint: 2
-    parentToIK: 1
+    effectSpawnData:
+      effectDefinition: {fileID: 11400000, guid: 039aff3216736a04283b756edaf67064, type: 2}
+      spawnPoint: {fileID: 1887953391499806068}
+      positionOffset: {x: 0, y: 0, z: 0}
+      rotationOffset: {x: 0, y: 0, z: 0}
+      parentToTransform: 1
+      durationOverride: 0
   - taskAnimation: 3
-    effect: {fileID: 11400000, guid: 2bcde8c9636bd174d9d2960b0ea2977d, type: 2}
-    ikPoint: 2
-    parentToIK: 0
+    effectSpawnData:
+      effectDefinition: {fileID: 11400000, guid: 2bcde8c9636bd174d9d2960b0ea2977d, type: 2}
+      spawnPoint: {fileID: 1887953391499806068}
+      positionOffset: {x: 0, y: 0, z: 0}
+      rotationOffset: {x: 0, y: 0, z: 0}
+      parentToTransform: 0
+      durationOverride: 0
   - taskAnimation: 4
-    effect: {fileID: 11400000, guid: 2bcde8c9636bd174d9d2960b0ea2977d, type: 2}
-    ikPoint: 2
-    parentToIK: 0
+    effectSpawnData:
+      effectDefinition: {fileID: 11400000, guid: 2bcde8c9636bd174d9d2960b0ea2977d, type: 2}
+      spawnPoint: {fileID: 1887953391499806068}
+      positionOffset: {x: 0, y: 0, z: 0}
+      rotationOffset: {x: 0, y: 0, z: 0}
+      parentToTransform: 0
+      durationOverride: 0
 --- !u!114 &8320294776751182447
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1771,7 +1787,6 @@ MonoBehaviour:
   dashElementalEffects:
   - element: 0
     dashEffect: {fileID: 11400000, guid: 115e1d46a30b4f644bb674d91e81537c, type: 2}
-  defaultVfxDuration: 2
 --- !u!114 &1287946293633936085
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1896,7 +1911,6 @@ MonoBehaviour:
   starvationThreshold: 10
   workSpeedMultiplier: 1
   noFoodCooldown: 10
-  isSick: 0
   baseSicknessChance: 0.001
   sicknessCheckInterval: 5
   baseSicknessDurationInGameHours: 6

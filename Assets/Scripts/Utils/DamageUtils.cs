@@ -588,7 +588,7 @@ public static class DamageUtils
     /// <param name="element">Elemental type of the damage</param>
     /// <param name="duration">How long the area lasts</param>
     /// <param name="damageInterval">How often damage is dealt (seconds)</param>
-    /// <param name="visualEffect">Visual effect for the damage area</param>
+    /// <param name="visualEffect">Visual effect for the damage area (will be parented to damage area)</param>
     /// <param name="allegiance">Allegiance of the damage area (auto-detected from attacker if not specified)</param>
     /// <returns>The created damage area GameObject</returns>
     public static GameObject CreateDamageArea(Vector3 position, float radius, float damage, float poiseDamage,
@@ -616,7 +616,7 @@ public static class DamageUtils
         TemporaryDamageArea damageArea = damageAreaObj.AddComponent<TemporaryDamageArea>();
         damageArea.Setup(damage, poiseDamage, duration, element, 0, attacker, damageInterval, areaAllegiance);
         
-        // Add visual effect if provided
+        // Add visual effect if provided (parented to damage area)
         if (visualEffect != null)
         {
             GameObject visualObj = EffectManager.Instance.PlayEffect(position, Vector3.up, Quaternion.identity, 

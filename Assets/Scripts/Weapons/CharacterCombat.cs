@@ -7,16 +7,23 @@ public class CharacterCombat : MonoBehaviour
 {
     private CharacterInventory characterInventory;
 
+    /// <summary>
+    /// Maps attack directions to transforms for VFX spawning
+    /// Note: The transform is used as fallback if EffectSpawnData doesn't specify a spawnPoint
+    /// </summary>
     [System.Serializable]
     public class AttackDirectionTransform
     {
         [Tooltip("The attack direction this transform represents")]
         public MeleeAttackDirection attackDirection;
         
-        [Tooltip("Transform where VFX should be spawned and oriented")]
+        [Tooltip("Transform where VFX should be spawned and oriented (used as fallback)")]
         public Transform vfxTransform;
     }
 
+    /// <summary>
+    /// Maps elemental types to melee attack effects
+    /// </summary>
     [System.Serializable]
     public class MeleeElementalEffect
     {
@@ -27,6 +34,9 @@ public class CharacterCombat : MonoBehaviour
         public EffectDefinition meleeEffect;
     }
 
+    /// <summary>
+    /// Maps elemental types to dash attack effects
+    /// </summary>
     [System.Serializable]
     public class DashElementalEffect
     {
@@ -52,10 +62,6 @@ public class CharacterCombat : MonoBehaviour
     [Header("Dash Elemental Effects")]
     [Tooltip("Effect definitions for different elemental types for dash attacks")]
     [SerializeField] private DashElementalEffect[] dashElementalEffects = new DashElementalEffect[0];
-
-    [Header("Settings")]
-    [Tooltip("Default duration for attack VFX if not specified in effect definition")]
-    [SerializeField] private float defaultVfxDuration = 2f;
 
     private Dictionary<MeleeAttackDirection, AttackDirectionTransform> directionTransformMap;
     private Dictionary<AttackElement, MeleeElementalEffect> meleeElementEffectMap;
@@ -178,19 +184,13 @@ public class CharacterCombat : MonoBehaviour
             return;
         }
 
-        // Calculate position and rotation
-        Vector3 position = directionTransform.vfxTransform.position;
-        Vector3 normal = directionTransform.vfxTransform.forward;
-        Quaternion rotation = directionTransform.vfxTransform.rotation;
-
-        // Play the effect using EffectManager (not parented to transform)
+        // Spawn effect at the direction transform's position
         GameObject effectInstance = EffectManager.Instance.PlayEffect(
-            position, 
-            normal, 
-            rotation, 
+            directionTransform.vfxTransform.position,
+            directionTransform.vfxTransform.forward,
+            directionTransform.vfxTransform.rotation,
             null, // Don't parent to transform for melee effects
-            elementEffect.meleeEffect,
-            defaultVfxDuration
+            elementEffect.meleeEffect
         );
 
         // Apply attack speed to particle systems if effect was created
@@ -218,19 +218,13 @@ public class CharacterCombat : MonoBehaviour
             return;
         }
 
-        // Calculate position and rotation
-        Vector3 position = dashVfxTransform.position;
-        Vector3 normal = dashVfxTransform.forward;
-        Quaternion rotation = dashVfxTransform.rotation;
-
-        // Play the effect using EffectManager (not parented to transform)
+        // Spawn effect at the dash transform's position
         EffectManager.Instance.PlayEffect(
-            position, 
-            normal, 
-            rotation, 
+            dashVfxTransform.position,
+            dashVfxTransform.forward,
+            dashVfxTransform.rotation,
             null, // Don't parent to transform for dash effects
-            elementEffect.dashEffect,
-            defaultVfxDuration
+            elementEffect.dashEffect
         );
     }
 

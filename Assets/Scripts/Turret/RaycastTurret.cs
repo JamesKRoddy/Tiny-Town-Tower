@@ -7,25 +7,19 @@ using UnityEngine;
 public class RaycastTurret : BaseTurret
 {
     [Header("Raycast Settings")]
-    [Tooltip("Visual effect to play when firing")]
-    public EffectDefinition muzzleFlashEffect;
-    [Tooltip("Visual effect to play on hit")]
+    [Tooltip("Muzzle flash effect configuration (typically parented to firePoint)")]
+    public EffectSpawnData muzzleFlashEffect;
+    [Tooltip("Hit effect to play on impact")]
     public EffectDefinition hitEffect;
     [Tooltip("Maximum raycast distance")]
     public float maxRaycastDistance = 100f;
 
     protected override void Fire()
     {
-        // Play muzzle flash effect
-        if (muzzleFlashEffect != null && Managers.EffectManager.Instance != null)
+        // Play muzzle flash effect using EffectSpawnData
+        if (muzzleFlashEffect != null && muzzleFlashEffect.IsValid())
         {
-            Managers.EffectManager.Instance.PlayEffect(
-                firePoint.position,
-                firePoint.forward,
-                firePoint.rotation,
-                firePoint,
-                muzzleFlashEffect
-            );
+            muzzleFlashEffect.SpawnEffect(firePoint);
         }
 
         // Use the unified raycast damage system
@@ -46,7 +40,7 @@ public class RaycastTurret : BaseTurret
                 hit.point,
                 hit.normal,
                 Quaternion.LookRotation(hit.normal),
-                hit.transform,
+                null, // No parenting needed for hit effects
                 hitEffect
             );
         }
