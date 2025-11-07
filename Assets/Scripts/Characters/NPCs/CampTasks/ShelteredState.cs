@@ -29,7 +29,7 @@ public class ShelteredState : _TaskState
         }
         if (animator != null)
         {
-            animator.SetFloat("Speed", 0f);
+            animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, 0f);
         }
         // Optionally: Hide NPC visuals if not already handled by BunkerBuilding
         // npc.gameObject.SetActive(false); // Usually handled by BunkerBuilding

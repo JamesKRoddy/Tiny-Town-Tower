@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 76e5ac0af6026e848a65e87f58d50094
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 159547
+  packageName: 90's Desktop OS UI
+  packageVersion: 1.0
+  assetPath: Assets/Desktop90_UI/Prefabs/UIPartials/ActionListItem.prefab
+  uploadId: 345207

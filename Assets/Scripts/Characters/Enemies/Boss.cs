@@ -92,9 +92,12 @@ namespace Enemies{
             }
         }
 
-        public new void TakeDamage(float amount, Transform damageSource = null)
+        /// <summary>
+        /// Override TakeDamage to update boss health UI
+        /// </summary>
+        public new void TakeDamage(DamageInfo damageInfo)
         {
-            base.TakeDamage(amount, damageSource);
+            base.TakeDamage(damageInfo);
             UpdateHealthUI();
         }
 
@@ -138,7 +141,7 @@ namespace Enemies{
                 EndAttack();
                 currentAttack.OnAttackEnd();
                 currentAttack = null;
-                animator.SetInteger("AttackType", 0);
+                animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, 0);
                 // Speed will be set by UpdateAnimationParameters based on agent velocity
             }
         }

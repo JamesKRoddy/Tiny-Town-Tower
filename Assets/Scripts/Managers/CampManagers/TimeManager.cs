@@ -222,6 +222,22 @@ namespace Managers
         {
             isPaused = pause;
         }
+
+        /// <summary>
+        /// Pause the time cycle
+        /// </summary>
+        public void PauseTime()
+        {
+            isPaused = true;
+        }
+
+        /// <summary>
+        /// Resume the time cycle
+        /// </summary>
+        public void ResumeTime()
+        {
+            isPaused = false;
+        }
         
         /// <summary>
         /// Force set the time of day
@@ -632,14 +648,6 @@ namespace Managers
                 TimeOfDay.Night => "Night",
                 _ => "Unknown"
             };
-        }
-        
-        /// <summary>
-        /// Get formatted time string with progress (legacy method for compatibility)
-        /// </summary>
-        public string GetFormattedTimeString()
-        {
-            return GetFormattedTime12Hour();
         }
         
         #endregion

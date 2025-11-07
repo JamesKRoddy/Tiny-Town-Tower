@@ -116,7 +116,7 @@ namespace Enemies
                     }
                     if (animator != null)
                     {
-                        animator.SetInteger("AttackType", 0);
+                        animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, 0);
                     }
                 }
                 else
@@ -439,7 +439,7 @@ namespace Enemies
             // Reset attack type to 0 (default)
             if (animator != null)
             {
-                animator.SetInteger("AttackType", 0);
+                animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, 0);
             }
             
             // Allow new attacks to be selected

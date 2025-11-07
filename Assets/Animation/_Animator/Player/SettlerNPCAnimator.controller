@@ -231,7 +231,6 @@ AnimatorState:
   - {fileID: -7244105830372115711}
   m_StateMachineBehaviours:
   - {fileID: 6081880560244325508}
-  - {fileID: -5269686712659304211}
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -538,6 +537,10 @@ MonoBehaviour:
     boolValue: 0
     intValue: 0
     floatValue: 0
+    useRandom: 0
+    randomMinValue: 0
+    randomMaxValue: 1
+    randomMaxInclusive: 1
     modifyOnEnter: 1
     modifyOnExit: 0
     modifyOnUpdate: 0
@@ -738,8 +741,7 @@ AnimatorState:
   m_Transitions:
   - {fileID: -3817422727147395977}
   - {fileID: -3287137014179206710}
-  m_StateMachineBehaviours:
-  - {fileID: -4908308863800018648}
+  m_StateMachineBehaviours: []
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -1519,8 +1521,7 @@ AnimatorState:
   m_Transitions:
   - {fileID: 3618603884334883763}
   - {fileID: 2569907732279934237}
-  m_StateMachineBehaviours:
-  - {fileID: 8285829747401041191}
+  m_StateMachineBehaviours: []
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -1756,8 +1757,7 @@ AnimatorState:
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions: []
-  m_StateMachineBehaviours:
-  - {fileID: 3366728992248048695}
+  m_StateMachineBehaviours: []
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -2008,7 +2008,6 @@ AnimatorState:
   - {fileID: 8266328913383140049}
   m_StateMachineBehaviours:
   - {fileID: 7863145445836495066}
-  - {fileID: -8389981303230134901}
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -2133,7 +2132,6 @@ AnimatorState:
   - {fileID: 6662730043767686951}
   m_StateMachineBehaviours:
   - {fileID: -5253922974659321581}
-  - {fileID: -7566327171765639741}
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -2555,6 +2553,10 @@ MonoBehaviour:
     boolValue: 0
     intValue: 0
     floatValue: 0
+    useRandom: 0
+    randomMinValue: 0
+    randomMaxValue: 1
+    randomMaxInclusive: 1
     modifyOnEnter: 1
     modifyOnExit: 0
     modifyOnUpdate: 0

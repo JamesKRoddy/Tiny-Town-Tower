@@ -23,12 +23,13 @@ namespace Managers
         private List<string> availableNames = new List<string>();
         private List<string> availableDescriptions = new List<string>();
 
-        [Header("NPC Tracking")]
-        private List<SettlerNPC> activeNPCs = new List<SettlerNPC>();
-        public int TotalNPCs => activeNPCs.Count;
+    [Header("NPC Tracking")]
+    // NPC tracking is now delegated to CampManager for single source of truth
+    public int TotalNPCs => CampManager.Instance != null ? CampManager.Instance.GetTotalLivingNPCs() : 0;
 
-        // Event for NPC count changes
-        public event Action<int> OnNPCCountChanged;
+    // Event for NPC count changes
+    public event Action<int> OnNPCCountChanged;
+    public event Action OnAllNPCsLost;
 
         [Header("NPC Transfer Settings")]
         [SerializeField] private float transferDelay = 2f; // Delay before transferring NPCs to allow scene setup
@@ -86,20 +87,50 @@ namespace Managers
             }
         }
 
+        /// <summary>
+        /// Register an NPC with the camp (delegates to CampManager)
+        /// </summary>
         public void RegisterNPC(SettlerNPC npc)
         {
-            if (!activeNPCs.Contains(npc))
+            if (CampManager.Instance != null)
             {
-                activeNPCs.Add(npc);
+                CampManager.Instance.AddNPC(npc);
                 OnNPCCountChanged?.Invoke(TotalNPCs);
+            }
+            else
+            {
+                Debug.LogWarning("[NPCManager] CampManager not available to register NPC");
             }
         }
 
+        /// <summary>
+        /// Unregister an NPC from the camp (delegates to CampManager)
+        /// </summary>
         public void UnregisterNPC(SettlerNPC npc)
         {
-            if (activeNPCs.Remove(npc))
+            if (CampManager.Instance != null)
             {
+                // Mark as dead so CampManager can track it for cleanup
+                bool isDead = npc != null && npc.Health <= 0;
+                CampManager.Instance.RemoveNPC(npc, isDead);
                 OnNPCCountChanged?.Invoke(TotalNPCs);
+                
+                // Check if all NPCs are lost
+                if (TotalNPCs == 0)
+                {
+                    Debug.LogWarning("[NPCManager] All NPCs have been lost!");
+                    OnAllNPCsLost?.Invoke();
+                    
+                    // Trigger game restart if GameStartManager exists
+                    if (GameStartManager.Instance != null)
+                    {
+                        GameStartManager.Instance.TriggerGameRestart();
+                    }
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[NPCManager] CampManager not available to unregister NPC");
             }
         }
 
@@ -109,11 +140,29 @@ namespace Managers
         }
         
         /// <summary>
-        /// Get all active NPCs in the camp
+        /// Get all active living NPCs in the camp (delegates to CampManager)
         /// </summary>
         public List<SettlerNPC> GetAllNPCs()
         {
-            return new List<SettlerNPC>(activeNPCs);
+            if (CampManager.Instance == null)
+            {
+                Debug.LogWarning("[NPCManager] CampManager not available to get NPCs");
+                return new List<SettlerNPC>();
+            }
+            
+            // Get living NPCs from CampManager's internal list (single source of truth)
+            var allNPCs = new List<SettlerNPC>();
+            var livingNPCs = CampManager.Instance.GetLivingNPCs();
+            
+            foreach (var npc in livingNPCs)
+            {
+                if (npc is SettlerNPC settler)
+                {
+                    allNPCs.Add(settler);
+                }
+            }
+            
+            return allNPCs;
         }
 
         /// <summary>

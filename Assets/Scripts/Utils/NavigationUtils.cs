@@ -214,6 +214,74 @@ public static class NavigationUtils
         return CalculateEffectiveReachDistance(agent.transform.position, target, baseStoppingDistance, obstacleBoundsOffset);
     }
 
+    /// <summary>
+    /// Find a distributed position around a target with crowd avoidance.
+    /// Used for both enemy attacks and NPC work positioning to prevent clustering.
+    /// Creates a ring of positions around the target and picks the best one based on:
+    /// - Distance to the agent (prefer closer positions)
+    /// - Crowding (avoid positions with many nearby agents)
+    /// </summary>
+    /// <param name="agentPosition">Position of the agent (enemy/NPC)</param>
+    /// <param name="target">The target to position around (building, enemy, etc.)</param>
+    /// <param name="desiredDistance">Desired distance from the target (attack range or work distance)</param>
+    /// <param name="obstacleBoundsOffset">Additional offset for obstacle bounds</param>
+    /// <param name="positionCount">Number of positions to test around the target</param>
+    /// <param name="crowdingRadius">Radius to check for nearby agents</param>
+    /// <returns>A less crowded position around the target</returns>
+    public static Vector3 FindDistributedPositionAroundTarget(Vector3 agentPosition, Transform target, float desiredDistance, float obstacleBoundsOffset = 1f, int positionCount = 12, float crowdingRadius = 3f)
+    {
+        if (target == null) return agentPosition;
+        
+        // Calculate the effective distance (accounts for NavMeshObstacle size)
+        float effectiveDistance = CalculateEffectiveReachDistance(agentPosition, target, desiredDistance, obstacleBoundsOffset);
+        
+        // Generate positions in a ring around the target
+        Vector3 targetPos = target.position;
+        float angleStep = 360f / positionCount;
+        
+        // Score each position based on distance to agent and crowding
+        Vector3 bestPosition = targetPos;
+        float bestScore = float.MinValue;
+        
+        for (int i = 0; i < positionCount; i++)
+        {
+            float angle = i * angleStep;
+            Vector3 direction = Quaternion.Euler(0, angle, 0) * Vector3.forward;
+            Vector3 ringPosition = targetPos + direction * effectiveDistance;
+            
+            // Sample NavMesh to ensure position is valid
+            NavMeshHit hit;
+            if (NavMesh.SamplePosition(ringPosition, out hit, 2f, NavMesh.AllAreas))
+            {
+                // Check for nearby agents (crowding)
+                Collider[] nearbyColliders = Physics.OverlapSphere(hit.position, crowdingRadius);
+                int agentCount = 0;
+                
+                foreach (var collider in nearbyColliders)
+                {
+                    // Count NavMeshAgents (enemies and NPCs) near this position
+                    if (collider.GetComponent<NavMeshAgent>() != null)
+                    {
+                        agentCount++;
+                    }
+                }
+                
+                // Calculate score: prefer closer positions with fewer nearby agents
+                float distanceToAgent = Vector3.Distance(hit.position, agentPosition);
+                float crowdingPenalty = agentCount * 5f; // Each nearby agent adds distance penalty
+                float score = 100f - distanceToAgent - crowdingPenalty;
+                
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestPosition = hit.position;
+                }
+            }
+        }
+        
+        return bestPosition;
+    }
+
     #region Rotation Utilities
 
     /// <summary>

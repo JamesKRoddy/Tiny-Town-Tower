@@ -52,9 +52,9 @@ namespace Enemies.Attacks
             maxRange = explosionRadius;
             
             // Validate attack effect
-            if (attackEffect == null)
+            if (attackEffect == null || !attackEffect.IsValid())
             {
-                Debug.LogError("Attack effect (explosion) definition is not assigned to ExplosionAttack on " + enemy.gameObject.name);
+                Debug.LogError("Attack effect (explosion) definition is not assigned or invalid on ExplosionAttack on " + enemy.gameObject.name);
             }
             
             Debug.Log($"[{enemy.gameObject.name}] ExplosionAttack initialized | ExplosionRadius: {explosionRadius} | ExplosionDamage: {damage}");
@@ -93,7 +93,7 @@ namespace Enemies.Attacks
                 damage * poiseDamageMultiplier, 
                 enemy.transform, 
                 attackElement, 
-                attackEffect
+                attackEffect?.effectDefinition
             );
             
             Debug.Log($"[{enemy.gameObject.name}] Explosion executed | Damage: {damage} | Radius: {explosionRadius} | Targets: {targetsDamaged}");
@@ -106,7 +106,9 @@ namespace Enemies.Attacks
             // Attacker dies after exploding
             if (dieAfterExplosion && enemy != null)
             {
-                enemy.TakeDamage(enemy.Health, 0f, enemy.transform); // Kill the attacker
+                // Kill the attacker with environmental damage (no VFX needed for self-destruction)
+                var damageInfo = DamageInfo.Environmental(enemy.Health, playHitVFX: false);
+                enemy.TakeDamage(damageInfo);
             }
         }
 
@@ -146,13 +148,15 @@ namespace Enemies.Attacks
                 damage * poiseDamageMultiplier, 
                 enemy.transform, 
                 attackElement, 
-                attackEffect
+                attackEffect?.effectDefinition
             );
             
             // Kill the attacker if configured to do so
             if (dieAfterExplosion && enemy != null)
             {
-                enemy.TakeDamage(enemy.Health, 0f, enemy.transform); // Kill the attacker
+                // Kill the attacker with environmental damage (no VFX needed for self-destruction)
+                var damageInfo = DamageInfo.Environmental(enemy.Health, playHitVFX: false);
+                enemy.TakeDamage(damageInfo);
             }
             
             Debug.Log($"[{enemy.gameObject.name}] Explosion force triggered!");

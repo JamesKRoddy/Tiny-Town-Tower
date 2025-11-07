@@ -122,38 +122,70 @@ public class PlayerController : MonoBehaviour, IControllerInput
 
     /// <summary>
     /// Updates the NPC's position after a scene transition.
-    /// If no position is provided, it will default to the PlayerSpawnPoint.
-    /// If a Transform is provided, it will use the position of the Transform.
-    /// If a Vector3 is provided, it will use the Vector3 as the position. Has to be a vector3 because the scene transition manager will clear the transform.
+    /// Properly handles CharacterController and NavMeshAgent to ensure position sticks.
     /// </summary>
-    /// <param name="position"></param>
     public void UpdateNPCPosition(object position)
     {   
         MonoBehaviour npc = _possessedNPC as MonoBehaviour;
-        if (npc != null)
+        if (npc == null)
         {
-            if (position == null)
+            Debug.LogError("[PlayerController] No possessed NPC found!");
+            return;
+        }
+
+        Vector3 targetPosition = Vector3.zero;
+
+        // Determine target position from input parameter
+        if (position == null)
+        {
+            Transform spawnPoint = GameObject.Find("PlayerSpawnPoint")?.transform;
+            if (spawnPoint != null)
             {
-                // Default to finding PlayerSpawnPoint if no position provided
-                Transform spawnPoint = GameObject.Find("PlayerSpawnPoint")?.transform;
-                if (spawnPoint == null)
-                {
-                    Debug.LogError("No player spawn point found");
-                    npc.transform.position = Vector3.zero;
-                }
-                else
-                {
-                    npc.transform.position = spawnPoint.position;
-                }
+                targetPosition = spawnPoint.position;
             }
-            else if (position is Transform transform)
-            {
-                npc.transform.position = transform.position;
-            }
-            else if (position is Vector3 vector)
-            {
-                npc.transform.position = vector;
-            }
+        }
+        else if (position is Transform transform)
+        {
+            targetPosition = transform.position;
+        }
+        else if (position is Vector3 vector)
+        {
+            targetPosition = vector;
+        }
+        
+        // Get movement components
+        CharacterController charController = npc.GetComponent<CharacterController>();
+        UnityEngine.AI.NavMeshAgent navAgent = npc.GetComponent<UnityEngine.AI.NavMeshAgent>();
+        
+        // Disable CharacterController to allow position change
+        bool wasCharControllerEnabled = false;
+        if (charController != null && charController.enabled)
+        {
+            wasCharControllerEnabled = true;
+            charController.enabled = false;
+        }
+        
+        // Disable NavMeshAgent if it's somehow still enabled
+        bool wasNavAgentEnabled = false;
+        if (navAgent != null && navAgent.enabled)
+        {
+            wasNavAgentEnabled = true;
+            navAgent.enabled = false;
+        }
+        
+        // Set the position
+        npc.transform.position = targetPosition;
+        
+        // Re-enable CharacterController
+        if (wasCharControllerEnabled && charController != null)
+        {
+            charController.enabled = true;
+        }
+        
+        // Re-enable NavMeshAgent if it was enabled (shouldn't be in roguelike, but just in case)
+        if (wasNavAgentEnabled && navAgent != null)
+        {
+            navAgent.enabled = true;
         }
     }
 

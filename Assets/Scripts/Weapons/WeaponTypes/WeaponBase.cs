@@ -131,16 +131,6 @@ public abstract class WeaponBase : MonoBehaviour, IPickupableItem, IDamageDealer
         DamageUtils.DealDamage(this, target, damageAmount, poiseAmount);
     }
     
-    /// <summary>
-    /// Deals damage to a target using this weapon's elemental properties (legacy method for backward compatibility)
-    /// </summary>
-    /// <param name="target">The target to damage</param>
-    /// <param name="damageSource">The source of the damage (usually the weapon or character)</param>
-    public virtual void DealDamage(IDamageable target, Transform damageSource)
-    {
-        DealDamage(target);
-    }
-    
     // Note: Status effects and camera shake are now handled by the DamageDealer utility class
     
     /// <summary>

@@ -46,7 +46,7 @@ namespace Enemies
     /// </summary>
     [RequireComponent(typeof(NavMeshAgent))]
     [RequireComponent(typeof(Animator))]
-    public class EnemyBase : MonoBehaviour, IDamageable
+    public class EnemyBase : MonoBehaviour, IDamageable, IStatusEffectTarget
     {
         #region Constants
         
@@ -150,6 +150,10 @@ namespace Enemies
         protected Material flashMaterial;
         protected float flashDuration = 0.5f;
         protected Color flashColor = new Color(1f, 0.1f, 0.1f);
+
+        // Status Effect System - Enemy owns its gameplay status effect data (source of truth)
+        // EffectManager handles VFX/presentation layer only
+        protected HashSet<StatusEffectType> activeStatusEffects = new HashSet<StatusEffectType>();
 
         #endregion
 
@@ -622,7 +626,9 @@ namespace Enemies
                     else
                     {
                         // No strategic position, move toward target
-                        agent.SetDestination(navMeshTarget.position);
+                        // For buildings with NavMeshObstacle, use distributed positions to avoid clustering
+                        Vector3 targetDestination = GetDistributedDestination(navMeshTarget, optimalStoppingDistance);
+                        agent.SetDestination(targetDestination);
                         
                         // For root motion zombies, check if we should stop the agent
                         if (useRootMotion)
@@ -667,34 +673,49 @@ namespace Enemies
                 // COOLDOWN BEHAVIOR: Stop moving when in attack range but waiting for cooldown
                 // Prevents enemies from running around/circling player while waiting to attack
                 // ─────────────────────────────────────────────────────────────────────────────────
-                bool inAttackRangeButOnCooldown = false;
-                bool hasAnyValidAttack = false;
+                bool inRangeButOnCooldown = false;
+                bool inRangeButNoLOS = false;
                 
-                if (distanceToTarget <= GetMaximumAttackRange())
+                // Check all attacks to determine movement behavior
+                // Uses obstacle-aware range checking for consistency with AttackBase.CanAttack()
+                var attackComponents = GetComponents<AttackBase>();
+                foreach (var attack in attackComponents)
                 {
-                    // Check if any attack is on cooldown
-                    var attackComponents = GetComponents<AttackBase>();
-                    foreach (var attack in attackComponents)
+                    if (attack != null && attack.enabled)
                     {
-                        if (attack != null && attack.enabled)
+                        // Check if in range using obstacle-aware logic (handles buildings with NavMeshObstacle)
+                        bool inRange = DamageUtils.IsInRangeWithObstacles(transform.position, navMeshTarget, attack.minRange, attack.maxRange);
+                        
+                        if (inRange)
                         {
-                            hasAnyValidAttack = true;
-                            if (!attack.CanAttack())
+                            bool cooldownReady = DamageUtils.IsCooldownReady(attack.lastAttackTime, attack.cooldown);
+                            
+                            if (!cooldownReady)
                             {
-                                inAttackRangeButOnCooldown = true;
+                                inRangeButOnCooldown = true;
                                 if (showCollisionDebug)
                                 {
-                                    Debug.Log($"[{gameObject.name}] Attack {attack.GetType().Name} cannot attack (range: {attack.minRange}-{attack.maxRange}, distance: {distanceToTarget:F2})");
+                                    Debug.Log($"[{gameObject.name}] Attack {attack.GetType().Name} on cooldown");
                                 }
-                                break;
+                            }
+                            else if (attack.minRange > 0) // Ranged attack
+                            {
+                                // In range and cooldown ready, so check if LOS is blocking
+                                if (!HasLineOfSight(navMeshTarget.position))
+                                {
+                                    inRangeButNoLOS = true;
+                                    if (showCollisionDebug)
+                                    {
+                                        Debug.Log($"[{gameObject.name}] Attack {attack.GetType().Name} blocked by LOS - need to reposition");
+                                    }
+                                }
                             }
                         }
                     }
                 }
                 
-                // If in range but on cooldown, stay still (don't circle or move around)
-                // ONLY stop if we have valid attacks and they're on cooldown
-                if (inAttackRangeButOnCooldown && hasAnyValidAttack && !isAttacking)
+                // If in range but on actual cooldown, stay still (don't circle or move around)
+                if (inRangeButOnCooldown && !isAttacking)
                 {
                     if (!agent.isStopped)
                     {
@@ -704,6 +725,34 @@ namespace Enemies
                         }
                         agent.isStopped = true;
                         agent.velocity = Vector3.zero;
+                    }
+                }
+                // If in range but no LOS, try to reposition to get a clear shot
+                else if (inRangeButNoLOS && !isAttacking)
+                {
+                    // Try to find a position with clear LOS
+                    Vector3 repositionTarget = FindPositionWithLineOfSight();
+                    
+                    if (repositionTarget != Vector3.zero)
+                    {
+                        agent.SetDestination(repositionTarget);
+                        if (agent.isStopped)
+                        {
+                            if (showCollisionDebug)
+                            {
+                                Debug.Log($"[{gameObject.name}] Repositioning to find clear line of sight");
+                            }
+                            agent.isStopped = false;
+                        }
+                    }
+                    else
+                    {
+                        // Can't find a good position, just move towards target to get closer
+                        agent.SetDestination(navMeshTarget.position);
+                        if (agent.isStopped)
+                        {
+                            agent.isStopped = false;
+                        }
                     }
                 }
                 else
@@ -762,7 +811,9 @@ namespace Enemies
                     else
                     {
                         // No strategic position assigned, move toward target
-                        agent.SetDestination(navMeshTarget.position);
+                        // For buildings with NavMeshObstacle, use distributed positions to avoid clustering
+                        Vector3 targetDestination = GetDistributedDestination(navMeshTarget, optimalStoppingDistance);
+                        agent.SetDestination(targetDestination);
                         
                         // For root motion zombies, check if we should stop the agent
                         if (useRootMotion)
@@ -936,31 +987,27 @@ namespace Enemies
 
         /// <summary>
         /// Check if the enemy is in an attack cooldown by checking actual attack components
+        /// This specifically checks for cooldown timers, NOT line of sight or range issues
         /// </summary>
         /// <returns>True if in cooldown</returns>
         private bool IsInAttackCooldown()
         {
             if (navMeshTarget == null) return false;
 
-            float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
-            float minAttackDistance = GetMinimumAttackDistance();
-            float maxAttackRange = GetMaximumAttackRange();
-            
-            // Must be in range to potentially attack
-            if (distanceToTarget < minAttackDistance || distanceToTarget > maxAttackRange)
-            {
-                return false; // Not in range, so not in cooldown
-            }
-
-            // Check if any attack component is on cooldown
+            // Check if any attack component is on actual cooldown (not just unable to attack)
             bool anyAttackOnCooldown = false;
-            var zombieComponent = GetComponent<Zombie>();
-            if (zombieComponent != null)
+            var attackComponents = GetComponents<AttackBase>();
+            
+            foreach (var attack in attackComponents)
             {
-                var attackComponents = GetComponents<AttackBase>();
-                foreach (var attack in attackComponents)
+                if (attack != null && attack.enabled)
                 {
-                    if (attack != null && attack.enabled && !attack.CanAttack())
+                    // Check if in range using obstacle-aware logic (consistent with CanAttack)
+                    bool inRange = DamageUtils.IsInRangeWithObstacles(transform.position, navMeshTarget, attack.minRange, attack.maxRange);
+                    bool cooldownReady = DamageUtils.IsCooldownReady(attack.lastAttackTime, attack.cooldown);
+                    
+                    // If in range but cooldown is NOT ready, then we're actually in cooldown
+                    if (inRange && !cooldownReady)
                     {
                         anyAttackOnCooldown = true;
                         break;
@@ -984,6 +1031,66 @@ namespace Enemies
             lastTargetChangeTime = Time.time; // Initialize the target change timer
         }
 
+        /// <summary>
+        /// Find a position with clear line of sight to the target
+        /// Tries multiple positions around the current location to find one with LOS
+        /// </summary>
+        /// <returns>A valid position with LOS, or Vector3.zero if none found</returns>
+        private Vector3 FindPositionWithLineOfSight()
+        {
+            if (navMeshTarget == null) return Vector3.zero;
+            
+            Vector3 currentPos = transform.position;
+            Vector3 targetPos = navMeshTarget.position;
+            float maxAttackRange = GetMaximumAttackRange();
+            float minAttackDistance = GetMinimumAttackDistance();
+            
+            // Try multiple positions around the current location
+            // Start with positions at a comfortable attack distance
+            float[] testDistances = { minAttackDistance + 2f, minAttackDistance + 4f, maxAttackRange * 0.7f };
+            float[] testAngles = { -90f, -45f, 0f, 45f, 90f, -135f, 135f, 180f }; // Try various angles
+            
+            foreach (float distance in testDistances)
+            {
+                foreach (float angle in testAngles)
+                {
+                    // Calculate test position relative to target
+                    Vector3 directionFromTarget = (currentPos - targetPos).normalized;
+                    Vector3 rotatedDirection = Quaternion.AngleAxis(angle, Vector3.up) * directionFromTarget;
+                    Vector3 testPosition = targetPos + rotatedDirection * distance;
+                    
+                    // Check if position is valid on NavMesh
+                    UnityEngine.AI.NavMeshHit navHit;
+                    if (UnityEngine.AI.NavMesh.SamplePosition(testPosition, out navHit, 3f, UnityEngine.AI.NavMesh.AllAreas))
+                    {
+                        // Check if this position has LOS to target
+                        Vector3 rayOrigin = navHit.position + Vector3.up * 1.5f;
+                        Vector3 rayTarget = targetPos + Vector3.up * 1.5f;
+                        Vector3 direction = rayTarget - rayOrigin;
+                        float rayDistance = direction.magnitude;
+                        
+                        // Use same layer mask as HasLineOfSight - ignore Player and Enemy layers
+                        LayerMask ignoreMask = LayerMask.GetMask("Player", "Enemy", "Ignore Raycast");
+                        LayerMask obstacleMask = ~ignoreMask;
+                        RaycastHit hit;
+                        
+                        if (!Physics.Raycast(rayOrigin, direction.normalized, out hit, rayDistance, obstacleMask))
+                        {
+                            // Found a position with clear LOS!
+                            if (showCollisionDebug)
+                            {
+                                Debug.Log($"[{gameObject.name}] Found clear position at angle {angle}° and distance {distance:F2}");
+                            }
+                            return navHit.position;
+                        }
+                    }
+                }
+            }
+            
+            // No clear position found
+            return Vector3.zero;
+        }
+        
         /// <summary>
         /// Find a new target position for cooldown movement - strafe around the player at optimal range
         /// </summary>
@@ -1065,6 +1172,50 @@ namespace Enemies
             return maxRange > 0 ? maxRange : 10f;
         }
 
+        /// <summary>
+        /// Get a distributed destination around a target to prevent clustering.
+        /// Uses crowd avoidance for buildings with NavMeshObstacles, direct position otherwise.
+        /// 
+        /// HOW IT WORKS:
+        /// 1. For buildings: Creates a ring of positions around the building at attack range
+        /// 2. Tests each position for nearby agents (crowding)
+        /// 3. Scores positions: closer to enemy + fewer nearby agents = better score
+        /// 4. Returns the best position, naturally spreading enemies around the building
+        /// 
+        /// TUNING:
+        /// - positionCount (12): More positions = smoother distribution, but slower
+        /// - crowdingRadius (2.5f): Larger = more spread out, smaller = tighter grouping
+        /// </summary>
+        /// <param name="target">The target to move toward</param>
+        /// <param name="attackRange">The desired attack range/stopping distance</param>
+        /// <returns>A position to path to around the target</returns>
+        private Vector3 GetDistributedDestination(Transform target, float attackRange)
+        {
+            if (target == null) return transform.position;
+            
+            // Check if target has a NavMeshObstacle (typically buildings/structures)
+            NavMeshObstacle obstacle = target.GetComponent<NavMeshObstacle>();
+            
+            if (obstacle != null)
+            {
+                // Target is a building/structure - use distributed positioning with crowd avoidance
+                return NavigationUtils.FindDistributedPositionAroundTarget(
+                    transform.position, 
+                    target, 
+                    attackRange, 
+                    obstacleBoundsOffset,
+                    12,  // Test 12 positions around the building (every 30 degrees)
+                    2.5f // Crowding radius - consider positions crowded if 2.5 units from other agents
+                );
+            }
+            else
+            {
+                // Target is a character (NPC/player) - path directly to them
+                // NavMesh agent avoidance will handle avoiding other agents
+                return target.position;
+            }
+        }
+
         private void UpdateAnimationParameters()
         {
             if (animator == null) return;
@@ -1074,7 +1225,7 @@ namespace Enemies
             float normalizedSpeed = Mathf.Clamp01(velocity / movementSpeed);
             
             // Set Speed parameter (0-1 range) based on normalized velocity
-            animator.SetFloat("Speed", normalizedSpeed);
+            animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, normalizedSpeed);
         }
 
         private void UpdateRotation()
@@ -1512,14 +1663,58 @@ namespace Enemies
         #region Attack Validation
 
         /// <summary>
-        /// Validates if an attack can be performed on the current target
+        /// Checks if there is a clear line of sight from this enemy to the target.
+        /// Uses raycasting to detect walls and obstacles that would block ranged attacks.
+        /// </summary>
+        /// <param name="targetPosition">The target position to check line of sight to</param>
+        /// <param name="checkHeight">Height offset for the raycast origin (default: 1.5f for center mass)</param>
+        /// <returns>True if there's a clear line of sight, false if blocked by obstacles</returns>
+        public bool HasLineOfSight(Vector3 targetPosition, float checkHeight = 1.5f)
+        {
+            if (navMeshTarget == null) return false;
+
+            // Start raycast from enemy's center mass height
+            Vector3 rayOrigin = transform.position + Vector3.up * checkHeight;
+            Vector3 rayTarget = targetPosition + Vector3.up * checkHeight;
+            Vector3 direction = rayTarget - rayOrigin;
+            float distance = direction.magnitude;
+
+            // Layer mask: Ignore Settler and Enemy layers - we only want to detect walls/obstacles
+            // Using inverse mask (~) to ignore specific layers instead of specifying which to hit
+            LayerMask ignoreMask = LayerMask.GetMask("Settler", "Enemy", "Ignore Raycast");
+            LayerMask obstacleMask = ~ignoreMask; // Invert to hit everything EXCEPT these layers
+            
+            // Perform the raycast
+            RaycastHit hit;
+            bool hasLineOfSight = !Physics.Raycast(rayOrigin, direction.normalized, out hit, distance, obstacleMask);
+            
+            // Debug visualization if enabled
+            if (showCollisionDebug)
+            {
+                Color rayColor = hasLineOfSight ? Color.green : Color.red;
+                Debug.DrawLine(rayOrigin, rayTarget, rayColor, 0.1f);
+                
+                if (!hasLineOfSight && hit.collider != null)
+                {
+                    Debug.DrawLine(rayOrigin, hit.point, Color.yellow, 0.1f);
+                    Debug.Log($"[{gameObject.name}] Line of sight blocked by {hit.collider.gameObject.name} at distance {hit.distance:F2}");
+                }
+            }
+            
+            return hasLineOfSight;
+        }
+
+        /// <summary>
+        /// Validates if an attack can be performed on the current target.
+        /// Includes distance, angle, and line-of-sight checks.
         /// </summary>
         /// <param name="attackRange">The range for this specific attack</param>
         /// <param name="angleThreshold">Maximum angle deviation for attack</param>
         /// <param name="distanceToTarget">Current distance to target (output)</param>
         /// <param name="angleToTarget">Current angle to target (output)</param>
+        /// <param name="requireLineOfSight">Whether to check for line of sight (default: true for ranged attacks)</param>
         /// <returns>True if attack is valid</returns>
-        protected bool ValidateAttack(float attackRange, float angleThreshold, out float distanceToTarget, out float angleToTarget)
+        protected bool ValidateAttack(float attackRange, float angleThreshold, out float distanceToTarget, out float angleToTarget, bool requireLineOfSight = true)
         {
             distanceToTarget = 0f;
             angleToTarget = 0f;
@@ -1549,7 +1744,22 @@ namespace Enemies
             Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
             angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
             
-            return angleToTarget <= angleThreshold;
+            if (angleToTarget > angleThreshold)
+            {
+                return false;
+            }
+
+            // Line of sight validation (especially important for ranged attacks)
+            if (requireLineOfSight && !HasLineOfSight(navMeshTarget.position))
+            {
+                if (showCollisionDebug)
+                {
+                    Debug.Log($"[{gameObject.name}] Attack blocked: No line of sight to target");
+                }
+                return false;
+            }
+            
+            return true;
         }
 
         #endregion
@@ -1561,31 +1771,10 @@ namespace Enemies
         {
             Debug.LogWarning($"Attack not overridden for {gameObject.name}");
         }
-        
-        /// <summary>
-        /// Deals damage to a target (legacy method - use AttackBase for new implementations)
-        /// </summary>
-        /// <param name="target">The target to damage</param>
-        /// <param name="baseDamage">Base damage amount</param>
-        /// <param name="poiseDamage">Poise damage amount</param>
-        protected virtual void DealDamageToTarget(IDamageable target, float baseDamage, float poiseDamage = 0f)
-        {
-            if (target == null) return;
-            
-            // Legacy method - new attack components should use AttackBase.DealDamage instead
-            if (poiseDamage > 0)
-            {
-                target.TakeDamage(baseDamage, poiseDamage, transform);
-            }
-            else
-            {
-                target.TakeDamage(baseDamage, transform);
-            }
-        }
 
         protected virtual void BeginAttackSequence()
         {
-            animator.SetBool("Attack", true);
+            animator.SetBool(GameConstants.AnimatorParams.AttackHash, true);
             isAttacking = true;
             isRotatingToAttack = false; // Stop rotation phase
 
@@ -1602,7 +1791,7 @@ namespace Enemies
         /// </summary>
         protected virtual void EndAttack()
         {
-            animator.SetBool("Attack", false);
+            animator.SetBool(GameConstants.AnimatorParams.AttackHash, false);
             isAttacking = false;
             isRotatingToAttack = false; // Reset rotation state
 
@@ -1614,57 +1803,71 @@ namespace Enemies
             // For non-root motion, rotation will resume automatically in update logic
         }
 
-        public void TakeDamage(float amount, Transform damageSource = null)
-        {
-            // Prevent taking damage if already dead
-            if (Health <= 0) return;
-            
-            float previousHealth = Health;
-            Health -= amount;
-
-            // Use DamageUtils for consistent damage handling
-            DamageUtils.ApplyDamage(this, amount, damageSource, animator, transform, 
-                OnDamageTaken, OnDeath, true);
-
-            // Track hit for procedural IK reactions
-            if (damageSource != null)
-            {
-                LastHitOrigin = damageSource.position;
-                LastHitTime = Time.time;
-                LastHitPoiseDamage = 10f; // Default poise damage for basic attacks
-                HandleDamageReaction(damageSource);
-            }
-
-            if (Health <= 0)
-            {
-                Die();
-            }
-        }
-
-
-
-
-
         /// <summary>
-        /// Overloaded TakeDamage method that handles both health and poise damage
+        /// Unified method to handle all types of damage using DamageInfo struct
         /// </summary>
-        /// <param name="amount">Amount of damage to take</param>
-        /// <param name="poiseDamage">Amount of poise damage to take</param>
-        /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
-        public void TakeDamage(float amount, float poiseDamage, Transform damageSource = null)
+        /// <param name="damageInfo">Complete damage information including source, type, and flags</param>
+        public void TakeDamage(DamageInfo damageInfo)
         {
             // Prevent taking damage if already dead
             if (Health <= 0) return;
             
-            float previousHealth = Health;
-            Health -= amount;
+            // Extract parameters from DamageInfo
+            float amount = damageInfo.Amount;
+            float poiseDamage = damageInfo.PoiseDamage;
+            AttackElement damageType = damageInfo.ElementType;
+            Transform damageSource = damageInfo.SourceTransform;
+            bool playHitVFX = damageInfo.PlayHitVFX;
+            
+            bool hasPoiseDamage = poiseDamage > 0f;
+            bool hasElementalDamage = damageType != AttackElement.NONE;
+            bool poiseBroken = false;
+            float finalDamage = amount;
 
-            // Use DamageUtils for consistent damage and poise handling
-            var (hitDirection, poiseBroken) = DamageUtils.ApplyDamageWithPoise(this, amount, poiseDamage, 
-                damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
+            // Handle different damage types with appropriate utilities
+            if (hasPoiseDamage && hasElementalDamage)
+            {
+                // Full damage: poise + elemental
+                var result = DamageUtils.ApplyElementalDamageWithPoise(this, amount, poiseDamage, damageType, 
+                    damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, playHitVFX);
+                finalDamage = result.Item2;
+                poiseBroken = result.Item3;
+                
+                // Skip if immune to this damage type
+                if (finalDamage <= 0) return;
+                
+                Health -= finalDamage;
+            }
+            else if (hasElementalDamage)
+            {
+                // Elemental damage only
+                var result = DamageUtils.ApplyElementalDamage(this, amount, damageType, 
+                    damageSource, animator, transform, OnDamageTaken, OnDeath, playHitVFX);
+                finalDamage = result.Item2;
+                
+                // Skip if immune to this damage type
+                if (finalDamage <= 0) return;
+                
+                Health -= finalDamage;
+            }
+            else if (hasPoiseDamage)
+            {
+                // Poise damage only
+                var result = DamageUtils.ApplyDamageWithPoise(this, amount, poiseDamage, 
+                    damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, playHitVFX);
+                poiseBroken = result.Item2;
+                Health -= amount;
+            }
+            else
+            {
+                // Basic damage only
+                Health -= amount;
+                DamageUtils.ApplyDamage(this, amount, damageSource, animator, transform, 
+                    OnDamageTaken, OnDeath, playHitVFX);
+            }
 
             // Update poise damage tracking
-            if (poiseDamage > 0)
+            if (hasPoiseDamage)
             {
                 lastPoiseDamageTime = Time.time;
                 if (poiseBroken)
@@ -1673,18 +1876,20 @@ namespace Enemies
                 }
             }
 
-            // Track hit for procedural IK reactions (skip if poise broken to avoid conflicts with stagger animations)
+            // Track hit for procedural IK reactions
             if (damageSource != null)
             {
-                if (!poiseBroken)
+                // Skip IK reactions if poise broken (to avoid conflicts with stagger animations)
+                if (!poiseBroken || !hasPoiseDamage)
                 {
                     LastHitOrigin = damageSource.position;
                     LastHitTime = Time.time;
-                    LastHitPoiseDamage = poiseDamage; // Use actual poise damage for reaction scaling
+                    LastHitPoiseDamage = hasPoiseDamage ? poiseDamage : 10f; // Use actual poise or default
                 }
                 HandleDamageReaction(damageSource);
             }
 
+            // Check for death
             if (Health <= 0)
             {
                 Die();
@@ -1708,7 +1913,7 @@ namespace Enemies
             if (animator != null)
             {
                 Debug.Log($"[{gameObject.name}] Setting death animation and disabling root motion. applyRootMotion before: {animator.applyRootMotion}");
-                animator.SetTrigger("Dead");
+                animator.SetTrigger(GameConstants.AnimatorParams.DeadHash);
                 // Disable root motion to prevent dead zombies from rotating
                 animator.applyRootMotion = false;
                 Debug.Log($"[{gameObject.name}] applyRootMotion after: {animator.applyRootMotion}");
@@ -2001,96 +2206,154 @@ namespace Enemies
             return DamageUtils.GetDamageMultiplier(GetResistance(damageType));
         }
 
+        #endregion
+        
+        #region IStatusEffectTarget Implementation
+        
+        // ========================================
+        // GAMEPLAY DATA (Source of Truth)
+        // This enemy owns its status effect data
+        // ========================================
+        
         /// <summary>
-        /// Take damage with elemental type consideration
+        /// Add a status effect to this enemy (gameplay data)
+        /// This is the source of truth for active effects
         /// </summary>
-        /// <param name="amount">Base amount of damage to take</param>
-        /// <param name="damageType">Type of elemental damage</param>
-        /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
-        public void TakeDamage(float amount, AttackElement damageType, Transform damageSource = null)
+        /// <param name="effectType">The type of status effect to add</param>
+        /// <returns>True if added, false if already present</returns>
+        public bool AddStatusEffect(StatusEffectType effectType)
         {
-            // Prevent taking damage if already dead
-            if (Health <= 0) return;
+            return activeStatusEffects.Add(effectType);
+        }
+        
+        /// <summary>
+        /// Remove a status effect from this enemy (gameplay data)
+        /// </summary>
+        /// <param name="effectType">The type of status effect to remove</param>
+        /// <returns>True if removed, false if not present</returns>
+        public bool RemoveStatusEffect(StatusEffectType effectType)
+        {
+            return activeStatusEffects.Remove(effectType);
+        }
+        
+        /// <summary>
+        /// Check if this enemy has a specific status effect
+        /// </summary>
+        /// <param name="effectType">The type of status effect to check</param>
+        /// <returns>True if the effect is active</returns>
+        public bool HasStatusEffect(StatusEffectType effectType)
+        {
+            return activeStatusEffects.Contains(effectType);
+        }
+        
+        /// <summary>
+        /// Get all active status effects on this enemy
+        /// </summary>
+        /// <returns>Read-only collection of active status effect types</returns>
+        public IReadOnlyCollection<StatusEffectType> GetActiveStatusEffects()
+        {
+            return activeStatusEffects;
+        }
+        
+        /// <summary>
+        /// Gets the character type for status effect configuration lookups
+        /// Required by IStatusEffectTarget interface
+        /// </summary>
+        /// <returns>The CharacterType for this enemy</returns>
+        public CharacterType GetCharacterType()
+        {
+            return characterType;
+        }
+        
+        // ========================================
+        // GAMEPLAY CALLBACKS (Effect Behavior)
+        // Called by EffectManager after data changes
+        // ========================================
+        
+        /// <summary>
+        /// Called when a status effect is applied (after AddStatusEffect)
+        /// Handle gameplay logic like movement penalties, AI behavior changes, etc.
+        /// </summary>
+        public virtual void OnStatusEffectApplied(StatusEffectType effectType, float duration)
+        {
+            Debug.Log($"[{gameObject.name}] Status effect applied: {effectType} for {duration}s");
             
-            // Use DamageUtils for elemental damage calculation with resistance
-            var (hitDirection, finalDamage) = DamageUtils.ApplyElementalDamage(this, amount, damageType, 
-                damageSource, animator, transform, OnDamageTaken, OnDeath, true);
-
-            // Skip if immune to this damage type
-            if (finalDamage <= 0) return;
-
-            // Apply the calculated damage
-            float previousHealth = Health;
-            Health -= finalDamage;
-            OnDamageTaken?.Invoke(finalDamage, Health);
-
-            // Track hit for procedural IK reactions
-            if (damageSource != null)
+            // Handle specific gameplay effects
+            switch (effectType)
             {
-                LastHitOrigin = damageSource.position;
-                LastHitTime = Time.time;
-                LastHitPoiseDamage = 10f; // Default poise damage for elemental attacks without poise
-                HandleDamageReaction(damageSource);
-            }
-
-            if (Health <= 0)
-            {
-                Die();
+                case StatusEffectType.ON_FIRE:
+                    Debug.Log($"[{gameObject.name}] is on fire! Taking damage over time.");
+                    // Could add panic/aggro behavior
+                    break;
+                    
+                case StatusEffectType.FROZEN:
+                    Debug.Log($"[{gameObject.name}] is frozen! Movement slowed.");
+                    // Could reduce movement speed, animation speed
+                    if (agent != null)
+                    {
+                        // Example: Reduce speed by 50%
+                        agent.speed *= 0.5f;
+                    }
+                    break;
+                    
+                case StatusEffectType.ELECTROCUTED:
+                    Debug.Log($"[{gameObject.name}] is electrocuted!");
+                    // Could add stun behavior, interrupt attacks
+                    break;
             }
         }
-
+        
         /// <summary>
-        /// Take damage with poise damage and elemental type consideration
+        /// Called when a status effect is removed (after RemoveStatusEffect)
+        /// Handle cleanup logic for gameplay effects
         /// </summary>
-        /// <param name="amount">Base amount of damage to take</param>
-        /// <param name="poiseDamage">Amount of poise damage to take</param>
-        /// <param name="damageType">Type of elemental damage</param>
-        /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
-        public void TakeDamage(float amount, float poiseDamage, AttackElement damageType, Transform damageSource = null)
+        public virtual void OnStatusEffectRemoved(StatusEffectType effectType)
         {
-            // Prevent taking damage if already dead
-            if (Health <= 0) return;
+            Debug.Log($"[{gameObject.name}] Status effect removed: {effectType}");
             
-            // Use DamageUtils for elemental damage calculation with resistance
-            var (hitDirection, finalDamage, poiseBroken) = DamageUtils.ApplyElementalDamageWithPoise(this, amount, poiseDamage, damageType, 
-                damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
-
-            // Skip if immune to this damage type
-            if (finalDamage <= 0) return;
-
-            // Apply the calculated damage
-            float previousHealth = Health;
-            Health -= finalDamage;
-            OnDamageTaken?.Invoke(finalDamage, Health);
-
-            // Update poise damage tracking
-            if (poiseDamage > 0)
+            // Handle specific cleanup
+            switch (effectType)
             {
-                lastPoiseDamageTime = Time.time;
-                if (poiseBroken)
-                {
-                    isPoiseBroken = true;
-                }
-            }
-
-            // Track hit for procedural IK reactions (skip if poise broken to avoid conflicts with stagger animations)
-            if (damageSource != null)
-            {
-                if (!poiseBroken)
-                {
-                    LastHitOrigin = damageSource.position;
-                    LastHitTime = Time.time;
-                    LastHitPoiseDamage = poiseDamage; // Use actual poise damage for reaction scaling
-                }
-                HandleDamageReaction(damageSource);
-            }
-
-            if (Health <= 0)
-            {
-                Die();
+                case StatusEffectType.FROZEN:
+                    Debug.Log($"[{gameObject.name}] is no longer frozen.");
+                    // Restore movement speed
+                    if (agent != null)
+                    {
+                        // Example: Restore speed
+                        agent.speed = movementSpeed;
+                    }
+                    break;
+                    
+                case StatusEffectType.ELECTROCUTED:
+                    Debug.Log($"[{gameObject.name}] is no longer electrocuted.");
+                    break;
             }
         }
-
+        
+        /// <summary>
+        /// Utility: Apply a status effect with VFX through EffectManager
+        /// For external systems that want both gameplay AND visual effects
+        /// </summary>
+        public void ApplyStatusEffectWithVFX(StatusEffectType effectType, float duration = 0f)
+        {
+            if (EffectManager.Instance != null)
+            {
+                EffectManager.Instance.ApplyStatusEffect(this, effectType, duration);
+            }
+        }
+        
+        /// <summary>
+        /// Utility: Remove a status effect with VFX through EffectManager
+        /// For external systems that want both gameplay AND visual effects
+        /// </summary>
+        public void RemoveStatusEffectWithVFX(StatusEffectType effectType)
+        {
+            if (EffectManager.Instance != null)
+            {
+                EffectManager.Instance.RemoveStatusEffect(this, effectType);
+            }
+        }
+        
         #endregion
     }
 }

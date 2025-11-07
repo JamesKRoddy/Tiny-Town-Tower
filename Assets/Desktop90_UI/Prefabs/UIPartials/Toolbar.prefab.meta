@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 686b1ba7473f1da4abb1bd3b847c3982
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 159547
+  packageName: 90's Desktop OS UI
+  packageVersion: 1.0
+  assetPath: Assets/Desktop90_UI/Prefabs/UIPartials/Toolbar.prefab
+  uploadId: 345207

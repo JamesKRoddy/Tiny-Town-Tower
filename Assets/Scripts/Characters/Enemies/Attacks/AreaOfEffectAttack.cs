@@ -78,7 +78,7 @@ namespace Enemies.Attacks
                 attackElement, 
                 aoeDuration, 
                 damageInterval, 
-                attackEffect
+                attackEffect?.effectDefinition
             );
             
             Debug.Log($"[{enemy.gameObject.name}] Area of effect attack executed | Position: {aoePosition} | Radius: {aoeRadius} | Duration: {aoeDuration}");

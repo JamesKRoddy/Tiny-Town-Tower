@@ -50,6 +50,9 @@ namespace Managers
         public event Action OnCampWaveEnded;
         public event Action OnWaveLoopComplete;
         public event Action OnWaveCycleComplete;
+        
+        // Camp attack state change events - NPCs listen to this to decide their behavior
+        public event Action<CampAttackState> OnCampAttackStateChanged;
 
         #endregion
 
@@ -62,12 +65,14 @@ namespace Managers
 
         // Camp wave management
         private List<HumanCharacterController> campNPCs = new List<HumanCharacterController>();
+        private List<HumanCharacterController> deadNPCs = new List<HumanCharacterController>(); // Dead NPCs awaiting cleanup
         private float lastWaveEndCheck = 0f;
         private float waveStartTime = 0f;
         private float currentWaveDuration = 60f;
         private int currentWaveNumber = 0;
         private int wavesCompletedInLoop = 0;
         private Coroutine waveLoopCoroutine;
+        private CampAttackState campAttackState = CampAttackState.PEACEFUL;
 
         // Cached target lists for efficient checking
         private List<IDamageable> cachedTargets = new List<IDamageable>();
@@ -111,7 +116,14 @@ namespace Managers
 
         // Wave state
         public bool IsWaveActive => GetEnemySetupState() != EnemySetupState.ALL_WAVES_CLEARED;
+        public CampAttackState CampAttackState => campAttackState;
+        public bool IsCampUnderAttack => campAttackState == CampAttackState.UNDER_ATTACK;
         public int GetCurrentWaveNumber() => currentWaveNumber;
+        
+        // NPC tracking
+        public int GetTotalLivingNPCs() => campNPCs.Count;
+        public int GetTotalDeadNPCs() => deadNPCs.Count;
+        public List<HumanCharacterController> GetLivingNPCs() => new List<HumanCharacterController>(campNPCs);
         
         public int GetCurrentMaxWaves()
         {
@@ -141,8 +153,50 @@ namespace Managers
         {
             base.Start();
             
-            FindCampNPCs();
+            // NPCs register themselves when they spawn/load - no need to search here
+            // FindCampNPCs() removed - it was running before NPCs loaded from save
             PopulateTargetCache();
+            
+            // Subscribe to time events to end attacks at morning
+            if (GameManager.Instance?.TimeManager != null)
+            {
+                TimeManager.OnDayStarted += OnDayStarted;
+            }
+
+            // Subscribe to scene loaded event to detect when CampScene loads
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+        {
+            // Only initialize game start system when CampScene is loaded
+            if (scene.name == "CampScene")
+            {
+                StartCoroutine(InitializeGameStartSystem());
+            }
+        }
+
+        private System.Collections.IEnumerator InitializeGameStartSystem()
+        {
+            // Wait for save system to finish loading
+            yield return new WaitForSeconds(0.5f);
+
+            // Initialize the game start manager
+            if (GameStartManager.Instance != null)
+            {
+                GameStartManager.Instance.InitializeGame();
+            }
+        }
+        
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            
+            // Unsubscribe from time events
+            TimeManager.OnDayStarted -= OnDayStarted;
+            
+            // Unsubscribe from scene loaded event
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
         private void Update()
@@ -445,6 +499,10 @@ namespace Managers
                 waveLoopCoroutine = null;
             }
 
+            // Set camp under attack - NPCs will respond via OnCampAttackStateChanged event
+            SetCampAttackState(CampAttackState.UNDER_ATTACK);
+            Debug.Log("[CampManager] Camp is now UNDER_ATTACK - NPCs will respond based on their current state");
+
             waveLoopCoroutine = StartCoroutine(SingleWaveCycle());
         }
 
@@ -498,6 +556,9 @@ namespace Managers
             
             OnWaveLoopComplete?.Invoke();
             
+            // All waves in the cycle complete - camp is no longer under attack
+            SetCampAttackState(CampAttackState.PEACEFUL);
+            
             StartCoroutine(WaveCompletionSequence());
             waveLoopCoroutine = null;
         }
@@ -545,6 +606,9 @@ namespace Managers
                 waveLoopCoroutine = null;
             }
             
+            // Attack is over - no targets left
+            SetCampAttackState(CampAttackState.PEACEFUL);
+            
             SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
             StartCoroutine(WaveCompletionSequence());
         }
@@ -557,6 +621,16 @@ namespace Managers
             SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
             PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_CAMERA_MOVEMENT);
         }
+        
+        /// <summary>
+        /// Manually trigger the morning wave end sequence (for debugging/testing)
+        /// This simulates what happens when morning starts: ends waves, kills zombies, returns NPCs to work
+        /// </summary>
+        public void TriggerMorningWaveEnd()
+        {
+            Debug.Log("[CampManager] Manually triggering morning wave end sequence");
+            OnDayStarted();
+        }
 
         #endregion
 
@@ -564,13 +638,17 @@ namespace Managers
 
         protected override void EnemySetupStateChanged(EnemySetupState newState)
         {
+            Debug.Log($"[CampManager] EnemySetupStateChanged: {newState}");
+            
             switch (newState)
             {
                 case EnemySetupState.WAVE_START:
+                    Debug.Log("[CampManager] WAVE_START - resetting wave count");
                     EnemySpawnManager.Instance.ResetWaveCount();
                     StartCoroutine(TransitionToNextState(EnemySetupState.PRE_ENEMY_SPAWNING, 0.5f));
                     break;
                 case EnemySetupState.PRE_ENEMY_SPAWNING:
+                    Debug.Log("[CampManager] PRE_ENEMY_SPAWNING - calling SetupCampForWave");
                     SetupCampForWave();
                     StartCoroutine(TransitionToNextState(EnemySetupState.ENEMY_SPAWN_START, 1.0f));
                     break;
@@ -635,10 +713,19 @@ namespace Managers
 
         /// <summary>
         /// Finds all NPCs in the camp for wave management
+        /// Only used as a fallback - NPCs should register themselves via AddNPC()
         /// </summary>
         private void FindCampNPCs()
         {
-            campNPCs.Clear();
+            // Don't clear if NPCs have already registered themselves (e.g., from save load)
+            // Only clear and search if the list is empty
+            if (campNPCs.Count > 0)
+            {
+                Debug.Log($"[CampManager] FindCampNPCs skipped - {campNPCs.Count} NPCs already registered");
+                return;
+            }
+            
+            Debug.Log("[CampManager] FindCampNPCs searching for NPCs in scene");
             HumanCharacterController[] npcs = FindObjectsByType<HumanCharacterController>(FindObjectsSortMode.None);
             
             foreach (var npc in npcs)
@@ -649,6 +736,8 @@ namespace Managers
                     RegisterTarget(npc);
                 }
             }
+            
+            Debug.Log($"[CampManager] FindCampNPCs found {campNPCs.Count} NPCs");
         }
 
         /// <summary>
@@ -660,26 +749,83 @@ namespace Managers
             {
                 campNPCs.Add(npc);
                 RegisterTarget(npc);
+                Debug.Log($"[CampManager] Added NPC {npc.name} to wave manager. Total NPCs: {campNPCs.Count}");
             }
         }
 
-        public void RemoveNPC(HumanCharacterController npc)
+        /// <summary>
+        /// Remove an NPC from the camp and optionally track as dead for later cleanup
+        /// </summary>
+        /// <param name="npc">The NPC to remove</param>
+        /// <param name="isDead">Whether this NPC is dead and should be tracked for cleanup</param>
+        public void RemoveNPC(HumanCharacterController npc, bool isDead = false)
         {
             if (campNPCs.Contains(npc))
             {
                 campNPCs.Remove(npc);
+                
+                // Add to dead NPCs list if marked as dead
+                if (isDead && !deadNPCs.Contains(npc))
+                {
+                    deadNPCs.Add(npc);
+                    Debug.Log($"[CampManager] Moved {npc.name} to dead NPCs list. Living: {campNPCs.Count}, Dead: {deadNPCs.Count}");
+                }
+                else
+                {
+                    Debug.Log($"[CampManager] Removed NPC {npc.name} from camp. Total living NPCs: {campNPCs.Count}");
+                }
+                
                 UnregisterTarget(npc);
+            }
+        }
+        
+        /// <summary>
+        /// Clean up all dead NPC GameObjects
+        /// </summary>
+        public void CleanupDeadNPCs()
+        {
+            int cleanedCount = 0;
+            foreach (var deadNPC in deadNPCs)
+            {
+                if (deadNPC != null)
+                {
+                    Debug.Log($"[CampManager] Destroying dead NPC GameObject: {deadNPC.name}");
+                    Destroy(deadNPC.gameObject);
+                    cleanedCount++;
+                }
+            }
+            
+            deadNPCs.Clear();
+            
+            if (cleanedCount > 0)
+            {
+                Debug.Log($"[CampManager] Cleaned up {cleanedCount} dead NPC GameObject(s)");
+            }
+            else
+            {
+                Debug.Log("[CampManager] No dead NPCs to clean up");
             }
         }
 
         private void SetupCampForWave()
         {
+            Debug.Log("[CampManager] SetupCampForWave called");
+            
+            // Unpossess any currently possessed NPC before wave starts
             if (PlayerController.Instance._possessedNPC != null)
             {
+                Debug.Log($"[CampManager] Unpossessing {PlayerController.Instance._possessedNPC.GetTransform().name} before wave starts");
                 PlayerController.Instance.PossessNPC(null);
             }
+            else
+            {
+                Debug.Log("[CampManager] No possessed NPC to unpossess");
+            }
             
-            MakeNPCsFlee();
+            // Set camp under attack state - NPCs will respond via OnCampAttackStateChanged event
+            // Each NPC decides what to do based on their current state (sleeping NPCs stay asleep, others flee)
+            SetCampAttackState(CampAttackState.UNDER_ATTACK);
+            Debug.Log("[CampManager] SetupCampForWave complete - NPCs notified via event");
         }
 
         private void StartCampEnemyWave()
@@ -697,45 +843,201 @@ namespace Managers
 
         private void EndCampWave()
         {
-            ReturnNPCsToNormal();
+            // NPCs now respond to OnCampAttackStateChanged event instead of direct control
+            // ReturnNPCsToNormal(); // DEPRECATED
             OnCampWaveEnded?.Invoke();
             PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.CAMP_CAMERA_MOVEMENT);
         }
 
+        /// <summary>
+        /// DEPRECATED - NPCs now decide their own behavior via OnCampAttackStateChanged event
+        /// Keeping this method commented for reference
+        /// </summary>
+        /*
         private void MakeNPCsFlee()
         {
+            Debug.Log($"[CampManager] MakeNPCsFlee called - NPCs count: {campNPCs.Count}");
+            
             foreach (var npc in campNPCs)
             {
                 if (npc is SettlerNPC settler)
                 {
+                    Debug.Log($"[CampManager] Telling {settler.name} to FLEE");
                     settler.ChangeTask(TaskType.FLEE);
+                }
+                else
+                {
+                    Debug.Log($"[CampManager] NPC {npc?.name} is not a SettlerNPC");
                 }
             }
         }
+        */
 
+        /// <summary>
+        /// DEPRECATED - NPCs now decide their own behavior via OnCampAttackStateChanged event
+        /// Keeping this method commented for reference
+        /// </summary>
+        /*
         private void ReturnNPCsToNormal()
         {
-            Debug.Log("Returning NPCs to normal");
+            // Only return NPCs to normal if camp is no longer under attack
+            if (campAttackState == CampAttackState.UNDER_ATTACK)
+            {
+                Debug.Log("[CampManager] Not returning NPCs to normal - camp is still UNDER_ATTACK (more waves coming)");
+                return;
+            }
+            
+            Debug.Log($"[CampManager] Returning {campNPCs.Count} NPCs to normal - camp is PEACEFUL");
+            
+            int npcsReturnedToWork = 0;
+            int npcsSetToWander = 0;
+            int npcsSkipped = 0;
+            int npcsLeftSleeping = 0;
+            
             foreach (var npc in campNPCs)
             {
+                if (npc == null)
+                {
+                    npcsSkipped++;
+                    continue;
+                }
+                
                 if (npc is SettlerNPC settler)
                 {
+                    // Skip if this is the possessed NPC
+                    if (PlayerController.Instance?._possessedNPC == settler)
+                    {
+                        Debug.Log($"[CampManager] Skipping {settler.name} - is possessed NPC");
+                        npcsSkipped++;
+                        continue;
+                    }
+                    
+                    // IMPORTANT: Don't wake up sleeping NPCs - only AlarmBuilding should do that
+                    if (settler.GetCurrentTaskType() == TaskType.SLEEP)
+                    {
+                        Debug.Log($"[CampManager] Skipping {settler.name} - is sleeping (only AlarmBuilding wakes NPCs)");
+                        npcsLeftSleeping++;
+                        continue;
+                    }
+                    
                     // Check for available work before going to wander
                     if (WorkManager != null)
                     {
                         bool taskAssigned = WorkManager.AssignNextAvailableTask(settler);
-                        if (!taskAssigned)
+                        if (taskAssigned)
+                        {
+                            Debug.Log($"[CampManager] Returned {settler.name} to work");
+                            npcsReturnedToWork++;
+                        }
+                        else
                         {
                             // No tasks available, go to wander state
                             settler.ChangeTask(TaskType.WANDER);
+                            Debug.Log($"[CampManager] No work available for {settler.name}, set to WANDER");
+                            npcsSetToWander++;
                         }
                     }
                     else
                     {
                         settler.ChangeTask(TaskType.WANDER);
+                        Debug.LogWarning($"[CampManager] WorkManager not available, set {settler.name} to WANDER");
+                        npcsSetToWander++;
                     }
                 }
+                else
+                {
+                    Debug.LogWarning($"[CampManager] NPC {npc?.name} is not a SettlerNPC, skipped");
+                    npcsSkipped++;
+                }
             }
+            
+            Debug.Log($"[CampManager] NPC return complete - Returned to work: {npcsReturnedToWork}, Set to wander: {npcsSetToWander}, Left sleeping: {npcsLeftSleeping}, Skipped: {npcsSkipped}");
+        }
+        */
+        
+        /// <summary>
+        /// Set the camp attack state and notify NPCs via event
+        /// </summary>
+        private void SetCampAttackState(CampAttackState newState)
+        {
+            if (campAttackState == newState) return;
+            
+            CampAttackState previousState = campAttackState;
+            campAttackState = newState;
+            Debug.Log($"[CampManager] CampAttackState changed from {previousState} to: {newState}");
+            
+            // Fire event to notify all listeners (NPCs will decide their behavior based on their current state)
+            OnCampAttackStateChanged?.Invoke(newState);
+            Debug.Log($"[CampManager] OnCampAttackStateChanged event fired with state: {newState}");
+        }
+        
+        /// <summary>
+        /// Called when day starts - ends any active attack
+        /// </summary>
+        private void OnDayStarted()
+        {
+            Debug.Log("[CampManager] ═══════════════════════════════════════════════════════════");
+            Debug.Log("[CampManager] MORNING HAS STARTED - Ending zombie attack and returning NPCs to work");
+            Debug.Log("[CampManager] ═══════════════════════════════════════════════════════════");
+            
+            // Check if there's an active attack
+            bool hadActiveAttack = campAttackState == CampAttackState.UNDER_ATTACK;
+            bool hadActiveWaves = IsWaveActive;
+            
+            if (hadActiveAttack || hadActiveWaves)
+            {
+                Debug.Log($"[CampManager] Active attack detected - Attack State: {campAttackState}, Waves Active: {hadActiveWaves}");
+                
+                // Stop wave loop if active
+                if (waveLoopCoroutine != null)
+                {
+                    Debug.Log("[CampManager] Stopping active wave loop coroutine");
+                    StopCoroutine(waveLoopCoroutine);
+                    waveLoopCoroutine = null;
+                }
+                
+                // Reset wave counters
+                currentWaveNumber = 0;
+                wavesCompletedInLoop = 0;
+                Debug.Log("[CampManager] Wave counters reset");
+                
+                // Stop enemy spawning
+                if (EnemySpawnManager.Instance != null)
+                {
+                    EnemySpawnManager.Instance.StopSpawning();
+                    Debug.Log("[CampManager] Stopped enemy spawn manager");
+                }
+                
+                // Clear any remaining enemies
+                EnemyBase[] remainingEnemies = FindObjectsByType<EnemyBase>(FindObjectsSortMode.None);
+                Debug.Log($"[CampManager] Found {remainingEnemies.Length} remaining enemies to clear");
+                
+                if (remainingEnemies.Length > 0)
+                {
+                    ClearAllEnemiesWithFade();
+                    Debug.Log("[CampManager] Clearing all remaining enemies with fade effect");
+                }
+                
+                // Reset wave state
+                SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+                Debug.Log("[CampManager] Enemy setup state set to ALL_WAVES_CLEARED");
+                
+                // Morning has arrived - force end the attack and return NPCs to work
+                SetCampAttackState(CampAttackState.PEACEFUL);
+                Debug.Log("[CampManager] Camp attack state set to PEACEFUL - NPCs will be returned to work");
+                
+                // Update player controls
+                PlayerInput.Instance?.UpdatePlayerControls(PlayerControlType.CAMP_CAMERA_MOVEMENT);
+                Debug.Log("[CampManager] Player controls updated to CAMP_CAMERA_MOVEMENT");
+            }
+            else
+            {
+                Debug.Log("[CampManager] No active attack - morning routine skipped");
+            }
+            
+            Debug.Log("[CampManager] ═══════════════════════════════════════════════════════════");
+            Debug.Log("[CampManager] Morning transition complete");
+            Debug.Log("[CampManager] ═══════════════════════════════════════════════════════════");
         }
 
         #endregion
@@ -1007,7 +1309,7 @@ namespace Managers
                     originalMaterials[enemy] = renderer.material;
                     
                     Material fadeMaterial = new Material(renderer.material);
-                    fadeMaterial.SetFloat("_Mode", 3);
+                    fadeMaterial.SetFloat(GameConstants.ShaderProperties.Mode, 3);
                     fadeMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
                     fadeMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
                     fadeMaterial.SetInt("_ZWrite", 0);

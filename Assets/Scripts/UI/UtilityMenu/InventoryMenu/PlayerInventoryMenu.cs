@@ -27,12 +27,20 @@ public class PlayerInventoryMenu : PreviewListMenuBase<ItemCategory, ResourceScr
 
     public override void SetupItemButton(ResourceScriptableObj item, GameObject button)
     {
-        var buttonComponent = button.GetComponent<InventoryPreviewBtn>();
+        var buttonComponent = button.GetComponent<PreviewButtonBase>();
         if (buttonComponent != null)
         {
             int quantity = PlayerInventory.Instance.GetItemCount(item);
-            buttonComponent.SetupButton(item, item.sprite, quantity.ToString());
+            // Click handler for inventory items - could open submenu if needed
+            buttonComponent.SetupButton(item, (obj) => OnInventoryItemClicked(obj as ResourceScriptableObj), item.sprite, item.objectName, quantity.ToString());
         }
+    }
+
+    private void OnInventoryItemClicked(ResourceScriptableObj item)
+    {
+        if (item == null) return;
+        // Open inventory submenu or perform action (currently empty as per original implementation)
+        Debug.Log($"[PlayerInventoryMenu] Clicked on inventory item: {item.objectName}");
     }
 
     public override string GetPreviewName(ResourceScriptableObj item)

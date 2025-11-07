@@ -14,6 +14,9 @@ public class EatState : _TaskState
     protected override void Awake()
     {
         base.Awake();
+        
+        // EatState-specific stopping distance - need to be close to canteen
+        stoppingDistance = 0.75f;
     }
 
     public override TaskType GetTaskType()
@@ -142,7 +145,7 @@ public class EatState : _TaskState
         // Start eating animation
         if (animator != null)
         {
-            animator.SetTrigger("IsEating");
+            animator.SetTrigger(GameConstants.AnimatorParams.IsEatingHash);
         }
 
         eatingCoroutine = npc.StartCoroutine(EatingCoroutine());

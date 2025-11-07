@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d88e393bf18414e4c84f2980563364ba, type: 3}
   m_Name: NPC Sleeping
   m_EditorClassIdentifier: 
-  statusType: 10
+  statusType: 6
   behavior: 3
   visualEffect: {fileID: 11400000, guid: 69e732d2dbb915449ae4ca903844c621, type: 2}
   iconSprite: {fileID: 0}

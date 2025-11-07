@@ -65,6 +65,18 @@ namespace Managers
         {
             currentWave = 0;
         }
+        
+        /// <summary>
+        /// Stop all active enemy spawning (e.g., when morning starts)
+        /// </summary>
+        public void StopSpawning()
+        {
+            Debug.Log("[EnemySpawnManager] Stopping all enemy spawning");
+            StopAllCoroutines();
+            currentWave = 0;
+            enemiesSpawned = 0;
+            totalEnemiesInWave = 0;
+        }
 
         public void StartSpawningEnemies(EnemyWaveConfig waveConfig)
         {

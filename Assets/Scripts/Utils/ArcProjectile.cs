@@ -26,6 +26,9 @@ public class ArcProjectile : MonoBehaviour
     private float jumpDuration;
     private float maxLifetime = 10f;
 
+    /// <summary>
+    /// Initialize the arc projectile with damage and effect parameters
+    /// </summary>
     public void Initialize(Vector3 targetPos, float dmg, float poiseDmg, Transform attackTransform, 
         AttackElement elem, float projectileSpeed = 10f, float projectileMaxHeight = 5f,
         EffectDefinition impactEff = null, bool createArea = false, float areaRadius = 0f, float areaDuration = 5f, bool triggerBased = false)
@@ -87,6 +90,9 @@ public class ArcProjectile : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Create impact effect and damage area at projectile hit location
+    /// </summary>
     void CreateImpact()
     {
         if (hasHit) return;
@@ -94,7 +100,7 @@ public class ArcProjectile : MonoBehaviour
 
         GameObject impactObject = null;
 
-        // Play impact effect
+        // Play impact effect at projectile position
         if (impactEffect != null)
         {
             impactObject = EffectManager.Instance.PlayEffect(transform.position, Vector3.up, Quaternion.identity, null, impactEffect, damageAreaDuration);

@@ -515,18 +515,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   characterType: 101
-  moveMaxSpeed: 10
-  rotationSpeed: 720
   attackRotationSpeed: 360
-  dashSpeed: 20
   dashDuration: 0.2
-  dashCooldown: 1
   vaultDuration: 0.4
   vaultCooldown: 0.3
   obstacleLayers: []
   capsuleCastRadius: 0.5
   vaultHeight: 1
   vaultOffset: 1
+  stepOffset: 0.3
+  slopeLimit: 45
+  skinWidth: 0.08
   maxVaultHeight: 1.2
   minVaultHeight: 0.3
   obstacleAnalysisRange: 1.5
@@ -538,15 +537,30 @@ MonoBehaviour:
   climbCheckDistance: 0.5
   enableGravity: 1
   gravity: 9.81
-  groundCheckDistance: 0.1
-  groundLayers:
-    serializedVersion: 2
-    m_Bits: 1
   terminalVelocity: 20
   maxFallDistance: 100
+  fallingMovementMultiplier: 0.5
+  groundedBufferTime: 0.15
+  baseStats:
+    maxHealth: 100
+    maxPoise: 40
+    moveMaxSpeed: 10
+    rotationSpeed: 720
+    dashSpeed: 20
+    dashCooldown: 1
+  currentStats:
+    maxHealth: 0
+    maxPoise: 0
+    moveMaxSpeed: 0
+    rotationSpeed: 0
+    dashSpeed: 0
+    dashCooldown: 0
   health: 100
-  maxHealth: 100
   damageCooldown: 0.5
+  poise: 40
+  poiseRecoveryRate: 8
+  poiseRecoveryDelay: 2
+  resistances: []
   settlerName: 
   settlerAge: 0
   settlerDescription: 
@@ -570,8 +584,6 @@ MonoBehaviour:
     handAccessoryChance: 0.2
   initializationContext: 0
   hasBeenInitialized: 0
-  additionalMutationSlots: 3
-  maxStamina: 100
   currentStamina: 100
   baseStaminaDrainInGameHours: 36
   baseStaminaRegenInGameHours: 8
@@ -1798,7 +1810,7 @@ MonoBehaviour:
   m_LayerMask:
     serializedVersion: 2
     m_Bits: 64
-  m_UseGeometry: 0
+  m_UseGeometry: 1
   m_DefaultArea: 0
   m_GenerateLinks: 0
   m_IgnoreNavMeshAgent: 1

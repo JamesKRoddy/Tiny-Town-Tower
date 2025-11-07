@@ -30,6 +30,9 @@ namespace Managers
     private float lastHealthDrainTime;
     private float lastSicknessCheckTime;
 
+    // Pause state
+    private bool isPaused = false;
+
         [Header("Dirt Pile Settings")]
         [SerializeField] private GameObject dirtPilePrefab;
         [SerializeField] private float dirtPileCleanlinessDecrease = 10f;
@@ -110,7 +113,7 @@ namespace Managers
 
             while (true)
             {
-                if (Time.time - lastDirtPileSpawnTime >= dirtPileSpawnInterval)
+                if (!isPaused && Time.time - lastDirtPileSpawnTime >= dirtPileSpawnInterval)
                 {
                     CheckAndSpawnDirtPile();
                     lastDirtPileSpawnTime = Time.time;
@@ -377,6 +380,9 @@ namespace Managers
         /// <param name="workDelta">Amount of work performed this frame</param>
         public void GenerateDirtFromWork(float workDelta)
         {
+            // Don't generate dirt when paused
+            if (isPaused) return;
+
             // Generate dirt based on work activity
             float dirtGenerated = workDelta * workDirtGenerationRate;
             accumulatedDirt += dirtGenerated;
@@ -403,6 +409,22 @@ namespace Managers
                     // Reset accumulated dirt
                     accumulatedDirt = 0f;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Set pause state for cleanliness system
+        /// </summary>
+        public void SetPaused(bool paused)
+        {
+            isPaused = paused;
+            if (paused)
+            {
+                Debug.Log("[CleanlinessManager] Paused");
+            }
+            else
+            {
+                Debug.Log("[CleanlinessManager] Resumed");
             }
         }
         
@@ -482,18 +504,21 @@ namespace Managers
             
             while (true)
             {
-                float cleanlinessPercentage = GetCleanlinessPercentage();
-                
-                // Apply health drain when very dirty
-                if (cleanlinessPercentage <= 20f)
+                if (!isPaused)
                 {
-                    ApplyHealthDrain();
-                }
-                
-                // Check for sickness when filthy
-                if (cleanlinessPercentage <= 10f)
-                {
-                    CheckForSickness();
+                    float cleanlinessPercentage = GetCleanlinessPercentage();
+                    
+                    // Apply health drain when very dirty
+                    if (cleanlinessPercentage <= 20f)
+                    {
+                        ApplyHealthDrain();
+                    }
+                    
+                    // Check for sickness when filthy
+                    if (cleanlinessPercentage <= 10f)
+                    {
+                        CheckForSickness();
+                    }
                 }
                 
                 yield return wait;
@@ -502,19 +527,23 @@ namespace Managers
         
         /// <summary>
         /// Apply health drain to all NPCs when camp is very dirty
+        /// Called every 1 second from HealthEffectsCoroutine
         /// </summary>
         private void ApplyHealthDrain()
         {
             if (NPCManager.Instance == null) return;
             
-            float healthDrain = healthDrainRate * Time.deltaTime;
+            // Damage per second (this runs every 1 second, not every frame)
+            // healthDrainRate is defined as "health lost per second" so we use it directly
+            float healthDrain = healthDrainRate * 1f;
             
             foreach (var npc in NPCManager.Instance.GetAllNPCs())
             {
                 if (npc is SettlerNPC settler && settler.Health > 0)
                 {
-                    // Environmental damage doesn't deal poise damage
-                    settler.TakeDamage(healthDrain, 0f);
+                    // Use environmental damage info - no VFX, no flee behavior
+                    var damageInfo = DamageInfo.Environmental(healthDrain, playHitVFX: false);
+                    settler.TakeDamage(damageInfo);
                     
                     // Log occasionally for feedback
                     if (Time.time - lastHealthDrainTime >= 10f)
@@ -565,6 +594,50 @@ namespace Managers
             yield return new WaitForSeconds(sicknessDuration);
             
             Debug.Log($"[CleanlinessManager] {settler.name} has recovered from illness.");
+        }
+
+        /// <summary>
+        /// Reset cleanliness to abandoned state (used for game restart)
+        /// The camp has been abandoned and is now dirty
+        /// </summary>
+        public void ResetCleanliness()
+        {
+            // Clear all active dirt piles first
+            foreach (var dirtPile in activeDirtPiles.ToArray())
+            {
+                if (dirtPile != null)
+                {
+                    // Free the grid slot
+                    if (CampManager.Instance != null)
+                    {
+                        Vector2Int dirtPileSize = new Vector2Int(1, 1);
+                        CampManager.Instance.MarkSharedGridSlotsUnoccupied(dirtPile.transform.position, dirtPileSize);
+                    }
+                    Destroy(dirtPile.gameObject);
+                }
+            }
+            activeDirtPiles.Clear();
+
+            // Set cleanliness to abandoned state (30-50% clean)
+            // Camp has been abandoned so it's gotten dirty
+            float abandonedCleanlinessPercent = Random.Range(0.3f, 0.5f);
+            currentCleanliness = maxCleanliness * abandonedCleanlinessPercent;
+            accumulatedDirt = 0f;
+            lastDirtPileSpawnTime = Time.time;
+            lastHealthDrainTime = Time.time;
+            lastSicknessCheckTime = Time.time;
+
+            // Spawn some dirt piles to represent abandonment (3-5 piles)
+            int dirtPilesToSpawn = Random.Range(3, 6);
+            for (int i = 0; i < dirtPilesToSpawn; i++)
+            {
+                SpawnDirtPile();
+            }
+
+            OnCleanlinessChanged?.Invoke(GetCleanlinessPercentage());
+            OnProductivityMultiplierChanged?.Invoke(GetProductivityMultiplier());
+
+            Debug.Log($"[CleanlinessManager] Camp abandoned - cleanliness set to {GetCleanlinessPercentage():F0}% with {activeDirtPiles.Count} dirt piles");
         }
     }
 }

@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 2d90f886ff7cde34f994c4e20cefa56d
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 159547
+  packageName: 90's Desktop OS UI
+  packageVersion: 1.0
+  assetPath: Assets/Desktop90_UI/Scripts/WindowController.cs
+  uploadId: 345207

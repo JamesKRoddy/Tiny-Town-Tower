@@ -53,11 +53,11 @@ public static class DamageUtils
         if (animator == null) return;
 
         // Set the 2D hit direction parameters for the blend tree
-        animator.SetFloat("HitDirectionX", hitDirection.x);  // Left/Right component
-        animator.SetFloat("HitDirectionY", hitDirection.y);  // Forward/Back component
+        animator.SetFloat(GameConstants.AnimatorParams.HitDirectionXHash, hitDirection.x);  // Left/Right component
+        animator.SetFloat(GameConstants.AnimatorParams.HitDirectionYHash, hitDirection.y);  // Forward/Back component
         
         // Trigger the damaged animation
-        animator.SetTrigger("Damaged");
+        animator.SetTrigger(GameConstants.AnimatorParams.DamagedHash);
     }
 
     /// <summary>
@@ -70,11 +70,11 @@ public static class DamageUtils
         if (animator == null) return;
 
         // Set the 2D hit direction parameters for the blend tree
-        animator.SetFloat("HitDirectionX", hitDirection.x);  // Left/Right component
-        animator.SetFloat("HitDirectionY", hitDirection.y);  // Forward/Back component
+        animator.SetFloat(GameConstants.AnimatorParams.HitDirectionXHash, hitDirection.x);  // Left/Right component
+        animator.SetFloat(GameConstants.AnimatorParams.HitDirectionYHash, hitDirection.y);  // Forward/Back component
         
         // Trigger the knockback animation
-        animator.SetTrigger("Knockback");
+        animator.SetTrigger(GameConstants.AnimatorParams.KnockbackHash);
     }
 
     /// <summary>
@@ -338,6 +338,16 @@ public static class DamageUtils
         // Calculate 2D hit direction
         Vector2 hitDirection = CalculateHitDirection(characterTransform, damageSource);
         
+        // CRITICAL: Actually apply the health damage!
+        float healthBefore = character.Health;
+        character.Health = Mathf.Max(0, character.Health - finalDamage);
+        float actualDamage = healthBefore - character.Health;
+        
+        Debug.Log($"[DamageUtils] ApplyElementalDamage - Health: {healthBefore:F1} -> {character.Health:F1} (damage: {actualDamage:F1})");
+        
+        // Invoke damage taken callback
+        onDamageTaken?.Invoke(actualDamage, character.Health);
+        
         // Set damage type parameter for animations
         TriggerElementalDamagedAnimation(animator, hitDirection, damageType);
         
@@ -346,6 +356,12 @@ public static class DamageUtils
         {
             var (hitPoint, hitNormal) = CalculateHitPointAndNormal(characterTransform, damageSource);
             EffectManager.Instance.PlayElementalHitEffect(hitPoint, hitNormal, character, damageType);
+        }
+        
+        // Check for death
+        if (character.Health <= 0)
+        {
+            onDeath?.Invoke();
         }
         
         return (hitDirection, finalDamage);
@@ -392,6 +408,16 @@ public static class DamageUtils
         // Calculate 2D hit direction
         Vector2 hitDirection = CalculateHitDirection(characterTransform, damageSource);
         
+        // CRITICAL: Actually apply the health damage!
+        float healthBefore = character.Health;
+        character.Health = Mathf.Max(0, character.Health - finalDamage);
+        float actualDamage = healthBefore - character.Health;
+        
+        Debug.Log($"[DamageUtils] ApplyElementalDamageWithPoise - Health: {healthBefore:F1} -> {character.Health:F1} (damage: {actualDamage:F1})");
+        
+        // Invoke damage taken callback
+        onDamageTaken?.Invoke(actualDamage, character.Health);
+        
         // Apply poise damage and check if poise is broken
         bool poiseBroken = ApplyPoiseDamage(character, poiseDamage, onPoiseBroken);
         
@@ -412,6 +438,12 @@ public static class DamageUtils
             EffectManager.Instance.PlayElementalHitEffect(hitPoint, hitNormal, character, damageType);
         }
         
+        // Check for death
+        if (character.Health <= 0)
+        {
+            onDeath?.Invoke();
+        }
+        
         return (hitDirection, finalDamage, poiseBroken);
     }
 
@@ -426,14 +458,14 @@ public static class DamageUtils
         if (animator == null) return;
 
         // Set the 2D hit direction parameters for the blend tree
-        animator.SetFloat("HitDirectionX", hitDirection.x);  // Left/Right component
-        animator.SetFloat("HitDirectionY", hitDirection.y);  // Forward/Back component
+        animator.SetFloat(GameConstants.AnimatorParams.HitDirectionXHash, hitDirection.x);  // Left/Right component
+        animator.SetFloat(GameConstants.AnimatorParams.HitDirectionYHash, hitDirection.y);  // Forward/Back component
         
         // Set the damage type parameter for elemental animations
-        animator.SetInteger("DamageType", (int)damageType);
+        animator.SetInteger(GameConstants.AnimatorParams.DamageTypeHash, (int)damageType);
         
         // Trigger the damaged animation
-        animator.SetTrigger("Damaged");
+        animator.SetTrigger(GameConstants.AnimatorParams.DamagedHash);
     }
 
     /// <summary>
@@ -447,14 +479,14 @@ public static class DamageUtils
         if (animator == null) return;
 
         // Set the 2D hit direction parameters for the blend tree
-        animator.SetFloat("HitDirectionX", hitDirection.x);  // Left/Right component
-        animator.SetFloat("HitDirectionY", hitDirection.y);  // Forward/Back component
+        animator.SetFloat(GameConstants.AnimatorParams.HitDirectionXHash, hitDirection.x);  // Left/Right component
+        animator.SetFloat(GameConstants.AnimatorParams.HitDirectionYHash, hitDirection.y);  // Forward/Back component
         
         // Set the damage type parameter for elemental animations
-        animator.SetInteger("DamageType", (int)damageType);
+        animator.SetInteger(GameConstants.AnimatorParams.DamageTypeHash, (int)damageType);
         
         // Trigger the knockback animation
-        animator.SetTrigger("Knockback");
+        animator.SetTrigger(GameConstants.AnimatorParams.KnockbackHash);
     }
 
     // ===== AREA DAMAGE UTILITIES =====
@@ -476,40 +508,54 @@ public static class DamageUtils
     {
         int targetsDamaged = 0;
         
+        Debug.Log($"[DamageUtils] DealDamageInRadius called - Center: {center}, Radius: {radius}, Damage: {damageAmount}, Poise: {poiseDamage}");
+        
         // Find all colliders in the radius
         Collider[] hitColliders = Physics.OverlapSphere(center, radius, layerMask);
+        Debug.Log($"[DamageUtils] Found {hitColliders.Length} colliders in radius");
         
         foreach (var hitCollider in hitColliders)
         {
             IDamageable damageable = hitCollider.GetComponent<IDamageable>();
-            if (damageable != null && damageable.GetAllegiance() == Allegiance.FRIENDLY)
+            
+            if (damageable == null)
             {
-                // Check if the target is still active (this will catch NPCs in bunkers)
-                if (!hitCollider.gameObject.activeInHierarchy)
-                {
-                    continue; // Skip inactive targets
-                }
-                
-                // Exclude self if requested
-                if (excludeSelf && hitCollider.transform == attacker)
-                {
-                    continue;
-                }
-                
-                // Apply damage with elemental type
-                if (element == AttackElement.NONE || element == AttackElement.PHYSICAL)
-                {
-                    damageable.TakeDamage(damageAmount, poiseDamage, attacker);
-                }
-                else
-                {
-                    damageable.TakeDamage(damageAmount, poiseDamage, element, attacker);
-                }
-                
-                targetsDamaged++;
+                Debug.Log($"[DamageUtils] Skipping {hitCollider.name} - no IDamageable component");
+                continue;
             }
+            
+            Allegiance allegiance = damageable.GetAllegiance();
+            Debug.Log($"[DamageUtils] Found damageable: {hitCollider.name}, Allegiance: {allegiance}");
+            
+            if (allegiance != Allegiance.FRIENDLY)
+            {
+                Debug.Log($"[DamageUtils] Skipping {hitCollider.name} - not FRIENDLY allegiance");
+                continue;
+            }
+            
+            // Check if the target is still active (this will catch NPCs in bunkers)
+            if (!hitCollider.gameObject.activeInHierarchy)
+            {
+                Debug.Log($"[DamageUtils] Skipping {hitCollider.name} - not active in hierarchy");
+                continue;
+            }
+            
+            // Exclude self if requested
+            if (excludeSelf && hitCollider.transform == attacker)
+            {
+                Debug.Log($"[DamageUtils] Skipping {hitCollider.name} - is attacker (excludeSelf)");
+                continue;
+            }
+            
+            // Apply damage with elemental type (using DamageInfo)
+            Debug.Log($"[DamageUtils] Calling TakeDamage on {hitCollider.name} - Damage: {damageAmount}, Poise: {poiseDamage}, Element: {element}");
+            var damageInfo = DamageInfo.Create(damageAmount, poiseDamage, element, attacker, playHitVFX: true, isEnvironmental: false);
+            damageable.TakeDamage(damageInfo);
+            
+            targetsDamaged++;
         }
         
+        Debug.Log($"[DamageUtils] DealDamageInRadius complete - Targets damaged: {targetsDamaged}");
         return targetsDamaged;
     }
     
@@ -526,15 +572,9 @@ public static class DamageUtils
     {
         if (target == null) return;
         
-        // Apply damage with elemental type
-        if (element == AttackElement.NONE || element == AttackElement.PHYSICAL)
-        {
-            target.TakeDamage(damageAmount, poiseDamage, attacker);
-        }
-        else
-        {
-            target.TakeDamage(damageAmount, poiseDamage, element, attacker);
-        }
+        // Apply damage with elemental type (using DamageInfo)
+        var damageInfo = DamageInfo.Create(damageAmount, poiseDamage, element, attacker, playHitVFX: true, isEnvironmental: false);
+        target.TakeDamage(damageInfo);
     }
 
     /// <summary>
@@ -548,7 +588,7 @@ public static class DamageUtils
     /// <param name="element">Elemental type of the damage</param>
     /// <param name="duration">How long the area lasts</param>
     /// <param name="damageInterval">How often damage is dealt (seconds)</param>
-    /// <param name="visualEffect">Visual effect for the damage area</param>
+    /// <param name="visualEffect">Visual effect for the damage area (will be parented to damage area)</param>
     /// <param name="allegiance">Allegiance of the damage area (auto-detected from attacker if not specified)</param>
     /// <returns>The created damage area GameObject</returns>
     public static GameObject CreateDamageArea(Vector3 position, float radius, float damage, float poiseDamage,
@@ -576,7 +616,7 @@ public static class DamageUtils
         TemporaryDamageArea damageArea = damageAreaObj.AddComponent<TemporaryDamageArea>();
         damageArea.Setup(damage, poiseDamage, duration, element, 0, attacker, damageInterval, areaAllegiance);
         
-        // Add visual effect if provided
+        // Add visual effect if provided (parented to damage area)
         if (visualEffect != null)
         {
             GameObject visualObj = EffectManager.Instance.PlayEffect(position, Vector3.up, Quaternion.identity, 
@@ -633,6 +673,35 @@ public static class DamageUtils
     {
         float distance = Vector3.Distance(attackerPos, targetPos);
         return distance >= minRange && distance <= maxRange;
+    }
+    
+    /// <summary>
+    /// Check if a target is within attack range, accounting for NavMesh obstacles
+    /// This is crucial for attacking buildings and other structures with NavMesh obstacles,
+    /// as enemies cannot path directly to their center point.
+    /// </summary>
+    /// <param name="attackerPos">Position of the attacker</param>
+    /// <param name="target">Target transform to check</param>
+    /// <param name="minRange">Minimum attack range (0 = no minimum)</param>
+    /// <param name="maxRange">Maximum attack range</param>
+    /// <param name="obstacleBoundsOffset">Additional offset for obstacle bounds (default: 1f)</param>
+    /// <returns>True if target is within effective attack range</returns>
+    public static bool IsInRangeWithObstacles(Vector3 attackerPos, Transform target, float minRange, float maxRange, float obstacleBoundsOffset = 1f)
+    {
+        if (target == null) return false;
+        
+        float distance = Vector3.Distance(attackerPos, target.position);
+        
+        // For minimum range, use simple distance (enemies need to stay away regardless of obstacles)
+        if (minRange > 0 && distance < minRange)
+        {
+            return false;
+        }
+        
+        // For maximum range, calculate effective reach distance considering obstacles
+        float effectiveMaxRange = NavigationUtils.CalculateEffectiveReachDistance(attackerPos, target, maxRange, obstacleBoundsOffset);
+        
+        return distance <= effectiveMaxRange;
     }
     
     /// <summary>
@@ -1013,15 +1082,9 @@ public static class DamageUtils
             totalDamage += dealer.ElementalDamageBonus;
         }
         
-        // Apply damage with elemental type
-        if (dealer.ElementType == AttackElement.NONE || dealer.ElementType == AttackElement.PHYSICAL)
-        {
-            target.TakeDamage(totalDamage, poiseAmount, dealer.DamageSource);
-        }
-        else
-        {
-            target.TakeDamage(totalDamage, poiseAmount, dealer.ElementType, dealer.DamageSource);
-        }
+        // Apply damage using DamageInfo from dealer
+        var damageInfo = new DamageInfo(dealer, amount: totalDamage, poiseDamage: poiseAmount);
+        target.TakeDamage(damageInfo);
         
         // Apply additional effects based on dealer type
         ApplyAdditionalEffects(dealer, target, totalDamage);

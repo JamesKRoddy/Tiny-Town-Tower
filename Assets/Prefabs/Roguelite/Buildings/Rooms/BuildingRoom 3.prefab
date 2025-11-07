@@ -285,13 +285,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2769219577561543912}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.70710677, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -9.360001, y: 1.04, z: 0}
-  m_LocalScale: {x: 2.62248, y: 2, z: 1}
+  m_LocalRotation: {x: -0, y: -0.0000014603138, z: -0, w: 1}
+  m_LocalPosition: {x: -9.09, y: 1.04, z: 0}
+  m_LocalScale: {x: 1, y: 2, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 390971021541427741}
-  m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &6362755756021287155
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -684,8 +684,8 @@ MonoBehaviour:
   doors: []
   chests: []
   roomBounds:
-    m_Center: {x: 0.000008583069, y: 2.25, z: 30.250006}
-    m_Extent: {x: 11.50001, y: 3.5000005, z: 11.25001}
+    m_Center: {x: 0.000012397766, y: 1.0411161, z: 30.07622}
+    m_Extent: {x: 11.125007, y: 2.2911162, z: 11.076223}
   autoCalculateBounds: 1
   boundsPadding: 2
   showRoomBounds: 1

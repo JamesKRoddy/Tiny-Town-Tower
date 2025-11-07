@@ -168,27 +168,30 @@ public class SceneTransitionManager : MonoBehaviour
         //3.5 Load the game
         SaveLoadManager.Instance.LoadGame(NextGameMode);
 
-        //4. Update Player NPC position
-        PlayerController.Instance.UpdateNPCPosition(GameManager.Instance.GetPlayerSpawnPoint());
+        //3.75 Get spawn point BEFORE NextScene is cleared to NONE
+        Vector3 spawnPoint = GameManager.Instance.GetPlayerSpawnPoint();
 
-        //5. Invoke actions passed in from the previous scene
+        //4. Invoke actions passed in from the previous scene
         OnActionsFromPreviousScene?.Invoke();
 
-        //6. Update scene tracking and game mode BEFORE fade out
+        //5. Update scene tracking and game mode
         CurrentScene = NextScene;
         NextScene = SceneNames.NONE;
         GameManager.Instance.CurrentGameMode = NextGameMode;
 
-        //7. Short pause for camera transition
+        //5.5 NOW update NPC position AFTER all OnGameModeChanged events have fired
+        PlayerController.Instance.UpdateNPCPosition(spawnPoint);
+
+        //6. Short pause for camera transition
         yield return new WaitForSeconds(1.0f);
 
-        //8. Fade out (now uses correct game mode for control type)
+        //7. Fade out (now uses correct game mode for control type)
         if (PlayerUIManager.Instance.transitionMenu != null)
         {
             yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
         }
 
-        //9. Re-enable player input
+        //8. Re-enable player input
         PlayerInput.Instance.DisablePlayerInput(false);
     }
 

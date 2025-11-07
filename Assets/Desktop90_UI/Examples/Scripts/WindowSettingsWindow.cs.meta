@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: e7ae59cb9417140d8804972796331146
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 159547
+  packageName: 90's Desktop OS UI
+  packageVersion: 1.0
+  assetPath: Assets/Desktop90_UI/Examples/Scripts/WindowSettingsWindow.cs
+  uploadId: 345207

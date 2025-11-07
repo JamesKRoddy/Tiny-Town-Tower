@@ -31,10 +31,19 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         }
     }
 
-    [Header ("Chest handling")]
+    [Header ("Interaction Detection")]
     private IInteractive<object> currentInteractive; // The interaction the player is currently looking at
-    public float interactionRange = 3f; // Distance to detect weapons    
-    [SerializeField] private Vector3 boxCastSize = new Vector3(0.5f, 0.5f, 0.5f); // Size of the box cast for interaction detection
+    
+    /// <summary>
+    /// Public accessor for the currently detected interactive object.
+    /// Used by other systems (like NarrativeManager) to reuse detection instead of duplicating raycast logic.
+    /// </summary>
+    public IInteractive<object> CurrentInteractive => currentInteractive;
+    
+    public float interactionRange = 3.5f; // Distance to detect interactive objects
+    [SerializeField] private Vector3 boxCastSize = new Vector3(1.2f, 1.5f, 0.8f); // Size of the box cast for interaction detection (width, height, depth)
+    [SerializeField] private float sphereCastRadius = 0.8f; // Fallback sphere cast radius for more reliable detection
+    [SerializeField] private bool showDebugVisualization = false; // Show debug gizmos for interaction detection in editor
 
     [Header("Players currently equipped items")] 
     public AttackElement dashElement = AttackElement.NONE;
@@ -163,6 +172,11 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         }
     }
 
+    /// <summary>
+    /// Detects interactive objects in front of the player using BoxCast with SphereCast fallback.
+    /// Checks all colliders, sorts by distance, and filters for IInteractiveBase components - works with interactives on any layer.
+    /// Excludes the player's possessed NPC, checks if NarrativeInteractive components are enabled, and skips sleeping NPCs.
+    /// </summary>
     private void DetectInteraction()
     {
         // If the game is in rogue lite mode and the wave is active, don't allow the player to interact
@@ -172,24 +186,73 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             return;
         }
 
-        RaycastHit hit;
-        Vector3 startPos = PlayerController.Instance._possessedNPC.GetTransform().position + Vector3.up;
-        Vector3 direction = PlayerController.Instance._possessedNPC.GetTransform().forward;
+        Transform playerTransform = PlayerController.Instance._possessedNPC.GetTransform();
+        Vector3 direction = playerTransform.forward;
+        GameObject possessedNPCObject = playerTransform.gameObject;
         
-        if (Physics.BoxCast(startPos, boxCastSize * 0.5f, direction, out hit, PlayerController.Instance._possessedNPC.GetTransform().rotation, interactionRange))
+        // Primary detection: BoxCast at chest/door height (better vertical coverage)
+        Vector3 boxStartPos = playerTransform.position + Vector3.up * 1.2f;
+        RaycastHit[] hits;
+        
+        // Try BoxCast first - get all hits, sort by distance, and find the closest valid interactive
+        hits = Physics.BoxCastAll(boxStartPos, boxCastSize * 0.5f, direction, playerTransform.rotation, interactionRange);
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance)); // Sort by distance, closest first
+        
+        foreach (RaycastHit hit in hits)
         {
+            // Skip the player's own possessed NPC
+            if (hit.collider.gameObject == possessedNPCObject)
+                continue;
+            
             IInteractiveBase interactive = hit.collider.GetComponent<IInteractiveBase>();
             if (interactive != null && interactive.CanInteract())
             {
+                // If it's a NarrativeInteractive, check if it's enabled
+                if (interactive is NarrativeInteractive narrative && !narrative.enabled)
+                    continue;
+                
+                // If it's a SettlerNPC, check if they're asleep
+                SettlerNPC settler = hit.collider.GetComponent<SettlerNPC>();
+                if (settler != null && settler.GetCurrentTaskType() == TaskType.SLEEP)
+                    continue;
+                
                 if (interactive is IInteractive<object> typedInteractive)
                 {
                     currentInteractive = typedInteractive;
                     PlayerUIManager.Instance.InteractionPrompt(interactive.GetInteractionText());
                     return;
                 }
-                else
+            }
+        }
+
+        // Fallback detection: SphereCast from center mass for more forgiving detection
+        Vector3 sphereStartPos = playerTransform.position + Vector3.up;
+        hits = Physics.SphereCastAll(sphereStartPos, sphereCastRadius, direction, interactionRange);
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance)); // Sort by distance, closest first
+        
+        foreach (RaycastHit hit in hits)
+        {
+            // Skip the player's own possessed NPC
+            if (hit.collider.gameObject == possessedNPCObject)
+                continue;
+            
+            IInteractiveBase interactive = hit.collider.GetComponent<IInteractiveBase>();
+            if (interactive != null && interactive.CanInteract())
+            {
+                // If it's a NarrativeInteractive, check if it's enabled
+                if (interactive is NarrativeInteractive narrative && !narrative.enabled)
+                    continue;
+                
+                // If it's a SettlerNPC, check if they're asleep
+                SettlerNPC settler = hit.collider.GetComponent<SettlerNPC>();
+                if (settler != null && settler.GetCurrentTaskType() == TaskType.SLEEP)
+                    continue;
+                
+                if (interactive is IInteractive<object> typedInteractive)
                 {
-                    Debug.LogWarning($"Interactive object {interactive.GetType().Name} does not implement IInteractive<object>. Full type: {interactive.GetType().FullName}");
+                    currentInteractive = typedInteractive;
+                    PlayerUIManager.Instance.InteractionPrompt(interactive.GetInteractionText());
+                    return;
                 }
             }
         }
@@ -233,7 +296,10 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 AddToPlayerInventory(resourcePickup);
                 break;
             case NarrativeAsset narrative:
-                NarrativeManager.Instance.StartConversation(narrative);
+                if (narrative?.dialogueFile != null)
+                {
+                    NarrativeManager.Instance.StartConversation(narrative.dialogueFile);
+                }
                 break;
             case Building building:
                 // Show the work task selection popup
@@ -241,6 +307,16 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                     if (task != null && PlayerController.Instance._possessedNPC is RobotCharacterController robot)
                     {
                         robot.StartWork(task);
+                    }
+                    else if (task != null && PlayerController.Instance._possessedNPC is SettlerNPC settler)
+                    {
+                        // Unpossess the player from the settler
+                        PlayerController.Instance.PossessNPC(null);
+                        
+                        // Assign the selected task to the settler
+                        settler.StartWork(task);
+                        
+                        Debug.Log($"[PlayerInventory] Unpossessed player from {settler.name} and assigned work task {task.GetType().Name}");
                     }
                     CampManager.Instance.WorkManager.CloseSelectionPopup();
                 });
@@ -251,6 +327,16 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                     {
                         robot.StartWork(task);
                     }
+                    else if (task != null && PlayerController.Instance._possessedNPC is SettlerNPC settler)
+                    {
+                        // Unpossess the player from the settler
+                        PlayerController.Instance.PossessNPC(null);
+                        
+                        // Assign the selected task to the settler
+                        settler.StartWork(task);
+                        
+                        Debug.Log($"[PlayerInventory] Unpossessed player from {settler.name} and assigned work task {task.GetType().Name}");
+                    }
                     CampManager.Instance.WorkManager.CloseSelectionPopup();
                 });
                 break;
@@ -259,6 +345,16 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                 {
                     PlayerInput.Instance.UpdatePlayerControls(PlayerControlType.ROBOT_WORKING);
                     robot.StartWork(workTask);
+                }
+                else if (PlayerController.Instance._possessedNPC is SettlerNPC settler)
+                {
+                    // Unpossess the player from the settler
+                    PlayerController.Instance.PossessNPC(null);
+                    
+                    // Assign the task to the settler
+                    settler.StartWork(workTask);
+                    
+                    Debug.Log($"[PlayerInventory] Unpossessed player from {settler.name} and assigned work task {workTask.GetType().Name}");
                 }
                 break;
             default:
@@ -650,10 +746,53 @@ public class PlayerInventory : CharacterInventory, IControllerInput
             recruitedNPCs.Remove(dataToRemove);
         }
     }
-    
-
 
     #endregion
+
+#if UNITY_EDITOR
+    /// <summary>
+    /// Draw debug visualization for interaction detection in the Unity editor.
+    /// Shows the BoxCast and SphereCast detection volumes.
+    /// </summary>
+    private void OnDrawGizmos()
+    {
+        if (!showDebugVisualization || PlayerController.Instance?._possessedNPC == null)
+            return;
+
+        Transform playerTransform = PlayerController.Instance._possessedNPC.GetTransform();
+        if (playerTransform == null) return;
+
+        Vector3 direction = playerTransform.forward;
+        
+        // Visualize BoxCast detection volume
+        Vector3 boxStartPos = playerTransform.position + Vector3.up * 1.2f;
+        Vector3 boxEndPos = boxStartPos + direction * interactionRange;
+        
+        // Draw BoxCast volume
+        Gizmos.color = currentInteractive != null ? Color.green : new Color(0, 1, 1, 0.3f); // Cyan when idle, green when detecting
+        Gizmos.matrix = Matrix4x4.TRS(boxStartPos, playerTransform.rotation, Vector3.one);
+        Gizmos.DrawWireCube(Vector3.zero, boxCastSize);
+        Gizmos.matrix = Matrix4x4.TRS(boxEndPos, playerTransform.rotation, Vector3.one);
+        Gizmos.DrawWireCube(Vector3.zero, boxCastSize);
+        
+        // Draw connecting lines
+        Gizmos.matrix = Matrix4x4.identity;
+        Gizmos.DrawLine(boxStartPos, boxEndPos);
+        
+        // Visualize SphereCast fallback detection
+        Vector3 sphereStartPos = playerTransform.position + Vector3.up;
+        Vector3 sphereEndPos = sphereStartPos + direction * interactionRange;
+        
+        Gizmos.color = new Color(1, 1, 0, 0.2f); // Yellow transparent for sphere fallback
+        Gizmos.DrawWireSphere(sphereStartPos, sphereCastRadius);
+        Gizmos.DrawWireSphere(sphereEndPos, sphereCastRadius);
+        
+        // Draw direction arrow
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(playerTransform.position + Vector3.up * 1.2f, 
+                        playerTransform.position + Vector3.up * 1.2f + direction * 1.5f);
+    }
+#endif
 }
 
 /// <summary>

@@ -64,6 +64,31 @@ public abstract class WorkTask : MonoBehaviour
     protected float baseWorkTime = 5f;
     protected int resourceAmount = 1;
 
+    /// <summary>
+    /// Reset work progress to 0 (used for game restart)
+    /// </summary>
+    public virtual void ResetProgress()
+    {
+        workProgress = 0f;
+    }
+
+    /// <summary>
+    /// Stop all workers and reset task (used for game restart)
+    /// </summary>
+    public virtual void StopAllWork()
+    {
+        var workersToStop = new List<HumanCharacterController>(currentWorkers);
+        foreach (var worker in workersToStop)
+        {
+            if (worker != null)
+            {
+                worker.StopWork();
+            }
+        }
+        currentWorkers.Clear();
+        ResetProgress();
+    }
+
     // Progress bar settings
     [Header("Progress Display")]
     [SerializeField] protected bool showProgressBar = true; // Whether to show progress bar for this task
@@ -195,6 +220,38 @@ public abstract class WorkTask : MonoBehaviour
         }
         // Otherwise use the task's position
         return transform;
+    }
+    
+    /// <summary>
+    /// Get a distributed work position around the task to prevent NPCs from clustering.
+    /// Used when multiple NPCs work on the same task (construction, etc.)
+    /// </summary>
+    /// <param name="npcPosition">Current position of the NPC</param>
+    /// <returns>A distributed position around the work area</returns>
+    public virtual Vector3 GetDistributedWorkPosition(Vector3 npcPosition)
+    {
+        Transform targetTransform = workLocationTransform != null ? workLocationTransform : transform;
+        
+        // Check if target has a NavMeshObstacle (large buildings/structures that need distributed positioning)
+        UnityEngine.AI.NavMeshObstacle obstacle = targetTransform.GetComponent<UnityEngine.AI.NavMeshObstacle>();
+        
+        if (obstacle != null && maxWorkers > 1)
+        {
+            // Multi-worker task on a building - use distributed positioning with crowd avoidance
+            return NavigationUtils.FindDistributedPositionAroundTarget(
+                npcPosition,
+                targetTransform,
+                0.5f,  // Work distance - NPCs work close to the building for construction
+                0.25f, // Obstacle bounds offset - small buffer around obstacle edges
+                8,     // Test 8 positions around the building (every 45 degrees)
+                2f     // Crowding radius - consider positions crowded if 2 units from other NPCs
+            );
+        }
+        else
+        {
+            // Single-worker task or small object - use direct position
+            return targetTransform.position;
+        }
     }
 
     // Method for precise positioning - can return null if no precise position needed

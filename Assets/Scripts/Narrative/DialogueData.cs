@@ -33,7 +33,6 @@ public class DialogueOption
 {
     public string text; // Text for the player option
     public string nextLine; // The ID of the next line to jump to
-    public string requiredItem; // (Optional) Item required to enable this option (legacy - use requiredInventoryItems instead)
     public string recruitNPC; // (Optional) Name of NPC to recruit when this option is selected
     
     // Enhanced Inventory Requirements

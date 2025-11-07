@@ -18,6 +18,9 @@ namespace Managers
         public GameObject destructionPrefab;
     }
 
+	/// <summary>
+	/// Maps building grid sizes to construction complete effects
+	/// </summary>
 	[System.Serializable]
 	public class ConstructionCompleteEffectMapping
 	{
@@ -25,6 +28,9 @@ namespace Managers
 		public EffectDefinition effect;
 	}
 
+	/// <summary>
+	/// Maps building grid sizes to repair effects
+	/// </summary>
 	[System.Serializable]
 	public class RepairEffectMapping
 	{
@@ -32,6 +38,9 @@ namespace Managers
 		public EffectDefinition effect;
 	}
 
+	/// <summary>
+	/// Maps building grid sizes to destruction effects
+	/// </summary>
 	[System.Serializable]
 	public class DestructionEffectMapping
 	{
@@ -90,6 +99,9 @@ namespace Managers
             return destructionPrefabMappings.Count > 0 ? destructionPrefabMappings[0].destructionPrefab : null;
         }
 
+		/// <summary>
+		/// Get the EffectDefinition for construction complete by building size
+		/// </summary>
 		public EffectDefinition GetConstructionCompleteEffect(Vector2Int size)
 		{
 			foreach (var mapping in constructionCompleteEffectMappings)
@@ -104,6 +116,9 @@ namespace Managers
 			return null;
 		}
 
+		/// <summary>
+		/// Play construction complete effect at specified position
+		/// </summary>
 		public void PlayConstructionCompleteEffect(Vector3 position, Vector3 normal, Vector2Int size)
 		{
 			var effect = GetConstructionCompleteEffect(size);
@@ -115,6 +130,9 @@ namespace Managers
 			EffectManager.Instance?.PlayEffect(position, normal, Quaternion.LookRotation(normal), null, effect);
 		}
 
+		/// <summary>
+		/// Get the EffectDefinition for repair by building size
+		/// </summary>
 		public EffectDefinition GetRepairEffect(Vector2Int size)
 		{
 			foreach (var mapping in repairEffectMappings)
@@ -129,6 +147,9 @@ namespace Managers
 			return null;
 		}
 
+		/// <summary>
+		/// Play repair effect at specified position
+		/// </summary>
 		public void PlayRepairEffect(Vector3 position, Vector3 normal, Vector2Int size)
 		{
 			var effect = GetRepairEffect(size);
@@ -140,6 +161,9 @@ namespace Managers
 			EffectManager.Instance?.PlayEffect(position, normal, Quaternion.LookRotation(normal), null, effect);
 		}
 
+		/// <summary>
+		/// Get the EffectDefinition for destruction by building size
+		/// </summary>
 		public EffectDefinition GetDestructionEffect(Vector2Int size)
 		{
 			foreach (var mapping in destructionEffectMappings)
@@ -154,6 +178,9 @@ namespace Managers
 			return null;
 		}
 
+		/// <summary>
+		/// Play destruction effect at specified position
+		/// </summary>
 		public void PlayDestructionEffect(Vector3 position, Vector3 normal, Vector2Int size)
 		{
 			var effect = GetDestructionEffect(size);

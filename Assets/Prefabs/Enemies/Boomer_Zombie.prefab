@@ -2902,7 +2902,7 @@ GameObject:
   - component: {fileID: 778508632017002504}
   m_Layer: 8
   m_Name: Boomer_Zombie
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3033,6 +3033,17 @@ MonoBehaviour:
   obstacleBoundsOffset: 1
   rootMotionMultiplier: 1
   showCollisionDebug: 0
+  enableCooldownMovement: 1
+  cooldownMovementMinDistance: 2
+  cooldownMovementMaxDistance: 4
+  cooldownMovementMinDuration: 1
+  cooldownMovementMaxDuration: 3
+  enableHeadTracking: 1
+  headTrackingWeight: 0.8
+  headTrackingRotationWeight: 0.5
+  headTrackingLerpSpeed: 3
+  maxHeadTrackingAngle: 60
+  headTrackingDistance: 15
   health: 100
   maxHealth: 100
   poise: 50
@@ -3064,23 +3075,47 @@ MonoBehaviour:
   poiseDamage: 15
   attackType: 0
   attackOrigin: {fileID: 0}
+  allowRotationDuringAttack: 0
   attackElement: 0
   elementalDamageBonus: 0
-  startEffect: {fileID: 0}
+  startEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   startEffectDelay: 0
-  attackEffect: {fileID: 0}
+  attackEffect:
+    effectDefinition: {fileID: 11400000, guid: ce058444ab7d3b24ebc0ffb7c961e39e, type: 2}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   attackEffectDelay: 0
-  hitEffect: {fileID: 0}
+  hitEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   hitEffectDelay: 0
-  endEffect: {fileID: 0}
+  endEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
   endEffectDelay: 0
   attackTrigger: Attack
   attackGameObjects: []
+  lastAttackTime: 0
   explosionRadius: 5
-  explosionDamage: 50
   poiseDamageMultiplier: 1.2
   dieAfterExplosion: 1
-  explosionEffect: {fileID: 11400000, guid: ce058444ab7d3b24ebc0ffb7c961e39e, type: 2}
   explodeOnDeath: 1
   explodeOnDamage: 0
   minDamageToExplode: 10

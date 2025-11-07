@@ -40,19 +40,19 @@ namespace Enemies
 
         [Header("Attack Effects")]
         [Tooltip("Effect played when the attack starts")]
-        public EffectDefinition startEffect;
+        public EffectSpawnData startEffect;
         [Tooltip("Delay in seconds before playing the start effect")]
         public float startEffectDelay = 0f;
         [Tooltip("Effect played when the enemy attacks")]
-        public EffectDefinition attackEffect;
+        public EffectSpawnData attackEffect;
         [Tooltip("Delay in seconds before playing the attack effect")]
         public float attackEffectDelay = 0f;
         [Tooltip("Effect played when the attack hits")]
-        public EffectDefinition hitEffect;
+        public EffectSpawnData hitEffect;
         [Tooltip("Delay in seconds before playing the hit effect")]
         public float hitEffectDelay = 0f;
         [Tooltip("Effect played when the attack ends")]
-        public EffectDefinition endEffect;
+        public EffectSpawnData endEffect;
         [Tooltip("Delay in seconds before playing the end effect")]
         public float endEffectDelay = 0f;
 
@@ -64,7 +64,11 @@ namespace Enemies
         [Tooltip("Game objects that will be enabled when this attack is active")]
         public GameObject[] attackGameObjects;
 
-        protected float lastAttackTime;
+        /// <summary>
+        /// Time when this attack was last executed (used for cooldown calculations)
+        /// Made public so EnemyBase can check actual cooldown status
+        /// </summary>
+        public float lastAttackTime;
         protected EnemyBase enemy;
         protected Animator animator;
         protected Transform target;
@@ -110,11 +114,11 @@ namespace Enemies
                 attackOrigin = enemy.transform;
             }
 
-            // Initialize effect players
-            startEffectPlayer = new EffectPlayer(this, startEffect, startEffectDelay);
-            attackEffectPlayer = new EffectPlayer(this, attackEffect, attackEffectDelay);
-            hitEffectPlayer = new EffectPlayer(this, hitEffect, hitEffectDelay);
-            endEffectPlayer = new EffectPlayer(this, endEffect, endEffectDelay);
+            // Initialize effect players - convert EffectSpawnData to EffectDefinition for EffectPlayer
+            startEffectPlayer = new EffectPlayer(this, startEffect?.effectDefinition, startEffectDelay);
+            attackEffectPlayer = new EffectPlayer(this, attackEffect?.effectDefinition, attackEffectDelay);
+            hitEffectPlayer = new EffectPlayer(this, hitEffect?.effectDefinition, hitEffectDelay);
+            endEffectPlayer = new EffectPlayer(this, endEffect?.effectDefinition, endEffectDelay);
         }
 
         /// <summary>
@@ -126,11 +130,20 @@ namespace Enemies
             if (target == null || enemy == null) return false;
             if (enemy.Health <= 0) return false;
             
-            // Use unified range and cooldown utilities
-            bool inRange = DamageUtils.IsInRange(enemy.transform.position, target.position, minRange, maxRange);
+            // Use obstacle-aware range check for targets with NavMesh obstacles (like buildings)
+            // This ensures enemies can attack buildings even though they can't path directly to the center
+            bool inRange = DamageUtils.IsInRangeWithObstacles(enemy.transform.position, target, minRange, maxRange);
             bool cooldownReady = DamageUtils.IsCooldownReady(lastAttackTime, cooldown);
             
-            return inRange && cooldownReady;
+            // For ranged attacks (attacks with minimum range > 0), check line of sight
+            // Melee attacks don't need line of sight since they're close-range
+            bool hasLineOfSight = true;
+            if (minRange > 0) // Ranged attack
+            {
+                hasLineOfSight = enemy.HasLineOfSight(target.position);
+            }
+            
+            return inRange && cooldownReady && hasLineOfSight;
         }
 
         /// <summary>
@@ -140,7 +153,7 @@ namespace Enemies
         {
             if (enemy != null && animator != null)
             {
-                animator.SetInteger("AttackType", attackType);
+                animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, attackType);
                 animator.SetTrigger(attackTrigger);
             }
             lastAttackTime = Time.time;
@@ -217,7 +230,7 @@ namespace Enemies
             // Reset animation parameters
             if (enemy != null && animator != null)
             {
-                animator.SetInteger("AttackType", 0);
+                animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, 0);
             }
             
             // Note: NavMeshAgent rotation is handled by EnemyBase.EndAttack()
@@ -286,7 +299,7 @@ namespace Enemies
         protected virtual bool IsTargetInRange()
         {
             if (target == null) return false;
-            return DamageUtils.IsInRange(enemy.transform.position, target.position, minRange, maxRange);
+            return DamageUtils.IsInRangeWithObstacles(enemy.transform.position, target, minRange, maxRange);
         }
 
         /// <summary>
@@ -337,27 +350,6 @@ namespace Enemies
         public virtual void DealDamage(IDamageable target, float damageAmount, float poiseAmount)
         {
             DamageUtils.DealDamage(this, target, damageAmount, poiseAmount);
-        }
-        
-        /// <summary>
-        /// Deal damage to a target (legacy method for backward compatibility)
-        /// </summary>
-        /// <param name="target">The target to damage</param>
-        /// <param name="damageAmount">Amount of damage to deal</param>
-        protected virtual void DealDamageLegacy(IDamageable target, float damageAmount)
-        {
-            DealDamage(target, damageAmount, poiseDamage);
-        }
-
-        /// <summary>
-        /// Deal damage to a single target with enhanced parameters (legacy method)
-        /// </summary>
-        /// <param name="target">The target to damage</param>
-        /// <param name="damageAmount">Amount of damage to deal</param>
-        /// <param name="poiseAmount">Amount of poise damage to deal</param>
-        protected virtual void DealDamageToTarget(IDamageable target, float damageAmount, float poiseAmount)
-        {
-            DealDamage(target, damageAmount, poiseAmount);
         }
 
         /// <summary>
@@ -418,35 +410,76 @@ namespace Enemies
         }
 
         /// <summary>
-        /// Play start effect
+        /// Play start effect using EffectSpawnData configuration
         /// </summary>
         protected virtual void PlayStartEffect(Vector3? position = null, Vector3? direction = null, Quaternion? rotation = null, Transform parent = null)
         {
-            startEffectPlayer.Play(position, direction, rotation, parent);
+            if (startEffect != null && startEffect.IsValid())
+            {
+                PlayEffectSpawnData(startEffect, startEffectDelay, attackOrigin ?? enemy?.transform);
+            }
         }
 
         /// <summary>
-        /// Play attack effect
+        /// Play attack effect using EffectSpawnData configuration
         /// </summary>
         protected virtual void PlayAttackEffect(Vector3? position = null, Vector3? direction = null, Quaternion? rotation = null, Transform parent = null)
         {
-            attackEffectPlayer.Play(position, direction, rotation, parent);
+            if (attackEffect != null && attackEffect.IsValid())
+            {
+                PlayEffectSpawnData(attackEffect, attackEffectDelay, attackOrigin ?? enemy?.transform);
+            }
         }
 
         /// <summary>
-        /// Play hit effect
+        /// Play hit effect using EffectSpawnData configuration
         /// </summary>
         protected virtual void PlayHitEffect(Vector3? position = null, Vector3? direction = null, Quaternion? rotation = null, Transform parent = null)
         {
-            hitEffectPlayer.Play(position, direction, rotation, parent);
+            if (hitEffect != null && hitEffect.IsValid())
+            {
+                PlayEffectSpawnData(hitEffect, hitEffectDelay, attackOrigin ?? enemy?.transform);
+            }
         }
 
         /// <summary>
-        /// Play end effect
+        /// Play end effect using EffectSpawnData configuration
         /// </summary>
         protected virtual void PlayEndEffect(Vector3? position = null, Vector3? direction = null, Quaternion? rotation = null, Transform parent = null)
         {
-            endEffectPlayer.Play(position, direction, rotation, parent);
+            if (endEffect != null && endEffect.IsValid())
+            {
+                PlayEffectSpawnData(endEffect, endEffectDelay, attackOrigin ?? enemy?.transform);
+            }
+        }
+        
+        /// <summary>
+        /// Play an EffectSpawnData with optional delay
+        /// </summary>
+        protected virtual void PlayEffectSpawnData(EffectSpawnData effectData, float delay, Transform fallbackTransform)
+        {
+            if (effectData == null || !effectData.IsValid()) return;
+            
+            if (delay > 0)
+            {
+                StartCoroutine(PlayEffectSpawnDataDelayed(effectData, delay, fallbackTransform));
+            }
+            else
+            {
+                effectData.SpawnEffect(fallbackTransform);
+            }
+        }
+        
+        /// <summary>
+        /// Coroutine to play an EffectSpawnData after a delay
+        /// </summary>
+        private IEnumerator PlayEffectSpawnDataDelayed(EffectSpawnData effectData, float delay, Transform fallbackTransform)
+        {
+            yield return new WaitForSeconds(delay);
+            if (effectData != null && effectData.IsValid())
+            {
+                effectData.SpawnEffect(fallbackTransform);
+            }
         }
 
         /// <summary>

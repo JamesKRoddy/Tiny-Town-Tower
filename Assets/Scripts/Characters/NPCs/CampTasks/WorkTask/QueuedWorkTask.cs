@@ -65,6 +65,16 @@ public abstract class QueuedWorkTask : WorkTask
         taskQueue.Clear();
     }
 
+    /// <summary>
+    /// Alias for ClearTaskQueue - clears the task queue
+    /// </summary>
+    public virtual void ClearQueue()
+    {
+        ClearTaskQueue();
+        currentTaskData = null;
+        workProgress = 0f;
+    }
+
     // Virtual method to setup the next task in queue
     protected virtual void SetupNextTask()
     {

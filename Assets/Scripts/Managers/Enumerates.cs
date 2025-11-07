@@ -226,6 +226,15 @@ public enum EnemySetupState
     ALL_WAVES_CLEARED // enemies are all dea, player is free the move around and choose the next path
 }
 
+/// <summary>
+/// Overall camp attack state - tracks whether the camp is under attack (entire wave cycle) or peaceful
+/// </summary>
+public enum CampAttackState
+{
+    PEACEFUL,        // No attack happening, NPCs can do normal activities
+    UNDER_ATTACK     // Camp is under attack (wave cycle active), NPCs should flee/hide until morning or all waves cleared
+}
+
 public enum WallType
 {
     ENABLED, // Model can be seen, collider enabled
@@ -370,7 +379,8 @@ public enum CharacterType
 /// </summary>
 public enum NPCInitializationContext
 {
-    FRESH_SPAWN,      // New NPC spawned in roguelike rooms, needs full random initialization
+    FRESH_SPAWN,      // New NPC spawned in roguelike rooms, needs full random initialization (NO camp registration)
+    CAMP_SPAWN,       // New NPC spawned directly in camp (game start/restart), registers with camp managers
     RECRUITED,        // NPC recruited from roguelike, may have predetermined characteristics  
     LOADED_FROM_SAVE  // NPC loaded from save file, should restore previous state
 }

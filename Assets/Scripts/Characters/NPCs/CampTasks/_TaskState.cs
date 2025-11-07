@@ -154,6 +154,13 @@ public abstract class _TaskState : MonoBehaviour
     /// </summary>
     protected void TryAssignWorkOrWander()
     {
+        // Don't try to assign work or change states when NPC is possessed by the player
+        if (npc.IsPossessed())
+        {
+            Debug.Log($"[TaskState] {npc.name} is possessed - skipping TryAssignWorkOrWander");
+            return;
+        }
+        
         Debug.Log($"[TaskState] TryAssignWorkOrWander called for {npc.name} from {GetTaskType()} state");
         
         // First check if NPC has an assigned work task they should return to
@@ -258,7 +265,7 @@ public abstract class _TaskState : MonoBehaviour
         
         float maxSpeed = MaxSpeed();
         float currentSpeedNormalized = agent.velocity.magnitude / maxSpeed;
-        animator.SetFloat("Speed", currentSpeedNormalized);
+        animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, currentSpeedNormalized);
     }
 
     /// <summary>
@@ -338,6 +345,13 @@ public abstract class _TaskState : MonoBehaviour
     {
         // Wait a short time for new tasks to potentially be added to the queue
         yield return new WaitForSeconds(0.1f);
+        
+        // Check if NPC got possessed while waiting
+        if (npc.IsPossessed())
+        {
+            Debug.Log($"[TaskState] {npc.name} is possessed - aborting RetryWorkAssignment");
+            yield break;
+        }
         
         if (CampManager.Instance?.WorkManager != null)
         {

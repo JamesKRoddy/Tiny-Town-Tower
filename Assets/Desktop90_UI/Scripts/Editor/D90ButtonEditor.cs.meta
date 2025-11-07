@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: c9ec545051078b645af9963f2252d9d0
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 159547
+  packageName: 90's Desktop OS UI
+  packageVersion: 1.0
+  assetPath: Assets/Desktop90_UI/Scripts/Editor/D90ButtonEditor.cs
+  uploadId: 345207

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 0bcb1c7f41728433fa0c7f76cb41a927
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 159547
+  packageName: 90's Desktop OS UI
+  packageVersion: 1.0
+  assetPath: Assets/Desktop90_UI/Prefabs/UIPartials/DigitalClock.prefab
+  uploadId: 345207

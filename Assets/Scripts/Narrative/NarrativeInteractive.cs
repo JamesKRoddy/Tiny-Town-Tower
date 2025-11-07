@@ -35,11 +35,11 @@ public class NarrativeInteractive : MonoBehaviour, IInteractive<NarrativeAsset>
             // Start conversation through NarrativeManager with this component as source
             if (NarrativeManager.Instance != null)
             {
-                NarrativeManager.Instance.StartConversation(narrativeAsset, this);
+                NarrativeManager.Instance.StartConversation(narrativeAsset.dialogueFile, GetNarrativeTarget(), this);
                 return null; // We're handling it through NarrativeManager
             }
             
-            return narrativeAsset; // Fallback to legacy system
+            return narrativeAsset; // Fallback if NarrativeManager is not available
         }
         // Otherwise use dynamic loading based on CharacterType
         else if (NarrativeManager.Instance != null)
@@ -92,30 +92,6 @@ public class NarrativeInteractive : MonoBehaviour, IInteractive<NarrativeAsset>
             }
         }
         return saveableObj;
-    }
-
-    /// <summary>
-    /// Get the narrative asset (create one if using dynamic loading) - maintains legacy compatibility
-    /// </summary>
-    public NarrativeAsset GetOrCreateNarrativeAsset()
-    {
-        if (narrativeAsset == null)
-        {
-            // Create a runtime narrative asset for dynamic loading
-            narrativeAsset = new NarrativeAsset();
-            if (debugFlags)
-            {
-                Debug.Log($"[NarrativeInteractive] Created runtime NarrativeAsset for {gameObject.name}");
-            }
-        }
-
-        // Initialize flags list if null
-        if (narrativeAsset.flags == null)
-        {
-            narrativeAsset.flags = new List<NarrativeAssetFlag>();
-        }
-
-        return narrativeAsset;
     }
 
     /// <summary>

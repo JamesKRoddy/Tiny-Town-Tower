@@ -63,9 +63,9 @@ namespace Enemies.Attacks
             }
             
             // Validate effects
-            if (attackEffect == null)
+            if (attackEffect == null || !attackEffect.IsValid())
             {
-                Debug.LogError("Attack effect (projectile) definition is not assigned to ProjectileAttack on " + enemy.gameObject.name);
+                Debug.LogError("Attack effect (projectile) definition is not assigned or invalid on ProjectileAttack on " + enemy.gameObject.name);
             }
             
             Debug.Log($"[{enemy.gameObject.name}] ProjectileAttack initialized | Min: {minRange} | Max: {maxRange} | Damage: {damage}");
@@ -109,8 +109,8 @@ namespace Enemies.Attacks
                     poiseDamage,
                     enemy.transform,
                     attackElement,
-                    attackEffect,
-                    hitEffect,
+                    attackEffect?.effectDefinition,
+                    hitEffect?.effectDefinition,
                     createDamageAreaOnImpact,
                     damageRadius,
                     impactDamageDuration,
@@ -125,15 +125,15 @@ namespace Enemies.Attacks
         /// </summary>
         private float CalculateDamageRadius()
         {
-            if (!useTriggerBasedDamage || hitEffect == null)
+            if (!useTriggerBasedDamage || hitEffect == null || !hitEffect.IsValid())
             {
                 return fallbackDamageRadius;
             }
 
             // Check if the impact effect has a damage component that can handle triggers
-            if (hitEffect.prefabs != null && hitEffect.prefabs.Length > 0)
+            if (hitEffect.effectDefinition != null && hitEffect.effectDefinition.prefabs != null && hitEffect.effectDefinition.prefabs.Length > 0)
             {
-                GameObject effectPrefab = hitEffect.prefabs[0];
+                GameObject effectPrefab = hitEffect.effectDefinition.prefabs[0];
                 
                 // Check for damage area components that can handle OnTriggerEnter
                 // This will find DamageArea or any class that inherits from it (like ZombieVomitPool)
@@ -164,7 +164,7 @@ namespace Enemies.Attacks
             }
 
             // Fallback to radius-based detection
-            Debug.Log($"[{enemy.gameObject.name}] No trigger-capable damage component found in impact effect '{hitEffect.name}', using fallback radius: {fallbackDamageRadius}");
+            Debug.Log($"[{enemy.gameObject.name}] No trigger-capable damage component found in impact effect '{hitEffect?.effectDefinition?.name}', using fallback radius: {fallbackDamageRadius}");
             return fallbackDamageRadius;
         }
 

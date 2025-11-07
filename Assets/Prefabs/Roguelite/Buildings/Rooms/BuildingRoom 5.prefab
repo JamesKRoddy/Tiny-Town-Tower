@@ -266,8 +266,8 @@ Transform:
   m_GameObject: {fileID: 2417916347690760348}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -26.794378, y: 1.652, z: 5.160223}
-  m_LocalScale: {x: 6, y: 1.685841, z: 1}
+  m_LocalPosition: {x: -26.794378, y: 1.24, z: 5.160223}
+  m_LocalScale: {x: 6, y: 2.5538805, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 390971021541427741}
@@ -782,8 +782,8 @@ MonoBehaviour:
   doors: []
   chests: []
   roomBounds:
-    m_Center: {x: -10.249996, y: 2.25, z: 30.250008}
-    m_Extent: {x: 21.750013, y: 3.5000005, z: 11.250011}
+    m_Center: {x: -10.031988, y: 1.12305, z: 30.07622}
+    m_Extent: {x: 21.157007, y: 2.37305, z: 11.076223}
   autoCalculateBounds: 1
   boundsPadding: 2
   showRoomBounds: 1
@@ -1363,7 +1363,7 @@ Transform:
   m_GameObject: {fileID: 8667011855953360880}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.70710677, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -23.294378, y: 1.3, z: 7.160223}
+  m_LocalPosition: {x: -23.294378, y: 1.24, z: 7.160223}
   m_LocalScale: {x: 5.1198597, y: 2.3922, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

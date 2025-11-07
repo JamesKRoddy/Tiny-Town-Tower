@@ -15,12 +15,14 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     [SerializeField] protected CharacterType characterType = CharacterType.HUMAN_MALE_1;
 
     [Header("Movement Parameters")]
-    public float moveMaxSpeed = 10f; // Speed at which the player moves normally
-    public float rotationSpeed = 720f; // Speed at which the player rotates
-    public float attackRotationSpeed = 360f; // Speed at which the player rotates while attacking
-    public float dashSpeed = 20f; // Speed during a dash
-    public float dashDuration = 0.2f; // How long a dash lasts
-    public float dashCooldown = 1.0f; // Cooldown time between dashes
+    // Core movement stats now use ModifyStats system (see Character Stats section)
+    public float moveMaxSpeed => currentStats.moveMaxSpeed; // Speed at which the character moves normally
+    public float rotationSpeed => currentStats.rotationSpeed; // Speed at which the character rotates
+    public float dashSpeed => currentStats.dashSpeed; // Speed during a dash
+    public float dashCooldown => currentStats.dashCooldown; // Cooldown time between dashes
+    
+    [SerializeField] private float attackRotationSpeed = 360f; // Speed at which the player rotates while attacking
+    [SerializeField] private float dashDuration = 0.2f; // How long a dash lasts
     public float vaultDuration = 0.4f; // How long a vault lasts
     public float vaultCooldown = 0.3f; // Short cooldown between vaults to prevent rapid firing
 
@@ -69,6 +71,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private float verticalVelocity = 0f; // Current vertical velocity for gravity
     private bool wasGroundedLastFrame = true; // Track grounded state from previous frame
     private float lastGroundedTime = 0f; // Last time the character was grounded (for coyote time)
+    private Vector3 lastGroundedPosition = Vector3.zero; // Position when last grounded (for fall distance check)
     private bool isGroundedBuffered = true; // Buffered grounded state (smoother than raw CharacterController.isGrounded)
 
     // Automatic obstacle navigation: analyzes height to determine WalkOver, Vault, or TooHigh
@@ -132,16 +135,21 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     private Vector3 pushOffsetFromObject = Vector3.zero; // Player's offset from the pushed object
     private Vector3 lastPushObjectPosition = Vector3.zero; // Last position of the pushed object
 
+    [Header("Character Stats")]
+    [Tooltip("Base stats - saved and restored from save file")]
+    [SerializeField] protected CharacterModifiableStats baseStats = new CharacterModifiableStats(100f, 40f, 10f, 720f, 20f, 1f);
+    
+    [Tooltip("Current stats - calculated from base stats + characteristics/mutations (not saved)")]
+    [SerializeField, ReadOnly] protected CharacterModifiableStats currentStats;
+    
     [Header("Health")]
     [SerializeField] private float health = 100f;
-    [SerializeField] private float maxHealth = 100f;
     [SerializeField] private float damageCooldown = 0.5f; // Time before TakeDamage can be called again
-    private bool isDead = false;
+    protected bool isDead = false; // Protected so subclasses can check death state
     private float lastDamageTime = 0f; // Track when damage was last taken
 
     [Header("Poise Settings")]
     [SerializeField] private float poise = 40f;
-    [SerializeField] private float maxPoise = 40f;
     [SerializeField] private float poiseRecoveryRate = 8f; // Poise recovered per second
     [SerializeField] private float poiseRecoveryDelay = 2f; // Delay before poise starts recovering
     private float lastPoiseDamageTime = 0f; // Track when poise damage was last taken
@@ -162,6 +170,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     protected virtual void Awake()
     {
+        // Initialize current stats from base stats
+        currentStats = baseStats;
+        
         // Store the references once
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
@@ -233,7 +244,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         actualMovementSpeed = 0f;
         
         // Initialize poise
-        Poise = maxPoise;
+        Poise = MaxPoise;
         
         // Ensure root motion is disabled by default
         if (animator != null)
@@ -315,6 +326,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Reset gravity state for player control
         verticalVelocity = 0f;
         wasGroundedLastFrame = characterController != null && characterController.isGrounded;
+        lastGroundedPosition = transform.position;
     }
 
     public void OnUnpossess()
@@ -326,6 +338,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Reset gravity state for AI control
         verticalVelocity = 0f;
         wasGroundedLastFrame = true;
+        lastGroundedPosition = transform.position;
     }
 
     /// <summary>
@@ -334,35 +347,42 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     /// <param name="isAIControlled">True if the NPC should act autonomously, False if player-controlled.</param>
     private void SetAIControl(bool isAIControlled)
     {
-        var navMeshAgent = GetComponent<NavMeshAgent>();
-        if (navMeshAgent != null) navMeshAgent.enabled = isAIControlled;
-        
-        // Toggle CharacterController for player control (opposite of NavMeshAgent)
-        if (characterController != null) 
-        {
-            characterController.enabled = !isAIControlled;
-        }
-
-        var narrativeInteractive = GetComponent<NarrativeInteractive>();
-        if (narrativeInteractive != null) narrativeInteractive.enabled = isAIControlled;
-
         var settlerNPC = GetComponent<SettlerNPC>();
-
-        foreach (var task in GetComponents<_TaskState>())
-        {
-            task.enabled = isAIControlled;
-        }
 
         if (isAIControlled)
         {
+            // Re-enable AI control
+            var navMeshAgent = GetComponent<NavMeshAgent>();
+            if (navMeshAgent != null) navMeshAgent.enabled = true;
+            
+            // Toggle CharacterController for player control (opposite of NavMeshAgent)
+            if (characterController != null) 
+            {
+                characterController.enabled = false;
+            }
+
+            var narrativeInteractive = GetComponent<NarrativeInteractive>();
+            if (narrativeInteractive != null) narrativeInteractive.enabled = true;
+
+            // Re-enable task states
+            foreach (var task in GetComponents<_TaskState>())
+            {
+                task.enabled = true;
+            }
+
+            // Return to wander state
             settlerNPC?.ChangeTask(TaskType.WANDER);
         }
         else
         {
-            // Clean up work animations and tasks when possessed
+            // Taking player control - clean up AI state FIRST before disabling components
             if (settlerNPC != null)
             {
-                // Stop any work animations on the work layer
+                // IMPORTANT: Exit current state properly BEFORE disabling task components
+                // This ensures OnExitState is called and animations are stopped
+                settlerNPC.ChangeState(null);
+                
+                // Stop any work animations on the work layer (redundant but safe)
                 settlerNPC.StopWorkAnimation();
                 
                 // Clear any assigned work tasks
@@ -370,10 +390,26 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 {
                     settlerNPC.ClearAssignedWork();
                 }
-                
-                // Set state to null to disable AI behavior
-                settlerNPC.ChangeState(null);
             }
+            
+            // NOW disable task states after proper cleanup
+            foreach (var task in GetComponents<_TaskState>())
+            {
+                task.enabled = false;
+            }
+            
+            // Disable NavMeshAgent
+            var navMeshAgent = GetComponent<NavMeshAgent>();
+            if (navMeshAgent != null) navMeshAgent.enabled = false;
+            
+            // Toggle CharacterController for player control (opposite of NavMeshAgent)
+            if (characterController != null) 
+            {
+                characterController.enabled = true;
+            }
+
+            var narrativeInteractive = GetComponent<NarrativeInteractive>();
+            if (narrativeInteractive != null) narrativeInteractive.enabled = false;
         }
     }
 
@@ -387,7 +423,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         if (!isDashing && !isVaulting && !isPushing && !isClimbing && !isClimbLanding && characterInventory.equippedWeaponScriptObj != null)
         {
             isAttacking = true;
-            animator.SetBool("LightAttack", true);
+            animator.SetBool(GameConstants.AnimatorParams.LightAttackHash, true);
             
             // Enable root motion for attack animations
             if (animator != null)
@@ -461,7 +497,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     }
     public void EquipMeleeWeapon(int equipped)
     {
-        animator.SetInteger("Equipped", equipped);
+        animator.SetInteger(GameConstants.AnimatorParams.EquippedHash, equipped);
         UpdateAnimationSpeed();
     }
 
@@ -470,7 +506,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         if (characterInventory.equippedWeaponBase != null)
         {
             // Update the speed of all attack animations in the Attacking Layer
-            animator.SetFloat("AttackSpeed", characterInventory.equippedWeaponBase.GetCurrentAttackSpeed());
+            animator.SetFloat(GameConstants.AnimatorParams.AttackSpeedHash, characterInventory.equippedWeaponBase.GetCurrentAttackSpeed());
         }
     }
 
@@ -510,7 +546,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         dashTime = Time.time + dashDuration;
         dashCooldownTime = Time.time + dashCooldown;
         currentDirection = movementInput.normalized; // Initialize dash direction based on input
-        animator.SetTrigger("IsDashing");
+        animator.SetTrigger(GameConstants.AnimatorParams.IsDashingHash);
 
         // Disable root motion during dash
         if (animator != null)
@@ -638,13 +674,13 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         switch (currentVaultType)
         {
             case ObstacleType.Vault:
-                animator.SetTrigger("IsVaulting"); // High vault animation
+                animator.SetTrigger(GameConstants.AnimatorParams.IsVaultingHash); // High vault animation
                 break;
             case ObstacleType.RollUnder:
-                animator.SetTrigger("IsRolling"); // Low vault/roll animation
+                animator.SetTrigger(GameConstants.AnimatorParams.IsRollingHash); // Low vault/roll animation
                 break;
             default:
-                animator.SetTrigger("IsVaulting"); // Default vault animation
+                animator.SetTrigger(GameConstants.AnimatorParams.IsVaultingHash); // Default vault animation
                 break;
         }
         
@@ -696,7 +732,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         }
         
         // Trigger climb animation (use vault animation as fallback since climb animation might not exist)
-        animator.SetTrigger("IsClimbing");
+        animator.SetTrigger(GameConstants.AnimatorParams.IsClimbingHash);
         
         humanCollider.enabled = false; // Disable the player's collider to avoid collision during climbing
     }
@@ -785,7 +821,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 lastPushObjectPosition = pushableObject.transform.position;
                 
                 // Trigger push animation if you have one
-                animator.SetBool("IsPushing", true);
+                animator.SetBool(GameConstants.AnimatorParams.IsPushingHash, true);
                 
                 // Reset push state
                 pushHoldTime = 0f;
@@ -819,7 +855,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     {
         isPushing = false;
         currentPushTarget = null;
-        animator.SetBool("IsPushing", false);
+        animator.SetBool(GameConstants.AnimatorParams.IsPushingHash, false);
         
         // Ensure root motion is disabled after push
         if (animator != null)
@@ -909,6 +945,15 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             {
                 return ObstacleType.None;
             }
+        }
+
+        // Check if this is a walkable slope/ramp/stair by examining the surface normal
+        // CharacterController can handle slopes within slopeLimit automatically
+        float surfaceAngle = Vector3.Angle(obstacleInfo.normal, Vector3.up);
+        if (surfaceAngle <= slopeLimit)
+        {
+            // This is a walkable slope/ramp/stair - let CharacterController handle it naturally
+            return ObstacleType.WalkOver;
         }
 
         // Store reference to the obstacle collider for safety checks
@@ -1648,21 +1693,26 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Get raw grounded state from CharacterController
         bool isGroundedRaw = characterController.isGrounded;
         
-        // Update last grounded time when we detect ground
+        // Update last grounded time and position when we detect ground
         if (isGroundedRaw)
         {
             lastGroundedTime = Time.time;
+            lastGroundedPosition = transform.position;
         }
         
         // Buffered grounded state: remain "grounded" for a short time after leaving ground
         // This prevents animation flickering on slopes and small bumps (coyote time)
-        isGroundedBuffered = isGroundedRaw || (Time.time - lastGroundedTime) < groundedBufferTime;
+        // Allow buffer for small drops like stair transitions
+        bool withinBufferTime = (Time.time - lastGroundedTime) < groundedBufferTime;
+        bool hasNotFallenFar = (lastGroundedPosition.y - transform.position.y) <= (stepOffset * 1.5f); // 1.5x for small bumps
+        
+        isGroundedBuffered = isGroundedRaw || (withinBufferTime && hasNotFallenFar);
 
         if (isGroundedBuffered && verticalVelocity < 0)
         {
-            // Keep character grounded with small downward force
-            // This prevents bouncing and ensures proper ground detection
-            verticalVelocity = -2f;
+            // Apply stronger downward force to stick to slopes/stairs
+            // This prevents floating off slopes when walking down
+            verticalVelocity = -8f; // Increased from -2f to better stick to downward slopes
         }
         else if (!isGroundedBuffered)
         {
@@ -1709,14 +1759,20 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     }
 
     /// <summary>
-    /// Check if the character is currently falling
+    /// Check if the character is currently falling (actual fall, not just stepping down stairs/curbs)
     /// </summary>
-    /// <returns>True if falling (not grounded and has downward velocity)</returns>
+    /// <returns>True if falling (not grounded and has fallen beyond step height)</returns>
     public bool IsFalling()
     {
         if (characterController == null || !characterController.enabled) return false;
-        // Use buffered grounded state for smoother detection on slopes
-        return !isGroundedBuffered && verticalVelocity < -3f; // Only count as falling if velocity is significant
+        
+        // Only count as "falling" if we've dropped more than the buffer threshold
+        // This prevents movement penalties when walking down stairs, slopes, or small ledges
+        // Now that slope adhesion is fixed, we can be more responsive to actual falls
+        float fallDistance = lastGroundedPosition.y - transform.position.y;
+        bool hasActuallyFallen = fallDistance > (stepOffset * 2f); // 2x step height (0.6 units)
+        
+        return !isGroundedBuffered && hasActuallyFallen && verticalVelocity < -3f;
     }
 
     /// <summary>
@@ -1738,6 +1794,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         verticalVelocity = 0f;
         isGroundedBuffered = true;
         lastGroundedTime = Time.time;
+        lastGroundedPosition = transform.position;
     }
 
     #endregion
@@ -1761,7 +1818,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         float maxSpeed = isDashing ? dashSpeed : moveMaxSpeed;
         float currentSpeedNormalized = actualMovementSpeed / maxSpeed;
 
-        animator.SetFloat("Speed", currentSpeedNormalized);
+        animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, currentSpeedNormalized);
     }
 
     public virtual void PlayWorkAnimation(string animationName)
@@ -2051,62 +2108,113 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
 #region IDamageable Interface
 
-    public void TakeDamage(float amount, Transform damageSource = null)
+    /// <summary>
+    /// Unified method to handle all types of damage using DamageInfo struct
+    /// Made virtual so SettlerNPC can override to add behavior like fleeing from hostile attacks
+    /// </summary>
+    /// <param name="damageInfo">Complete damage information including source, type, and flags</param>
+    public virtual void TakeDamage(DamageInfo damageInfo)
     {
         // Prevent taking damage if already dead
-        if (isDead) return;
+        if (isDead)
+        {
+            Debug.Log($"[{name}] TakeDamage blocked - already dead");
+            return;
+        }
         
         // Prevent taking damage if cooldown is active
         if (Time.time - lastDamageTime < damageCooldown)
         {
+            float cooldownRemaining = damageCooldown - (Time.time - lastDamageTime);
+            Debug.Log($"[{name}] TakeDamage blocked by cooldown - {cooldownRemaining:F2}s remaining (takes damage every {damageCooldown}s)");
             return;
         }
-
-        float previousHealth = health;
-        health = Mathf.Max(0, health - amount);
-        OnDamageTaken?.Invoke(amount, health);
-
-        // Check if already damaged to prevent unnecessary animation calls
-        bool wasAlreadyDamaged = isDamaged;
         
-        // Set damaged state to prevent movement
-        isDamaged = true;
-        lastDamageTime = Time.time; // Update last damage time
-
-        // Only trigger damaged animation if not already damaged to prevent unnecessary animation calls
-        if (!wasAlreadyDamaged)
-        {
-            // Calculate hit direction and trigger damaged animation
-            DamageUtils.TriggerDamagedAnimation(animator, DamageUtils.CalculateHitDirection(transform, damageSource));
-        }
-
-        // Play hit VFX
-        var (hitPoint, hitNormal) = DamageUtils.CalculateHitPointAndNormal(transform, damageSource);
-        EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
-
-        // Track hit for procedural IK reactions
-        if (damageSource != null)
-        {
-            LastHitOrigin = damageSource.position;
-            LastHitTime = Time.time;
-            LastHitPoiseDamage = 10f; // Default poise damage for basic attacks
-        }
-
-        if (health <= 0 && !isDead) Die();
-    }
-
-    // Overloaded TakeDamage method for poise damage
-    public void TakeDamage(float amount, float poiseDamage, Transform damageSource = null)
-    {
-        // Prevent taking damage if already dead
-        if (isDead) return;
+        // Extract parameters from DamageInfo
+        float amount = damageInfo.Amount;
+        float poiseDamage = damageInfo.PoiseDamage;
+        AttackElement damageType = damageInfo.ElementType;
+        Transform damageSource = damageInfo.SourceTransform;
+        bool playHitVFX = damageInfo.PlayHitVFX;
         
-        // Use DamageUtils for consistent damage and poise handling
-        var (hitDirection, poiseBroken) = DamageUtils.ApplyDamageWithPoise(this, amount, poiseDamage, 
-            damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
+        Debug.Log($"[{name}] TakeDamage ACCEPTED - Amount: {amount}, Poise: {poiseDamage}, Element: {damageType}, Health before: {health:F1}/{MaxHealth:F1}");
+
+        bool hasPoiseDamage = poiseDamage > 0f;
+        bool hasElementalDamage = damageType != AttackElement.NONE;
+        bool poiseBroken = false;
+        float finalDamage = amount;
+
+        // Handle different damage types with appropriate utilities
+        if (hasPoiseDamage && hasElementalDamage)
+        {
+            Debug.Log($"[{name}] Applying ELEMENTAL + POISE damage");
+            // Full damage: poise + elemental
+            var result = DamageUtils.ApplyElementalDamageWithPoise(this, amount, poiseDamage, damageType, 
+                damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, playHitVFX);
+            finalDamage = result.Item2;
+            poiseBroken = result.Item3;
+            
+            Debug.Log($"[{name}] Final damage after elemental calculation: {finalDamage:F1}, Poise broken: {poiseBroken}, Health after: {health:F1}/{MaxHealth:F1}");
+            
+            // Skip if immune to this damage type
+            if (finalDamage <= 0) return;
+        }
+        else if (hasElementalDamage)
+        {
+            Debug.Log($"[{name}] Applying ELEMENTAL damage only");
+            // Elemental damage only
+            var result = DamageUtils.ApplyElementalDamage(this, amount, damageType, 
+                damageSource, animator, transform, OnDamageTaken, OnDeath, playHitVFX);
+            finalDamage = result.Item2;
+            
+            Debug.Log($"[{name}] Final damage after elemental calculation: {finalDamage:F1}, Health after: {health:F1}/{MaxHealth:F1}");
+            
+            // Skip if immune to this damage type
+            if (finalDamage <= 0) return;
+        }
+        else if (hasPoiseDamage)
+        {
+            Debug.Log($"[{name}] Applying POISE damage only");
+            // Poise damage only
+            var result = DamageUtils.ApplyDamageWithPoise(this, amount, poiseDamage, 
+                damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, playHitVFX);
+            poiseBroken = result.Item2;
+            
+            Debug.Log($"[{name}] Poise broken: {poiseBroken}, Health after: {health:F1}/{MaxHealth:F1}");
+        }
+        else
+        {
+            // Basic damage only
+            float healthBefore = health;
+            health = Mathf.Max(0, health - amount);
+            float actualDamage = healthBefore - health;
+            OnDamageTaken?.Invoke(amount, health);
+            
+            Debug.Log($"[{name}] Health reduced by {actualDamage:F1} - Health after: {health:F1}/{MaxHealth:F1}");
+
+            // Check if already damaged to prevent unnecessary animation calls
+            bool wasAlreadyDamaged = isDamaged;
+            
+            // Set damaged state to prevent movement
+            isDamaged = true;
+            lastDamageTime = Time.time;
+
+            // Only trigger damaged animation if not already damaged
+            if (!wasAlreadyDamaged)
+            {
+                DamageUtils.TriggerDamagedAnimation(animator, DamageUtils.CalculateHitDirection(transform, damageSource));
+            }
+
+            // Play hit VFX only if requested (skip for status effect damage like hunger/sickness)
+            if (playHitVFX)
+            {
+                var (hitPoint, hitNormal) = DamageUtils.CalculateHitPointAndNormal(transform, damageSource);
+                EffectManager.Instance.PlayHitEffect(hitPoint, hitNormal, this);
+            }
+        }
 
         // Update poise damage tracking
-        if (poiseDamage > 0)
+        if (hasPoiseDamage)
         {
             lastPoiseDamageTime = Time.time;
             if (poiseBroken)
@@ -2117,18 +2225,24 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             }
         }
 
-        // Track hit for procedural IK reactions (skip if poise broken to avoid conflicts with stagger animations)
+        // Track hit for procedural IK reactions
         if (damageSource != null)
         {
-            if (!poiseBroken)
+            // Skip IK reactions if poise broken (to avoid conflicts with stagger animations)
+            if (!poiseBroken || !hasPoiseDamage)
             {
                 LastHitOrigin = damageSource.position;
                 LastHitTime = Time.time;
-                LastHitPoiseDamage = poiseDamage; // Use actual poise damage for reaction scaling
+                LastHitPoiseDamage = hasPoiseDamage ? poiseDamage : 10f; // Use actual poise or default
             }
-            HandleDamageReaction(damageSource);
+            
+            if (hasPoiseDamage || hasElementalDamage)
+            {
+                HandleDamageReaction(damageSource);
+            }
         }
 
+        // Check for death
         if (Health <= 0 && !isDead) Die();
     }
 
@@ -2172,11 +2286,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void Heal(float amount)
     {
-        health = Mathf.Min(maxHealth, health + amount);
+        health = Mathf.Min(MaxHealth, health + amount);
         OnHeal?.Invoke(amount, health);
     }
 
-    public void Die()
+    public virtual void Die()
     {
         // Prevent multiple calls to Die()
         if (isDead) return;
@@ -2189,7 +2303,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
         characterInventory.ClearInventory();
 
-        animator.SetBool("Dead", true);
+        animator.SetBool(GameConstants.AnimatorParams.DeadHash, true);
 
         // Disable movement and AI components to prevent dead NPCs from moving
         isAttacking = false;
@@ -2266,19 +2380,54 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     #endregion
 
     public float Health { get => health; set => health = value; }
-    public float MaxHealth { get => maxHealth; set => maxHealth = value; }
+    public float MaxHealth { get => currentStats.maxHealth; set => currentStats.maxHealth = value; }
     public float DamageCooldown { get => damageCooldown; set => damageCooldown = value; }
 
     // Poise properties
     public float Poise 
     { 
         get => poise; 
-        set => poise = Mathf.Clamp(value, 0, maxPoise); 
+        set => poise = Mathf.Clamp(value, 0, currentStats.maxPoise); 
     }
     public float MaxPoise 
     { 
-        get => maxPoise; 
-        set => maxPoise = value; 
+        get => currentStats.maxPoise; 
+        set => currentStats.maxPoise = value; 
+    }
+    
+    /// <summary>
+    /// Modify character stats (called by characteristics/mutations)
+    /// Base method for all character types - override in derived classes for additional stats
+    /// </summary>
+    public virtual void ModifyStats(float maxHealthModifier = 0f, float maxPoiseModifier = 0f, 
+                                     float moveMaxSpeedModifier = 0f, float rotationSpeedModifier = 0f, 
+                                     float dashSpeedModifier = 0f, float dashCooldownModifier = 0f)
+    {
+        currentStats.maxHealth += maxHealthModifier;
+        currentStats.maxPoise += maxPoiseModifier;
+        currentStats.moveMaxSpeed += moveMaxSpeedModifier;
+        currentStats.rotationSpeed += rotationSpeedModifier;
+        currentStats.dashSpeed += dashSpeedModifier;
+        currentStats.dashCooldown += dashCooldownModifier;
+    }
+    
+    /// <summary>
+    /// Get current modifiable stats (for debugging/UI/save system)
+    /// </summary>
+    public CharacterModifiableStats GetCurrentStats() => currentStats;
+    
+    /// <summary>
+    /// Get base modifiable stats (for debugging/UI/save system)
+    /// </summary>
+    public CharacterModifiableStats GetBaseStats() => baseStats;
+    
+    /// <summary>
+    /// Set base modifiable stats (for load system)
+    /// </summary>
+    public virtual void SetBaseStats(CharacterModifiableStats stats)
+    {
+        baseStats = stats;
+        currentStats = stats;
     }
 
     protected virtual void OnDestroy()
@@ -2325,103 +2474,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         return DamageUtils.GetDamageMultiplier(GetResistance(damageType));
     }
 
-    /// <summary>
-    /// Take damage with elemental type consideration
-    /// </summary>
-    /// <param name="amount">Base amount of damage to take</param>
-    /// <param name="damageType">Type of elemental damage</param>
-    /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
-    public void TakeDamage(float amount, AttackElement damageType, Transform damageSource = null)
-    {
-        // Prevent taking damage if already dead
-        if (isDead) return;
-        
-        // Prevent taking damage if cooldown is active
-        if (Time.time - lastDamageTime < damageCooldown)
-        {
-            return;
-        }
-
-        // Use DamageUtils for elemental damage calculation with resistance
-        var (hitDirection, finalDamage) = DamageUtils.ApplyElementalDamage(this, amount, damageType, 
-            damageSource, animator, transform, OnDamageTaken, OnDeath, true);
-
-        // Skip if immune to this damage type
-        if (finalDamage <= 0) return;
-
-        // Apply the calculated damage
-        float previousHealth = health;
-        health = Mathf.Max(0, health - finalDamage);
-        OnDamageTaken?.Invoke(finalDamage, health);
-
-        // Check if already damaged to prevent unnecessary animation calls
-        bool wasAlreadyDamaged = isDamaged;
-        
-        // Set damaged state to prevent movement
-        isDamaged = true;
-        lastDamageTime = Time.time; // Update last damage time
-
-        // Track hit for procedural IK reactions
-        if (damageSource != null)
-        {
-            LastHitOrigin = damageSource.position;
-            LastHitTime = Time.time;
-            LastHitPoiseDamage = 10f; // Default poise damage for elemental attacks without poise
-        }
-
-        if (health <= 0 && !isDead) Die();
-    }
-
-    /// <summary>
-    /// Take damage with poise damage and elemental type consideration
-    /// </summary>
-    /// <param name="amount">Base amount of damage to take</param>
-    /// <param name="poiseDamage">Amount of poise damage to take</param>
-    /// <param name="damageType">Type of elemental damage</param>
-    /// <param name="damageSource">Transform of the damage source (optional, for VFX)</param>
-    public void TakeDamage(float amount, float poiseDamage, AttackElement damageType, Transform damageSource = null)
-    {
-        // Prevent taking damage if already dead
-        if (isDead) return;
-        
-        // Use DamageUtils for elemental damage calculation with resistance
-        var (hitDirection, finalDamage, poiseBroken) = DamageUtils.ApplyElementalDamageWithPoise(this, amount, poiseDamage, damageType, 
-            damageSource, animator, transform, OnDamageTaken, OnPoiseBroken, OnDeath, true);
-
-        // Skip if immune to this damage type
-        if (finalDamage <= 0) return;
-
-        // Apply the calculated damage
-        float previousHealth = health;
-        health = Mathf.Max(0, health - finalDamage);
-        OnDamageTaken?.Invoke(finalDamage, health);
-
-        // Update poise damage tracking
-        if (poiseDamage > 0)
-        {
-            lastPoiseDamageTime = Time.time;
-            if (poiseBroken)
-            {
-                isPoiseBroken = true;
-                // Reset poise to max when broken to prevent repeated staggering
-                Poise = MaxPoise;
-            }
-        }
-
-        // Track hit for procedural IK reactions (skip if poise broken to avoid conflicts with stagger animations)
-        if (damageSource != null)
-        {
-            if (!poiseBroken)
-            {
-                LastHitOrigin = damageSource.position;
-                LastHitTime = Time.time;
-                LastHitPoiseDamage = poiseDamage; // Use actual poise damage for reaction scaling
-            }
-            HandleDamageReaction(damageSource);
-        }
-
-        if (health <= 0 && !isDead) Die();
-    }
 
     /// <summary>
     /// Called by Unity for IK updates. This allows hit reactions to modify body part positions dynamically.

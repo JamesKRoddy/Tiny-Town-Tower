@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 57db76edbe0ffd8429bf5cfa303bca74
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 159547
+  packageName: 90's Desktop OS UI
+  packageVersion: 1.0
+  assetPath: Assets/Desktop90_UI/Prefabs/UIElements/D90 Scrollbar.prefab
+  uploadId: 345207

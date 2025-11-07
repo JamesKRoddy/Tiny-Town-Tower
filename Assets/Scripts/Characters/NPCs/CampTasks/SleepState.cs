@@ -27,6 +27,14 @@ public class SleepState : _TaskState
     
     #region Task State Implementation
     
+    protected override void Awake()
+    {
+        base.Awake();
+        
+        // SleepState-specific stopping distance - need to be very close to bed
+        stoppingDistance = 0.5f;
+    }
+    
     public override TaskType GetTaskType()
     {
         return TaskType.SLEEP;
@@ -379,6 +387,17 @@ public class SleepState : _TaskState
         Debug.Log($"[SleepState] {npc.name} waking up (stamina: {npc.GetStaminaPercentage():F1}%)");
         
         StopSleeping();
+        
+        // Check if camp is under attack - if so, flee immediately instead of wandering
+        if (CampManager.Instance != null && CampManager.Instance.IsCampUnderAttack)
+        {
+            Debug.Log($"[SleepState] {npc.name} woke up during attack - immediately fleeing!");
+            if (npc is SettlerNPC settler)
+            {
+                settler.ChangeTask(TaskType.FLEE);
+            }
+            return;
+        }
         
         // Return to work or wander
         TryAssignWorkOrWander();

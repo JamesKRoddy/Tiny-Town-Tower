@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: f29a546b9fe440a42be978b511528b1c
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 159547
+  packageName: 90's Desktop OS UI
+  packageVersion: 1.0
+  assetPath: Assets/Desktop90_UI/Scripts/Editor/PrefabInstantiatorMethods.cs
+  uploadId: 345207
