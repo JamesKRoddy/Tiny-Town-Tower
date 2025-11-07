@@ -1,16 +1,16 @@
 *****Current Work*****
 
-Remove all read me files
 
-Create a new branch
 
 ****** Tomorrow work:
 
-PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
+VFX and sounds for footsteps
+
+Create the scriptable obj and prefabs for: Genetic mutations, weapons, world objects etc.
+
+Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
 
 ****** Next work:
-
-VFX and sounds for footsteps
 
 Charge up attacks by holding down buttons
 
@@ -20,21 +20,13 @@ Have to test turrets using the new damage system
 
 Sweet spot for attack animations which grant extra bonus damage/effects
 
-Custom inspectors for NPC and their components, enemies, managers that need it
-
-Create the scriptable obj and prefabs for: Genetic mutations, weapons, world objects etc.
-
 VFX for player, npc, attacks, hits, status effects etc.
-
-UI refactor, try to reuse buttons, place in graphics to use for the real ui in the game
-
-Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
 
 Recruitable NPCs in roguelike section shouldn't wander, get tired/sick etc. They should just hang out until the player talks to them. Have to create an animation state to just have idle animations
 
-Situation when the last npc dies in the game, you load back to the camp. A length of time passes and more npcs stumble across your camp. The punishment for this is that during this time the camp will be messy, buildings will be damaged or completely broken. You do still get to keep all of your research though.
-
 Clean up debug logs, also have to have a central debug manager to control what classes have enable logs enabled
+
+PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
 
 ****** Bugs and refactoring:
 

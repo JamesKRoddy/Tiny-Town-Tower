@@ -339,13 +339,60 @@ namespace Managers
             }
         }
 
-        public void PlayFootstepEffect(Vector3 position, Vector3 normal, CharacterType characterType)
+    /// <summary>
+    /// Plays footstep effect for a character, detecting surface type automatically
+    /// </summary>
+    /// <param name="position">Position where the footstep occurs (foot IK position)</param>
+    /// <param name="normal">Surface normal</param>
+    /// <param name="characterType">Type of character making the footstep</param>
+    /// <param name="characterTransform">Transform of the character (for surface detection)</param>
+    public void PlayFootstepEffect(Vector3 position, Vector3 normal, CharacterType characterType, Transform characterTransform = null)
+    {
+        SurfaceType surfaceType = SurfaceType.DEFAULT;
+        
+        // Detect surface type if we have a character transform
+        if (characterTransform != null)
         {
-            var effects = GetCharacterEffects(characterType);
-            if (effects == null || effects.footstepEffects == null || effects.footstepEffects.Length == 0) return;
-
-            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, effects.footstepEffects[Random.Range(0, effects.footstepEffects.Length)]);
+            surfaceType = SurfaceDetector.DetectSurfaceAtCharacter(characterTransform);
         }
+        else
+        {
+            // Otherwise detect from position
+            surfaceType = SurfaceDetector.DetectSurface(position + Vector3.up * 0.1f);
+        }
+        
+        PlayFootstepEffect(position, normal, characterType, surfaceType);
+    }
+    
+    /// <summary>
+    /// Plays footstep effect for a character on a specific surface type
+    /// </summary>
+    /// <param name="position">Position where the footstep occurs (foot IK position)</param>
+    /// <param name="normal">Surface normal</param>
+    /// <param name="characterType">Type of character making the footstep</param>
+    /// <param name="surfaceType">Surface type being stepped on</param>
+    public void PlayFootstepEffect(Vector3 position, Vector3 normal, CharacterType characterType, SurfaceType surfaceType)
+    {
+        var characterEffects = GetCharacterEffects(characterType);
+        if (characterEffects == null)
+        {
+            Debug.LogWarning($"[EffectManager] No character effects found for type: {characterType}");
+            return;
+        }
+        
+        // Get surface-specific effects
+        EffectDefinition[] effectsForSurface = characterEffects.GetFootstepEffectsForSurface(surfaceType);
+        
+        if (effectsForSurface == null || effectsForSurface.Length == 0)
+        {
+            // No effects found - this is not necessarily an error, some characters might not have footsteps
+            return;
+        }
+        
+        // Play a random effect from the array
+        EffectDefinition selectedEffect = effectsForSurface[Random.Range(0, effectsForSurface.Length)];
+        PlayEffect(position, normal, Quaternion.LookRotation(normal), null, selectedEffect);
+    }
 
         public void PlaySpawnEffect(Vector3 position, Vector3 normal, CharacterType characterType)
         {

@@ -137,4 +137,111 @@ public static class GameConstants
         public static readonly int MaskCutOutID = Shader.PropertyToID(MaskCutOut);
     }
     #endregion
+
+    #region Animation Events
+    /// <summary>
+    /// Animation event function names called from animation clips
+    /// Use these constants when adding animation events to prevent typos
+    /// </summary>
+    public static class AnimationEvents
+    {
+        // Footstep events
+        public const string FootstepLeft = "FootstepLeft";
+        public const string FootstepRight = "FootstepRight";
+        public const string Footstep = "Footstep";
+
+        // Combat events
+        public const string AttackVFX = "AttackVFX";
+        public const string UseWeapon = "UseWeapon";
+        public const string StopWeapon = "StopWeapon";
+
+        // Work/Task events
+        public const string PlayTaskAnimationEffect = "PlayTaskAnimationEffect";
+
+        /// <summary>
+        /// Attack direction values passed as int parameters to AttackVFX events
+        /// </summary>
+        public static class AttackDirection
+        {
+            public const int HorizontalLeft = 0;
+            public const int HorizontalRight = 1;
+            public const int VerticalDown = 2;
+            public const int VerticalUp = 3;
+        }
+
+        /// <summary>
+        /// Check if an event name is a footstep event
+        /// </summary>
+        public static bool IsFootstepEvent(string eventName)
+        {
+            return eventName == FootstepLeft || 
+                   eventName == FootstepRight || 
+                   eventName == Footstep;
+        }
+
+        /// <summary>
+        /// Check if an event name is a combat event
+        /// </summary>
+        public static bool IsCombatEvent(string eventName)
+        {
+            return eventName == AttackVFX || 
+                   eventName == UseWeapon || 
+                   eventName == StopWeapon;
+        }
+
+        /// <summary>
+        /// Check if an event name is a work/task event
+        /// </summary>
+        public static bool IsWorkEvent(string eventName)
+        {
+            return eventName == PlayTaskAnimationEffect;
+        }
+
+        /// <summary>
+        /// Get all footstep event names
+        /// </summary>
+        public static string[] GetFootstepEventNames()
+        {
+            return new[] { FootstepLeft, FootstepRight, Footstep };
+        }
+
+        /// <summary>
+        /// Get all combat event names
+        /// </summary>
+        public static string[] GetCombatEventNames()
+        {
+            return new[] { AttackVFX, UseWeapon, StopWeapon };
+        }
+
+        /// <summary>
+        /// Get all work event names
+        /// </summary>
+        public static string[] GetWorkEventNames()
+        {
+            return new[] { PlayTaskAnimationEffect };
+        }
+
+        /// <summary>
+        /// Get all animation event names used in the project
+        /// </summary>
+        public static string[] GetAllEventNames()
+        {
+            return new[]
+            {
+                // Footsteps
+                FootstepLeft,
+                FootstepRight,
+                Footstep,
+                
+                // Combat
+                AttackVFX,
+                UseWeapon,
+                StopWeapon,
+                
+                // Work
+                PlayTaskAnimationEffect
+            };
+        }
+    }
+    #endregion
 }

@@ -16,8 +16,11 @@ public class CharacterEffects : BaseEffects
     public EffectDefinition[] deathEffects = new EffectDefinition[0];
 
     [Header("Movement Effects")]
-    [Tooltip("Effects played when the character takes a step")]
+    [Tooltip("DEPRECATED: Use surfaceFootstepEffects instead for surface-specific footsteps")]
     public EffectDefinition[] footstepEffects = new EffectDefinition[0];
+    
+    [Tooltip("Surface-specific footstep effects - one entry per surface type")]
+    public SurfaceFootstepEffects[] surfaceFootstepEffects = new SurfaceFootstepEffects[0];
 
     [Header("Spawn Effects")]
     [Tooltip("Effects played when the character spawns (for enemies)")]
@@ -43,7 +46,49 @@ public class CharacterEffects : BaseEffects
         if (bloodEffects == null) bloodEffects = new EffectDefinition[0];
         if (deathEffects == null) deathEffects = new EffectDefinition[0];
         if (footstepEffects == null) footstepEffects = new EffectDefinition[0];
+        if (surfaceFootstepEffects == null) surfaceFootstepEffects = new SurfaceFootstepEffects[0];
         if (spawnEffects == null) spawnEffects = new EffectDefinition[0];
         if (idleEffects == null) idleEffects = new EffectDefinition[0];
+    }
+    
+    /// <summary>
+    /// Gets footstep effects for a specific surface type
+    /// Falls back to default footstepEffects if no surface-specific effects are defined
+    /// </summary>
+    /// <param name="surfaceType">The surface type to get effects for</param>
+    /// <returns>Array of effect definitions for the surface, or null if none found</returns>
+    public EffectDefinition[] GetFootstepEffectsForSurface(SurfaceType surfaceType)
+    {
+        // First try to find surface-specific effects
+        if (surfaceFootstepEffects != null && surfaceFootstepEffects.Length > 0)
+        {
+            foreach (var surfaceEffect in surfaceFootstepEffects)
+            {
+                if (surfaceEffect.surfaceType == surfaceType && surfaceEffect.footstepEffects != null && surfaceEffect.footstepEffects.Length > 0)
+                {
+                    return surfaceEffect.footstepEffects;
+                }
+            }
+            
+            // If specific surface not found, try DEFAULT surface
+            if (surfaceType != SurfaceType.DEFAULT)
+            {
+                foreach (var surfaceEffect in surfaceFootstepEffects)
+                {
+                    if (surfaceEffect.surfaceType == SurfaceType.DEFAULT && surfaceEffect.footstepEffects != null && surfaceEffect.footstepEffects.Length > 0)
+                    {
+                        return surfaceEffect.footstepEffects;
+                    }
+                }
+            }
+        }
+        
+        // Fallback to legacy footstepEffects array
+        if (footstepEffects != null && footstepEffects.Length > 0)
+        {
+            return footstepEffects;
+        }
+        
+        return null;
     }
 }

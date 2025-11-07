@@ -1,0 +1,604 @@
+================================================================================
+                    ANIMATION EVENT HELPER - COMPREHENSIVE GUIDE
+================================================================================
+
+OVERVIEW:
+---------
+The Animation Event Helper is a powerful editor tool that makes it easy to add
+animation events to your animations without manually editing them. It now
+supports multiple event types:
+
+✓ Footsteps (FootstepLeft, FootstepRight, Footstep)
+✓ Combat (AttackVFX, UseWeapon, StopWeapon)
+✓ Work Tasks (PlayTaskAnimationEffect)
+✓ Custom Events (any function name with parameters)
+
+All animation event function names are now stored as constants in:
+  Assets/Scripts/Utils/GameConstants.cs (AnimationEvents section)
+
+================================================================================
+                              ACCESSING THE TOOL
+================================================================================
+
+METHOD 1 - Tools Menu:
+----------------------
+1. Go to: Tools > Animation Event Helper
+2. Drag your animation clip into the window
+3. Choose category and configure events
+4. Click Add button
+
+METHOD 2 - Context Menu (Quick):
+---------------------------------
+Right-click any animation clip in Project window:
+  > Animation Events > Open Event Helper
+  > Animation Events > Quick Add Footsteps (Walk)
+  > Animation Events > Quick Add Footsteps (Run)
+
+Quick Add options automatically add footstep events with preset timings!
+
+================================================================================
+                              TOOL INTERFACE
+================================================================================
+
+TABS:
+-----
+The tool has 4 category tabs:
+
+1. FOOTSTEPS (Cyan)
+   - Add FootstepLeft and FootstepRight events
+   - Quick presets for Walk/Run/Sprint
+   - Accurate foot contact timing
+
+2. COMBAT (Red)
+   - Add AttackVFX (weapon trail effects)
+   - Add UseWeapon (enable hitbox)
+   - Add StopWeapon (disable hitbox)
+   - Quick setup for fast/heavy attacks
+
+3. WORK (Yellow)
+   - Add PlayTaskAnimationEffect events
+   - Specify TaskAnimation enum or leave empty
+
+4. CUSTOM (Green)
+   - Add any custom event
+   - Support for int, float, or string parameters
+
+================================================================================
+                          FOOTSTEPS TAB - DETAILED
+================================================================================
+
+PURPOSE:
+--------
+Add footstep events to walk/run animations for VFX and sound effects.
+
+CONTROLS:
+---------
+- Left Foot Frame/Time: When left foot touches ground
+- Right Foot Frame/Time: When right foot touches ground
+- Use Normalized Time: Toggle between frame numbers and 0-1 time
+
+QUICK PRESETS:
+--------------
+- Walk (0.25 / 0.75): Standard walk cycle timing
+- Run (0.20 / 0.70): Faster run cycle timing
+- Sprint (0.15 / 0.65): Very fast sprint timing
+
+WORKFLOW:
+---------
+1. Load your walk or run animation
+2. Click a preset button OR manually adjust sliders
+3. Preview animation to verify timing looks correct
+4. Click "Add Footstep Events"
+5. Done! Events are added automatically
+
+TIPS:
+-----
+- Start with presets, then fine-tune if needed
+- Check existing events list to see what's already there
+- The tool shows both frame numbers and normalized time
+
+================================================================================
+                          COMBAT TAB - DETAILED
+================================================================================
+
+PURPOSE:
+--------
+Add combat-related events to attack animations.
+
+ATTACK VFX EVENT:
+-----------------
+Plays weapon trail/slash visual effects during attack swing.
+
+Controls:
+- VFX Frame/Time: When to start playing the effect
+- Attack Direction: Which direction the attack swings
+  * Horizontal Left (0)
+  * Horizontal Right (1)
+  * Vertical Down (2)
+  * Vertical Up (3)
+
+Typical Timing:
+- Fast attacks: ~0.2 (20% into animation)
+- Heavy attacks: ~0.3 (30% into animation)
+
+WEAPON HITBOX EVENTS:
+---------------------
+Controls when weapon can damage enemies (UseWeapon = start, StopWeapon = end).
+
+Controls:
+- Start Frame/Time: When hitbox becomes active
+- End Frame/Time: When hitbox becomes inactive
+- Duration: Automatically calculated and displayed
+
+Typical Timing:
+- Fast attacks: 0.25 to 0.45 (short window)
+- Heavy attacks: 0.4 to 0.7 (longer window)
+
+QUICK SETUP BUTTONS:
+--------------------
+These add ALL combat events at once with good defaults:
+
+"Quick Setup: Fast Attack"
+  - AttackVFX at 20%
+  - UseWeapon at 25%
+  - StopWeapon at 45%
+  - Direction: Horizontal Left
+
+"Quick Setup: Heavy Attack"
+  - AttackVFX at 30%
+  - UseWeapon at 40%
+  - StopWeapon at 70%
+  - Direction: Vertical Down
+
+WORKFLOW:
+---------
+1. Load your attack animation
+2. Either:
+   a) Click a Quick Setup button for instant configuration, OR
+   b) Manually configure timing for custom attacks
+3. Done! All combat events added in correct order
+
+================================================================================
+                          WORK TAB - DETAILED
+================================================================================
+
+PURPOSE:
+--------
+Add work/task effect events for NPC work animations (farming, cooking, etc.).
+
+CONTROLS:
+---------
+- Effect Frame/Time: When to play the work effect
+- Task Animation Enum: Optional TaskAnimation enum name
+
+TASK ANIMATION ENUM:
+--------------------
+Leave empty to use character's current WorkTask, or specify:
+  - COOKING_POT_STIR
+  - HAMMER_STANDING
+  - HAMMER_COUNTER
+  - PLANTING_SEEDS
+  - WATERING_PLANTS
+  - HARVEST_PLANT_STANDING
+  - etc.
+
+TYPICAL TIMING:
+---------------
+Add events at "impact" moments:
+- Hammer strike: When hammer hits
+- Stirring: When spoon moves through pot
+- Planting: When hands touch ground
+- Harvesting: When pulling plant
+
+WORKFLOW:
+---------
+1. Load your work animation
+2. Find the "impact" frame (when action happens)
+3. Set Effect Frame to that timing
+4. Enter Task Animation Enum or leave empty
+5. Click "Add Work Effect Event"
+
+================================================================================
+                          CUSTOM TAB - DETAILED
+================================================================================
+
+PURPOSE:
+--------
+Add any custom animation event with optional parameters.
+
+CONTROLS:
+---------
+- Function Name: The method name to call
+- Event Frame/Time: When to call it
+- Parameters: Choose ONE parameter type:
+  * Int Parameter: Whole number value
+  * Float Parameter: Decimal number value
+  * String Parameter: Text value
+
+EXAMPLES:
+---------
+Custom Event: "PlayVoiceClip"
+  String Parameter: "Grunt_01"
+  Time: 0.5
+
+Custom Event: "ShakeCamera"
+  Float Parameter: 0.8 (intensity)
+  Time: 0.3
+
+Custom Event: "ChangeState"
+  Int Parameter: 2 (state ID)
+  Time: 0.9
+
+WORKFLOW:
+---------
+1. Enter function name (must match a method in your scripts)
+2. Set timing
+3. Choose parameter type if needed
+4. Enter parameter value
+5. Click "Add Custom Event"
+
+================================================================================
+                          EXISTING EVENTS LIST
+================================================================================
+
+The bottom section shows all events currently in the animation.
+
+COLOR CODING:
+-------------
+- Cyan: Footstep events
+- Red: Combat events
+- Yellow: Work events
+- White: Custom/other events
+
+INFORMATION SHOWN:
+------------------
+- Function Name
+- Time (in seconds)
+- Frame number
+- Parameters (if any)
+
+This helps you:
+- See what's already added
+- Avoid duplicates
+- Verify timing
+- Check parameters
+
+================================================================================
+                          MANAGING EVENTS
+================================================================================
+
+REMOVE BUTTONS:
+---------------
+"Remove Footstep Events"
+  - Removes only FootstepLeft and FootstepRight events
+  - Keeps all other events intact
+
+"Remove Combat Events"
+  - Removes only AttackVFX, UseWeapon, StopWeapon events
+  - Keeps all other events intact
+
+"Remove ALL Events"
+  - Deletes every animation event in the clip
+  - Shows confirmation dialog
+  - CANNOT BE UNDONE
+
+WORKFLOW:
+---------
+If you need to redo events:
+1. Click appropriate Remove button
+2. Configure new timing
+3. Add events again
+
+================================================================================
+                    ANIMATION EVENT NAMES CONSTANTS
+================================================================================
+
+All function names are now stored in:
+  Assets/Scripts/Utils/GameConstants.cs (AnimationEvents section)
+
+AVAILABLE CONSTANTS:
+--------------------
+
+Footsteps:
+  GameConstants.AnimationEvents.FootstepLeft
+  GameConstants.AnimationEvents.FootstepRight
+  GameConstants.AnimationEvents.Footstep
+
+Combat:
+  GameConstants.AnimationEvents.AttackVFX
+  GameConstants.AnimationEvents.UseWeapon
+  GameConstants.AnimationEvents.StopWeapon
+
+Work:
+  GameConstants.AnimationEvents.PlayTaskAnimationEffect
+
+Attack Directions:
+  GameConstants.AnimationEvents.AttackDirection.HorizontalLeft (0)
+  GameConstants.AnimationEvents.AttackDirection.HorizontalRight (1)
+  GameConstants.AnimationEvents.AttackDirection.VerticalDown (2)
+  GameConstants.AnimationEvents.AttackDirection.VerticalUp (3)
+
+USAGE IN CODE:
+--------------
+Use constants instead of magic strings:
+
+OLD WAY (bad):
+  if (evt.functionName == "FootstepLeft")
+
+NEW WAY (good):
+  if (evt.functionName == GameConstants.AnimationEvents.FootstepLeft)
+
+UTILITY METHODS:
+----------------
+Check event categories:
+  GameConstants.AnimationEvents.IsFootstepEvent(eventName)
+  GameConstants.AnimationEvents.IsCombatEvent(eventName)
+  GameConstants.AnimationEvents.IsWorkEvent(eventName)
+
+Get all names in category:
+  GameConstants.AnimationEvents.GetFootstepEventNames()
+  GameConstants.AnimationEvents.GetCombatEventNames()
+  GameConstants.AnimationEvents.GetWorkEventNames()
+  GameConstants.AnimationEvents.GetAllEventNames()
+
+================================================================================
+                          TIPS & BEST PRACTICES
+================================================================================
+
+FOOTSTEPS:
+----------
+1. Start with presets (Walk/Run/Sprint)
+2. Preview animation slowly to verify foot contacts
+3. Fine-tune timing if feet look off
+4. Both feet should trigger once per cycle
+5. Use normalized time for animations of different lengths
+
+COMBAT:
+-------
+1. Use Quick Setup buttons as starting points
+2. AttackVFX should play BEFORE UseWeapon
+3. UseWeapon and StopWeapon define damage window
+4. Longer damage windows = easier to hit with
+5. VFX timing affects feel (earlier = more impact)
+
+WORK TASKS:
+-----------
+1. Add events at "impact" moments
+2. One event per impact in animation
+3. Use empty string for auto-detection
+4. Or specify exact TaskAnimation for consistency
+
+CUSTOM EVENTS:
+--------------
+1. Ensure function exists in CharacterAnimationEvents or similar
+2. Only use ONE parameter type per event
+3. Test events don't work? Check console for errors
+4. Function must be public and match signature
+
+GENERAL:
+--------
+1. Save your scene/project after adding events
+2. Check Existing Events list to verify
+3. Use Remove buttons to clean up mistakes
+4. Context menu Quick Add is fastest for footsteps
+5. Open the tool with clip pre-selected using context menu
+
+================================================================================
+                          TROUBLESHOOTING
+================================================================================
+
+"Add Event" button doesn't work:
+---------------------------------
+✓ Check animation clip is assigned (not null)
+✓ Check you clicked the correct category's Add button
+✓ Check Console for error messages
+✓ Try saving project and reopening tool
+
+Events not showing in list:
+----------------------------
+✓ Click another clip then back to refresh
+✓ Check you saved after adding (happens automatically)
+✓ Verify clip is not read-only
+✓ Check the animation file in your project isn't corrupted
+
+Events not triggering in game:
+-------------------------------
+✓ CharacterAnimationEvents component must be on character
+✓ Function names must match exactly (use constants!)
+✓ Check character has all required components
+✓ Enable debug mode to see if events are called
+✓ Verify animation is actually playing
+
+Wrong timing:
+-------------
+✓ Toggle between frame numbers and normalized time
+✓ Preview animation in Animation window
+✓ Use Unity's animation scrubber to find exact frame
+✓ Remember: normalized time is 0-1, not frame number
+
+Tool window looks broken:
+--------------------------
+✓ Close and reopen: Tools > Animation Event Helper
+✓ Resize window (minimum 450x600)
+✓ Check Unity console for errors
+✓ Restart Unity if styles aren't loading
+
+================================================================================
+                          KEYBOARD SHORTCUTS
+================================================================================
+
+Unfortunately Unity doesn't support custom keyboard shortcuts for editor
+windows, but here are workflow tips:
+
+FAST WORKFLOW:
+--------------
+1. Select animation clip in Project window
+2. Right-click > Animation Events > Quick Add Footsteps (Walk)
+   - OR -
+   Right-click > Animation Events > Open Event Helper
+
+3. For multiple clips, use:
+   - Select clip
+   - Alt+Tab to keep window focused
+   - Drag next clip into window
+   - Configure and add
+   - Repeat
+
+BATCH PROCESSING:
+-----------------
+If you have many animations with same timing:
+1. Configure first animation completely
+2. Note down the exact frame numbers
+3. For remaining animations:
+   - Drag clip in
+   - Enter same frame numbers
+   - Click Add
+   - Next clip
+
+================================================================================
+                          ADVANCED USAGE
+================================================================================
+
+PROGRAMMATIC EVENT ADDING:
+--------------------------
+You can also add events from code:
+
+using UnityEditor;
+
+AnimationEvent evt = new AnimationEvent();
+evt.time = 0.5f; // seconds
+evt.functionName = AnimationEventNames.FOOTSTEP_LEFT;
+evt.intParameter = 0;
+
+AnimationEvent[] events = AnimationUtility.GetAnimationEvents(clip);
+List<AnimationEvent> newEvents = new List<AnimationEvent>(events);
+newEvents.Add(evt);
+AnimationUtility.SetAnimationEvents(clip, newEvents.ToArray());
+
+BATCH PROCESSING SCRIPT:
+-------------------------
+Create an Editor script to process multiple animations:
+
+[MenuItem("Tools/Batch Add Footsteps")]
+static void BatchAddFootsteps()
+{
+    foreach (var clip in Selection.objects.OfType<AnimationClip>())
+    {
+        // Add events to each clip
+    }
+}
+
+CUSTOM PRESETS:
+---------------
+Modify AnimationEventHelper.cs to add your own preset buttons:
+
+if (GUILayout.Button("My Custom Preset"))
+{
+    leftFootFrame = 0.33f;
+    rightFootFrame = 0.66f;
+    AddFootstepEvents();
+}
+
+================================================================================
+                          VERSION COMPATIBILITY
+================================================================================
+
+This tool requires:
+- Unity 2019.4 or newer
+- Animation system (not Timeline)
+- AnimationClip assets (not Animation controllers)
+
+Works with:
+✓ Humanoid rigs
+✓ Generic rigs
+✓ Legacy animation
+✓ Imported FBX animations
+✓ Animation clips created in Unity
+
+Does NOT work with:
+✗ Timeline tracks (use Timeline markers instead)
+✗ Animator states (events go on clips, not states)
+✗ Blend trees (add events to source clips)
+
+================================================================================
+                          EXTENDING THE TOOL
+================================================================================
+
+Want to add more event types?
+
+STEP 1: Add constant to AnimationEventNames.cs
+-------------------------------------------------
+public const string MY_NEW_EVENT = "MyNewEvent";
+
+STEP 2: Add handler to CharacterAnimationEvents.cs
+---------------------------------------------------
+public void MyNewEvent()
+{
+    // Your code here
+}
+
+STEP 3: (Optional) Add new tab to AnimationEventHelper.cs
+----------------------------------------------------------
+Add to EventCategory enum and create DrawMyNewSection() method.
+
+STEP 4: Test
+-------------
+Use Custom tab to test new event before adding dedicated UI.
+
+================================================================================
+                          INTEGRATION NOTES
+================================================================================
+
+This tool integrates with:
+- EffectManager (for footsteps and VFX)
+- CharacterAnimationEvents (event handlers)
+- CharacterCombat (combat events)
+- WorkTask system (work effects)
+
+All function names are defined in AnimationEventNames.cs, so:
+- No magic strings
+- Type-safe with constants
+- Easy refactoring
+- IntelliSense support
+
+The tool saves events directly to animation clips, so:
+- No additional setup needed
+- Works in builds automatically
+- Events are version controlled with clips
+- Compatible with collaboration tools
+
+================================================================================
+                          QUICK REFERENCE
+================================================================================
+
+TOOL LOCATION:
+  Tools > Animation Event Helper
+  OR
+  Right-click AnimationClip > Animation Events > Open Event Helper
+
+CONSTANTS FILE:
+  Assets/Scripts/Utils/GameConstants.cs (AnimationEvents section)
+
+EVENT HANDLERS:
+  Assets/Scripts/Characters/CharacterAnimationEvents.cs
+
+FOOTSTEP PRESETS:
+  Walk: 0.25 / 0.75
+  Run: 0.20 / 0.70
+  Sprint: 0.15 / 0.65
+
+COMBAT QUICK SETUP:
+  Fast Attack: VFX=0.2, Active=0.25-0.45
+  Heavy Attack: VFX=0.3, Active=0.4-0.7
+
+REMEMBER:
+- Use presets as starting points
+- Check Existing Events list
+- Color coding helps identify event types
+- Save happens automatically
+- Remove buttons let you retry
+
+================================================================================
+                          END OF GUIDE
+================================================================================
+

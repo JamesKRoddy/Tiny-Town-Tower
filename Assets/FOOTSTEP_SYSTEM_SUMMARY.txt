@@ -1,0 +1,395 @@
+================================================================================
+                    FOOTSTEP SYSTEM - IMPLEMENTATION SUMMARY
+================================================================================
+
+OVERVIEW:
+---------
+A complete footstep VFX and sound system has been implemented for your NPCs 
+and zombies. The system:
+
+✓ Detects different surface types (grass, stone, wood, metal, etc.)
+✓ Uses humanoid IK for accurate foot placement
+✓ Supports different character types with unique footstep effects
+✓ Integrates with your existing EffectManager and pooling system
+✓ Works with blend tree animations (walk/run)
+✓ Includes editor tools to easily add animation events
+
+================================================================================
+                              FILES CREATED/MODIFIED
+================================================================================
+
+NEW FILES:
+----------
+1. Assets/Scripts/Managers/SurfaceType.cs
+   - Defines surface types (GRASS, STONE, WOOD, etc.)
+   - SurfaceDetector utility for automatic surface detection
+   - SurfaceIdentifier component for manual surface tagging
+
+2. Assets/Scripts/Characters/FootstepSystemGuide.cs
+   - Complete documentation and setup instructions
+   - Step-by-step guide with examples
+   - Tips for different character types
+
+3. Assets/Scripts/Editor/FootstepAnimationEventHelper.cs
+   - Editor window tool to add footstep events to animations
+   - Access via: Tools > Footstep Animation Event Helper
+   - Or right-click animation clip > Add Footstep Events
+
+4. Assets/Scripts/Characters/FootstepTester.cs
+   - Debug component to test footsteps without animations
+   - Keyboard controls for manual testing
+   - Auto-test mode with interval timer
+   - Visualizes foot positions and surface detection
+
+MODIFIED FILES:
+---------------
+1. Assets/Scripts/ScriptableObjects/CharacterEffects.cs
+   - Added surfaceFootstepEffects array
+   - Added GetFootstepEffectsForSurface() method
+   - Maintains backward compatibility with old footstepEffects
+
+2. Assets/Scripts/Managers/GameManagers/EffectManager.cs
+   - Updated PlayFootstepEffect() with surface detection
+   - Overload methods for flexibility
+   - Integrated with SurfaceDetector
+
+3. Assets/Scripts/Characters/CharacterAnimationEvents.cs
+   - Added FootstepLeft() method (for animation events)
+   - Added FootstepRight() method (for animation events)
+   - Added Footstep() generic method
+   - Uses IK for accurate foot positioning
+   - Automatic surface detection
+
+================================================================================
+                              QUICK START GUIDE
+================================================================================
+
+STEP 1 - ADD ANIMATION EVENTS:
+-------------------------------
+Option A: Use the Editor Tool (Recommended)
+1. Open: Tools > Footstep Animation Event Helper
+2. Drag your walk/run animation into "Animation Clip" field
+3. Use sliders or presets to set foot contact frames
+4. Click "Add Footstep Events"
+
+Option B: Manual Method
+1. Select walk/run animation in Project window
+2. Open Animation window
+3. Find frames where feet touch ground
+4. Add Animation Event:
+   - Function: "FootstepLeft" (for left foot contact)
+   - Function: "FootstepRight" (for right foot contact)
+
+Typical Frame Timings:
+- Walk: Left ~25%, Right ~75%
+- Run:  Left ~20%, Right ~70%
+
+STEP 2 - CREATE EFFECT DEFINITIONS:
+------------------------------------
+1. Right-click > Create > Scriptable Objects > Effects > Effect Definition
+2. Name it descriptively (e.g., "Footstep_Zombie_Grass")
+3. Configure:
+   - Prefabs: Add your VFX particle systems
+   - Sounds: Add footstep audio clips
+   - Volume: 0.5-1.0 (footsteps should be subtle)
+   - Spatial Blend: 1.0 (full 3D)
+   - Min/Max Pitch: 0.9-1.1 (for variation)
+
+Repeat for each surface type you want:
+- Footstep_Zombie_Grass
+- Footstep_Zombie_Stone
+- Footstep_Zombie_Wood
+- etc.
+
+STEP 3 - CONFIGURE CHARACTER EFFECTS:
+--------------------------------------
+1. Find or create CharacterEffects asset for your character type
+   - Right-click > Create > Scriptable Objects > Effects > Character Effects
+2. Set Character Type (e.g., ZOMBIE_MELEE)
+3. Configure Surface Footstep Effects:
+   
+   Example for Zombie:
+   
+   Size: 3
+   
+   Element 0:
+     Surface Type: DEFAULT
+     Footstep Effects: [Footstep_Zombie_Default]
+   
+   Element 1:
+     Surface Type: GRASS
+     Footstep Effects: [Footstep_Zombie_Grass_01, Footstep_Zombie_Grass_02]
+   
+   Element 2:
+     Surface Type: STONE
+     Footstep Effects: [Footstep_Zombie_Stone_01, Footstep_Zombie_Stone_02]
+
+4. Repeat for all your character types (NPCs, different zombie types, etc.)
+
+STEP 4 - ASSIGN TO EFFECT MANAGER:
+-----------------------------------
+1. Find EffectManager in your scene
+2. Expand "Character Effects" array
+3. Add your CharacterEffects assets
+4. Ensure each CharacterType has an entry
+
+STEP 5 - (OPTIONAL) TAG SURFACES:
+----------------------------------
+For best surface detection, add SurfaceIdentifier to ground objects:
+
+1. Select ground GameObject
+2. Add Component > Surface Identifier
+3. Set Surface Type
+
+Alternatively:
+- Name physics materials with surface keywords ("grass", "stone", etc.)
+- Name ground objects with surface keywords
+
+================================================================================
+                                    TESTING
+================================================================================
+
+METHOD 1 - Using FootstepTester Component (Quick Test):
+--------------------------------------------------------
+1. Add FootstepTester component to any character
+2. Set Character Type
+3. Enable Debug Mode and Show Gizmos
+4. Play the game
+5. Use keyboard:
+   - Left Arrow = Left foot
+   - Right Arrow = Right foot
+   - Space = Generic footstep
+6. Check console for debug output
+
+METHOD 2 - Using CharacterAnimationEvents (Full Test):
+-------------------------------------------------------
+1. Enable "Debug Footsteps" on CharacterAnimationEvents component
+2. Play the game
+3. Move character around
+4. Watch console for footstep logs
+5. Scene view shows green debug lines at foot positions
+
+METHOD 3 - Context Menu Test:
+------------------------------
+1. Select character in scene (not playing)
+2. Find FootstepTester component
+3. Right-click component header
+4. Select "Test Left Footstep" or "Test Right Footstep"
+
+================================================================================
+                              SURFACE DETECTION
+================================================================================
+
+The system automatically detects surfaces using this priority:
+
+1. SurfaceIdentifier component (most reliable)
+   - Add to ground objects
+   - Explicitly set surface type
+
+2. Physics Material name
+   - Name materials: "Grass", "Stone", "Wood", etc.
+   - System checks material name for keywords
+
+3. GameObject name
+   - Name ground objects: "Ground_Grass", "Floor_Stone", etc.
+   - Fallback detection method
+
+4. DEFAULT surface
+   - Used when no specific surface detected
+   - Always create DEFAULT surface effects as fallback
+
+Keywords Detected:
+- GRASS: "grass", "dirt", "soil"
+- STONE: "stone", "concrete", "brick"
+- WOOD: "wood"
+- METAL: "metal"
+- WATER: "water"
+- SAND: "sand", "gravel"
+- SNOW: "snow", "ice"
+
+================================================================================
+                            CHARACTER VARIATIONS
+================================================================================
+
+Recommended footstep characteristics:
+
+ZOMBIES:
+- Heavy, dragging sounds
+- Lower pitch (0.8-0.9)
+- More debris particles
+- Louder volume (0.8-1.0)
+
+HUMAN NPCs:
+- Light, clean footsteps
+- Normal pitch (0.9-1.1)
+- Subtle dust particles
+- Quieter volume (0.4-0.6)
+
+LARGE ENEMIES:
+- Very heavy impacts
+- Much lower pitch (0.6-0.8)
+- Large particle systems
+- Loudest volume (1.0)
+
+================================================================================
+                              PERFORMANCE NOTES
+================================================================================
+
+The system is optimized for performance:
+
+✓ Uses object pooling (configured in EffectManager)
+✓ Effects automatically return to pool after duration
+✓ Raycasts only occur on footstep events (not every frame)
+✓ Surface detection is cached per footstep
+✓ Compatible with your existing effect pooling system
+
+Recommended Settings:
+- Pool Size: 20 per effect (default in EffectManager)
+- Particle Count: < 50 particles per footstep
+- Effect Duration: 0.5-1.0 seconds
+- Audio Sources: Unity's default limit (32)
+
+================================================================================
+                                API REFERENCE
+================================================================================
+
+Animation Events (Add to animation clips):
+-------------------------------------------
+FootstepLeft()     - Left foot contact (precise IK positioning)
+FootstepRight()    - Right foot contact (precise IK positioning)  
+Footstep()         - Generic footstep (character root position)
+
+Code API:
+---------
+// Detect surface
+SurfaceType surface = SurfaceDetector.DetectSurface(position, rayDistance);
+SurfaceType surface = SurfaceDetector.DetectSurfaceAtCharacter(transform);
+
+// Play footstep effect
+EffectManager.Instance.PlayFootstepEffect(position, normal, characterType, transform);
+EffectManager.Instance.PlayFootstepEffect(position, normal, characterType, surfaceType);
+
+// Get effects for character
+CharacterEffects effects = GetCharacterEffects(characterType);
+EffectDefinition[] footsteps = effects.GetFootstepEffectsForSurface(surfaceType);
+
+================================================================================
+                            TROUBLESHOOTING
+================================================================================
+
+No footsteps playing:
+- Check CharacterEffects asset is assigned to EffectManager
+- Verify Character Type matches between character and effects asset
+- Check animation events are added to animations
+- Enable Debug Footsteps to see console output
+
+Wrong surface detected:
+- Add SurfaceIdentifier components to ground objects
+- Check physics material names for keywords
+- Check "Surface Detection Distance" in CharacterAnimationEvents
+
+Footsteps at wrong position:
+- Verify character has Humanoid avatar type
+- Check foot bones are properly rigged
+- Adjust "Surface Detection Distance"
+
+Footsteps too loud/quiet:
+- Adjust volume in EffectDefinition assets
+- Check audio mixer settings
+- Verify Spatial Blend is set to 1.0
+
+No effects or sounds assigned:
+- Create EffectDefinition assets first
+- Assign to CharacterEffects surfaceFootstepEffects
+- Check prefabs and audio clips are not null
+
+================================================================================
+                              EDITOR TOOLS
+================================================================================
+
+Footstep Animation Event Helper:
+---------------------------------
+Location: Tools > Footstep Animation Event Helper
+
+Features:
+- Add footstep events to animations with GUI
+- Preview existing events
+- Quick presets for walk/run/sprint
+- Frame or normalized time input
+- Remove footstep events
+- Context menu: Right-click animation > Add Footstep Events
+
+Footstep Tester Component:
+---------------------------
+Add to any character for testing
+
+Features:
+- Manual keyboard testing (arrow keys + space)
+- Auto-test mode with interval
+- Test all surfaces automatically
+- Debug mode with console output
+- Visual gizmos showing foot positions
+- Manual or auto surface detection
+
+Context Menu Functions:
+- Test Left Footstep
+- Test Right Footstep  
+- Test Generic Footstep
+- Test All Surfaces
+
+================================================================================
+                            NEXT STEPS
+================================================================================
+
+1. Create EffectDefinition assets for your footsteps
+   - Use your existing VFX and audio assets
+   - Create variations for different surfaces
+
+2. Configure CharacterEffects assets
+   - One for each character type you use
+   - Map surface types to effect definitions
+
+3. Add animation events to walk/run animations
+   - Use the Footstep Animation Event Helper tool
+   - Start with presets, then fine-tune
+
+4. Test with FootstepTester component
+   - Verify effects play correctly
+   - Check surface detection works
+   - Adjust timing if needed
+
+5. Tag important surfaces (optional)
+   - Add SurfaceIdentifier to key ground objects
+   - Ensures accurate detection
+
+================================================================================
+                            ADDITIONAL NOTES
+================================================================================
+
+Integration with Existing Systems:
+- Works with your current EffectManager setup
+- Uses existing object pooling
+- Compatible with CharacterAnimationEvents
+- No changes needed to character controllers
+
+Extensibility:
+- Easy to add new surface types (edit SurfaceType enum)
+- Easy to add new character types (just create CharacterEffects asset)
+- Can create surface-specific detection logic
+- Effects can include both VFX and sounds
+
+Best Practices:
+- Always create a DEFAULT surface effect as fallback
+- Use descriptive names for EffectDefinition assets
+- Keep particle systems lightweight
+- Use pitch variation for more natural sounds
+- Test on different surfaces during development
+
+Remember: Per your preference, all documentation is inline in code comments
+and XML documentation. This text file is supplementary and can be deleted
+after you've completed setup if you prefer.
+
+================================================================================
+                                END OF SUMMARY
+================================================================================
+
