@@ -2783,6 +2783,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7451046357896141963, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: poolSize
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 7451046357896141963, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: buildingHitEffects.Array.size
       value: 0
       objectReference: {fileID: 0}

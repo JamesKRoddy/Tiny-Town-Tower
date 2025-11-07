@@ -18,10 +18,11 @@ MonoBehaviour:
   bloodEffects:
   - {fileID: 11400000, guid: 72ada4b74a4b1c04fa1401dee6cb2cc4, type: 2}
   deathEffects: []
-  footstepEffects: []
+  surfaceFootstepEffects:
+  - surfaceType: 0
+    footstepEffects:
+    - {fileID: 11400000, guid: 938995993cb1b4d43a950a9b60d5175a, type: 2}
   spawnEffects: []
   idleEffects: []
   minIdleInterval: 5
   maxIdleInterval: 15
-  statusEffects:
-  - {fileID: 11400000, guid: 2c012f144f2c04a48bb8399843f48081, type: 2}

@@ -202,6 +202,7 @@ public class CharacterAnimationEvents : MonoBehaviour
         
         Vector3 footPosition = transform.position; // Default fallback
         Vector3 footNormal = Vector3.up;
+        bool hitGround = false;
         
         // Try to get accurate foot position from animator IK
         if (animator != null && animator.isHuman)
@@ -212,23 +213,44 @@ public class CharacterAnimationEvents : MonoBehaviour
             {
                 footPosition = footTransform.position;
                 
+                // Create layer mask that ignores character layers
+                int layerMask = GameConstants.Layers.GroundDetectionMask;
+                
                 // Raycast down from foot to find exact ground contact point
+                // Start higher up to avoid foot being inside ground
                 RaycastHit hit;
-                if (Physics.Raycast(footPosition + Vector3.up * 0.2f, Vector3.down, out hit, surfaceDetectionDistance))
-                {
-                    footPosition = hit.point;
-                    footNormal = hit.normal;
+                Vector3 rayStart = footPosition + Vector3.up * 0.5f;
+                float rayDistance = surfaceDetectionDistance + 0.5f; // Add extra distance for the higher start
                     
-                    if (debugFootsteps)
+                    if (Physics.Raycast(rayStart, Vector3.down, out hit, rayDistance, layerMask, QueryTriggerInteraction.Ignore))
                     {
-                        Debug.DrawLine(footPosition, footPosition + footNormal * 0.5f, Color.green, 1f);
+                        footPosition = hit.point;
+                        footNormal = hit.normal;
+                        hitGround = true;
+                        
+                        if (debugFootsteps)
+                        {
+                            Debug.DrawLine(rayStart, hit.point, Color.green, 2f);
+                        }
                     }
-                }
+                    else
+                    {
+                        if (debugFootsteps)
+                        {
+                            Debug.DrawLine(rayStart, rayStart + Vector3.down * rayDistance, Color.red, 2f);
+                        }
+                    }
             }
         }
         
+        // Only play effect if we actually hit ground
+        if (!hitGround)
+        {
+            return;
+        }
+        
         // Detect surface type at foot position
-        SurfaceType surfaceType = SurfaceDetector.DetectSurface(footPosition + Vector3.up * 0.1f, surfaceDetectionDistance);
+        SurfaceType surfaceType = SurfaceDetector.DetectSurface(footPosition + Vector3.up * 0.1f, surfaceDetectionDistance, ignoreTransform: transform, debugLog: debugFootsteps);
         
         if (debugFootsteps)
         {

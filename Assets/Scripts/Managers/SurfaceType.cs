@@ -66,21 +66,30 @@ public static class SurfaceDetector
     /// </summary>
     /// <param name="position">World position to check from</param>
     /// <param name="rayDistance">How far down to raycast (default 0.5m)</param>
-    /// <param name="layerMask">Layers to check for ground surfaces (default: Everything)</param>
+    /// <param name="ignoreTransform">Optional transform to ignore (useful for ignoring the character's own collider)</param>
     /// <returns>Detected surface type, or DEFAULT if nothing found</returns>
-    public static SurfaceType DetectSurface(Vector3 position, float rayDistance = 0.5f, int layerMask = -1)
+    public static SurfaceType DetectSurface(Vector3 position, float rayDistance = 0.5f, Transform ignoreTransform = null, bool debugLog = false)
     {
         RaycastHit hit;
         
-        // Raycast downward from the position
-        if (Physics.Raycast(position, Vector3.down, out hit, rayDistance, layerMask))
-        {
-            // Priority 1: Check for explicit SurfaceIdentifier component
-            SurfaceIdentifier surfaceId = hit.collider.GetComponent<SurfaceIdentifier>();
-            if (surfaceId != null)
+        // Create layer mask that ignores character layers
+        int layerMask = GameConstants.Layers.GroundDetectionMask;
+        
+            // Raycast downward from the position
+            if (Physics.Raycast(position, Vector3.down, out hit, rayDistance, layerMask, QueryTriggerInteraction.Ignore))
             {
-                return surfaceId.surfaceType;
-            }
+                // Skip if we hit the character we're supposed to ignore
+                if (ignoreTransform != null && hit.transform.IsChildOf(ignoreTransform))
+                {
+                    return SurfaceType.DEFAULT;
+                }
+            
+                // Priority 1: Check for explicit SurfaceIdentifier component
+                SurfaceIdentifier surfaceId = hit.collider.GetComponent<SurfaceIdentifier>();
+                if (surfaceId != null)
+                {
+                    return surfaceId.surfaceType;
+                }
             
             // Priority 2: Check physics material name
             if (hit.collider.sharedMaterial != null)
@@ -139,7 +148,7 @@ public static class SurfaceDetector
     public static SurfaceType DetectSurfaceAtCharacter(Transform characterTransform, float heightOffset = 0.1f, float rayDistance = 1.0f)
     {
         Vector3 startPosition = characterTransform.position + Vector3.up * heightOffset;
-        return DetectSurface(startPosition, rayDistance);
+        return DetectSurface(startPosition, rayDistance, characterTransform);
     }
 }
 

@@ -20,13 +20,23 @@ public static class GameConstants
     public static class Layers
     {
         public const string Enemy = "Enemy";
+        public const string Player = "Player";
+        public const string Settler = "Settler";
         public const string Weapon = "Weapon";
         public const string IgnoreRaycast = "Ignore Raycast";
 
         // Layer mask integers (cached for performance)
         public static readonly int EnemyLayer = LayerMask.NameToLayer(Enemy);
+        public static readonly int PlayerLayer = LayerMask.NameToLayer(Player);
+        public static readonly int SettlerLayer = LayerMask.NameToLayer(Settler);
         public static readonly int WeaponLayer = LayerMask.NameToLayer(Weapon);
         public static readonly int IgnoreRaycastLayer = LayerMask.NameToLayer(IgnoreRaycast);
+        
+        /// <summary>
+        /// Layer mask that excludes character layers (for raycasting to ground)
+        /// Use this for footstep detection, surface detection, etc.
+        /// </summary>
+        public static readonly int GroundDetectionMask = ~LayerMask.GetMask(Enemy, Player, Settler, IgnoreRaycast);
     }
     #endregion
 

@@ -33,7 +33,7 @@ namespace Managers
         [Tooltip("Status effect definitions that apply to all character types")]
         public StatusEffectDefinition[] universalStatusEffects;
 
-        [Tooltip("Number of instances of each effect to keep in the object pool")]
+        [Tooltip("Initial number of instances of each effect to pre-instantiate in the object pool")]
         public int poolSize = 20;
 
         private Dictionary<EffectDefinition, Queue<GameObject>> effectPools = new Dictionary<EffectDefinition, Queue<GameObject>>();
@@ -66,23 +66,35 @@ namespace Managers
             InitializeUniversalStatusEffectPools();
         }
 
-        private void InitializeCharacterEffectPools()
+    private void InitializeCharacterEffectPools()
+    {
+        if (characterEffects == null) return;
+
+        foreach (var charEffect in characterEffects)
         {
-            if (characterEffects == null) return;
+            if (charEffect == null) continue;
 
-            foreach (var charEffect in characterEffects)
+            InitializeEffectPool(charEffect.bloodEffects);
+            InitializeEffectPool(charEffect.impactEffects);
+            InitializeEffectPool(charEffect.deathEffects);
+            InitializeEffectPool(charEffect.destructionEffects);
+            
+            // Initialize surface-specific footstep effects
+            if (charEffect.surfaceFootstepEffects != null)
             {
-                if (charEffect == null) continue;
-
-                InitializeEffectPool(charEffect.bloodEffects);
-                InitializeEffectPool(charEffect.impactEffects);
-                InitializeEffectPool(charEffect.deathEffects);
-                InitializeEffectPool(charEffect.destructionEffects);
-                InitializeEffectPool(charEffect.footstepEffects);
-                InitializeEffectPool(charEffect.spawnEffects);
-                InitializeEffectPool(charEffect.idleEffects);
+                foreach (var surfaceFootstep in charEffect.surfaceFootstepEffects)
+                {
+                    if (surfaceFootstep != null)
+                    {
+                        InitializeEffectPool(surfaceFootstep.footstepEffects);
+                    }
+                }
             }
+            
+            InitializeEffectPool(charEffect.spawnEffects);
+            InitializeEffectPool(charEffect.idleEffects);
         }
+    }
 
         private void InitializeBuildingEffectPools()
         {
@@ -468,6 +480,7 @@ namespace Managers
             }
 
             GameObject vfx = GetPooledObject(effect);
+            
             if (vfx == null)
             {
                 // If we couldn't get a pooled object, create a new one
@@ -590,23 +603,29 @@ namespace Managers
             Queue<GameObject> pool = effectPools[effect];
             List<GameObject> active = activeEffects[effect];
 
-            GameObject obj;
+            GameObject obj = null;
+            
+            // Try to get from available pool
             if (pool.Count > 0)
             {
                 obj = pool.Dequeue();
                 obj.SetActive(true);
                 active.Add(obj);
             }
-            else if (active.Count > 0)
+            // Pool is empty - create a new instance dynamically
+            else if (effect.prefabs != null && effect.prefabs.Length > 0)
             {
-                obj = active[0];
-                active.RemoveAt(0);
-                active.Add(obj);
+                GameObject prefab = effect.prefabs[Random.Range(0, effect.prefabs.Length)];
+                if (prefab != null)
+                {
+                    obj = Instantiate(prefab, transform);
+                    obj.SetActive(true);
+                    active.Add(obj);
+                }
             }
-            else
-            {
+
+            if (obj == null)
                 return null;
-            }
 
             // Ensure AudioSource component exists if the effect has sounds
             if (effect.sounds != null && effect.sounds.Length > 0)
