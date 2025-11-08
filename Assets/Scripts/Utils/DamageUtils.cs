@@ -1,6 +1,6 @@
-using Managers;
 using UnityEngine;
 using Enemies;
+using Managers;
 
 /// <summary>
 /// Utility class for handling damage-related calculations and animations
@@ -1007,12 +1007,12 @@ public static class DamageUtils
     // ===== PROJECTILE UTILITIES =====
 
     /// <summary>
-    /// Fire a projectile with arc trajectory using an effect definition
+    /// Fire a projectile using an effect definition and attach the specified projectile behavior
     /// </summary>
     /// <param name="startPosition">Starting position of the projectile</param>
     /// <param name="direction">Direction of the projectile</param>
     /// <param name="rotation">Rotation of the projectile</param>
-    /// <param name="targetPosition">Target position for the projectile</param>
+    /// <param name="targetPosition">Target position for the projectile (used by ARC and HOMING types)</param>
     /// <param name="damage">Damage the projectile deals on impact</param>
     /// <param name="poiseDamage">Poise damage the projectile deals on impact</param>
     /// <param name="attacker">The attacker (for damage source tracking)</param>
@@ -1022,11 +1022,16 @@ public static class DamageUtils
     /// <param name="createDamageArea">Whether to create a damage area on impact</param>
     /// <param name="damageAreaRadius">Radius of the damage area (if createDamageArea is true)</param>
     /// <param name="damageAreaDuration">Duration of the damage area (if createDamageArea is true)</param>
+    /// <param name="useTriggerBasedDamage">Whether to use trigger-based damage detection</param>
+    /// <param name="projectileType">Type of projectile behavior to attach (STRAIGHT, ARC, HOMING, etc.)</param>
+    /// <param name="projectileSpeed">Speed of the projectile (default varies by type)</param>
+    /// <param name="projectileMaxHeight">Max height for arc projectiles (default 5f)</param>
     /// <returns>The spawned projectile GameObject</returns>
     public static GameObject FireProjectileWithEffect(Vector3 startPosition, Vector3 direction, Quaternion rotation,
         Vector3 targetPosition, float damage, float poiseDamage, Transform attacker, AttackElement element,
         EffectDefinition projectileEffect, EffectDefinition impactEffect = null, bool createDamageArea = false,
-        float damageAreaRadius = 0f, float damageAreaDuration = 5f, bool useTriggerBasedDamage = false)
+        float damageAreaRadius = 0f, float damageAreaDuration = 5f, bool useTriggerBasedDamage = false,
+        ProjectileType projectileType = ProjectileType.NONE, float projectileSpeed = 0f, float projectileMaxHeight = 5f)
     {
         if (projectileEffect == null)
         {
@@ -1037,16 +1042,65 @@ public static class DamageUtils
         // Play the projectile effect and get the spawned GameObject
         GameObject projectileObj = EffectManager.Instance.PlayEffect(startPosition, direction, rotation, null, projectileEffect);
         
-        // Add projectile component to the spawned object
-        if (projectileObj != null)
+        if (projectileObj == null)
         {
-            ArcProjectile projectile = projectileObj.GetComponent<ArcProjectile>();
-            if (projectile == null)
-            {
-                projectile = projectileObj.AddComponent<ArcProjectile>();
-            }
-            projectile.Initialize(targetPosition, damage, poiseDamage, attacker, element, 10f, 5f, 
-                impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage);
+            Debug.LogError("Failed to spawn projectile effect!");
+            return null;
+        }
+        
+        // Attach the appropriate projectile behavior based on type
+        switch (projectileType)
+        {
+            case ProjectileType.STRAIGHT:
+                {
+                    float speed = projectileSpeed > 0f ? projectileSpeed : 20f;
+                    StraightProjectile straightProj = projectileObj.GetComponent<StraightProjectile>();
+                    if (straightProj == null)
+                    {
+                        straightProj = projectileObj.AddComponent<StraightProjectile>();
+                    }
+                    straightProj.Initialize(direction, damage, poiseDamage, attacker, element, speed,
+                        impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage);
+                }
+                break;
+                
+            case ProjectileType.ARC:
+                {
+                    float speed = projectileSpeed > 0f ? projectileSpeed : 10f;
+                    ArcProjectile arcProj = projectileObj.GetComponent<ArcProjectile>();
+                    if (arcProj == null)
+                    {
+                        arcProj = projectileObj.AddComponent<ArcProjectile>();
+                    }
+                    arcProj.Initialize(targetPosition, damage, poiseDamage, attacker, element, speed, projectileMaxHeight,
+                        impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage);
+                }
+                break;
+                
+            case ProjectileType.HOMING:
+                // Homing missiles are handled separately by HomingMissileAttack
+                // which adds the HomingMissile component directly
+                Debug.LogWarning("HOMING projectile type should be configured by HomingMissileAttack, not through FireProjectileWithEffect");
+                break;
+                
+            case ProjectileType.NONE:
+                // No projectile behavior - check if prefab already has one
+                ArcProjectile existingArc = projectileObj.GetComponent<ArcProjectile>();
+                if (existingArc != null)
+                {
+                    float speed = projectileSpeed > 0f ? projectileSpeed : 10f;
+                    existingArc.Initialize(targetPosition, damage, poiseDamage, attacker, element, speed, projectileMaxHeight,
+                        impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage);
+                }
+                
+                StraightProjectile existingStraight = projectileObj.GetComponent<StraightProjectile>();
+                if (existingStraight != null)
+                {
+                    float speed = projectileSpeed > 0f ? projectileSpeed : 20f;
+                    existingStraight.Initialize(direction, damage, poiseDamage, attacker, element, speed,
+                        impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage);
+                }
+                break;
         }
         
         return projectileObj;

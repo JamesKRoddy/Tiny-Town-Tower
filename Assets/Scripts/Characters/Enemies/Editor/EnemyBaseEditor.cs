@@ -21,10 +21,27 @@ namespace Enemies.Editor
         private SerializedProperty poiseRecoveryRate;
         private SerializedProperty poiseRecoveryDelay;
         private SerializedProperty showCollisionDebug;
+        
+        // Cooldown Movement
+        private SerializedProperty enableCooldownMovement;
+        private SerializedProperty cooldownMovementMinDistance;
+        private SerializedProperty cooldownMovementMaxDistance;
+        private SerializedProperty cooldownMovementMinDuration;
+        private SerializedProperty cooldownMovementMaxDuration;
+        
+        // Head Tracking
+        private SerializedProperty enableHeadTracking;
+        private SerializedProperty headTrackingWeight;
+        private SerializedProperty headTrackingRotationWeight;
+        private SerializedProperty headTrackingLerpSpeed;
+        private SerializedProperty maxHeadTrackingAngle;
+        private SerializedProperty headTrackingDistance;
 
         private bool showMovementSettings = true;
         private bool showHealthSettings = true;
         private bool showPoiseSettings = true;
+        private bool showCooldownMovementSettings = false;
+        private bool showHeadTrackingSettings = false;
         private bool showDebugSettings = false;
 
         protected virtual void OnEnable()
@@ -42,6 +59,21 @@ namespace Enemies.Editor
             poiseRecoveryRate = serializedObject.FindProperty("poiseRecoveryRate");
             poiseRecoveryDelay = serializedObject.FindProperty("poiseRecoveryDelay");
             showCollisionDebug = serializedObject.FindProperty("showCollisionDebug");
+            
+            // Cooldown Movement
+            enableCooldownMovement = serializedObject.FindProperty("enableCooldownMovement");
+            cooldownMovementMinDistance = serializedObject.FindProperty("cooldownMovementMinDistance");
+            cooldownMovementMaxDistance = serializedObject.FindProperty("cooldownMovementMaxDistance");
+            cooldownMovementMinDuration = serializedObject.FindProperty("cooldownMovementMinDuration");
+            cooldownMovementMaxDuration = serializedObject.FindProperty("cooldownMovementMaxDuration");
+            
+            // Head Tracking
+            enableHeadTracking = serializedObject.FindProperty("enableHeadTracking");
+            headTrackingWeight = serializedObject.FindProperty("headTrackingWeight");
+            headTrackingRotationWeight = serializedObject.FindProperty("headTrackingRotationWeight");
+            headTrackingLerpSpeed = serializedObject.FindProperty("headTrackingLerpSpeed");
+            maxHeadTrackingAngle = serializedObject.FindProperty("maxHeadTrackingAngle");
+            headTrackingDistance = serializedObject.FindProperty("headTrackingDistance");
         }
 
         public override void OnInspectorGUI()
@@ -126,6 +158,53 @@ namespace Enemies.Editor
             EditorGUILayout.EndFoldoutHeaderGroup();
             EditorGUILayout.Space(5);
 
+            // Cooldown Movement Settings
+            showCooldownMovementSettings = EditorGUILayout.BeginFoldoutHeaderGroup(showCooldownMovementSettings, "Cooldown Movement Settings");
+            if (showCooldownMovementSettings)
+            {
+                EditorGUI.indentLevel++;
+                
+                EditorGUILayout.PropertyField(enableCooldownMovement);
+                
+                if (enableCooldownMovement != null && enableCooldownMovement.boolValue)
+                {
+                    EditorGUI.indentLevel++;
+                    EditorGUILayout.PropertyField(cooldownMovementMinDistance);
+                    EditorGUILayout.PropertyField(cooldownMovementMaxDistance);
+                    EditorGUILayout.PropertyField(cooldownMovementMinDuration);
+                    EditorGUILayout.PropertyField(cooldownMovementMaxDuration);
+                    EditorGUI.indentLevel--;
+                }
+                
+                EditorGUI.indentLevel--;
+            }
+            EditorGUILayout.EndFoldoutHeaderGroup();
+            EditorGUILayout.Space(5);
+
+            // Head Tracking Settings
+            showHeadTrackingSettings = EditorGUILayout.BeginFoldoutHeaderGroup(showHeadTrackingSettings, "Head Tracking Settings");
+            if (showHeadTrackingSettings)
+            {
+                EditorGUI.indentLevel++;
+                
+                EditorGUILayout.PropertyField(enableHeadTracking);
+                
+                if (enableHeadTracking != null && enableHeadTracking.boolValue)
+                {
+                    EditorGUI.indentLevel++;
+                    EditorGUILayout.PropertyField(headTrackingWeight);
+                    EditorGUILayout.PropertyField(headTrackingRotationWeight);
+                    EditorGUILayout.PropertyField(headTrackingLerpSpeed);
+                    EditorGUILayout.PropertyField(maxHeadTrackingAngle);
+                    EditorGUILayout.PropertyField(headTrackingDistance);
+                    EditorGUI.indentLevel--;
+                }
+                
+                EditorGUI.indentLevel--;
+            }
+            EditorGUILayout.EndFoldoutHeaderGroup();
+            EditorGUILayout.Space(5);
+
             // Debug Settings
             showDebugSettings = EditorGUILayout.BeginFoldoutHeaderGroup(showDebugSettings, "Debug Settings");
             if (showDebugSettings)
@@ -177,6 +256,17 @@ namespace Enemies.Editor
                 "maxPoise",
                 "poiseRecoveryRate",
                 "poiseRecoveryDelay",
+                "enableCooldownMovement",
+                "cooldownMovementMinDistance",
+                "cooldownMovementMaxDistance",
+                "cooldownMovementMinDuration",
+                "cooldownMovementMaxDuration",
+                "enableHeadTracking",
+                "headTrackingWeight",
+                "headTrackingRotationWeight",
+                "headTrackingLerpSpeed",
+                "maxHeadTrackingAngle",
+                "headTrackingDistance",
                 "showCollisionDebug");
 
             serializedObject.ApplyModifiedProperties();

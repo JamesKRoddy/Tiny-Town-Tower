@@ -8,8 +8,11 @@ using Enemies.Attacks;
 namespace Enemies
 {
     /// <summary>
-    /// Base zombie class that uses modular attack components.
+    /// Base class for enemies that use modular attack components.
     /// Handles navigation, health, and automatically selects appropriate attacks based on distance, health, etc.
+    /// 
+    /// This is the foundation for zombies, robots, drones, and any other enemy that needs flexible attack combinations.
+    /// Attach AttackBase components (AnimationAttack, ProjectileAttack, BeamAttack, etc.) to define behavior.
     /// </summary>
     public class ModularEnemy : EnemyBase
     {
@@ -46,14 +49,15 @@ namespace Enemies
 
         protected override void Awake()
         {
-            useRootMotion = true; // Enable root motion for the zombie
+            // Note: useRootMotion should be set by derived classes (Zombie, Robot, Drone, etc.)
+            // before calling base.Awake() to ensure proper NavMeshAgent configuration
             base.Awake();
             originalSpeed = agent.speed; // Store original speed
             
             // Initialize attack components
             InitializeAttackComponents();
             
-            Debug.Log($"[{gameObject.name}] Zombie initialized with {attackComponents.Length} attack component(s)");
+            Debug.Log($"[{gameObject.name}] ModularEnemy initialized with {attackComponents.Length} attack component(s)");
         }
 
         protected override void Start()
@@ -114,7 +118,7 @@ namespace Enemies
                         currentAttack.OnAttackEnd();
                         currentAttack = null;
                     }
-                    if (animator != null)
+                    if (HasValidAnimator())
                     {
                         animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, 0);
                     }
@@ -365,6 +369,21 @@ namespace Enemies
             attackExecutionStartTime = Time.time;
             attack.StartAttack();
             
+            // For enemies without valid animators (like drones) execute immediately
+            if (attack.ShouldExecuteImmediately())
+            {
+                attack.OnAttack();
+                attack.OnAttackEnd();
+                
+                // Clear attack state immediately
+                currentAttack = null;
+                isExecutingAttack = false;
+                
+                // Resume normal movement/logic without waiting for animation events
+                EndAttack();
+                return;
+            }
+            
             // Update base class attack time for cooldown movement system
             lastAttackTime = Time.time;
         }
@@ -437,7 +456,7 @@ namespace Enemies
             }
             
             // Reset attack type to 0 (default)
-            if (animator != null)
+            if (HasValidAnimator())
             {
                 animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, 0);
             }
@@ -449,7 +468,7 @@ namespace Enemies
         /// <summary>
         /// Set the attacking state (used by attack components)
         /// </summary>
-        /// <param name="attacking">Whether the zombie is attacking</param>
+        /// <param name="attacking">Whether the enemy is attacking</param>
         public void SetAttacking(bool attacking)
         {
             isAttacking = attacking;
@@ -464,7 +483,7 @@ namespace Enemies
 
         /// <summary>
         /// Calculate the optimal stopping distance based on available attacks.
-        /// For zombies, this ensures they don't get closer than their closest attack range.
+        /// This ensures the enemy doesn't get closer than their closest attack range.
         /// </summary>
         /// <returns>Optimal stopping distance from target</returns>
         protected override float CalculateOptimalStoppingDistance()
@@ -498,13 +517,13 @@ namespace Enemies
             }
 
             // Return the closest attack range as the optimal stopping distance
-            // This ensures the zombie doesn't get closer than its minimum attack range
+            // This ensures the enemy doesn't get closer than its minimum attack range
             return closestAttackRange;
         }
 
         /// <summary>
-        /// Get the minimum distance at which the zombie can attack.
-        /// For zombies with ranged attacks, this returns the minimum attack distance.
+        /// Get the minimum distance at which the enemy can attack.
+        /// For enemies with ranged attacks, this returns the minimum attack distance.
         /// </summary>
         /// <returns>Minimum attack distance (0 if can attack at any close distance)</returns>
         protected override float GetMinimumAttackDistance()

@@ -72,6 +72,7 @@ namespace Enemies
         protected EnemyBase enemy;
         protected Animator animator;
         protected Transform target;
+        private bool hasValidAnimator;
         
         // Public property for external access
         public Transform Target => target;
@@ -96,6 +97,25 @@ namespace Enemies
         protected virtual void Awake()
         {
             // Override in child classes to set default attack types
+        }
+
+        /// <summary>
+        /// Determine whether this attack has a usable animator to drive its timing.
+        /// Cached each time StartAttack() runs to avoid repeated property lookups.
+        /// </summary>
+        protected bool HasValidAnimator()
+        {
+            return hasValidAnimator;
+        }
+
+        /// <summary>
+        /// Should this attack execute immediately (without waiting for animation events)?
+        /// Default behaviour is to execute immediately when no valid animator is available.
+        /// Child attacks can override to force animation-driven timing even if an animator exists.
+        /// </summary>
+        public virtual bool ShouldExecuteImmediately()
+        {
+            return !HasValidAnimator();
         }
 
         /// <summary>
@@ -151,7 +171,9 @@ namespace Enemies
         /// </summary>
         public virtual void StartAttack()
         {
-            if (enemy != null && animator != null)
+            hasValidAnimator = animator != null && animator.runtimeAnimatorController != null;
+
+            if (enemy != null && animator != null && animator.runtimeAnimatorController != null)
             {
                 animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, attackType);
                 animator.SetTrigger(attackTrigger);
@@ -228,7 +250,7 @@ namespace Enemies
             }
             
             // Reset animation parameters
-            if (enemy != null && animator != null)
+            if (enemy != null && animator != null && animator.runtimeAnimatorController != null)
             {
                 animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, 0);
             }

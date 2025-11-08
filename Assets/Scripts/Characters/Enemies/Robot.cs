@@ -4,10 +4,10 @@ using UnityEngine.AI;
 namespace Enemies
 {
     /// <summary>
-    /// Base robot class that inherits from Zombie (uses the modular attack system).
+    /// Base robot class that inherits from ModularEnemy (uses the modular attack system).
     /// Robots are mechanical enemies with enhanced durability and various attack patterns.
     /// 
-    /// Key Differences from Zombies:
+    /// Key Features:
     /// - Typically higher health and poise
     /// - Different movement characteristics (more rigid/mechanical)
     /// - Uses MACHINE character type for spawning effects
@@ -58,6 +58,10 @@ namespace Enemies
 
         protected override void Awake()
         {
+            // Robots use root motion for animation-driven movement
+            // IMPORTANT: Set this BEFORE calling base.Awake() so NavMeshAgent is configured correctly
+            useRootMotion = true;
+            
             base.Awake();
             
             // Enable shield visual if configured

@@ -6,6 +6,8 @@ Setup some new enemies: Zombie that when its killed splits into smaller enemies.
 
 Create the scriptable obj and prefabs for: Genetic mutations, weapons, world objects etc.
 
+Spawning a boss at the end 
+
 ****** Next work:
 
 Charge up attacks by holding down buttons

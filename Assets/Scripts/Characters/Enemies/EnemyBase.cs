@@ -1216,9 +1216,18 @@ namespace Enemies
             }
         }
 
+        /// <summary>
+        /// Check if animator is valid and has a controller assigned
+        /// Prevents warnings when enemies don't have animation controllers (like drones)
+        /// </summary>
+        protected bool HasValidAnimator()
+        {
+            return animator != null && animator.runtimeAnimatorController != null;
+        }
+
         private void UpdateAnimationParameters()
         {
-            if (animator == null) return;
+            if (!HasValidAnimator()) return;
             
             // Calculate normalized speed based on agent velocity
             float velocity = agent.velocity.magnitude;
@@ -1328,15 +1337,18 @@ namespace Enemies
                 currentHeadTrackingWeight = Mathf.Lerp(currentHeadTrackingWeight, 0f, headTrackingLerpSpeed * Time.deltaTime);
             }
             
-            // Apply head IK weights
-            if (currentHeadTrackingWeight > 0.01f)
+            // Apply head IK weights (only if animator has a controller)
+            if (HasValidAnimator())
             {
-                animator.SetLookAtWeight(currentHeadTrackingWeight, headTrackingRotationWeight, 0f, 0f, 0f);
-                animator.SetLookAtPosition(currentLookAtTarget);
-            }
-            else
-            {
-                animator.SetLookAtWeight(0f);
+                if (currentHeadTrackingWeight > 0.01f)
+                {
+                    animator.SetLookAtWeight(currentHeadTrackingWeight, headTrackingRotationWeight, 0f, 0f, 0f);
+                    animator.SetLookAtPosition(currentLookAtTarget);
+                }
+                else
+                {
+                    animator.SetLookAtWeight(0f);
+                }
             }
         }
 
@@ -1774,7 +1786,11 @@ namespace Enemies
 
         protected virtual void BeginAttackSequence()
         {
-            animator.SetBool(GameConstants.AnimatorParams.AttackHash, true);
+            if (HasValidAnimator())
+            {
+                animator.SetBool(GameConstants.AnimatorParams.AttackHash, true);
+            }
+            
             isAttacking = true;
             isRotatingToAttack = false; // Stop rotation phase
 
@@ -1791,7 +1807,11 @@ namespace Enemies
         /// </summary>
         protected virtual void EndAttack()
         {
-            animator.SetBool(GameConstants.AnimatorParams.AttackHash, false);
+            if (HasValidAnimator())
+            {
+                animator.SetBool(GameConstants.AnimatorParams.AttackHash, false);
+            }
+            
             isAttacking = false;
             isRotatingToAttack = false; // Reset rotation state
 
@@ -1910,7 +1930,7 @@ namespace Enemies
             OnDeath?.Invoke();
             
             // Play death animation
-            if (animator != null)
+            if (HasValidAnimator())
             {
                 Debug.Log($"[{gameObject.name}] Setting death animation and disabling root motion. applyRootMotion before: {animator.applyRootMotion}");
                 animator.SetTrigger(GameConstants.AnimatorParams.DeadHash);

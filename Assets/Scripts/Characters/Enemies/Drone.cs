@@ -4,7 +4,7 @@ using UnityEngine.AI;
 namespace Enemies
 {
     /// <summary>
-    /// Base drone class that inherits from Zombie (uses the modular attack system).
+    /// Base drone class that inherits from ModularEnemy (uses the modular attack system).
     /// Drones are flying enemies that hover above the ground and can attack from the air.
     /// 
     /// Key Features:
@@ -23,13 +23,18 @@ namespace Enemies
     /// 2. Add attack components (ProjectileAttack, BeamAttack recommended)
     /// 3. Configure hover height and movement in inspector
     /// 4. Set CharacterType to MACHINE_DRONE
-    /// 5. Ensure the model has appropriate hover animations
+    /// 5. IMPORTANT: Add a child GameObject for the visual mesh/model (will be auto-detected)
+    ///    - The child will bob/tilt while the parent (NavMeshAgent) stays grounded
+    ///    - If no child found, will bob the entire GameObject (legacy behavior)
     /// </summary>
     public class Drone : ModularEnemy
     {
         #region Inspector Fields
 
         [Header("Drone Flight Settings")]
+        [Tooltip("Child transform containing the visual mesh (auto-detected if null). This will bob while root stays grounded.")]
+        [SerializeField] protected Transform visualMesh;
+        
         [Tooltip("Height above ground to hover at")]
         [SerializeField] protected float hoverHeight = 3f;
         
@@ -88,9 +93,15 @@ namespace Enemies
         protected override void Awake()
         {
             // Drones don't use root motion (flying movement is custom)
+            // IMPORTANT: Set this BEFORE calling base.Awake() so NavMeshAgent is configured correctly
             useRootMotion = false;
             
             base.Awake();
+
+            if (agent != null)
+            {
+                agent.updateRotation = false;
+            }
             
             // Randomize bobbing offset for variety
             bobbingTimeOffset = Random.Range(0f, 2f * Mathf.PI);
@@ -100,17 +111,31 @@ namespace Enemies
         {
             base.Start();
             
+            // Auto-detect visual mesh if not assigned
+            if (visualMesh == null && transform.childCount > 0)
+            {
+                // Use the first child as the visual mesh
+                visualMesh = transform.GetChild(0);
+                Debug.Log($"[{gameObject.name}] Auto-detected visual mesh: {visualMesh.name}");
+            }
+            
+            if (visualMesh == null)
+            {
+                Debug.LogWarning($"[{gameObject.name}] No visual mesh child found! Bobbing will move the entire GameObject (including NavMeshAgent). Add a child GameObject for the mesh to avoid pathfinding issues.");
+            }
+            
             // Set initial hover height
             baseHeight = hoverHeight;
             
-            // Spawn hover effect
+            // Spawn hover effect (attach to visual mesh if available, otherwise root)
             if (hoverEffectPrefab != null)
             {
-                hoverEffectInstance = Instantiate(hoverEffectPrefab, transform);
+                Transform effectParent = visualMesh != null ? visualMesh : transform;
+                hoverEffectInstance = Instantiate(hoverEffectPrefab, effectParent);
                 hoverEffectInstance.transform.localPosition = Vector3.zero;
             }
             
-            Debug.Log($"[{gameObject.name}] Drone initialized at hover height: {hoverHeight}, bobbing: {enableHoverBobbing}, strafe: {strafeMovement}");
+            Debug.Log($"[{gameObject.name}] Drone initialized at hover height: {hoverHeight}, bobbing: {enableHoverBobbing}, strafe: {strafeMovement}, visualMesh: {visualMesh?.name ?? "None (legacy mode)"}");
         }
 
         protected override void Update()
@@ -121,6 +146,9 @@ namespace Enemies
             
             // Apply hover height and bobbing
             ApplyHoverHeight();
+
+            // Rotate to face the current target
+            ApplyLookRotation();
             
             // Apply tilt based on movement
             if (enableTilting)
@@ -146,13 +174,12 @@ namespace Enemies
 
         /// <summary>
         /// Apply hover height and bobbing effect
+        /// If visualMesh is assigned, only the child bobs (NavMeshAgent stays grounded)
+        /// If visualMesh is null, the entire GameObject bobs (legacy behavior)
         /// </summary>
         protected virtual void ApplyHoverHeight()
         {
             if (agent == null || !agent.isOnNavMesh) return;
-            
-            // Get the NavMesh position (ground level)
-            Vector3 navMeshPosition = agent.nextPosition;
             
             // Calculate bobbing offset
             float bobbingOffset = 0f;
@@ -162,11 +189,23 @@ namespace Enemies
                 bobbingOffset = Mathf.Sin(time) * bobbingAmplitude;
             }
             
-            // Apply hover height and bobbing
-            Vector3 targetPosition = navMeshPosition + Vector3.up * (baseHeight + bobbingOffset);
-            
-            // Smoothly move to target position
-            transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * 5f);
+            if (visualMesh != null)
+            {
+                // NEW BEHAVIOR: NavMeshAgent handles root position (agent.updatePosition = true)
+                // We only control the visual mesh child's local position for hovering/bobbing
+                // This keeps pathfinding independent from visual effects
+                Vector3 targetLocalPosition = Vector3.up * (baseHeight + bobbingOffset);
+                visualMesh.localPosition = Vector3.Lerp(visualMesh.localPosition, targetLocalPosition, Time.deltaTime * 5f);
+            }
+            else
+            {
+                // LEGACY BEHAVIOR: Move entire GameObject (including NavMeshAgent)
+                // This can cause pathfinding issues but maintains backwards compatibility
+                // We manually override the position since there's no separate visual mesh
+                Vector3 navMeshPosition = agent.nextPosition;
+                Vector3 targetPosition = navMeshPosition + Vector3.up * (baseHeight + bobbingOffset);
+                transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * 5f);
+            }
         }
 
         /// <summary>
@@ -201,10 +240,15 @@ namespace Enemies
                 currentTilt = Quaternion.Slerp(currentTilt, Quaternion.identity, Time.deltaTime * tiltSpeed);
             }
             
-            // Apply tilt rotation (in addition to facing direction)
-            if (transform.childCount > 0)
+            // Apply tilt rotation to visual mesh
+            if (visualMesh != null)
             {
-                // Apply tilt to child object (model) instead of root to not interfere with facing direction
+                // Apply tilt to visual mesh (doesn't interfere with root facing direction or NavMeshAgent)
+                visualMesh.localRotation = currentTilt;
+            }
+            else if (transform.childCount > 0)
+            {
+                // LEGACY: Apply to first child if no visualMesh assigned
                 Transform model = transform.GetChild(0);
                 model.localRotation = currentTilt;
             }
@@ -250,6 +294,22 @@ namespace Enemies
             
             // Set destination
             agent.SetDestination(strafeTarget);
+        }
+
+        /// <summary>
+        /// Keep the drone oriented toward its current target while allowing the NavMeshAgent to control position.
+        /// </summary>
+        protected virtual void ApplyLookRotation()
+        {
+            if (navMeshTarget == null) return;
+
+            Vector3 direction = navMeshTarget.position - transform.position;
+            direction.y = 0f;
+
+            if (direction.sqrMagnitude < 0.0001f) return;
+
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
         }
 
         #endregion
@@ -359,13 +419,25 @@ namespace Enemies
         {
             base.OnDrawGizmosSelected();
             
-            // Draw hover height line
+            // Show root position (NavMeshAgent position)
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(transform.position, 0.3f);
+            
+            // Show visual mesh position (if assigned)
+            if (visualMesh != null)
+            {
+                Gizmos.color = Color.magenta;
+                Gizmos.DrawWireSphere(visualMesh.position, 0.2f);
+                Gizmos.DrawLine(transform.position, visualMesh.position);
+            }
+            
+            // Draw hover height line from root
             Gizmos.color = Color.cyan;
-            Gizmos.DrawLine(transform.position, transform.position - Vector3.up * hoverHeight);
+            Gizmos.DrawLine(transform.position, transform.position + Vector3.up * hoverHeight);
             
             // Draw hover height sphere
             Gizmos.color = new Color(0f, 1f, 1f, 0.3f);
-            Gizmos.DrawSphere(transform.position - Vector3.up * hoverHeight, 0.5f);
+            Gizmos.DrawSphere(transform.position + Vector3.up * hoverHeight, 0.5f);
             
             // Draw strafe circle at preferred distance
             if (strafeMovement)

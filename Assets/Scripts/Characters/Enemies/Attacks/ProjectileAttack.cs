@@ -114,7 +114,8 @@ namespace Enemies.Attacks
                     createDamageAreaOnImpact,
                     damageRadius,
                     impactDamageDuration,
-                    useTriggerDetection
+                    useTriggerDetection,
+                    ProjectileType.ARC
                 );
             
             Debug.Log($"[{enemy.gameObject.name}] Projectile attack executed | Projectile fired towards: {attackTargetPosition} | Damage: {damage} | Radius: {damageRadius}");

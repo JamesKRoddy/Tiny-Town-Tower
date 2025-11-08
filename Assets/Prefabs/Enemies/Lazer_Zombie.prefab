@@ -3041,7 +3041,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   characterType: 201
-  useRootMotion: 0
+  useRootMotion: 1
   stoppingDistance: 1.5
   rotationSpeed: 10
   movementSpeed: 3.5

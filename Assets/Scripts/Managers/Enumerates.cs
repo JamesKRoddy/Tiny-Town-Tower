@@ -463,3 +463,35 @@ public enum FloatingTextType
     Success
 }
 
+/// <summary>
+/// Types of projectile behaviors
+/// Used to determine which projectile component to attach when spawning projectiles
+/// </summary>
+public enum ProjectileType
+{
+    /// <summary>
+    /// No projectile behavior (static effect or instant hit)
+    /// </summary>
+    NONE = 0,
+    
+    /// <summary>
+    /// Straight line projectile with constant velocity
+    /// </summary>
+    STRAIGHT = 1,
+    
+    /// <summary>
+    /// Arcing projectile that follows a parabolic trajectory
+    /// </summary>
+    ARC = 2,
+    
+    /// <summary>
+    /// Homing projectile that tracks a target
+    /// </summary>
+    HOMING = 3,
+    
+    /// <summary>
+    /// Ballistic projectile affected by gravity
+    /// </summary>
+    BALLISTIC = 4
+}
+
