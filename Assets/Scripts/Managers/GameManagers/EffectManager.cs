@@ -515,14 +515,18 @@ namespace Managers
             vfx.transform.position = position;
             vfx.transform.rotation = rotation;
             
-            // Apply intensity to particle systems using helper component
-            ParticleEffectIntensity intensityHelper = vfx.GetComponent<ParticleEffectIntensity>();
-            if (intensityHelper == null)
+            // Only add intensity component if a non-default intensity is requested
+            // This avoids unnecessary component overhead for most effects
+            if (!Mathf.Approximately(intensity, 1.0f))
             {
-                intensityHelper = vfx.AddComponent<ParticleEffectIntensity>();
-                intensityHelper.Initialize();
+                ParticleEffectIntensity intensityHelper = vfx.GetComponent<ParticleEffectIntensity>();
+                if (intensityHelper == null)
+                {
+                    intensityHelper = vfx.AddComponent<ParticleEffectIntensity>();
+                    intensityHelper.Initialize();
+                }
+                intensityHelper.ApplyIntensity(intensity);
             }
-            intensityHelper.ApplyIntensity(intensity);
 
             float particleDuration = 0f;
             float audioDuration = 0f;

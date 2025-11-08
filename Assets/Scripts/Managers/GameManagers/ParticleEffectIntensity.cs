@@ -10,6 +10,7 @@ namespace Managers
     public class ParticleEffectIntensity : MonoBehaviour
     {
         private bool isInitialized = false;
+        private Vector3 originalScale; // Store the prefab's original scale
         
         /// <summary>
         /// Initialize - ensures all particle systems use Hierarchy scaling mode
@@ -19,6 +20,9 @@ namespace Managers
         public void Initialize()
         {
             if (isInitialized) return;
+            
+            // Capture the original scale from the prefab before any modifications
+            originalScale = transform.localScale;
             
             // Set all particle systems to Hierarchy scaling mode
             // This makes them respect the GameObject's transform scale
@@ -35,6 +39,7 @@ namespace Managers
         /// <summary>
         /// Apply intensity scaling via transform scale
         /// Works perfectly with Size over Lifetime curves
+        /// Multiplies the original prefab scale by the intensity value
         /// </summary>
         /// <param name="intensity">Intensity value (0.1-2.0)</param>
         public void ApplyIntensity(float intensity)
@@ -42,16 +47,19 @@ namespace Managers
             if (!isInitialized) Initialize();
             
             float clampedIntensity = Mathf.Clamp(intensity, 0.1f, 2.0f);
-            transform.localScale = Vector3.one * clampedIntensity;
+            // Apply intensity as a multiplier on top of the original prefab scale
+            transform.localScale = originalScale * clampedIntensity;
         }
         
         /// <summary>
-        /// Reset transform scale to original
+        /// Reset transform scale to original prefab scale
         /// Called when returning to pool
         /// </summary>
         public void ResetToOriginal()
         {
-            transform.localScale = Vector3.one;
+            if (!isInitialized) Initialize();
+            
+            transform.localScale = originalScale;
         }
     }
 }
