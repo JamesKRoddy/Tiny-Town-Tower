@@ -196,7 +196,7 @@ Transform:
   m_GameObject: {fileID: 917726455971820320}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.989965, y: -0.47, z: 17.5}
+  m_LocalPosition: {x: 2.989965, y: -0.97, z: 17.5}
   m_LocalScale: {x: 1.58, y: 1, z: 1.5092}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3599,6 +3599,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3496533891084861522, guid: dd255dba3c270e54eba0c2211b49091b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7451360162888265704}
+    - targetCorrespondingSourceObject: {fileID: 3496533891084861522, guid: dd255dba3c270e54eba0c2211b49091b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7759145804313638417}
   m_SourcePrefab: {fileID: 100100000, guid: dd255dba3c270e54eba0c2211b49091b, type: 3}
 --- !u!4 &2419861824401019224 stripped
 Transform:
@@ -3677,6 +3680,20 @@ MonoBehaviour:
   elementType: 0
   elementalDamageBonus: 0
   damageSource: {fileID: 0}
+  dealerAllegiance: 2
+--- !u!114 &7759145804313638417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3089120999883656162}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c75a705fe886a6c4bb34b27ab132e196, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  surfaceType: 8
 --- !u!1001 &2060873913142937695
 PrefabInstance:
   m_ObjectHideFlags: 0

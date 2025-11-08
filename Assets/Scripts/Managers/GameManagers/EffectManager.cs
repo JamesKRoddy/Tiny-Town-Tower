@@ -361,19 +361,21 @@ namespace Managers
     public void PlayFootstepEffect(Vector3 position, Vector3 normal, CharacterType characterType, Transform characterTransform = null)
     {
         SurfaceType surfaceType = SurfaceType.DEFAULT;
+        Vector3 effectPosition = position;
         
-        // Detect surface type if we have a character transform
+        // Detect surface type and position if we have a character transform
         if (characterTransform != null)
         {
-            surfaceType = SurfaceDetector.DetectSurfaceAtCharacter(characterTransform);
+            surfaceType = SurfaceDetector.DetectSurfaceAtCharacter(characterTransform, out effectPosition);
         }
         else
         {
             // Otherwise detect from position
-            surfaceType = SurfaceDetector.DetectSurface(position + Vector3.up * 0.1f);
+            surfaceType = SurfaceDetector.DetectSurface(position + Vector3.up * 0.1f, out effectPosition);
         }
         
-        PlayFootstepEffect(position, normal, characterType, surfaceType);
+        // Use detected effect position (handles triggers like water/poison)
+        PlayFootstepEffect(effectPosition, normal, characterType, surfaceType);
     }
     
     /// <summary>
@@ -403,7 +405,8 @@ namespace Managers
         
         // Play a random effect from the array
         EffectDefinition selectedEffect = effectsForSurface[Random.Range(0, effectsForSurface.Length)];
-        PlayEffect(position, normal, Quaternion.LookRotation(normal), null, selectedEffect);
+        // Use prefab's default rotation instead of rotating to match surface normal
+        PlayEffect(position, normal, Quaternion.identity, null, selectedEffect);
     }
 
         public void PlaySpawnEffect(Vector3 position, Vector3 normal, CharacterType characterType)

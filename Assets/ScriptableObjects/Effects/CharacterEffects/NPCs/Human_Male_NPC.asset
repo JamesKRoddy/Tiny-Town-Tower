@@ -22,6 +22,9 @@ MonoBehaviour:
   - surfaceType: 0
     footstepEffects:
     - {fileID: 11400000, guid: 938995993cb1b4d43a950a9b60d5175a, type: 2}
+  - surfaceType: 8
+    footstepEffects:
+    - {fileID: 11400000, guid: 2a2e31d594a9a0647ba1bb6938471335, type: 2}
   spawnEffects: []
   idleEffects: []
   minIdleInterval: 5

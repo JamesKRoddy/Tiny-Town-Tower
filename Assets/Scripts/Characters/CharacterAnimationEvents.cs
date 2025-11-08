@@ -127,17 +127,18 @@ public class CharacterAnimationEvents : MonoBehaviour
     {
         if (Managers.EffectManager.Instance == null || damageable == null) return;
         
-        // Detect surface at character position
-        SurfaceType surfaceType = SurfaceDetector.DetectSurfaceAtCharacter(transform, 0.1f, surfaceDetectionDistance);
+        // Detect surface at character position - start from ABOVE to detect triggers at any height
+        Vector3 effectPosition;
+        SurfaceType surfaceType = SurfaceDetector.DetectSurfaceAtCharacter(transform, out effectPosition, 2.0f, surfaceDetectionDistance + 2.5f);
         
         if (debugFootsteps)
         {
-            Debug.Log($"[Footstep] {gameObject.name} - Surface: {surfaceType} at {transform.position}");
+            Debug.Log($"[Footstep] {gameObject.name} - Surface: {surfaceType} at {effectPosition}");
         }
         
-        // Play footstep effect at character position
+        // Play footstep effect at detected surface position (handles triggers like water/poison)
         Managers.EffectManager.Instance.PlayFootstepEffect(
-            transform.position, 
+            effectPosition, 
             Vector3.up, 
             damageable.CharacterType, 
             surfaceType
@@ -249,18 +250,21 @@ public class CharacterAnimationEvents : MonoBehaviour
             return;
         }
         
-        // Detect surface type at foot position
-        SurfaceType surfaceType = SurfaceDetector.DetectSurface(footPosition + Vector3.up * 0.1f, surfaceDetectionDistance, ignoreTransform: transform, debugLog: debugFootsteps);
+        // Detect surface type - start from ABOVE character to detect triggers at any height (water, poison, etc.)
+        // Start high enough to catch waist-height triggers, then raycast down through entire character
+        Vector3 effectPosition;
+        Vector3 detectionStart = transform.position + Vector3.up * 2.0f; // Start from above character's head
+        SurfaceType surfaceType = SurfaceDetector.DetectSurface(detectionStart, out effectPosition, surfaceDetectionDistance + 2.5f, ignoreTransform: transform, debugLog: debugFootsteps);
         
         if (debugFootsteps)
         {
             string footName = ikGoal == AvatarIKGoal.LeftFoot ? "LEFT" : "RIGHT";
-            Debug.Log($"[Footstep] {gameObject.name} - {footName} foot on {surfaceType} at {footPosition}");
+            Debug.Log($"[Footstep] {gameObject.name} - {footName} foot on {surfaceType} at {effectPosition}");
         }
         
-        // Play footstep effect
+        // Play footstep effect at detected surface position (handles triggers like water/poison)
         Managers.EffectManager.Instance.PlayFootstepEffect(
-            footPosition, 
+            effectPosition, 
             footNormal, 
             damageable.CharacterType, 
             surfaceType

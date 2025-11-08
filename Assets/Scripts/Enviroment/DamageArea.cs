@@ -47,16 +47,17 @@ public class DamageArea : MonoBehaviour, IDamageDealer
     /// <summary>
     /// Ensures the collider and rigidbody are properly configured as triggers
     /// This allows enemies/NPCs to walk through damage areas like vomit pools
+    /// Uses Water layer so footstep system can detect these surfaces for VFX
     /// </summary>
     private void ConfigureColliderAndRigidbody()
     {
-        // Set the GameObject layer to "Ignore Raycast" to prevent NavMesh and root motion collision
-        // This is critical - enemies use collision detection on "Default" and "ObstacleLayer" 
-        // to avoid obstacles, so we need to be on a different layer
-        if (gameObject.layer != GameConstants.Layers.IgnoreRaycastLayer)
+        // Set the GameObject layer to "Water" so footstep raycasts can detect it
+        // NPCs should have Water layer excluded from their obstacleLayerMasks to walk through
+        // This allows footstep system to detect poison/water surfaces while NPCs walk through them
+        if (gameObject.layer != GameConstants.Layers.WaterLayer)
         {
-            gameObject.layer = GameConstants.Layers.IgnoreRaycastLayer;
-            Debug.Log($"[DamageArea] Set layer to '{GameConstants.Layers.IgnoreRaycast}' on {gameObject.name}");
+            gameObject.layer = GameConstants.Layers.WaterLayer;
+            Debug.Log($"[DamageArea] Set layer to '{GameConstants.Layers.Water}' on {gameObject.name}");
         }
         
         // Get all colliders on this GameObject (there might be multiple)

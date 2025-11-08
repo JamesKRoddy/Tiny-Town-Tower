@@ -1,10 +1,8 @@
 *****Current Work*****
 
-
+VFX and sounds for footsteps
 
 ****** Tomorrow work:
-
-VFX and sounds for footsteps
 
 Create the scriptable obj and prefabs for: Genetic mutations, weapons, world objects etc.
 

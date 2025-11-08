@@ -23,6 +23,7 @@ public static class GameConstants
         public const string Player = "Player";
         public const string Settler = "Settler";
         public const string Weapon = "Weapon";
+        public const string Water = "Water";
         public const string IgnoreRaycast = "Ignore Raycast";
 
         // Layer mask integers (cached for performance)
@@ -30,10 +31,12 @@ public static class GameConstants
         public static readonly int PlayerLayer = LayerMask.NameToLayer(Player);
         public static readonly int SettlerLayer = LayerMask.NameToLayer(Settler);
         public static readonly int WeaponLayer = LayerMask.NameToLayer(Weapon);
+        public static readonly int WaterLayer = LayerMask.NameToLayer(Water);
         public static readonly int IgnoreRaycastLayer = LayerMask.NameToLayer(IgnoreRaycast);
         
         /// <summary>
         /// Layer mask that excludes character layers (for raycasting to ground)
+        /// Includes Water layer so triggers like poison pools and water can be detected by footsteps
         /// Use this for footstep detection, surface detection, etc.
         /// </summary>
         public static readonly int GroundDetectionMask = ~LayerMask.GetMask(Enemy, Player, Settler, IgnoreRaycast);

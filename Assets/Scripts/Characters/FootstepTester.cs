@@ -216,12 +216,13 @@ public class FootstepTester : MonoBehaviour
             return testSurface;
         }
         
+        Vector3 hitPos;
         if (position.HasValue)
         {
-            return SurfaceDetector.DetectSurface(position.Value + Vector3.up * 0.1f, 1.0f);
+            return SurfaceDetector.DetectSurface(position.Value + Vector3.up * 0.1f, out hitPos, 1.0f);
         }
         
-        return SurfaceDetector.DetectSurfaceAtCharacter(transform);
+        return SurfaceDetector.DetectSurfaceAtCharacter(transform, out hitPos);
     }
     
     private void OnDrawGizmos()
