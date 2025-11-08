@@ -3,6 +3,12 @@ using System;
 using System.Collections.Generic;
 using Managers;
 
+/// <summary>
+/// Handles animation events for all character types (NPCs, Settlers, and Enemies)
+/// - Footstep events: Works for all characters with IDamageable
+/// - Combat events: Only used by player/NPCs with CharacterCombat and CharacterInventory
+/// - Work events: Only used by Settlers with assigned work tasks
+/// </summary>
 public class CharacterAnimationEvents : MonoBehaviour
 {
     private CharacterCombat combat;
@@ -86,7 +92,7 @@ public class CharacterAnimationEvents : MonoBehaviour
     /// </summary>
     public void UseWeapon()
     {
-        if (inventory.equippedWeaponScriptObj != null)
+        if (inventory != null && inventory.equippedWeaponScriptObj != null)
             inventory.equippedWeaponBase.Use();
     }
 
@@ -95,7 +101,7 @@ public class CharacterAnimationEvents : MonoBehaviour
     /// </summary>
     public void StopWeapon()
     {
-        if (inventory.equippedWeaponScriptObj != null)
+        if (inventory != null && inventory.equippedWeaponScriptObj != null)
             inventory.equippedWeaponBase.StopUse();
     }
     

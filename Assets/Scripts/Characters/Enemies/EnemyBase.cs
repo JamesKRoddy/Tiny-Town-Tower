@@ -500,7 +500,7 @@ namespace Enemies
             return 0f;
         }
 
-        private void UpdateMovement()
+        protected virtual void UpdateMovement()
         {
             // Handle cooldown movement for ranged enemies (this takes priority over regular movement)
             UpdateCooldownMovement();
@@ -1155,7 +1155,7 @@ namespace Enemies
             float maxRange = 0f;
 
             // Check Zombie attack components
-            var zombieComponent = GetComponent<Zombie>();
+            var zombieComponent = GetComponent<ModularEnemy>();
             if (zombieComponent != null)
             {
                 var attackComponents = GetComponents<AttackBase>();

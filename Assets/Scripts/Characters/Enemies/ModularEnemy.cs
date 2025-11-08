@@ -11,7 +11,7 @@ namespace Enemies
     /// Base zombie class that uses modular attack components.
     /// Handles navigation, health, and automatically selects appropriate attacks based on distance, health, etc.
     /// </summary>
-    public class Zombie : EnemyBase
+    public class ModularEnemy : EnemyBase
     {
         #region Constants
         

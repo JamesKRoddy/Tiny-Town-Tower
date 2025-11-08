@@ -1,7 +1,14 @@
 fileFormatVersion: 2
 guid: fd38d2202a7c6714f83d00a0bde323d0
+AssetOrigin:
+  serializedVersion: 1
+  productId: 268209
+  packageName: Zombie Animation Set
+  packageVersion: 1.0
+  assetPath: Assets/Nephilite Studios/Zombie Animation Set/Animations/zombie_walk_05.fbx
+  uploadId: 620862
 ModelImporter:
-  serializedVersion: 21300
+  serializedVersion: 22200
   internalIDToNameTable:
   - first:
       74: 6053303403308736431
@@ -19,10 +26,9 @@ ModelImporter:
     optimizeGameObjects: 0
     removeConstantScaleCurves: 1
     motionNodeName: 
-    rigImportErrors: 
-    rigImportWarnings: 
     animationImportErrors: 
-    animationImportWarnings: 
+    animationImportWarnings: Event FootstepLeft has a time (2.037189) outside the
+      clip's valid range (0.000000..1.566667). It will never be fired
     animationRetargetingWarnings: 
     animationDoRetargetingWarnings: 0
     importAnimatedCustomProperties: 0
@@ -38,9 +44,9 @@ ModelImporter:
     - serializedVersion: 16
       name: zombie_walk_05
       takeName: zombie_walk_05
-      internalID: 0
+      internalID: 6053303403308736431
       firstFrame: 0
-      lastFrame: 90
+      lastFrame: 47
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -48,7 +54,7 @@ ModelImporter:
       loop: 0
       hasAdditiveReferencePose: 0
       loopTime: 1
-      loopBlend: 0
+      loopBlend: 1
       loopBlendOrientation: 1
       loopBlendPositionY: 1
       loopBlendPositionXZ: 0
@@ -59,7 +65,21 @@ ModelImporter:
       mirror: 0
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
-      events: []
+      events:
+      - time: 2.037189
+        functionName: FootstepLeft
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0.1
+        intParameter: 0
+        messageOptions: 0
+      - time: 0.47333333
+        functionName: FootstepRight
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0.1
+        intParameter: 0
+        messageOptions: 0
       transformMask: []
       maskType: 3
       maskSource: {instanceID: 0}
@@ -72,6 +92,7 @@ ModelImporter:
     addColliders: 0
     useSRGBMaterialColor: 1
     sortHierarchyByName: 1
+    importPhysicalCameras: 1
     importVisibility: 1
     importBlendShapes: 1
     importCameras: 1
@@ -99,6 +120,7 @@ ModelImporter:
     secondaryUVMinObjectScale: 1
     secondaryUVPackMargin: 4
     useFileScale: 1
+    strictVertexDataChecks: 0
   tangentSpace:
     normalSmoothAngle: 60
     normalImportMode: 0
@@ -750,22 +772,15 @@ ModelImporter:
     hasTranslationDoF: 0
     hasExtraRoot: 1
     skeletonHasParents: 1
-  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: 0ad932253e8dc8841948afa5d1a0d051,
-    type: 3}
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: 0ad932253e8dc8841948afa5d1a0d051, type: 3}
   autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 3
   humanoidOversampling: 1
   avatarSetup: 2
   addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 0
   remapMaterialsIfMaterialImportModeIsNone: 0
   additionalBone: 0
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 268209
-  packageName: Zombie Animation Set
-  packageVersion: 1.0
-  assetPath: Assets/Nephilite Studios/Zombie Animation Set/Animations/zombie_walk_05.fbx
-  uploadId: 620862

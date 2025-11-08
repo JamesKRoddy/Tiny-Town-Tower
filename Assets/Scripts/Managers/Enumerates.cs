@@ -360,6 +360,7 @@ public enum CharacterType
     ZOMBIE_MELEE = 201,
     ZOMBIE_SPITTER = 202,
     ZOMBIE_TANK = 203,
+    ZOMBIE_SPLITTING = 204,
 
     // Category 3: Machine Types (3xx)
     MACHINE_DRONE = 301,
