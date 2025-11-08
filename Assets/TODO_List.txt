@@ -1,12 +1,10 @@
 *****Current Work*****
 
-VFX and sounds for footsteps
+Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
 
 ****** Tomorrow work:
 
 Create the scriptable obj and prefabs for: Genetic mutations, weapons, world objects etc.
-
-Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
 
 ****** Next work:
 
