@@ -1,5 +1,7 @@
 *****Current Work*****
 
+Homing projectiles not exploding on impact
+
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
 
 ****** Tomorrow work:

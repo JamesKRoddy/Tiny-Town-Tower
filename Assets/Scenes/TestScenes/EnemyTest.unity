@@ -1291,8 +1291,8 @@ MonoBehaviour:
     durationOverride: 0
   startEffectDelay: 0
   attackEffect:
-    effectDefinition: {fileID: 0}
-    spawnPoint: {fileID: 0}
+    effectDefinition: {fileID: 11400000, guid: 42278b46f41fae24b9b5b275bb88225a, type: 2}
+    spawnPoint: {fileID: 1892930243}
     positionOffset: {x: 0, y: 0, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
     parentToTransform: 0
@@ -1328,13 +1328,6 @@ MonoBehaviour:
   turnSpeed: 180
   explodeOnTimeout: 1
   missileSpeedMultiplier: 1.2
-  launchEffect:
-    effectDefinition: {fileID: 11400000, guid: 42278b46f41fae24b9b5b275bb88225a, type: 2}
-    spawnPoint: {fileID: 1892930243}
-    positionOffset: {x: 0, y: 0, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-    parentToTransform: 0
-    durationOverride: 0
 --- !u!1001 &911855481
 PrefabInstance:
   m_ObjectHideFlags: 0
