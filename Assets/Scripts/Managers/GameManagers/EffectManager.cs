@@ -385,7 +385,8 @@ namespace Managers
     /// <param name="normal">Surface normal</param>
     /// <param name="characterType">Type of character making the footstep</param>
     /// <param name="surfaceType">Surface type being stepped on</param>
-    public void PlayFootstepEffect(Vector3 position, Vector3 normal, CharacterType characterType, SurfaceType surfaceType)
+    /// <param name="intensity">Intensity 0-1 (controls particle scale and audio volume, default 1.0)</param>
+    public void PlayFootstepEffect(Vector3 position, Vector3 normal, CharacterType characterType, SurfaceType surfaceType, float intensity = 1.0f)
     {
         var characterEffects = GetCharacterEffects(characterType);
         if (characterEffects == null)
@@ -406,7 +407,7 @@ namespace Managers
         // Play a random effect from the array
         EffectDefinition selectedEffect = effectsForSurface[Random.Range(0, effectsForSurface.Length)];
         // Use prefab's default rotation instead of rotating to match surface normal
-        PlayEffect(position, normal, Quaternion.identity, null, selectedEffect);
+        PlayEffect(position, normal, Quaternion.identity, null, selectedEffect, intensity);
     }
 
         public void PlaySpawnEffect(Vector3 position, Vector3 normal, CharacterType characterType)
@@ -468,7 +469,7 @@ namespace Managers
             return null;
         }
 
-        public GameObject PlayEffect(Vector3 position, Vector3 normal, Quaternion rotation, Transform parent, EffectDefinition effect, float duration = 0f)
+        public GameObject PlayEffect(Vector3 position, Vector3 normal, Quaternion rotation, Transform parent, EffectDefinition effect, float intensity = 1.0f, float duration = 0f)
         {
             if (effect == null)
             {
@@ -513,6 +514,15 @@ namespace Managers
             // Set position and rotation in world space
             vfx.transform.position = position;
             vfx.transform.rotation = rotation;
+            
+            // Apply intensity to particle systems using helper component
+            ParticleEffectIntensity intensityHelper = vfx.GetComponent<ParticleEffectIntensity>();
+            if (intensityHelper == null)
+            {
+                intensityHelper = vfx.AddComponent<ParticleEffectIntensity>();
+                intensityHelper.Initialize();
+            }
+            intensityHelper.ApplyIntensity(intensity);
 
             float particleDuration = 0f;
             float audioDuration = 0f;
@@ -538,7 +548,7 @@ namespace Managers
                 {
                     audioSource.clip = sound;
                     audioSource.pitch = Random.Range(effect.minPitch, effect.maxPitch);
-                    audioSource.volume = effect.volume;
+                    audioSource.volume = effect.volume * Mathf.Clamp01(intensity); // Scale volume by intensity
                     audioSource.spatialBlend = effect.spatialBlend;
                     audioSource.Play();
                     audioDuration = Mathf.Max(audioDuration, sound.length);
@@ -651,6 +661,13 @@ namespace Managers
             
             if (obj != null && effect != null && activeEffects.ContainsKey(effect))
             {
+                // Reset particle intensity to original values before pooling
+                ParticleEffectIntensity intensityHelper = obj.GetComponent<ParticleEffectIntensity>();
+                if (intensityHelper != null)
+                {
+                    intensityHelper.ResetToOriginal();
+                }
+                
                 // Reset parent back to EffectManager before disabling
                 obj.transform.SetParent(transform, false);
                 obj.SetActive(false);
@@ -1238,6 +1255,13 @@ namespace Managers
             
             if (activeEffects.ContainsKey(effect) && activeEffects[effect].Contains(effectInstance))
             {
+                // Reset particle intensity to original values before pooling
+                ParticleEffectIntensity intensityHelper = effectInstance.GetComponent<ParticleEffectIntensity>();
+                if (intensityHelper != null)
+                {
+                    intensityHelper.ResetToOriginal();
+                }
+                
                 // Reset parent back to EffectManager before disabling
                 effectInstance.transform.SetParent(transform, false);
                 effectInstance.SetActive(false);

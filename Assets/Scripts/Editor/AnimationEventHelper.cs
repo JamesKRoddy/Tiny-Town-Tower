@@ -26,6 +26,8 @@ public class AnimationEventHelper : EditorWindow
     // Footstep settings
     private float leftFootFrame = 0f;
     private float rightFootFrame = 0f;
+    private float leftFootIntensity = 1.0f;
+    private float rightFootIntensity = 1.0f;
     
     // Combat settings
     private float attackVfxFrame = 0f;
@@ -229,25 +231,33 @@ public class AnimationEventHelper : EditorWindow
     {
         EditorGUILayout.LabelField("Footstep Events", subHeaderStyle);
         EditorGUILayout.HelpBox(
-            "Add FootstepLeft and FootstepRight events at frames where feet touch ground.",
+            "Add FootstepLeft and FootstepRight events at frames where feet touch ground.\n" +
+            "Intensity (0-1) controls particle scale and audio volume (0.5=walking, 1.0=running).",
             MessageType.Info
         );
         
         int totalFrames = GetTotalFrames();
         
         // Left foot
+        EditorGUILayout.LabelField("Left Foot", EditorStyles.boldLabel);
         if (useNormalizedTime)
-            leftFootFrame = EditorGUILayout.Slider("Left Foot Time", leftFootFrame, 0f, 1f);
+            leftFootFrame = EditorGUILayout.Slider("Time", leftFootFrame, 0f, 1f);
         else
-            leftFootFrame = EditorGUILayout.Slider("Left Foot Frame", leftFootFrame, 0f, totalFrames);
+            leftFootFrame = EditorGUILayout.Slider("Frame", leftFootFrame, 0f, totalFrames);
+        leftFootIntensity = EditorGUILayout.Slider("Intensity", leftFootIntensity, 0f, 1f);
+        
+        EditorGUILayout.Space(5);
         
         // Right foot
+        EditorGUILayout.LabelField("Right Foot", EditorStyles.boldLabel);
         if (useNormalizedTime)
-            rightFootFrame = EditorGUILayout.Slider("Right Foot Time", rightFootFrame, 0f, 1f);
+            rightFootFrame = EditorGUILayout.Slider("Time", rightFootFrame, 0f, 1f);
         else
-            rightFootFrame = EditorGUILayout.Slider("Right Foot Frame", rightFootFrame, 0f, totalFrames);
+            rightFootFrame = EditorGUILayout.Slider("Frame", rightFootFrame, 0f, totalFrames);
+        rightFootIntensity = EditorGUILayout.Slider("Intensity", rightFootIntensity, 0f, 1f);
         
         // Show both representations
+        EditorGUILayout.Space(3);
         EditorGUILayout.BeginHorizontal();
         if (useNormalizedTime)
         {
@@ -267,22 +277,28 @@ public class AnimationEventHelper : EditorWindow
         EditorGUILayout.LabelField("Quick Presets", EditorStyles.miniLabel);
         EditorGUILayout.BeginHorizontal();
         
-        if (GUILayout.Button("Walk\n(0.25/0.75)"))
+        if (GUILayout.Button("Walk\n(0.25/0.75, 0.5)"))
         {
             leftFootFrame = useNormalizedTime ? 0.25f : totalFrames * 0.25f;
             rightFootFrame = useNormalizedTime ? 0.75f : totalFrames * 0.75f;
+            leftFootIntensity = 0.5f;
+            rightFootIntensity = 0.5f;
         }
         
-        if (GUILayout.Button("Run\n(0.20/0.70)"))
+        if (GUILayout.Button("Run\n(0.20/0.70, 0.75)"))
         {
             leftFootFrame = useNormalizedTime ? 0.20f : totalFrames * 0.20f;
             rightFootFrame = useNormalizedTime ? 0.70f : totalFrames * 0.70f;
+            leftFootIntensity = 0.75f;
+            rightFootIntensity = 0.75f;
         }
         
-        if (GUILayout.Button("Sprint\n(0.15/0.65)"))
+        if (GUILayout.Button("Sprint\n(0.15/0.65, 1.0)"))
         {
             leftFootFrame = useNormalizedTime ? 0.15f : totalFrames * 0.15f;
             rightFootFrame = useNormalizedTime ? 0.65f : totalFrames * 0.65f;
+            leftFootIntensity = 1.0f;
+            rightFootIntensity = 1.0f;
         }
         
         EditorGUILayout.EndHorizontal();
@@ -573,10 +589,10 @@ public class AnimationEventHelper : EditorWindow
         float leftTime = CalculateEventTime(leftFootFrame);
         float rightTime = CalculateEventTime(rightFootFrame);
         
-        AddEvent(GameConstants.AnimationEvents.FootstepLeft, leftTime);
-        AddEvent(GameConstants.AnimationEvents.FootstepRight, rightTime);
+        AddEvent(GameConstants.AnimationEvents.FootstepLeft, leftTime, leftFootIntensity);
+        AddEvent(GameConstants.AnimationEvents.FootstepRight, rightTime, rightFootIntensity);
         
-        SaveAndLog($"Added footstep events:\n  Left: {leftTime:F3}s\n  Right: {rightTime:F3}s");
+        SaveAndLog($"Added footstep events:\n  Left: {leftTime:F3}s (intensity: {leftFootIntensity:F2})\n  Right: {rightTime:F3}s (intensity: {rightFootIntensity:F2})");
     }
     
     private void AddAttackVfxEvent()
@@ -853,9 +869,11 @@ public class AnimationEventHelper : EditorWindow
             {
                 case "FootstepLeft":
                     leftFootFrame = useNormalizedTime ? normalizedTime : frameNumber;
+                    leftFootIntensity = evt.floatParameter > 0 ? evt.floatParameter : 1.0f;
                     break;
                 case "FootstepRight":
                     rightFootFrame = useNormalizedTime ? normalizedTime : frameNumber;
+                    rightFootIntensity = evt.floatParameter > 0 ? evt.floatParameter : 1.0f;
                     break;
                 case "AttackVFX":
                     attackVfxFrame = useNormalizedTime ? normalizedTime : frameNumber;

@@ -104,9 +104,10 @@ public class CharacterAnimationEvents : MonoBehaviour
     /// Uses humanoid IK to get accurate foot position
     /// Add this as an Animation Event in your walk/run animations at the frame where the left foot touches ground
     /// </summary>
-    public void FootstepLeft()
+    /// <param name="intensity">Optional intensity 0-1 (controls particle scale and audio volume, default 1.0)</param>
+    public void FootstepLeft(float intensity = 1.0f)
     {
-        PlayFootstepAtFoot(AvatarIKGoal.LeftFoot, HumanBodyBones.LeftFoot);
+        PlayFootstepAtFoot(AvatarIKGoal.LeftFoot, HumanBodyBones.LeftFoot, intensity);
     }
     
     /// <summary>
@@ -114,16 +115,18 @@ public class CharacterAnimationEvents : MonoBehaviour
     /// Uses humanoid IK to get accurate foot position
     /// Add this as an Animation Event in your walk/run animations at the frame where the right foot touches ground
     /// </summary>
-    public void FootstepRight()
+    /// <param name="intensity">Optional intensity 0-1 (controls particle scale and audio volume, default 1.0)</param>
+    public void FootstepRight(float intensity = 1.0f)
     {
-        PlayFootstepAtFoot(AvatarIKGoal.RightFoot, HumanBodyBones.RightFoot);
+        PlayFootstepAtFoot(AvatarIKGoal.RightFoot, HumanBodyBones.RightFoot, intensity);
     }
     
     /// <summary>
     /// Generic footstep event that uses character position (for non-humanoid or simple footsteps)
     /// Can be called from animations that don't need precise foot positioning
     /// </summary>
-    public void Footstep()
+    /// <param name="intensity">Optional intensity 0-1 (controls particle scale and audio volume, default 1.0)</param>
+    public void Footstep(float intensity = 1.0f)
     {
         if (Managers.EffectManager.Instance == null || damageable == null) return;
         
@@ -133,7 +136,7 @@ public class CharacterAnimationEvents : MonoBehaviour
         
         if (debugFootsteps)
         {
-            Debug.Log($"[Footstep] {gameObject.name} - Surface: {surfaceType} at {effectPosition}");
+            Debug.Log($"[Footstep] {gameObject.name} - Surface: {surfaceType} at {effectPosition} (intensity: {intensity:F2})");
         }
         
         // Play footstep effect at detected surface position (handles triggers like water/poison)
@@ -141,7 +144,8 @@ public class CharacterAnimationEvents : MonoBehaviour
             effectPosition, 
             Vector3.up, 
             damageable.CharacterType, 
-            surfaceType
+            surfaceType,
+            intensity
         );
     }
     #endregion
@@ -197,7 +201,8 @@ public class CharacterAnimationEvents : MonoBehaviour
     /// </summary>
     /// <param name="ikGoal">Which foot IK goal to use</param>
     /// <param name="footBone">Which foot bone to use as fallback</param>
-    private void PlayFootstepAtFoot(AvatarIKGoal ikGoal, HumanBodyBones footBone)
+    /// <param name="intensity">Intensity 0-1 controlling particle scale and audio volume</param>
+    private void PlayFootstepAtFoot(AvatarIKGoal ikGoal, HumanBodyBones footBone, float intensity = 1.0f)
     {
         if (Managers.EffectManager.Instance == null || damageable == null) return;
         
@@ -259,7 +264,7 @@ public class CharacterAnimationEvents : MonoBehaviour
         if (debugFootsteps)
         {
             string footName = ikGoal == AvatarIKGoal.LeftFoot ? "LEFT" : "RIGHT";
-            Debug.Log($"[Footstep] {gameObject.name} - {footName} foot on {surfaceType} at {effectPosition}");
+            Debug.Log($"[Footstep] {gameObject.name} - {footName} foot on {surfaceType} at {effectPosition} (intensity: {intensity:F2})");
         }
         
         // Play footstep effect at detected surface position (handles triggers like water/poison)
@@ -267,7 +272,8 @@ public class CharacterAnimationEvents : MonoBehaviour
             effectPosition, 
             footNormal, 
             damageable.CharacterType, 
-            surfaceType
+            surfaceType,
+            intensity
         );
     }
     #endregion
