@@ -36,8 +36,21 @@ namespace Managers
         [Tooltip("Initial number of instances of each effect to pre-instantiate in the object pool")]
         public int poolSize = 20;
 
-        private Dictionary<EffectDefinition, Queue<GameObject>> effectPools = new Dictionary<EffectDefinition, Queue<GameObject>>();
-        private Dictionary<EffectDefinition, List<GameObject>> activeEffects = new Dictionary<EffectDefinition, List<GameObject>>();
+        private class PrefabPool
+        {
+            public GameObject prefab;
+            public Queue<GameObject> available = new Queue<GameObject>();
+            public HashSet<GameObject> active = new HashSet<GameObject>();
+
+            public PrefabPool(GameObject prefabReference)
+            {
+                prefab = prefabReference;
+            }
+        }
+
+        private Dictionary<EffectDefinition, Dictionary<GameObject, PrefabPool>> effectPrefabPools =
+            new Dictionary<EffectDefinition, Dictionary<GameObject, PrefabPool>>();
+        private Dictionary<GameObject, PrefabPool> instanceToPrefabPool = new Dictionary<GameObject, PrefabPool>();
         
         // VFX/Presentation tracking for status effects
         // Note: Gameplay data (active effects) is owned by target objects (IStatusEffectTarget)
@@ -141,24 +154,37 @@ namespace Managers
 
             foreach (var effect in effects)
             {
-                if (effect != null && !effectPools.ContainsKey(effect) && effect.prefabs != null && effect.prefabs.Length > 0)
+                InitializeEffectPool(effect);
+            }
+        }
+
+        private void InitializeEffectPool(EffectDefinition effect)
+        {
+            if (effect == null || effect.prefabs == null || effect.prefabs.Length == 0)
+                return;
+
+            if (!effectPrefabPools.TryGetValue(effect, out var prefabPools))
+            {
+                prefabPools = new Dictionary<GameObject, PrefabPool>();
+                effectPrefabPools[effect] = prefabPools;
+            }
+
+            foreach (var prefab in effect.prefabs)
+            {
+                if (prefab == null) continue;
+
+                if (!prefabPools.TryGetValue(prefab, out var pool))
                 {
-                    Queue<GameObject> pool = new Queue<GameObject>();
-                    List<GameObject> active = new List<GameObject>();
+                    pool = new PrefabPool(prefab);
+                    prefabPools[prefab] = pool;
 
                     for (int i = 0; i < poolSize; i++)
                     {
-                        GameObject prefab = effect.prefabs[Random.Range(0, effect.prefabs.Length)];
-                        if (prefab != null)
-                        {
-                            GameObject obj = Instantiate(prefab, transform);
-                            obj.SetActive(false);
-                            pool.Enqueue(obj);
-                        }
+                        GameObject obj = Instantiate(prefab, transform);
+                        obj.SetActive(false);
+                        pool.available.Enqueue(obj);
+                        instanceToPrefabPool[obj] = pool;
                     }
-
-                    effectPools[effect] = pool;
-                    activeEffects[effect] = active;
                 }
             }
         }
@@ -477,69 +503,63 @@ namespace Managers
                 return null;
             }
 
-            // If the effect isn't in our pools yet, initialize it
-            if (!effectPools.ContainsKey(effect))
-            {
-                InitializeEffectPool(new[] { effect });
-            }
+            InitializeEffectPool(effect);
 
-            GameObject vfx = GetPooledObject(effect);
-            
-            if (vfx == null)
-            {
-                // If we couldn't get a pooled object, create a new one
-                if (effect.prefabs != null && effect.prefabs.Length > 0)
-                {
-                    GameObject prefab = effect.playMode == EffectDefinition.PlayMode.Random
-                        ? effect.prefabs[Random.Range(0, effect.prefabs.Length)]
-                        : effect.prefabs[0]; // For All mode, we'll create additional instances below
-
-                    if (prefab != null)
-                    {
-                        vfx = Instantiate(prefab, parent ?? transform);
-                        activeEffects[effect].Add(vfx);
-                    }
-                }
-            }
-
-            if (vfx == null)
-            {
-                Debug.LogError($"[EffectManager] Failed to create effect instance for: {effect.name}");
-                return null;
-            }
-
-            // Set parent first to ensure proper local space calculations
-            vfx.transform.SetParent(parent ?? transform, false);
-            
-            // Set position and rotation in world space
-            vfx.transform.position = position;
-            vfx.transform.rotation = rotation;
-            
-            // Only add intensity component if a non-default intensity is requested
-            // This avoids unnecessary component overhead for most effects
-            if (!Mathf.Approximately(intensity, 1.0f))
-            {
-                ParticleEffectIntensity intensityHelper = vfx.GetComponent<ParticleEffectIntensity>();
-                if (intensityHelper == null)
-                {
-                    intensityHelper = vfx.AddComponent<ParticleEffectIntensity>();
-                    intensityHelper.Initialize();
-                }
-                intensityHelper.ApplyIntensity(intensity);
-            }
-
+            List<GameObject> spawnedInstances = new List<GameObject>();
             float particleDuration = 0f;
             float audioDuration = 0f;
 
-            // Find all particle systems in the effect (including children) and get the longest duration
-            particleDuration = PlayAllParticleSystemsAndGetMaxDuration(vfx);
+            GameObject primaryInstance = null;
+
+            if (effect.playMode == EffectDefinition.PlayMode.All)
+            {
+                foreach (var prefab in effect.prefabs)
+                {
+                    if (prefab == null) continue;
+
+                    GameObject instance = GetPooledObject(effect, prefab);
+                    if (instance == null)
+                    {
+                        Debug.LogError($"[EffectManager] Failed to get pooled instance for prefab '{prefab.name}' in effect '{effect.name}'");
+                        continue;
+                    }
+
+                    ConfigureEffectInstance(instance, parent, position, rotation, intensity, ref particleDuration);
+
+                    spawnedInstances.Add(instance);
+                    if (primaryInstance == null)
+                    {
+                        primaryInstance = instance;
+                    }
+                }
+            }
+            else
+            {
+                GameObject instance = GetPooledObject(effect);
+                if (instance == null)
+                {
+                    Debug.LogError($"[EffectManager] Failed to get pooled instance for effect '{effect.name}'");
+                    return null;
+                }
+
+                ConfigureEffectInstance(instance, parent, position, rotation, intensity, ref particleDuration);
+
+                spawnedInstances.Add(instance);
+                primaryInstance = instance;
+            }
+
+            if (primaryInstance == null)
+            {
+                Debug.LogError($"[EffectManager] No instances spawned for effect '{effect.name}'");
+                return null;
+            }
 
             if (effect.sounds != null && effect.sounds.Length > 0)
             {
-                AudioSource audioSource = vfx.GetComponent<AudioSource>();
+                AudioSource audioSource = primaryInstance.GetComponent<AudioSource>();
                 if (audioSource == null)
                 {
-                    audioSource = vfx.AddComponent<AudioSource>();
+                    audioSource = primaryInstance.AddComponent<AudioSource>();
                     audioSource.playOnAwake = false;
                     audioSource.loop = false;
                 }
@@ -552,35 +572,47 @@ namespace Managers
                 {
                     audioSource.clip = sound;
                     audioSource.pitch = Random.Range(effect.minPitch, effect.maxPitch);
-                    audioSource.volume = effect.volume * Mathf.Clamp01(intensity); // Scale volume by intensity
+                    audioSource.volume = effect.volume * Mathf.Clamp01(intensity);
                     audioSource.spatialBlend = effect.spatialBlend;
                     audioSource.Play();
                     audioDuration = Mathf.Max(audioDuration, sound.length);
                 }
             }
 
-            // If in All mode, create additional instances for remaining prefabs
-            if (effect.playMode == EffectDefinition.PlayMode.All && effect.prefabs != null && effect.prefabs.Length > 1)
+            if (duration <= 0)
             {
-                for (int i = 1; i < effect.prefabs.Length; i++)
-                {
-                    GameObject additionalVfx = Instantiate(effect.prefabs[i], parent ?? transform);
-                    additionalVfx.transform.position = position;
-                    additionalVfx.transform.rotation = rotation;
-                    activeEffects[effect].Add(additionalVfx);
-
-                    // Play all particle systems in this additional effect and get max duration
-                    float additionalDuration = PlayAllParticleSystemsAndGetMaxDuration(additionalVfx);
-                    particleDuration = Mathf.Max(particleDuration, additionalDuration);
-                }
+                duration = effect.duration > 0 ? effect.duration : Mathf.Max(particleDuration, audioDuration);
             }
 
-            if (duration <= 0)
-                duration = effect.duration > 0 ? effect.duration : Mathf.Max(particleDuration, audioDuration);
+            foreach (var instance in spawnedInstances)
+            {
+                StartCoroutine(ReturnToPoolAfterDuration(instance, effect, duration));
+            }
 
-            StartCoroutine(ReturnToPoolAfterDuration(vfx, effect, duration));
+            return primaryInstance;
+        }
 
-            return vfx;
+        private void ConfigureEffectInstance(GameObject instance, Transform parent, Vector3 position, Quaternion rotation, float intensity, ref float particleDuration)
+        {
+            if (instance == null) return;
+
+            instance.transform.SetParent(parent ?? transform, false);
+            instance.transform.position = position;
+            instance.transform.rotation = rotation;
+
+            if (!Mathf.Approximately(intensity, 1.0f))
+            {
+                ParticleEffectIntensity intensityHelper = instance.GetComponent<ParticleEffectIntensity>();
+                if (intensityHelper == null)
+                {
+                    intensityHelper = instance.AddComponent<ParticleEffectIntensity>();
+                    intensityHelper.Initialize();
+                }
+                intensityHelper.ApplyIntensity(intensity);
+            }
+
+            float instanceDuration = PlayAllParticleSystemsAndGetMaxDuration(instance);
+            particleDuration = Mathf.Max(particleDuration, instanceDuration);
         }
 
         /// <summary>
@@ -613,48 +645,63 @@ namespace Managers
             return maxDuration;
         }
 
-        private GameObject GetPooledObject(EffectDefinition effect)
+        private GameObject GetPooledObject(EffectDefinition effect, GameObject specificPrefab = null)
         {
-            if (effect == null || !effectPools.ContainsKey(effect)) return null;
+            if (effect == null) return null;
 
-            Queue<GameObject> pool = effectPools[effect];
-            List<GameObject> active = activeEffects[effect];
-
-            GameObject obj = null;
-            
-            // Try to get from available pool
-            if (pool.Count > 0)
-            {
-                obj = pool.Dequeue();
-                obj.SetActive(true);
-                active.Add(obj);
-            }
-            // Pool is empty - create a new instance dynamically
-            else if (effect.prefabs != null && effect.prefabs.Length > 0)
-            {
-                GameObject prefab = effect.prefabs[Random.Range(0, effect.prefabs.Length)];
-                if (prefab != null)
-                {
-                    obj = Instantiate(prefab, transform);
-                    obj.SetActive(true);
-                    active.Add(obj);
-                }
-            }
-
-            if (obj == null)
+            if (!effectPrefabPools.TryGetValue(effect, out var prefabPools) || prefabPools.Count == 0)
                 return null;
 
-            // Ensure AudioSource component exists if the effect has sounds
-            if (effect.sounds != null && effect.sounds.Length > 0)
+            if (specificPrefab != null)
             {
-                AudioSource audioSource = obj.GetComponent<AudioSource>();
-                if (audioSource == null)
+                if (!prefabPools.TryGetValue(specificPrefab, out var pool))
                 {
-                    audioSource = obj.AddComponent<AudioSource>();
-                    audioSource.playOnAwake = false;
-                    audioSource.loop = false;
+                    InitializeEffectPool(effect);
+                    if (!prefabPools.TryGetValue(specificPrefab, out pool))
+                        return null;
+                }
+
+                return GetInstanceFromPool(pool);
+            }
+
+            var pools = new List<PrefabPool>(prefabPools.Values);
+            if (pools.Count == 0) return null;
+
+            int startIndex = Random.Range(0, pools.Count);
+
+            for (int i = 0; i < pools.Count; i++)
+            {
+                var pool = pools[(startIndex + i) % pools.Count];
+                GameObject instance = GetInstanceFromPool(pool);
+                if (instance != null)
+                {
+                    return instance;
                 }
             }
+
+            return null;
+        }
+
+        private GameObject GetInstanceFromPool(PrefabPool pool)
+        {
+            if (pool == null || pool.prefab == null) return null;
+
+            GameObject obj = null;
+
+            if (pool.available.Count > 0)
+            {
+                obj = pool.available.Dequeue();
+            }
+            else
+            {
+                obj = Instantiate(pool.prefab, transform);
+            }
+
+            if (obj == null) return null;
+
+            obj.SetActive(true);
+            pool.active.Add(obj);
+            instanceToPrefabPool[obj] = pool;
 
             return obj;
         }
@@ -662,25 +709,8 @@ namespace Managers
         private IEnumerator ReturnToPoolAfterDuration(GameObject obj, EffectDefinition effect, float duration)
         {
             yield return new WaitForSeconds(duration);
-            
-            if (obj != null && effect != null && activeEffects.ContainsKey(effect))
-            {
-                // Reset particle intensity to original values before pooling
-                ParticleEffectIntensity intensityHelper = obj.GetComponent<ParticleEffectIntensity>();
-                if (intensityHelper != null)
-                {
-                    intensityHelper.ResetToOriginal();
-                }
-                
-                // Reset parent back to EffectManager before disabling
-                obj.transform.SetParent(transform, false);
-                obj.SetActive(false);
-                activeEffects[effect].Remove(obj);
-                if (effectPools.ContainsKey(effect))
-                {
-                    effectPools[effect].Enqueue(obj);
-                }
-            }
+
+            ReturnEffectToPool(obj, effect);
         }
         
         #region Status Effect Management
@@ -1257,31 +1287,35 @@ namespace Managers
         {
             if (effectInstance == null || effect == null) return;
             
-            if (activeEffects.ContainsKey(effect) && activeEffects[effect].Contains(effectInstance))
+            if (!instanceToPrefabPool.TryGetValue(effectInstance, out var pool))
             {
-                // Reset particle intensity to original values before pooling
-                ParticleEffectIntensity intensityHelper = effectInstance.GetComponent<ParticleEffectIntensity>();
-                if (intensityHelper != null)
-                {
-                    intensityHelper.ResetToOriginal();
-                }
-                
-                // Reset parent back to EffectManager before disabling
-                effectInstance.transform.SetParent(transform, false);
-                effectInstance.SetActive(false);
-                activeEffects[effect].Remove(effectInstance);
-                
-                if (effectPools.ContainsKey(effect))
-                {
-                    effectPools[effect].Enqueue(effectInstance);
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"[EffectManager] Could not return effect to pool - not tracked or effect definition mismatch");
-                // If we can't return to pool, destroy it to prevent memory leaks
+                Debug.LogWarning($"[EffectManager] Could not return effect instance to pool - instance not tracked");
                 Destroy(effectInstance);
+                return;
             }
+
+            // Optional: ensure this pool belongs to the provided effect definition
+            if (!effectPrefabPools.TryGetValue(effect, out var prefabPools) || !prefabPools.ContainsKey(pool.prefab))
+            {
+                Debug.LogWarning($"[EffectManager] Prefab pool mismatch when returning instance for effect '{effect.name}'");
+                pool.active.Remove(effectInstance);
+                instanceToPrefabPool.Remove(effectInstance);
+                Destroy(effectInstance);
+                return;
+            }
+
+            // Reset particle intensity to original values before pooling
+            ParticleEffectIntensity intensityHelper = effectInstance.GetComponent<ParticleEffectIntensity>();
+            if (intensityHelper != null)
+            {
+                intensityHelper.ResetToOriginal();
+            }
+
+            effectInstance.transform.SetParent(transform, false);
+            effectInstance.SetActive(false);
+
+            pool.active.Remove(effectInstance);
+            pool.available.Enqueue(effectInstance);
         }
         
         /// <summary>
