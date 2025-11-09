@@ -126,7 +126,7 @@ public class HomingProjectile : MonoBehaviour
             transform.rotation = Quaternion.LookRotation(currentDirection);
         }
         
-        Debug.Log($"[HomingProjectile] {gameObject.name} initialized | Target: {targetTransform?.name} | Speed: {speed} | Duration: {duration}s | Has Collider: {GetComponent<Collider>() != null}");
+        Debug.Log($"[HomingProjectile] {gameObject.name} initialized | Target: {targetTransform?.name} | Speed: {speed} | Duration: {duration}s | Has Collider: {GetComponent<Collider>() != null} | CreateDamageArea: {createArea} | Radius: {areaRadius} | UseTrigger: {triggerBased}");
     }
 
     void Update()
@@ -266,6 +266,8 @@ public class HomingProjectile : MonoBehaviour
     /// </summary>
     private void HandleImpact(Vector3 hitPoint, Vector3 hitNormal, Transform hitTransform)
     {
+        Debug.Log($"[HomingProjectile] {gameObject.name} HandleImpact called | HitPoint: {hitPoint} | CreateDamageArea: {createDamageArea} | Radius: {damageAreaRadius} | Damage: {damage}");
+        
         // Stop tracking and movement
         isTracking = false;
         if (rb != null)
@@ -280,6 +282,7 @@ public class HomingProjectile : MonoBehaviour
             IDamageable damageable = hitTransform.GetComponentInParent<IDamageable>();
             if (damageable != null)
             {
+                Debug.Log($"[HomingProjectile] Applying direct hit damage to {hitTransform.name}");
                 var damageInfo = new DamageInfo
                 {
                     Amount = damage,
@@ -292,9 +295,14 @@ public class HomingProjectile : MonoBehaviour
                 };
                 damageable.TakeDamage(damageInfo);
             }
+            else
+            {
+                Debug.Log($"[HomingProjectile] {hitTransform.name} has no IDamageable component");
+            }
         }
 
         // Create damage area if configured
+        Debug.Log($"[HomingProjectile] Checking damage area: createDamageArea={createDamageArea}, useTriggerBasedDamage={useTriggerBasedDamage}, impactEffect={impactEffect?.name ?? "null"}");
         if (createDamageArea)
         {
             if (useTriggerBasedDamage && impactEffect != null)

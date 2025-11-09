@@ -1322,7 +1322,7 @@ MonoBehaviour:
   projectileMaxHeight: 5
   createDamageAreaOnImpact: 1
   impactDamageDuration: 5
-  useTriggerBasedDamage: 1
+  useTriggerBasedDamage: 0
   fallbackDamageRadius: 2
   homingDuration: 3
   turnSpeed: 180
