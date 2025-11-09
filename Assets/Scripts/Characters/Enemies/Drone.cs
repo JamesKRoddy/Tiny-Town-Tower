@@ -209,6 +209,55 @@ namespace Enemies
 
         #endregion
 
+        #region Damage & Knockback
+        
+        /// <summary>
+        /// Disable automatic procedural knockback for drones since we handle it differently
+        /// </summary>
+        protected override bool ShouldApplyProceduralKnockback()
+        {
+            return false; // Drones use custom horizontal-only knockback
+        }
+        
+        /// <summary>
+        /// Override HandleDamageReaction to apply horizontal knockback that works with hovering.
+        /// Drones only get knocked back horizontally, not vertically, to maintain flight.
+        /// </summary>
+        protected override void HandleDamageReaction(Transform damageSource)
+        {
+            base.HandleDamageReaction(damageSource);
+            
+            // Apply horizontal knockback immediately
+            if (damageSource != null && agent != null && agent.isOnNavMesh)
+            {
+                // Calculate knockback direction (horizontal only)
+                Vector3 knockbackDirection = (transform.position - damageSource.position).normalized;
+                knockbackDirection.y = 0f; // Keep on horizontal plane
+                
+                // Scale knockback based on poise damage (same scaling as base class)
+                float baseKnockback = 0.75f;
+                float poiseScale = Mathf.Clamp(LastHitPoiseDamage / 15f, 0.5f, 2.0f);
+                float scaledKnockback = baseKnockback * poiseScale;
+                
+                // Apply knockback to NavMesh position (not visual position)
+                Vector3 knockbackPosition = transform.position + knockbackDirection * scaledKnockback;
+                
+                // Validate position is on NavMesh
+                if (NavMesh.SamplePosition(knockbackPosition, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+                {
+                    // Use Warp to apply knockback without breaking pathfinding
+                    agent.Warp(hit.position);
+                    
+                    if (showCollisionDebug)
+                    {
+                        Debug.Log($"[{gameObject.name}] Drone knockback - Poise: {LastHitPoiseDamage}, Scale: {poiseScale:F2}, Distance: {scaledKnockback:F2}");
+                    }
+                }
+            }
+        }
+        
+        #endregion
+
         #region Movement & Hovering
 
         /// <summary>

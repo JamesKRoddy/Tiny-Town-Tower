@@ -118,7 +118,7 @@ public abstract class BaseProjectile : MonoBehaviour
                 // Spawn trigger-based damage effect (lingering damage zone)
                 Debug.Log($"[{GetType().Name}] Creating trigger-based damage area");
                 EffectManager.Instance?.PlayEffect(hitPoint, hitNormal, Quaternion.identity, 
-                    null, impactEffect, damageAreaDuration);
+                    null, impactEffect, duration: damageAreaDuration);
             }
             else
             {

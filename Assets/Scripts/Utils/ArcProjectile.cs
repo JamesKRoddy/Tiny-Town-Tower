@@ -103,7 +103,13 @@ public class ArcProjectile : MonoBehaviour
         // Play impact effect at projectile position
         if (impactEffect != null)
         {
-            impactObject = EffectManager.Instance.PlayEffect(transform.position, Vector3.up, Quaternion.identity, null, impactEffect, damageAreaDuration);
+            impactObject = EffectManager.Instance.PlayEffect(
+                transform.position,
+                Vector3.up,
+                Quaternion.identity,
+                null,
+                impactEffect,
+                duration: damageAreaDuration);
             
             // Configure trigger-based damage if requested
             if (useTriggerBasedDamage && impactObject != null)

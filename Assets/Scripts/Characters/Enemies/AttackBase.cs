@@ -537,6 +537,14 @@ namespace Enemies
         /// </summary>
         protected virtual void OnDrawGizmosSelected()
         {
+            // Draw min range (too close zone) - yellow
+            if (minRange > 0)
+            {
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawWireSphere(transform.position, minRange);
+            }
+            
+            // Draw max range (attack range) - red
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(transform.position, maxRange);
         }

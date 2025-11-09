@@ -320,9 +320,13 @@ namespace Enemies
         /// <summary>
         /// Applies procedural knockback based on recent hits using the IK reaction system.
         /// This creates smooth, physics-like knockback without coroutines.
+        /// Can be disabled by child classes that handle knockback differently (e.g. flying drones).
         /// </summary>
         private void ApplyProceduralKnockback()
         {
+            // Allow child classes to disable automatic knockback if they handle it differently
+            if (!ShouldApplyProceduralKnockback()) return;
+            
             // Check if we should apply knockback
             float timeSinceHit = Time.time - LastHitTime;
             if (timeSinceHit > 0.3f || LastHitOrigin == Vector3.zero) return; // Slightly longer for visible effect
@@ -1914,6 +1918,15 @@ namespace Enemies
             }
         }
 
+        /// <summary>
+        /// Determines if procedural knockback should be applied automatically.
+        /// Override in child classes to disable if custom knockback handling is needed.
+        /// </summary>
+        protected virtual bool ShouldApplyProceduralKnockback()
+        {
+            return true; // Default: apply knockback for all enemies
+        }
+        
         protected virtual void HandleDamageReaction(Transform damageSource)
         {
             // Knockback is now handled procedurally via IKReactionUtils.CalculateKnockbackOffset()
@@ -2132,14 +2145,14 @@ namespace Enemies
                 // Draw minimum attack range (yellow) - area where enemy tries to stay away from
                 if (minAttackRange > 0)
                 {
-                    Gizmos.color = Color.yellow;
+            Gizmos.color = Color.yellow;
                     Gizmos.DrawWireSphere(transform.position, minAttackRange);
                 }
-                
+
                 // Draw maximum attack range (red) - furthest the enemy can attack
                 if (maxAttackRange > 0)
                 {
-                    Gizmos.color = Color.red;
+            Gizmos.color = Color.red;
                     Gizmos.DrawWireSphere(transform.position, maxAttackRange);
                 }
             }
@@ -2153,24 +2166,24 @@ namespace Enemies
             // Draw a line to the target
             if (navMeshTarget != null)
             {
-                Gizmos.color = Color.blue;
-                Gizmos.DrawLine(transform.position, navMeshTarget.position);
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(transform.position, navMeshTarget.position);
 
-                // Draw the target's bounds if it has a collider
-                Collider targetCollider = navMeshTarget.GetComponent<Collider>();
-                if (targetCollider != null)
-                {
-                    Gizmos.color = Color.green;
-                    Gizmos.DrawWireCube(targetCollider.bounds.center, targetCollider.bounds.size);
-                }
+            // Draw the target's bounds if it has a collider
+            Collider targetCollider = navMeshTarget.GetComponent<Collider>();
+            if (targetCollider != null)
+            {
+                Gizmos.color = Color.green;
+                Gizmos.DrawWireCube(targetCollider.bounds.center, targetCollider.bounds.size);
+            }
 
-                // Draw NavMeshObstacle bounds if present
-                NavMeshObstacle obstacle = navMeshTarget.GetComponent<NavMeshObstacle>();
-                if (obstacle != null)
-                {
-                    Gizmos.color = Color.magenta;
-                    Vector3 obstacleSize = obstacle.size;
-                    Gizmos.DrawWireCube(navMeshTarget.position, obstacleSize);
+            // Draw NavMeshObstacle bounds if present
+            NavMeshObstacle obstacle = navMeshTarget.GetComponent<NavMeshObstacle>();
+            if (obstacle != null)
+            {
+                Gizmos.color = Color.magenta;
+                Vector3 obstacleSize = obstacle.size;
+                Gizmos.DrawWireCube(navMeshTarget.position, obstacleSize);
                 }
             }
 

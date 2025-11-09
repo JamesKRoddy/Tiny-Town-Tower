@@ -116,6 +116,12 @@ namespace Enemies.Attacks
             
             if (missile != null)
             {
+                // Fire the start effect at the launch point when the missile is created (thruster flare, etc.)
+                if (startEffect != null && startEffect.IsValid())
+                {
+                    PlayStartEffect(spawnPosition, launchDirection, Quaternion.LookRotation(launchDirection), spawnTransform);
+                }
+                
                 // Configure the homing behavior
                 ConfigureHomingMissile(missile, launchDirection, damageRadius);
                 

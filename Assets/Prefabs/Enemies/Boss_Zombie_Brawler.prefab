@@ -716,7 +716,7 @@ GameObject:
   - component: {fileID: 2700677688428301997}
   - component: {fileID: 6988115495219620664}
   m_Layer: 8
-  m_Name: ZombieBoss_Brawler
+  m_Name: Boss_Zombie_Brawler
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

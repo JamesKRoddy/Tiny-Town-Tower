@@ -621,7 +621,7 @@ public static class DamageUtils
         if (visualEffect != null)
         {
             GameObject visualObj = EffectManager.Instance.PlayEffect(position, Vector3.up, Quaternion.identity, 
-                damageAreaObj.transform, visualEffect, duration);
+                damageAreaObj.transform, visualEffect, duration: duration);
             
             if (visualObj != null)
             {

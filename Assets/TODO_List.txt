@@ -1,6 +1,9 @@
 *****Current Work*****
 
-Homing projectiles not exploding on impact
+If homing missile is hit by the player then send it back to the origin
+Camera shake when hitting drone
+VFX for hitting drone
+Drone death and cleanup
 
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
 

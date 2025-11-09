@@ -407,7 +407,7 @@ namespace Managers
         // Play a random effect from the array
         EffectDefinition selectedEffect = effectsForSurface[Random.Range(0, effectsForSurface.Length)];
         // Use prefab's default rotation instead of rotating to match surface normal
-        PlayEffect(position, normal, Quaternion.identity, null, selectedEffect, intensity);
+        PlayEffect(position, normal, Quaternion.identity, null, selectedEffect, intensity: intensity);
     }
 
         public void PlaySpawnEffect(Vector3 position, Vector3 normal, CharacterType characterType)
@@ -975,7 +975,7 @@ namespace Managers
                         Quaternion.identity, 
                         targetTransform, 
                         visualEffect, 
-                        activeEffect.duration
+                        duration: activeEffect.duration
                     );
                 }
             }
@@ -1232,7 +1232,7 @@ namespace Managers
                     Quaternion.identity, 
                     targetTransform, 
                     visualEffect,
-                    effectDuration // Use loop interval as duration for proper pooling
+                    duration: effectDuration // Use loop interval as duration for proper pooling
                 );
                 
                 // Store the current instance
