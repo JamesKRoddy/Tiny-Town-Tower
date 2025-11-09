@@ -1,12 +1,11 @@
 *****Current Work*****
 
+Drone.cs FallToGround and Die logic is not working.
+
 If homing missile is hit by the player then send it back to the origin
 
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
 
-Drone.cs FallToGround logic is not working.
-
-The EffectDefinitions prefabs and sounds should have a time delay option on each so it should be a game object/audio clip with a float then if any of the floats are not 0 then play that effect after the delay
 
 ****** Tomorrow work:
 
