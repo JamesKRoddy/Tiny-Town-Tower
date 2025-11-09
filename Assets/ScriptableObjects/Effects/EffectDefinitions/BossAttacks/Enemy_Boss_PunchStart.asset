@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Enemy_Boss_PunchStart
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 1380329679129358, guid: 24206d8a9ca2a5c409e2de653d14d07d, type: 3}
+  - prefab: {fileID: 1380329679129358, guid: 24206d8a9ca2a5c409e2de653d14d07d, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

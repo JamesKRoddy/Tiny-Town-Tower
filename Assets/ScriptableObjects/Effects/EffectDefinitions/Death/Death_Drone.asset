@@ -13,14 +13,19 @@ MonoBehaviour:
   m_Name: Death_Drone
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 2751990826327497175, guid: fda3be700e2e8774a94be8c2a8c87854, type: 3}
-  - {fileID: 1236643204216662, guid: 945738472a46f624f942f4dacfe95b20, type: 3}
+  - prefab: {fileID: 2751990826327497175, guid: fda3be700e2e8774a94be8c2a8c87854, type: 3}
+    delay: 0.5
+  - prefab: {fileID: 1236643204216662, guid: 945738472a46f624f942f4dacfe95b20, type: 3}
+    delay: 0
   sounds: []
+  legacyPrefabs:
+  - {fileID: 2751990826327497175, guid: fda3be700e2e8774a94be8c2a8c87854, type: 3}
+  legacySounds: []
   minPitch: 0.9
   maxPitch: 1.1
   volume: 1
-  duration: 0
+  duration: 2
   looping: 0
   loopInterval: 5
   spatialBlend: 1
-  playMode: 0
+  playMode: 1

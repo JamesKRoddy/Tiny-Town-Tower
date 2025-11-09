@@ -13,8 +13,12 @@ MonoBehaviour:
   m_Name: Attack_MeleeSlash_Fire
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 5791441926558626170, guid: 0b2ce5ab96c9e4446b481d1b6ae7e0e0, type: 3}
+  - prefab: {fileID: 5791441926558626170, guid: 0b2ce5ab96c9e4446b481d1b6ae7e0e0, type: 3}
+    delay: 0
   sounds: []
+  legacyPrefabs:
+  - {fileID: 0}
+  legacySounds: []
   minPitch: 0.9
   maxPitch: 1.1
   volume: 1

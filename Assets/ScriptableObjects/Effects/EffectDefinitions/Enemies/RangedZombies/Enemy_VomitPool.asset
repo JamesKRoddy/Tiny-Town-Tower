@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Enemy_VomitPool
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 5463006163525327907, guid: 939d8c9032b9deb4f93ed8d2a0b94d39, type: 3}
+  - prefab: {fileID: 5463006163525327907, guid: 939d8c9032b9deb4f93ed8d2a0b94d39, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

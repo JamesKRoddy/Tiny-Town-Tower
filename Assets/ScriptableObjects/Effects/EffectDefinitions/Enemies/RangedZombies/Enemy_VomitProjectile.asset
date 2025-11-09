@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Enemy_VomitProjectile
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 6065242573691159738, guid: 7e578001f97bebc49b72fa440fc01405, type: 3}
+  - prefab: {fileID: 6065242573691159738, guid: 7e578001f97bebc49b72fa440fc01405, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

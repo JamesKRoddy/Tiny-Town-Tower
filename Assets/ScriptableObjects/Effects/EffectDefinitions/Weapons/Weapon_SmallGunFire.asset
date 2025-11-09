@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: Weapon_SmallGunFire
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 1174029534445386, guid: 88f52a933127a47418c77b5edc6af292, type: 3}
-  - {fileID: 5724799227821769488, guid: 20339093db9987044bcc227f46d139e9, type: 3}
+  - prefab: {fileID: 1174029534445386, guid: 88f52a933127a47418c77b5edc6af292, type: 3}
+    delay: 0
+  - prefab: {fileID: 5724799227821769488, guid: 20339093db9987044bcc227f46d139e9, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

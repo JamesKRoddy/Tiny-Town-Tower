@@ -178,11 +178,15 @@ namespace Enemies.Attacks
             // Check if the impact effect has a damage component
             if (hitEffect.effectDefinition != null && hitEffect.effectDefinition.prefabs != null && hitEffect.effectDefinition.prefabs.Length > 0)
             {
-                GameObject effectPrefab = hitEffect.effectDefinition.prefabs[0];
-                var damageArea = effectPrefab.GetComponent<DamageArea>();
-                if (damageArea != null)
+                var prefabEntry = hitEffect.effectDefinition.prefabs[0];
+                GameObject effectPrefab = prefabEntry != null ? prefabEntry.prefab : null;
+                if (effectPrefab != null)
                 {
-                    return 0f; // Trigger-based detection
+                    var damageArea = effectPrefab.GetComponent<DamageArea>();
+                    if (damageArea != null)
+                    {
+                        return 0f; // Trigger-based detection
+                    }
                 }
             }
 

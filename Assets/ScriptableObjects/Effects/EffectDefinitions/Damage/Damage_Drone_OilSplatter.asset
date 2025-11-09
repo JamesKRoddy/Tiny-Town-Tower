@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Damage_Drone_OilSplatter
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 1026642433091512, guid: b61508334f63ed54a8ec87a11e1cad7a, type: 3}
+  - prefab: {fileID: 1026642433091512, guid: b61508334f63ed54a8ec87a11e1cad7a, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

@@ -134,8 +134,11 @@ namespace Enemies.Attacks
             // Check if the impact effect has a damage component that can handle triggers
             if (hitEffect.effectDefinition != null && hitEffect.effectDefinition.prefabs != null && hitEffect.effectDefinition.prefabs.Length > 0)
             {
-                GameObject effectPrefab = hitEffect.effectDefinition.prefabs[0];
+                var prefabEntry = hitEffect.effectDefinition.prefabs[0];
+                GameObject effectPrefab = prefabEntry != null ? prefabEntry.prefab : null;
                 
+                if (effectPrefab != null)
+                {
                 // Check for damage area components that can handle OnTriggerEnter
                 // This will find DamageArea or any class that inherits from it (like ZombieVomitPool)
                 var damageArea = effectPrefab.GetComponent<DamageArea>();
@@ -161,6 +164,7 @@ namespace Enemies.Attacks
                 if (triggerComponent != null && triggerComponent.isTrigger)
                 {
                     Debug.Log($"[{enemy.gameObject.name}] Found trigger collider, but no DamageArea component. Using fallback radius.");
+                    }
                 }
             }
 

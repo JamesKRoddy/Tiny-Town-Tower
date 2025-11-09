@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Building_Construction1x1_Complete
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 1103121671024242, guid: 63b71429d87506b45ad3d13ae3eed411, type: 3}
+  - prefab: {fileID: 1103121671024242, guid: 63b71429d87506b45ad3d13ae3eed411, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

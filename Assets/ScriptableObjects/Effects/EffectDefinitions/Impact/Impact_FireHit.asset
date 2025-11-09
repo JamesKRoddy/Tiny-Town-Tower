@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Impact_FireHit
   m_EditorClassIdentifier: Assembly-CSharp:Managers:EffectDefinition
   prefabs:
-  - {fileID: 7458652613773166844, guid: 4473d9d85f7eabe4eb91877fabdd69cb, type: 3}
+  - prefab: {fileID: 7458652613773166844, guid: 4473d9d85f7eabe4eb91877fabdd69cb, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

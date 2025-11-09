@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Footstep_Poison
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 1932552764689772, guid: 5853e2e48d2d32244b80c6ab96dbfa71, type: 3}
+  - prefab: {fileID: 1932552764689772, guid: 5853e2e48d2d32244b80c6ab96dbfa71, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

@@ -169,9 +169,11 @@ namespace Managers
                 effectPrefabPools[effect] = prefabPools;
             }
 
-            foreach (var prefab in effect.prefabs)
+            foreach (var entry in effect.prefabs)
             {
-                if (prefab == null) continue;
+                if (entry == null || entry.prefab == null) continue;
+
+                var prefab = entry.prefab;
 
                 if (!prefabPools.TryGetValue(prefab, out var pool))
                 {
@@ -511,50 +513,73 @@ namespace Managers
 
             GameObject primaryInstance = null;
 
+            if (effect.prefabs != null && effect.prefabs.Length > 0)
+            {
+                List<EffectDefinition.EffectPrefabEntry> prefabEntriesToPlay = new List<EffectDefinition.EffectPrefabEntry>();
+
             if (effect.playMode == EffectDefinition.PlayMode.All)
             {
-                foreach (var prefab in effect.prefabs)
+                    prefabEntriesToPlay.AddRange(effect.prefabs);
+                }
+                else
                 {
-                    if (prefab == null) continue;
+                    var selectedEntry = effect.prefabs[Random.Range(0, effect.prefabs.Length)];
+                    if (selectedEntry != null)
+                    {
+                        prefabEntriesToPlay.Add(selectedEntry);
+                    }
+                }
 
-                    GameObject instance = GetPooledObject(effect, prefab);
+                foreach (var entry in prefabEntriesToPlay)
+                {
+                    if (entry == null || entry.prefab == null) continue;
+
+                    GameObject instance = GetPooledObject(effect, entry.prefab);
                     if (instance == null)
                     {
-                        Debug.LogError($"[EffectManager] Failed to get pooled instance for prefab '{prefab.name}' in effect '{effect.name}'");
+                        Debug.LogError($"[EffectManager] Failed to get pooled instance for prefab '{entry.prefab.name}' in effect '{effect.name}'");
                         continue;
                     }
 
-                    ConfigureEffectInstance(instance, parent, position, rotation, intensity, ref particleDuration);
-
-                    spawnedInstances.Add(instance);
                     if (primaryInstance == null)
                     {
                         primaryInstance = instance;
                     }
-                }
+
+                    if (!spawnedInstances.Contains(instance))
+                    {
+                        spawnedInstances.Add(instance);
+                    }
+
+                    float predictedDuration = GetParticleSystemMaxDuration(entry.prefab);
+
+                    if (entry.delay > 0f)
+                    {
+                        PrepareInstanceForDelayedPlay(instance);
+                        StartCoroutine(ConfigureEffectInstanceAfterDelay(instance, parent, position, rotation, intensity, entry.delay));
+                        particleDuration = Mathf.Max(particleDuration, entry.delay + predictedDuration);
             }
             else
             {
-                GameObject instance = GetPooledObject(effect);
-                if (instance == null)
-                {
-                    Debug.LogError($"[EffectManager] Failed to get pooled instance for effect '{effect.name}'");
-                    return null;
+                        float localDuration = 0f;
+                        ConfigureEffectInstance(instance, parent, position, rotation, intensity, ref localDuration);
+                        particleDuration = Mathf.Max(particleDuration, entry.delay + Mathf.Max(predictedDuration, localDuration));
+                    }
                 }
-
-                ConfigureEffectInstance(instance, parent, position, rotation, intensity, ref particleDuration);
-
-                spawnedInstances.Add(instance);
-                primaryInstance = instance;
-            }
-
-            if (primaryInstance == null)
-            {
-                Debug.LogError($"[EffectManager] No instances spawned for effect '{effect.name}'");
-                return null;
             }
 
             if (effect.sounds != null && effect.sounds.Length > 0)
+            {
+            if (primaryInstance == null)
+            {
+                    primaryInstance = GetPooledObject(effect);
+                    if (primaryInstance != null && !spawnedInstances.Contains(primaryInstance))
+                    {
+                        spawnedInstances.Add(primaryInstance);
+                    }
+            }
+
+                if (primaryInstance != null)
             {
                 AudioSource audioSource = primaryInstance.GetComponent<AudioSource>();
                 if (audioSource == null)
@@ -564,29 +589,52 @@ namespace Managers
                     audioSource.loop = false;
                 }
 
-                AudioClip[] soundsToPlay = effect.playMode == EffectDefinition.PlayMode.Random
-                    ? new[] { effect.sounds[Random.Range(0, effect.sounds.Length)] }
-                    : effect.sounds;
+                    List<EffectDefinition.EffectSoundEntry> soundsToPlay = new List<EffectDefinition.EffectSoundEntry>();
+                    if (effect.playMode == EffectDefinition.PlayMode.All)
+                    {
+                        soundsToPlay.AddRange(effect.sounds);
+                    }
+                    else
+                    {
+                        var selectedSound = effect.sounds[Random.Range(0, effect.sounds.Length)];
+                        if (selectedSound != null)
+                        {
+                            soundsToPlay.Add(selectedSound);
+                        }
+                    }
 
-                foreach (var sound in soundsToPlay)
+                    foreach (var soundEntry in soundsToPlay)
                 {
-                    audioSource.clip = sound;
-                    audioSource.pitch = Random.Range(effect.minPitch, effect.maxPitch);
-                    audioSource.volume = effect.volume * Mathf.Clamp01(intensity);
-                    audioSource.spatialBlend = effect.spatialBlend;
-                    audioSource.Play();
-                    audioDuration = Mathf.Max(audioDuration, sound.length);
+                        if (soundEntry == null || soundEntry.clip == null) continue;
+
+                        audioDuration = Mathf.Max(audioDuration, soundEntry.delay + soundEntry.clip.length);
+                        StartCoroutine(PlaySoundWithDelay(audioSource, soundEntry, effect, intensity));
+                    }
                 }
             }
 
-            if (duration <= 0)
+            if (primaryInstance == null)
             {
-                duration = effect.duration > 0 ? effect.duration : Mathf.Max(particleDuration, audioDuration);
+                Debug.LogError($"[EffectManager] No instances spawned for effect '{effect.name}'");
+                return null;
+            }
+
+            float totalDuration = duration;
+            if (totalDuration <= 0f)
+            {
+                if (effect.duration > 0f)
+            {
+                    totalDuration = effect.duration;
+                }
+                else
+                {
+                    totalDuration = Mathf.Max(particleDuration, audioDuration);
+                }
             }
 
             foreach (var instance in spawnedInstances)
             {
-                StartCoroutine(ReturnToPoolAfterDuration(instance, effect, duration));
+                StartCoroutine(ReturnToPoolAfterDuration(instance, effect, totalDuration));
             }
 
             return primaryInstance;
@@ -613,6 +661,55 @@ namespace Managers
 
             float instanceDuration = PlayAllParticleSystemsAndGetMaxDuration(instance);
             particleDuration = Mathf.Max(particleDuration, instanceDuration);
+        }
+
+        private IEnumerator ConfigureEffectInstanceAfterDelay(GameObject instance, Transform parent, Vector3 position, Quaternion rotation, float intensity, float delay)
+        {
+            if (instance == null) yield break;
+
+            if (delay > 0f)
+            {
+                yield return new WaitForSeconds(delay);
+            }
+
+            float particleDuration = 0f;
+            ConfigureEffectInstance(instance, parent, position, rotation, intensity, ref particleDuration);
+        }
+
+        private void PrepareInstanceForDelayedPlay(GameObject instance)
+        {
+            if (instance == null) return;
+
+            ParticleSystem[] particleSystems = instance.GetComponentsInChildren<ParticleSystem>();
+            foreach (ParticleSystem ps in particleSystems)
+            {
+                if (ps == null) continue;
+                ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
+        }
+
+        private float GetParticleSystemMaxDuration(GameObject effectPrefab)
+        {
+            if (effectPrefab == null) return 0f;
+
+            float maxDuration = 0f;
+            ParticleSystem[] particleSystems = effectPrefab.GetComponentsInChildren<ParticleSystem>(true);
+
+            foreach (ParticleSystem ps in particleSystems)
+            {
+                if (ps == null) continue;
+
+                float duration = ps.main.duration;
+
+                if (duration < 0.1f)
+                {
+                    duration = ps.main.startLifetime.constantMax;
+                }
+
+                maxDuration = Mathf.Max(maxDuration, duration);
+            }
+
+            return maxDuration;
         }
 
         /// <summary>
@@ -643,6 +740,24 @@ namespace Managers
             }
             
             return maxDuration;
+        }
+
+        private IEnumerator PlaySoundWithDelay(AudioSource audioSource, EffectDefinition.EffectSoundEntry soundEntry, EffectDefinition effect, float intensity)
+        {
+            if (audioSource == null || soundEntry == null || soundEntry.clip == null)
+            {
+                yield break;
+            }
+
+            if (soundEntry.delay > 0f)
+            {
+                yield return new WaitForSeconds(soundEntry.delay);
+            }
+
+            audioSource.pitch = Random.Range(effect.minPitch, effect.maxPitch);
+            audioSource.volume = effect.volume * Mathf.Clamp01(intensity);
+            audioSource.spatialBlend = effect.spatialBlend;
+            audioSource.PlayOneShot(soundEntry.clip);
         }
 
         private GameObject GetPooledObject(EffectDefinition effect, GameObject specificPrefab = null)

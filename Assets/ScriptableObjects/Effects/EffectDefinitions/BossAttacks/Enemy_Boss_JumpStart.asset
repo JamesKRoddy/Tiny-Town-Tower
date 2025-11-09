@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Enemy_Boss_JumpStart
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 1173262663564242, guid: b4daa1e8fbf36de49b5810a9286c9451, type: 3}
+  - prefab: {fileID: 1173262663564242, guid: b4daa1e8fbf36de49b5810a9286c9451, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

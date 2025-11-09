@@ -13,14 +13,21 @@ MonoBehaviour:
   m_Name: Damage_Zombie_BloodSplatter
   m_EditorClassIdentifier: Assembly-CSharp:Managers:EffectDefinition
   prefabs:
-  - {fileID: 1362418652685942, guid: b369efb4abe69e044890b664115fab9e, type: 3}
-  - {fileID: 166404, guid: 78e1c8c5b281b8b439229473779ac9aa, type: 3}
+  - prefab: {fileID: 1362418652685942, guid: b369efb4abe69e044890b664115fab9e, type: 3}
+    delay: 0
+  - prefab: {fileID: 166404, guid: 78e1c8c5b281b8b439229473779ac9aa, type: 3}
+    delay: 0
   sounds:
-  - {fileID: 8300000, guid: 2fbb284fd9872c34683d38d64a2b7e65, type: 3}
-  - {fileID: 8300000, guid: 1bc5b3fbec54ebb45b376ff640368684, type: 3}
-  - {fileID: 8300000, guid: 2b63571a5d71b0e43a8ed97011b43d14, type: 3}
-  - {fileID: 8300000, guid: ced5900a1abaa8e45aaf93af491af55d, type: 3}
-  - {fileID: 8300000, guid: 14d4fbad7e842f0448d226f8cfa60290, type: 3}
+  - clip: {fileID: 8300000, guid: 2fbb284fd9872c34683d38d64a2b7e65, type: 3}
+    delay: 0
+  - clip: {fileID: 8300000, guid: 1bc5b3fbec54ebb45b376ff640368684, type: 3}
+    delay: 0
+  - clip: {fileID: 8300000, guid: 2b63571a5d71b0e43a8ed97011b43d14, type: 3}
+    delay: 0
+  - clip: {fileID: 8300000, guid: ced5900a1abaa8e45aaf93af491af55d, type: 3}
+    delay: 0
+  - clip: {fileID: 8300000, guid: 14d4fbad7e842f0448d226f8cfa60290, type: 3}
+    delay: 0
   minPitch: 0.9
   maxPitch: 1.1
   volume: 1

@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Building_CampAlarm
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 1597810799027298, guid: 0058d5de97db72045a6e7a53526e4937, type: 3}
+  - prefab: {fileID: 1597810799027298, guid: 0058d5de97db72045a6e7a53526e4937, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

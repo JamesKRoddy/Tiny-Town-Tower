@@ -13,9 +13,11 @@ MonoBehaviour:
   m_Name: Enemy_Boss_RoarHit
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 1159970587636746, guid: 07148c8ec1315044cacab39dff250f3f, type: 3}
+  - prefab: {fileID: 1159970587636746, guid: 07148c8ec1315044cacab39dff250f3f, type: 3}
+    delay: 0
   sounds:
-  - {fileID: 0}
+  - clip: {fileID: 0}
+    delay: 0
   minPitch: 0.9
   maxPitch: 1.1
   volume: 1

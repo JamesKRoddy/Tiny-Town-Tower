@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Missile
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 1942343336931824, guid: eee5508da5d43364f9fa8bc98d722490, type: 3}
+  - prefab: {fileID: 1942343336931824, guid: eee5508da5d43364f9fa8bc98d722490, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

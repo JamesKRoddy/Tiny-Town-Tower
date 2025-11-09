@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Development_BasicConstructionComplete(Unsue what this is used for!)
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 7381760930260317775, guid: 196bd896de1fc6c45ad43b572affa333, type: 3}
+  - prefab: {fileID: 7381760930260317775, guid: 196bd896de1fc6c45ad43b572affa333, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

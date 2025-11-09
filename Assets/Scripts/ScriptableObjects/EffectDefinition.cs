@@ -1,5 +1,5 @@
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 
 [CreateAssetMenu(fileName = "New Effect Definition", menuName = "Scriptable Objects/Effects/Effect Definition")]
@@ -11,11 +11,86 @@ public class EffectDefinition : ScriptableObject
         All
     }
 
+    [System.Serializable]
+    public class EffectPrefabEntry
+    {
+        [Tooltip("Particle system prefab to spawn when this entry is selected")]
+        public GameObject prefab;
+
+        [Tooltip("Delay in seconds before this prefab is played")]
+        [Min(0f)]
+        public float delay = 0f;
+    }
+
+    [System.Serializable]
+    public class EffectSoundEntry
+    {
+        [Tooltip("Audio clip to play when this entry is selected")]
+        public AudioClip clip;
+
+        [Tooltip("Delay in seconds before this audio clip is played")]
+        [Min(0f)]
+        public float delay = 0f;
+    }
+
     [Tooltip("Array of possible particle system prefabs. One will be randomly selected")]
-    public GameObject[] prefabs;
-    
+    public EffectPrefabEntry[] prefabs;
+
     [Tooltip("Array of possible sound effects to play. One will be randomly selected")]
-    public AudioClip[] sounds;
+    public EffectSoundEntry[] sounds;
+
+#if UNITY_EDITOR
+    [SerializeField, HideInInspector, FormerlySerializedAs("prefabs")]
+    private GameObject[] legacyPrefabs;
+
+    [SerializeField, HideInInspector, FormerlySerializedAs("sounds")]
+    private AudioClip[] legacySounds;
+
+    public bool MigrateLegacyData()
+    {
+        bool migrated = false;
+
+        if ((prefabs == null || prefabs.Length == 0) && legacyPrefabs != null && legacyPrefabs.Length > 0)
+        {
+            prefabs = new EffectPrefabEntry[legacyPrefabs.Length];
+            for (int i = 0; i < legacyPrefabs.Length; i++)
+            {
+                prefabs[i] = new EffectPrefabEntry
+                {
+                    prefab = legacyPrefabs[i],
+                    delay = 0f
+                };
+            }
+            legacyPrefabs = null;
+            migrated = true;
+        }
+
+        if ((sounds == null || sounds.Length == 0) && legacySounds != null && legacySounds.Length > 0)
+        {
+            sounds = new EffectSoundEntry[legacySounds.Length];
+            for (int i = 0; i < legacySounds.Length; i++)
+            {
+                sounds[i] = new EffectSoundEntry
+                {
+                    clip = legacySounds[i],
+                    delay = 0f
+                };
+            }
+            legacySounds = null;
+            migrated = true;
+        }
+
+        return migrated;
+    }
+
+    private void OnValidate()
+    {
+        if (MigrateLegacyData())
+        {
+            UnityEditor.EditorUtility.SetDirty(this);
+        }
+    }
+#endif
     
     [Tooltip("Minimum pitch variation for the sound effect (0.9 = 10% lower)")]
     public float minPitch = 0.9f;

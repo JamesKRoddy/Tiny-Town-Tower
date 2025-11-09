@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Work_WateringPlants
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 1487774844701372, guid: 128fc8d234f831243bfe6a4c23948dda, type: 3}
+  - prefab: {fileID: 1487774844701372, guid: 128fc8d234f831243bfe6a4c23948dda, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

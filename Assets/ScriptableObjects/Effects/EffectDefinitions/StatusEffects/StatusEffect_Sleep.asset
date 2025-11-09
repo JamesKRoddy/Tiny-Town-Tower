@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: StatusEffect_Sleep
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 5812081752390845428, guid: 44a44d3197df38b459404ee54ebebd0f, type: 3}
+  - prefab: {fileID: 5812081752390845428, guid: 44a44d3197df38b459404ee54ebebd0f, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

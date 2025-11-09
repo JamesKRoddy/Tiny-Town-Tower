@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Enviromental_ExplosionSmall
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 1822773341328252, guid: 8aea2a892ad46aa439b8be49adccdcad, type: 3}
+  - prefab: {fileID: 1822773341328252, guid: 8aea2a892ad46aa439b8be49adccdcad, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1
