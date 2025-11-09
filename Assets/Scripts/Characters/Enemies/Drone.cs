@@ -492,11 +492,11 @@ namespace Enemies
                 Gizmos.matrix = Matrix4x4.identity;
             }
             
-            // Draw strafe circle at preferred distance
-            if (strafeMovement)
+            // Draw strafe circle at preferred distance (cyan/blue to distinguish from attack ranges)
+            if (strafeMovement && Application.isPlaying)
             {
                 float preferredDistance = (maxRange + minRange) / 2f;
-                Gizmos.color = Color.yellow;
+                Gizmos.color = new Color(0f, 0.8f, 1f, 0.7f); // Bright cyan/blue
                 // Draw circle at ground level
                 for (int i = 0; i < 36; i++)
                 {

@@ -193,7 +193,12 @@ namespace Enemies.Attacks
             Gizmos.color = Color.magenta;
             Vector3 startPos = enemy.transform.position + Vector3.up * projectileSpawnHeight;
             
+            // Show spawn position
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(startPos, 0.2f);
+            
             // Show multiple trajectory lines for visualization
+            Gizmos.color = Color.magenta;
             for (int i = 0; i < 5; i++)
             {
                 float angle = (i - 2) * 15f; // -30 to +30 degrees

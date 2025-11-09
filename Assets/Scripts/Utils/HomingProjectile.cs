@@ -1,31 +1,31 @@
 using UnityEngine;
 using Managers;
 
-/// <summary>
+    /// <summary>
 /// Homing projectile component that tracks and follows a target.
 /// Generic implementation that can be used by enemies, NPCs, turrets, etc.
-/// 
+    /// 
 /// The projectile will smoothly rotate towards the target for a specified duration,
-/// then either explode or fall to the ground.
-/// </summary>
-[RequireComponent(typeof(Rigidbody))]
+    /// then either explode or fall to the ground.
+    /// </summary>
+    [RequireComponent(typeof(Rigidbody))]
 public class HomingProjectile : BaseProjectile
 {
     // Homing-specific parameters
-    private Transform target;
-    private float homingDuration;
-    private float turnSpeed;
-    private float speed;
-    private float baseSpeed;
+        private Transform target;
+        private float homingDuration;
+        private float turnSpeed;
+        private float speed;
+        private float baseSpeed;
     private bool explodeOnTimeout;
     
     // Homing-specific state
     private bool isTracking = false;
     private Vector3 currentDirection;
-
-    /// <summary>
+        
+        /// <summary>
     /// Initialize the homing projectile with damage, tracking, and effect parameters
-    /// </summary>
+        /// </summary>
     /// <param name="targetTransform">Target to track</param>
     /// <param name="dmg">Damage on impact</param>
     /// <param name="poiseDmg">Poise damage on impact</param>
@@ -40,8 +40,8 @@ public class HomingProjectile : BaseProjectile
     /// <param name="areaRadius">Damage area radius</param>
     /// <param name="areaDuration">Damage area duration</param>
     /// <param name="triggerBased">Use trigger-based damage</param>
-    public void Initialize(
-        Transform targetTransform,
+        public void Initialize(
+            Transform targetTransform, 
         float dmg,
         float poiseDmg,
         Transform attackTransform,
@@ -60,12 +60,12 @@ public class HomingProjectile : BaseProjectile
         InitializeBase(dmg, poiseDmg, attackTransform, elem, impactEff, createArea, areaRadius, areaDuration, triggerBased);
         
         // Store homing-specific parameters
-        target = targetTransform;
-        homingDuration = duration;
-        turnSpeed = turnSpeedDegrees;
+            target = targetTransform;
+            homingDuration = duration;
+            turnSpeed = turnSpeedDegrees;
         speed = projectileSpeed;
         baseSpeed = projectileSpeed;
-        explodeOnTimeout = explodeWhenExpired;
+            explodeOnTimeout = explodeWhenExpired;
         
         // Initialize homing-specific state
         isTracking = true;
@@ -79,7 +79,7 @@ public class HomingProjectile : BaseProjectile
         
         // Ensure projectile has a collider for impact detection
         EnsureCollider(0.2f, false);
-        
+            
         // Point projectile in direction of travel
         if (currentDirection != Vector3.zero)
         {
@@ -95,101 +95,101 @@ public class HomingProjectile : BaseProjectile
     }
 
     void FixedUpdate()
-    {
+        {
         if (!isTracking || hasHit) return;
-        
-        // Check if tracking duration has expired
-        float timeAlive = Time.time - launchTime;
-        if (timeAlive >= homingDuration)
-        {
-            StopTracking();
-            return;
-        }
-        
-        // Update tracking behavior
-        UpdateHoming(timeAlive);
-        
-        // Move the missile forward
-        if (rb != null)
-        {
-            rb.linearVelocity = currentDirection * speed;
-        }
-        else
-        {
-            transform.position += currentDirection * speed * Time.fixedDeltaTime;
-        }
-    }
-
-    /// <summary>
-    /// Update the homing behavior to track the target
-    /// </summary>
-    private void UpdateHoming(float timeAlive)
-    {
-        // Check if target is still valid
-        if (target == null || !target.gameObject.activeInHierarchy)
-        {
-            // Target destroyed, continue in current direction
-            Debug.Log($"[{gameObject.name}] Target lost, continuing forward");
-            isTracking = false;
-            return;
-        }
-        
-        // Calculate direction to target
-        Vector3 directionToTarget = (target.position - transform.position).normalized;
-        
-        // Smoothly rotate towards target
-        float rotationSpeed = turnSpeed * Time.fixedDeltaTime;
-        Vector3 newDirection = Vector3.RotateTowards(currentDirection, directionToTarget, rotationSpeed * Mathf.Deg2Rad, 0f);
-        currentDirection = newDirection.normalized;
-        
-        // Update transform rotation to match direction
-        if (currentDirection != Vector3.zero)
-        {
-            transform.rotation = Quaternion.LookRotation(currentDirection);
-        }
-        
-        // Slightly increase speed as missile tracks (feels more aggressive)
-        float speedMultiplier = 1f + (timeAlive / homingDuration) * 0.2f; // Up to 20% speed increase
-        speed = baseSpeed * speedMultiplier;
-    }
-
-    /// <summary>
-    /// Stop tracking and handle timeout behavior
-    /// </summary>
-    private void StopTracking()
-    {
-        isTracking = false;
-        
-        if (explodeOnTimeout)
-        {
-            Debug.Log($"[{gameObject.name}] Homing duration expired, exploding");
-            // The projectile should explode via its normal collision/trigger system
-            // or we could force trigger it here
-            TriggerExplosion();
-        }
-        else
-        {
-            Debug.Log($"[{gameObject.name}] Homing duration expired, falling");
-            // Enable gravity so missile falls
+            
+            // Check if tracking duration has expired
+            float timeAlive = Time.time - launchTime;
+            if (timeAlive >= homingDuration)
+            {
+                StopTracking();
+                return;
+            }
+            
+            // Update tracking behavior
+            UpdateHoming(timeAlive);
+            
+            // Move the missile forward
             if (rb != null)
             {
-                rb.useGravity = true;
+                rb.linearVelocity = currentDirection * speed;
+            }
+            else
+            {
+                transform.position += currentDirection * speed * Time.fixedDeltaTime;
             }
         }
-    }
 
-    /// <summary>
-    /// Force trigger explosion (used when tracking expires)
-    /// </summary>
-    private void TriggerExplosion()
-    {
-        // The projectile behavior should handle explosion via collision
-        // We can force it by triggering collision with ground or by direct call
-        // For now, just let it hit something or fall
-        
-        // Optionally: Destroy after a delay if it hasn't hit anything
-        Destroy(gameObject, 2f);
-    }
+        /// <summary>
+        /// Update the homing behavior to track the target
+        /// </summary>
+        private void UpdateHoming(float timeAlive)
+        {
+            // Check if target is still valid
+            if (target == null || !target.gameObject.activeInHierarchy)
+            {
+                // Target destroyed, continue in current direction
+                Debug.Log($"[{gameObject.name}] Target lost, continuing forward");
+                isTracking = false;
+                return;
+            }
+            
+            // Calculate direction to target
+            Vector3 directionToTarget = (target.position - transform.position).normalized;
+            
+            // Smoothly rotate towards target
+            float rotationSpeed = turnSpeed * Time.fixedDeltaTime;
+            Vector3 newDirection = Vector3.RotateTowards(currentDirection, directionToTarget, rotationSpeed * Mathf.Deg2Rad, 0f);
+            currentDirection = newDirection.normalized;
+            
+            // Update transform rotation to match direction
+            if (currentDirection != Vector3.zero)
+            {
+                transform.rotation = Quaternion.LookRotation(currentDirection);
+            }
+            
+            // Slightly increase speed as missile tracks (feels more aggressive)
+            float speedMultiplier = 1f + (timeAlive / homingDuration) * 0.2f; // Up to 20% speed increase
+            speed = baseSpeed * speedMultiplier;
+        }
+
+        /// <summary>
+        /// Stop tracking and handle timeout behavior
+        /// </summary>
+        private void StopTracking()
+        {
+            isTracking = false;
+            
+            if (explodeOnTimeout)
+            {
+                Debug.Log($"[{gameObject.name}] Homing duration expired, exploding");
+                // The projectile should explode via its normal collision/trigger system
+                // or we could force trigger it here
+                TriggerExplosion();
+            }
+            else
+            {
+                Debug.Log($"[{gameObject.name}] Homing duration expired, falling");
+                // Enable gravity so missile falls
+                if (rb != null)
+                {
+                    rb.useGravity = true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Force trigger explosion (used when tracking expires)
+        /// </summary>
+        private void TriggerExplosion()
+        {
+            // The projectile behavior should handle explosion via collision
+            // We can force it by triggering collision with ground or by direct call
+            // For now, just let it hit something or fall
+            
+            // Optionally: Destroy after a delay if it hasn't hit anything
+            Destroy(gameObject, 2f);
+        }
 
     void OnCollisionEnter(Collision collision)
     {
@@ -203,7 +203,7 @@ public class HomingProjectile : BaseProjectile
         Vector3 hitNormal = collision.contacts.Length > 0 ? collision.contacts[0].normal : Vector3.up;
 
         HandleImpact(hitPoint, hitNormal, collision.transform);
-    }
+                }
 
     void OnTriggerEnter(Collider other)
     {
@@ -214,7 +214,7 @@ public class HomingProjectile : BaseProjectile
         isTracking = false; // Stop tracking on impact
 
         HandleImpact(transform.position, Vector3.up, other.transform);
-    }
+        }
 }
 
 

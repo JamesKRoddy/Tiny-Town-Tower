@@ -2104,36 +2104,74 @@ namespace Enemies
         /// </summary>
         protected virtual void OnDrawGizmosSelected()
         {
-            if (navMeshTarget == null) return;
-
-            // Draw the base stopping distance
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(transform.position, stoppingDistance);
-
-            // Draw the effective attack distance
-            float effectiveDistance = NavigationUtils.CalculateEffectiveReachDistance(transform.position, navMeshTarget, stoppingDistance, obstacleBoundsOffset);
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(transform.position, effectiveDistance);
-
-            // Draw a line to the target
-            Gizmos.color = Color.blue;
-            Gizmos.DrawLine(transform.position, navMeshTarget.position);
-
-            // Draw the target's bounds if it has a collider
-            Collider targetCollider = navMeshTarget.GetComponent<Collider>();
-            if (targetCollider != null)
+            // Get all attack components to determine combined attack ranges
+            var attackComponents = GetComponents<AttackBase>();
+            float minAttackRange = float.MaxValue;
+            float maxAttackRange = 0f;
+            bool hasAttacks = false;
+            
+            foreach (var attack in attackComponents)
             {
-                Gizmos.color = Color.green;
-                Gizmos.DrawWireCube(targetCollider.bounds.center, targetCollider.bounds.size);
+                if (attack != null && attack.enabled)
+                {
+                    hasAttacks = true;
+                    minAttackRange = Mathf.Min(minAttackRange, attack.minRange);
+                    maxAttackRange = Mathf.Max(maxAttackRange, attack.maxRange);
+                }
+            }
+            
+            // Draw combined attack ranges if enemy has attacks
+            if (hasAttacks)
+            {
+                // If no minimum range found (all attacks have 0 min range), set to 0
+                if (minAttackRange == float.MaxValue)
+                {
+                    minAttackRange = 0f;
+                }
+                
+                // Draw minimum attack range (yellow) - area where enemy tries to stay away from
+                if (minAttackRange > 0)
+                {
+                    Gizmos.color = Color.yellow;
+                    Gizmos.DrawWireSphere(transform.position, minAttackRange);
+                }
+                
+                // Draw maximum attack range (red) - furthest the enemy can attack
+                if (maxAttackRange > 0)
+                {
+                    Gizmos.color = Color.red;
+                    Gizmos.DrawWireSphere(transform.position, maxAttackRange);
+                }
+            }
+            else
+            {
+                // Fallback: Draw the base stopping distance if no attacks found
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawWireSphere(transform.position, stoppingDistance);
             }
 
-            // Draw NavMeshObstacle bounds if present
-            NavMeshObstacle obstacle = navMeshTarget.GetComponent<NavMeshObstacle>();
-            if (obstacle != null)
+            // Draw a line to the target
+            if (navMeshTarget != null)
             {
-                Gizmos.color = Color.magenta;
-                Vector3 obstacleSize = obstacle.size;
-                Gizmos.DrawWireCube(navMeshTarget.position, obstacleSize);
+                Gizmos.color = Color.blue;
+                Gizmos.DrawLine(transform.position, navMeshTarget.position);
+
+                // Draw the target's bounds if it has a collider
+                Collider targetCollider = navMeshTarget.GetComponent<Collider>();
+                if (targetCollider != null)
+                {
+                    Gizmos.color = Color.green;
+                    Gizmos.DrawWireCube(targetCollider.bounds.center, targetCollider.bounds.size);
+                }
+
+                // Draw NavMeshObstacle bounds if present
+                NavMeshObstacle obstacle = navMeshTarget.GetComponent<NavMeshObstacle>();
+                if (obstacle != null)
+                {
+                    Gizmos.color = Color.magenta;
+                    Vector3 obstacleSize = obstacle.size;
+                    Gizmos.DrawWireCube(navMeshTarget.position, obstacleSize);
+                }
             }
 
             // Draw cooldown movement visualization
