@@ -524,12 +524,13 @@ public static class DamageUtils
                 continue;
             }
             
-            Allegiance allegiance = damageable.GetAllegiance();
-            Debug.Log($"[DamageUtils] Found damageable: {hitCollider.name}, Allegiance: {allegiance}");
+            Allegiance targetAllegiance = damageable.GetAllegiance();
+            Debug.Log($"[DamageUtils] Found damageable: {hitCollider.name}, Allegiance: {targetAllegiance}");
             
-            if (allegiance != Allegiance.FRIENDLY)
+            // Only skip NEUTRAL entities (protected quest NPCs, invulnerable objects)
+            if (targetAllegiance == Allegiance.NEUTRAL)
             {
-                Debug.Log($"[DamageUtils] Skipping {hitCollider.name} - not FRIENDLY allegiance");
+                Debug.Log($"[DamageUtils] Skipping {hitCollider.name} - NEUTRAL allegiance (protected)");
                 continue;
             }
             
@@ -1056,11 +1057,11 @@ public static class DamageUtils
                     float speed = projectileSpeed > 0f ? projectileSpeed : 20f;
                     StraightProjectile straightProj = projectileObj.GetComponent<StraightProjectile>();
                     if (straightProj == null)
-                    {
+            {
                         straightProj = projectileObj.AddComponent<StraightProjectile>();
-                    }
+            }
                     straightProj.Initialize(direction, damage, poiseDamage, attacker, element, speed,
-                        impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage);
+                impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage);
                 }
                 break;
                 

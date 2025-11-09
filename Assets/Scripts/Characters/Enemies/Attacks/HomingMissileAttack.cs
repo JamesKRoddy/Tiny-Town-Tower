@@ -87,13 +87,17 @@ namespace Enemies.Attacks
                 return;
             }
             
-            // Calculate launch direction
-            Vector3 launchDirection = (target.position - enemy.transform.position).normalized;
+            // Use attack origin if provided, otherwise use enemy position
+            Transform spawnTransform = attackOrigin != null ? attackOrigin : enemy.transform;
+            Vector3 spawnPosition = spawnTransform.position + Vector3.up * projectileSpawnHeight;
+            
+            // Calculate launch direction from spawn position
+            Vector3 launchDirection = (target.position - spawnPosition).normalized;
             float damageRadius = CalculateDamageRadius();
             
             // Fire the missile using the utility (ProjectileType.HOMING tells the system we'll configure our own component)
             GameObject missile = DamageUtils.FireProjectileWithEffect(
-                enemy.transform.position + Vector3.up * projectileSpawnHeight,
+                spawnPosition,
                 launchDirection,
                 Quaternion.LookRotation(launchDirection),
                 target.position,
@@ -115,7 +119,7 @@ namespace Enemies.Attacks
                 // Configure the homing behavior
                 ConfigureHomingMissile(missile, launchDirection, damageRadius);
                 
-                Debug.Log($"[{enemy.gameObject.name}] Homing missile fired at {target.name} | Duration: {homingDuration}s");
+                Debug.Log($"[{enemy.gameObject.name}] Homing missile fired from {spawnPosition} at {target.name} | Duration: {homingDuration}s");
             }
             else
             {

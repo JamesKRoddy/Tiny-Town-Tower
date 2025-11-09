@@ -89,6 +89,7 @@ One that shows enemies life bars
 Increase poise damage
 Increase players poise
 Be able to hit ghost enemies without destroying machine
+One the player is damaged it send out an elemental shockwave dealing damage to all close enemies with high poise damage to give them a break to get away
 
 Research
 Unlock vaulting and dash for roguelike to increase movement options

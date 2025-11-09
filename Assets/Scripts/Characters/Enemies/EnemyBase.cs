@@ -1459,7 +1459,6 @@ namespace Enemies
                     if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null)
                     {
                         newTarget = PlayerController.Instance._possessedNPC.GetTransform();
-                        Debug.Log($"[{gameObject.name}] Found player target in ROGUE_LITE mode: {newTarget.name}");
                     }
                     else
                     {
@@ -1481,7 +1480,6 @@ namespace Enemies
             if (newTarget != null)
             {
                 navMeshTarget = newTarget;
-                Debug.Log($"[{gameObject.name}] Target set to: {navMeshTarget.name}");
                 // Speed will be set by UpdateAnimationParameters based on agent velocity
             }
             else

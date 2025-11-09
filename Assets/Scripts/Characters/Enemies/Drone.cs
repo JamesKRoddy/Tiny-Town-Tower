@@ -105,6 +105,45 @@ namespace Enemies
             
             // Randomize bobbing offset for variety
             bobbingTimeOffset = Random.Range(0f, 2f * Mathf.PI);
+            
+            // CRITICAL: Ensure the root GameObject has a collider for damage detection
+            // The collider must be on the same GameObject as IDamageable (EnemyBase)
+            EnsureDroneCollider();
+        }
+        
+        /// <summary>
+        /// Ensure the drone has a properly sized collider on the root GameObject for damage detection.
+        /// The collider extends from ground level to hover height to cover the entire drone.
+        /// </summary>
+        protected virtual void EnsureDroneCollider()
+        {
+            // Check if there's already a collider on the root
+            Collider existingCollider = GetComponent<Collider>();
+            
+            if (existingCollider == null)
+            {
+                // Add a capsule collider that extends from ground to hover height
+                CapsuleCollider capsule = gameObject.AddComponent<CapsuleCollider>();
+                capsule.radius = 0.5f; // Adjust based on drone size
+                capsule.height = hoverHeight + 1f; // Cover hover height + extra for bobbing
+                capsule.center = new Vector3(0f, capsule.height / 2f, 0f); // Center at half height
+                capsule.direction = 1; // Y-axis
+                
+                Debug.Log($"[{gameObject.name}] Added CapsuleCollider to root for damage detection | Height: {capsule.height} | Center: {capsule.center}");
+            }
+            else
+            {
+                Debug.Log($"[{gameObject.name}] Root already has collider: {existingCollider.GetType().Name}");
+                
+                // If it's a capsule, ensure it's tall enough to cover hover height
+                if (existingCollider is CapsuleCollider capsule)
+                {
+                    if (capsule.height < hoverHeight)
+                    {
+                        Debug.LogWarning($"[{gameObject.name}] CapsuleCollider height ({capsule.height}) is less than hover height ({hoverHeight}). Consider increasing it.");
+                    }
+                }
+            }
         }
 
         protected override void Start()
@@ -413,7 +452,7 @@ namespace Enemies
         #region Debug Visualization
 
         /// <summary>
-        /// Draw gizmos to show hover height and attack ranges
+        /// Draw gizmos to show hover height, attack ranges, and damage collider
         /// </summary>
         protected override void OnDrawGizmosSelected()
         {
@@ -438,6 +477,20 @@ namespace Enemies
             // Draw hover height sphere
             Gizmos.color = new Color(0f, 1f, 1f, 0.3f);
             Gizmos.DrawSphere(transform.position + Vector3.up * hoverHeight, 0.5f);
+            
+            // Draw damage collider visualization
+            CapsuleCollider capsule = GetComponent<CapsuleCollider>();
+            if (capsule != null)
+            {
+                Gizmos.color = new Color(1f, 0f, 0f, 0.3f); // Red semi-transparent
+                Vector3 colliderCenter = transform.position + capsule.center;
+                
+                // Draw wire capsule to show damage detection area
+                Gizmos.matrix = Matrix4x4.TRS(colliderCenter, transform.rotation, Vector3.one);
+                Gizmos.DrawWireSphere(Vector3.up * (capsule.height / 2f - capsule.radius), capsule.radius);
+                Gizmos.DrawWireSphere(Vector3.down * (capsule.height / 2f - capsule.radius), capsule.radius);
+                Gizmos.matrix = Matrix4x4.identity;
+            }
             
             // Draw strafe circle at preferred distance
             if (strafeMovement)

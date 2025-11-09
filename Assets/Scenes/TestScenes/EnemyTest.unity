@@ -1189,7 +1189,7 @@ MonoBehaviour:
   selectionStrategy: 2
   attackSwitchCooldown: 0.5
   visualMesh: {fileID: 465859031}
-  hoverHeight: 3
+  hoverHeight: 2
   enableHoverBobbing: 1
   bobbingSpeed: 1
   bobbingAmplitude: 0.3
@@ -3022,7 +3022,7 @@ Transform:
   m_GameObject: {fileID: 1892930242}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.559, z: 0.41}
+  m_LocalPosition: {x: 0, y: 1.845, z: 0.41}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
