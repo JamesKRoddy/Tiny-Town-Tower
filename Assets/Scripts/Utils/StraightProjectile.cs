@@ -60,11 +60,24 @@ public class StraightProjectile : MonoBehaviour
         // Set initial velocity
         rb.linearVelocity = direction.normalized * speed;
         
+        // Ensure projectile has a collider for impact detection
+        Collider col = GetComponent<Collider>();
+        if (col == null)
+        {
+            // Add a sphere collider as default
+            SphereCollider sphereCol = gameObject.AddComponent<SphereCollider>();
+            sphereCol.radius = 0.15f;
+            sphereCol.isTrigger = false; // Use physical collisions by default
+            Debug.LogWarning($"[StraightProjectile] {gameObject.name} missing collider, added SphereCollider automatically");
+        }
+        
         // Point projectile in direction of travel
         if (direction != Vector3.zero)
         {
             transform.rotation = Quaternion.LookRotation(direction);
         }
+        
+        Debug.Log($"[StraightProjectile] {gameObject.name} initialized | Speed: {speed} | Has Collider: {GetComponent<Collider>() != null}");
     }
 
     void Update()
@@ -83,6 +96,8 @@ public class StraightProjectile : MonoBehaviour
     void OnCollisionEnter(Collision collision)
     {
         if (hasHit) return;
+        
+        Debug.Log($"[StraightProjectile] {gameObject.name} OnCollisionEnter with {collision.gameObject.name}");
         hasHit = true;
 
         Vector3 hitPoint = collision.contacts.Length > 0 ? collision.contacts[0].point : transform.position;
@@ -94,6 +109,8 @@ public class StraightProjectile : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         if (hasHit) return;
+        
+        Debug.Log($"[StraightProjectile] {gameObject.name} OnTriggerEnter with {other.gameObject.name}");
         hasHit = true;
 
         HandleImpact(transform.position, Vector3.up, other.transform);
@@ -137,7 +154,7 @@ public class StraightProjectile : MonoBehaviour
             if (useTriggerBasedDamage && impactEffect != null)
             {
                 // Spawn trigger-based damage effect
-                EffectManager.Instance?.PlayEffect(hitPoint, hitNormal, Quaternion.LookRotation(hitNormal), 
+                EffectManager.Instance?.PlayEffect(hitPoint, hitNormal, Quaternion.identity, 
                     null, impactEffect, damageAreaDuration);
             }
             else
@@ -155,7 +172,7 @@ public class StraightProjectile : MonoBehaviour
                 // Optional impact VFX
                 if (impactEffect != null)
                 {
-                    EffectManager.Instance?.PlayEffect(hitPoint, hitNormal, Quaternion.LookRotation(hitNormal), 
+                    EffectManager.Instance?.PlayEffect(hitPoint, hitNormal, Quaternion.identity, 
                         null, impactEffect);
                 }
             }
@@ -163,7 +180,7 @@ public class StraightProjectile : MonoBehaviour
         else if (impactEffect != null)
         {
             // Just play impact effect
-            EffectManager.Instance?.PlayEffect(hitPoint, hitNormal, Quaternion.LookRotation(hitNormal), 
+            EffectManager.Instance?.PlayEffect(hitPoint, hitNormal, Quaternion.identity, 
                 null, impactEffect);
         }
 

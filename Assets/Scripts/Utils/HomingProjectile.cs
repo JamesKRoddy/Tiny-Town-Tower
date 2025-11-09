@@ -109,11 +109,24 @@ public class HomingProjectile : MonoBehaviour
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         rb.linearVelocity = currentDirection * speed;
         
+        // Ensure projectile has a collider for impact detection
+        Collider col = GetComponent<Collider>();
+        if (col == null)
+        {
+            // Add a sphere collider as default
+            SphereCollider sphereCol = gameObject.AddComponent<SphereCollider>();
+            sphereCol.radius = 0.2f;
+            sphereCol.isTrigger = false; // Use physical collisions by default
+            Debug.LogWarning($"[HomingProjectile] {gameObject.name} missing collider, added SphereCollider automatically");
+        }
+        
         // Point projectile in direction of travel
         if (currentDirection != Vector3.zero)
         {
             transform.rotation = Quaternion.LookRotation(currentDirection);
         }
+        
+        Debug.Log($"[HomingProjectile] {gameObject.name} initialized | Target: {targetTransform?.name} | Speed: {speed} | Duration: {duration}s | Has Collider: {GetComponent<Collider>() != null}");
     }
 
     void Update()
@@ -228,6 +241,8 @@ public class HomingProjectile : MonoBehaviour
     void OnCollisionEnter(Collision collision)
     {
         if (hasHit) return;
+        
+        Debug.Log($"[HomingProjectile] {gameObject.name} OnCollisionEnter with {collision.gameObject.name} (Layer: {LayerMask.LayerToName(collision.gameObject.layer)}) | Time Alive: {Time.time - launchTime:F2}s | Distance to target: {(target != null ? Vector3.Distance(transform.position, target.position) : -1):F2}m");
         hasHit = true;
 
         Vector3 hitPoint = collision.contacts.Length > 0 ? collision.contacts[0].point : transform.position;
@@ -239,6 +254,8 @@ public class HomingProjectile : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         if (hasHit) return;
+        
+        Debug.Log($"[HomingProjectile] {gameObject.name} OnTriggerEnter with {other.gameObject.name}");
         hasHit = true;
 
         HandleImpact(transform.position, Vector3.up, other.transform);
@@ -283,7 +300,7 @@ public class HomingProjectile : MonoBehaviour
             if (useTriggerBasedDamage && impactEffect != null)
             {
                 // Spawn trigger-based damage effect
-                EffectManager.Instance?.PlayEffect(hitPoint, hitNormal, Quaternion.LookRotation(hitNormal), 
+                EffectManager.Instance?.PlayEffect(hitPoint, hitNormal, Quaternion.identity, 
                     null, impactEffect, damageAreaDuration);
             }
             else
@@ -301,7 +318,7 @@ public class HomingProjectile : MonoBehaviour
                 // Optional impact VFX
                 if (impactEffect != null)
                 {
-                    EffectManager.Instance?.PlayEffect(hitPoint, hitNormal, Quaternion.LookRotation(hitNormal), 
+                    EffectManager.Instance?.PlayEffect(hitPoint, hitNormal, Quaternion.identity, 
                         null, impactEffect);
                 }
             }
@@ -309,7 +326,7 @@ public class HomingProjectile : MonoBehaviour
         else if (impactEffect != null)
         {
             // Just play impact effect
-            EffectManager.Instance?.PlayEffect(hitPoint, hitNormal, Quaternion.LookRotation(hitNormal), 
+            EffectManager.Instance?.PlayEffect(hitPoint, hitNormal, Quaternion.identity, 
                 null, impactEffect);
         }
 

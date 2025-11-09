@@ -1299,7 +1299,7 @@ MonoBehaviour:
     durationOverride: 0
   attackEffectDelay: 0
   hitEffect:
-    effectDefinition: {fileID: 0}
+    effectDefinition: {fileID: 11400000, guid: 60c78a7ec47ade04e8ec9f2ff0a25297, type: 2}
     spawnPoint: {fileID: 0}
     positionOffset: {x: 0, y: 0, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
