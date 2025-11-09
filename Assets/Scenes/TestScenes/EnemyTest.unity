@@ -2943,12 +2943,28 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3022436264274484580, guid: 9bb212af9f792714683c70aadc99245f, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3022436264274484580, guid: 9bb212af9f792714683c70aadc99245f, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3022436264274484580, guid: 9bb212af9f792714683c70aadc99245f, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3022436264274484580, guid: 9bb212af9f792714683c70aadc99245f, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.958
+      value: 1.57
       objectReference: {fileID: 0}
     - target: {fileID: 8260594433969657557, guid: 9bb212af9f792714683c70aadc99245f, type: 3}
       propertyPath: m_Name
       value: Drone_HomingMissile
+      objectReference: {fileID: 0}
+    - target: {fileID: 8696261942076367843, guid: 9bb212af9f792714683c70aadc99245f, type: 3}
+      propertyPath: projectileSpawnHeight
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8696261942076367843, guid: 9bb212af9f792714683c70aadc99245f, type: 3}
       propertyPath: startEffect.spawnPoint

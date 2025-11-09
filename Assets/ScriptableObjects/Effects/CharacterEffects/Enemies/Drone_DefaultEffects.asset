@@ -10,22 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 30b97a306db20054c9836880f1ae9f49, type: 3}
-  m_Name: Default_Zombie
+  m_Name: Drone_DefaultEffects
   m_EditorClassIdentifier: Assembly-CSharp:Managers:CharacterEffects
   impactEffects: []
   destructionEffects: []
-  characterType: 201
+  characterType: 301
   bloodEffects:
-  - {fileID: 11400000, guid: eae0766bee71efd4393734407dda6009, type: 2}
+  - {fileID: 11400000, guid: 47b468ef764f5714e9b0639e4b63894b, type: 2}
   deathEffects:
-  - {fileID: 11400000, guid: 43cd6af74bf79d346a6d5c96866bf83b, type: 2}
-  surfaceFootstepEffects:
-  - surfaceType: 0
-    footstepEffects:
-    - {fileID: 11400000, guid: 938995993cb1b4d43a950a9b60d5175a, type: 2}
-  - surfaceType: 8
-    footstepEffects:
-    - {fileID: 11400000, guid: 2a2e31d594a9a0647ba1bb6938471335, type: 2}
+  - {fileID: 11400000, guid: 271102255fa6cc549afbe089257650bc, type: 2}
+  surfaceFootstepEffects: []
   spawnEffects:
   - {fileID: 11400000, guid: 7211516908f2f9045b8d2fa26d4ae6cc, type: 2}
   idleEffects: []
