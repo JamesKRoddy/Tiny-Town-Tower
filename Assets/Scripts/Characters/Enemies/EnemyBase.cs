@@ -1340,14 +1340,14 @@ namespace Enemies
             // Apply head IK weights (only if animator has a controller)
             if (HasValidAnimator())
             {
-                if (currentHeadTrackingWeight > 0.01f)
-                {
-                    animator.SetLookAtWeight(currentHeadTrackingWeight, headTrackingRotationWeight, 0f, 0f, 0f);
-                    animator.SetLookAtPosition(currentLookAtTarget);
-                }
-                else
-                {
-                    animator.SetLookAtWeight(0f);
+            if (currentHeadTrackingWeight > 0.01f)
+            {
+                animator.SetLookAtWeight(currentHeadTrackingWeight, headTrackingRotationWeight, 0f, 0f, 0f);
+                animator.SetLookAtPosition(currentLookAtTarget);
+            }
+            else
+            {
+                animator.SetLookAtWeight(0f);
                 }
             }
         }
@@ -1787,8 +1787,8 @@ namespace Enemies
         protected virtual void BeginAttackSequence()
         {
             if (HasValidAnimator())
-            {
-                animator.SetBool(GameConstants.AnimatorParams.AttackHash, true);
+        {
+            animator.SetBool(GameConstants.AnimatorParams.AttackHash, true);
             }
             
             isAttacking = true;
@@ -1808,8 +1808,8 @@ namespace Enemies
         protected virtual void EndAttack()
         {
             if (HasValidAnimator())
-            {
-                animator.SetBool(GameConstants.AnimatorParams.AttackHash, false);
+        {
+            animator.SetBool(GameConstants.AnimatorParams.AttackHash, false);
             }
             
             isAttacking = false;

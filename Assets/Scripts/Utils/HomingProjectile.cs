@@ -9,20 +9,9 @@ using Managers;
 /// then either explode or fall to the ground.
 /// </summary>
 [RequireComponent(typeof(Rigidbody))]
-public class HomingProjectile : MonoBehaviour
+public class HomingProjectile : BaseProjectile
 {
-    // Damage parameters
-    private float damage;
-    private float poiseDamage;
-    private Transform attacker;
-    private AttackElement element;
-    private EffectDefinition impactEffect;
-    private bool createDamageArea;
-    private float damageAreaRadius;
-    private float damageAreaDuration;
-    private bool useTriggerBasedDamage;
-    
-    // Homing parameters
+    // Homing-specific parameters
     private Transform target;
     private float homingDuration;
     private float turnSpeed;
@@ -30,13 +19,9 @@ public class HomingProjectile : MonoBehaviour
     private float baseSpeed;
     private bool explodeOnTimeout;
     
-    // State tracking
-    private Rigidbody rb;
-    private bool hasHit = false;
+    // Homing-specific state
     private bool isTracking = false;
-    private float launchTime;
     private Vector3 currentDirection;
-    private float maxLifetime = 10f;
 
     /// <summary>
     /// Initialize the homing projectile with damage, tracking, and effect parameters
@@ -71,18 +56,10 @@ public class HomingProjectile : MonoBehaviour
         float areaDuration = 5f,
         bool triggerBased = false)
     {
-        // Store damage parameters
-        damage = dmg;
-        poiseDamage = poiseDmg;
-        attacker = attackTransform;
-        element = elem;
-        impactEffect = impactEff;
-        createDamageArea = createArea;
-        damageAreaRadius = areaRadius;
-        damageAreaDuration = areaDuration;
-        useTriggerBasedDamage = triggerBased;
+        // Initialize base parameters (damage, effects, etc.)
+        InitializeBase(dmg, poiseDmg, attackTransform, elem, impactEff, createArea, areaRadius, areaDuration, triggerBased);
         
-        // Store homing parameters
+        // Store homing-specific parameters
         target = targetTransform;
         homingDuration = duration;
         turnSpeed = turnSpeedDegrees;
@@ -90,18 +67,9 @@ public class HomingProjectile : MonoBehaviour
         baseSpeed = projectileSpeed;
         explodeOnTimeout = explodeWhenExpired;
         
-        // Initialize state
-        hasHit = false;
+        // Initialize homing-specific state
         isTracking = true;
-        launchTime = Time.time;
         currentDirection = transform.forward;
-        
-        // Get or add rigidbody
-        rb = GetComponent<Rigidbody>();
-        if (rb == null)
-        {
-            rb = gameObject.AddComponent<Rigidbody>();
-        }
         
         // Configure rigidbody for homing behavior
         rb.useGravity = false;
@@ -110,15 +78,7 @@ public class HomingProjectile : MonoBehaviour
         rb.linearVelocity = currentDirection * speed;
         
         // Ensure projectile has a collider for impact detection
-        Collider col = GetComponent<Collider>();
-        if (col == null)
-        {
-            // Add a sphere collider as default
-            SphereCollider sphereCol = gameObject.AddComponent<SphereCollider>();
-            sphereCol.radius = 0.2f;
-            sphereCol.isTrigger = false; // Use physical collisions by default
-            Debug.LogWarning($"[HomingProjectile] {gameObject.name} missing collider, added SphereCollider automatically");
-        }
+        EnsureCollider(0.2f, false);
         
         // Point projectile in direction of travel
         if (currentDirection != Vector3.zero)
@@ -129,16 +89,9 @@ public class HomingProjectile : MonoBehaviour
         Debug.Log($"[HomingProjectile] {gameObject.name} initialized | Target: {targetTransform?.name} | Speed: {speed} | Duration: {duration}s | Has Collider: {GetComponent<Collider>() != null} | CreateDamageArea: {createArea} | Radius: {areaRadius} | UseTrigger: {triggerBased}");
     }
 
-    void Update()
+    protected override void Update()
     {
-        if (hasHit) return;
-        
-        // Destroy after max lifetime to prevent infinite projectiles
-        float timeAlive = Time.time - launchTime;
-        if (timeAlive >= maxLifetime)
-        {
-            Destroy(gameObject);
-        }
+        base.Update(); // Call base class Update for lifetime management
     }
 
     void FixedUpdate()
@@ -244,6 +197,7 @@ public class HomingProjectile : MonoBehaviour
         
         Debug.Log($"[HomingProjectile] {gameObject.name} OnCollisionEnter with {collision.gameObject.name} (Layer: {LayerMask.LayerToName(collision.gameObject.layer)}) | Time Alive: {Time.time - launchTime:F2}s | Distance to target: {(target != null ? Vector3.Distance(transform.position, target.position) : -1):F2}m");
         hasHit = true;
+        isTracking = false; // Stop tracking on impact
 
         Vector3 hitPoint = collision.contacts.Length > 0 ? collision.contacts[0].point : transform.position;
         Vector3 hitNormal = collision.contacts.Length > 0 ? collision.contacts[0].normal : Vector3.up;
@@ -257,89 +211,9 @@ public class HomingProjectile : MonoBehaviour
         
         Debug.Log($"[HomingProjectile] {gameObject.name} OnTriggerEnter with {other.gameObject.name}");
         hasHit = true;
+        isTracking = false; // Stop tracking on impact
 
         HandleImpact(transform.position, Vector3.up, other.transform);
-    }
-
-    /// <summary>
-    /// Handle impact effects and damage
-    /// </summary>
-    private void HandleImpact(Vector3 hitPoint, Vector3 hitNormal, Transform hitTransform)
-    {
-        Debug.Log($"[HomingProjectile] {gameObject.name} HandleImpact called | HitPoint: {hitPoint} | CreateDamageArea: {createDamageArea} | Radius: {damageAreaRadius} | Damage: {damage}");
-        
-        // Stop tracking and movement
-        isTracking = false;
-        if (rb != null)
-        {
-            rb.linearVelocity = Vector3.zero;
-            rb.isKinematic = true;
-        }
-
-        // Apply direct hit damage
-        if (hitTransform != null)
-        {
-            IDamageable damageable = hitTransform.GetComponentInParent<IDamageable>();
-            if (damageable != null)
-            {
-                Debug.Log($"[HomingProjectile] Applying direct hit damage to {hitTransform.name}");
-                var damageInfo = new DamageInfo
-                {
-                    Amount = damage,
-                    PoiseDamage = poiseDamage,
-                    ElementType = element,
-                    SourceTransform = attacker,
-                    DamageDealer = null,  // Projectile itself isn't a damage dealer
-                    PlayHitVFX = true,
-                    IsEnvironmentalDamage = false
-                };
-                damageable.TakeDamage(damageInfo);
-            }
-            else
-            {
-                Debug.Log($"[HomingProjectile] {hitTransform.name} has no IDamageable component");
-            }
-        }
-
-        // Create damage area if configured
-        Debug.Log($"[HomingProjectile] Checking damage area: createDamageArea={createDamageArea}, useTriggerBasedDamage={useTriggerBasedDamage}, impactEffect={impactEffect?.name ?? "null"}");
-        if (createDamageArea)
-        {
-            if (useTriggerBasedDamage && impactEffect != null)
-            {
-                // Spawn trigger-based damage effect
-                EffectManager.Instance?.PlayEffect(hitPoint, hitNormal, Quaternion.identity, 
-                    null, impactEffect, damageAreaDuration);
-            }
-            else
-            {
-                float radius = damageAreaRadius > 0f ? damageAreaRadius : 1.5f;
-                DamageUtils.CreateDamageArea(
-                    hitPoint,
-                    radius,
-                    damage,
-                    poiseDamage,
-                    attacker,
-                    element,
-                    damageAreaDuration);
-
-                // Optional impact VFX
-                if (impactEffect != null)
-                {
-                    EffectManager.Instance?.PlayEffect(hitPoint, hitNormal, Quaternion.identity, 
-                        null, impactEffect);
-                }
-            }
-        }
-        else if (impactEffect != null)
-        {
-            // Just play impact effect
-            EffectManager.Instance?.PlayEffect(hitPoint, hitNormal, Quaternion.identity, 
-                null, impactEffect);
-        }
-
-        // Destroy projectile
-        Destroy(gameObject);
     }
 }
 

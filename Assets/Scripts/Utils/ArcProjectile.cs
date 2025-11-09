@@ -113,10 +113,11 @@ public class ArcProjectile : MonoBehaviour
         }
 
         // Create damage area if requested (fallback for radius-based damage)
-        if (createDamageArea && damageAreaRadius > 0)
+        if (createDamageArea && damageAreaRadius > 0 && !useTriggerBasedDamage)
         {
-            DamageUtils.CreateDamageArea(transform.position, damageAreaRadius, damage, poiseDamage, 
-                attacker, element, damageAreaDuration);
+            // Use instant damage area for explosions (not lingering damage zones)
+            DamageUtils.CreateInstantDamageArea(transform.position, damageAreaRadius, damage, poiseDamage, 
+                attacker, element, null); // VFX already played above
         }
     }
 
