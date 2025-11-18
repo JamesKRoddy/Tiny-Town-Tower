@@ -347,6 +347,21 @@ namespace Enemies
                     attackExecutionStartTime = Time.time;
                     attack.StartAttack();
                     
+                    // For enemies without valid animators (like drones) execute immediately
+                    if (attack.ShouldExecuteImmediately())
+                    {
+                        attack.OnAttack();
+                        attack.OnAttackEnd();
+                        
+                        // Clear attack state immediately
+                        currentAttack = null;
+                        isExecutingAttack = false;
+                        
+                        // Resume normal movement/logic without waiting for animation events
+                        EndAttack();
+                        return;
+                    }
+                    
                     // Update base class attack time for cooldown movement system
                     lastAttackTime = Time.time;
                 }
