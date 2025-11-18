@@ -85,11 +85,6 @@ namespace Enemies
         /// Hover effect instance
         /// </summary>
         protected GameObject hoverEffectInstance;
-        
-        /// <summary>
-        /// Flag to track if the drone is currently falling (after death)
-        /// </summary>
-        protected bool isFalling = false;
 
         #endregion
 
@@ -186,7 +181,7 @@ namespace Enemies
         {
             base.Update();
             
-            if (Health <= 0 || isFalling) return;
+            if (Health <= 0) return;
             
             // Apply hover height and bobbing
             ApplyHoverHeight();
@@ -410,11 +405,11 @@ namespace Enemies
         #region Combat
 
         /// <summary>
-        /// Override Die to add falling behavior
+        /// Override Die to destroy faster
         /// </summary>
         public override void Die()
         {
-            Debug.Log($"[{gameObject.name}] Drone Die() called! Starting fall...");
+            Debug.Log($"[{gameObject.name}] Drone Die() called!");
             
             // Disable hover effect
             if (hoverEffectInstance != null)
@@ -422,81 +417,11 @@ namespace Enemies
                 hoverEffectInstance.SetActive(false);
             }
             
-            // Call base die
+            // Call base die (this will spawn death VFX)
             base.Die();
             
-            // Start falling
-            StartCoroutine(FallToGround());
-        }
-
-        /// <summary>
-        /// Coroutine to handle drone falling to ground when destroyed
-        /// </summary>
-        protected virtual System.Collections.IEnumerator FallToGround()
-        {
-            // Set falling flag to prevent Update() from interfering
-            isFalling = true;
-            
-            // Disable NavMesh agent (base.Die() already does this, but ensure it's disabled)
-            if (agent != null)
-            {
-                agent.enabled = false;
-            }
-            
-            // Disable hover bobbing and reset base height to prevent Update() from interfering
-            enableHoverBobbing = false;
-            baseHeight = 0f;
-            
-            // Get the current world position (use visual mesh if it exists, otherwise root)
-            Transform targetTransform = visualMesh != null ? visualMesh : transform;
-            float startHeight = targetTransform.position.y;
-            float currentHeight = startHeight;
-            
-            // Store initial visual mesh local position to lerp it back to zero
-            Vector3 initialVisualLocalPos = visualMesh != null ? visualMesh.localPosition : Vector3.zero;
-            
-            Debug.Log($"[{gameObject.name}] Starting fall from height: {startHeight}, visualMesh: {visualMesh?.name ?? "None"}");
-            
-            // Fall to ground
-            float fallSpeed = 2f;
-            float groundLevel = 0.1f;
-            
-            while (currentHeight > groundLevel + 0.1f)
-            {
-                // Calculate fall with acceleration
-                fallSpeed += 9.8f * Time.deltaTime; // Gravity acceleration
-                float fallDistance = fallSpeed * Time.deltaTime;
-                
-                // Move root transform down (this will move visual mesh too since it's a child)
-                Vector3 rootPosition = transform.position;
-                rootPosition.y -= fallDistance;
-                transform.position = rootPosition;
-                
-                // Gradually reset visual mesh local position to zero (brings it down to root level)
-                if (visualMesh != null)
-                {
-                    float fallProgress = 1f - ((currentHeight - groundLevel) / (startHeight - groundLevel));
-                    fallProgress = Mathf.Clamp01(fallProgress);
-                    visualMesh.localPosition = Vector3.Lerp(initialVisualLocalPos, Vector3.zero, fallProgress);
-                }
-                
-                // Update current height for next iteration
-                currentHeight = targetTransform.position.y;
-                yield return null;
-            }
-            
-            // Impact with ground - snap to final position
-            Vector3 finalRootPosition = transform.position;
-            finalRootPosition.y = groundLevel;
-            transform.position = finalRootPosition;
-            
-            // Ensure visual mesh is at root level
-            if (visualMesh != null)
-            {
-                visualMesh.localPosition = Vector3.zero;
-            }
-            
-            Debug.Log($"[{gameObject.name}] Drone has fallen to ground at position: {transform.position}");
+            // Destroy drone quickly so it disappears before effects finish
+            Destroy(gameObject, 1.5f);
         }
 
         #endregion

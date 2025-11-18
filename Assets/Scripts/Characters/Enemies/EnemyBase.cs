@@ -1973,10 +1973,18 @@ namespace Enemies
             // Play death VFX
             Vector3 deathPoint = transform.position + Vector3.up * 1.5f;
             Vector3 deathNormal = Vector3.up;
-            EffectManager.Instance.PlayDeathEffect(deathPoint, deathNormal, this);
+            PlayDeathVFX(deathPoint, deathNormal);
 
             // Destroy after delay
             Destroy(gameObject, 10f);
+        }
+        
+        /// <summary>
+        /// Virtual method to play death VFX. Override in child classes to customize (e.g., parent effects to transform)
+        /// </summary>
+        protected virtual void PlayDeathVFX(Vector3 position, Vector3 normal)
+        {
+            EffectManager.Instance.PlayDeathEffect(position, normal, this);
         }
 
         #endregion

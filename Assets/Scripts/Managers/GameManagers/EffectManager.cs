@@ -52,6 +52,9 @@ namespace Managers
             new Dictionary<EffectDefinition, Dictionary<GameObject, PrefabPool>>();
         private Dictionary<GameObject, PrefabPool> instanceToPrefabPool = new Dictionary<GameObject, PrefabPool>();
         
+        // Track effects that are parented to objects (so we can unparent before parent is destroyed)
+        private Dictionary<Transform, HashSet<GameObject>> parentedEffects = new Dictionary<Transform, HashSet<GameObject>>();
+        
         // VFX/Presentation tracking for status effects
         // Note: Gameplay data (active effects) is owned by target objects (IStatusEffectTarget)
         // This only tracks VFX instances and coroutines for presentation layer
@@ -302,6 +305,11 @@ namespace Managers
 
         public void PlayDeathEffect(Vector3 position, Vector3 normal, IDamageable damageable)
         {
+            PlayDeathEffect(position, normal, damageable, null);
+        }
+
+        public void PlayDeathEffect(Vector3 position, Vector3 normal, IDamageable damageable, Transform parent)
+        {
             if (damageable == null) return;
             var effects = GetCharacterEffects(damageable.CharacterType);
             if (effects == null || effects.deathEffects == null || effects.deathEffects.Length == 0)
@@ -310,7 +318,8 @@ namespace Managers
                 return;
             }
 
-            PlayEffect(position, normal, Quaternion.LookRotation(normal), null, effects.deathEffects[Random.Range(0, effects.deathEffects.Length)]);
+            // PlayEffect will automatically track parented effects
+            PlayEffect(position, normal, Quaternion.LookRotation(normal), parent, effects.deathEffects[Random.Range(0, effects.deathEffects.Length)]);
         }
 
         public void PlayDestructionEffect(Vector3 position, Vector3 normal, Vector2Int buildingSize)
@@ -635,6 +644,12 @@ namespace Managers
             foreach (var instance in spawnedInstances)
             {
                 StartCoroutine(ReturnToPoolAfterDuration(instance, effect, totalDuration));
+                
+                // Track parented effects so we can unparent before parent is destroyed
+                if (parent != null)
+                {
+                    TrackParentedEffect(instance, parent);
+                }
             }
 
             return primaryInstance;
@@ -1396,11 +1411,49 @@ namespace Managers
         }
         
         /// <summary>
+        /// Track an effect that is parented to a transform (so we can unparent it before parent is destroyed)
+        /// </summary>
+        private void TrackParentedEffect(GameObject effectInstance, Transform parent)
+        {
+            if (effectInstance == null || parent == null) return;
+            
+            if (!parentedEffects.ContainsKey(parent))
+            {
+                parentedEffects[parent] = new HashSet<GameObject>();
+            }
+            
+            parentedEffects[parent].Add(effectInstance);
+        }
+        
+        /// <summary>
+        /// Unparent all effects from a given parent transform (call this before destroying the parent)
+        /// </summary>
+        public void UnparentEffectsFrom(Transform parent)
+        {
+            if (parent == null || !parentedEffects.ContainsKey(parent)) return;
+            
+            var effects = parentedEffects[parent];
+            foreach (var effectInstance in effects)
+            {
+                if (effectInstance != null)
+                {
+                    // Unparent to EffectManager's transform to prevent destruction
+                    effectInstance.transform.SetParent(transform, true);
+                }
+            }
+            
+            parentedEffects.Remove(parent);
+        }
+        
+        /// <summary>
         /// Manually return an effect to the pool (used for looping effects management)
         /// </summary>
         public void ReturnEffectToPool(GameObject effectInstance, EffectDefinition effect)
         {
             if (effectInstance == null || effect == null) return;
+            
+            // Remove from parented effects tracking if it exists
+            RemoveFromParentedEffectsTracking(effectInstance);
             
             if (!instanceToPrefabPool.TryGetValue(effectInstance, out var pool))
             {
@@ -1431,6 +1484,33 @@ namespace Managers
 
             pool.active.Remove(effectInstance);
             pool.available.Enqueue(effectInstance);
+        }
+        
+        /// <summary>
+        /// Remove an effect from parented effects tracking
+        /// </summary>
+        private void RemoveFromParentedEffectsTracking(GameObject effectInstance)
+        {
+            if (effectInstance == null) return;
+            
+            // Find and remove from any parent's tracking
+            var parentsToRemove = new List<Transform>();
+            foreach (var kvp in parentedEffects)
+            {
+                if (kvp.Value.Remove(effectInstance))
+                {
+                    if (kvp.Value.Count == 0)
+                    {
+                        parentsToRemove.Add(kvp.Key);
+                    }
+                }
+            }
+            
+            // Clean up empty entries
+            foreach (var parent in parentsToRemove)
+            {
+                parentedEffects.Remove(parent);
+            }
         }
         
         /// <summary>
