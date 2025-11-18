@@ -9,6 +9,7 @@ using Managers;
 public class StraightProjectile : BaseProjectile
 {
     private float speed;
+    private Vector3 currentDirection;
 
     /// <summary>
     /// Initialize the straight projectile with damage and effect parameters
@@ -23,6 +24,7 @@ public class StraightProjectile : BaseProjectile
         
         // Store straight projectile-specific parameters
         speed = projectileSpeed;
+        currentDirection = direction.normalized;
         
         // Configure rigidbody for straight projectile behavior
         rb.useGravity = false;
@@ -30,10 +32,14 @@ public class StraightProjectile : BaseProjectile
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         
         // Set initial velocity
-        rb.linearVelocity = direction.normalized * speed;
+        rb.linearVelocity = currentDirection * speed;
         
         // Ensure projectile has a collider for impact detection
+        // Use trigger for player hit detection (will still trigger OnCollisionEnter for non-trigger collisions)
         EnsureCollider(0.15f, false);
+        
+        // Also ensure we have a trigger collider for player detection
+        EnsureTriggerColliderForReflection();
         
         // Point projectile in direction of travel
         if (direction != Vector3.zero)
@@ -44,9 +50,46 @@ public class StraightProjectile : BaseProjectile
         Debug.Log($"[StraightProjectile] {gameObject.name} initialized | Speed: {speed} | Has Collider: {GetComponent<Collider>() != null}");
     }
 
+    /// <summary>
+    /// Ensure projectile has a trigger collider for player reflection detection
+    /// (separate from the main collision collider)
+    /// </summary>
+    private void EnsureTriggerColliderForReflection()
+    {
+        // Check if we already have a trigger collider
+        Collider[] colliders = GetComponents<Collider>();
+        bool hasTrigger = false;
+        foreach (var col in colliders)
+        {
+            if (col.isTrigger)
+            {
+                hasTrigger = true;
+                break;
+            }
+        }
+
+        // Add a trigger collider if we don't have one (for player detection)
+        if (!hasTrigger)
+        {
+            SphereCollider triggerCol = gameObject.AddComponent<SphereCollider>();
+            triggerCol.radius = 0.2f;
+            triggerCol.isTrigger = true;
+        }
+    }
+
     void OnCollisionEnter(Collision collision)
     {
         if (hasHit) return;
+        
+        // Check if hit by player first (before normal impact) - don't check isReflected here to allow reflection
+        if (!isReflected && IsHitByPlayer(collision.transform))
+        {
+            ReflectProjectile();
+            return; // Don't impact, reflect instead
+        }
+        
+        // Skip normal impact if already reflected (on way back)
+        if (isReflected) return;
         
         Debug.Log($"[StraightProjectile] {gameObject.name} OnCollisionEnter with {collision.gameObject.name}");
         hasHit = true;
@@ -61,10 +104,69 @@ public class StraightProjectile : BaseProjectile
     {
         if (hasHit) return;
         
-        Debug.Log($"[StraightProjectile] {gameObject.name} OnTriggerEnter with {other.gameObject.name}");
-        hasHit = true;
+        // Only process player collisions in OnTriggerEnter (trigger collider is for player reflection)
+        // Ground, walls, and other solid objects should be handled by OnCollisionEnter instead
+        if (!isReflected && IsHitByPlayer(other))
+        {
+            ReflectProjectile();
+            return; // Reflect instead of impacting
+        }
+        
+        // Ignore all other trigger collisions (ground, walls, etc.) - they should use OnCollisionEnter
+        // Don't process impact here - let OnCollisionEnter handle non-player collisions
+    }
 
-        HandleImpact(transform.position, Vector3.up, other.transform);
+    void FixedUpdate()
+    {
+        if (hasHit) return;
+
+        // Handle reflected projectile movement
+        if (isReflected)
+        {
+            // Reverse direction back to origin
+            Vector3 toOrigin = (GetOriginPosition() - transform.position).normalized;
+            currentDirection = toOrigin;
+            rb.linearVelocity = currentDirection * speed;
+            
+            // Rotate towards origin
+            if (toOrigin != Vector3.zero)
+            {
+                transform.rotation = Quaternion.LookRotation(toOrigin);
+            }
+            
+            // Check if reached origin (or close enough)
+            float distanceToOrigin = Vector3.Distance(transform.position, GetOriginPosition());
+            if (distanceToOrigin < 0.5f)
+            {
+                // Reached origin, create impact
+                Vector3 impactPos = GetOriginPosition();
+                HandleImpact(impactPos, Vector3.up, attacker);
+                return;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Reflect the projectile back to its origin (called when hit by player)
+    /// </summary>
+    private void ReflectProjectile()
+    {
+        if (isReflected) return; // Already reflected
+        
+        OnReflected(); // Call base method to set isReflected flag
+        
+        // Reverse direction immediately
+        Vector3 toOrigin = (GetOriginPosition() - transform.position).normalized;
+        currentDirection = toOrigin;
+        rb.linearVelocity = currentDirection * speed;
+        
+        // Rotate towards origin
+        if (toOrigin != Vector3.zero)
+        {
+            transform.rotation = Quaternion.LookRotation(toOrigin);
+        }
+        
+        Debug.Log($"[StraightProjectile] {gameObject.name} reflected by player, returning to origin at {GetOriginPosition()}");
     }
 }
 

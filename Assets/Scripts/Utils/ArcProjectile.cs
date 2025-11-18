@@ -25,6 +25,10 @@ public class ArcProjectile : MonoBehaviour
     private bool hasHit = false;
     private float jumpDuration;
     private float maxLifetime = 10f;
+    private bool isReflected = false; // Track if projectile has been reflected by player
+    private float reflectedTimeAlive = 0f; // Track time since reflection
+    private Vector3 reflectionStartPosition; // Position where projectile was reflected
+    private float reflectionJumpDuration; // Duration for return trip
 
     /// <summary>
     /// Initialize the arc projectile with damage and effect parameters
@@ -48,6 +52,11 @@ public class ArcProjectile : MonoBehaviour
         useTriggerBasedDamage = triggerBased;
         timeAlive = 0f;
         hasHit = false;
+        isReflected = false;
+        reflectedTimeAlive = 0f;
+
+        // Ensure projectile has a collider for player hit detection
+        EnsureCollider();
 
         // Calculate the duration based on distance and speed
         float distance = Vector3.Distance(
@@ -55,6 +64,35 @@ public class ArcProjectile : MonoBehaviour
             new Vector3(targetPosition.x, 0, targetPosition.z)
         );
         jumpDuration = distance / speed;
+    }
+
+    /// <summary>
+    /// Ensure the projectile has a collider and rigidbody for player hit detection and reflection
+    /// </summary>
+    private void EnsureCollider()
+    {
+        // Ensure Rigidbody exists (required for OnTriggerEnter to work with moving objects)
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb == null)
+        {
+            rb = gameObject.AddComponent<Rigidbody>();
+            rb.isKinematic = true; // Don't use physics, we're moving it manually
+            rb.useGravity = false;
+        }
+
+        Collider col = GetComponent<Collider>();
+        if (col == null)
+        {
+            SphereCollider sphereCol = gameObject.AddComponent<SphereCollider>();
+            sphereCol.radius = 0.2f;
+            sphereCol.isTrigger = true; // Use trigger for player/weapon detection
+            Debug.LogWarning($"[ArcProjectile] {gameObject.name} missing collider, added SphereCollider automatically");
+        }
+        else if (!col.isTrigger)
+        {
+            // If collider exists but isn't a trigger, make it one for player detection
+            col.isTrigger = true;
+        }
     }
 
     void Update()
@@ -71,6 +109,38 @@ public class ArcProjectile : MonoBehaviour
             return;
         }
 
+        // Handle reflected projectile movement
+        if (isReflected)
+        {
+            reflectedTimeAlive += Time.deltaTime;
+            float returnProgress = reflectedTimeAlive / reflectionJumpDuration;
+
+            // Calculate position going back to origin (attacker position) with arc
+            if (returnProgress < 1f)
+            {
+                Vector3 returnPos = Vector3.Lerp(reflectionStartPosition, initialPosition, returnProgress);
+                // Add vertical movement using a sine wave for the return arc (shorter arc)
+                returnPos.y += Mathf.Sin(returnProgress * Mathf.PI) * maxHeight * 0.5f;
+                transform.position = returnPos;
+            }
+            else
+            {
+                // Reached origin, create impact
+                CreateImpact();
+                Destroy(gameObject);
+                return;
+            }
+
+            // Check if the reflected projectile has hit the ground
+            if (transform.position.y <= 0.1f)
+            {
+                CreateImpact();
+                Destroy(gameObject);
+            }
+            return;
+        }
+
+        // Normal projectile movement (before reflection)
         float progress = timeAlive / jumpDuration;
 
         // Calculate the current position in the jump arc
@@ -88,6 +158,85 @@ public class ArcProjectile : MonoBehaviour
             CreateImpact();
             Destroy(gameObject);
         }
+    }
+
+    /// <summary>
+    /// Detect collision with player or weapon to reflect projectile back to origin
+    /// Uses standardized player detection pattern
+    /// </summary>
+    void OnTriggerEnter(Collider other)
+    {
+        if (hasHit || isReflected) return; // Don't process if already hit or reflected
+
+        // Check if hit by player or player weapon using standardized detection
+        if (IsHitByPlayer(other))
+        {
+            // Reflect projectile back to origin (attacker position)
+            ReflectToOrigin();
+        }
+    }
+
+    /// <summary>
+    /// Check if a collider belongs to the player or player weapon
+    /// Standardized detection method (matches BaseProjectile pattern)
+    /// </summary>
+    private bool IsHitByPlayer(Collider other)
+    {
+        if (other == null) return false;
+
+        // Check by layer
+        if (other.gameObject.layer == GameConstants.Layers.PlayerLayer ||
+            other.gameObject.layer == GameConstants.Layers.WeaponLayer)
+        {
+            return true;
+        }
+
+        // Check by tag
+        if (other.CompareTag(GameConstants.Tags.Player))
+        {
+            return true;
+        }
+
+        // Check if parent is player or weapon
+        Transform parent = other.transform.parent;
+        while (parent != null)
+        {
+            if (parent.gameObject.layer == GameConstants.Layers.PlayerLayer ||
+                parent.CompareTag(GameConstants.Tags.Player))
+            {
+                return true;
+            }
+            parent = parent.parent;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Reflect the projectile back to its origin (the attacker that fired it)
+    /// Uses initialPosition which is the origin (attacker position)
+    /// </summary>
+    private void ReflectToOrigin()
+    {
+        if (isReflected) return; // Already reflected
+
+        isReflected = true;
+        reflectedTimeAlive = 0f;
+        
+        // Store the position where reflection occurred
+        reflectionStartPosition = transform.position;
+
+        // Calculate new duration for return trip
+        float returnDistance = Vector3.Distance(
+            new Vector3(reflectionStartPosition.x, 0, reflectionStartPosition.z),
+            new Vector3(initialPosition.x, 0, initialPosition.z)
+        );
+        reflectionJumpDuration = returnDistance / speed;
+
+        // Update target to origin
+        targetPosition = initialPosition;
+
+        Debug.Log($"[ArcProjectile] {gameObject.name} reflected by player at {reflectionStartPosition}, returning to origin at {initialPosition}");
     }
 
     /// <summary>

@@ -1,7 +1,5 @@
 *****Current Work*****
 
-Drone.cs FallToGround and Die logic is not working.
-
 If homing missile is hit by the player then send it back to the origin
 
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.

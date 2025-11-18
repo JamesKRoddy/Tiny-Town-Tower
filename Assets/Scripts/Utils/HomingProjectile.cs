@@ -56,20 +56,66 @@ public class HomingProjectile : BaseProjectile
         float areaDuration = 5f,
         bool triggerBased = false)
     {
+        Debug.Log($"[HomingProjectile] ===== INITIALIZE START =====");
+        Debug.Log($"[HomingProjectile] GameObject: {gameObject.name} | Position: {transform.position}");
+        Debug.Log($"[HomingProjectile] Parameters:");
+        Debug.Log($"[HomingProjectile]   - Target: {(targetTransform != null ? targetTransform.name : "NULL")}");
+        Debug.Log($"[HomingProjectile]   - Damage: {dmg} | Poise: {poiseDmg} | Element: {elem}");
+        Debug.Log($"[HomingProjectile]   - Attacker: {(attackTransform != null ? attackTransform.name : "NULL")}");
+        Debug.Log($"[HomingProjectile]   - Speed: {projectileSpeed} | Duration: {duration}s | Turn Speed: {turnSpeedDegrees}°/s");
+        Debug.Log($"[HomingProjectile]   - Explode On Timeout: {explodeWhenExpired}");
+        Debug.Log($"[HomingProjectile]   - Impact Effect: {(impactEff != null ? impactEff.name : "NULL")}");
+        Debug.Log($"[HomingProjectile]   - Create Area: {createArea} | Radius: {areaRadius} | Duration: {areaDuration}");
+        Debug.Log($"[HomingProjectile]   - Use Trigger: {triggerBased}");
+        
+        if (gameObject == null)
+        {
+            Debug.LogError("[HomingProjectile] ❌ GameObject is NULL!");
+            return;
+        }
+        
         // Initialize base parameters (damage, effects, etc.)
-        InitializeBase(dmg, poiseDmg, attackTransform, elem, impactEff, createArea, areaRadius, areaDuration, triggerBased);
+        Debug.Log($"[HomingProjectile] Calling InitializeBase...");
+        try
+        {
+            InitializeBase(dmg, poiseDmg, attackTransform, elem, impactEff, createArea, areaRadius, areaDuration, triggerBased);
+            Debug.Log($"[HomingProjectile] ✅ InitializeBase completed");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[HomingProjectile] ❌ EXCEPTION in InitializeBase(): {e.Message}");
+            Debug.LogError($"[HomingProjectile] Stack Trace: {e.StackTrace}");
+            return;
+        }
+        
+        if (rb == null)
+        {
+            Debug.LogError("[HomingProjectile] ❌ Rigidbody is NULL after InitializeBase()!");
+            return;
+        }
+        
+        Debug.Log($"[HomingProjectile] Rigidbody found: {rb.name} | Is Kinematic: {rb.isKinematic} | Use Gravity: {rb.useGravity}");
         
         // Store homing-specific parameters
-            target = targetTransform;
-            homingDuration = duration;
-            turnSpeed = turnSpeedDegrees;
+        target = targetTransform;
+        if (target == null)
+        {
+            Debug.LogWarning("[HomingProjectile] ⚠️ Target Transform is NULL! Homing will not work.");
+        }
+        
+        homingDuration = duration;
+        turnSpeed = turnSpeedDegrees;
         speed = projectileSpeed;
         baseSpeed = projectileSpeed;
-            explodeOnTimeout = explodeWhenExpired;
+        explodeOnTimeout = explodeWhenExpired;
+        
+        Debug.Log($"[HomingProjectile] Homing parameters stored | Target: {(target != null ? target.name : "NULL")} | Speed: {speed} | Duration: {homingDuration}s");
         
         // Initialize homing-specific state
         isTracking = true;
         currentDirection = transform.forward;
+        
+        Debug.Log($"[HomingProjectile] Initial direction: {currentDirection} | Is Tracking: {isTracking}");
         
         // Configure rigidbody for homing behavior
         rb.useGravity = false;
@@ -77,16 +123,64 @@ public class HomingProjectile : BaseProjectile
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         rb.linearVelocity = currentDirection * speed;
         
+        Debug.Log($"[HomingProjectile] Rigidbody configured | Velocity: {rb.linearVelocity} | Speed: {speed}");
+        
         // Ensure projectile has a collider for impact detection
+        Debug.Log($"[HomingProjectile] Ensuring collider...");
         EnsureCollider(0.2f, false);
+        Collider mainCollider = GetComponent<Collider>();
+        Debug.Log($"[HomingProjectile] Main Collider: {(mainCollider != null ? mainCollider.GetType().Name + " (trigger: " + mainCollider.isTrigger + ")" : "NULL")}");
+        
+        // Also ensure we have a trigger collider for player detection
+        Debug.Log($"[HomingProjectile] Ensuring trigger collider for reflection...");
+        EnsureTriggerColliderForReflection();
+        Collider[] allColliders = GetComponents<Collider>();
+        Debug.Log($"[HomingProjectile] Total Colliders: {allColliders.Length}");
+        foreach (var col in allColliders)
+        {
+            Debug.Log($"[HomingProjectile]   - {col.GetType().Name} | Is Trigger: {col.isTrigger} | Enabled: {col.enabled}");
+        }
             
         // Point projectile in direction of travel
         if (currentDirection != Vector3.zero)
         {
             transform.rotation = Quaternion.LookRotation(currentDirection);
+            Debug.Log($"[HomingProjectile] Rotation set to: {transform.rotation}");
+        }
+        else
+        {
+            Debug.LogWarning("[HomingProjectile] ⚠️ Current direction is zero! Cannot set rotation.");
         }
         
-        Debug.Log($"[HomingProjectile] {gameObject.name} initialized | Target: {targetTransform?.name} | Speed: {speed} | Duration: {duration}s | Has Collider: {GetComponent<Collider>() != null} | CreateDamageArea: {createArea} | Radius: {areaRadius} | UseTrigger: {triggerBased}");
+        Debug.Log($"[HomingProjectile] ✅ {gameObject.name} initialized successfully | Target: {(target != null ? target.name : "NULL")} | Speed: {speed} | Duration: {duration}s | Has Collider: {mainCollider != null} | CreateDamageArea: {createArea} | Radius: {areaRadius} | UseTrigger: {triggerBased}");
+        Debug.Log($"[HomingProjectile] ===== INITIALIZE END =====");
+    }
+
+    /// <summary>
+    /// Ensure projectile has a trigger collider for player reflection detection
+    /// (separate from the main collision collider)
+    /// </summary>
+    private void EnsureTriggerColliderForReflection()
+    {
+        // Check if we already have a trigger collider
+        Collider[] colliders = GetComponents<Collider>();
+        bool hasTrigger = false;
+        foreach (var col in colliders)
+        {
+            if (col.isTrigger)
+            {
+                hasTrigger = true;
+                break;
+            }
+        }
+
+        // Add a trigger collider if we don't have one (for player detection)
+        if (!hasTrigger)
+        {
+            SphereCollider triggerCol = gameObject.AddComponent<SphereCollider>();
+            triggerCol.radius = 0.2f;
+            triggerCol.isTrigger = true;
+        }
     }
 
     protected override void Update()
@@ -96,7 +190,46 @@ public class HomingProjectile : BaseProjectile
 
     void FixedUpdate()
         {
-        if (!isTracking || hasHit) return;
+        if (hasHit) return;
+
+        // Handle reflected projectile movement
+        if (isReflected)
+        {
+            isTracking = false; // Stop tracking when reflected
+            
+            // Reverse direction back to origin
+            Vector3 toOrigin = (GetOriginPosition() - transform.position).normalized;
+            currentDirection = toOrigin;
+            
+            // Move towards origin
+            if (rb != null)
+            {
+                rb.linearVelocity = currentDirection * speed;
+            }
+            else
+            {
+                transform.position += currentDirection * speed * Time.fixedDeltaTime;
+            }
+            
+            // Rotate towards origin
+            if (toOrigin != Vector3.zero)
+            {
+                transform.rotation = Quaternion.LookRotation(toOrigin);
+            }
+            
+            // Check if reached origin (or close enough)
+            float distanceToOrigin = Vector3.Distance(transform.position, GetOriginPosition());
+            if (distanceToOrigin < 0.5f)
+            {
+                // Reached origin, create impact
+                Vector3 impactPos = GetOriginPosition();
+                HandleImpact(impactPos, Vector3.up, attacker);
+                return;
+            }
+            return;
+        }
+            
+        if (!isTracking) return;
             
             // Check if tracking duration has expired
             float timeAlive = Time.time - launchTime;
@@ -193,9 +326,52 @@ public class HomingProjectile : BaseProjectile
 
     void OnCollisionEnter(Collision collision)
     {
-        if (hasHit) return;
+        // === COMPREHENSIVE COLLISION LOGGING ===
+        float timeAlive = Time.time - launchTime;
+        float distanceToTarget = target != null ? Vector3.Distance(transform.position, target.position) : -1f;
+        float distanceToAttacker = attacker != null ? Vector3.Distance(transform.position, attacker.position) : -1f;
+        bool isAttacker = attacker != null && (collision.gameObject == attacker.gameObject || collision.transform.IsChildOf(attacker));
+        bool isPlayerHit = IsHitByPlayer(collision.transform);
         
-        Debug.Log($"[HomingProjectile] {gameObject.name} OnCollisionEnter with {collision.gameObject.name} (Layer: {LayerMask.LayerToName(collision.gameObject.layer)}) | Time Alive: {Time.time - launchTime:F2}s | Distance to target: {(target != null ? Vector3.Distance(transform.position, target.position) : -1):F2}m");
+        Debug.Log($"[HomingProjectile] ===== COLLISION DETECTED =====");
+        Debug.Log($"[HomingProjectile] Projectile: {gameObject.name} | Position: {transform.position}");
+        Debug.Log($"[HomingProjectile] Hit Object: {collision.gameObject.name}");
+        Debug.Log($"[HomingProjectile] Hit Layer: {LayerMask.LayerToName(collision.gameObject.layer)} ({collision.gameObject.layer})");
+        Debug.Log($"[HomingProjectile] Hit Tag: {(string.IsNullOrEmpty(collision.gameObject.tag) ? "None" : collision.gameObject.tag)}");
+        Debug.Log($"[HomingProjectile] Is Attacker: {isAttacker} | Attacker: {(attacker != null ? attacker.name : "NULL")}");
+        Debug.Log($"[HomingProjectile] Is Player Hit: {isPlayerHit}");
+        Debug.Log($"[HomingProjectile] Is Reflected: {isReflected} | Has Hit: {hasHit}");
+        Debug.Log($"[HomingProjectile] Time Alive: {timeAlive:F3}s | Distance to Target: {distanceToTarget:F2}m | Distance to Attacker: {distanceToAttacker:F2}m");
+        Debug.Log($"[HomingProjectile] Hit Point: {(collision.contacts.Length > 0 ? collision.contacts[0].point.ToString() : "No contacts")}");
+        
+        if (hasHit)
+        {
+            Debug.Log($"[HomingProjectile] >>> IGNORED - Already hit something");
+            return;
+        }
+        
+        // Check if hit by player first (before normal impact) - don't check isReflected here to allow reflection
+        if (!isReflected && isPlayerHit)
+        {
+            Debug.Log($"[HomingProjectile] >>> REFLECTING - Hit by player/weapon");
+            ReflectProjectile();
+            return; // Don't impact, reflect instead
+        }
+        
+        // Skip normal impact if already reflected (on way back)
+        if (isReflected)
+        {
+            Debug.Log($"[HomingProjectile] >>> IGNORED - Already reflected (on way back)");
+            return;
+        }
+        
+        // Check if hitting the attacker (drone itself)
+        if (isAttacker)
+        {
+            Debug.Log($"[HomingProjectile] >>> WARNING - Hitting attacker (drone)! This may indicate spawn position is too close.");
+        }
+        
+        Debug.Log($"[HomingProjectile] >>> PROCESSING IMPACT");
         hasHit = true;
         isTracking = false; // Stop tracking on impact
 
@@ -207,14 +383,71 @@ public class HomingProjectile : BaseProjectile
 
     void OnTriggerEnter(Collider other)
     {
-        if (hasHit) return;
+        // === COMPREHENSIVE TRIGGER LOGGING ===
+        float timeAlive = Time.time - launchTime;
+        float distanceToTarget = target != null ? Vector3.Distance(transform.position, target.position) : -1f;
+        float distanceToAttacker = attacker != null ? Vector3.Distance(transform.position, attacker.position) : -1f;
+        bool isAttacker = attacker != null && (other.gameObject == attacker.gameObject || other.transform.IsChildOf(attacker));
+        bool isPlayerHit = IsHitByPlayer(other);
         
-        Debug.Log($"[HomingProjectile] {gameObject.name} OnTriggerEnter with {other.gameObject.name}");
-        hasHit = true;
-        isTracking = false; // Stop tracking on impact
-
-        HandleImpact(transform.position, Vector3.up, other.transform);
+        Debug.Log($"[HomingProjectile] ===== TRIGGER DETECTED =====");
+        Debug.Log($"[HomingProjectile] Projectile: {gameObject.name} | Position: {transform.position}");
+        Debug.Log($"[HomingProjectile] Trigger Object: {other.gameObject.name}");
+        Debug.Log($"[HomingProjectile] Trigger Layer: {LayerMask.LayerToName(other.gameObject.layer)} ({other.gameObject.layer})");
+        Debug.Log($"[HomingProjectile] Trigger Tag: {(string.IsNullOrEmpty(other.gameObject.tag) ? "None" : other.gameObject.tag)}");
+        Debug.Log($"[HomingProjectile] Is Attacker: {isAttacker} | Attacker: {(attacker != null ? attacker.name : "NULL")}");
+        Debug.Log($"[HomingProjectile] Is Player Hit: {isPlayerHit}");
+        Debug.Log($"[HomingProjectile] Is Reflected: {isReflected} | Has Hit: {hasHit}");
+        Debug.Log($"[HomingProjectile] Time Alive: {timeAlive:F3}s | Distance to Target: {distanceToTarget:F2}m | Distance to Attacker: {distanceToAttacker:F2}m");
+        
+        if (hasHit)
+        {
+            Debug.Log($"[HomingProjectile] >>> IGNORED - Already hit something");
+            return;
         }
+        
+        // Only process player collisions in OnTriggerEnter (trigger collider is for player reflection)
+        // Ground, walls, and other solid objects should be handled by OnCollisionEnter instead
+        if (!isReflected && isPlayerHit)
+        {
+            Debug.Log($"[HomingProjectile] >>> REFLECTING - Hit by player/weapon (trigger)");
+            ReflectProjectile();
+            return; // Reflect instead of impacting
+        }
+        
+        // Ignore all other trigger collisions (ground, walls, etc.) - they should use OnCollisionEnter
+        Debug.Log($"[HomingProjectile] >>> IGNORED - Non-player trigger (will be handled by OnCollisionEnter)");
+        }
+
+    /// <summary>
+    /// Reflect the projectile back to its origin (called when hit by player)
+    /// </summary>
+    private void ReflectProjectile()
+    {
+        if (isReflected) return; // Already reflected
+        
+        OnReflected(); // Call base method to set isReflected flag
+        
+        // Stop tracking
+        isTracking = false;
+        
+        // Reverse direction immediately
+        Vector3 toOrigin = (GetOriginPosition() - transform.position).normalized;
+        currentDirection = toOrigin;
+        
+        if (rb != null)
+        {
+            rb.linearVelocity = currentDirection * speed;
+        }
+        
+        // Rotate towards origin
+        if (toOrigin != Vector3.zero)
+        {
+            transform.rotation = Quaternion.LookRotation(toOrigin);
+        }
+        
+        Debug.Log($"[HomingProjectile] {gameObject.name} reflected by player, returning to origin at {GetOriginPosition()}");
+    }
 }
 
 

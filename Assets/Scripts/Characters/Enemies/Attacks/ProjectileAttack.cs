@@ -11,7 +11,7 @@ namespace Enemies.Attacks
     {
         [Header("Projectile Settings")]
         [Tooltip("Height offset for projectile spawn")]
-        public float projectileSpawnHeight = 1.5f;
+        public float projectileSpawnHeight = 0.0f;
         [Tooltip("Speed of the projectile")]
         public float projectileSpeed = 10f;
         [Tooltip("Maximum height of the projectile arc")]
@@ -73,7 +73,13 @@ namespace Enemies.Attacks
 
         public override void StartAttack()
         {
+            // Do everything the base does EXCEPT play the start effect
+            // The start effect should only play when the projectile is successfully created in OnAttack()
             base.StartAttack();
+            
+            // Cancel the start effect that was played by base.StartAttack()
+            // We'll play it in OnAttack() only when the projectile is successfully created
+            // (This prevents the muzzle flash from playing when no missile is spawned)
             
             // Store the target position when attack begins
             if (target != null)
@@ -82,6 +88,57 @@ namespace Enemies.Attacks
             }
             
             Debug.Log($"[{enemy.gameObject.name}] Projectile attack started | Target: {target.name} | Distance: {Vector3.Distance(enemy.transform.position, target.position):F2}");
+        }
+        
+        /// <summary>
+        /// Override to prevent start effect from playing in StartAttack()
+        /// It will only play in OnAttack() when projectile is successfully created
+        /// When called with parameters (from OnAttack), actually play the effect
+        /// </summary>
+        protected override void PlayStartEffect(Vector3? position = null, Vector3? direction = null, Quaternion? rotation = null, Transform parent = null)
+        {
+            // Only play start effect if parameters are provided (meaning it's being called from OnAttack, not StartAttack)
+            // This prevents the muzzle flash from playing when the missile fails to spawn
+            if (startEffect != null && startEffect.IsValid() && position.HasValue)
+            {
+                // Use provided position/direction/rotation/parent if available, otherwise use defaults
+                Vector3 effectPos = position.Value;
+                Vector3 effectDir = direction.HasValue ? direction.Value : Vector3.forward;
+                Quaternion effectRot = rotation.HasValue ? rotation.Value : Quaternion.identity;
+                Transform effectParent = parent ?? attackOrigin ?? enemy?.transform;
+                
+                // Play the effect at the specified location (muzzle flash at spawn position)
+                PlayEffectSpawnDataAtPosition(startEffect, startEffectDelay, effectParent, effectPos, effectDir, effectRot);
+            }
+            // If no parameters provided (called from base.StartAttack()), do nothing
+        }
+        
+        /// <summary>
+        /// Helper to play EffectSpawnData with explicit position/direction/rotation
+        /// </summary>
+        private void PlayEffectSpawnDataAtPosition(EffectSpawnData effectData, float delay, Transform parent, Vector3 position, Vector3 direction, Quaternion rotation)
+        {
+            if (effectData == null || !effectData.IsValid()) return;
+            
+            // Spawn at the specified world position with the specified rotation
+            if (delay > 0)
+            {
+                StartCoroutine(PlayEffectSpawnDataAtPositionDelayed(effectData, delay, parent, position, direction, rotation));
+            }
+            else
+            {
+                // Use EffectManager to spawn at world position
+                EffectManager.Instance?.PlayEffect(position, direction, rotation, parent, effectData.effectDefinition);
+            }
+        }
+        
+        private System.Collections.IEnumerator PlayEffectSpawnDataAtPositionDelayed(EffectSpawnData effectData, float delay, Transform parent, Vector3 position, Vector3 direction, Quaternion rotation)
+        {
+            yield return new WaitForSeconds(delay);
+            if (effectData != null && effectData.IsValid())
+            {
+                EffectManager.Instance?.PlayEffect(position, direction, rotation, parent, effectData.effectDefinition);
+            }
         }
 
         public override void OnAttack()

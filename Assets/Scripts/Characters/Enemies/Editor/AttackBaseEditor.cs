@@ -142,6 +142,9 @@ namespace Enemies.Editor
                 EditorGUILayout.Space(5);
             }
 
+            // Draw child class specific settings (like projectile settings) - always visible
+            DrawChildSpecificSettings();
+
             // Note: Specific attack types (like CloseRangeAttack) will add their own visualizations
 
             // Draw child class properties
@@ -178,7 +181,11 @@ namespace Enemies.Editor
                 "useTriggerBasedDamage",
                 "fallbackDamageRadius",
                 "projectileEffect",
-                "impactEffect");
+                "impactEffect",
+                "homingDuration",
+                "turnSpeed",
+                "explodeOnTimeout",
+                "missileSpeedMultiplier");
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -229,9 +236,6 @@ namespace Enemies.Editor
                 cooldownVal = Mathf.Max(0f, EditorGUILayout.FloatField("Cooldown", cooldownVal));
                 cooldown.floatValue = cooldownVal;
             }
-            
-            // Call child class specific settings
-            DrawChildSpecificSettings();
             
             // Draw the visual graphics
             EditorGUILayout.Space(5);

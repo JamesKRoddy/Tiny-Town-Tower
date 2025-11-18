@@ -1013,7 +1013,7 @@ public static class DamageUtils
     /// <param name="startPosition">Starting position of the projectile</param>
     /// <param name="direction">Direction of the projectile</param>
     /// <param name="rotation">Rotation of the projectile</param>
-    /// <param name="targetPosition">Target position for the projectile (used by ARC and HOMING types)</param>
+    /// <param name="targetPosition">Target position for the projectile (used by ARC type)</param>
     /// <param name="damage">Damage the projectile deals on impact</param>
     /// <param name="poiseDamage">Poise damage the projectile deals on impact</param>
     /// <param name="attacker">The attacker (for damage source tracking)</param>
@@ -1027,27 +1027,56 @@ public static class DamageUtils
     /// <param name="projectileType">Type of projectile behavior to attach (STRAIGHT, ARC, HOMING, etc.)</param>
     /// <param name="projectileSpeed">Speed of the projectile (default varies by type)</param>
     /// <param name="projectileMaxHeight">Max height for arc projectiles (default 5f)</param>
+    /// <param name="targetTransform">Target Transform for homing projectiles (required for HOMING type)</param>
+    /// <param name="homingDuration">How long homing projectiles track the target (default 3f)</param>
+    /// <param name="turnSpeed">Turn speed for homing projectiles in degrees/second (default 180f)</param>
+    /// <param name="explodeOnTimeout">Whether homing projectiles explode when tracking expires (default true)</param>
     /// <returns>The spawned projectile GameObject</returns>
     public static GameObject FireProjectileWithEffect(Vector3 startPosition, Vector3 direction, Quaternion rotation,
         Vector3 targetPosition, float damage, float poiseDamage, Transform attacker, AttackElement element,
         EffectDefinition projectileEffect, EffectDefinition impactEffect = null, bool createDamageArea = false,
         float damageAreaRadius = 0f, float damageAreaDuration = 5f, bool useTriggerBasedDamage = false,
-        ProjectileType projectileType = ProjectileType.NONE, float projectileSpeed = 0f, float projectileMaxHeight = 5f)
+        ProjectileType projectileType = ProjectileType.NONE, float projectileSpeed = 0f, float projectileMaxHeight = 5f,
+        Transform targetTransform = null, float homingDuration = 3f, float turnSpeed = 180f, bool explodeOnTimeout = true)
     {
+        Debug.Log($"[DamageUtils] ===== FIRE PROJECTILE WITH EFFECT START =====");
+        Debug.Log($"[DamageUtils] Projectile Type: {projectileType} | Start Position: {startPosition} | Direction: {direction}");
+        Debug.Log($"[DamageUtils] Attacker: {(attacker != null ? attacker.name : "NULL")} | Damage: {damage} | Poise: {poiseDamage} | Element: {element}");
+        
         if (projectileEffect == null)
         {
-            Debug.LogError("Projectile effect definition is null!");
+            Debug.LogError("[DamageUtils] ❌ Projectile effect definition is NULL!");
             return null;
         }
+        
+        Debug.Log($"[DamageUtils] Projectile Effect Definition: {projectileEffect.name}");
+        
+        if (EffectManager.Instance == null)
+        {
+            Debug.LogError("[DamageUtils] ❌ EffectManager.Instance is NULL! Cannot spawn projectile effect.");
+            return null;
+        }
+        
+        Debug.Log($"[DamageUtils] EffectManager.Instance found, spawning projectile effect...");
         
         // Play the projectile effect and get the spawned GameObject
         GameObject projectileObj = EffectManager.Instance.PlayEffect(startPosition, direction, rotation, null, projectileEffect);
         
         if (projectileObj == null)
         {
-            Debug.LogError("Failed to spawn projectile effect!");
+            Debug.LogError("[DamageUtils] ❌ EffectManager.Instance.PlayEffect() returned NULL! Failed to spawn projectile effect!");
+            Debug.LogError($"[DamageUtils]   - Effect Definition: {projectileEffect.name}");
+            Debug.LogError($"[DamageUtils]   - Start Position: {startPosition}");
+            Debug.LogError($"[DamageUtils]   - Effect Definition prefabs count: {(projectileEffect.prefabs != null ? projectileEffect.prefabs.Length.ToString() : "NULL")}");
+            if (projectileEffect.prefabs != null && projectileEffect.prefabs.Length > 0)
+            {
+                Debug.LogError($"[DamageUtils]   - First prefab: {(projectileEffect.prefabs[0] != null && projectileEffect.prefabs[0].prefab != null ? projectileEffect.prefabs[0].prefab.name : "NULL")}");
+            }
             return null;
         }
+        
+        Debug.Log($"[DamageUtils] ✅ Projectile GameObject spawned: {projectileObj.name} | Active: {projectileObj.activeSelf}");
+        Debug.Log($"[DamageUtils] Projectile Position: {projectileObj.transform.position} | Rotation: {projectileObj.transform.rotation}");
         
         // Attach the appropriate projectile behavior based on type
         switch (projectileType)
@@ -1057,11 +1086,22 @@ public static class DamageUtils
                     float speed = projectileSpeed > 0f ? projectileSpeed : 20f;
                     StraightProjectile straightProj = projectileObj.GetComponent<StraightProjectile>();
                     if (straightProj == null)
-            {
+                    {
                         straightProj = projectileObj.AddComponent<StraightProjectile>();
-            }
-                    straightProj.Initialize(direction, damage, poiseDamage, attacker, element, speed,
-                impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage);
+                    }
+                    straightProj.Initialize(
+                        direction,                                    // direction
+                        damage,                                      // dmg
+                        poiseDamage,                                 // poiseDmg
+                        attacker,                                    // attackTransform
+                        element,                                     // elem
+                        speed,                                       // projectileSpeed
+                        impactEffect,                                // impactEff
+                        createDamageArea,                            // createArea
+                        damageAreaRadius,                            // areaRadius
+                        damageAreaDuration,                          // areaDuration
+                        useTriggerBasedDamage                        // triggerBased
+                    );
                 }
                 break;
                 
@@ -1073,15 +1113,92 @@ public static class DamageUtils
                     {
                         arcProj = projectileObj.AddComponent<ArcProjectile>();
                     }
-                    arcProj.Initialize(targetPosition, damage, poiseDamage, attacker, element, speed, projectileMaxHeight,
-                        impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage);
+                    arcProj.Initialize(
+                        targetPosition,                              // targetPos
+                        damage,                                      // dmg
+                        poiseDamage,                                 // poiseDmg
+                        attacker,                                    // attackTransform
+                        element,                                     // elem
+                        speed,                                       // projectileSpeed
+                        projectileMaxHeight,                         // projectileMaxHeight
+                        impactEffect,                                // impactEff
+                        createDamageArea,                            // createArea
+                        damageAreaRadius,                            // areaRadius
+                        damageAreaDuration,                          // areaDuration
+                        useTriggerBasedDamage                        // triggerBased
+                    );
                 }
                 break;
                 
             case ProjectileType.HOMING:
-                // Homing missiles are handled separately by HomingMissileAttack
-                // which adds the HomingMissile component directly
-                Debug.LogWarning("HOMING projectile type should be configured by HomingMissileAttack, not through FireProjectileWithEffect");
+                {
+                    Debug.Log($"[DamageUtils] Processing HOMING projectile type...");
+                    
+                    if (targetTransform == null)
+                    {
+                        Debug.LogWarning("[DamageUtils] ⚠️ HOMING projectile type requires a targetTransform parameter. Homing projectile may not track correctly.");
+                    }
+                    else
+                    {
+                        Debug.Log($"[DamageUtils] Target Transform: {targetTransform.name} | Position: {targetTransform.position}");
+                    }
+                    
+                    float speed = projectileSpeed > 0f ? projectileSpeed : 15f;
+                    Debug.Log($"[DamageUtils] Projectile Speed: {speed} (provided: {projectileSpeed})");
+                    
+                    HomingProjectile homingProj = projectileObj.GetComponent<HomingProjectile>();
+                    if (homingProj == null)
+                    {
+                        Debug.Log($"[DamageUtils] HomingProjectile component not found, adding...");
+                        homingProj = projectileObj.AddComponent<HomingProjectile>();
+                        if (homingProj == null)
+                        {
+                            Debug.LogError("[DamageUtils] ❌ Failed to add HomingProjectile component!");
+                            return null;
+                        }
+                        Debug.Log($"[DamageUtils] ✅ HomingProjectile component added");
+                    }
+                    else
+                    {
+                        Debug.Log($"[DamageUtils] HomingProjectile component already exists");
+                    }
+                    
+                    Debug.Log($"[DamageUtils] Initializing HomingProjectile with:");
+                    Debug.Log($"[DamageUtils]   - Target: {(targetTransform != null ? targetTransform.name : "NULL")}");
+                    Debug.Log($"[DamageUtils]   - Damage: {damage} | Poise: {poiseDamage} | Element: {element}");
+                    Debug.Log($"[DamageUtils]   - Speed: {speed} | Duration: {homingDuration}s | Turn Speed: {turnSpeed}°/s");
+                    Debug.Log($"[DamageUtils]   - Explode On Timeout: {explodeOnTimeout}");
+                    Debug.Log($"[DamageUtils]   - Create Damage Area: {createDamageArea} | Radius: {damageAreaRadius} | Duration: {damageAreaDuration}");
+                    Debug.Log($"[DamageUtils]   - Use Trigger Based: {useTriggerBasedDamage}");
+                    Debug.Log($"[DamageUtils]   - Impact Effect: {(impactEffect != null ? impactEffect.name : "NULL")}");
+                    
+                    try
+                    {
+                        homingProj.Initialize(
+                            targetTransform,                              // targetTransform
+                            damage,                                      // dmg
+                            poiseDamage,                                 // poiseDmg
+                            attacker,                                    // attackTransform
+                            element,                                     // elem
+                            speed,                                       // projectileSpeed
+                            homingDuration,                              // duration
+                            turnSpeed,                                   // turnSpeedDegrees
+                            explodeOnTimeout,                            // explodeWhenExpired
+                            impactEffect,                                // impactEff
+                            createDamageArea,                            // createArea
+                            damageAreaRadius,                            // areaRadius
+                            damageAreaDuration,                          // areaDuration
+                            useTriggerBasedDamage                        // triggerBased
+                        );
+                        Debug.Log($"[DamageUtils] ✅ HomingProjectile.Initialize() completed successfully");
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError($"[DamageUtils] ❌ EXCEPTION during HomingProjectile.Initialize(): {e.Message}");
+                        Debug.LogError($"[DamageUtils] Stack Trace: {e.StackTrace}");
+                        return null;
+                    }
+                }
                 break;
                 
             case ProjectileType.NONE:
@@ -1103,6 +1220,9 @@ public static class DamageUtils
                 }
                 break;
         }
+        
+        Debug.Log($"[DamageUtils] ✅ Projectile setup complete. Returning: {(projectileObj != null ? projectileObj.name : "NULL")}");
+        Debug.Log($"[DamageUtils] ===== FIRE PROJECTILE WITH EFFECT END =====");
         
         return projectileObj;
     }

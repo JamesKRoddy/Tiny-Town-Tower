@@ -24,6 +24,10 @@ public abstract class BaseProjectile : MonoBehaviour
     protected bool hasHit = false;
     protected float launchTime;
     protected float maxLifetime = 10f;
+    
+    // Reflection tracking (for player hit reflection)
+    protected bool isReflected = false;
+    protected Vector3 originPosition; // Original launch position (attacker position)
 
     /// <summary>
     /// Initialize common projectile parameters
@@ -45,7 +49,11 @@ public abstract class BaseProjectile : MonoBehaviour
         
         // Initialize state
         hasHit = false;
+        isReflected = false;
         launchTime = Time.time;
+        
+        // Store origin position (attacker position) for reflection
+        originPosition = attackTransform != null ? attackTransform.position : transform.position;
         
         // Get or add rigidbody
         rb = GetComponent<Rigidbody>();
@@ -160,6 +168,104 @@ public abstract class BaseProjectile : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
+
+    // ===== REFLECTION SYSTEM (STANDARDIZED) =====
+
+    /// <summary>
+    /// Check if a collider/transform belongs to the player or player weapon
+    /// Standardized detection used by all projectile types
+    /// </summary>
+    /// <param name="other">The collider or transform to check</param>
+    /// <returns>True if hit by player or player weapon</returns>
+    protected bool IsHitByPlayer(Collider other)
+    {
+        if (other == null) return false;
+
+        // Check by layer
+        if (other.gameObject.layer == GameConstants.Layers.PlayerLayer ||
+            other.gameObject.layer == GameConstants.Layers.WeaponLayer)
+        {
+            return true;
+        }
+
+        // Check by tag
+        if (other.CompareTag(GameConstants.Tags.Player))
+        {
+            return true;
+        }
+
+        // Check if parent is player or weapon
+        Transform parent = other.transform.parent;
+        while (parent != null)
+        {
+            if (parent.gameObject.layer == GameConstants.Layers.PlayerLayer ||
+                parent.CompareTag(GameConstants.Tags.Player))
+            {
+                return true;
+            }
+            parent = parent.parent;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Check if a transform belongs to the player or player weapon
+    /// Standardized detection used by all projectile types
+    /// </summary>
+    /// <param name="other">The transform to check</param>
+    /// <returns>True if hit by player or player weapon</returns>
+    protected bool IsHitByPlayer(Transform other)
+    {
+        if (other == null) return false;
+
+        // Check by layer
+        if (other.gameObject.layer == GameConstants.Layers.PlayerLayer ||
+            other.gameObject.layer == GameConstants.Layers.WeaponLayer)
+        {
+            return true;
+        }
+
+        // Check by tag
+        if (other.CompareTag(GameConstants.Tags.Player))
+        {
+            return true;
+        }
+
+        // Check if parent is player or weapon
+        Transform parent = other.parent;
+        while (parent != null)
+        {
+            if (parent.gameObject.layer == GameConstants.Layers.PlayerLayer ||
+                parent.CompareTag(GameConstants.Tags.Player))
+            {
+                return true;
+            }
+            parent = parent.parent;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Called when projectile is reflected by player hit
+    /// Override in derived classes to implement reflection behavior
+    /// </summary>
+    protected virtual void OnReflected()
+    {
+        isReflected = true;
+        Debug.Log($"[{GetType().Name}] {gameObject.name} reflected by player, returning to origin at {originPosition}");
+    }
+
+    /// <summary>
+    /// Get the origin position (where projectile was launched from)
+    /// Used for reflection calculations
+    /// </summary>
+    /// <returns>Origin position (attacker position)</returns>
+    protected Vector3 GetOriginPosition()
+    {
+        return originPosition;
     }
 }
 
