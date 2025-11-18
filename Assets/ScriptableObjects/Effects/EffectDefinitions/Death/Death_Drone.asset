@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   prefabs:
   - prefab: {fileID: 2751990826327497175, guid: fda3be700e2e8774a94be8c2a8c87854, type: 3}
-    delay: 0.5
+    delay: 1
   - prefab: {fileID: 1236643204216662, guid: 945738472a46f624f942f4dacfe95b20, type: 3}
     delay: 0
   sounds: []

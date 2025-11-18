@@ -1960,7 +1960,14 @@ namespace Enemies
             int shouldDropLoot = UnityEngine.Random.Range(0, 100);
             if (shouldDropLoot < 50)
             {
-                GameManager.Instance.ResourceManager.SpawnCharacterLoot(characterType, GameManager.Instance.DifficultyManager.GetCurrentWaveDifficulty(), transform.position + Vector3.up * 1.0f);
+                if (GameManager.Instance != null && GameManager.Instance.ResourceManager != null && GameManager.Instance.DifficultyManager != null)
+                {
+                    GameManager.Instance.ResourceManager.SpawnCharacterLoot(characterType, GameManager.Instance.DifficultyManager.GetCurrentWaveDifficulty(), transform.position + Vector3.up * 1.0f);
+                }
+                else
+                {
+                    Debug.LogWarning($"[{gameObject.name}] Cannot spawn loot - GameManager, ResourceManager, or DifficultyManager is null.");
+                }
             }
 
             // Play death VFX
