@@ -29,6 +29,7 @@ public class ArcProjectile : MonoBehaviour
     private float reflectedTimeAlive = 0f; // Track time since reflection
     private Vector3 reflectionStartPosition; // Position where projectile was reflected
     private float reflectionJumpDuration; // Duration for return trip
+    private float originalSpeed; // Store original speed for reflection speed boost
 
     /// <summary>
     /// Initialize the arc projectile with damage and effect parameters
@@ -44,6 +45,7 @@ public class ArcProjectile : MonoBehaviour
         attacker = attackTransform;
         element = elem;
         speed = projectileSpeed;
+        originalSpeed = projectileSpeed; // Store original speed for reflection speed boost
         maxHeight = projectileMaxHeight;
         impactEffect = impactEff;
         createDamageArea = createArea;
@@ -112,23 +114,44 @@ public class ArcProjectile : MonoBehaviour
         // Handle reflected projectile movement
         if (isReflected)
         {
-            reflectedTimeAlive += Time.deltaTime;
-            float returnProgress = reflectedTimeAlive / reflectionJumpDuration;
-
-            // Calculate position going back to origin (attacker position) with arc
-            if (returnProgress < 1f)
+            // Update target to attacker's current position each frame (tracks moving enemies)
+            Vector3 currentTargetOrigin = (attacker != null) ? attacker.position : initialPosition;
+            
+            // Calculate direction and distance to current target
+            Vector3 toTarget = currentTargetOrigin - transform.position;
+            float currentDistance = toTarget.magnitude;
+            
+            // Check if close enough to impact
+            if (currentDistance < 1.0f) // Increased threshold to ensure impact triggers
             {
-                Vector3 returnPos = Vector3.Lerp(reflectionStartPosition, initialPosition, returnProgress);
-                // Add vertical movement using a sine wave for the return arc (shorter arc)
-                returnPos.y += Mathf.Sin(returnProgress * Mathf.PI) * maxHeight * 0.5f;
-                transform.position = returnPos;
-            }
-            else
-            {
-                // Reached origin, create impact
+                // Reached attacker, create impact
+                Debug.Log($"[ArcProjectile] {gameObject.name} reached attacker at distance {currentDistance:F2}m, creating impact");
                 CreateImpact();
                 Destroy(gameObject);
                 return;
+            }
+            
+            // Move towards attacker's current position with arc trajectory
+            // Calculate movement speed (accounting for arc height)
+            float moveDistance = speed * Time.deltaTime;
+            
+            // Normalize direction (only horizontal movement for distance calculation)
+            Vector3 horizontalDir = new Vector3(toTarget.x, 0, toTarget.z).normalized;
+            
+            // Move horizontally
+            Vector3 newPosition = transform.position + horizontalDir * moveDistance;
+            
+            // Calculate vertical arc height based on remaining distance
+            float remainingDistance = currentDistance - moveDistance;
+            float arcHeight = Mathf.Lerp(0f, maxHeight * 0.5f, Mathf.Clamp01(remainingDistance / (speed * 2f)));
+            newPosition.y = Mathf.Lerp(transform.position.y, currentTargetOrigin.y, moveDistance / currentDistance) + arcHeight;
+            
+            transform.position = newPosition;
+            
+            // Rotate towards target
+            if (horizontalDir != Vector3.zero)
+            {
+                transform.rotation = Quaternion.LookRotation(horizontalDir);
             }
 
             // Check if the reflected projectile has hit the ground
@@ -137,6 +160,7 @@ public class ArcProjectile : MonoBehaviour
                 CreateImpact();
                 Destroy(gameObject);
             }
+            
             return;
         }
 
@@ -162,11 +186,28 @@ public class ArcProjectile : MonoBehaviour
 
     /// <summary>
     /// Detect collision with player or weapon to reflect projectile back to origin
+    /// Also detects collision with attacker when reflected
     /// Uses standardized player detection pattern
     /// </summary>
     void OnTriggerEnter(Collider other)
     {
-        if (hasHit || isReflected) return; // Don't process if already hit or reflected
+        if (hasHit) return;
+        
+        // If reflected, check if hitting the attacker
+        if (isReflected)
+        {
+            bool isAttacker = attacker != null && (other.gameObject == attacker.gameObject || other.transform.IsChildOf(attacker));
+            if (isAttacker)
+            {
+                // Hit the attacker, create impact
+                Debug.Log($"[ArcProjectile] {gameObject.name} reflected projectile hit attacker {attacker.name}");
+                CreateImpact();
+                Destroy(gameObject);
+                return;
+            }
+            // Ignore other collisions when reflected
+            return;
+        }
 
         // Check if hit by player or player weapon using standardized detection
         if (IsHitByPlayer(other))
@@ -214,7 +255,7 @@ public class ArcProjectile : MonoBehaviour
 
     /// <summary>
     /// Reflect the projectile back to its origin (the attacker that fired it)
-    /// Uses initialPosition which is the origin (attacker position)
+    /// When attacker is available, tracks their current position so projectile follows moving enemies
     /// </summary>
     private void ReflectToOrigin()
     {
@@ -223,20 +264,38 @@ public class ArcProjectile : MonoBehaviour
         isReflected = true;
         reflectedTimeAlive = 0f;
         
+        // Increase speed by 1.5x when reflected
+        speed = originalSpeed * 1.5f;
+        
         // Store the position where reflection occurred
         reflectionStartPosition = transform.position;
 
-        // Calculate new duration for return trip
+        // Use attacker's current position if available (so projectile tracks moving enemies)
+        // Otherwise use initial spawn position
+        Vector3 targetOrigin = (attacker != null) ? attacker.position : initialPosition;
+
+        // Calculate new duration for return trip (using increased speed)
         float returnDistance = Vector3.Distance(
             new Vector3(reflectionStartPosition.x, 0, reflectionStartPosition.z),
-            new Vector3(initialPosition.x, 0, initialPosition.z)
+            new Vector3(targetOrigin.x, 0, targetOrigin.z)
         );
         reflectionJumpDuration = returnDistance / speed;
 
-        // Update target to origin
-        targetPosition = initialPosition;
+        // Update target to origin (will be updated each frame to track moving attacker)
+        targetPosition = targetOrigin;
 
-        Debug.Log($"[ArcProjectile] {gameObject.name} reflected by player at {reflectionStartPosition}, returning to origin at {initialPosition}");
+        Debug.Log($"[ArcProjectile] {gameObject.name} reflected by player at {reflectionStartPosition}, returning to attacker at {(attacker != null ? attacker.name : "NULL")} position {targetOrigin} | Speed increased to {speed} (1.5x original)");
+    }
+
+    /// <summary>
+    /// Public method to reflect projectile when hit by player weapon
+    /// Called from DamageUtils.PerformBoxCastDamage when melee weapon hits projectile
+    /// </summary>
+    public void ReflectByPlayer()
+    {
+        if (isReflected || hasHit) return; // Don't reflect if already reflected or hit
+        
+        ReflectToOrigin();
     }
 
     /// <summary>

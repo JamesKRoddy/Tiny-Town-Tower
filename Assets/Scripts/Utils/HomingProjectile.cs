@@ -219,10 +219,11 @@ public class HomingProjectile : BaseProjectile
             
             // Check if reached origin (or close enough)
             float distanceToOrigin = Vector3.Distance(transform.position, GetOriginPosition());
-            if (distanceToOrigin < 0.5f)
+            if (distanceToOrigin < 1.0f) // Increased threshold to ensure impact triggers
             {
                 // Reached origin, create impact
                 Vector3 impactPos = GetOriginPosition();
+                Debug.Log($"[HomingProjectile] {gameObject.name} reached attacker at distance {distanceToOrigin:F2}m, creating impact");
                 HandleImpact(impactPos, Vector3.up, attacker);
                 return;
             }
@@ -358,10 +359,24 @@ public class HomingProjectile : BaseProjectile
             return; // Don't impact, reflect instead
         }
         
-        // Skip normal impact if already reflected (on way back)
+        // If reflected, only process collisions with the attacker (enemy that fired it)
         if (isReflected)
         {
-            Debug.Log($"[HomingProjectile] >>> IGNORED - Already reflected (on way back)");
+            if (isAttacker)
+            {
+                // Hit the attacker, create impact
+                Debug.Log($"[HomingProjectile] >>> REFLECTED PROJECTILE HIT ATTACKER - Creating impact");
+                hasHit = true;
+                isTracking = false;
+                
+                Vector3 impactPoint = collision.contacts.Length > 0 ? collision.contacts[0].point : transform.position;
+                Vector3 impactNormal = collision.contacts.Length > 0 ? collision.contacts[0].normal : Vector3.up;
+                
+                HandleImpact(impactPoint, impactNormal, attacker);
+                return;
+            }
+            // Ignore other collisions when reflected (let distance check handle impact)
+            Debug.Log($"[HomingProjectile] >>> IGNORED - Already reflected, not attacker");
             return;
         }
         
@@ -406,9 +421,27 @@ public class HomingProjectile : BaseProjectile
             return;
         }
         
+        // If reflected, check if hitting the attacker
+        if (isReflected)
+        {
+            if (isAttacker)
+            {
+                // Hit the attacker, create impact
+                Debug.Log($"[HomingProjectile] >>> REFLECTED PROJECTILE HIT ATTACKER (trigger) - Creating impact");
+                hasHit = true;
+                isTracking = false;
+                
+                HandleImpact(transform.position, Vector3.up, attacker);
+                return;
+            }
+            // Ignore other triggers when reflected
+            Debug.Log($"[HomingProjectile] >>> IGNORED - Already reflected, not attacker");
+            return;
+        }
+        
         // Only process player collisions in OnTriggerEnter (trigger collider is for player reflection)
         // Ground, walls, and other solid objects should be handled by OnCollisionEnter instead
-        if (!isReflected && isPlayerHit)
+        if (isPlayerHit)
         {
             Debug.Log($"[HomingProjectile] >>> REFLECTING - Hit by player/weapon (trigger)");
             ReflectProjectile();
@@ -431,6 +464,9 @@ public class HomingProjectile : BaseProjectile
         // Stop tracking
         isTracking = false;
         
+        // Increase speed by 1.5x when reflected
+        speed = baseSpeed * 1.5f;
+        
         // Reverse direction immediately
         Vector3 toOrigin = (GetOriginPosition() - transform.position).normalized;
         currentDirection = toOrigin;
@@ -446,7 +482,17 @@ public class HomingProjectile : BaseProjectile
             transform.rotation = Quaternion.LookRotation(toOrigin);
         }
         
-        Debug.Log($"[HomingProjectile] {gameObject.name} reflected by player, returning to origin at {GetOriginPosition()}");
+        Debug.Log($"[HomingProjectile] {gameObject.name} reflected by player, returning to origin at {GetOriginPosition()} | Speed increased to {speed} (1.5x original)");
+    }
+
+    /// <summary>
+    /// Override to call private ReflectProjectile method which handles direction reversal and tracking stop
+    /// </summary>
+    public override void ReflectByPlayer()
+    {
+        if (isReflected || hasHit) return; // Don't reflect if already reflected or hit
+        
+        ReflectProjectile();
     }
 }
 

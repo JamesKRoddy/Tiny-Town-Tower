@@ -99,6 +99,7 @@ Strength that allows you to push heavier objects to open new areas
 Vaulting over obstacles
 Vaulting over enemies?
 Unlock better weapons avalible at the start of runs
+The projectile reflection technique thats used by baseprojectiles when they are hit by DamageUtoils.PerformBoxCastDamage. First level reflects it away from the player, second level it travel back towards the enemy that shot it.
 
 Buildings:
 An alarm that will alert NPCs of an incoming zombie attack

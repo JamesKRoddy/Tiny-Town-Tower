@@ -63,6 +63,10 @@ public class CharacterCombat : MonoBehaviour
     [Tooltip("Effect definitions for different elemental types for dash attacks")]
     [SerializeField] private DashElementalEffect[] dashElementalEffects = new DashElementalEffect[0];
 
+    [Header("Projectile Reflection VFX")]
+    [Tooltip("Effect definition for when projectiles are reflected by player")]
+    [SerializeField] private EffectDefinition projectileReflectionEffect;
+
     private Dictionary<MeleeAttackDirection, AttackDirectionTransform> directionTransformMap;
     private Dictionary<AttackElement, MeleeElementalEffect> meleeElementEffectMap;
     private Dictionary<AttackElement, DashElementalEffect> dashElementEffectMap;
@@ -295,5 +299,62 @@ public class CharacterCombat : MonoBehaviour
         }
 
         Debug.Log("[CharacterCombat] VFX configuration validation complete.");
+    }
+
+    /// <summary>
+    /// Plays the projectile reflection VFX at the specified hit point
+    /// Called from DamageUtils when a projectile is reflected by player weapon
+    /// </summary>
+    /// <param name="hitPoint">Position where the reflection occurred (between weapon and projectile)</param>
+    /// <param name="hitNormal">Normal vector at the hit point (towards the weapon)</param>
+    public void PlayProjectileReflectionVFX(Vector3 hitPoint, Vector3 hitNormal)
+    {
+        if (projectileReflectionEffect == null)
+        {
+            Debug.LogWarning("[CharacterCombat] No projectile reflection effect configured!");
+            return;
+        }
+
+        // Calculate rotation to face away from the hit normal (towards the reflected direction)
+        Quaternion rotation = Quaternion.LookRotation(-hitNormal);
+        
+        // Spawn effect at the hit point
+        EffectManager.Instance?.PlayEffect(hitPoint, hitNormal, rotation, null, projectileReflectionEffect);
+    }
+
+    /// <summary>
+    /// Static method to play projectile reflection VFX from anywhere
+    /// Finds the currently possessed NPC's CharacterCombat component
+    /// </summary>
+    /// <param name="hitPoint">Position where the reflection occurred</param>
+    /// <param name="hitNormal">Normal vector at the hit point</param>
+    public static void PlayReflectionVFX(Vector3 hitPoint, Vector3 hitNormal)
+    {
+        // Try to get the currently possessed NPC's CharacterCombat
+        CharacterCombat characterCombat = null;
+        
+        if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null)
+        {
+            Transform npcTransform = PlayerController.Instance._possessedNPC.GetTransform();
+            if (npcTransform != null)
+            {
+                characterCombat = npcTransform.GetComponent<CharacterCombat>();
+            }
+        }
+        
+        // If not found, try to find any CharacterCombat in the scene (fallback)
+        if (characterCombat == null)
+        {
+            characterCombat = FindFirstObjectByType<CharacterCombat>();
+        }
+        
+        if (characterCombat != null)
+        {
+            characterCombat.PlayProjectileReflectionVFX(hitPoint, hitNormal);
+        }
+        else
+        {
+            Debug.LogWarning("[CharacterCombat] Could not find CharacterCombat to play reflection VFX!");
+        }
     }
 }

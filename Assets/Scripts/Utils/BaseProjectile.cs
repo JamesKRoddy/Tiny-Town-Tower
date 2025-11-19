@@ -259,12 +259,33 @@ public abstract class BaseProjectile : MonoBehaviour
     }
 
     /// <summary>
+    /// Public method to reflect projectile when hit by player weapon
+    /// Called from DamageUtils.PerformBoxCastDamage when melee weapon hits projectile
+    /// </summary>
+    public virtual void ReflectByPlayer()
+    {
+        if (isReflected || hasHit) return; // Don't reflect if already reflected or hit
+        
+        OnReflected();
+    }
+
+    /// <summary>
     /// Get the origin position (where projectile was launched from)
+    /// When reflected, returns the attacker's current position if available (so projectile tracks moving enemies)
+    /// Otherwise returns the stored origin position
     /// Used for reflection calculations
     /// </summary>
-    /// <returns>Origin position (attacker position)</returns>
+    /// <returns>Origin position (attacker's current position if reflected, otherwise launch position)</returns>
     protected Vector3 GetOriginPosition()
     {
+        // When reflected, try to track the attacker's current position
+        // This allows projectiles to follow moving enemies back to where they are now
+        if (isReflected && attacker != null)
+        {
+            return attacker.position;
+        }
+        
+        // Otherwise, use the stored origin position (where projectile was launched from)
         return originPosition;
     }
 }

@@ -798,6 +798,69 @@ public static class DamageUtils
             if (hitTargets != null && hitTargets.Contains(hit.collider))
                 continue;
             
+            // Check for projectiles first (player can reflect projectiles with melee weapon)
+            BaseProjectile projectile = hit.collider.GetComponent<BaseProjectile>();
+            if (projectile != null)
+            {
+                // Use projectile's transform position (BoxCast hit.point may be unreliable)
+                Vector3 hitPoint = projectile.transform.position;
+                
+                // Calculate hit normal - direction from weapon origin to projectile
+                Vector3 hitNormal = (hitPoint - origin).normalized;
+                if (hitNormal == Vector3.zero)
+                {
+                    // Fallback: use opposite of projectile's forward direction
+                    hitNormal = -projectile.transform.forward;
+                }
+                
+                // Reflect the projectile back to its origin
+                projectile.ReflectByPlayer();
+                
+                // Play reflection VFX at the projectile position
+                CharacterCombat.PlayReflectionVFX(hitPoint, hitNormal);
+                
+                // Track this target
+                if (hitTargets != null)
+                {
+                    hitTargets.Add(hit.collider);
+                }
+                
+                targetsHit++;
+                continue;
+            }
+            
+            // Check for ArcProjectile (doesn't inherit from BaseProjectile)
+            ArcProjectile arcProjectile = hit.collider.GetComponent<ArcProjectile>();
+            if (arcProjectile != null)
+            {
+                // Use projectile's transform position (BoxCast hit.point may be unreliable)
+                Vector3 hitPoint = arcProjectile.transform.position;
+                
+                // Calculate hit normal - direction from weapon origin to projectile
+                Vector3 hitNormal = (hitPoint - origin).normalized;
+                if (hitNormal == Vector3.zero)
+                {
+                    // Fallback: use opposite of projectile's forward direction
+                    hitNormal = -arcProjectile.transform.forward;
+                }
+                
+                // Reflect the projectile back to its origin
+                arcProjectile.ReflectByPlayer();
+                
+                // Play reflection VFX at the projectile position
+                CharacterCombat.PlayReflectionVFX(hitPoint, hitNormal);
+                
+                // Track this target
+                if (hitTargets != null)
+                {
+                    hitTargets.Add(hit.collider);
+                }
+                
+                targetsHit++;
+                continue;
+            }
+            
+            // Check for damageable targets (enemies, etc.)
             IDamageable target = hit.collider.GetComponent<IDamageable>();
             if (target != null && IsValidTarget(target, dealer))
             {
