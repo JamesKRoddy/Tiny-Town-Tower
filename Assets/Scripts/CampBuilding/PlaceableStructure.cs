@@ -82,6 +82,15 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
     
     public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
     public WorkTask GetCurrentWorkTask() => currentWorkTask;
+
+    /// <summary>
+    /// Gets the target transform for VFX spawning and projectile targeting.
+    /// Returns the main transform (buildings typically use their root transform).
+    /// </summary>
+    public virtual Transform GetTargetTransform()
+    {
+        return transform; // Buildings use their root transform by default
+    }
     
     // Hit reaction tracking (used for directional shake effects on buildings)
     public Vector3 LastHitOrigin { get; set; } = Vector3.zero;

@@ -162,6 +162,15 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public CharacterType CharacterType => characterType;
     
     public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
+
+    /// <summary>
+    /// Gets the target transform for VFX spawning and projectile targeting.
+    /// Returns the main transform (characters typically use their root transform).
+    /// </summary>
+    public Transform GetTargetTransform()
+    {
+        return transform; // Characters use their root transform by default
+    }
     
     // IDamageable hit reaction tracking
     public Vector3 LastHitOrigin { get; set; } = Vector3.zero;

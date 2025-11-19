@@ -74,6 +74,15 @@ public interface IDamageable
     // Elemental resistance system
     DamageResistance GetResistance(AttackElement damageType); // Get resistance level for a specific damage type
     float GetDamageMultiplier(AttackElement damageType); // Get damage multiplier for a specific damage type
+    
+    /// <summary>
+    /// Gets the target transform for VFX spawning and projectile targeting.
+    /// This is typically the mesh/model transform where visual effects should spawn.
+    /// For enemies with separate mesh objects (like drones), this returns the mesh transform.
+    /// Falls back to the main transform if no specific target is set.
+    /// </summary>
+    /// <returns>The transform to use for VFX and projectile targeting</returns>
+    Transform GetTargetTransform();
 }
 
 /// <summary>

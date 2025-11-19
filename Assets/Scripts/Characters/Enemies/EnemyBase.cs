@@ -107,7 +107,9 @@ namespace Enemies
         [SerializeField] private float poiseRecoveryRate = 10f; // Poise recovered per second
         [SerializeField] private float poiseRecoveryDelay = 2f; // Delay before poise starts recovering
 
-
+        [Header("Target Transform")]
+        [Tooltip("Transform for VFX spawning and projectile targeting (typically the mesh/model). If not set, uses the main transform.")]
+        [SerializeField] protected Transform targetTransform;
 
         #endregion
 
@@ -182,6 +184,15 @@ namespace Enemies
         }
         public CharacterType CharacterType => characterType;
         public Allegiance GetAllegiance() => Allegiance.HOSTILE;
+
+        /// <summary>
+        /// Gets the target transform for VFX spawning and projectile targeting.
+        /// Returns the assigned targetTransform if set, otherwise falls back to the main transform.
+        /// </summary>
+        public virtual Transform GetTargetTransform()
+        {
+            return targetTransform != null ? targetTransform : transform;
+        }
 
         public event Action<float, float> OnDamageTaken;
         public event Action<float, float> OnHeal;

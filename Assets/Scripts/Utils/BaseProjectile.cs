@@ -271,17 +271,29 @@ public abstract class BaseProjectile : MonoBehaviour
 
     /// <summary>
     /// Get the origin position (where projectile was launched from)
-    /// When reflected, returns the attacker's current position if available (so projectile tracks moving enemies)
+    /// When reflected, returns the attacker's target transform position if available (so projectile tracks moving enemies)
+    /// Uses IDamageable.GetTargetTransform() to get the mesh/target transform for proper VFX and targeting
     /// Otherwise returns the stored origin position
     /// Used for reflection calculations
     /// </summary>
-    /// <returns>Origin position (attacker's current position if reflected, otherwise launch position)</returns>
+    /// <returns>Origin position (attacker's target transform position if reflected, otherwise launch position)</returns>
     protected Vector3 GetOriginPosition()
     {
-        // When reflected, try to track the attacker's current position
-        // This allows projectiles to follow moving enemies back to where they are now
+        // When reflected, try to track the attacker's target transform position
+        // This allows projectiles to follow moving enemies back to their mesh/target position
         if (isReflected && attacker != null)
         {
+            // Check if attacker implements IDamageable to get the target transform (mesh)
+            IDamageable damageable = attacker.GetComponent<IDamageable>();
+            if (damageable != null)
+            {
+                Transform targetTransform = damageable.GetTargetTransform();
+                if (targetTransform != null)
+                {
+                    return targetTransform.position;
+                }
+            }
+            // Fallback to attacker's position if not IDamageable or no target transform
             return attacker.position;
         }
         

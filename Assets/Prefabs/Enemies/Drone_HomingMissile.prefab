@@ -150,6 +150,7 @@ MonoBehaviour:
   maxPoise: 50
   poiseRecoveryRate: 10
   poiseRecoveryDelay: 2
+  targetTransform: {fileID: 3917110413430893265}
   animator: {fileID: 0}
   isAttacking: 0
   resistances: []

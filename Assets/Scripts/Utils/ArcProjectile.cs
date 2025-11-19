@@ -114,8 +114,28 @@ public class ArcProjectile : MonoBehaviour
         // Handle reflected projectile movement
         if (isReflected)
         {
-            // Update target to attacker's current position each frame (tracks moving enemies)
-            Vector3 currentTargetOrigin = (attacker != null) ? attacker.position : initialPosition;
+            // Update target to attacker's target transform position each frame (tracks moving enemies to their mesh)
+            Vector3 currentTargetOrigin = initialPosition;
+            if (attacker != null)
+            {
+                IDamageable damageable = attacker.GetComponent<IDamageable>();
+                if (damageable != null)
+                {
+                    Transform targetTransform = damageable.GetTargetTransform();
+                    if (targetTransform != null)
+                    {
+                        currentTargetOrigin = targetTransform.position;
+                    }
+                    else
+                    {
+                        currentTargetOrigin = attacker.position;
+                    }
+                }
+                else
+                {
+                    currentTargetOrigin = attacker.position;
+                }
+            }
             
             // Calculate direction and distance to current target
             Vector3 toTarget = currentTargetOrigin - transform.position;
@@ -270,9 +290,29 @@ public class ArcProjectile : MonoBehaviour
         // Store the position where reflection occurred
         reflectionStartPosition = transform.position;
 
-        // Use attacker's current position if available (so projectile tracks moving enemies)
+        // Use attacker's target transform position if available (so projectile tracks moving enemies to their mesh)
         // Otherwise use initial spawn position
-        Vector3 targetOrigin = (attacker != null) ? attacker.position : initialPosition;
+        Vector3 targetOrigin = initialPosition;
+        if (attacker != null)
+        {
+            IDamageable damageable = attacker.GetComponent<IDamageable>();
+            if (damageable != null)
+            {
+                Transform targetTransform = damageable.GetTargetTransform();
+                if (targetTransform != null)
+                {
+                    targetOrigin = targetTransform.position;
+                }
+                else
+                {
+                    targetOrigin = attacker.position;
+                }
+            }
+            else
+            {
+                targetOrigin = attacker.position;
+            }
+        }
 
         // Calculate new duration for return trip (using increased speed)
         float returnDistance = Vector3.Distance(
