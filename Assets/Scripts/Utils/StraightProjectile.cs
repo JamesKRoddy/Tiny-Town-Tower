@@ -13,6 +13,23 @@ public class StraightProjectile : BaseProjectile
     private Vector3 currentDirection;
 
     /// <summary>
+    /// Initialize the straight projectile using parameter class
+    /// </summary>
+    public void Initialize(StraightProjectileParams parameters)
+    {
+        if (parameters == null)
+        {
+            Debug.LogError($"[StraightProjectile] {gameObject.name} Initialize called with null parameters!");
+            return;
+        }
+        
+        Initialize(parameters.direction, parameters.damage, parameters.poiseDamage, parameters.attacker,
+            parameters.element, parameters.speed, parameters.impactEffect, parameters.createDamageArea,
+            parameters.damageAreaRadius, parameters.damageAreaDuration, parameters.useTriggerBasedDamage,
+            parameters.armingDelay);
+    }
+
+    /// <summary>
     /// Initialize the straight projectile with damage and effect parameters
     /// </summary>
     public void Initialize(Vector3 direction, float dmg, float poiseDmg, Transform attackTransform,

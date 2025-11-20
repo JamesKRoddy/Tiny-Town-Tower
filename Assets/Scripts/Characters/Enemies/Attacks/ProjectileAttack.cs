@@ -24,6 +24,8 @@ namespace Enemies.Attacks
         public bool useTriggerBasedDamage = true;
         [Tooltip("Fallback radius if no trigger component is found")]
         public float fallbackDamageRadius = 2f;
+        [Tooltip("If true, projectile explodes on any collision. If false, only explodes on ground hit (default false for arc projectiles like vomit pools)")]
+        public bool explodeOnAnyHit = false;
 
         
         protected override void Awake()
@@ -174,7 +176,8 @@ namespace Enemies.Attacks
                     useTriggerDetection,
                     ProjectileType.ARC,
                     projectileSpeed,          // Pass projectile speed from component
-                    projectileMaxHeight       // Pass max height from component
+                    projectileMaxHeight,      // Pass max height from component
+                    explodeOnAnyHit: explodeOnAnyHit  // Control explosion behavior (default false)
                 );
             
             Debug.Log($"[{enemy.gameObject.name}] Projectile attack executed | Projectile fired towards: {attackTargetPosition} | Damage: {damage} | Radius: {damageRadius}");

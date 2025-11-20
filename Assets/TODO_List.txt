@@ -1,6 +1,6 @@
 *****Current Work*****
 
-If homing missile is hit by the player then send it back to the origin
+Arch projectiles still exploding too soon
 
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
 
@@ -100,6 +100,7 @@ Vaulting over obstacles
 Vaulting over enemies?
 Unlock better weapons avalible at the start of runs
 The projectile reflection technique thats used by baseprojectiles when they are hit by DamageUtoils.PerformBoxCastDamage. First level reflects it away from the player, second level it travel back towards the enemy that shot it.
+Can have a MeleeWeapon.projectileBoxSizeMultiplier increase to increase the chance of reflecting projectiles
 
 Buildings:
 An alarm that will alert NPCs of an incoming zombie attack

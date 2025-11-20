@@ -334,6 +334,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: EffectManagerManager
       objectReference: {fileID: 0}
+    - target: {fileID: 3155998006727192342, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: autoStartCycle
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4686915863895893509, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -2786,7 +2790,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1633898417205440891, guid: b5c3cb9ae758fb549906e6cc604c6b3e, type: 3}
       propertyPath: showCollisionDebug
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2505444480820924123, guid: b5c3cb9ae758fb549906e6cc604c6b3e, type: 3}
       propertyPath: cooldown
@@ -2802,7 +2806,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2505444480820924123, guid: b5c3cb9ae758fb549906e6cc604c6b3e, type: 3}
       propertyPath: projectileSpeed
-      value: 3
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2505444480820924123, guid: b5c3cb9ae758fb549906e6cc604c6b3e, type: 3}
       propertyPath: elementalDamageBonus

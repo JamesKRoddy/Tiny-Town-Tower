@@ -1254,7 +1254,75 @@ public static class DamageUtils
     // ===== PROJECTILE UTILITIES =====
 
     /// <summary>
+    /// Fire an arc projectile using parameter class (cleaner API)
+    /// </summary>
+    public static GameObject FireArcProjectile(Vector3 startPosition, Quaternion rotation, EffectDefinition projectileEffect, ArcProjectileParams parameters)
+    {
+        if (parameters == null)
+        {
+            Debug.LogError("[DamageUtils] ❌ ArcProjectileParams is NULL!");
+            return null;
+        }
+        
+        Vector3 direction = (parameters.targetPosition - startPosition).normalized;
+        if (direction == Vector3.zero) direction = Vector3.forward;
+        
+        return FireProjectileWithEffect(startPosition, direction, rotation, parameters.targetPosition,
+            parameters.damage, parameters.poiseDamage, parameters.attacker, parameters.element,
+            projectileEffect, parameters.impactEffect, parameters.createDamageArea,
+            parameters.damageAreaRadius, parameters.damageAreaDuration, parameters.useTriggerBasedDamage,
+            ProjectileType.ARC, parameters.speed, parameters.maxHeight, null, 0f, 0f, true,
+            parameters.armingDelay, parameters.explodeOnAnyHit);
+    }
+
+    /// <summary>
+    /// Fire a straight projectile using parameter class (cleaner API)
+    /// </summary>
+    public static GameObject FireStraightProjectile(Vector3 startPosition, Quaternion rotation, EffectDefinition projectileEffect, StraightProjectileParams parameters)
+    {
+        if (parameters == null)
+        {
+            Debug.LogError("[DamageUtils] ❌ StraightProjectileParams is NULL!");
+            return null;
+        }
+        
+        return FireProjectileWithEffect(startPosition, parameters.direction, rotation, Vector3.zero,
+            parameters.damage, parameters.poiseDamage, parameters.attacker, parameters.element,
+            projectileEffect, parameters.impactEffect, parameters.createDamageArea,
+            parameters.damageAreaRadius, parameters.damageAreaDuration, parameters.useTriggerBasedDamage,
+            ProjectileType.STRAIGHT, parameters.speed, 0f, null, 0f, 0f, true,
+            parameters.armingDelay, false);
+    }
+
+    /// <summary>
+    /// Fire a homing projectile using parameter class (cleaner API)
+    /// </summary>
+    public static GameObject FireHomingProjectile(Vector3 startPosition, Quaternion rotation, EffectDefinition projectileEffect, HomingProjectileParams parameters)
+    {
+        if (parameters == null)
+        {
+            Debug.LogError("[DamageUtils] ❌ HomingProjectileParams is NULL!");
+            return null;
+        }
+        
+        Vector3 direction = Vector3.forward;
+        if (parameters.targetTransform != null)
+        {
+            direction = (parameters.targetTransform.position - startPosition).normalized;
+        }
+        
+        return FireProjectileWithEffect(startPosition, direction, rotation, Vector3.zero,
+            parameters.damage, parameters.poiseDamage, parameters.attacker, parameters.element,
+            projectileEffect, parameters.impactEffect, parameters.createDamageArea,
+            parameters.damageAreaRadius, parameters.damageAreaDuration, parameters.useTriggerBasedDamage,
+            ProjectileType.HOMING, parameters.speed, 0f, parameters.targetTransform,
+            parameters.homingDuration, parameters.turnSpeed, parameters.explodeOnTimeout,
+            parameters.armingDelay, false);
+    }
+
+    /// <summary>
     /// Fire a projectile using an effect definition and attach the specified projectile behavior
+    /// LEGACY METHOD: Consider using FireArcProjectile, FireStraightProjectile, or FireHomingProjectile for cleaner code
     /// </summary>
     /// <param name="startPosition">Starting position of the projectile</param>
     /// <param name="direction">Direction of the projectile</param>
@@ -1278,6 +1346,7 @@ public static class DamageUtils
     /// <param name="turnSpeed">Turn speed for homing projectiles in degrees/second (default 180f)</param>
     /// <param name="explodeOnTimeout">Whether homing projectiles explode when tracking expires (default true)</param>
     /// <param name="armingDelay">Delay before projectile can cause damage, allowing time for reflection/dodge (default 0.2f)</param>
+    /// <param name="explodeOnAnyHit">If true, explode on any collision. If false, only explode on ground hit (default false for arc projectiles)</param>
     /// <returns>The spawned projectile GameObject</returns>
     public static GameObject FireProjectileWithEffect(Vector3 startPosition, Vector3 direction, Quaternion rotation,
         Vector3 targetPosition, float damage, float poiseDamage, Transform attacker, AttackElement element,
@@ -1285,7 +1354,7 @@ public static class DamageUtils
         float damageAreaRadius = 0f, float damageAreaDuration = 5f, bool useTriggerBasedDamage = false,
         ProjectileType projectileType = ProjectileType.NONE, float projectileSpeed = 0f, float projectileMaxHeight = 5f,
         Transform targetTransform = null, float homingDuration = 3f, float turnSpeed = 180f, bool explodeOnTimeout = true,
-        float armingDelay = 0.2f)
+        float armingDelay = 0.2f, bool explodeOnAnyHit = false)
     {
         Debug.Log($"[DamageUtils] ===== FIRE PROJECTILE WITH EFFECT START =====");
         Debug.Log($"[DamageUtils] Projectile Type: {projectileType} | Start Position: {startPosition} | Direction: {direction}");
@@ -1337,20 +1406,12 @@ public static class DamageUtils
                     {
                         straightProj = projectileObj.AddComponent<StraightProjectile>();
                     }
-                    straightProj.Initialize(
-                        direction,                                    // direction
-                        damage,                                      // dmg
-                        poiseDamage,                                 // poiseDmg
-                        attacker,                                    // attackTransform
-                        element,                                     // elem
-                        speed,                                       // projectileSpeed
-                        impactEffect,                                // impactEff
-                        createDamageArea,                            // createArea
-                        damageAreaRadius,                            // areaRadius
-                        damageAreaDuration,                          // areaDuration
-                        useTriggerBasedDamage,                       // triggerBased
-                        armingDelay                                  // armingDelay
-                    );
+                    
+                    // Create parameter class for cleaner initialization
+                    StraightProjectileParams straightParams = new StraightProjectileParams(
+                        direction, speed, damage, poiseDamage, attacker, element, impactEffect,
+                        createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage, armingDelay);
+                    straightProj.Initialize(straightParams);
                 }
                 break;
                 
@@ -1362,21 +1423,12 @@ public static class DamageUtils
                     {
                         arcProj = projectileObj.AddComponent<ArcProjectile>();
                     }
-                    arcProj.Initialize(
-                        targetPosition,                              // targetPos
-                        damage,                                      // dmg
-                        poiseDamage,                                 // poiseDmg
-                        attacker,                                    // attackTransform
-                        element,                                     // elem
-                        speed,                                       // projectileSpeed
-                        projectileMaxHeight,                         // projectileMaxHeight
-                        impactEffect,                                // impactEff
-                        createDamageArea,                            // createArea
-                        damageAreaRadius,                            // areaRadius
-                        damageAreaDuration,                          // areaDuration
-                        useTriggerBasedDamage,                       // triggerBased
-                        armingDelay                                  // armingDelay
-                    );
+                    
+                    // Create parameter class for cleaner initialization
+                    ArcProjectileParams arcParams = new ArcProjectileParams(
+                        targetPosition, speed, projectileMaxHeight, damage, poiseDamage, attacker, element, impactEffect,
+                        createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage, armingDelay, explodeOnAnyHit);
+                    arcProj.Initialize(arcParams);
                 }
                 break;
                 
@@ -1424,23 +1476,12 @@ public static class DamageUtils
                     
                     try
                     {
-                        homingProj.Initialize(
-                            targetTransform,                              // targetTransform
-                            damage,                                      // dmg
-                            poiseDamage,                                 // poiseDmg
-                            attacker,                                    // attackTransform
-                            element,                                     // elem
-                            speed,                                       // projectileSpeed
-                            homingDuration,                              // duration
-                            turnSpeed,                                   // turnSpeedDegrees
-                            explodeOnTimeout,                            // explodeWhenExpired
-                            impactEffect,                                // impactEff
-                            createDamageArea,                            // createArea
-                            damageAreaRadius,                            // areaRadius
-                            damageAreaDuration,                          // areaDuration
-                            useTriggerBasedDamage,                       // triggerBased
-                            armingDelay                                  // armingDelay
-                        );
+                        // Create parameter class for cleaner initialization
+                        HomingProjectileParams homingParams = new HomingProjectileParams(
+                            targetTransform, speed, homingDuration, turnSpeed, explodeOnTimeout,
+                            damage, poiseDamage, attacker, element, impactEffect,
+                            createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage, armingDelay);
+                        homingProj.Initialize(homingParams);
                         Debug.Log($"[DamageUtils] ✅ HomingProjectile.Initialize() completed successfully");
                     }
                     catch (System.Exception e)

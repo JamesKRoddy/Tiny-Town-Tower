@@ -27,6 +27,10 @@ public abstract class BaseProjectile : MonoBehaviour, IHittable
     protected float maxLifetime = 10f;
     protected float armingDelay = 0.2f; // Delay before projectile can cause damage (allows time for reflection/dodge)
     
+    // Explosion behavior control
+    [Tooltip("If true, explode on any collision. If false, only explode on ground hit")]
+    protected bool explodeOnAnyHit = true; // If true, explode on any collision. If false, only explode on ground hit
+    
     // Reflection tracking (for player hit reflection)
     protected bool isReflected = false;
     protected Vector3 originPosition; // Original launch position (attacker position)
@@ -36,7 +40,7 @@ public abstract class BaseProjectile : MonoBehaviour, IHittable
     /// </summary>
     protected virtual void InitializeBase(float dmg, float poiseDmg, Transform attackTransform,
         AttackElement elem, EffectDefinition impactEff, bool createArea, float areaRadius,
-        float areaDuration, bool triggerBased, float armingDelay = 0.2f)
+        float areaDuration, bool triggerBased, float armingDelay = 0.2f, bool explodeOnAnyHit = true)
     {
         // Store damage parameters
         damage = dmg;
@@ -54,6 +58,7 @@ public abstract class BaseProjectile : MonoBehaviour, IHittable
         isReflected = false;
         launchTime = Time.time;
         this.armingDelay = armingDelay;
+        this.explodeOnAnyHit = explodeOnAnyHit;
         
         // Store origin position (attacker position) for reflection
         originPosition = attackTransform != null ? attackTransform.position : transform.position;

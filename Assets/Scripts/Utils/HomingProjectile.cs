@@ -40,7 +40,29 @@ public class HomingProjectile : BaseProjectile
     /// <param name="areaRadius">Damage area radius</param>
     /// <param name="areaDuration">Damage area duration</param>
     /// <param name="triggerBased">Use trigger-based damage</param>
-        public void Initialize(
+    
+    /// <summary>
+    /// Initialize the homing projectile using parameter class
+    /// </summary>
+    public void Initialize(HomingProjectileParams parameters)
+    {
+        if (parameters == null)
+        {
+            Debug.LogError($"[HomingProjectile] {gameObject.name} Initialize called with null parameters!");
+            return;
+        }
+        
+        Initialize(parameters.targetTransform, parameters.damage, parameters.poiseDamage, parameters.attacker,
+            parameters.element, parameters.speed, parameters.homingDuration, parameters.turnSpeed,
+            parameters.explodeOnTimeout, parameters.impactEffect, parameters.createDamageArea,
+            parameters.damageAreaRadius, parameters.damageAreaDuration, parameters.useTriggerBasedDamage,
+            parameters.armingDelay);
+    }
+    
+    /// <summary>
+    /// Initialize the homing projectile with damage, tracking, and effect parameters
+    /// </summary>
+    public void Initialize(
             Transform targetTransform, 
         float dmg,
         float poiseDmg,
@@ -99,17 +121,17 @@ public class HomingProjectile : BaseProjectile
         Debug.Log($"[HomingProjectile] Rigidbody found: {rb.name} | Is Kinematic: {rb.isKinematic} | Use Gravity: {rb.useGravity}");
         
         // Store homing-specific parameters
-        target = targetTransform;
+            target = targetTransform;
         if (target == null)
         {
             Debug.LogWarning("[HomingProjectile] ⚠️ Target Transform is NULL! Homing will not work.");
         }
         
-        homingDuration = duration;
-        turnSpeed = turnSpeedDegrees;
+            homingDuration = duration;
+            turnSpeed = turnSpeedDegrees;
         speed = projectileSpeed;
         baseSpeed = projectileSpeed;
-        explodeOnTimeout = explodeWhenExpired;
+            explodeOnTimeout = explodeWhenExpired;
         
         Debug.Log($"[HomingProjectile] Homing parameters stored | Target: {(target != null ? target.name : "NULL")} | Speed: {speed} | Duration: {homingDuration}s");
         
@@ -430,7 +452,7 @@ public class HomingProjectile : BaseProjectile
             {
                 // Hit the attacker, create impact
                 Debug.Log($"[HomingProjectile] >>> REFLECTED PROJECTILE HIT ATTACKER (trigger) - Creating impact");
-                hasHit = true;
+        hasHit = true;
                 isTracking = false;
                 
                 HandleImpact(transform.position, Vector3.up, attacker);
@@ -508,7 +530,7 @@ public class HomingProjectile : BaseProjectile
         }
         
         ReflectProjectile();
-    }
+        }
 }
 
 
