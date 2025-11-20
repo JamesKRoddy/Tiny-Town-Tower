@@ -18,10 +18,10 @@ public class StraightProjectile : BaseProjectile
     public void Initialize(Vector3 direction, float dmg, float poiseDmg, Transform attackTransform,
         AttackElement elem, float projectileSpeed = 20f,
         EffectDefinition impactEff = null, bool createArea = false, float areaRadius = 0f, 
-        float areaDuration = 5f, bool triggerBased = false)
+        float areaDuration = 5f, bool triggerBased = false, float armingDelay = 0.2f)
     {
         // Initialize base parameters (damage, effects, etc.)
-        InitializeBase(dmg, poiseDmg, attackTransform, elem, impactEff, createArea, areaRadius, areaDuration, triggerBased);
+        InitializeBase(dmg, poiseDmg, attackTransform, elem, impactEff, createArea, areaRadius, areaDuration, triggerBased, armingDelay);
         
         // Store straight projectile-specific parameters
         speed = projectileSpeed;
@@ -193,9 +193,22 @@ public class StraightProjectile : BaseProjectile
     /// <summary>
     /// Override to call private ReflectProjectile method which handles direction reversal
     /// </summary>
-    public override void ReflectByPlayer()
+    public override void ReflectByPlayer(Vector3 hitPoint = default, Vector3 hitNormal = default)
     {
         if (isReflected || hasHit) return; // Don't reflect if already reflected or hit
+        
+        // Play reflection VFX if hit point/normal provided
+        if (hitPoint != default && hitNormal != default)
+        {
+            CharacterCombat.PlayReflectionVFX(hitPoint, hitNormal);
+        }
+        else
+        {
+            // Use projectile position as fallback
+            Vector3 fallbackHitPoint = transform.position;
+            Vector3 fallbackHitNormal = -transform.forward;
+            CharacterCombat.PlayReflectionVFX(fallbackHitPoint, fallbackHitNormal);
+        }
         
         ReflectProjectile();
     }

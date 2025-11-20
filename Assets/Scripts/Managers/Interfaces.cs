@@ -1,5 +1,46 @@
 using UnityEngine;
 
+/// <summary>
+/// Information about a hit on an IHittable object
+/// Used for projectile reflection, environmental interactions, etc.
+/// </summary>
+public struct HitInfo
+{
+    public Vector3 HitPoint;      // Where the hit occurred
+    public Vector3 HitNormal;     // Normal at the hit point
+    public Transform Attacker;     // Who/what caused the hit
+    public float Force;           // Force of the hit (for physics reactions)
+    public IDamageDealer Dealer;  // The damage dealer (if applicable)
+    
+    public HitInfo(Vector3 hitPoint, Vector3 hitNormal, Transform attacker, float force = 0f, IDamageDealer dealer = null)
+    {
+        HitPoint = hitPoint;
+        HitNormal = hitNormal;
+        Attacker = attacker;
+        Force = force;
+        Dealer = dealer;
+    }
+}
+
+/// <summary>
+/// Interface for any object that can be hit and respond to hits
+/// Examples: projectiles (reflection), barrels (break), bells (ring), interactive props
+/// </summary>
+public interface IHittable
+{
+    /// <summary>
+    /// Called when this object is hit by a weapon or other source
+    /// </summary>
+    /// <param name="hitInfo">Information about the hit</param>
+    void OnHit(HitInfo hitInfo);
+    
+    /// <summary>
+    /// Check if this object can currently be hit
+    /// </summary>
+    /// <returns>True if the object can be hit right now</returns>
+    bool CanBeHit();
+}
+
 public interface IControllerInput
 {
     public void SetPlayerControlType(PlayerControlType controlType);

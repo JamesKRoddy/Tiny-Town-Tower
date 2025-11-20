@@ -9,6 +9,14 @@ public class MeleeWeapon : WeaponBase
     public Vector3 boxSize = new Vector3(1f, 1f, 1f); // Public size of the box for visualization and adjustment
     public Vector3 boxOffset = new Vector3(0f, 1f, 0f); // Offset for the box origin (relative to player)
 
+    [Header("Projectile Reflection")]
+    [Tooltip("Enable separate, larger box cast for projectile detection (more forgiving for fast projectiles)")]
+    public bool enableProjectileDetection = true;
+    [Tooltip("Size multiplier for projectile detection box XZ (horizontal reach)")]
+    public float projectileBoxSizeMultiplier = 3f;
+    [Tooltip("Size multiplier for projectile detection box Y (vertical reach - higher for arc projectiles)")]
+    public float projectileBoxHeightMultiplier = 5f;
+
     private bool isAttacking = false;
     private HashSet<Collider> hitTargets = new HashSet<Collider>();
 
@@ -58,7 +66,25 @@ public class MeleeWeapon : WeaponBase
 
         Vector3 boxDirection = characterTransform.forward;
 
-        // Use the unified box cast damage system
+        // First, check for projectiles with a larger, more forgiving detection box
+        // Y is scaled more to catch arc projectiles flying overhead
+        if (enableProjectileDetection)
+        {
+            Vector3 projectileBoxSize = new Vector3(
+                boxSize.x * projectileBoxSizeMultiplier,
+                boxSize.y * projectileBoxHeightMultiplier,
+                boxSize.z * projectileBoxSizeMultiplier
+            );
+            DamageUtils.PerformProjectileReflectionDetection(
+                this,
+                boxOrigin,
+                projectileBoxSize,
+                characterTransform.rotation,
+                hitTargets
+            );
+        }
+
+        // Then perform the normal box cast for damageable targets
         int targetsHit = DamageUtils.PerformBoxCastDamage(
             this,
             boxOrigin,
@@ -80,7 +106,18 @@ public class MeleeWeapon : WeaponBase
                             characterTransform.forward * boxCastDistance +
                             characterTransform.TransformDirection(boxOffset);
 
-        // Use the unified gizmo drawing utility
+        // Draw projectile detection box (larger, more forgiving) in yellow if enabled
+        if (enableProjectileDetection)
+        {
+            Vector3 projectileBoxSize = new Vector3(
+                boxSize.x * projectileBoxSizeMultiplier,
+                boxSize.y * projectileBoxHeightMultiplier,
+                boxSize.z * projectileBoxSizeMultiplier
+            );
+            DamageUtils.DrawBoxCastGizmo(boxOrigin, projectileBoxSize, characterTransform.rotation, Color.yellow);
+        }
+
+        // Draw main damage box in red
         DamageUtils.DrawBoxCastGizmo(boxOrigin, boxSize, characterTransform.rotation, Color.red);
     }
 }

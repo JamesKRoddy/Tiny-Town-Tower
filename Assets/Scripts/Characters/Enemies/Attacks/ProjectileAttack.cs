@@ -172,7 +172,9 @@ namespace Enemies.Attacks
                     damageRadius,
                     impactDamageDuration,
                     useTriggerDetection,
-                    ProjectileType.ARC
+                    ProjectileType.ARC,
+                    projectileSpeed,          // Pass projectile speed from component
+                    projectileMaxHeight       // Pass max height from component
                 );
             
             Debug.Log($"[{enemy.gameObject.name}] Projectile attack executed | Projectile fired towards: {attackTargetPosition} | Damage: {damage} | Radius: {damageRadius}");

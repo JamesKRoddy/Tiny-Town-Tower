@@ -82,7 +82,7 @@ public abstract class PlaceableStructure<T> : MonoBehaviour, IDamageable, IBuild
     
     public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
     public WorkTask GetCurrentWorkTask() => currentWorkTask;
-
+    
     /// <summary>
     /// Gets the target transform for VFX spawning and projectile targeting.
     /// Returns the main transform (buildings typically use their root transform).

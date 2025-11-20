@@ -1,6 +1,7 @@
 using UnityEngine;
 using Enemies;
 using Managers;
+using System.Linq;
 
 /// <summary>
 /// Utility class for handling damage-related calculations and animations
@@ -770,6 +771,188 @@ public static class DamageUtils
     // ===== HIT DETECTION UTILITIES =====
     
     /// <summary>
+    /// Perform a separate, larger OverlapBox specifically for detecting and hitting hittable objects (projectiles, props, etc).
+    /// This runs before the main damage box cast and uses OverlapBox for better detection of fast-moving objects.
+    /// </summary>
+    /// <param name="dealer">The damage dealer performing the attack</param>
+    /// <param name="center">Center point of the overlap box</param>
+    /// <param name="boxSize">Size of the box (full extents, not half extents)</param>
+    /// <param name="rotation">Rotation of the box</param>
+    /// <param name="hitTargets">HashSet to track already hit targets (prevents double-hitting)</param>
+    /// <returns>Number of hittable objects hit (e.g., projectiles reflected)</returns>
+    public static int PerformProjectileReflectionDetection(IDamageDealer dealer, Vector3 center, Vector3 boxSize,
+        Quaternion rotation, System.Collections.Generic.HashSet<Collider> hitTargets = null)
+    {
+        if (dealer == null) return 0;
+        
+        int objectsHit = 0;
+        
+        // Use OverlapBox for better detection of fast-moving objects (doesn't require continuous collision)
+        // Use QueryTriggerInteraction.Collide to detect trigger colliders (projectiles use triggers for player detection)
+        // Use half extents for OverlapBox
+        Collider[] colliders = Physics.OverlapBox(center, boxSize * 0.5f, rotation, -1, QueryTriggerInteraction.Collide);
+        
+        Debug.Log($"[DamageUtils] PerformProjectileReflectionDetection - Box center: {center} | Box size: {boxSize} | Box rotation: {rotation.eulerAngles} | Found {colliders.Length} colliders");
+        
+        // DIRECTLY check for ALL IHittable objects in scene (more reliable than Physics.OverlapBox for newly-spawned colliders)
+        IHittable[] allHittables = UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<IHittable>().ToArray();
+        if (allHittables.Length > 0)
+        {
+            Debug.Log($"[DamageUtils] Found {allHittables.Length} IHittable objects in scene:");
+            foreach (var hittable in allHittables)
+            {
+                if (hittable is MonoBehaviour mb && mb != null)
+                {
+                    float distance = Vector3.Distance(center, mb.transform.position);
+                    
+                    // Transform the position to the box's local space for accurate AABB check
+                    Vector3 localPos = Quaternion.Inverse(rotation) * (mb.transform.position - center);
+                    Vector3 halfExtents = boxSize * 0.5f;
+                    bool inBox = Mathf.Abs(localPos.x) <= halfExtents.x && 
+                                 Mathf.Abs(localPos.y) <= halfExtents.y && 
+                                 Mathf.Abs(localPos.z) <= halfExtents.z;
+                    
+                    Debug.Log($"[DamageUtils]   - {mb.gameObject.name} at {mb.transform.position} | Distance: {distance:F2}m | InBox: {inBox} | CanBeHit: {hittable.CanBeHit()}");
+                    
+                    // PROCESS IHittables that are in the box directly (bypasses Physics.OverlapBox issues with new colliders)
+                    if (inBox && hittable.CanBeHit())
+                    {
+                        // Skip if already hit
+                        Collider hittableCollider = mb.GetComponent<Collider>();
+                        if (hitTargets != null && hittableCollider != null && hitTargets.Contains(hittableCollider))
+                        {
+                            Debug.Log($"[DamageUtils] Skipping {mb.gameObject.name} - already hit this collider");
+                            continue;
+                        }
+                        
+                        // Calculate hit info
+                        Vector3 hitPoint = mb.transform.position;
+                        Vector3 hitNormal = (hitPoint - center).normalized;
+                        if (hitNormal == Vector3.zero)
+                        {
+                            hitNormal = -mb.transform.forward;
+                        }
+                        
+                        Debug.Log($"[DamageUtils] ✅ HITTING IHittable {mb.gameObject.name} directly at position {hitPoint}");
+                        
+                        // Create hit info and call OnHit
+                        var hitInfo = new HitInfo(hitPoint, hitNormal, dealer.DamageSource, dealer.BaseDamage, dealer);
+                        hittable.OnHit(hitInfo);
+                        
+                        // Mark as hit
+                        if (hitTargets != null && hittableCollider != null)
+                        {
+                            hitTargets.Add(hittableCollider);
+                        }
+                        
+                        objectsHit++;
+                    }
+                }
+            }
+        }
+        
+        // Log all detected colliders immediately
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            if (colliders[i] != null && colliders[i].gameObject != null)
+            {
+                Debug.Log($"[DamageUtils] Detected collider [{i}]: {colliders[i].gameObject.name} at {colliders[i].transform.position} | Layer: {LayerMask.LayerToName(colliders[i].gameObject.layer)} ({colliders[i].gameObject.layer}) | IsTrigger: {colliders[i].isTrigger}");
+            }
+        }
+        
+        foreach (Collider collider in colliders)
+        {
+            if (collider == null || collider.gameObject == null) continue;
+            
+            // Skip if we've already hit this collider
+            if (hitTargets != null && hitTargets.Contains(collider))
+            {
+                Debug.Log($"[DamageUtils] Skipping {collider.gameObject.name} - already hit");
+                continue;
+            }
+            
+            // Debug log what we found
+            Debug.Log($"[DamageUtils] Checking collider: {collider.gameObject.name} | Layer: {LayerMask.LayerToName(collider.gameObject.layer)} ({collider.gameObject.layer}) | IsTrigger: {collider.isTrigger}");
+            
+            // Check for IHittable interface (unified system for projectiles, props, etc.)
+            IHittable hittable = collider.GetComponent<IHittable>();
+            if (hittable != null)
+            {
+                Debug.Log($"[DamageUtils] Found IHittable on {collider.gameObject.name}!");
+                
+                if (!hittable.CanBeHit())
+                {
+                    Debug.Log($"[DamageUtils] IHittable {collider.gameObject.name} CanBeHit returned false - skipping");
+                    continue;
+                }
+                
+                // Calculate hit info
+                Vector3 hitPoint = collider.transform.position;
+                Vector3 hitNormal = (hitPoint - center).normalized;
+                if (hitNormal == Vector3.zero)
+                {
+                    // Fallback: use opposite of object's forward direction
+                    hitNormal = -collider.transform.forward;
+                }
+                
+                Debug.Log($"[DamageUtils] Hitting IHittable {collider.gameObject.name} at position {hitPoint}");
+                
+                // Create hit info and call OnHit
+                var hitInfo = new HitInfo(hitPoint, hitNormal, dealer.DamageSource, dealer.BaseDamage, dealer);
+                hittable.OnHit(hitInfo);
+                
+                // Track this target
+                if (hitTargets != null)
+                {
+                    hitTargets.Add(collider);
+                }
+                
+                objectsHit++;
+                continue;
+            }
+            
+            // Also check in parent in case collider is on a child object
+            IHittable hittableInParent = collider.GetComponentInParent<IHittable>();
+            if (hittableInParent != null)
+            {
+                Debug.Log($"[DamageUtils] Found IHittable in PARENT of {collider.gameObject.name}! Parent: {(hittableInParent as MonoBehaviour)?.gameObject.name ?? "Unknown"}");
+                
+                if (!hittableInParent.CanBeHit())
+                {
+                    Debug.Log($"[DamageUtils] IHittable parent CanBeHit returned false - skipping");
+                    continue;
+                }
+                
+                // Get the parent's transform for position
+                Transform parentTransform = (hittableInParent as MonoBehaviour)?.transform;
+                if (parentTransform != null)
+                {
+                    Vector3 hitPoint = parentTransform.position;
+                    Vector3 hitNormal = (hitPoint - center).normalized;
+                    if (hitNormal == Vector3.zero)
+                    {
+                        hitNormal = -parentTransform.forward;
+                    }
+                    
+                    Debug.Log($"[DamageUtils] Hitting IHittable (from parent) at position {hitPoint}");
+                    
+                    var hitInfo = new HitInfo(hitPoint, hitNormal, dealer.DamageSource, dealer.BaseDamage, dealer);
+                    hittableInParent.OnHit(hitInfo);
+                    
+                    if (hitTargets != null)
+                    {
+                    hitTargets.Add(collider);
+                    }
+                    
+                    objectsHit++;
+                }
+            }
+        }
+        
+        return objectsHit;
+    }
+    
+    /// <summary>
     /// Perform a box cast to detect and damage targets in an area
     /// </summary>
     /// <param name="dealer">The damage dealer performing the attack</param>
@@ -1094,13 +1277,15 @@ public static class DamageUtils
     /// <param name="homingDuration">How long homing projectiles track the target (default 3f)</param>
     /// <param name="turnSpeed">Turn speed for homing projectiles in degrees/second (default 180f)</param>
     /// <param name="explodeOnTimeout">Whether homing projectiles explode when tracking expires (default true)</param>
+    /// <param name="armingDelay">Delay before projectile can cause damage, allowing time for reflection/dodge (default 0.2f)</param>
     /// <returns>The spawned projectile GameObject</returns>
     public static GameObject FireProjectileWithEffect(Vector3 startPosition, Vector3 direction, Quaternion rotation,
         Vector3 targetPosition, float damage, float poiseDamage, Transform attacker, AttackElement element,
         EffectDefinition projectileEffect, EffectDefinition impactEffect = null, bool createDamageArea = false,
         float damageAreaRadius = 0f, float damageAreaDuration = 5f, bool useTriggerBasedDamage = false,
         ProjectileType projectileType = ProjectileType.NONE, float projectileSpeed = 0f, float projectileMaxHeight = 5f,
-        Transform targetTransform = null, float homingDuration = 3f, float turnSpeed = 180f, bool explodeOnTimeout = true)
+        Transform targetTransform = null, float homingDuration = 3f, float turnSpeed = 180f, bool explodeOnTimeout = true,
+        float armingDelay = 0.2f)
     {
         Debug.Log($"[DamageUtils] ===== FIRE PROJECTILE WITH EFFECT START =====");
         Debug.Log($"[DamageUtils] Projectile Type: {projectileType} | Start Position: {startPosition} | Direction: {direction}");
@@ -1163,7 +1348,8 @@ public static class DamageUtils
                         createDamageArea,                            // createArea
                         damageAreaRadius,                            // areaRadius
                         damageAreaDuration,                          // areaDuration
-                        useTriggerBasedDamage                        // triggerBased
+                        useTriggerBasedDamage,                       // triggerBased
+                        armingDelay                                  // armingDelay
                     );
                 }
                 break;
@@ -1188,7 +1374,8 @@ public static class DamageUtils
                         createDamageArea,                            // createArea
                         damageAreaRadius,                            // areaRadius
                         damageAreaDuration,                          // areaDuration
-                        useTriggerBasedDamage                        // triggerBased
+                        useTriggerBasedDamage,                       // triggerBased
+                        armingDelay                                  // armingDelay
                     );
                 }
                 break;
@@ -1251,7 +1438,8 @@ public static class DamageUtils
                             createDamageArea,                            // createArea
                             damageAreaRadius,                            // areaRadius
                             damageAreaDuration,                          // areaDuration
-                            useTriggerBasedDamage                        // triggerBased
+                            useTriggerBasedDamage,                       // triggerBased
+                            armingDelay                                  // armingDelay
                         );
                         Debug.Log($"[DamageUtils] ✅ HomingProjectile.Initialize() completed successfully");
                     }
@@ -1271,7 +1459,7 @@ public static class DamageUtils
                 {
                     float speed = projectileSpeed > 0f ? projectileSpeed : 10f;
                     existingArc.Initialize(targetPosition, damage, poiseDamage, attacker, element, speed, projectileMaxHeight,
-                        impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage);
+                        impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage, armingDelay);
                 }
                 
                 StraightProjectile existingStraight = projectileObj.GetComponent<StraightProjectile>();
@@ -1279,7 +1467,7 @@ public static class DamageUtils
                 {
                     float speed = projectileSpeed > 0f ? projectileSpeed : 20f;
                     existingStraight.Initialize(direction, damage, poiseDamage, attacker, element, speed,
-                        impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage);
+                        impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage, armingDelay);
                 }
                 break;
         }

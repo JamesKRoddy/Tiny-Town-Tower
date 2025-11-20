@@ -4,9 +4,10 @@ using Managers;
 /// <summary>
 /// Base class for all projectile types (straight, arc, homing, etc.)
 /// Provides shared initialization, damage parameters, and impact handling
+/// Implements IHittable for weapon reflection
 /// </summary>
 [RequireComponent(typeof(Rigidbody))]
-public abstract class BaseProjectile : MonoBehaviour
+public abstract class BaseProjectile : MonoBehaviour, IHittable
 {
     // Damage parameters (shared by all projectile types)
     protected float damage;
@@ -24,6 +25,7 @@ public abstract class BaseProjectile : MonoBehaviour
     protected bool hasHit = false;
     protected float launchTime;
     protected float maxLifetime = 10f;
+    protected float armingDelay = 0.2f; // Delay before projectile can cause damage (allows time for reflection/dodge)
     
     // Reflection tracking (for player hit reflection)
     protected bool isReflected = false;
@@ -34,7 +36,7 @@ public abstract class BaseProjectile : MonoBehaviour
     /// </summary>
     protected virtual void InitializeBase(float dmg, float poiseDmg, Transform attackTransform,
         AttackElement elem, EffectDefinition impactEff, bool createArea, float areaRadius,
-        float areaDuration, bool triggerBased)
+        float areaDuration, bool triggerBased, float armingDelay = 0.2f)
     {
         // Store damage parameters
         damage = dmg;
@@ -51,6 +53,7 @@ public abstract class BaseProjectile : MonoBehaviour
         hasHit = false;
         isReflected = false;
         launchTime = Time.time;
+        this.armingDelay = armingDelay;
         
         // Store origin position (attacker position) for reflection
         originPosition = attackTransform != null ? attackTransform.position : transform.position;
@@ -60,6 +63,17 @@ public abstract class BaseProjectile : MonoBehaviour
         if (rb == null)
         {
             rb = gameObject.AddComponent<Rigidbody>();
+        }
+        
+        // Log collider setup for debugging reflection detection
+        Collider col = GetComponent<Collider>();
+        if (col != null)
+        {
+            Debug.Log($"[{GetType().Name}] {gameObject.name} initialized with collider: {col.GetType().Name} | Layer: {LayerMask.LayerToName(gameObject.layer)} ({gameObject.layer}) | IsTrigger: {col.isTrigger} | Position: {transform.position}");
+        }
+        else
+        {
+            Debug.LogWarning($"[{GetType().Name}] {gameObject.name} initialized WITHOUT collider! Reflection detection may fail!");
         }
     }
 
@@ -79,10 +93,29 @@ public abstract class BaseProjectile : MonoBehaviour
     }
 
     /// <summary>
+    /// Check if the projectile is armed (can cause damage)
+    /// Projectiles have a brief arming delay after launch to allow reflection/dodge time
+    /// </summary>
+    /// <returns>True if the projectile is armed and can cause damage</returns>
+    protected bool IsArmed()
+    {
+        float timeAlive = Time.time - launchTime;
+        return timeAlive >= armingDelay;
+    }
+    
+    /// <summary>
     /// Handle impact effects and damage (shared by all projectile types)
     /// </summary>
     protected virtual void HandleImpact(Vector3 hitPoint, Vector3 hitNormal, Transform hitTransform)
     {
+        // Check if projectile is armed before causing damage
+        if (!IsArmed() && !isReflected)
+        {
+            // Projectile is not armed yet - can still be reflected, but won't cause damage
+            Debug.Log($"[{GetType().Name}] {gameObject.name} hit target before arming delay ({Time.time - launchTime:F3}s < {armingDelay:F3}s) - no damage dealt");
+            return;
+        }
+        
         Debug.Log($"[{GetType().Name}] {gameObject.name} HandleImpact called | HitPoint: {hitPoint} | CreateDamageArea: {createDamageArea} | Radius: {damageAreaRadius} | Damage: {damage}");
         
         // Stop movement
@@ -250,23 +283,67 @@ public abstract class BaseProjectile : MonoBehaviour
 
     /// <summary>
     /// Called when projectile is reflected by player hit
-    /// Override in derived classes to implement reflection behavior
+    /// Override in derived classes to implement reflection behavior and VFX
     /// </summary>
-    protected virtual void OnReflected()
+    /// <param name="hitPoint">Position where the reflection occurred (for VFX)</param>
+    /// <param name="hitNormal">Normal vector at the hit point (for VFX)</param>
+    protected virtual void OnReflected(Vector3 hitPoint = default, Vector3 hitNormal = default)
     {
         isReflected = true;
         Debug.Log($"[{GetType().Name}] {gameObject.name} reflected by player, returning to origin at {originPosition}");
+        
+        // Play reflection VFX (handled by projectile classes if they override this)
+        if (hitPoint != default && hitNormal != default)
+        {
+            PlayReflectionVFX(hitPoint, hitNormal);
+        }
+    }
+    
+    /// <summary>
+    /// Play the reflection VFX at the hit point
+    /// Override in derived classes to use their own VFX system
+    /// </summary>
+    protected virtual void PlayReflectionVFX(Vector3 hitPoint, Vector3 hitNormal)
+    {
+        // Default implementation - can be overridden by derived classes
+        // Uses CharacterCombat static method to find and play VFX
+        CharacterCombat.PlayReflectionVFX(hitPoint, hitNormal);
     }
 
+    // ===== IHITTABLE IMPLEMENTATION =====
+    
+    /// <summary>
+    /// Called when this projectile is hit (implements IHittable)
+    /// Handles reflection logic
+    /// </summary>
+    public virtual void OnHit(HitInfo hitInfo)
+    {
+        if (!CanBeHit()) return;
+        
+        // Reflect the projectile
+        OnReflected(hitInfo.HitPoint, hitInfo.HitNormal);
+    }
+    
+    /// <summary>
+    /// Check if this projectile can currently be hit/reflected (implements IHittable)
+    /// </summary>
+    public virtual bool CanBeHit()
+    {
+        return !isReflected && !hasHit;
+    }
+    
     /// <summary>
     /// Public method to reflect projectile when hit by player weapon
-    /// Called from DamageUtils.PerformBoxCastDamage when melee weapon hits projectile
+    /// Called from DamageUtils.PerformProjectileReflectionDetection when melee weapon hits projectile
+    /// DEPRECATED: Use OnHit() via IHittable interface instead
     /// </summary>
-    public virtual void ReflectByPlayer()
+    /// <param name="hitPoint">Position where the reflection occurred (for VFX)</param>
+    /// <param name="hitNormal">Normal vector at the hit point (for VFX)</param>
+    public virtual void ReflectByPlayer(Vector3 hitPoint = default, Vector3 hitNormal = default)
     {
         if (isReflected || hasHit) return; // Don't reflect if already reflected or hit
         
-        OnReflected();
+        OnReflected(hitPoint, hitNormal);
     }
 
     /// <summary>
