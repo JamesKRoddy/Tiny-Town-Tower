@@ -27,13 +27,18 @@ namespace Enemies.Editor
         private SerializedProperty hitEffectDelay;
         private SerializedProperty endEffectDelay;
         private SerializedProperty elementalDamageBonus;
+        private SerializedProperty useAnimatorTiming;
         private SerializedProperty attackTrigger;
+        private SerializedProperty warningDelay;
+        private SerializedProperty attackDelay;
+        private SerializedProperty attackEndDelay;
         private SerializedProperty allowRotationDuringAttack;
 
         private bool showRangeSettings = true;
         private bool showDamageSettings = true;
         private bool showEffectSettings = true;
         private bool showVisualizationSettings = true;
+        private bool showTimingSettings = true;
 
         protected virtual void OnEnable()
         {
@@ -55,7 +60,11 @@ namespace Enemies.Editor
             hitEffectDelay = serializedObject.FindProperty("hitEffectDelay");
             endEffectDelay = serializedObject.FindProperty("endEffectDelay");
             elementalDamageBonus = serializedObject.FindProperty("elementalDamageBonus");
+            useAnimatorTiming = serializedObject.FindProperty("useAnimatorTiming");
             attackTrigger = serializedObject.FindProperty("attackTrigger");
+            warningDelay = serializedObject.FindProperty("warningDelay");
+            attackDelay = serializedObject.FindProperty("attackDelay");
+            attackEndDelay = serializedObject.FindProperty("attackEndDelay");
             allowRotationDuringAttack = serializedObject.FindProperty("allowRotationDuringAttack");
         }
 
@@ -90,13 +99,63 @@ namespace Enemies.Editor
             if (elementalDamageBonus != null) EditorGUILayout.PropertyField(elementalDamageBonus);
             EditorGUILayout.Space(5);
 
-            // Animation Settings
-            EditorGUILayout.LabelField("Animation Settings", EditorStyles.boldLabel);
-            if (attackTrigger != null) EditorGUILayout.PropertyField(attackTrigger);
-            if (allowRotationDuringAttack != null) 
+            // Attack Timing Settings - Show either Animation or Timeline based on toggle
+            showTimingSettings = EditorGUILayout.BeginFoldoutHeaderGroup(showTimingSettings, "Attack Timing");
+            if (showTimingSettings)
             {
-                EditorGUILayout.PropertyField(allowRotationDuringAttack, new GUIContent("Allow Rotation During Attack", "Enable NavMeshAgent rotation during attack (useful for tracking moving targets)"));
+                EditorGUI.indentLevel++;
+                
+                // Toggle between animator and timeline
+                if (useAnimatorTiming != null)
+                {
+                    EditorGUILayout.PropertyField(useAnimatorTiming, new GUIContent("Use Animator Timing", "Use animator events to trigger attack phases. If false, uses timeline delays."));
+                }
+                
+                EditorGUILayout.Space(3);
+                
+                // Show appropriate settings based on timing mode
+                if (useAnimatorTiming != null && useAnimatorTiming.boolValue)
+                {
+                    // Animator-based timing
+                    EditorGUILayout.LabelField("Animator Settings", EditorStyles.miniBoldLabel);
+                    if (attackTrigger != null) 
+                    {
+                        EditorGUILayout.PropertyField(attackTrigger, new GUIContent("Attack Trigger", "Animator trigger parameter name"));
+                    }
+                    EditorGUILayout.HelpBox("Attack phases (Warning/Attack/End) are triggered by animation events.", MessageType.Info);
+                }
+                else
+                {
+                    // Timeline-based timing
+                    EditorGUILayout.LabelField("Timeline Settings", EditorStyles.miniBoldLabel);
+                    if (warningDelay != null)
+                    {
+                        EditorGUILayout.PropertyField(warningDelay, new GUIContent("Warning Delay", "Time before AttackWarning is called (visual indicator)"));
+                    }
+                    if (attackDelay != null)
+                    {
+                        EditorGUILayout.PropertyField(attackDelay, new GUIContent("Attack Delay", "Time before Attack is executed (damage dealing)"));
+                    }
+                    if (attackEndDelay != null)
+                    {
+                        EditorGUILayout.PropertyField(attackEndDelay, new GUIContent("End Delay", "Time before AttackEnd is called (cleanup)"));
+                    }
+                    
+                    // Visual timeline
+                    DrawTimelineVisualization();
+                }
+                
+                EditorGUILayout.Space(3);
+                
+                // Common settings
+                if (allowRotationDuringAttack != null) 
+                {
+                    EditorGUILayout.PropertyField(allowRotationDuringAttack, new GUIContent("Allow Rotation During Attack", "Enable rotation tracking during attack"));
+                }
+                
+                EditorGUI.indentLevel--;
             }
+            EditorGUILayout.EndFoldoutHeaderGroup();
             EditorGUILayout.Space(5);
 
             // Attack Visualization Settings - All visualization controls in one place
@@ -155,7 +214,11 @@ namespace Enemies.Editor
                 "poiseDamage", 
                 "attackElement", 
                 "elementalDamageBonus",
+                "useAnimatorTiming",
                 "attackTrigger",
+                "warningDelay",
+                "attackDelay",
+                "attackEndDelay",
                 "allowRotationDuringAttack",
                 "cooldown", 
                 "minRange", 
@@ -328,6 +391,60 @@ namespace Enemies.Editor
         protected virtual void DrawChildSpecificSettings()
         {
             // Override in child classes to add specific settings
+        }
+        
+        /// <summary>
+        /// Draw a visual timeline showing attack phases
+        /// </summary>
+        protected virtual void DrawTimelineVisualization()
+        {
+            if (warningDelay == null || attackDelay == null || attackEndDelay == null) return;
+            
+            float warning = warningDelay.floatValue;
+            float attack = attackDelay.floatValue;
+            float end = attackEndDelay.floatValue;
+            float totalTime = Mathf.Max(end, 0.1f);
+            
+            EditorGUILayout.Space(5);
+            EditorGUILayout.LabelField("Timeline Preview", EditorStyles.miniLabel);
+            
+            // Draw timeline bar
+            Rect timelineRect = GUILayoutUtility.GetRect(0, 40, GUILayout.ExpandWidth(true));
+            timelineRect.x += 5;
+            timelineRect.width -= 10;
+            
+            // Background
+            EditorGUI.DrawRect(timelineRect, new Color(0.2f, 0.2f, 0.2f, 0.8f));
+            
+            // Calculate positions
+            float warningPos = (warning / totalTime) * timelineRect.width;
+            float attackPos = (attack / totalTime) * timelineRect.width;
+            float endPos = timelineRect.width;
+            
+            // Draw phases
+            Rect startRect = new Rect(timelineRect.x, timelineRect.y, warningPos, timelineRect.height);
+            Rect warningRect = new Rect(timelineRect.x + warningPos, timelineRect.y, attackPos - warningPos, timelineRect.height);
+            Rect attackRect = new Rect(timelineRect.x + attackPos, timelineRect.y, endPos - attackPos, timelineRect.height);
+            
+            EditorGUI.DrawRect(startRect, new Color(0.3f, 0.3f, 0.3f, 0.8f)); // Start phase (dark gray)
+            EditorGUI.DrawRect(warningRect, new Color(1f, 0.8f, 0f, 0.6f));    // Warning phase (yellow)
+            EditorGUI.DrawRect(attackRect, new Color(1f, 0.3f, 0.3f, 0.6f));   // Attack phase (red)
+            
+            // Labels
+            GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
+            labelStyle.fontSize = 9;
+            labelStyle.normal.textColor = Color.white;
+            labelStyle.alignment = TextAnchor.MiddleCenter;
+            
+            if (warningPos > 30) GUI.Label(startRect, "Start", labelStyle);
+            if (attackPos - warningPos > 40) GUI.Label(warningRect, $"Warning\n{warning:F2}s", labelStyle);
+            if (endPos - attackPos > 40) GUI.Label(attackRect, $"Attack\n{attack:F2}s", labelStyle);
+            
+            // Time marker at bottom
+            labelStyle.fontSize = 8;
+            labelStyle.alignment = TextAnchor.UpperRight;
+            GUI.Label(new Rect(timelineRect.x + timelineRect.width - 50, timelineRect.y + timelineRect.height + 2, 50, 12), 
+                     $"End: {end:F2}s", labelStyle);
         }
 
     }

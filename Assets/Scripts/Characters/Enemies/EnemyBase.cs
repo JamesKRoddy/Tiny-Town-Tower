@@ -148,6 +148,7 @@ namespace Enemies
 
         // Material flash effect
         protected SkinnedMeshRenderer skinnedMeshRenderer;
+        protected MeshRenderer meshRenderer;
         protected Material originalMaterial;
         protected Material flashMaterial;
         protected float flashDuration = 0.5f;
@@ -454,12 +455,24 @@ namespace Enemies
 
         private void SetupMaterialFlash()
         {
+            // Try to get SkinnedMeshRenderer first (for animated characters)
             skinnedMeshRenderer = GetComponentInChildren<SkinnedMeshRenderer>();
             if (skinnedMeshRenderer != null)
             {
                 originalMaterial = skinnedMeshRenderer.material;
                 flashMaterial = new Material(originalMaterial);
                 flashMaterial.color = flashColor;
+            }
+            else
+            {
+                // If no SkinnedMeshRenderer, try regular MeshRenderer (for drones, etc.)
+                meshRenderer = GetComponentInChildren<MeshRenderer>();
+                if (meshRenderer != null)
+                {
+                    originalMaterial = meshRenderer.material;
+                    flashMaterial = new Material(originalMaterial);
+                    flashMaterial.color = flashColor;
+                }
             }
         }
 
@@ -2019,17 +2032,33 @@ namespace Enemies
         /// </summary>
         public virtual void AttackWarning()
         {
-            if (skinnedMeshRenderer != null)
+            Debug.Log($"[{gameObject.name}] AttackWarning called! Has SkinnedMeshRenderer: {skinnedMeshRenderer != null}, Has MeshRenderer: {meshRenderer != null}");
+            
+            if (skinnedMeshRenderer != null || meshRenderer != null)
             {
                 StartCoroutine(FlashMaterialCoroutine());
+            }
+            else
+            {
+                Debug.LogWarning($"[{gameObject.name}] AttackWarning: No renderer found for flash effect!");
             }
         }
 
         private IEnumerator FlashMaterialCoroutine()
         {
-            skinnedMeshRenderer.material = flashMaterial;
-            yield return new WaitForSeconds(flashDuration);
-            skinnedMeshRenderer.material = originalMaterial;
+            // Flash the appropriate renderer
+            if (skinnedMeshRenderer != null)
+            {
+                skinnedMeshRenderer.material = flashMaterial;
+                yield return new WaitForSeconds(flashDuration);
+                skinnedMeshRenderer.material = originalMaterial;
+            }
+            else if (meshRenderer != null)
+            {
+                meshRenderer.material = flashMaterial;
+                yield return new WaitForSeconds(flashDuration);
+                meshRenderer.material = originalMaterial;
+            }
         }
 
         internal void Setup(Transform navAgentTarget)

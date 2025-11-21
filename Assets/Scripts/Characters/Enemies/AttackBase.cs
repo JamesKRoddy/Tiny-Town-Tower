@@ -57,8 +57,18 @@ namespace Enemies
         public float endEffectDelay = 0f;
 
         [Header("Animation Settings")]
-        [Tooltip("Animation trigger name for this attack")]
+        [Tooltip("Use animator to trigger attack timing. If false, uses timeline settings below.")]
+        public bool useAnimatorTiming = true;
+        [Tooltip("Animation trigger name for this attack (only used if useAnimatorTiming is true)")]
         public string attackTrigger = "Attack";
+        
+        [Header("Timeline Settings (when useAnimatorTiming is false)")]
+        [Tooltip("Delay before calling AttackWarning (visual indicator)")]
+        public float warningDelay = 0.3f;
+        [Tooltip("Delay before calling Attack (actual damage execution)")]
+        public float attackDelay = 0.6f;
+        [Tooltip("Delay before calling AttackEnd (cleanup and return to movement)")]
+        public float attackEndDelay = 1.0f;
 
         [Header("Attack Game Objects")]
         [Tooltip("Game objects that will be enabled when this attack is active")]
@@ -110,12 +120,14 @@ namespace Enemies
 
         /// <summary>
         /// Should this attack execute immediately (without waiting for animation events)?
-        /// Default behaviour is to execute immediately when no valid animator is available.
+        /// Returns true only when there's no animator AND not using timeline timing.
         /// Child attacks can override to force animation-driven timing even if an animator exists.
         /// </summary>
         public virtual bool ShouldExecuteImmediately()
         {
-            return !HasValidAnimator();
+            // Only execute immediately if we have no animator AND not using timeline
+            // If using timeline, the coroutine will handle timing
+            return !HasValidAnimator() && useAnimatorTiming;
         }
 
         /// <summary>
@@ -173,11 +185,6 @@ namespace Enemies
         {
             hasValidAnimator = animator != null && animator.runtimeAnimatorController != null;
 
-            if (enemy != null && animator != null && animator.runtimeAnimatorController != null)
-            {
-                animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, attackType);
-                animator.SetTrigger(attackTrigger);
-            }
             lastAttackTime = Time.time;
             
             // Mark enemy as attacking
@@ -191,6 +198,68 @@ namespace Enemies
             
             // Play start effect
             PlayStartEffect();
+            
+            // Choose between animator-driven or timeline-driven attack
+            if (useAnimatorTiming && hasValidAnimator)
+            {
+                // Animator-driven: trigger animation, animator events will call AttackWarning/Attack/AttackEnd
+                if (enemy != null && animator != null)
+                {
+                    animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, attackType);
+                    animator.SetTrigger(attackTrigger);
+                }
+            }
+            else
+            {
+                // Timeline-driven: manually call AttackWarning/Attack/AttackEnd at specified delays
+                StartCoroutine(ExecuteAttackTimeline());
+            }
+        }
+        
+        /// <summary>
+        /// Execute the attack using timeline delays instead of animator events
+        /// </summary>
+        private IEnumerator ExecuteAttackTimeline()
+        {
+            Debug.Log($"[{enemy?.gameObject.name}] Timeline attack started | Warning: {warningDelay}s, Attack: {attackDelay}s, End: {attackEndDelay}s");
+            
+            // Wait for warning delay, then show warning
+            if (warningDelay > 0)
+            {
+                yield return new WaitForSeconds(warningDelay);
+            }
+            
+            Debug.Log($"[{enemy?.gameObject.name}] Timeline: Calling AttackWarning");
+            if (enemy != null)
+            {
+                enemy.AttackWarning();
+            }
+            
+            // Wait for attack delay (from start, not from warning)
+            float remainingDelay = attackDelay - warningDelay;
+            if (remainingDelay > 0)
+            {
+                yield return new WaitForSeconds(remainingDelay);
+            }
+            
+            Debug.Log($"[{enemy?.gameObject.name}] Timeline: Executing Attack");
+            // Execute the actual attack
+            OnAttack();
+            if (enemy != null)
+            {
+                enemy.Attack();
+            }
+            
+            // Wait for end delay (from start, not from attack)
+            remainingDelay = attackEndDelay - attackDelay;
+            if (remainingDelay > 0)
+            {
+                yield return new WaitForSeconds(remainingDelay);
+            }
+            
+            Debug.Log($"[{enemy?.gameObject.name}] Timeline: Calling AttackEnd");
+            // End the attack
+            OnAttackEnd();
         }
 
         /// <summary>
