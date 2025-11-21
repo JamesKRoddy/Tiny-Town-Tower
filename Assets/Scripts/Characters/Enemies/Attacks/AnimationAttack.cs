@@ -102,8 +102,8 @@ namespace Enemies.Attacks
                 }
             }
             
-            // Deal damage in radius
-            int targetsDamaged = DamageUtils.DealDamageInRadius(enemy.transform.position, attackRadius, damage, poiseDamage, enemy.transform, attackElement, targetLayer);
+            // Deal damage in radius (exclude self to prevent self-damage)
+            int targetsDamaged = DamageUtils.DealDamageInRadius(enemy.transform.position, attackRadius, damage, poiseDamage, enemy.transform, attackElement, targetLayer, excludeSelf: true);
             
             Debug.Log($"[{enemy.gameObject.name}] Close range attack executed | Damage: {damage} | Radius: {attackRadius} | Targets: {targetsDamaged}");
         }
