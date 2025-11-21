@@ -47,6 +47,74 @@ namespace Enemies
 
         private float currentAnimSpeed = 1f;
 
+        #region Attack Range Properties
+
+        /// <summary>
+        /// Get minimum attack distance (smallest minRange from all attacks)
+        /// </summary>
+        protected float minRange
+        {
+            get
+            {
+                if (attackComponents == null || attackComponents.Length == 0)
+                    return 0f;
+                
+                // Get minimum range from attacks
+                float min = float.MaxValue; // Start with a large value, then find the actual min
+                foreach (var attack in attackComponents)
+                {
+                    if (attack != null && attack.minRange < min)
+                    {
+                        min = attack.minRange;
+                    }
+                }
+                // Return actual min, or 0f if no attacks found
+                return min < float.MaxValue ? min : 0f;
+            }
+        }
+
+        /// <summary>
+        /// Get maximum attack distance (largest maxRange from all attacks)
+        /// </summary>
+        protected float maxRange
+        {
+            get
+            {
+                if (attackComponents == null || attackComponents.Length == 0)
+                {
+                    if (showCollisionDebug && Time.frameCount % 120 == 0)
+                    {
+                        Debug.Log($"[{gameObject.name}] maxRange property: attackComponents is null or empty, returning 0");
+                    }
+                    return 0f; // Return 0 instead of 10, so drones with uninitialized attacks don't strafe
+                }
+                
+                // Get maximum range from attacks
+                float max = 0f;
+                foreach (var attack in attackComponents)
+                {
+                    if (attack != null && attack.maxRange > max)
+                    {
+                        max = attack.maxRange;
+                        if (showCollisionDebug && Time.frameCount % 120 == 0)
+                        {
+                            Debug.Log($"[{gameObject.name}] maxRange property: Found attack {attack.GetType().Name} with maxRange {attack.maxRange}");
+                        }
+                    }
+                }
+                
+                if (showCollisionDebug && Time.frameCount % 120 == 0)
+                {
+                    Debug.Log($"[{gameObject.name}] maxRange property: Returning {max} from {attackComponents.Length} components");
+                }
+                
+                // If no max found, return 0 (not initialized yet)
+                return max;
+            }
+        }
+
+        #endregion
+
         protected override void Awake()
         {
             // Note: useRootMotion should be set by derived classes (Zombie, Robot, Drone, etc.)

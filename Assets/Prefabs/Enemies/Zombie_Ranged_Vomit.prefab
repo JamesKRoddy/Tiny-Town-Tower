@@ -3542,7 +3542,7 @@ GameObject:
   - component: {fileID: 1633898417205440891}
   - component: {fileID: 2505444480820924123}
   m_Layer: 8
-  m_Name: Zombie_Ranged
+  m_Name: Zombie_Ranged_Vomit
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

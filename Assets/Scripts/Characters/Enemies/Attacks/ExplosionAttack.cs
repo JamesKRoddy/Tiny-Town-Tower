@@ -6,12 +6,24 @@ namespace Enemies.Attacks
     /// <summary>
     /// Explosion attack that deals area damage and may kill the attacker.
     /// Good for suicide bombers, explosive barrels, grenades, etc.
+    /// 
+    /// Configuration Tips:
+    /// - Set explosionRadius to the desired damage area (e.g., 5m)
+    /// - Set detonationDistanceFraction to control when explosion triggers:
+    ///   * 0.3 (default) = detonate at 30% of explosion radius (aggressive suicide bomber)
+    ///   * 0.5 = detonate at 50% of explosion radius (balanced)
+    ///   * 0.8 = detonate at 80% of explosion radius (proximity mine style)
+    /// - Works with both root motion and non-root motion movement systems
+    /// - Automatically prevents strafing for drones (charges directly at target)
     /// </summary>
     public class ExplosionAttack : AttackBase
     {
         [Header("Explosion Settings")]
         [Tooltip("Radius of the explosion")]
         public float explosionRadius = 5f;
+        [Tooltip("How close to get before detonating (as a fraction of explosion radius). 0.3 = detonate at 30% of explosion radius")]
+        [Range(0.1f, 0.8f)]
+        public float detonationDistanceFraction = 0.3f;
         [Tooltip("Poise damage multiplier for explosion (multiplied by base damage)")]
         public float poiseDamageMultiplier = 1.2f;
         [Tooltip("Whether the attacker should die after exploding")]
@@ -48,8 +60,10 @@ namespace Enemies.Attacks
                 attackElement = AttackElement.FIRE; // Explosions could be fire damage
             }
             
-            // Set default maxRange to explosion radius
-            maxRange = explosionRadius;
+            // Calculate detonation range based on explosion radius
+            // This ensures the attacker gets close enough for the explosion to hit the target
+            float detonationRange = explosionRadius * detonationDistanceFraction;
+            maxRange = detonationRange;
             
             // Validate attack effect
             if (attackEffect == null || !attackEffect.IsValid())
@@ -57,7 +71,7 @@ namespace Enemies.Attacks
                 Debug.LogError("Attack effect (explosion) definition is not assigned or invalid on ExplosionAttack on " + enemy.gameObject.name);
             }
             
-            Debug.Log($"[{enemy.gameObject.name}] ExplosionAttack initialized | ExplosionRadius: {explosionRadius} | ExplosionDamage: {damage}");
+            Debug.Log($"[{enemy.gameObject.name}] ExplosionAttack initialized | DetonationRange: {detonationRange:F2} ({detonationDistanceFraction * 100}% of radius) | ExplosionRadius: {explosionRadius} | ExplosionDamage: {damage}");
         }
 
         public override bool CanAttack()
@@ -166,7 +180,8 @@ namespace Enemies.Attacks
         {
             if (target == null) return false;
             
-            return !IsReadyToAttack(); // Explosions don't need precise aiming
+            // Explosions don't need precise aiming - just need to get close
+            return false;
         }
 
         /// <summary>
@@ -182,13 +197,17 @@ namespace Enemies.Attacks
         {
             if (enemy == null) return;
             
-            // Draw explosion radius
-            Gizmos.color = Color.red;
+            // Calculate detonation range for visualization
+            float detonationRange = explosionRadius * detonationDistanceFraction;
+            
+            // Draw explosion radius (damage area) - red
+            Gizmos.color = new Color(1f, 0f, 0f, 0.3f); // Semi-transparent red
             Gizmos.DrawWireSphere(enemy.transform.position, explosionRadius);
             
-            // Draw detonation distance
+            // Draw detonation range (trigger distance) - yellow
             Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(enemy.transform.position, maxRange);
+            Gizmos.DrawWireSphere(enemy.transform.position, detonationRange);
+            Gizmos.DrawWireSphere(enemy.transform.position, detonationRange * 0.8f);
             
             // Draw explosion center
             Gizmos.color = new Color(1f, 0.5f, 0f); // Orange color

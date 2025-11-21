@@ -544,6 +544,43 @@ namespace Managers
                 return Vector3.zero;
             }
             
+            // Check if this is a short-range attacker that should charge directly or hold back
+            if (enemy is ModularEnemy modularEnemy)
+            {
+                float maxAttackRange = GetMaxAttackRange(modularEnemy);
+                
+                // For short-range attackers (suicide bombers, melee), manage engagement to avoid overwhelming player
+                if (maxAttackRange > 0 && maxAttackRange < 4f) // Short-range attackers
+                {
+                    // Count how many enemies are already close to the player (within engagement range)
+                    int enemiesNearPlayer = CountEnemiesNearPlayer(6f); // Count within 6m
+                    
+                    // If too many enemies already engaging, make this one hold back at a waiting distance
+                    if (enemiesNearPlayer > maxSimultaneousAttackers)
+                    {
+                        // Return a waiting position further back (8-12m from player)
+                        Vector3 waitingPosition = CalculateWaitingPosition(enemy);
+                        
+                        if (showDebug && Time.frameCount % 120 == 0)
+                        {
+                            Debug.Log($"[EnemyManager] {enemy.gameObject.name} holding back - {enemiesNearPlayer} enemies already engaging (max: {maxSimultaneousAttackers})");
+                        }
+                        
+                        return waitingPosition;
+                    }
+                    else
+                    {
+                        // Clear to engage - charge directly at the player
+                        if (showDebug && Time.frameCount % 120 == 0)
+                        {
+                            Debug.Log($"[EnemyManager] {enemy.gameObject.name} charging directly - {enemiesNearPlayer} enemies engaging (max: {maxSimultaneousAttackers})");
+                        }
+                        return Vector3.zero; // Vector3.zero tells EnemyBase to move directly to target
+                    }
+                }
+            }
+            
+            // For ranged attackers and other enemies, use strategic positioning based on role
             EnemyRole role = enemyRoles[enemy];
             
             switch (role)
@@ -563,6 +600,67 @@ namespace Managers
                 default:
                     return Vector3.zero;
             }
+        }
+        
+        /// <summary>
+        /// Count how many enemies are within a certain distance of the player
+        /// </summary>
+        private int CountEnemiesNearPlayer(float distance)
+        {
+            if (lastPlayerPosition == Vector3.zero) return 0;
+            
+            int count = 0;
+            foreach (var enemy in activeEnemies)
+            {
+                if (enemy != null && enemy.Health > 0)
+                {
+                    float distToPlayer = Vector3.Distance(enemy.transform.position, lastPlayerPosition);
+                    if (distToPlayer < distance)
+                    {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+        
+        /// <summary>
+        /// Calculate a waiting position for enemies that should hold back
+        /// </summary>
+        private Vector3 CalculateWaitingPosition(EnemyBase enemy)
+        {
+            if (lastPlayerPosition == Vector3.zero) return Vector3.zero;
+            
+            // Calculate a position 8-12m from player, in a circle around them
+            Vector3 directionFromPlayer = (enemy.transform.position - lastPlayerPosition).normalized;
+            float waitingDistance = UnityEngine.Random.Range(8f, 12f);
+            Vector3 waitingPos = lastPlayerPosition + directionFromPlayer * waitingDistance;
+            
+            // Sample NavMesh
+            if (UnityEngine.AI.NavMesh.SamplePosition(waitingPos, out UnityEngine.AI.NavMeshHit hit, 10f, UnityEngine.AI.NavMesh.AllAreas))
+            {
+                return hit.position;
+            }
+            
+            // Fallback: just use the calculated position
+            return waitingPos;
+        }
+        
+        /// <summary>
+        /// Get the maximum attack range from a modular enemy's attack components
+        /// </summary>
+        private float GetMaxAttackRange(ModularEnemy enemy)
+        {
+            var attacks = enemy.GetComponents<AttackBase>();
+            float maxRange = 0f;
+            foreach (var attack in attacks)
+            {
+                if (attack != null && attack.maxRange > maxRange)
+                {
+                    maxRange = attack.maxRange;
+                }
+            }
+            return maxRange;
         }
         
         private Vector3 CalculateInterceptPosition(EnemyBase enemy)

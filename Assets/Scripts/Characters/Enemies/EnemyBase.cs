@@ -1495,6 +1495,13 @@ namespace Enemies
             if (newTarget != null)
             {
                 navMeshTarget = newTarget;
+                
+                // Resume movement if agent was stopped
+                if (agent != null && agent.isOnNavMesh && agent.isStopped)
+                {
+                    agent.isStopped = false;
+                    Debug.Log($"[{gameObject.name}] Target acquired: {newTarget.name} - resuming movement");
+                }
                 // Speed will be set by UpdateAnimationParameters based on agent velocity
             }
             else

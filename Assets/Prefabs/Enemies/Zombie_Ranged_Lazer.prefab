@@ -2903,7 +2903,7 @@ GameObject:
   - component: {fileID: 1929164753014622273}
   - component: {fileID: 8598843483662680964}
   m_Layer: 8
-  m_Name: Zombie_Lazer
+  m_Name: Zombie_Ranged_Lazer
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3067,6 +3067,7 @@ MonoBehaviour:
   maxPoise: 50
   poiseRecoveryRate: 10
   poiseRecoveryDelay: 2
+  targetTransform: {fileID: 0}
   animator: {fileID: 0}
   isAttacking: 0
   resistances: []

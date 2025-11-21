@@ -343,24 +343,52 @@ namespace Enemies
         }
 
         /// <summary>
-        /// Override movement to add strafing behavior
+        /// Override movement to add strafing behavior.
+        /// Only strafes for ranged attacks (maxRange > 3m).
+        /// Close-range attacks (suicide bombers, melee) charge directly.
         /// </summary>
         protected override void UpdateMovement()
         {
-            if (strafeMovement && navMeshTarget != null && agent != null && agent.isOnNavMesh)
+            // Only strafe if we have ranged attacks (maxRange > 3m = ranged threshold)
+            const float RANGED_ATTACK_THRESHOLD = 3f;
+            float currentMaxRange = maxRange;
+            float currentMinRange = minRange;
+            bool hasRangedAttack = currentMaxRange > RANGED_ATTACK_THRESHOLD;
+            
+            // Temporary debug logging
+            if (Time.frameCount % 60 == 0)
+            {
+                Debug.Log($"[{gameObject.name}] STRAFE CHECK | maxRange: {currentMaxRange:F2} | minRange: {currentMinRange:F2} | hasRangedAttack: {hasRangedAttack} | strafeMovement: {strafeMovement}");
+            }
+            
+            if (showCollisionDebug && Time.frameCount % 120 == 0)
+            {
+                Debug.Log($"[{gameObject.name}] UpdateMovement | Target: {(navMeshTarget != null ? navMeshTarget.name : "NULL")} | HasRangedAttack: {hasRangedAttack} | StrafeMovement: {strafeMovement} | agent.isStopped: {(agent != null ? agent.isStopped.ToString() : "N/A")}");
+                if (navMeshTarget != null)
+                {
+                    float dist = Vector3.Distance(transform.position, navMeshTarget.position);
+                    Debug.Log($"[{gameObject.name}] Distance: {dist:F2} | minRange: {currentMinRange:F2} | maxRange: {currentMaxRange:F2}");
+                }
+            }
+            
+            // Only use strafe movement for ranged attacks
+            if (hasRangedAttack && strafeMovement && navMeshTarget != null && agent != null && agent.isOnNavMesh)
             {
                 // Get distance to target
                 float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
                 
+                Debug.Log($"[{gameObject.name}] STRAFE BLOCK ENTERED | Distance: {distanceToTarget:F2} | Will strafe: {distanceToTarget < maxRange && distanceToTarget > minRange}");
+                
                 // If within attack range, strafe around target
                 if (distanceToTarget < maxRange && distanceToTarget > minRange)
                 {
+                    Debug.Log($"[{gameObject.name}] APPLYING STRAFE MOVEMENT");
                     ApplyStrafeMovement();
                     return;
                 }
             }
             
-            // Otherwise use normal movement
+            // Otherwise use normal movement (charging for close-range, approaching for ranged)
             base.UpdateMovement();
         }
 
@@ -427,49 +455,7 @@ namespace Enemies
         #endregion
 
         #region Configuration
-
-        /// <summary>
-        /// Get minimum attack distance (for ranged attacks)
-        /// </summary>
-        protected float minRange
-        {
-            get
-            {
-                // Get minimum range from attacks
-                AttackBase[] attacks = GetComponents<AttackBase>();
-                float min = 0f;
-                foreach (var attack in attacks)
-                {
-                    if (attack != null && attack.minRange > min)
-                    {
-                        min = attack.minRange;
-                    }
-                }
-                return min;
-            }
-        }
-
-        /// <summary>
-        /// Get maximum attack distance
-        /// </summary>
-        protected float maxRange
-        {
-            get
-            {
-                // Get maximum range from attacks
-                AttackBase[] attacks = GetComponents<AttackBase>();
-                float max = 10f; // Default
-                foreach (var attack in attacks)
-                {
-                    if (attack != null && attack.maxRange > max)
-                    {
-                        max = attack.maxRange;
-                    }
-                }
-                return max;
-            }
-        }
-
+        // Note: minRange and maxRange properties are inherited from ModularEnemy base class
         #endregion
 
         #region Debug Visualization
