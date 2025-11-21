@@ -544,39 +544,34 @@ namespace Managers
                 return Vector3.zero;
             }
             
-            // Check if this is a short-range attacker that should charge directly or hold back
-            if (enemy is ModularEnemy modularEnemy)
+            // Check if this enemy has melee attacks and should charge directly or hold back
+            if (enemy is ModularEnemy modularEnemy && HasMeleeAttack(modularEnemy))
             {
-                float maxAttackRange = GetMaxAttackRange(modularEnemy);
+                // This enemy has melee attacks - manage engagement to avoid overwhelming player
+                // Count how many enemies are already close to the player (within engagement range)
+                int enemiesNearPlayer = CountEnemiesNearPlayer(6f); // Count within 6m
                 
-                // For short-range attackers (suicide bombers, melee), manage engagement to avoid overwhelming player
-                if (maxAttackRange > 0 && maxAttackRange < 4f) // Short-range attackers
+                // If too many enemies already engaging, make this one hold back at a waiting distance
+                if (enemiesNearPlayer > maxSimultaneousAttackers)
                 {
-                    // Count how many enemies are already close to the player (within engagement range)
-                    int enemiesNearPlayer = CountEnemiesNearPlayer(6f); // Count within 6m
+                    // Return a waiting position further back (8-12m from player)
+                    Vector3 waitingPosition = CalculateWaitingPosition(enemy);
                     
-                    // If too many enemies already engaging, make this one hold back at a waiting distance
-                    if (enemiesNearPlayer > maxSimultaneousAttackers)
+                    if (showDebug && Time.frameCount % 120 == 0)
                     {
-                        // Return a waiting position further back (8-12m from player)
-                        Vector3 waitingPosition = CalculateWaitingPosition(enemy);
-                        
-                        if (showDebug && Time.frameCount % 120 == 0)
-                        {
-                            Debug.Log($"[EnemyManager] {enemy.gameObject.name} holding back - {enemiesNearPlayer} enemies already engaging (max: {maxSimultaneousAttackers})");
-                        }
-                        
-                        return waitingPosition;
+                        Debug.Log($"[EnemyManager] {enemy.gameObject.name} (melee) holding back - {enemiesNearPlayer} enemies already engaging (max: {maxSimultaneousAttackers})");
                     }
-                    else
+                    
+                    return waitingPosition;
+                }
+                else
+                {
+                    // Clear to engage - charge directly at the player (no flanking)
+                    if (showDebug && Time.frameCount % 120 == 0)
                     {
-                        // Clear to engage - charge directly at the player
-                        if (showDebug && Time.frameCount % 120 == 0)
-                        {
-                            Debug.Log($"[EnemyManager] {enemy.gameObject.name} charging directly - {enemiesNearPlayer} enemies engaging (max: {maxSimultaneousAttackers})");
-                        }
-                        return Vector3.zero; // Vector3.zero tells EnemyBase to move directly to target
+                        Debug.Log($"[EnemyManager] {enemy.gameObject.name} (melee) charging directly - {enemiesNearPlayer} enemies engaging (max: {maxSimultaneousAttackers})");
                     }
+                    return Vector3.zero; // Vector3.zero tells EnemyBase to move directly to target
                 }
             }
             
@@ -661,6 +656,23 @@ namespace Managers
                 }
             }
             return maxRange;
+        }
+        
+        /// <summary>
+        /// Check if enemy has any melee-range attacks (for determining movement behavior)
+        /// </summary>
+        private bool HasMeleeAttack(ModularEnemy enemy)
+        {
+            var attacks = enemy.GetComponents<AttackBase>();
+            foreach (var attack in attacks)
+            {
+                // Consider attacks with maxRange < 3m as melee
+                if (attack != null && attack.maxRange > 0 && attack.maxRange < 3f)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
         
         private Vector3 CalculateInterceptPosition(EnemyBase enemy)
