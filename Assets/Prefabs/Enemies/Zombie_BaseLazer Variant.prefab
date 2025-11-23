@@ -68,11 +68,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3741353692252941258, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
   m_PrefabInstance: {fileID: 3870491826117487428}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &7111859758796408120 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 6270375218561003132, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
-  m_PrefabInstance: {fileID: 3870491826117487428}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &7805601594089873862 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6477775522615659138, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
@@ -146,7 +141,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   damageInterval: 0.1
-  beamFirePoint: {fileID: 7111859758796408120}
+  beamFirePoint: {fileID: 458604734096081038}
   beamVisual: {fileID: 8208047592962227310}
   headIKWeight: 1
   headIKRotationWeight: 1
