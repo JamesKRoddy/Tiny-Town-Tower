@@ -1663,6 +1663,83 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c7cf93e6ddbc19d4fa0a346de2106a48, type: 3}
+--- !u!1 &1336172949 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6477775522615659138, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
+  m_PrefabInstance: {fileID: 1845884975}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1336172950
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1336172949}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb82b1178e60d5d44b29ef440bb1aa45, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attackDescription: Arching vomit projectile that creates an acid pool
+  minRange: 0
+  maxRange: 5
+  attackAngleThreshold: 30
+  cooldown: 2
+  damage: 1
+  poiseDamage: 15
+  attackType: 0
+  attackOrigin: {fileID: 0}
+  allowRotationDuringAttack: 0
+  attackElement: 0
+  elementalDamageBonus: 0
+  startEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
+  startEffectDelay: 0
+  attackEffect:
+    effectDefinition: {fileID: 11400000, guid: 94e6acf029b2a8e4f947c2e75662ee75, type: 2}
+    spawnPoint: {fileID: 4526171563111948445, guid: b5c3cb9ae758fb549906e6cc604c6b3e, type: 3}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
+  attackEffectDelay: 0
+  hitEffect:
+    effectDefinition: {fileID: 11400000, guid: 2f3ea51455a426f48b24456a8147c1f2, type: 2}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
+  hitEffectDelay: 0
+  endEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
+  endEffectDelay: 0
+  useAnimatorTiming: 1
+  attackTrigger: Attack
+  warningDelay: 0.3
+  attackDelay: 0.6
+  attackEndDelay: 1
+  attackEquipment: []
+  attackEffectObjects: []
+  lastAttackTime: 0
+  projectileSpawnHeight: 1.5
+  projectileSpeed: 10
+  projectileMaxHeight: 5
+  createDamageAreaOnImpact: 1
+  impactDamageDuration: 5
+  useTriggerBasedDamage: 1
+  fallbackDamageRadius: 2
+  explodeOnAnyHit: 0
 --- !u!1001 &1336259745
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2553,6 +2630,66 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b5c3cb9ae758fb549906e6cc604c6b3e, type: 3}
+--- !u!1001 &1845884975
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5979949113929886864, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1.77
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.00000047683716
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -5.04
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5979949113929886864, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6477775522615659138, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
+      propertyPath: m_Name
+      value: Zombie_BaseVomit
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6477775522615659138, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1336172950}
+  m_SourcePrefab: {fileID: 100100000, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
 --- !u!1001 &1872342383
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3101,3 +3238,4 @@ SceneRoots:
   - {fileID: 193006221}
   - {fileID: 5916107880912196019}
   - {fileID: 5099452706286741200}
+  - {fileID: 1845884975}

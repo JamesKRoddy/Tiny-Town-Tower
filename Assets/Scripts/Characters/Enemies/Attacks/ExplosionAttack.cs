@@ -7,6 +7,11 @@ namespace Enemies.Attacks
     /// Explosion attack that deals area damage and may kill the attacker.
     /// Good for suicide bombers, explosive barrels, grenades, etc.
     /// 
+    /// ATTACK DESCRIPTION FIELD:
+    /// Use the "Attack Description" field at the top to document your specific setup.
+    /// Example: "Suicide bomber that charges at player and explodes at 2m range. 
+    /// Deals 50 fire damage in 5m radius. Dies after explosion."
+    /// 
     /// Configuration Tips:
     /// - Set explosionRadius to the desired damage area (e.g., 5m)
     /// - Set detonationDistanceFraction to control when explosion triggers:
@@ -15,6 +20,21 @@ namespace Enemies.Attacks
     ///   * 0.8 = detonate at 80% of explosion radius (proximity mine style)
     /// - Works with both root motion and non-root motion movement systems
     /// - Automatically prevents strafing for drones (charges directly at target)
+    /// 
+    /// VISUAL SYSTEM:
+    /// Use BOTH visual arrays for complete effect:
+    /// 
+    /// PERMANENT EQUIPMENT (attackEquipment):
+    /// - Create dynamite stick models as children of the enemy
+    /// - Add them to "Equipment GameObjects" array
+    /// - Keep them enabled in the scene
+    /// - Players see the dynamite and know this enemy explodes!
+    /// 
+    /// TEMPORARY EFFECTS (attackEffectObjects):
+    /// - Create explosion trails, sparking fuse particles, glow effects
+    /// - Add them to "Effect GameObjects" array
+    /// - Start them disabled in the scene
+    /// - They'll light up/activate when the enemy is about to explode!
     /// </summary>
     public class ExplosionAttack : AttackBase
     {

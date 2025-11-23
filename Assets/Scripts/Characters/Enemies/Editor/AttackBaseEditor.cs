@@ -17,7 +17,9 @@ namespace Enemies.Editor
         private SerializedProperty minRange;
         private SerializedProperty maxRange;
         private SerializedProperty attackAngleThreshold;
-        private SerializedProperty attackGameObjects;
+        private SerializedProperty attackDescription;
+        private SerializedProperty attackEquipment;
+        private SerializedProperty attackEffectObjects;
         private SerializedProperty startEffect;
         private SerializedProperty attackEffect;
         private SerializedProperty hitEffect;
@@ -42,6 +44,7 @@ namespace Enemies.Editor
 
         protected virtual void OnEnable()
         {
+            attackDescription = serializedObject.FindProperty("attackDescription");
             attackType = serializedObject.FindProperty("attackType");
             damage = serializedObject.FindProperty("damage");
             poiseDamage = serializedObject.FindProperty("poiseDamage");
@@ -50,7 +53,8 @@ namespace Enemies.Editor
             minRange = serializedObject.FindProperty("minRange");
             maxRange = serializedObject.FindProperty("maxRange");
             attackAngleThreshold = serializedObject.FindProperty("attackAngleThreshold");
-            attackGameObjects = serializedObject.FindProperty("attackGameObjects");
+            attackEquipment = serializedObject.FindProperty("attackEquipment");
+            attackEffectObjects = serializedObject.FindProperty("attackEffectObjects");
             startEffect = serializedObject.FindProperty("startEffect");
             attackEffect = serializedObject.FindProperty("attackEffect");
             hitEffect = serializedObject.FindProperty("hitEffect");
@@ -74,8 +78,47 @@ namespace Enemies.Editor
 
             // Header
             EditorGUILayout.Space(5);
-            EditorGUILayout.LabelField(target.GetType().Name, EditorStyles.boldLabel);
+            GUIStyle headerStyle = new GUIStyle(EditorStyles.boldLabel);
+            headerStyle.fontSize = 14;
+            EditorGUILayout.LabelField(target.GetType().Name, headerStyle);
             EditorGUILayout.Space(5);
+            
+            // Attack Description Section
+            if (attackDescription != null)
+            {
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                
+                EditorGUILayout.LabelField("Attack Description", EditorStyles.boldLabel);
+                
+                // Show the description text area
+                EditorGUILayout.PropertyField(attackDescription, GUIContent.none);
+                
+                // If there's a description, show it nicely formatted
+                if (!string.IsNullOrWhiteSpace(attackDescription.stringValue))
+                {
+                    EditorGUILayout.Space(3);
+                    GUIStyle descriptionStyle = new GUIStyle(EditorStyles.wordWrappedLabel);
+                    descriptionStyle.fontSize = 11;
+                    descriptionStyle.normal.textColor = new Color(0.8f, 0.9f, 1f);
+                    descriptionStyle.padding = new RectOffset(10, 10, 5, 5);
+                    
+                    EditorGUILayout.BeginVertical(GUI.skin.box);
+                    EditorGUILayout.LabelField(attackDescription.stringValue, descriptionStyle);
+                    EditorGUILayout.EndVertical();
+                }
+                else
+                {
+                    EditorGUILayout.HelpBox(
+                        "Add a custom description to document this attack.\n\n" +
+                        "Example:\n" +
+                        "\"Close-range melee attack with 2m range. Triggers when enemy is within striking distance. " +
+                        "Use attackType=1 for animation override.\"",
+                        MessageType.None);
+                }
+                
+                EditorGUILayout.EndVertical();
+                EditorGUILayout.Space(5);
+            }
 
             // Attack Type
             if (attackType != null) EditorGUILayout.PropertyField(attackType);
@@ -193,13 +236,50 @@ namespace Enemies.Editor
                 EditorGUILayout.Space(5);
             }
 
-            // Game Objects - simple and clean
-            if (attackGameObjects != null)
+            // Attack Visual System Section
+            EditorGUILayout.Space(5);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            
+            EditorGUILayout.LabelField("Attack Visual System", EditorStyles.boldLabel);
+            EditorGUILayout.Space(3);
+            
+            // Permanent Equipment
+            EditorGUILayout.LabelField("Permanent Equipment (Always Visible)", EditorStyles.miniBoldLabel);
+            EditorGUILayout.HelpBox(
+                "Equipment that's ALWAYS visible to show what attack this enemy has.\n\n" +
+                "Examples:\n" +
+                "• Dynamite sticks → ExplosionAttack\n" +
+                "• Gun model → ProjectileAttack\n" +
+                "• Sword/weapon → Melee attacks\n" +
+                "• Rocket launcher → Missile attacks",
+                MessageType.Info);
+            
+            if (attackEquipment != null)
             {
-                EditorGUILayout.Space(5);
-                EditorGUILayout.PropertyField(attackGameObjects, new GUIContent("Attack Game Objects"), true);
-                EditorGUILayout.Space(5);
+                EditorGUILayout.PropertyField(attackEquipment, new GUIContent("Equipment GameObjects"), true);
             }
+            
+            EditorGUILayout.Space(5);
+            
+            // Temporary Effects
+            EditorGUILayout.LabelField("Temporary Effects (During Attacks Only)", EditorStyles.miniBoldLabel);
+            EditorGUILayout.HelpBox(
+                "Effects that appear ONLY during attacks.\n\n" +
+                "Examples:\n" +
+                "• Weapon trails (sword trails, smoke)\n" +
+                "• Muzzle flashes\n" +
+                "• Charge effects (glowing particles)\n" +
+                "• Attack telegraphs (warning indicators)\n\n" +
+                "Start these objects disabled in the scene!",
+                MessageType.Info);
+            
+            if (attackEffectObjects != null)
+            {
+                EditorGUILayout.PropertyField(attackEffectObjects, new GUIContent("Effect GameObjects"), true);
+            }
+            
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.Space(5);
 
             // Draw child class specific settings (like projectile settings) - always visible
             DrawChildSpecificSettings();
@@ -208,7 +288,8 @@ namespace Enemies.Editor
 
             // Draw child class properties
             DrawPropertiesExcluding(serializedObject, 
-                "m_Script", 
+                "m_Script",
+                "attackDescription",
                 "attackType", 
                 "damage", 
                 "poiseDamage", 
@@ -224,7 +305,8 @@ namespace Enemies.Editor
                 "minRange", 
                 "maxRange", 
                 "attackAngleThreshold", 
-                "attackGameObjects",
+                "attackEquipment",
+                "attackEffectObjects",
                 "startEffect",
                 "startEffectDelay",
                 "attackEffect",
@@ -248,7 +330,16 @@ namespace Enemies.Editor
                 "homingDuration",
                 "turnSpeed",
                 "explodeOnTimeout",
-                "missileSpeedMultiplier");
+                "missileSpeedMultiplier",
+                // BeamAttack specific properties
+                "beamHitLayers",
+                "damageInterval",
+                "beamFirePoint",
+                "beamVisual",
+                "headIKWeight",
+                "headIKRotationWeight",
+                "headIKLerpSpeed",
+                "maxHeadRotationAngle");
 
             serializedObject.ApplyModifiedProperties();
         }

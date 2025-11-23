@@ -7,10 +7,42 @@ namespace Enemies
 {
     /// <summary>
     /// Base class for all enemy attack components.
-    /// Contains common attack properties and functionality shared between boss and zombie attacks.
+    /// Contains common attack properties and functionality shared between all modular enemies.
+    /// 
+    /// VISUAL SYSTEM (2 Arrays):
+    /// This class supports two types of visual elements:
+    /// 
+    /// 1. PERMANENT EQUIPMENT (attackEquipment):
+    ///    - Always visible equipment that shows what the enemy has
+    ///    - Examples: dynamite sticks, guns, swords, rocket launchers
+    ///    - Stays ENABLED all the time
+    ///    - Lets players see enemy capabilities at a glance
+    /// 
+    /// 2. TEMPORARY EFFECTS (attackEffectObjects):
+    ///    - Visual effects that appear only during attacks
+    ///    - Examples: weapon trails, muzzle flashes, charge effects, telegraphs
+    ///    - Starts DISABLED, auto-enables during attack, auto-disables after
+    ///    - Adds visual flair to attacks
+    /// 
+    /// WORKFLOW:
+    /// 1. Create equipment models as children (e.g., dynamite sticks)
+    /// 2. Add them to attackEquipment array → Always visible
+    /// 3. Create effect objects as children (e.g., explosion trails)
+    /// 4. Add them to attackEffectObjects array → Toggle with attacks
+    /// 5. Start effect objects disabled in the scene
     /// </summary>
     public abstract class AttackBase : MonoBehaviour, IDamageDealer
     {
+        [Header("Attack Description")]
+        [Tooltip("Custom description of this attack for documentation.\n\n" +
+                 "Use this to explain:\n" +
+                 "• What this attack does\n" +
+                 "• How to configure it properly\n" +
+                 "• Special behaviors or requirements\n" +
+                 "• Tips for designers/developers")]
+        [TextArea(3, 8)]
+        public string attackDescription = "";
+        
         [Header("Attack Settings")]
         [Tooltip("Minimum range for this attack (0 = no minimum)")]
         public float minRange = 0f;
@@ -70,9 +102,24 @@ namespace Enemies
         [Tooltip("Delay before calling AttackEnd (cleanup and return to movement)")]
         public float attackEndDelay = 1.0f;
 
-        [Header("Attack Game Objects")]
-        [Tooltip("Game objects that will be enabled when this attack is active")]
-        public GameObject[] attackGameObjects;
+        [Header("Attack Visual Equipment")]
+        [Tooltip("Permanent equipment GameObjects that are ALWAYS visible.\n\n" +
+                 "These show what attack the enemy has:\n" +
+                 "• Dynamite sticks for ExplosionAttack\n" +
+                 "• Gun model for ProjectileAttack\n" +
+                 "• Sword/weapon for melee attacks\n" +
+                 "• Rocket launcher for missile attacks\n\n" +
+                 "These stay enabled all the time so players can see the enemy's capabilities.")]
+        public GameObject[] attackEquipment;
+        
+        [Tooltip("Temporary effect GameObjects that are ENABLED during attacks only.\n\n" +
+                 "These add visual flair during attacks:\n" +
+                 "• Weapon trails (sword trails, gun barrel smoke)\n" +
+                 "• Muzzle flashes\n" +
+                 "• Charge effects (glowing energy, particle buildup)\n" +
+                 "• Attack telegraphs (ground circles, warning indicators)\n\n" +
+                 "These start disabled and auto-enable/disable with attacks.")]
+        public GameObject[] attackEffectObjects;
 
         /// <summary>
         /// Time when this attack was last executed (used for cooldown calculations)
@@ -193,8 +240,8 @@ namespace Enemies
             // Note: Rotation during attack is now handled by UpdateDuringAttack() using Quaternion.Lerp
             // This approach doesn't conflict with NavMeshAgent rotation settings
             
-            // Enable attack game objects
-            EnableAttackGameObjects();
+            // Enable temporary attack effect objects
+            EnableAttackEffectObjects();
             
             // Play start effect
             PlayStartEffect();
@@ -327,8 +374,8 @@ namespace Enemies
             // Note: NavMeshAgent rotation is handled by EnemyBase.EndAttack()
             // Manual rotation during attack doesn't interfere with it
             
-            // Disable attack game objects
-            DisableAttackGameObjects();
+            // Disable temporary attack effect objects
+            DisableAttackEffectObjects();
             
             // Play end effect
             PlayEndEffect();
@@ -574,11 +621,13 @@ namespace Enemies
         }
 
         /// <summary>
-        /// Enable attack game objects
+        /// Enable temporary attack effect objects during attacks
         /// </summary>
-        protected virtual void EnableAttackGameObjects()
+        protected virtual void EnableAttackEffectObjects()
         {
-            foreach (GameObject obj in attackGameObjects)
+            if (attackEffectObjects == null) return;
+            
+            foreach (GameObject obj in attackEffectObjects)
             {
                 if (obj != null)
                 {
@@ -588,11 +637,13 @@ namespace Enemies
         }
 
         /// <summary>
-        /// Disable attack game objects
+        /// Disable temporary attack effect objects after attacks
         /// </summary>
-        protected virtual void DisableAttackGameObjects()
+        protected virtual void DisableAttackEffectObjects()
         {
-            foreach (GameObject obj in attackGameObjects)
+            if (attackEffectObjects == null) return;
+            
+            foreach (GameObject obj in attackEffectObjects)
             {
                 if (obj != null)
                 {
