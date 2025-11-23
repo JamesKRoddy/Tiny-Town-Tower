@@ -20,6 +20,21 @@ namespace Enemies
     /// </summary>
     public class HumanoidEnemy : ModularEnemy
     {
+        #region Appearance System
+        
+        /// <summary>
+        /// Procedural appearance system for randomizing enemy look
+        /// </summary>
+        [Header("Appearance System")]
+        [SerializeField] protected CharacterAppearanceSystem appearanceSystem;
+        
+        /// <summary>
+        /// Randomize enemy appearance on spawn
+        /// </summary>
+        [SerializeField] protected bool randomizeAppearanceOnSpawn = true;
+        
+        #endregion
+        
         #region Constants
         
         /// <summary>
@@ -36,6 +51,18 @@ namespace Enemies
             // Note: Derived classes should set useRootMotion before calling base.Awake()
             // if they want to use root motion animations
             base.Awake();
+            
+            // Initialize appearance system
+            if (appearanceSystem != null)
+            {
+                appearanceSystem.Initialize(transform, gameObject.name);
+                
+                // Randomize appearance if configured
+                if (randomizeAppearanceOnSpawn)
+                {
+                    appearanceSystem.RandomizeAppearance();
+                }
+            }
         }
         
         #endregion
@@ -86,6 +113,64 @@ namespace Enemies
             // - EnemyBase handles hit reaction IK (torso/head recoil)
             // - ModularEnemy forwards attack IK to current attack component
             // - AttackBase components handle weapon aiming IK
+        }
+        
+        #endregion
+        
+        #region Public Accessors
+        
+        /// <summary>
+        /// Get access to the enemy's appearance system
+        /// </summary>
+        public CharacterAppearanceSystem GetAppearanceSystem()
+        {
+            return appearanceSystem;
+        }
+        
+        /// <summary>
+        /// Manually trigger appearance randomization
+        /// </summary>
+        public void RandomizeAppearance()
+        {
+            if (appearanceSystem != null)
+            {
+                appearanceSystem.RandomizeAppearance();
+            }
+            else
+            {
+                Debug.LogWarning($"[HumanoidEnemy] {name} - Cannot randomize appearance: appearanceSystem is null");
+            }
+        }
+        
+        /// <summary>
+        /// Set specific appearance data (for save/load or predefined appearances)
+        /// </summary>
+        public void SetAppearance(CharacterAppearanceData appearanceData)
+        {
+            if (appearanceSystem != null)
+            {
+                appearanceSystem.SetAppearance(appearanceData);
+            }
+            else
+            {
+                Debug.LogWarning($"[HumanoidEnemy] {name} - Cannot set appearance: appearanceSystem is null");
+            }
+        }
+        
+        /// <summary>
+        /// Get current appearance data (for save/load)
+        /// </summary>
+        public CharacterAppearanceData GetCurrentAppearanceData()
+        {
+            if (appearanceSystem != null)
+            {
+                return appearanceSystem.GetCurrentAppearanceData();
+            }
+            else
+            {
+                Debug.LogWarning($"[HumanoidEnemy] {name} - Cannot get appearance data: appearanceSystem is null");
+                return null;
+            }
         }
         
         #endregion

@@ -5363,7 +5363,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &3744160193281993502
 Transform:
   m_ObjectHideFlags: 0
@@ -9022,10 +9022,66 @@ MonoBehaviour:
   selectionStrategy: 2
   attackSwitchCooldown: 0.5
   appearanceSystem:
-    bodyModels: []
+    bodyModels:
+    - {fileID: 3746490384753053152}
+    - {fileID: 3746716058011467066}
+    - {fileID: 3746079170348595404}
+    - {fileID: 3746681573740036336}
+    - {fileID: 3746684257052438414}
+    - {fileID: 3746148082635637066}
+    - {fileID: 3745070878597965896}
+    - {fileID: 3746718224505128676}
+    - {fileID: 3746477236427485990}
+    - {fileID: 3746869690825791862}
+    - {fileID: 3746657254335561846}
+    - {fileID: 3746516739716421142}
+    - {fileID: 3746958779772989046}
+    - {fileID: 3746081178304323032}
+    - {fileID: 3746393992645217698}
+    - {fileID: 3746675419158268696}
+    - {fileID: 3746071674870319890}
+    - {fileID: 3746570068823306920}
+    - {fileID: 3745139387544507340}
+    - {fileID: 3746768963633211366}
+    - {fileID: 3746095903912131892}
+    - {fileID: 3746809132697475994}
+    - {fileID: 3745986372118669970}
+    - {fileID: 3746112232224471070}
+    - {fileID: 3746842854899153314}
+    - {fileID: 3745145143988776374}
+    - {fileID: 3746098593892091458}
+    - {fileID: 3746077370129003582}
+    - {fileID: 3745124658130300586}
+    - {fileID: 3746687491572859514}
+    - {fileID: 3746642912760149380}
+    - {fileID: 3745975133926437112}
+    - {fileID: 3746375914039205898}
+    - {fileID: 3745990151604858396}
+    - {fileID: 3745876942408739432}
+    - {fileID: 3746577980958600768}
+    - {fileID: 3746438670923468336}
+    - {fileID: 3746695903815777054}
+    - {fileID: 3745882207110752514}
+    - {fileID: 3745965423783918448}
+    - {fileID: 3745148760793710694}
+    - {fileID: 3745911607176065394}
+    - {fileID: 3746037203302969728}
+    - {fileID: 3746019721877176620}
+    - {fileID: 3745899594066434546}
+    - {fileID: 3746467453511678960}
+    - {fileID: 3746927896134568840}
+    - {fileID: 3745978860997409078}
+    - {fileID: 3746075577410616926}
+    - {fileID: 3746392782786818834}
     headModels: []
     hairModels: []
-    topClothing: []
+    topClothing:
+    - {fileID: 7835523598823445913}
+    - {fileID: 228245773193280732}
+    - {fileID: 8128774313397628396}
+    - {fileID: 430576788478956810}
+    - {fileID: 2408099472893831229}
+    - {fileID: 8344283222811060103}
     bottomClothing: []
     footwear: []
     headAccessories: []
@@ -9037,6 +9093,7 @@ MonoBehaviour:
     headAccessoryChance: 0.3
     backAccessoryChance: 0.4
     handAccessoryChance: 0.2
+  randomizeAppearanceOnSpawn: 1
 --- !u!1 &7835523598823445913
 GameObject:
   m_ObjectHideFlags: 0

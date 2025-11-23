@@ -502,14 +502,14 @@ public class PlayerInventory : CharacterInventory, IControllerInput
         );
 
         // Capture appearance data from the SettlerNPC
-        NPCAppearanceData appearanceData = null;
+        CharacterAppearanceData appearanceData = null;
         if (settlerNPCReference.GetAppearanceSystem() != null)
         {
             appearanceData = settlerNPCReference.GetAppearanceSystem().GetCurrentAppearanceData();        }
         else
         {
             Debug.LogWarning($"[PlayerInventory] Could not capture appearance data for '{settlerName}' - no appearance system");
-            appearanceData = new NPCAppearanceData(); // Empty appearance data as fallback
+            appearanceData = new CharacterAppearanceData(); // Empty appearance data as fallback
         }
 
         
@@ -630,7 +630,7 @@ public class PlayerInventory : CharacterInventory, IControllerInput
     /// <summary>
     /// Spawn a recruited settler in the camp
     /// </summary>
-    private void SpawnSettlerInCamp(Managers.SettlerData settlerData, NPCAppearanceData appearanceData = null, string originalComponentId = null)
+    private void SpawnSettlerInCamp(Managers.SettlerData settlerData, CharacterAppearanceData appearanceData = null, string originalComponentId = null)
     {
         // Get the settler prefab from NPCManager
         if (NPCManager.Instance == null || !NPCManager.Instance.IsSettlerGenerationConfigured())
@@ -803,10 +803,10 @@ public class RecruitedNPCData
 {
     public Managers.SettlerData settlerData;
     public string componentId;
-    public NPCAppearanceData appearanceData;
+    public CharacterAppearanceData appearanceData;
     public List<NarrativeFlagData> narrativeFlags; // Store narrative flags for persistence
     
-    public RecruitedNPCData(Managers.SettlerData settler, string id, NPCAppearanceData appearance)
+    public RecruitedNPCData(Managers.SettlerData settler, string id, CharacterAppearanceData appearance)
     {
         settlerData = settler;
         componentId = id;
