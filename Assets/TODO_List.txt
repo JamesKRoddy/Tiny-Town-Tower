@@ -1,8 +1,8 @@
 *****Current Work*****
 
-Arch projectiles still exploding too soon
-
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
+
+Setup zombie meshes and gameobjects that should be enabled for different attacks
 
 Setup a massive boss like the hydra in hades
 
@@ -32,7 +32,7 @@ PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basic
 
 ****** Bugs and refactoring:
 
-
+Vomit pools are not damaging the player
 
 ****** Errors:
 
