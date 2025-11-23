@@ -3,6 +3,10 @@ using UnityEngine.UI;
 
 namespace Enemies
 {
+    /// <summary>
+    /// UI component for displaying boss health bars.
+    /// Works with any EnemyBase (no longer tied to Boss class).
+    /// </summary>
     public class BossHealthBarUI : MonoBehaviour
     {
         [Header("UI References")]
@@ -10,7 +14,7 @@ namespace Enemies
         [SerializeField] private Image healthFill;
         [SerializeField] private Text bossNameText;
 
-        private Boss boss;
+        private EnemyBase enemy;
         private Camera mainCamera;
 
         private void Start()
@@ -18,16 +22,22 @@ namespace Enemies
             mainCamera = Camera.main;
         }
 
-        public void Initialize(Boss boss)
+        /// <summary>
+        /// Initialize the boss health bar with an enemy reference
+        /// </summary>
+        public void Initialize(EnemyBase enemy)
         {
-            this.boss = boss;
+            this.enemy = enemy;
             if (bossNameText != null)
             {
-                bossNameText.text = boss.gameObject.name;
+                bossNameText.text = enemy.gameObject.name;
             }
-            UpdateHealth(boss.Health, boss.MaxHealth);
+            UpdateHealth(enemy.Health, enemy.MaxHealth);
         }
 
+        /// <summary>
+        /// Update the health bar display
+        /// </summary>
         public void UpdateHealth(float currentHealth, float maxHealth)
         {
             if (healthSlider != null)
@@ -39,10 +49,10 @@ namespace Enemies
 
         private void Update()
         {
-            if (boss != null && mainCamera != null)
+            if (enemy != null && mainCamera != null)
             {
-                // Position the health bar above the boss
-                Vector3 screenPos = mainCamera.WorldToScreenPoint(boss.transform.position + Vector3.up * 3f);
+                // Position the health bar above the enemy
+                Vector3 screenPos = mainCamera.WorldToScreenPoint(enemy.transform.position + Vector3.up * 3f);
                 transform.position = screenPos;
             }
         }

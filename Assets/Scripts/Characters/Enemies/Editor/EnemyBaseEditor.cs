@@ -181,29 +181,33 @@ namespace Enemies.Editor
             EditorGUILayout.EndFoldoutHeaderGroup();
             EditorGUILayout.Space(5);
 
-            // Head Tracking Settings
-            showHeadTrackingSettings = EditorGUILayout.BeginFoldoutHeaderGroup(showHeadTrackingSettings, "Head Tracking Settings");
-            if (showHeadTrackingSettings)
+            // Head Tracking Settings (only for humanoid enemies)
+            bool isHumanoid = target is HumanoidEnemy;
+            if (isHumanoid)
             {
-                EditorGUI.indentLevel++;
-                
-                EditorGUILayout.PropertyField(enableHeadTracking);
-                
-                if (enableHeadTracking != null && enableHeadTracking.boolValue)
+                showHeadTrackingSettings = EditorGUILayout.BeginFoldoutHeaderGroup(showHeadTrackingSettings, "Head Tracking Settings (Humanoid)");
+                if (showHeadTrackingSettings)
                 {
                     EditorGUI.indentLevel++;
-                    EditorGUILayout.PropertyField(headTrackingWeight);
-                    EditorGUILayout.PropertyField(headTrackingRotationWeight);
-                    EditorGUILayout.PropertyField(headTrackingLerpSpeed);
-                    EditorGUILayout.PropertyField(maxHeadTrackingAngle);
-                    EditorGUILayout.PropertyField(headTrackingDistance);
+                    
+                    EditorGUILayout.PropertyField(enableHeadTracking);
+                    
+                    if (enableHeadTracking != null && enableHeadTracking.boolValue)
+                    {
+                        EditorGUI.indentLevel++;
+                        EditorGUILayout.PropertyField(headTrackingWeight);
+                        EditorGUILayout.PropertyField(headTrackingRotationWeight);
+                        EditorGUILayout.PropertyField(headTrackingLerpSpeed);
+                        EditorGUILayout.PropertyField(maxHeadTrackingAngle);
+                        EditorGUILayout.PropertyField(headTrackingDistance);
+                        EditorGUI.indentLevel--;
+                    }
+                    
                     EditorGUI.indentLevel--;
                 }
-                
-                EditorGUI.indentLevel--;
+                EditorGUILayout.EndFoldoutHeaderGroup();
+                EditorGUILayout.Space(5);
             }
-            EditorGUILayout.EndFoldoutHeaderGroup();
-            EditorGUILayout.Space(5);
 
             // Debug Settings
             showDebugSettings = EditorGUILayout.BeginFoldoutHeaderGroup(showDebugSettings, "Debug Settings");

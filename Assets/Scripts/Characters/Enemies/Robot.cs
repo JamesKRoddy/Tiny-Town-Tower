@@ -4,10 +4,11 @@ using UnityEngine.AI;
 namespace Enemies
 {
     /// <summary>
-    /// Base robot class that inherits from ModularEnemy (uses the modular attack system).
-    /// Robots are mechanical enemies with enhanced durability and various attack patterns.
+    /// Base robot class that inherits from HumanoidEnemy (uses the modular attack system with humanoid features).
+    /// Robots are mechanical humanoid enemies with enhanced durability and various attack patterns.
     /// 
     /// Key Features:
+    /// - Humanoid rig with IK support (from HumanoidEnemy)
     /// - Typically higher health and poise
     /// - Different movement characteristics (more rigid/mechanical)
     /// - Uses MACHINE character type for spawning effects
@@ -20,7 +21,7 @@ namespace Enemies
     /// 3. Configure robot-specific properties in inspector
     /// 4. Set appropriate CharacterType in derived classes (MACHINE_ROBOT, MACHINE_DRONE, etc.)
     /// </summary>
-    public class Robot : ModularEnemy
+    public class Robot : HumanoidEnemy
     {
         #region Inspector Fields
 

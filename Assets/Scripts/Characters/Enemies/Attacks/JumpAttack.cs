@@ -231,11 +231,8 @@ namespace Enemies.Attacks
                     animator.applyRootMotion = wasRootMotionEnabled;
                 }
 
-                // Reset the attack state
-                if (enemy is Boss boss)
-                {
-                    boss.AttackEnd();
-                }
+                // Note: Attack state reset is handled by ModularEnemy's attack system
+                // No need for manual AttackEnd() call - the modular system handles it
             }
             else
             {

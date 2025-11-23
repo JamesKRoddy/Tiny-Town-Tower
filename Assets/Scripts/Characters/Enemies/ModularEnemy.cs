@@ -11,16 +11,14 @@ namespace Enemies
     /// Base class for enemies that use modular attack components.
     /// Handles navigation, health, and automatically selects appropriate attacks based on distance, health, etc.
     /// 
-    /// This is the foundation for zombies, robots, drones, and any other enemy that needs flexible attack combinations.
+    /// This is the foundation for all modular enemies (humanoids, drones, robots, etc.).
     /// Attach AttackBase components (AnimationAttack, ProjectileAttack, BeamAttack, etc.) to define behavior.
+    /// 
+    /// For humanoid enemies (zombies, robots, humanoid bosses), use HumanoidEnemy instead.
+    /// For flying enemies, use Drone.
     /// </summary>
     public class ModularEnemy : EnemyBase
     {
-        #region Constants
-        
-        private const float MELEE_ATTACK_ANGLE_THRESHOLD = 30f;
-        
-        #endregion
         
         [Header("Attack System")]
         [SerializeField] protected AttackSelectionStrategy selectionStrategy = AttackSelectionStrategy.DISTANCE_BASED;
@@ -703,26 +701,17 @@ namespace Enemies
 
         /// <summary>
         /// Called by Unity for IK (Inverse Kinematics) updates
-        /// Handles both general head tracking and attack-specific IK behavior
+        /// Handles attack-specific IK behavior for modular attacks
         /// </summary>
         protected override void OnAnimatorIK(int layerIndex)
         {
             // Always call base first - it handles hit reactions with proper priority
             base.OnAnimatorIK(layerIndex);
             
-            // Note: base.OnAnimatorIK already handles hit reactions and will return early if reacting
-            // If we're here, either no hit reaction is active, or base didn't return
-            // Only override with attack IK if actively executing an attack and have a current attack
-            if (currentAttack != null && isExecutingAttack && animator != null)
+            // Forward IK to current attack if actively executing
+            if (currentAttack != null && isExecutingAttack)
             {
-                // Check if we're reacting to a hit - if so, let hit reactions take priority
-                bool isReactingToHit = animator.isHuman && LastHitOrigin != Vector3.zero && 
-                                       (Time.time - LastHitTime) < 0.6f; // Match IKReactionUtils duration
-                
-                if (!isReactingToHit)
-                {
-                    currentAttack.OnAnimatorIK(layerIndex);
-                }
+                currentAttack.OnAnimatorIK(layerIndex);
             }
         }
 

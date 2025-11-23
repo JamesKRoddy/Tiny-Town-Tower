@@ -1639,10 +1639,11 @@ namespace Enemies
         }
 
         /// <summary>
-        /// Rotates towards target with enhanced speed for attack preparation
+        /// Rotates towards target with enhanced speed for attack preparation.
+        /// Virtual so derived classes (like HumanoidEnemy) can customize rotation behavior.
         /// </summary>
         /// <returns>True if rotation is complete and ready to attack</returns>
-        protected bool RotateTowardsTargetForAttack()
+        protected virtual bool RotateTowardsTargetForAttack()
         {
             if (navMeshTarget == null) return false;
             
