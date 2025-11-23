@@ -52,6 +52,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Zombie_BaseBoomer Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 7246404759604296529, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
+      propertyPath: appearanceSystem.bodyModels.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7246404759604296529, guid: 0684fd92b19fab24ba96603dae969c56, type: 3}
+      propertyPath: appearanceSystem.headModels.Array.size
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

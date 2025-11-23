@@ -8814,7 +8814,7 @@ GameObject:
   - component: {fileID: 4816306560198809998}
   - component: {fileID: -791964953897507138}
   - component: {fileID: 5237491215696526443}
-  - component: {fileID: 7708733117594400575}
+  - component: {fileID: 7246404759604296529}
   m_Layer: 8
   m_Name: Zombie_Base
   m_TagString: Enemy
@@ -8976,7 +8976,7 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &7708733117594400575
+--- !u!114 &7246404759604296529
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8985,7 +8985,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 6477775522615659138}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d3ec8c7d65a0c974581ca471b6948708, type: 3}
+  m_Script: {fileID: 11500000, guid: 6f0d3c1f46489754d9fb1cf24d826ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   characterType: 201
@@ -9021,6 +9021,22 @@ MonoBehaviour:
   resistances: []
   selectionStrategy: 2
   attackSwitchCooldown: 0.5
+  appearanceSystem:
+    bodyModels: []
+    headModels: []
+    hairModels: []
+    topClothing: []
+    bottomClothing: []
+    footwear: []
+    headAccessories: []
+    backAccessories: []
+    handAccessories: []
+    skinMaterials: []
+    hairMaterials: []
+    clothingMaterials: []
+    headAccessoryChance: 0.3
+    backAccessoryChance: 0.4
+    handAccessoryChance: 0.2
 --- !u!1 &7835523598823445913
 GameObject:
   m_ObjectHideFlags: 0
