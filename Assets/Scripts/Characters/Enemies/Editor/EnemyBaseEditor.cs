@@ -4,10 +4,15 @@ using Enemies;
 
 namespace Enemies.Editor
 {
+    /// <summary>
+    /// Custom inspector for EnemyBase with organized sections and visual hierarchy
+    /// Similar structure to SettlerNPCEditor for consistency
+    /// </summary>
     [CustomEditor(typeof(EnemyBase), true)]
     [CanEditMultipleObjects]
     public class EnemyBaseEditor : UnityEditor.Editor
     {
+        // Serialized Properties
         private SerializedProperty characterType;
         private SerializedProperty useRootMotion;
         private SerializedProperty stoppingDistance;
@@ -36,13 +41,10 @@ namespace Enemies.Editor
         private SerializedProperty headTrackingLerpSpeed;
         private SerializedProperty maxHeadTrackingAngle;
         private SerializedProperty headTrackingDistance;
-
-        private bool showMovementSettings = true;
-        private bool showHealthSettings = true;
-        private bool showPoiseSettings = true;
-        private bool showCooldownMovementSettings = false;
-        private bool showHeadTrackingSettings = false;
-        private bool showDebugSettings = false;
+        
+        // Appearance System (for HumanoidEnemy)
+        private SerializedProperty appearanceSystem;
+        private SerializedProperty randomizeAppearanceOnSpawn;
 
         protected virtual void OnEnable()
         {
@@ -74,29 +76,56 @@ namespace Enemies.Editor
             headTrackingLerpSpeed = serializedObject.FindProperty("headTrackingLerpSpeed");
             maxHeadTrackingAngle = serializedObject.FindProperty("maxHeadTrackingAngle");
             headTrackingDistance = serializedObject.FindProperty("headTrackingDistance");
+            
+            // Appearance System (may be null for non-humanoid enemies)
+            appearanceSystem = serializedObject.FindProperty("appearanceSystem");
+            randomizeAppearanceOnSpawn = serializedObject.FindProperty("randomizeAppearanceOnSpawn");
         }
 
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
+            
+            EnemyBase enemy = (EnemyBase)target;
 
-            // Header with enemy type
-            EditorGUILayout.Space(5);
-            GUIStyle headerStyle = new GUIStyle(EditorStyles.boldLabel);
-            headerStyle.fontSize = 14;
-            EditorGUILayout.LabelField(target.GetType().Name, headerStyle);
-            EditorGUILayout.Space(5);
-
-            // Character Type
-            EditorGUILayout.PropertyField(characterType);
-            EditorGUILayout.Space(5);
-
-            // Movement Settings
-            showMovementSettings = EditorGUILayout.BeginFoldoutHeaderGroup(showMovementSettings, "Movement Settings");
-            if (showMovementSettings)
+            // Header Section
+            DrawColoredSection("🎯 Custom Inspector Active", () => {
+                EditorGUILayout.HelpBox($"Custom inspector for {target.GetType().Name}", MessageType.Info);
+            }, new Color(0.2f, 0.6f, 1f, 0.3f)); // Blue tint
+            
+            // Enemy Info Section (Runtime)
+            if (Application.isPlaying)
             {
-                EditorGUI.indentLevel++;
-                
+                EditorGUILayout.Space(5);
+                DrawEnemyInfoSection(enemy);
+            }
+            else
+            {
+                EditorGUILayout.Space(5);
+                EditorGUILayout.HelpBox("Runtime enemy information will be displayed here during Play Mode", MessageType.Info);
+            }
+            
+            // Character Type
+            DrawColoredSection("🎭 Character Type", () => {
+                EditorGUILayout.PropertyField(characterType);
+            }, new Color(0.9f, 0.8f, 1f, 0.3f)); // Light purple tint
+            
+            // Appearance System (for HumanoidEnemy)
+            if (appearanceSystem != null)
+            {
+                DrawColoredSection("👤 Appearance System", () => {
+                    EditorGUILayout.PropertyField(appearanceSystem);
+                    EditorGUILayout.PropertyField(randomizeAppearanceOnSpawn);
+                    
+                    if (Application.isPlaying && appearanceSystem.objectReferenceValue != null)
+                    {
+                        EditorGUILayout.HelpBox("Appearance is managed at runtime", MessageType.Info);
+                    }
+                }, new Color(0.8f, 0.9f, 1f, 0.3f)); // Light blue tint
+            }
+            
+            // Movement Settings
+            DrawColoredSection("🏃 Movement & Navigation", () => {
                 EditorGUILayout.PropertyField(useRootMotion);
                 
                 EditorGUILayout.Space(3);
@@ -110,38 +139,21 @@ namespace Enemies.Editor
                 EditorGUILayout.PropertyField(rotationSpeed);
                 EditorGUILayout.PropertyField(acceleration);
                 EditorGUILayout.PropertyField(angularSpeed);
-                
-                EditorGUI.indentLevel--;
-            }
-            EditorGUILayout.EndFoldoutHeaderGroup();
-            EditorGUILayout.Space(5);
+            }, new Color(0.9f, 0.8f, 1f, 0.3f)); // Light purple tint
 
-            // Health Settings
-            showHealthSettings = EditorGUILayout.BeginFoldoutHeaderGroup(showHealthSettings, "Health Settings");
-            if (showHealthSettings)
-            {
-                EditorGUI.indentLevel++;
-                
+            // Health & Combat
+            DrawColoredSection("❤️ Health & Combat", () => {
                 EditorGUILayout.PropertyField(maxHealth);
                 
                 // Health bar visualization
                 if (Application.isPlaying)
                 {
-                    EnemyBase enemy = (EnemyBase)target;
                     DrawHealthBar(enemy.Health, enemy.MaxHealth);
                 }
-                
-                EditorGUI.indentLevel--;
-            }
-            EditorGUILayout.EndFoldoutHeaderGroup();
-            EditorGUILayout.Space(5);
+            }, new Color(1f, 0.8f, 0.8f, 0.3f)); // Light red tint
 
-            // Poise Settings
-            showPoiseSettings = EditorGUILayout.BeginFoldoutHeaderGroup(showPoiseSettings, "Poise Settings");
-            if (showPoiseSettings)
-            {
-                EditorGUI.indentLevel++;
-                
+            // Poise System
+            DrawColoredSection("💪 Poise System", () => {
                 EditorGUILayout.PropertyField(maxPoise);
                 EditorGUILayout.PropertyField(poiseRecoveryRate);
                 EditorGUILayout.PropertyField(poiseRecoveryDelay);
@@ -149,21 +161,12 @@ namespace Enemies.Editor
                 // Poise bar visualization
                 if (Application.isPlaying)
                 {
-                    EnemyBase enemy = (EnemyBase)target;
                     DrawPoiseBar(enemy.Poise, enemy.MaxPoise);
                 }
-                
-                EditorGUI.indentLevel--;
-            }
-            EditorGUILayout.EndFoldoutHeaderGroup();
-            EditorGUILayout.Space(5);
+            }, new Color(1f, 0.9f, 0.8f, 0.3f)); // Light orange tint
 
             // Cooldown Movement Settings
-            showCooldownMovementSettings = EditorGUILayout.BeginFoldoutHeaderGroup(showCooldownMovementSettings, "Cooldown Movement Settings");
-            if (showCooldownMovementSettings)
-            {
-                EditorGUI.indentLevel++;
-                
+            DrawColoredSection("🎯 Cooldown Movement", () => {
                 EditorGUILayout.PropertyField(enableCooldownMovement);
                 
                 if (enableCooldownMovement != null && enableCooldownMovement.boolValue)
@@ -175,21 +178,17 @@ namespace Enemies.Editor
                     EditorGUILayout.PropertyField(cooldownMovementMaxDuration);
                     EditorGUI.indentLevel--;
                 }
-                
-                EditorGUI.indentLevel--;
-            }
-            EditorGUILayout.EndFoldoutHeaderGroup();
-            EditorGUILayout.Space(5);
+                else
+                {
+                    EditorGUILayout.HelpBox("Enable to make enemies reposition during attack cooldowns", MessageType.Info);
+                }
+            }, new Color(0.9f, 1f, 0.9f, 0.3f)); // Light green tint
 
             // Head Tracking Settings (only for humanoid enemies)
             bool isHumanoid = target is HumanoidEnemy;
             if (isHumanoid)
             {
-                showHeadTrackingSettings = EditorGUILayout.BeginFoldoutHeaderGroup(showHeadTrackingSettings, "Head Tracking Settings (Humanoid)");
-                if (showHeadTrackingSettings)
-                {
-                    EditorGUI.indentLevel++;
-                    
+                DrawColoredSection("👀 Head Tracking (Humanoid)", () => {
                     EditorGUILayout.PropertyField(enableHeadTracking);
                     
                     if (enableHeadTracking != null && enableHeadTracking.boolValue)
@@ -202,53 +201,50 @@ namespace Enemies.Editor
                         EditorGUILayout.PropertyField(headTrackingDistance);
                         EditorGUI.indentLevel--;
                     }
-                    
-                    EditorGUI.indentLevel--;
-                }
-                EditorGUILayout.EndFoldoutHeaderGroup();
-                EditorGUILayout.Space(5);
+                    else
+                    {
+                        EditorGUILayout.HelpBox("Enable to make the enemy's head track the player", MessageType.Info);
+                    }
+                }, new Color(0.8f, 1f, 1f, 0.3f)); // Light cyan tint
+            }
+            
+            // Attack Components Section (Runtime)
+            if (Application.isPlaying)
+            {
+                DrawAttackComponentsSection(enemy);
             }
 
             // Debug Settings
-            showDebugSettings = EditorGUILayout.BeginFoldoutHeaderGroup(showDebugSettings, "Debug Settings");
-            if (showDebugSettings)
-            {
-                EditorGUI.indentLevel++;
+            DrawColoredSection("🔧 Debug Settings", () => {
                 EditorGUILayout.PropertyField(showCollisionDebug);
                 
                 // Runtime debug info
                 if (Application.isPlaying)
                 {
                     EditorGUILayout.Space(3);
-                    EnemyBase enemy = (EnemyBase)target;
-                    
                     EditorGUILayout.LabelField("Runtime Info", EditorStyles.miniBoldLabel);
                     EditorGUILayout.LabelField($"Is Attacking: {enemy.isAttacking}");
-                    EditorGUILayout.LabelField($"Health: {enemy.Health:F1} / {enemy.MaxHealth:F1}");
-                    EditorGUILayout.LabelField($"Poise: {enemy.Poise:F1} / {enemy.MaxPoise:F1}");
-                    
-                    // Show attack components
-                    var attacks = enemy.GetComponents<AttackBase>();
-                    if (attacks.Length > 0)
+                    EditorGUILayout.LabelField($"Position: {enemy.transform.position}");
+                    EditorGUILayout.LabelField($"Has Target: {enemy.NavMeshTarget != null}");
+                    if (enemy.NavMeshTarget != null)
                     {
-                        EditorGUILayout.Space(3);
-                        EditorGUILayout.LabelField($"Attack Components ({attacks.Length})", EditorStyles.miniBoldLabel);
-                        foreach (var attack in attacks)
-                        {
-                            EditorGUILayout.LabelField($"  • {attack.GetType().Name}");
-                        }
+                        float distanceToTarget = Vector3.Distance(enemy.transform.position, enemy.NavMeshTarget.position);
+                        EditorGUILayout.LabelField($"Distance to Target: {distanceToTarget:F2}m");
                     }
                 }
-                
-                EditorGUI.indentLevel--;
-            }
-            EditorGUILayout.EndFoldoutHeaderGroup();
-            EditorGUILayout.Space(5);
+            }, new Color(0.9f, 0.9f, 0.9f, 0.3f)); // Light gray tint
+            
+            // Draw separator
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+            EditorGUILayout.Space(10);
 
-            // Draw remaining properties
+            // Draw remaining properties not covered by custom sections
             DrawPropertiesExcluding(serializedObject,
                 "m_Script",
                 "characterType",
+                "appearanceSystem",
+                "randomizeAppearanceOnSpawn",
                 "useRootMotion",
                 "stoppingDistance",
                 "rotationSpeed",
@@ -281,7 +277,122 @@ namespace Enemies.Editor
                 Repaint();
             }
         }
+        
+        /// <summary>
+        /// Draw a section with a colored background (matches SettlerNPC style)
+        /// </summary>
+        private void DrawColoredSection(string title, System.Action content, Color backgroundColor)
+        {
+            EditorGUILayout.Space(5);
+            
+            // Store original background color
+            Color originalColor = GUI.backgroundColor;
+            
+            // Set background color
+            GUI.backgroundColor = backgroundColor;
+            
+            // Draw section with colored background
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+            content?.Invoke();
+            EditorGUILayout.EndVertical();
+            
+            // Restore original background color
+            GUI.backgroundColor = originalColor;
+        }
+        
+        /// <summary>
+        /// Draw enemy runtime information section
+        /// </summary>
+        private void DrawEnemyInfoSection(EnemyBase enemy)
+        {
+            DrawColoredSection("⚡ Enemy Status", () => {
+                // Health status
+                float healthPercent = (enemy.Health / enemy.MaxHealth) * 100f;
+                Color healthColor = healthPercent > 50f ? Color.green : (healthPercent > 25f ? Color.yellow : Color.red);
+                GUI.color = healthColor;
+                EditorGUILayout.LabelField("Health", $"{enemy.Health:F1} / {enemy.MaxHealth:F1} ({healthPercent:F0}%)");
+                GUI.color = Color.white;
+                
+                // Poise status
+                float poisePercent = (enemy.Poise / enemy.MaxPoise) * 100f;
+                Color poiseColor = poisePercent > 50f ? Color.cyan : (poisePercent > 25f ? Color.yellow : new Color(1f, 0.5f, 0f));
+                GUI.color = poiseColor;
+                EditorGUILayout.LabelField("Poise", $"{enemy.Poise:F1} / {enemy.MaxPoise:F1} ({poisePercent:F0}%)");
+                GUI.color = Color.white;
+                
+                // Combat state
+                EditorGUILayout.Space(3);
+                EditorGUILayout.LabelField("Combat State", EditorStyles.miniBoldLabel);
+                EditorGUILayout.LabelField("Attacking", enemy.isAttacking ? "Yes" : "No");
+                
+                // Target information
+                if (enemy.NavMeshTarget != null)
+                {
+                    float distanceToTarget = Vector3.Distance(enemy.transform.position, enemy.NavMeshTarget.position);
+                    EditorGUILayout.LabelField("Target Distance", $"{distanceToTarget:F2}m");
+                }
+                
+                // Active status effects
+                if (Managers.EffectManager.Instance != null)
+                {
+                    var activeEffects = enemy.GetActiveStatusEffects();
+                    if (activeEffects != null && activeEffects.Count > 0)
+                    {
+                        EditorGUILayout.Space(3);
+                        EditorGUILayout.LabelField($"Active Status Effects ({activeEffects.Count}):", EditorStyles.miniBoldLabel);
+                        
+                        foreach (var effectType in activeEffects)
+                        {
+                            Color effectColor = StatusEffectUtils.GetEffectColor(effectType);
+                            GUI.color = effectColor;
+                            string description = StatusEffectUtils.GetEffectDescription(effectType);
+                            EditorGUILayout.LabelField($"  • {description}", EditorStyles.miniLabel);
+                            GUI.color = Color.white;
+                        }
+                    }
+                }
+            }, new Color(0.8f, 1f, 0.8f, 0.3f)); // Light green tint
+        }
+        
+        /// <summary>
+        /// Draw attack components section
+        /// </summary>
+        private void DrawAttackComponentsSection(EnemyBase enemy)
+        {
+            var attacks = enemy.GetComponents<AttackBase>();
+            if (attacks.Length > 0)
+            {
+                DrawColoredSection($"⚔️ Attack Components ({attacks.Length})", () => {
+                    foreach (var attack in attacks)
+                    {
+                        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                        
+                        // Attack type name with color
+                        string attackTypeName = attack.GetType().Name;
+                        GUI.color = Color.cyan;
+                        EditorGUILayout.LabelField($"• {attackTypeName}", EditorStyles.boldLabel);
+                        GUI.color = Color.white;
+                        
+                        // Attack details
+                        EditorGUI.indentLevel++;
+                        EditorGUILayout.LabelField($"Min Range: {attack.minRange:F1}m");
+                        EditorGUILayout.LabelField($"Max Range: {attack.maxRange:F1}m");
+                        EditorGUILayout.LabelField($"Damage: {attack.damage:F1}");
+                        EditorGUILayout.LabelField($"Cooldown: {attack.cooldown:F1}s");
+                        EditorGUILayout.LabelField($"Can Attack: {attack.CanAttack()}");
+                        EditorGUI.indentLevel--;
+                        
+                        EditorGUILayout.EndVertical();
+                        EditorGUILayout.Space(2);
+                    }
+                }, new Color(1f, 0.8f, 0.9f, 0.3f)); // Light pink tint
+            }
+        }
 
+        /// <summary>
+        /// Draw a health bar visualization
+        /// </summary>
         private void DrawHealthBar(float current, float max)
         {
             Rect rect = GUILayoutUtility.GetRect(18, 18, GUILayout.ExpandWidth(true));
@@ -304,6 +415,9 @@ namespace Enemies.Editor
             GUI.Label(rect, $"Health: {current:F0} / {max:F0} ({healthPercent * 100:F0}%)", labelStyle);
         }
 
+        /// <summary>
+        /// Draw a poise bar visualization
+        /// </summary>
         private void DrawPoiseBar(float current, float max)
         {
             Rect rect = GUILayoutUtility.GetRect(18, 18, GUILayout.ExpandWidth(true));

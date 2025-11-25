@@ -172,6 +172,18 @@ public class SettlerNPCEditor : HumanCharacterControllerEditor
             EditorGUILayout.PropertyField(serializedObject.FindProperty("hasBeenInitialized"));
         }, new Color(0.9f, 0.9f, 0.8f, 0.3f)); // Light yellow tint
         
+        // Appearance System
+        DrawColoredSection("🎨 Appearance System", () => {
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("appearanceSystem"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("characteristicSystem"));
+            
+            if (Application.isPlaying)
+            {
+                EditorGUILayout.Space(3);
+                EditorGUILayout.HelpBox("Appearance and characteristics are managed at runtime", MessageType.Info);
+            }
+        }, new Color(0.8f, 0.9f, 1f, 0.3f)); // Light blue tint
+        
         // Stamina System
         DrawColoredSection("⚡ Stamina System", () => {
             EditorGUILayout.PropertyField(serializedObject.FindProperty("currentStamina"));

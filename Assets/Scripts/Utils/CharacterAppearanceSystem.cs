@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 /// <summary>
 /// Reusable appearance system for procedurally generating character looks.
@@ -11,24 +12,29 @@ using UnityEngine;
 /// 3. Call appearanceSystem.RandomizeAppearance() to generate random look
 /// 4. Use appearanceSystem.GetCurrentAppearanceData() to save appearance
 /// 5. Use appearanceSystem.SetAppearance(data) to restore saved appearance
+/// 
+/// Spawn Weights:
+/// - Higher weight = more common (e.g., 100 for common items)
+/// - Lower weight = more rare (e.g., 10 for rare items)
+/// - Weight of 0 = disabled (never spawns)
 /// </summary>
 [System.Serializable]
 public class CharacterAppearanceSystem
 {
     [Header("Model Options")]
-    [SerializeField] private GameObject[] bodyModels; // Different body/mesh options
-    [SerializeField] private GameObject[] headModels; // Different head options
-    [SerializeField] private GameObject[] hairModels; // Different hair styles
+    [SerializeField] private AppearanceOption[] bodyModels; // Different body/mesh options
+    [SerializeField] private AppearanceOption[] headModels; // Different head options
+    [SerializeField] private AppearanceOption[] hairModels; // Different hair styles
     
     [Header("Clothing Options")]
-    [SerializeField] private GameObject[] topClothing; // Shirts, jackets, etc.
-    [SerializeField] private GameObject[] bottomClothing; // Pants, skirts, etc.
-    [SerializeField] private GameObject[] footwear; // Shoes, boots, etc.
+    [SerializeField] private AppearanceOption[] topClothing; // Shirts, jackets, etc.
+    [SerializeField] private AppearanceOption[] bottomClothing; // Pants, skirts, etc.
+    [SerializeField] private AppearanceOption[] footwear; // Shoes, boots, etc.
     
     [Header("Accessories")]
-    [SerializeField] private GameObject[] headAccessories; // Hats, helmets, glasses
-    [SerializeField] private GameObject[] backAccessories; // Backpacks, cloaks
-    [SerializeField] private GameObject[] handAccessories; // Gloves, bracelets
+    [SerializeField] private AppearanceOption[] headAccessories; // Hats, helmets, glasses
+    [SerializeField] private AppearanceOption[] backAccessories; // Backpacks, cloaks
+    [SerializeField] private AppearanceOption[] handAccessories; // Gloves, bracelets
     
     [Header("Material Variants")]
     [SerializeField] private Material[] skinMaterials; // Different skin tones
@@ -138,18 +144,56 @@ public class CharacterAppearanceSystem
     }
     
     /// <summary>
-    /// Activate a random model from the given array.
+    /// Activate a random model from the given array using weighted selection.
+    /// Items with higher spawn weights are more likely to be selected.
     /// </summary>
-    private void ActivateRandomModel(GameObject[] modelArray, string categoryName)
+    private void ActivateRandomModel(AppearanceOption[] modelArray, string categoryName)
     {
         if (modelArray == null || modelArray.Length == 0) return;
         
-        GameObject selectedModel = modelArray[UnityEngine.Random.Range(0, modelArray.Length)];
+        // Filter out null models and those with 0 weight
+        var validOptions = modelArray.Where(opt => opt != null && opt.model != null && opt.spawnWeight > 0).ToList();
+        if (validOptions.Count == 0)
+        {
+            Debug.LogWarning($"[CharacterAppearanceSystem] No valid options for {categoryName}");
+            return;
+        }
+        
+        // Select based on weighted probability
+        GameObject selectedModel = SelectWeightedRandom(validOptions);
         if (selectedModel != null)
         {
             selectedModel.SetActive(true);
             activeModels.Add(selectedModel);
         }
+    }
+    
+    /// <summary>
+    /// Select a random model based on spawn weights.
+    /// Higher weight = higher chance of selection.
+    /// </summary>
+    private GameObject SelectWeightedRandom(List<AppearanceOption> options)
+    {
+        // Calculate total weight
+        float totalWeight = options.Sum(opt => opt.spawnWeight);
+        if (totalWeight <= 0) return null;
+        
+        // Pick a random value within the total weight
+        float randomValue = UnityEngine.Random.Range(0f, totalWeight);
+        
+        // Find which option this value falls into
+        float currentWeight = 0f;
+        foreach (var option in options)
+        {
+            currentWeight += option.spawnWeight;
+            if (randomValue <= currentWeight)
+            {
+                return option.model;
+            }
+        }
+        
+        // Fallback (shouldn't happen, but just in case)
+        return options[0].model;
     }
     
     /// <summary>
@@ -255,6 +299,15 @@ public class CharacterAppearanceSystem
     }
     
     /// <summary>
+    /// Get all models from the appearance option array as GameObjects.
+    /// </summary>
+    private GameObject[] GetModelsFromOptions(AppearanceOption[] options)
+    {
+        if (options == null) return null;
+        return options.Where(opt => opt != null && opt.model != null).Select(opt => opt.model).ToArray();
+    }
+    
+    /// <summary>
     /// Get current appearance data for saving.
     /// </summary>
     public CharacterAppearanceData GetCurrentAppearanceData()
@@ -342,13 +395,13 @@ public class CharacterAppearanceSystem
     /// <summary>
     /// Helper method to check if a model exists in a given array.
     /// </summary>
-    private bool IsModelInArray(GameObject model, GameObject[] modelArray)
+    private bool IsModelInArray(GameObject model, AppearanceOption[] modelArray)
     {
         if (modelArray == null || model == null) return false;
         
-        foreach (GameObject arrayModel in modelArray)
+        foreach (var option in modelArray)
         {
-            if (arrayModel == model) return true;
+            if (option != null && option.model == model) return true;
         }
         return false;
     }
@@ -356,16 +409,16 @@ public class CharacterAppearanceSystem
     /// <summary>
     /// Activate a specific model by name from the given array.
     /// </summary>
-    private void ActivateModelByName(GameObject[] modelArray, string modelName, string categoryName)
+    private void ActivateModelByName(AppearanceOption[] modelArray, string modelName, string categoryName)
     {
         if (modelArray == null || string.IsNullOrEmpty(modelName)) return;
 
-        foreach (GameObject model in modelArray)
+        foreach (var option in modelArray)
         {
-            if (model != null && model.name == modelName)
+            if (option != null && option.model != null && option.model.name == modelName)
             {
-                model.SetActive(true);
-                activeModels.Add(model);
+                option.model.SetActive(true);
+                activeModels.Add(option.model);
                 return;
             }
         }
@@ -427,6 +480,22 @@ public class CharacterAppearanceSystem
         
         return null;
     }
+}
+
+/// <summary>
+/// Represents a single appearance option with its associated spawn weight.
+/// Higher weight = more common, lower weight = more rare.
+/// Weight of 0 = disabled (never spawns).
+/// </summary>
+[System.Serializable]
+public class AppearanceOption
+{
+    [Tooltip("The GameObject model for this appearance option")]
+    public GameObject model;
+    
+    [Tooltip("Spawn weight - higher values are more common (default: 100 = common, 50 = uncommon, 10 = rare, 1 = very rare)")]
+    [Range(0f, 100f)]
+    public float spawnWeight = 100f;
 }
 
 /// <summary>

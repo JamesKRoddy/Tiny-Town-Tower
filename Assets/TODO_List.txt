@@ -1,8 +1,10 @@
 *****Current Work*****
 
-Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
+Basic robot attachments on the zombies for variation. Maybe add variation chances on different body types?
 
-Setup zombie meshes and gameobjects that should be enabled for different attacks
+Setup zombie/drone meshes and gameobjects that should be enabled for different attacks
+
+Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
 
 Setup a massive boss like the hydra in hades
 
