@@ -1554,11 +1554,11 @@ GameObject:
   - component: {fileID: 282148053366822605}
   - component: {fileID: 5726297302015666014}
   - component: {fileID: 4931471072091272626}
+  - component: {fileID: 1287946293633936085}
   - component: {fileID: 1203203454930544501}
   - component: {fileID: 2254817619120094739}
   - component: {fileID: 8320294776751182447}
   - component: {fileID: 593422880817215953}
-  - component: {fileID: 1287946293633936085}
   - component: {fileID: 4868853620621953941}
   - component: {fileID: 3754499901241065424}
   - component: {fileID: 6110800992483955535}
@@ -1679,6 +1679,158 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &1287946293633936085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2985604360754162274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54c2a897229fb6d4a8117c1e3843c816, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  characterType: 101
+  attackRotationSpeed: 120
+  dashDuration: 0.4
+  vaultDuration: 0.4
+  vaultCooldown: 0.3
+  obstacleLayers:
+  - serializedVersion: 2
+    m_Bits: 64
+  - serializedVersion: 2
+    m_Bits: 256
+  capsuleCastRadius: 0.2
+  vaultHeight: 1
+  vaultOffset: 1
+  stepOffset: 0.3
+  slopeLimit: 45
+  skinWidth: 0.08
+  maxVaultHeight: 1.2
+  minVaultHeight: 0.3
+  obstacleAnalysisRange: 1.5
+  heightCheckRayCount: 5
+  autoNavigateObstacles: 1
+  maxClimbHeight: 1.8
+  climbDuration: 0.4
+  climbCooldown: 0.5
+  climbCheckDistance: 0.5
+  enableGravity: 1
+  gravity: 9.81
+  terminalVelocity: 20
+  maxFallDistance: 100
+  fallingMovementMultiplier: 0.2
+  groundedBufferTime: 0.15
+  baseStats:
+    maxHealth: 100
+    maxPoise: 40
+    moveMaxSpeed: 10
+    rotationSpeed: 720
+    dashSpeed: 20
+    dashCooldown: 1
+  currentStats:
+    maxHealth: 0
+    maxPoise: 0
+    moveMaxSpeed: 0
+    rotationSpeed: 0
+    dashSpeed: 0
+    dashCooldown: 0
+  health: 100
+  damageCooldown: 0.5
+  poise: 40
+  poiseRecoveryRate: 8
+  poiseRecoveryDelay: 2
+  resistances: []
+  settlerName: 
+  settlerAge: 0
+  settlerDescription: 
+  characteristicSystem:
+    equippedCcharacteristics: []
+  appearanceSystem:
+    bodyModels:
+    - model: {fileID: 8789542491122857513}
+      spawnWeight: 100
+    - model: {fileID: 1604490121191356894}
+      spawnWeight: 100
+    - model: {fileID: 8522615969212874167}
+      spawnWeight: 100
+    - model: {fileID: 3466425493041804734}
+      spawnWeight: 100
+    - model: {fileID: 7099266184895824406}
+      spawnWeight: 100
+    - model: {fileID: 2322111189666042706}
+      spawnWeight: 100
+    - model: {fileID: 290198349498715242}
+      spawnWeight: 100
+    - model: {fileID: 6359156424574328462}
+      spawnWeight: 100
+    - model: {fileID: 1891503315548289140}
+      spawnWeight: 100
+    - model: {fileID: 5199702049741519242}
+      spawnWeight: 100
+    - model: {fileID: 7469210088815557212}
+      spawnWeight: 100
+    - model: {fileID: 2682830901947620276}
+      spawnWeight: 100
+    - model: {fileID: 1285351530076042551}
+      spawnWeight: 100
+    - model: {fileID: 6947136392685347350}
+      spawnWeight: 100
+    - model: {fileID: 3873041726461278088}
+      spawnWeight: 100
+    - model: {fileID: 2413434000837951976}
+      spawnWeight: 100
+    - model: {fileID: 7037613153353916352}
+      spawnWeight: 100
+    - model: {fileID: 8500098900155136744}
+      spawnWeight: 100
+    - model: {fileID: 221683676280985864}
+      spawnWeight: 100
+    - model: {fileID: 4579426575060130501}
+      spawnWeight: 100
+    - model: {fileID: 2859712664392381687}
+      spawnWeight: 100
+    headModels: []
+    hairModels: []
+    topClothing: []
+    bottomClothing: []
+    footwear: []
+    headAccessories: []
+    backAccessories: []
+    handAccessories: []
+    skinMaterials: []
+    hairMaterials: []
+    clothingMaterials: []
+    headAccessoryChance: 0.5
+    backAccessoryChance: 0.5
+    handAccessoryChance: 0.5
+  initializationContext: 0
+  hasBeenInitialized: 0
+  currentStamina: 100
+  baseStaminaDrainInGameHours: 36
+  baseStaminaRegenInGameHours: 8
+  staminaDrainRate: 1
+  staminaRegenRate: 5
+  baseFatigueRate: 1
+  fatigueRate: 1
+  sleepStaminaRegenMultiplier: 3
+  nightFatigueMultiplier: 1.5
+  maxHunger: 100
+  currentHunger: 100
+  baseHungerDecreaseInGameHours: 24
+  hungerDecreaseRate: 1
+  hungerThreshold: 30
+  starvationThreshold: 10
+  workSpeedMultiplier: 1
+  noFoodCooldown: 10
+  baseSicknessChance: 0.001
+  sicknessCheckInterval: 5
+  baseSicknessDurationInGameHours: 6
+  sicknessDuration: 30
+  sickWorkSpeedPenalty: 0.5
+  lowStaminaThreshold: 30
+  veryLowStaminaThreshold: 10
 --- !u!114 &1203203454930544501
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1790,137 +1942,6 @@ MonoBehaviour:
   - element: 0
     dashEffect: {fileID: 11400000, guid: 115e1d46a30b4f644bb674d91e81537c, type: 2}
   projectileReflectionEffect: {fileID: 11400000, guid: 581a9476f9d07124b947117a3f5511e9, type: 2}
---- !u!114 &1287946293633936085
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2985604360754162274}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 54c2a897229fb6d4a8117c1e3843c816, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  characterType: 101
-  attackRotationSpeed: 120
-  dashDuration: 0.4
-  vaultDuration: 0.4
-  vaultCooldown: 0.3
-  obstacleLayers:
-  - serializedVersion: 2
-    m_Bits: 64
-  - serializedVersion: 2
-    m_Bits: 256
-  capsuleCastRadius: 0.2
-  vaultHeight: 1
-  vaultOffset: 1
-  stepOffset: 0.3
-  slopeLimit: 45
-  skinWidth: 0.08
-  maxVaultHeight: 1.2
-  minVaultHeight: 0.3
-  obstacleAnalysisRange: 1.5
-  heightCheckRayCount: 5
-  autoNavigateObstacles: 1
-  maxClimbHeight: 1.8
-  climbDuration: 0.4
-  climbCooldown: 0.5
-  climbCheckDistance: 0.5
-  enableGravity: 1
-  gravity: 9.81
-  terminalVelocity: 20
-  maxFallDistance: 100
-  fallingMovementMultiplier: 0.2
-  groundedBufferTime: 0.15
-  baseStats:
-    maxHealth: 100
-    maxPoise: 40
-    moveMaxSpeed: 10
-    rotationSpeed: 720
-    dashSpeed: 20
-    dashCooldown: 1
-  currentStats:
-    maxHealth: 0
-    maxPoise: 0
-    moveMaxSpeed: 0
-    rotationSpeed: 0
-    dashSpeed: 0
-    dashCooldown: 0
-  health: 100
-  damageCooldown: 0.5
-  poise: 40
-  poiseRecoveryRate: 8
-  poiseRecoveryDelay: 2
-  resistances: []
-  settlerName: 
-  settlerAge: 0
-  settlerDescription: 
-  characteristicSystem:
-    equippedCcharacteristics: []
-  appearanceSystem:
-    bodyModels:
-    - {fileID: 8789542491122857513}
-    - {fileID: 1604490121191356894}
-    - {fileID: 8522615969212874167}
-    - {fileID: 3466425493041804734}
-    - {fileID: 7099266184895824406}
-    - {fileID: 2322111189666042706}
-    - {fileID: 290198349498715242}
-    - {fileID: 6359156424574328462}
-    - {fileID: 1891503315548289140}
-    - {fileID: 5199702049741519242}
-    - {fileID: 7469210088815557212}
-    - {fileID: 2682830901947620276}
-    - {fileID: 1285351530076042551}
-    - {fileID: 6947136392685347350}
-    - {fileID: 3873041726461278088}
-    - {fileID: 2413434000837951976}
-    - {fileID: 7037613153353916352}
-    - {fileID: 8500098900155136744}
-    - {fileID: 221683676280985864}
-    - {fileID: 4579426575060130501}
-    - {fileID: 2859712664392381687}
-    headModels: []
-    hairModels: []
-    topClothing: []
-    bottomClothing: []
-    footwear: []
-    headAccessories: []
-    backAccessories: []
-    handAccessories: []
-    skinMaterials: []
-    hairMaterials: []
-    clothingMaterials: []
-    headAccessoryChance: 0.5
-    backAccessoryChance: 0.5
-    handAccessoryChance: 0.5
-  initializationContext: 0
-  hasBeenInitialized: 0
-  currentStamina: 100
-  baseStaminaDrainInGameHours: 36
-  baseStaminaRegenInGameHours: 8
-  staminaDrainRate: 1
-  staminaRegenRate: 5
-  baseFatigueRate: 1
-  fatigueRate: 1
-  sleepStaminaRegenMultiplier: 3
-  nightFatigueMultiplier: 1.5
-  maxHunger: 100
-  currentHunger: 100
-  baseHungerDecreaseInGameHours: 24
-  hungerDecreaseRate: 1
-  hungerThreshold: 30
-  starvationThreshold: 10
-  workSpeedMultiplier: 1
-  noFoodCooldown: 10
-  baseSicknessChance: 0.001
-  sicknessCheckInterval: 5
-  baseSicknessDurationInGameHours: 6
-  sicknessDuration: 30
-  sickWorkSpeedPenalty: 0.5
-  lowStaminaThreshold: 30
-  veryLowStaminaThreshold: 10
 --- !u!114 &4868853620621953941
 MonoBehaviour:
   m_ObjectHideFlags: 0
