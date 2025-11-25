@@ -152,11 +152,12 @@ public class AppearanceOptionDrawer : PropertyDrawer
         // Define exclusion buttons with labels matching field names
         var exclusionButtons = new[]
         {
-            (AppearanceExclusions.Head, "Head"),
             (AppearanceExclusions.Hair, "Hair"),
-            (AppearanceExclusions.HeadAccessories, "HdAcc"),
-            (AppearanceExclusions.BackAccessories, "BkAcc"),
-            (AppearanceExclusions.HandAccessories, "HndAcc"),
+            (AppearanceExclusions.Hats, "Hats"),
+            (AppearanceExclusions.Helmets, "Helm"),
+            (AppearanceExclusions.FaceAccessories, "Face"),
+            (AppearanceExclusions.BackAccessories, "Back"),
+            (AppearanceExclusions.HandAccessories, "Hand"),
             (AppearanceExclusions.TopClothing, "TopCl"),
             (AppearanceExclusions.BottomClothing, "BotCl"),
             (AppearanceExclusions.Footwear, "Foot")

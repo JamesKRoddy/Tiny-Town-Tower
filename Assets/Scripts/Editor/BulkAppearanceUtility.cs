@@ -159,7 +159,6 @@ public class BulkAppearanceUtility : EditorWindow
                 EditorGUILayout.LabelField("Model Options:", EditorStyles.miniBoldLabel);
                 EditorGUILayout.BeginHorizontal();
                 if (GUILayout.Button("Body Models", GUILayout.Height(30))) AddToArray("bodyModels");
-                if (GUILayout.Button("Head Models", GUILayout.Height(30))) AddToArray("headModels");
                 if (GUILayout.Button("Hair Models", GUILayout.Height(30))) AddToArray("hairModels");
                 EditorGUILayout.EndHorizontal();
                 
@@ -172,9 +171,16 @@ public class BulkAppearanceUtility : EditorWindow
                 EditorGUILayout.EndHorizontal();
                 
                 EditorGUILayout.Space(3);
-                EditorGUILayout.LabelField("Accessories:", EditorStyles.miniBoldLabel);
+                EditorGUILayout.LabelField("Head Accessories:", EditorStyles.miniBoldLabel);
                 EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button("Head Accessories", GUILayout.Height(30))) AddToArray("headAccessories");
+                if (GUILayout.Button("Hats", GUILayout.Height(30))) AddToArray("hats");
+                if (GUILayout.Button("Helmets", GUILayout.Height(30))) AddToArray("helmets");
+                if (GUILayout.Button("Face Accessories", GUILayout.Height(30))) AddToArray("faceAccessories");
+                EditorGUILayout.EndHorizontal();
+                
+                EditorGUILayout.Space(3);
+                EditorGUILayout.LabelField("Other Accessories:", EditorStyles.miniBoldLabel);
+                EditorGUILayout.BeginHorizontal();
                 if (GUILayout.Button("Back Accessories", GUILayout.Height(30))) AddToArray("backAccessories");
                 if (GUILayout.Button("Hand Accessories", GUILayout.Height(30))) AddToArray("handAccessories");
                 EditorGUILayout.EndHorizontal();

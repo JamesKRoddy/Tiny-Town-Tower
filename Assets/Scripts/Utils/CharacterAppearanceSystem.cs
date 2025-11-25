@@ -23,7 +23,6 @@ public class CharacterAppearanceSystem
 {
     [Header("Model Options")]
     [SerializeField] private AppearanceOption[] bodyModels; // Different body/mesh options
-    [SerializeField] private AppearanceOption[] headModels; // Different head options
     [SerializeField] private AppearanceOption[] hairModels; // Different hair styles
     
     [Header("Clothing Options")]
@@ -31,8 +30,12 @@ public class CharacterAppearanceSystem
     [SerializeField] private AppearanceOption[] bottomClothing; // Pants, skirts, etc.
     [SerializeField] private AppearanceOption[] footwear; // Shoes, boots, etc.
     
-    [Header("Accessories")]
-    [SerializeField] private AppearanceOption[] headAccessories; // Hats, helmets, glasses
+    [Header("Head Accessories")]
+    [SerializeField] private AppearanceOption[] hats; // Casual headwear (caps, beanies, etc.)
+    [SerializeField] private AppearanceOption[] helmets; // Protective headwear (helmets, masks, etc.)
+    [SerializeField] private AppearanceOption[] faceAccessories; // Glasses, masks, visors, etc.
+    
+    [Header("Other Accessories")]
     [SerializeField] private AppearanceOption[] backAccessories; // Backpacks, cloaks
     [SerializeField] private AppearanceOption[] handAccessories; // Gloves, bracelets
     
@@ -42,7 +45,9 @@ public class CharacterAppearanceSystem
     [SerializeField] private Material[] clothingMaterials; // Different clothing colors
     
     [Header("Accessory Spawn Chances")]
-    [Range(0f, 1f)] [SerializeField] private float headAccessoryChance = 0.3f;
+    [Range(0f, 1f)] [SerializeField] private float hatChance = 0.3f;
+    [Range(0f, 1f)] [SerializeField] private float helmetChance = 0.2f;
+    [Range(0f, 1f)] [SerializeField] private float faceAccessoryChance = 0.15f;
     [Range(0f, 1f)] [SerializeField] private float backAccessoryChance = 0.4f;
     [Range(0f, 1f)] [SerializeField] private float handAccessoryChance = 0.2f;
     
@@ -78,7 +83,7 @@ public class CharacterAppearanceSystem
         ClearCurrentAppearance();
         
         // Check if we have any models to work with
-        bool hasAnyModels = (bodyModels?.Length > 0) || (headModels?.Length > 0) || (hairModels?.Length > 0) || 
+        bool hasAnyModels = (bodyModels?.Length > 0) || (hairModels?.Length > 0) || 
                            (topClothing?.Length > 0) || (bottomClothing?.Length > 0) || (footwear?.Length > 0);
         
         if (!hasAnyModels)
@@ -101,61 +106,129 @@ public class CharacterAppearanceSystem
             Debug.LogWarning($"[CharacterAppearanceSystem] No body models available for {characterName}");
         }
         
-        if (headModels != null && headModels.Length > 0 && !activeExclusions.HasFlag(AppearanceExclusions.Head))
+        // Randomize hair
+        if (hairModels != null && hairModels.Length > 0)
         {
-            var selected = ActivateRandomModel(headModels, "Head");
-            if (selected != null) activeExclusions |= selected.exclusions;
-        }
-        
-        // Check if hair is excluded
-        if (hairModels != null && hairModels.Length > 0 && !activeExclusions.HasFlag(AppearanceExclusions.Hair))
-        {
-            var selected = ActivateRandomModel(hairModels, "Hair");
-            if (selected != null) activeExclusions |= selected.exclusions;
+            if (!activeExclusions.HasFlag(AppearanceExclusions.Hair))
+            {
+                var selected = ActivateRandomModel(hairModels, "Hair");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(hairModels); // Deactivate if excluded
+            }
         }
         
         // Randomize clothing (check exclusions)
-        if (topClothing != null && topClothing.Length > 0 && !activeExclusions.HasFlag(AppearanceExclusions.TopClothing))
+        if (topClothing != null && topClothing.Length > 0)
         {
-            var selected = ActivateRandomModel(topClothing, "Top Clothing");
-            if (selected != null) activeExclusions |= selected.exclusions;
+            if (!activeExclusions.HasFlag(AppearanceExclusions.TopClothing))
+            {
+                var selected = ActivateRandomModel(topClothing, "Top Clothing");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(topClothing); // Deactivate if excluded
+            }
         }
         
-        if (bottomClothing != null && bottomClothing.Length > 0 && !activeExclusions.HasFlag(AppearanceExclusions.BottomClothing))
+        if (bottomClothing != null && bottomClothing.Length > 0)
         {
-            var selected = ActivateRandomModel(bottomClothing, "Bottom Clothing");
-            if (selected != null) activeExclusions |= selected.exclusions;
+            if (!activeExclusions.HasFlag(AppearanceExclusions.BottomClothing))
+            {
+                var selected = ActivateRandomModel(bottomClothing, "Bottom Clothing");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(bottomClothing); // Deactivate if excluded
+            }
         }
         
-        if (footwear != null && footwear.Length > 0 && !activeExclusions.HasFlag(AppearanceExclusions.Footwear))
+        if (footwear != null && footwear.Length > 0)
         {
-            var selected = ActivateRandomModel(footwear, "Footwear");
-            if (selected != null) activeExclusions |= selected.exclusions;
+            if (!activeExclusions.HasFlag(AppearanceExclusions.Footwear))
+            {
+                var selected = ActivateRandomModel(footwear, "Footwear");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(footwear); // Deactivate if excluded
+            }
         }
         
-        // Randomize accessories based on spawn chances and exclusions
-        if (headAccessories != null && headAccessories.Length > 0 && 
-            !activeExclusions.HasFlag(AppearanceExclusions.HeadAccessories) && 
-            UnityEngine.Random.value <= headAccessoryChance)
+        // Randomize head accessories based on spawn chances and exclusions
+        if (hats != null && hats.Length > 0)
         {
-            var selected = ActivateRandomModel(headAccessories, "Head Accessory");
-            if (selected != null) activeExclusions |= selected.exclusions;
+            if (!activeExclusions.HasFlag(AppearanceExclusions.Hats) && 
+                UnityEngine.Random.value <= hatChance)
+            {
+                var selected = ActivateRandomModel(hats, "Hat");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(hats); // Deactivate if excluded or not spawned
+            }
         }
         
-        if (backAccessories != null && backAccessories.Length > 0 && 
-            !activeExclusions.HasFlag(AppearanceExclusions.BackAccessories) && 
-            UnityEngine.Random.value <= backAccessoryChance)
+        if (helmets != null && helmets.Length > 0)
         {
-            var selected = ActivateRandomModel(backAccessories, "Back Accessory");
-            if (selected != null) activeExclusions |= selected.exclusions;
+            if (!activeExclusions.HasFlag(AppearanceExclusions.Helmets) && 
+                UnityEngine.Random.value <= helmetChance)
+            {
+                var selected = ActivateRandomModel(helmets, "Helmet");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(helmets); // Deactivate if excluded or not spawned
+            }
         }
         
-        if (handAccessories != null && handAccessories.Length > 0 && 
-            !activeExclusions.HasFlag(AppearanceExclusions.HandAccessories) && 
-            UnityEngine.Random.value <= handAccessoryChance)
+        if (faceAccessories != null && faceAccessories.Length > 0)
         {
-            var selected = ActivateRandomModel(handAccessories, "Hand Accessory");
-            if (selected != null) activeExclusions |= selected.exclusions;
+            if (!activeExclusions.HasFlag(AppearanceExclusions.FaceAccessories) && 
+                UnityEngine.Random.value <= faceAccessoryChance)
+            {
+                var selected = ActivateRandomModel(faceAccessories, "Face Accessory");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(faceAccessories); // Deactivate if excluded or not spawned
+            }
+        }
+        
+        if (backAccessories != null && backAccessories.Length > 0)
+        {
+            if (!activeExclusions.HasFlag(AppearanceExclusions.BackAccessories) && 
+                UnityEngine.Random.value <= backAccessoryChance)
+            {
+                var selected = ActivateRandomModel(backAccessories, "Back Accessory");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(backAccessories); // Deactivate if excluded or not spawned
+            }
+        }
+        
+        if (handAccessories != null && handAccessories.Length > 0)
+        {
+            if (!activeExclusions.HasFlag(AppearanceExclusions.HandAccessories) && 
+                UnityEngine.Random.value <= handAccessoryChance)
+            {
+                var selected = ActivateRandomModel(handAccessories, "Hand Accessory");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(handAccessories); // Deactivate if excluded or not spawned
+            }
         }        
         
         // Apply random materials (respect exclusions)
@@ -167,9 +240,28 @@ public class CharacterAppearanceSystem
     /// Items with higher spawn weights are more likely to be selected.
     /// Returns the selected AppearanceOption so exclusions can be tracked.
     /// </summary>
+    /// <summary>
+    /// Deactivate all models in a category (used when category is excluded or needs to be cleared)
+    /// </summary>
+    private void DeactivateAllInCategory(AppearanceOption[] modelArray)
+    {
+        if (modelArray == null || modelArray.Length == 0) return;
+        
+        foreach (var option in modelArray)
+        {
+            if (option != null && option.model != null)
+            {
+                option.model.SetActive(false);
+            }
+        }
+    }
+    
     private AppearanceOption ActivateRandomModel(AppearanceOption[] modelArray, string categoryName)
     {
         if (modelArray == null || modelArray.Length == 0) return null;
+        
+        // FIRST: Deactivate ALL models in this category (important for spawned characters where all start active)
+        DeactivateAllInCategory(modelArray);
         
         // Filter out null models and those with 0 weight
         var validOptions = modelArray.Where(opt => opt != null && opt.model != null && opt.spawnWeight > 0).ToList();
@@ -183,6 +275,7 @@ public class CharacterAppearanceSystem
         AppearanceOption selectedOption = SelectWeightedRandomOption(validOptions);
         if (selectedOption != null && selectedOption.model != null)
         {
+            // THEN: Activate only the selected model
             selectedOption.model.SetActive(true);
             activeModels.Add(selectedOption.model);
             return selectedOption;
@@ -258,6 +351,7 @@ public class CharacterAppearanceSystem
     
     /// <summary>
     /// Clear all currently active appearance models.
+    /// Deactivates all models in all categories to ensure clean state.
     /// </summary>
     public void ClearCurrentAppearance()
     {
@@ -267,13 +361,18 @@ public class CharacterAppearanceSystem
             return;
         }
 
-        foreach (GameObject model in activeModels)
-        {
-            if (model != null)
-            {
-                model.SetActive(false);
-            }
-        }
+        // Deactivate all categories to ensure nothing is left active
+        DeactivateAllInCategory(bodyModels);
+        DeactivateAllInCategory(hairModels);
+        DeactivateAllInCategory(topClothing);
+        DeactivateAllInCategory(bottomClothing);
+        DeactivateAllInCategory(footwear);
+        DeactivateAllInCategory(hats);
+        DeactivateAllInCategory(helmets);
+        DeactivateAllInCategory(faceAccessories);
+        DeactivateAllInCategory(backAccessories);
+        DeactivateAllInCategory(handAccessories);
+        
         activeModels.Clear();
     }
     
@@ -299,7 +398,6 @@ public class CharacterAppearanceSystem
 
         // Set body parts
         ActivateModelByName(bodyModels, appearanceData.bodyModelName, "Body");
-        ActivateModelByName(headModels, appearanceData.headModelName, "Head");
         ActivateModelByName(hairModels, appearanceData.hairModelName, "Hair");
 
         // Set clothing
@@ -308,9 +406,17 @@ public class CharacterAppearanceSystem
         ActivateModelByName(footwear, appearanceData.footwearName, "Footwear");
 
         // Set accessories (only if they have values)
-        if (!string.IsNullOrEmpty(appearanceData.headAccessoryName))
+        if (!string.IsNullOrEmpty(appearanceData.hatName))
         {
-            ActivateModelByName(headAccessories, appearanceData.headAccessoryName, "Head Accessory");
+            ActivateModelByName(hats, appearanceData.hatName, "Hat");
+        }
+        if (!string.IsNullOrEmpty(appearanceData.helmetName))
+        {
+            ActivateModelByName(helmets, appearanceData.helmetName, "Helmet");
+        }
+        if (!string.IsNullOrEmpty(appearanceData.faceAccessoryName))
+        {
+            ActivateModelByName(faceAccessories, appearanceData.faceAccessoryName, "Face Accessory");
         }
         if (!string.IsNullOrEmpty(appearanceData.backAccessoryName))
         {
@@ -358,10 +464,6 @@ public class CharacterAppearanceSystem
             {
                 appearanceData.bodyModelName = modelName;
             }
-            else if (IsModelInArray(activeModel, headModels))
-            {
-                appearanceData.headModelName = modelName;
-            }
             else if (IsModelInArray(activeModel, hairModels))
             {
                 appearanceData.hairModelName = modelName;
@@ -378,9 +480,17 @@ public class CharacterAppearanceSystem
             {
                 appearanceData.footwearName = modelName;
             }
-            else if (IsModelInArray(activeModel, headAccessories))
+            else if (IsModelInArray(activeModel, hats))
             {
-                appearanceData.headAccessoryName = modelName;
+                appearanceData.hatName = modelName;
+            }
+            else if (IsModelInArray(activeModel, helmets))
+            {
+                appearanceData.helmetName = modelName;
+            }
+            else if (IsModelInArray(activeModel, faceAccessories))
+            {
+                appearanceData.faceAccessoryName = modelName;
             }
             else if (IsModelInArray(activeModel, backAccessories))
             {
@@ -511,23 +621,24 @@ public class CharacterAppearanceSystem
 
 /// <summary>
 /// Appearance categories that can be excluded by certain options.
-/// For example, a full body armor might exclude hair and head accessories.
+/// For example, a full helmet might exclude hair, hats, and face accessories.
 /// </summary>
 [System.Flags]
 public enum AppearanceExclusions
 {
     None = 0,
-    Head = 1 << 0,              // Blocks head models (for full helmets that replace head)
-    Hair = 1 << 1,              // Blocks hair models
-    HeadAccessories = 1 << 2,   // Blocks head accessories (hats, helmets, glasses)
-    BackAccessories = 1 << 3,   // Blocks back accessories (backpacks, cloaks)
-    HandAccessories = 1 << 4,   // Blocks hand accessories (gloves, bracelets)
-    TopClothing = 1 << 5,       // Blocks top clothing (for full body suits)
-    BottomClothing = 1 << 6,    // Blocks bottom clothing (for full body suits)
-    Footwear = 1 << 7,          // Blocks footwear (for full body suits)
-    SkinMaterials = 1 << 8,     // Blocks skin material variation (for full coverage)
-    HairMaterials = 1 << 9,     // Blocks hair material variation
-    ClothingMaterials = 1 << 10 // Blocks clothing material variation
+    Hair = 1 << 0,              // Blocks hair models
+    Hats = 1 << 1,              // Blocks hats (casual headwear)
+    Helmets = 1 << 2,           // Blocks helmets (protective headwear)
+    FaceAccessories = 1 << 3,   // Blocks face accessories (glasses, masks, visors)
+    BackAccessories = 1 << 4,   // Blocks back accessories (backpacks, cloaks)
+    HandAccessories = 1 << 5,   // Blocks hand accessories (gloves, bracelets)
+    TopClothing = 1 << 6,       // Blocks top clothing (for full body suits)
+    BottomClothing = 1 << 7,    // Blocks bottom clothing (for full body suits)
+    Footwear = 1 << 8,          // Blocks footwear (for full body suits)
+    SkinMaterials = 1 << 9,     // Blocks skin material variation (for full coverage)
+    HairMaterials = 1 << 10,    // Blocks hair material variation
+    ClothingMaterials = 1 << 11 // Blocks clothing material variation
 }
 
 /// <summary>
@@ -558,12 +669,13 @@ public class AppearanceOption
 public class CharacterAppearanceData
 {
     public string bodyModelName;
-    public string headModelName;
     public string hairModelName;
     public string topClothingName;
     public string bottomClothingName;
     public string footwearName;
-    public string headAccessoryName;
+    public string hatName;
+    public string helmetName;
+    public string faceAccessoryName;
     public string backAccessoryName;
     public string handAccessoryName;
     public string skinMaterialName;

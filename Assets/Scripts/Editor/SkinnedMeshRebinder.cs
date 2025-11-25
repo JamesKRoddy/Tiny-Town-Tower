@@ -51,7 +51,7 @@ public class SkinnedMeshRebinder : EditorWindow
         EditorGUILayout.LabelField("Skinned Mesh Rebinder", titleStyle);
         
         EditorGUILayout.Space(10);
-        EditorGUILayout.HelpBox("This tool rebinds SkinnedMeshRenderer bones to a new skeleton by matching bone names. Perfect for using Synty character meshes on different rigs!", MessageType.Info);
+        EditorGUILayout.HelpBox("This tool rebinds SkinnedMeshRenderer bones to a new skeleton by matching bone names AND recalculates bind poses. Perfect for using Synty character meshes on different rigs!", MessageType.Info);
         EditorGUILayout.Space(10);
         
         // Step 1: Select target objects
@@ -220,7 +220,8 @@ public class SkinnedMeshRebinder : EditorWindow
         EditorGUILayout.LabelField("💡 Tips:", EditorStyles.boldLabel);
         EditorGUILayout.LabelField("• Make sure bone names match between meshes");
         EditorGUILayout.LabelField("• Common Synty root names: 'Hips', 'Male_Hips', 'Female_Hips'");
-        EditorGUILayout.LabelField("• The mesh will disappear if bones don't match!");
+        EditorGUILayout.LabelField("• This creates new mesh assets with recalculated bind poses");
+        EditorGUILayout.LabelField("• Original mesh assets are not modified (safe!)");
         EditorGUILayout.LabelField("• You can undo (Ctrl+Z) if something goes wrong");
         
         EditorGUILayout.EndVertical();
@@ -319,11 +320,36 @@ public class SkinnedMeshRebinder : EditorWindow
             return false;
         }
         
-        // Apply new bones
+        // CRITICAL: Recalculate bind poses for the new skeleton
+        // Without this, the mesh will appear distorted or shrunk
+        Matrix4x4[] bindPoses = new Matrix4x4[newBones.Length];
+        for (int i = 0; i < newBones.Length; i++)
+        {
+            if (newBones[i] != null)
+            {
+                // Bind pose is the inverse of the bone's transform relative to the mesh
+                bindPoses[i] = newBones[i].worldToLocalMatrix * smr.transform.localToWorldMatrix;
+            }
+            else
+            {
+                bindPoses[i] = Matrix4x4.identity;
+            }
+        }
+        
+        // Create a new mesh instance to avoid modifying the shared mesh asset
+        Mesh newMesh = Object.Instantiate(smr.sharedMesh);
+        newMesh.name = smr.sharedMesh.name + "_Rebound";
+        newMesh.bindposes = bindPoses;
+        
+        // Apply the new mesh and bones
+        smr.sharedMesh = newMesh;
         smr.bones = newBones;
         smr.rootBone = newRoot;
         
-        Debug.Log($"✓ Rebound {smr.name}: {matchedBones}/{oldBones.Length} bones matched");
+        // Recalculate bounds to prevent culling issues
+        smr.localBounds = newMesh.bounds;
+        
+        Debug.Log($"✓ Rebound {smr.name}: {matchedBones}/{oldBones.Length} bones matched, bind poses recalculated");
         
         return true;
     }
