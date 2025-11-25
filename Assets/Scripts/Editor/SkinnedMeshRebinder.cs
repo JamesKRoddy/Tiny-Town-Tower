@@ -51,7 +51,7 @@ public class SkinnedMeshRebinder : EditorWindow
         EditorGUILayout.LabelField("Skinned Mesh Rebinder", titleStyle);
         
         EditorGUILayout.Space(10);
-        EditorGUILayout.HelpBox("This tool rebinds SkinnedMeshRenderer bones to a new skeleton by matching bone names AND recalculates bind poses. Perfect for using Synty character meshes on different rigs!", MessageType.Info);
+        EditorGUILayout.HelpBox("This tool rebinds SkinnedMeshRenderer bones to a new skeleton by matching bone names AND recalculates bind poses. New meshes are saved as assets in Assets/ReboundMeshes/ so they persist with your prefabs. Perfect for using Synty character meshes on different rigs!", MessageType.Info);
         EditorGUILayout.Space(10);
         
         // Step 1: Select target objects
@@ -220,9 +220,9 @@ public class SkinnedMeshRebinder : EditorWindow
         EditorGUILayout.LabelField("💡 Tips:", EditorStyles.boldLabel);
         EditorGUILayout.LabelField("• Make sure bone names match between meshes");
         EditorGUILayout.LabelField("• Common Synty root names: 'Hips', 'Male_Hips', 'Female_Hips'");
-        EditorGUILayout.LabelField("• This creates new mesh assets with recalculated bind poses");
+        EditorGUILayout.LabelField("• New meshes are saved to Assets/ReboundMeshes/");
         EditorGUILayout.LabelField("• Original mesh assets are not modified (safe!)");
-        EditorGUILayout.LabelField("• You can undo (Ctrl+Z) if something goes wrong");
+        EditorGUILayout.LabelField("• Save your prefab after rebinding to keep changes");
         
         EditorGUILayout.EndVertical();
     }
@@ -260,7 +260,10 @@ public class SkinnedMeshRebinder : EditorWindow
                 failCount++;
         }
         
-        string message = $"Rebind complete!\n\nSuccess: {successCount}\nFailed: {failCount}";
+        // Refresh the asset database to ensure all new mesh assets are properly loaded
+        AssetDatabase.Refresh();
+        
+        string message = $"Rebind complete!\n\nSuccess: {successCount}\nFailed: {failCount}\n\nNew meshes saved to Assets/ReboundMeshes/\n\nRemember to save your prefabs!";
         EditorUtility.DisplayDialog("Rebind Complete", message, "OK");
         
         // Mark all target objects as dirty
@@ -341,6 +344,32 @@ public class SkinnedMeshRebinder : EditorWindow
         newMesh.name = smr.sharedMesh.name + "_Rebound";
         newMesh.bindposes = bindPoses;
         
+        // CRITICAL: Save the mesh as an asset so it persists with the prefab
+        // Without this, the mesh will be lost when you exit prefab mode
+        string meshFolderPath = "Assets/ReboundMeshes";
+        if (!AssetDatabase.IsValidFolder(meshFolderPath))
+        {
+            AssetDatabase.CreateFolder("Assets", "ReboundMeshes");
+        }
+        
+        // Generate unique path for this mesh
+        string originalMeshPath = AssetDatabase.GetAssetPath(smr.sharedMesh);
+        string originalMeshName = System.IO.Path.GetFileNameWithoutExtension(originalMeshPath);
+        string newMeshPath = $"{meshFolderPath}/{originalMeshName}_Rebound_{smr.gameObject.name}.asset";
+        
+        // If asset already exists, delete it first
+        if (AssetDatabase.LoadAssetAtPath<Mesh>(newMeshPath) != null)
+        {
+            AssetDatabase.DeleteAsset(newMeshPath);
+        }
+        
+        // Save the mesh as an asset
+        AssetDatabase.CreateAsset(newMesh, newMeshPath);
+        AssetDatabase.SaveAssets();
+        
+        // Load the saved mesh asset (important for proper reference)
+        newMesh = AssetDatabase.LoadAssetAtPath<Mesh>(newMeshPath);
+        
         // Apply the new mesh and bones
         smr.sharedMesh = newMesh;
         smr.bones = newBones;
@@ -349,7 +378,11 @@ public class SkinnedMeshRebinder : EditorWindow
         // Recalculate bounds to prevent culling issues
         smr.localBounds = newMesh.bounds;
         
-        Debug.Log($"✓ Rebound {smr.name}: {matchedBones}/{oldBones.Length} bones matched, bind poses recalculated");
+        // Mark the object as dirty so Unity saves the changes
+        EditorUtility.SetDirty(smr);
+        EditorUtility.SetDirty(smr.gameObject);
+        
+        Debug.Log($"✓ Rebound {smr.name}: {matchedBones}/{oldBones.Length} bones matched, mesh saved to {newMeshPath}");
         
         return true;
     }
