@@ -3,7 +3,7 @@ using UnityEditor;
 
 /// <summary>
 /// Custom property drawer for AppearanceOption to display it compactly in the inspector.
-/// Shows the model field and quick rarity preset buttons for spawn weight.
+/// Shows the model field, preview thumbnail, and quick rarity preset buttons for spawn weight.
 /// </summary>
 [CustomPropertyDrawer(typeof(AppearanceOption))]
 public class AppearanceOptionDrawer : PropertyDrawer
@@ -12,6 +12,12 @@ public class AppearanceOptionDrawer : PropertyDrawer
     private const float BUTTON_WIDTH = 50f;
     private const float VALUE_FIELD_WIDTH = 40f;
     
+    private static float PreviewSize
+    {
+        get { return EditorPrefs.GetFloat("AppearanceOption_PreviewSize", 70f); }
+        set { EditorPrefs.SetFloat("AppearanceOption_PreviewSize", value); }
+    }
+    
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
         EditorGUI.BeginProperty(position, label, property);
@@ -19,29 +25,58 @@ public class AppearanceOptionDrawer : PropertyDrawer
         // Get the properties
         SerializedProperty modelProp = property.FindPropertyRelative("model");
         SerializedProperty weightProp = property.FindPropertyRelative("spawnWeight");
+        SerializedProperty exclusionsProp = property.FindPropertyRelative("exclusions");
         
         // Calculate rects
         float indent = EditorGUI.indentLevel * 15f;
         float availableWidth = position.width - indent;
         
-        // Model field gets remaining space after buttons and value field
+        // Preview thumbnail on the left
+        float previewSize = PreviewSize;
+        Rect previewRect = new Rect(position.x + indent, position.y, previewSize, previewSize);
+        
+        // Model field gets remaining space after preview, buttons and value field
         float buttonsWidth = (BUTTON_WIDTH * 4) + (SPACING * 3); // 4 buttons
-        float modelWidth = availableWidth - buttonsWidth - VALUE_FIELD_WIDTH - SPACING * 2;
+        float modelWidth = availableWidth - previewSize - buttonsWidth - VALUE_FIELD_WIDTH - SPACING * 4;
         
-        Rect modelRect = new Rect(position.x + indent, position.y, modelWidth, position.height);
+        Rect modelRect = new Rect(previewRect.xMax + SPACING, position.y + (previewSize - EditorGUIUtility.singleLineHeight) / 2f, 
+                                   modelWidth, EditorGUIUtility.singleLineHeight);
         
-        // Quick preset buttons
-        Rect commonBtn = new Rect(modelRect.xMax + SPACING, position.y, BUTTON_WIDTH, position.height);
-        Rect uncommonBtn = new Rect(commonBtn.xMax + SPACING, position.y, BUTTON_WIDTH, position.height);
-        Rect rareBtn = new Rect(uncommonBtn.xMax + SPACING, position.y, BUTTON_WIDTH, position.height);
-        Rect ultraRareBtn = new Rect(rareBtn.xMax + SPACING, position.y, BUTTON_WIDTH, position.height);
+        // Quick preset buttons (vertically centered with model field)
+        float buttonY = position.y + (previewSize - EditorGUIUtility.singleLineHeight) / 2f;
+        Rect commonBtn = new Rect(modelRect.xMax + SPACING, buttonY, BUTTON_WIDTH, EditorGUIUtility.singleLineHeight);
+        Rect uncommonBtn = new Rect(commonBtn.xMax + SPACING, buttonY, BUTTON_WIDTH, EditorGUIUtility.singleLineHeight);
+        Rect rareBtn = new Rect(uncommonBtn.xMax + SPACING, buttonY, BUTTON_WIDTH, EditorGUIUtility.singleLineHeight);
+        Rect ultraRareBtn = new Rect(rareBtn.xMax + SPACING, buttonY, BUTTON_WIDTH, EditorGUIUtility.singleLineHeight);
         
         // Value field
-        Rect valueRect = new Rect(ultraRareBtn.xMax + SPACING, position.y, VALUE_FIELD_WIDTH, position.height);
+        Rect valueRect = new Rect(ultraRareBtn.xMax + SPACING, buttonY, VALUE_FIELD_WIDTH, EditorGUIUtility.singleLineHeight);
         
         // Temporarily disable indent for consistent alignment
         int oldIndent = EditorGUI.indentLevel;
         EditorGUI.indentLevel = 0;
+        
+        // Draw preview thumbnail
+        GameObject model = modelProp.objectReferenceValue as GameObject;
+        if (model != null)
+        {
+            Texture2D preview = AssetPreview.GetAssetPreview(model);
+            if (preview != null)
+            {
+                GUI.Box(previewRect, GUIContent.none, EditorStyles.helpBox);
+                GUI.DrawTexture(previewRect, preview, ScaleMode.ScaleToFit);
+            }
+            else
+            {
+                // Show placeholder while preview loads
+                GUI.Box(previewRect, "...", EditorStyles.helpBox);
+            }
+        }
+        else
+        {
+            // Show empty box when no model assigned
+            GUI.Box(previewRect, "None", EditorStyles.helpBox);
+        }
         
         // Draw model field with label
         EditorGUI.PropertyField(modelRect, modelProp, label);
@@ -93,12 +128,91 @@ public class AppearanceOptionDrawer : PropertyDrawer
         // Restore indent
         EditorGUI.indentLevel = oldIndent;
         
+        // Draw exclusions section below (second row)
+        float exclusionsY = position.y + previewSize + 4f;
+        DrawExclusionsRow(new Rect(position.x + indent, exclusionsY, availableWidth, EditorGUIUtility.singleLineHeight), 
+                         exclusionsProp);
+        
         EditorGUI.EndProperty();
+    }
+    
+    /// <summary>
+    /// Draw exclusion toggle buttons
+    /// </summary>
+    private void DrawExclusionsRow(Rect position, SerializedProperty exclusionsProp)
+    {
+        int exclusionValue = exclusionsProp.intValue;
+        
+        EditorGUI.LabelField(new Rect(position.x, position.y, 70, position.height), "Excludes:", EditorStyles.miniLabel);
+        
+        float buttonX = position.x + 75;
+        float buttonWidth = 50f;
+        float spacing = 3f;
+        
+        // Define exclusion buttons with labels matching field names
+        var exclusionButtons = new[]
+        {
+            (AppearanceExclusions.Head, "Head"),
+            (AppearanceExclusions.Hair, "Hair"),
+            (AppearanceExclusions.HeadAccessories, "HdAcc"),
+            (AppearanceExclusions.BackAccessories, "BkAcc"),
+            (AppearanceExclusions.HandAccessories, "HndAcc"),
+            (AppearanceExclusions.TopClothing, "TopCl"),
+            (AppearanceExclusions.BottomClothing, "BotCl"),
+            (AppearanceExclusions.Footwear, "Foot")
+        };
+        
+        Color originalBg = GUI.backgroundColor;
+        
+        foreach (var (flag, label) in exclusionButtons)
+        {
+            bool isActive = (exclusionValue & (int)flag) != 0;
+            
+            // Highlight active exclusions
+            GUI.backgroundColor = isActive ? new Color(1f, 0.5f, 0.5f) : originalBg;
+            
+            Rect buttonRect = new Rect(buttonX, position.y, buttonWidth, position.height - 2);
+            if (GUI.Button(buttonRect, new GUIContent(label, $"Exclude {flag}"), EditorStyles.miniButton))
+            {
+                // Toggle the flag
+                if (isActive)
+                    exclusionsProp.intValue &= ~(int)flag; // Remove flag
+                else
+                    exclusionsProp.intValue |= (int)flag; // Add flag
+            }
+            
+            buttonX += buttonWidth + spacing;
+        }
+        
+        GUI.backgroundColor = originalBg;
     }
     
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
-        return EditorGUIUtility.singleLineHeight + 2f; // Add a bit of spacing
+        return PreviewSize + EditorGUIUtility.singleLineHeight + 8f; // Preview + exclusions row + spacing
+    }
+    
+    /// <summary>
+    /// Draw preview size slider (call this from parent inspector)
+    /// </summary>
+    public static void DrawPreviewSizeSlider()
+    {
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField("Preview Size", GUILayout.Width(100));
+        
+        float newSize = EditorGUILayout.Slider(PreviewSize, 50f, 150f);
+        if (!Mathf.Approximately(newSize, PreviewSize))
+        {
+            PreviewSize = newSize;
+        }
+        
+        // Quick preset buttons
+        if (GUILayout.Button("S", GUILayout.Width(30))) PreviewSize = 60f;
+        if (GUILayout.Button("M", GUILayout.Width(30))) PreviewSize = 80f;
+        if (GUILayout.Button("L", GUILayout.Width(30))) PreviewSize = 100f;
+        if (GUILayout.Button("XL", GUILayout.Width(30))) PreviewSize = 120f;
+        
+        EditorGUILayout.EndHorizontal();
     }
 }
 

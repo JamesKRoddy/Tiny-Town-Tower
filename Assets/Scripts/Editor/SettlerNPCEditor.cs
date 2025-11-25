@@ -174,6 +174,10 @@ public class SettlerNPCEditor : HumanCharacterControllerEditor
         
         // Appearance System
         DrawColoredSection("🎨 Appearance System", () => {
+            // Preview size slider
+            AppearanceOptionDrawer.DrawPreviewSizeSlider();
+            EditorGUILayout.Space(5);
+            
             EditorGUILayout.PropertyField(serializedObject.FindProperty("appearanceSystem"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("characteristicSystem"));
             

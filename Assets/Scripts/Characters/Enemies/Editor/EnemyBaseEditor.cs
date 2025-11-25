@@ -114,6 +114,10 @@ namespace Enemies.Editor
             if (appearanceSystem != null)
             {
                 DrawColoredSection("👤 Appearance System", () => {
+                    // Preview size slider
+                    AppearanceOptionDrawer.DrawPreviewSizeSlider();
+                    EditorGUILayout.Space(5);
+                    
                     EditorGUILayout.PropertyField(appearanceSystem);
                     EditorGUILayout.PropertyField(randomizeAppearanceOnSpawn);
                     

@@ -87,92 +87,116 @@ public class CharacterAppearanceSystem
             return;
         }
         
+        // Track all exclusions from activated models
+        AppearanceExclusions activeExclusions = AppearanceExclusions.None;
+        
         // Randomize body parts
         if (bodyModels != null && bodyModels.Length > 0)
         {
-            ActivateRandomModel(bodyModels, "Body");
+            var selected = ActivateRandomModel(bodyModels, "Body");
+            if (selected != null) activeExclusions |= selected.exclusions;
         }
         else
         {
             Debug.LogWarning($"[CharacterAppearanceSystem] No body models available for {characterName}");
         }
         
-        if (headModels != null && headModels.Length > 0)
+        if (headModels != null && headModels.Length > 0 && !activeExclusions.HasFlag(AppearanceExclusions.Head))
         {
-            ActivateRandomModel(headModels, "Head");
+            var selected = ActivateRandomModel(headModels, "Head");
+            if (selected != null) activeExclusions |= selected.exclusions;
         }
         
-        if (hairModels != null && hairModels.Length > 0)
+        // Check if hair is excluded
+        if (hairModels != null && hairModels.Length > 0 && !activeExclusions.HasFlag(AppearanceExclusions.Hair))
         {
-            ActivateRandomModel(hairModels, "Hair");
+            var selected = ActivateRandomModel(hairModels, "Hair");
+            if (selected != null) activeExclusions |= selected.exclusions;
         }
         
-        // Randomize clothing
-        if (topClothing != null && topClothing.Length > 0)
+        // Randomize clothing (check exclusions)
+        if (topClothing != null && topClothing.Length > 0 && !activeExclusions.HasFlag(AppearanceExclusions.TopClothing))
         {
-            ActivateRandomModel(topClothing, "Top Clothing");
+            var selected = ActivateRandomModel(topClothing, "Top Clothing");
+            if (selected != null) activeExclusions |= selected.exclusions;
         }
         
-        if (bottomClothing != null && bottomClothing.Length > 0)
+        if (bottomClothing != null && bottomClothing.Length > 0 && !activeExclusions.HasFlag(AppearanceExclusions.BottomClothing))
         {
-            ActivateRandomModel(bottomClothing, "Bottom Clothing");
+            var selected = ActivateRandomModel(bottomClothing, "Bottom Clothing");
+            if (selected != null) activeExclusions |= selected.exclusions;
         }
         
-        if (footwear != null && footwear.Length > 0)
+        if (footwear != null && footwear.Length > 0 && !activeExclusions.HasFlag(AppearanceExclusions.Footwear))
         {
-            ActivateRandomModel(footwear, "Footwear");
+            var selected = ActivateRandomModel(footwear, "Footwear");
+            if (selected != null) activeExclusions |= selected.exclusions;
         }
         
-        // Randomize accessories based on spawn chances
-        if (headAccessories != null && headAccessories.Length > 0 && UnityEngine.Random.value <= headAccessoryChance)
+        // Randomize accessories based on spawn chances and exclusions
+        if (headAccessories != null && headAccessories.Length > 0 && 
+            !activeExclusions.HasFlag(AppearanceExclusions.HeadAccessories) && 
+            UnityEngine.Random.value <= headAccessoryChance)
         {
-            ActivateRandomModel(headAccessories, "Head Accessory");
+            var selected = ActivateRandomModel(headAccessories, "Head Accessory");
+            if (selected != null) activeExclusions |= selected.exclusions;
         }
         
-        if (backAccessories != null && backAccessories.Length > 0 && UnityEngine.Random.value <= backAccessoryChance)
+        if (backAccessories != null && backAccessories.Length > 0 && 
+            !activeExclusions.HasFlag(AppearanceExclusions.BackAccessories) && 
+            UnityEngine.Random.value <= backAccessoryChance)
         {
-            ActivateRandomModel(backAccessories, "Back Accessory");
+            var selected = ActivateRandomModel(backAccessories, "Back Accessory");
+            if (selected != null) activeExclusions |= selected.exclusions;
         }
         
-        if (handAccessories != null && handAccessories.Length > 0 && UnityEngine.Random.value <= handAccessoryChance)
+        if (handAccessories != null && handAccessories.Length > 0 && 
+            !activeExclusions.HasFlag(AppearanceExclusions.HandAccessories) && 
+            UnityEngine.Random.value <= handAccessoryChance)
         {
-            ActivateRandomModel(handAccessories, "Hand Accessory");
+            var selected = ActivateRandomModel(handAccessories, "Hand Accessory");
+            if (selected != null) activeExclusions |= selected.exclusions;
         }        
         
-        // Apply random materials
-        ApplyRandomMaterials();
+        // Apply random materials (respect exclusions)
+        ApplyRandomMaterials(activeExclusions);
     }
     
     /// <summary>
     /// Activate a random model from the given array using weighted selection.
     /// Items with higher spawn weights are more likely to be selected.
+    /// Returns the selected AppearanceOption so exclusions can be tracked.
     /// </summary>
-    private void ActivateRandomModel(AppearanceOption[] modelArray, string categoryName)
+    private AppearanceOption ActivateRandomModel(AppearanceOption[] modelArray, string categoryName)
     {
-        if (modelArray == null || modelArray.Length == 0) return;
+        if (modelArray == null || modelArray.Length == 0) return null;
         
         // Filter out null models and those with 0 weight
         var validOptions = modelArray.Where(opt => opt != null && opt.model != null && opt.spawnWeight > 0).ToList();
         if (validOptions.Count == 0)
         {
             Debug.LogWarning($"[CharacterAppearanceSystem] No valid options for {categoryName}");
-            return;
+            return null;
         }
         
         // Select based on weighted probability
-        GameObject selectedModel = SelectWeightedRandom(validOptions);
-        if (selectedModel != null)
+        AppearanceOption selectedOption = SelectWeightedRandomOption(validOptions);
+        if (selectedOption != null && selectedOption.model != null)
         {
-            selectedModel.SetActive(true);
-            activeModels.Add(selectedModel);
+            selectedOption.model.SetActive(true);
+            activeModels.Add(selectedOption.model);
+            return selectedOption;
         }
+        
+        return null;
     }
     
     /// <summary>
     /// Select a random model based on spawn weights.
     /// Higher weight = higher chance of selection.
+    /// Returns the full AppearanceOption for exclusion tracking.
     /// </summary>
-    private GameObject SelectWeightedRandom(List<AppearanceOption> options)
+    private AppearanceOption SelectWeightedRandomOption(List<AppearanceOption> options)
     {
         // Calculate total weight
         float totalWeight = options.Sum(opt => opt.spawnWeight);
@@ -188,39 +212,42 @@ public class CharacterAppearanceSystem
             currentWeight += option.spawnWeight;
             if (randomValue <= currentWeight)
             {
-                return option.model;
+                return option;
             }
         }
         
         // Fallback (shouldn't happen, but just in case)
-        return options[0].model;
+        return options[0];
     }
     
     /// <summary>
     /// Apply random materials to the active models.
     /// </summary>
-    private void ApplyRandomMaterials()
+    private void ApplyRandomMaterials(AppearanceExclusions exclusions = AppearanceExclusions.None)
     {
         foreach (GameObject model in activeModels)
         {
             Renderer[] renderers = model.GetComponentsInChildren<Renderer>();
             foreach (Renderer renderer in renderers)
             {
-                // Apply random skin material if available
-                if (skinMaterials != null && skinMaterials.Length > 0 && 
+                // Apply random skin material if available and not excluded
+                if (!exclusions.HasFlag(AppearanceExclusions.SkinMaterials) &&
+                    skinMaterials != null && skinMaterials.Length > 0 && 
                     (model.name.Contains("Body") || model.name.Contains("Head")))
                 {
                     Material randomSkinMaterial = skinMaterials[UnityEngine.Random.Range(0, skinMaterials.Length)];
                     renderer.material = randomSkinMaterial;
                 }
-                // Apply random hair material if available
-                else if (hairMaterials != null && hairMaterials.Length > 0 && model.name.Contains("Hair"))
+                // Apply random hair material if available and not excluded
+                else if (!exclusions.HasFlag(AppearanceExclusions.HairMaterials) &&
+                         hairMaterials != null && hairMaterials.Length > 0 && model.name.Contains("Hair"))
                 {
                     Material randomHairMaterial = hairMaterials[UnityEngine.Random.Range(0, hairMaterials.Length)];
                     renderer.material = randomHairMaterial;
                 }
-                // Apply random clothing material if available
-                else if (clothingMaterials != null && clothingMaterials.Length > 0)
+                // Apply random clothing material if available and not excluded
+                else if (!exclusions.HasFlag(AppearanceExclusions.ClothingMaterials) &&
+                         clothingMaterials != null && clothingMaterials.Length > 0)
                 {
                     Material randomClothingMaterial = clothingMaterials[UnityEngine.Random.Range(0, clothingMaterials.Length)];
                     renderer.material = randomClothingMaterial;
@@ -483,9 +510,31 @@ public class CharacterAppearanceSystem
 }
 
 /// <summary>
+/// Appearance categories that can be excluded by certain options.
+/// For example, a full body armor might exclude hair and head accessories.
+/// </summary>
+[System.Flags]
+public enum AppearanceExclusions
+{
+    None = 0,
+    Head = 1 << 0,              // Blocks head models (for full helmets that replace head)
+    Hair = 1 << 1,              // Blocks hair models
+    HeadAccessories = 1 << 2,   // Blocks head accessories (hats, helmets, glasses)
+    BackAccessories = 1 << 3,   // Blocks back accessories (backpacks, cloaks)
+    HandAccessories = 1 << 4,   // Blocks hand accessories (gloves, bracelets)
+    TopClothing = 1 << 5,       // Blocks top clothing (for full body suits)
+    BottomClothing = 1 << 6,    // Blocks bottom clothing (for full body suits)
+    Footwear = 1 << 7,          // Blocks footwear (for full body suits)
+    SkinMaterials = 1 << 8,     // Blocks skin material variation (for full coverage)
+    HairMaterials = 1 << 9,     // Blocks hair material variation
+    ClothingMaterials = 1 << 10 // Blocks clothing material variation
+}
+
+/// <summary>
 /// Represents a single appearance option with its associated spawn weight.
 /// Higher weight = more common, lower weight = more rare.
 /// Weight of 0 = disabled (never spawns).
+/// Can also specify which accessories/options this blocks.
 /// </summary>
 [System.Serializable]
 public class AppearanceOption
@@ -496,6 +545,9 @@ public class AppearanceOption
     [Tooltip("Spawn weight - higher values are more common (default: 100 = common, 50 = uncommon, 10 = rare, 1 = very rare)")]
     [Range(0f, 100f)]
     public float spawnWeight = 100f;
+    
+    [Tooltip("Which appearance categories this option excludes (e.g., full body armor excludes hair and head accessories)")]
+    public AppearanceExclusions exclusions = AppearanceExclusions.None;
 }
 
 /// <summary>
