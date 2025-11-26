@@ -1,12 +1,16 @@
 *****Current Work*****
 
+Alt Materials for bodies,heads etc!!!!
+
 Basic robot attachments on the zombies for variation. Maybe add variation chances on different body types?
 
 Setup zombie/drone meshes and gameobjects that should be enabled for different attacks
 
-Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
+Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones. Mutants! Characters in the PolygonApocalypseWasteland
 
 Setup a massive boss like the hydra in hades
+
+Setup a test environment that we can just spawn in random enemies, npcs etc and just select what accessories/bodies not to pair up again
 
 ****** Tomorrow work:
 
@@ -98,11 +102,13 @@ One the player is damaged it send out an elemental shockwave dealing damage to a
 Research
 Unlock vaulting and dash for roguelike to increase movement options
 Strength that allows you to push heavier objects to open new areas
+Being able to carry more inventory during rogulike
 Vaulting over obstacles
 Vaulting over enemies?
 Unlock better weapons avalible at the start of runs
 The projectile reflection technique thats used by baseprojectiles when they are hit by DamageUtoils.PerformBoxCastDamage. First level reflects it away from the player, second level it travel back towards the enemy that shot it.
 Can have a MeleeWeapon.projectileBoxSizeMultiplier increase to increase the chance of reflecting projectiles
+Heavy hitter-ability to break rubble to open new paths
 
 Buildings:
 An alarm that will alert NPCs of an incoming zombie attack
@@ -110,4 +116,10 @@ Implement water and thirst mechanics, water buildings etc.
 
 Weapons:
 All weapons should have versions from lvl 1 to 5 all originating from the same scriptable obj
+
+NPC Characteristics
+Strong back-able to carry more resources and higher inventory
+Quick-Faster movement
+strong-base damage increase
+
 

@@ -58,6 +58,9 @@ public class AppearanceOptionDrawer : PropertyDrawer
         
         // Draw preview thumbnail
         GameObject model = modelProp.objectReferenceValue as GameObject;
+        AppearanceMaterialVariants materialVariants = null;
+        int variantCount = 0;
+        
         if (model != null)
         {
             Texture2D preview = AssetPreview.GetAssetPreview(model);
@@ -71,11 +74,37 @@ public class AppearanceOptionDrawer : PropertyDrawer
                 // Show placeholder while preview loads
                 GUI.Box(previewRect, "...", EditorStyles.helpBox);
             }
+            
+            // Check if the model has material variants
+            materialVariants = model.GetComponent<AppearanceMaterialVariants>();
+            if (materialVariants != null)
+            {
+                variantCount = materialVariants.VariantCount;
+            }
         }
         else
         {
             // Show empty box when no model assigned
             GUI.Box(previewRect, "None", EditorStyles.helpBox);
+        }
+        
+        // Draw variant info badge if present
+        if (materialVariants != null && variantCount > 0)
+        {
+            Rect badgeRect = new Rect(previewRect.x + 2, previewRect.yMax - 18, previewRect.width - 4, 16);
+            
+            // Draw background
+            Color oldColor = GUI.color;
+            GUI.color = new Color(0.2f, 0.8f, 0.4f, 0.9f); // Green background
+            GUI.Box(badgeRect, GUIContent.none, EditorStyles.helpBox);
+            GUI.color = oldColor;
+            
+            // Draw text
+            GUIStyle badgeStyle = new GUIStyle(EditorStyles.miniLabel);
+            badgeStyle.alignment = TextAnchor.MiddleCenter;
+            badgeStyle.normal.textColor = Color.white;
+            badgeStyle.fontStyle = FontStyle.Bold;
+            GUI.Label(badgeRect, $"{variantCount} Mats", badgeStyle);
         }
         
         // Draw model field with label

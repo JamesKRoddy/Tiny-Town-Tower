@@ -278,6 +278,14 @@ public class CharacterAppearanceSystem
             // THEN: Activate only the selected model
             selectedOption.model.SetActive(true);
             activeModels.Add(selectedOption.model);
+            
+            // Apply random material variant if the model has the AppearanceMaterialVariants component
+            AppearanceMaterialVariants materialVariants = selectedOption.model.GetComponent<AppearanceMaterialVariants>();
+            if (materialVariants != null && materialVariants.VariantCount > 0)
+            {
+                materialVariants.ApplyRandomVariant();
+            }
+            
             return selectedOption;
         }
         
