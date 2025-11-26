@@ -1,16 +1,12 @@
 *****Current Work*****
 
-Alt Materials for bodies,heads etc!!!!
-
-Basic robot attachments on the zombies for variation. Maybe add variation chances on different body types?
+Basic robot attachments on the zombies for variation. Cont. w/ arms
 
 Setup zombie/drone meshes and gameobjects that should be enabled for different attacks
 
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones. Mutants! Characters in the PolygonApocalypseWasteland
 
 Setup a massive boss like the hydra in hades
-
-Setup a test environment that we can just spawn in random enemies, npcs etc and just select what accessories/bodies not to pair up again
 
 ****** Tomorrow work:
 

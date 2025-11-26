@@ -76,6 +76,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3741342198541758076}
   - component: {fileID: 3608080006685483730}
+  - component: {fileID: 1946559912820272185}
   m_Layer: 0
   m_Name: Zombie_BusinessShirt_Male_01
   m_TagString: Untagged
@@ -204,6 +205,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.000000059604645, y: 0.8633062, z: -0.065105505}
     m_Extent: {x: 1.0245593, y: 0.9614113, z: 0.2684757}
   m_DirtyAABB: 0
+--- !u!114 &1946559912820272185
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3745070878597965896}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3745101207239722104
 GameObject:
   m_ObjectHideFlags: 0
@@ -246,6 +264,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3743990347259542642}
   - component: {fileID: 3611277101328540246}
+  - component: {fileID: 5579998600894794599}
   m_Layer: 0
   m_Name: Zombie_Jock_Male_01
   m_TagString: Untagged
@@ -374,6 +393,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.000000059604645, y: 0.867645, z: -0.06539926}
     m_Extent: {x: 1.0245576, y: 0.9694756, z: 0.28170878}
   m_DirtyAABB: 0
+--- !u!114 &5579998600894794599
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3745124658130300586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3745139387544507340
 GameObject:
   m_ObjectHideFlags: 0
@@ -384,6 +420,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3741352972129849166}
   - component: {fileID: 3608427886564364154}
+  - component: {fileID: 5253516440912893272}
   m_Layer: 0
   m_Name: Zombie_Gangster_Male_01
   m_TagString: Untagged
@@ -512,6 +549,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.0000011324883, y: 0.8707578, z: -0.031837583}
     m_Extent: {x: 1.0245614, y: 0.97511446, z: 0.25866607}
   m_DirtyAABB: 0
+--- !u!114 &5253516440912893272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3745139387544507340}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3745145143988776374
 GameObject:
   m_ObjectHideFlags: 0
@@ -522,6 +576,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3743732204758419908}
   - component: {fileID: 3608224276000155464}
+  - component: {fileID: 3718296618400576936}
   m_Layer: 0
   m_Name: Zombie_HotDogSuit_Male_01
   m_TagString: Untagged
@@ -650,6 +705,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.0000006556511, y: 0.9286239, z: -0.07764539}
     m_Extent: {x: 1.0245595, y: 1.027046, z: 0.35833246}
   m_DirtyAABB: 0
+--- !u!114 &3718296618400576936
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3745145143988776374}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3745146168941728118
 GameObject:
   m_ObjectHideFlags: 0
@@ -691,6 +763,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3744104002682196376}
   - component: {fileID: 3611311524195462364}
+  - component: {fileID: 4958499593986198312}
   m_Layer: 0
   m_Name: Zombie_Roadworker_Male_01
   m_TagString: Untagged
@@ -819,6 +892,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.0013982058, y: 0.9039425, z: -0.041274726}
     m_Extent: {x: 1.0245618, y: 0.96695846, z: 0.2932071}
   m_DirtyAABB: 0
+--- !u!114 &4958499593986198312
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3745148760793710694}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3745872214463364032
 GameObject:
   m_ObjectHideFlags: 0
@@ -860,6 +950,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3741163750909938100}
   - component: {fileID: 3608311211134002052}
+  - component: {fileID: 3001466261903377332}
   m_Layer: 0
   m_Name: Zombie_Police_Female_01
   m_TagString: Untagged
@@ -988,6 +1079,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.000000059604645, y: 0.8727193, z: -0.0670833}
     m_Extent: {x: 1.0212042, y: 0.97147655, z: 0.26125905}
   m_DirtyAABB: 0
+--- !u!114 &3001466261903377332
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3745876942408739432}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3745882207110752514
 GameObject:
   m_ObjectHideFlags: 0
@@ -998,6 +1106,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3741045779979615192}
   - component: {fileID: 3611191733390119216}
+  - component: {fileID: 5220757004177166121}
   m_Layer: 0
   m_Name: Zombie_Punk_Male_01
   m_TagString: Untagged
@@ -1126,6 +1235,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.0000006556511, y: 0.9649468, z: -0.04684581}
     m_Extent: {x: 1.0245609, y: 1.0659006, z: 0.2941386}
   m_DirtyAABB: 0
+--- !u!114 &5220757004177166121
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3745882207110752514}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3745889593021095450
 GameObject:
   m_ObjectHideFlags: 0
@@ -1167,6 +1293,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3740941678131992880}
   - component: {fileID: 3611149809368058080}
+  - component: {fileID: 1993311731395322122}
   m_Layer: 0
   m_Name: Zombie_ShopKeeper_Male_01
   m_TagString: Untagged
@@ -1295,6 +1422,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.00000035762787, y: 0.8617839, z: -0.029551536}
     m_Extent: {x: 1.0245618, y: 0.9639643, z: 0.24078664}
   m_DirtyAABB: 0
+--- !u!114 &1993311731395322122
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3745899594066434546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3745911607176065394
 GameObject:
   m_ObjectHideFlags: 0
@@ -1305,6 +1449,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3743668796941201386}
   - component: {fileID: 3608220906797357928}
+  - component: {fileID: 8086305330959566254}
   m_Layer: 0
   m_Name: Zombie_SchoolBoy_Male_01
   m_TagString: Untagged
@@ -1433,6 +1578,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.000000059604645, y: 0.8672339, z: -0.018249363}
     m_Extent: {x: 1.0245616, y: 0.96941423, z: 0.2380076}
   m_DirtyAABB: 0
+--- !u!114 &8086305330959566254
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3745911607176065394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3745922900271578794
 GameObject:
   m_ObjectHideFlags: 0
@@ -1507,6 +1669,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3744000058933336640}
   - component: {fileID: 3610800257708412318}
+  - component: {fileID: 8678939085771105519}
   m_Layer: 0
   m_Name: Zombie_RiotCop_Male_01
   m_TagString: Untagged
@@ -1635,6 +1798,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.0000022053719, y: 0.8661594, z: -0.072726354}
     m_Extent: {x: 1.0245602, y: 0.96725565, z: 0.2739035}
   m_DirtyAABB: 0
+--- !u!114 &8678939085771105519
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3745965423783918448}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3745966787062272866
 GameObject:
   m_ObjectHideFlags: 0
@@ -1677,6 +1857,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3741068084846229804}
   - component: {fileID: 3608088837138939808}
+  - component: {fileID: 199284510386621486}
   m_Layer: 0
   m_Name: Zombie_Mother_Female_02
   m_TagString: Untagged
@@ -1805,6 +1986,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.0000030994415, y: 0.8422094, z: -0.0557539}
     m_Extent: {x: 1.0212036, y: 0.9605785, z: 0.23296092}
   m_DirtyAABB: 0
+--- !u!114 &199284510386621486
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3745975133926437112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3745978017889490402
 GameObject:
   m_ObjectHideFlags: 0
@@ -1846,6 +2044,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3741178725073163450}
   - component: {fileID: 3608345115062920372}
+  - component: {fileID: 962138730008767037}
   m_Layer: 0
   m_Name: Zombie_Tourist_Male_01
   m_TagString: Untagged
@@ -1974,6 +2173,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.0000013113022, y: 0.88120085, z: -0.025646895}
     m_Extent: {x: 1.0245614, y: 0.98496443, z: 0.31802678}
   m_DirtyAABB: 0
+--- !u!114 &962138730008767037
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3745978860997409078}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3745982727696846262
 GameObject:
   m_ObjectHideFlags: 0
@@ -2048,6 +2264,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3741192048643269348}
   - component: {fileID: 3607987810004311936}
+  - component: {fileID: 102353176590198739}
   m_Layer: 0
   m_Name: Zombie_Hipster_Male_01
   m_TagString: Untagged
@@ -2176,6 +2393,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.0000014901161, y: 0.86671114, z: -0.06375365}
     m_Extent: {x: 1.0245619, y: 0.97737336, z: 0.25608867}
   m_DirtyAABB: 0
+--- !u!114 &102353176590198739
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3745986372118669970}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3745990151604858396
 GameObject:
   m_ObjectHideFlags: 0
@@ -2186,6 +2420,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3740942228678889380}
   - component: {fileID: 3608037329899660400}
+  - component: {fileID: 7106403459738488906}
   m_Layer: 0
   m_Name: Zombie_Patient_Female_01
   m_TagString: Untagged
@@ -2314,6 +2549,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0, y: 0.8499973, z: -0.075102255}
     m_Extent: {x: 1.0212042, y: 0.9466579, z: 0.25352263}
   m_DirtyAABB: 0
+--- !u!114 &7106403459738488906
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3745990151604858396}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746014289827525868
 GameObject:
   m_ObjectHideFlags: 0
@@ -2356,6 +2608,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3744036552988386258}
   - component: {fileID: 3608461254372564242}
+  - component: {fileID: 3939053446161857395}
   m_Layer: 0
   m_Name: Zombie_ShopKeeper_Female_01
   m_TagString: Untagged
@@ -2484,6 +2737,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.00000023841858, y: 0.88342756, z: -0.03423409}
     m_Extent: {x: 1.0212882, y: 0.98808664, z: 0.2102765}
   m_DirtyAABB: 0
+--- !u!114 &3939053446161857395
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746019721877176620}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746027864531194736
 GameObject:
   m_ObjectHideFlags: 0
@@ -2528,6 +2798,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3743793985357323978}
   - component: {fileID: 3608335293222248014}
+  - component: {fileID: 4047684749433397747}
   m_Layer: 0
   m_Name: Zombie_SchoolGirl_Female_01
   m_TagString: Untagged
@@ -2656,6 +2927,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.00000017881393, y: 0.85771704, z: -0.054065928}
     m_Extent: {x: 1.021204, y: 0.970999, z: 0.21679284}
   m_DirtyAABB: 0
+--- !u!114 &4047684749433397747
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746037203302969728}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746038050529739010
 GameObject:
   m_ObjectHideFlags: 0
@@ -2760,6 +3048,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3740888564091768782}
   - component: {fileID: 3607947595412049666}
+  - component: {fileID: 1588960695068570273}
   m_Layer: 0
   m_Name: Zombie_Footballer_Male_01
   m_TagString: Untagged
@@ -2888,6 +3177,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.000000059604645, y: 0.86579156, z: -0.04348553}
     m_Extent: {x: 1.0245616, y: 0.966885, z: 0.27209595}
   m_DirtyAABB: 0
+--- !u!114 &1588960695068570273
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746071674870319890}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746075577410616926
 GameObject:
   m_ObjectHideFlags: 0
@@ -2898,6 +3204,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3740981565290280140}
   - component: {fileID: 3611108198266145668}
+  - component: {fileID: 4343187235276936511}
   m_Layer: 0
   m_Name: Zombie_Underwear_Female_01
   m_TagString: Untagged
@@ -3026,6 +3333,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.000000059604645, y: 0.85102224, z: -0.024380289}
     m_Extent: {x: 1.0192196, y: 0.94768286, z: 0.1862604}
   m_DirtyAABB: 0
+--- !u!114 &4343187235276936511
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746075577410616926}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746077370129003582
 GameObject:
   m_ObjectHideFlags: 0
@@ -3036,6 +3360,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3743953608224890658}
   - component: {fileID: 3611245689524078650}
+  - component: {fileID: 6184722862065734539}
   m_Layer: 0
   m_Name: Zombie_Jacket_Male_01
   m_TagString: Untagged
@@ -3164,6 +3489,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.0000013709068, y: 0.85721916, z: -0.08269866}
     m_Extent: {x: 1.0245605, y: 0.9553215, z: 0.27594912}
   m_DirtyAABB: 0
+--- !u!114 &6184722862065734539
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746077370129003582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746079170348595404
 GameObject:
   m_ObjectHideFlags: 0
@@ -3174,6 +3516,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3741316753604684246}
   - component: {fileID: 3611179459637734148}
+  - component: {fileID: 7553845626397280717}
   m_Layer: 0
   m_Name: Zombie_BioHazardSuit_Male_01
   m_TagString: Untagged
@@ -3302,6 +3645,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0, y: 0.8907193, z: -0.054586552}
     m_Extent: {x: 1.0245618, y: 0.9918127, z: 0.28943938}
   m_DirtyAABB: 0
+--- !u!114 &7553845626397280717
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746079170348595404}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746081178304323032
 GameObject:
   m_ObjectHideFlags: 0
@@ -3312,6 +3672,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3743679193668550720}
   - component: {fileID: 3611047917576676758}
+  - component: {fileID: 2423482951043864439}
   m_Layer: 0
   m_Name: Zombie_Father_Male_01
   m_TagString: Untagged
@@ -3440,6 +3801,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.000000059604645, y: 0.8628936, z: -0.0372051}
     m_Extent: {x: 1.0245616, y: 0.96665716, z: 0.26662716}
   m_DirtyAABB: 0
+--- !u!114 &2423482951043864439
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746081178304323032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746082051714748624
 GameObject:
   m_ObjectHideFlags: 0
@@ -3485,6 +3863,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3743747029422473004}
   - component: {fileID: 3611107636824951368}
+  - component: {fileID: 1586681327355732623}
   m_Layer: 0
   m_Name: Zombie_Grandpa_Male_01
   m_TagString: Untagged
@@ -3613,6 +3992,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.0000005364418, y: 0.8536799, z: -0.05001469}
     m_Extent: {x: 1.0245619, y: 0.95463395, z: 0.27124637}
   m_DirtyAABB: 0
+--- !u!114 &1586681327355732623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746095903912131892}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746098593892091458
 GameObject:
   m_ObjectHideFlags: 0
@@ -3623,6 +4019,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3741225141209382216}
   - component: {fileID: 3608302182443683996}
+  - component: {fileID: 4321104210880218107}
   m_Layer: 0
   m_Name: Zombie_Jacket_Female_01
   m_TagString: Untagged
@@ -3751,6 +4148,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.008365154, y: 0.84712285, z: -0.061930478}
     m_Extent: {x: 1.0295683, y: 0.96141595, z: 0.26370487}
   m_DirtyAABB: 0
+--- !u!114 &4321104210880218107
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746098593892091458}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746112232224471070
 GameObject:
   m_ObjectHideFlags: 0
@@ -3761,6 +4175,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3740978778024004438}
   - component: {fileID: 3607998041330454638}
+  - component: {fileID: 1057692773087209888}
   m_Layer: 0
   m_Name: Zombie_Hobo_Male_01
   m_TagString: Untagged
@@ -3889,6 +4304,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.0000004172325, y: 0.87291247, z: -0.046375617}
     m_Extent: {x: 1.0245585, y: 0.97385913, z: 0.31776613}
   m_DirtyAABB: 0
+--- !u!114 &1057692773087209888
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746112232224471070}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746147168296716310
 GameObject:
   m_ObjectHideFlags: 0
@@ -3931,6 +4363,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3743704806980657772}
   - component: {fileID: 3608129866404751786}
+  - component: {fileID: 4070582915542555587}
   m_Layer: 0
   m_Name: Zombie_Businessman_Male_01
   m_TagString: Untagged
@@ -4059,6 +4492,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.000000059604645, y: 0.8749251, z: -0.052453183}
     m_Extent: {x: 1.024559, y: 0.97303015, z: 0.28074017}
   m_DirtyAABB: 0
+--- !u!114 &4070582915542555587
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746148082635637066}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746373646841273954
 GameObject:
   m_ObjectHideFlags: 0
@@ -4101,6 +4551,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3741354781962608862}
   - component: {fileID: 3611113039425600066}
+  - component: {fileID: 7361975493655558608}
   m_Layer: 0
   m_Name: Zombie_Paramedic_Female_01
   m_TagString: Untagged
@@ -4229,6 +4680,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.00005966425, y: 0.8648151, z: -0.030372754}
     m_Extent: {x: 1.0212102, y: 0.96761703, z: 0.20725058}
   m_DirtyAABB: 0
+--- !u!114 &7361975493655558608
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746375914039205898}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746392782786818834
 GameObject:
   m_ObjectHideFlags: 0
@@ -4239,6 +4707,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3743660151919595004}
   - component: {fileID: 3607598416262582224}
+  - component: {fileID: 2564532217553754811}
   m_Layer: 0
   m_Name: Zombie_Underwear_Male_01
   m_TagString: Untagged
@@ -4367,6 +4836,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.000000059604645, y: 0.84347886, z: -0.06108754}
     m_Extent: {x: 1.0245616, y: 0.94457227, z: 0.25316468}
   m_DirtyAABB: 0
+--- !u!114 &2564532217553754811
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746392782786818834}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746393992645217698
 GameObject:
   m_ObjectHideFlags: 0
@@ -4377,6 +4863,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3744092037708185106}
   - component: {fileID: 3611130425594364870}
+  - component: {fileID: 5206177642225886672}
   m_Layer: 0
   m_Name: Zombie_Father_Male_02
   m_TagString: Untagged
@@ -4505,6 +4992,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.000000059604645, y: 0.8588844, z: -0.018711463}
     m_Extent: {x: 1.0245616, y: 0.960074, z: 0.2860273}
   m_DirtyAABB: 0
+--- !u!114 &5206177642225886672
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746393992645217698}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746438670923468336
 GameObject:
   m_ObjectHideFlags: 0
@@ -4515,6 +5019,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3741198006776736876}
   - component: {fileID: 3607969267874915190}
+  - component: {fileID: 3857857870275835885}
   m_Layer: 0
   m_Name: Zombie_Prisinor_Male_01
   m_TagString: Untagged
@@ -4643,6 +5148,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.000009775162, y: 0.85448074, z: -0.058943845}
     m_Extent: {x: 1.0245531, y: 0.95557415, z: 0.25646943}
   m_DirtyAABB: 0
+--- !u!114 &3857857870275835885
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746438670923468336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746450885365145996
 GameObject:
   m_ObjectHideFlags: 0
@@ -4748,6 +5270,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3741261433749523082}
   - component: {fileID: 3608451457465942876}
+  - component: {fileID: 576560834743935894}
   m_Layer: 0
   m_Name: Zombie_Son_Male_01
   m_TagString: Untagged
@@ -4876,6 +5399,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.0000006556511, y: 0.8681336, z: -0.0150977075}
     m_Extent: {x: 1.0245624, y: 0.96935433, z: 0.26414928}
   m_DirtyAABB: 0
+--- !u!114 &576560834743935894
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746467453511678960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746471999334093616
 GameObject:
   m_ObjectHideFlags: 0
@@ -4918,6 +5458,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3744011923148665312}
   - component: {fileID: 3611171997773385494}
+  - component: {fileID: 9173601168804994396}
   m_Layer: 0
   m_Name: Zombie_Clown_Male_01
   m_TagString: Untagged
@@ -5046,6 +5587,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.0000005364418, y: 0.8790802, z: -0.06587259}
     m_Extent: {x: 1.0245616, y: 0.9902586, z: 0.28054982}
   m_DirtyAABB: 0
+--- !u!114 &9173601168804994396
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746477236427485990}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746490384753053152
 GameObject:
   m_ObjectHideFlags: 0
@@ -5056,6 +5614,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3744160193281993502}
   - component: {fileID: 3608504463294184006}
+  - component: {fileID: 780919429074463703}
   m_Layer: 0
   m_Name: Zombie_Bellboy_Male_01
   m_TagString: Untagged
@@ -5071,12 +5630,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3746490384753053152}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0.69579417, y: -0.71824133, z: 0.000000040978193, w: 0.000000059604645}
+  m_LocalPosition: {x: -0.827998, y: -0.12531176, z: -0.02046907}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 5979949113929886864}
+  m_Father: {fileID: 3743822791207023592}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!137 &3608504463294184006
 SkinnedMeshRenderer:
@@ -5184,6 +5743,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.0000010728836, y: 0.8709697, z: -0.05633028}
     m_Extent: {x: 1.0245606, y: 0.9690748, z: 0.27961087}
   m_DirtyAABB: 0
+--- !u!114 &780919429074463703
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746490384753053152}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746496667958419584
 GameObject:
   m_ObjectHideFlags: 0
@@ -5258,6 +5834,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3740912297496882348}
   - component: {fileID: 3611309544075357762}
+  - component: {fileID: 3942457623397870792}
   m_Layer: 0
   m_Name: Zombie_Diver_Male_01
   m_TagString: Untagged
@@ -5386,6 +5963,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.000000059604645, y: 0.8309231, z: -0.0026285201}
     m_Extent: {x: 1.0245616, y: 1.011824, z: 0.32951927}
   m_DirtyAABB: 0
+--- !u!114 &3942457623397870792
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746516739716421142}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746538153089574452
 GameObject:
   m_ObjectHideFlags: 0
@@ -5525,6 +6119,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3740833309169673848}
   - component: {fileID: 3611140376386888442}
+  - component: {fileID: 9185090259826867040}
   m_Layer: 0
   m_Name: Zombie_GamerGirl_Female_01
   m_TagString: Untagged
@@ -5653,6 +6248,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.00056540966, y: 0.881389, z: -0.027481169}
     m_Extent: {x: 1.0219108, y: 0.97898054, z: 0.21215367}
   m_DirtyAABB: 0
+--- !u!114 &9185090259826867040
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746570068823306920}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746577980958600768
 GameObject:
   m_ObjectHideFlags: 0
@@ -5663,6 +6275,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3740807163137342252}
   - component: {fileID: 3608468665314963448}
+  - component: {fileID: 3509984033137275453}
   m_Layer: 0
   m_Name: Zombie_Police_Male_01
   m_TagString: Untagged
@@ -5791,6 +6404,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0, y: 0.87884206, z: -0.04523465}
     m_Extent: {x: 1.0245593, y: 0.97993547, z: 0.29640326}
   m_DirtyAABB: 0
+--- !u!114 &3509984033137275453
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746577980958600768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746590859999228458
 GameObject:
   m_ObjectHideFlags: 0
@@ -5897,6 +6527,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3743628639471814020}
   - component: {fileID: 3608129059152190760}
+  - component: {fileID: 8162950659630601437}
   m_Layer: 0
   m_Name: Zombie_Mother_Female_01
   m_TagString: Untagged
@@ -6025,6 +6656,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.0000010728836, y: 0.8664693, z: -0.02248633}
     m_Extent: {x: 1.0212042, y: 0.9848384, z: 0.2334263}
   m_DirtyAABB: 0
+--- !u!114 &8162950659630601437
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746642912760149380}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746657254335561846
 GameObject:
   m_ObjectHideFlags: 0
@@ -6035,6 +6683,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3741351344956864084}
   - component: {fileID: 3608006766180921846}
+  - component: {fileID: 6447021089015930315}
   m_Layer: 0
   m_Name: Zombie_Daughter_Female_01
   m_TagString: Untagged
@@ -6163,6 +6812,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0, y: 0.8683889, z: -0.04475385}
     m_Extent: {x: 1.0212042, y: 0.97069657, z: 0.22818255}
   m_DirtyAABB: 0
+--- !u!114 &6447021089015930315
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746657254335561846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746657988233567104
 GameObject:
   m_ObjectHideFlags: 0
@@ -6237,6 +6903,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3740869405162834460}
   - component: {fileID: 3608111369654923248}
+  - component: {fileID: 4934967388051535270}
   m_Layer: 0
   m_Name: Zombie_Firefighter_Male_01
   m_TagString: Untagged
@@ -6365,6 +7032,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.0000012516975, y: 0.8871802, z: -0.056825653}
     m_Extent: {x: 1.0245605, y: 0.99305403, z: 0.30242777}
   m_DirtyAABB: 0
+--- !u!114 &4934967388051535270
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746675419158268696}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746681573740036336
 GameObject:
   m_ObjectHideFlags: 0
@@ -6375,6 +7059,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3743642667376051020}
   - component: {fileID: 3607965729471602870}
+  - component: {fileID: 710241420228626933}
   m_Layer: 0
   m_Name: Zombie_Bride_Female_01
   m_TagString: Untagged
@@ -6503,6 +7188,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0, y: 0.87408054, z: -0.043592148}
     m_Extent: {x: 1.0212042, y: 0.9707413, z: 0.21347183}
   m_DirtyAABB: 0
+--- !u!114 &710241420228626933
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746681573740036336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746684257052438414
 GameObject:
   m_ObjectHideFlags: 0
@@ -6513,6 +7215,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3743799041058321356}
   - component: {fileID: 3608354723125003542}
+  - component: {fileID: 5211465178632367377}
   m_Layer: 0
   m_Name: Zombie_Business_Female_01
   m_TagString: Untagged
@@ -6641,6 +7344,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.0000006556511, y: 0.86576533, z: -0.046856247}
     m_Extent: {x: 1.0212042, y: 0.9584112, z: 0.2545382}
   m_DirtyAABB: 0
+--- !u!114 &5211465178632367377
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746684257052438414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746687491572859514
 GameObject:
   m_ObjectHideFlags: 0
@@ -6651,6 +7371,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3744049097083530556}
   - component: {fileID: 3608480145339924854}
+  - component: {fileID: 2648834114193307023}
   m_Layer: 0
   m_Name: Zombie_Military_Male_01
   m_TagString: Untagged
@@ -6779,6 +7500,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.000002503395, y: 0.8600756, z: -0.05076456}
     m_Extent: {x: 1.0245622, y: 0.958189, z: 0.27500698}
   m_DirtyAABB: 0
+--- !u!114 &2648834114193307023
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746687491572859514}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746695903815777054
 GameObject:
   m_ObjectHideFlags: 0
@@ -6789,6 +7527,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3741157463559840736}
   - component: {fileID: 3608127265897778418}
+  - component: {fileID: 1200634829736721014}
   m_Layer: 0
   m_Name: Zombie_Punk_Female_01
   m_TagString: Untagged
@@ -6917,6 +7656,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.00000071525574, y: 0.8672102, z: -0.0070779473}
     m_Extent: {x: 1.0212886, y: 0.9723726, z: 0.18408628}
   m_DirtyAABB: 0
+--- !u!114 &1200634829736721014
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746695903815777054}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746716058011467066
 GameObject:
   m_ObjectHideFlags: 0
@@ -6927,6 +7683,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3743814801886600110}
   - component: {fileID: 3608286989328909022}
+  - component: {fileID: 2119716194027810937}
   m_Layer: 0
   m_Name: Zombie_Biker_Male_01
   m_TagString: Untagged
@@ -7055,6 +7812,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.0000009536743, y: 0.8666966, z: -0.031073213}
     m_Extent: {x: 1.0245591, y: 0.96764326, z: 0.2912987}
   m_DirtyAABB: 0
+--- !u!114 &2119716194027810937
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746716058011467066}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746718224505128676
 GameObject:
   m_ObjectHideFlags: 0
@@ -7065,6 +7839,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3740881097204050908}
   - component: {fileID: 3607612560757760662}
+  - component: {fileID: 4426807304213776292}
   m_Layer: 0
   m_Name: Zombie_Cheerleader_Female_01
   m_TagString: Untagged
@@ -7193,6 +7968,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.00000035762787, y: 0.86976415, z: -0.030808568}
     m_Extent: {x: 1.021204, y: 0.96616477, z: 0.22604132}
   m_DirtyAABB: 0
+--- !u!114 &4426807304213776292
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746718224505128676}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746725120032818228
 GameObject:
   m_ObjectHideFlags: 0
@@ -7299,6 +8091,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3741321331779923878}
   - component: {fileID: 3608330479123909620}
+  - component: {fileID: 2488677955057666592}
   m_Layer: 0
   m_Name: Zombie_Grandma_Female_01
   m_TagString: Untagged
@@ -7427,6 +8220,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.0002900362, y: 0.8643121, z: -0.028963424}
     m_Extent: {x: 1.0221575, y: 0.9775941, z: 0.21287754}
   m_DirtyAABB: 0
+--- !u!114 &2488677955057666592
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746768963633211366}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746779090047513336
 GameObject:
   m_ObjectHideFlags: 0
@@ -7567,6 +8377,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3740995615161319044}
   - component: {fileID: 3611171736328864088}
+  - component: {fileID: 6220764264616072963}
   m_Layer: 0
   m_Name: Zombie_Hipster_Female_01
   m_TagString: Untagged
@@ -7695,6 +8506,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.0005655885, y: 0.8797956, z: -0.041718274}
     m_Extent: {x: 1.0219107, y: 0.98099154, z: 0.22400343}
   m_DirtyAABB: 0
+--- !u!114 &6220764264616072963
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746809132697475994}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746819096358372394
 GameObject:
   m_ObjectHideFlags: 0
@@ -7768,6 +8596,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3741282429902255986}
   - component: {fileID: 3607985323724810362}
+  - component: {fileID: 8747945793781741209}
   m_Layer: 0
   m_Name: Zombie_Hoodie_Male_01
   m_TagString: Untagged
@@ -7896,6 +8725,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.000000059604645, y: 0.8551386, z: -0.07861956}
     m_Extent: {x: 1.02456, y: 0.956232, z: 0.27374926}
   m_DirtyAABB: 0
+--- !u!114 &8747945793781741209
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746842854899153314}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746856488807794976
 GameObject:
   m_ObjectHideFlags: 0
@@ -7938,6 +8784,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3741324365326855254}
   - component: {fileID: 3610773425006509302}
+  - component: {fileID: 432241966929686459}
   m_Layer: 0
   m_Name: Zombie_Coat_Female_01
   m_TagString: Untagged
@@ -8066,6 +8913,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.0000011920929, y: 0.861858, z: -0.05371663}
     m_Extent: {x: 1.021203, y: 0.9599631, z: 0.250526}
   m_DirtyAABB: 0
+--- !u!114 &432241966929686459
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746869690825791862}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746891322341977132
 GameObject:
   m_ObjectHideFlags: 0
@@ -8108,6 +8972,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3741169525185710206}
   - component: {fileID: 3608053210137842836}
+  - component: {fileID: 1512175568920545167}
   m_Layer: 0
   m_Name: Zombie_SummerGirl_Female_01
   m_TagString: Untagged
@@ -8236,6 +9101,23 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.0006210804, y: 0.85945916, z: 0.006226197}
     m_Extent: {x: 1.0219103, y: 0.96411824, z: 0.26297814}
   m_DirtyAABB: 0
+--- !u!114 &1512175568920545167
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746927896134568840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746930183276750982
 GameObject:
   m_ObjectHideFlags: 0
@@ -8266,6 +9148,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3743691314375084538}
+  - {fileID: 3744160193281993502}
   m_Father: {fileID: 3741182523159947650}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3746934504312357186
@@ -8342,6 +9225,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3743954920714769318}
   - component: {fileID: 3608479988832787658}
+  - component: {fileID: 1339620894601960647}
   m_Layer: 0
   m_Name: Zombie_FastfoodWorker_Male_01
   m_TagString: Untagged
@@ -8470,6 +9354,23 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.00000071525574, y: 0.89914477, z: -0.040284768}
     m_Extent: {x: 1.0245595, y: 1.0059437, z: 0.2968802}
   m_DirtyAABB: 0
+--- !u!114 &1339620894601960647
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3746958779772989046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a2aff6ddcf8042b48a8d8d182232e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  materials:
+  - {fileID: 2100000, guid: 5545c89bb0a75004bbe217d139a97e89, type: 2}
+  - {fileID: 2100000, guid: a7617607466826e4cb2d99cd90200ebd, type: 2}
+  - {fileID: 2100000, guid: 7f2790332154c79459a9115b8faf30dd, type: 2}
+  materialSlots: 
 --- !u!1 &3746990332861394310
 GameObject:
   m_ObjectHideFlags: 0
@@ -8537,7 +9438,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3743715633581648348}
-  - {fileID: 3744160193281993502}
   - {fileID: 3743814801886600110}
   - {fileID: 3741316753604684246}
   - {fileID: 3743642667376051020}
