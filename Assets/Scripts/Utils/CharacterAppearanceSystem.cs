@@ -35,9 +35,32 @@ public class CharacterAppearanceSystem
     [SerializeField] private AppearanceOption[] helmets; // Protective headwear (helmets, masks, etc.)
     [SerializeField] private AppearanceOption[] faceAccessories; // Glasses, masks, visors, etc.
     
+    [Header("Shoulder Accessories")]
+    [SerializeField] private AppearanceOption[] leftShoulderAccessories; // Left pauldrons, shoulder pads
+    [SerializeField] private AppearanceOption[] rightShoulderAccessories; // Right pauldrons, shoulder pads
+    
+    [Header("Forearm Accessories")]
+    [SerializeField] private AppearanceOption[] leftForearmAccessories; // Left bracers, arm guards
+    [SerializeField] private AppearanceOption[] rightForearmAccessories; // Right bracers, arm guards
+    
+    [Header("Hand Accessories")]
+    [SerializeField] private AppearanceOption[] leftHandAccessories; // Left gloves, bracelets
+    [SerializeField] private AppearanceOption[] rightHandAccessories; // Right gloves, bracelets
+    
+    [Header("Hip Accessories")]
+    [SerializeField] private AppearanceOption[] leftHipAccessories; // Left hip pouches, holsters
+    [SerializeField] private AppearanceOption[] rightHipAccessories; // Right hip pouches, holsters
+    
+    [Header("Calf Accessories")]
+    [SerializeField] private AppearanceOption[] leftCalfAccessories; // Left shin guards, leg wraps
+    [SerializeField] private AppearanceOption[] rightCalfAccessories; // Right shin guards, leg wraps
+    
+    [Header("Foot Accessories")]
+    [SerializeField] private AppearanceOption[] leftFootAccessories; // Left ankle accessories, spurs
+    [SerializeField] private AppearanceOption[] rightFootAccessories; // Right ankle accessories, spurs
+    
     [Header("Other Accessories")]
     [SerializeField] private AppearanceOption[] backAccessories; // Backpacks, cloaks
-    [SerializeField] private AppearanceOption[] handAccessories; // Gloves, bracelets
     
     [Header("Material Variants")]
     [SerializeField] private Material[] skinMaterials; // Different skin tones
@@ -48,8 +71,19 @@ public class CharacterAppearanceSystem
     [Range(0f, 1f)] [SerializeField] private float hatChance = 0.3f;
     [Range(0f, 1f)] [SerializeField] private float helmetChance = 0.2f;
     [Range(0f, 1f)] [SerializeField] private float faceAccessoryChance = 0.15f;
+    [Range(0f, 1f)] [SerializeField] private float leftShoulderAccessoryChance = 0.25f;
+    [Range(0f, 1f)] [SerializeField] private float rightShoulderAccessoryChance = 0.25f;
+    [Range(0f, 1f)] [SerializeField] private float leftForearmAccessoryChance = 0.25f;
+    [Range(0f, 1f)] [SerializeField] private float rightForearmAccessoryChance = 0.25f;
+    [Range(0f, 1f)] [SerializeField] private float leftHandAccessoryChance = 0.2f;
+    [Range(0f, 1f)] [SerializeField] private float rightHandAccessoryChance = 0.2f;
+    [Range(0f, 1f)] [SerializeField] private float leftHipAccessoryChance = 0.25f;
+    [Range(0f, 1f)] [SerializeField] private float rightHipAccessoryChance = 0.25f;
+    [Range(0f, 1f)] [SerializeField] private float leftCalfAccessoryChance = 0.2f;
+    [Range(0f, 1f)] [SerializeField] private float rightCalfAccessoryChance = 0.2f;
+    [Range(0f, 1f)] [SerializeField] private float leftFootAccessoryChance = 0.15f;
+    [Range(0f, 1f)] [SerializeField] private float rightFootAccessoryChance = 0.15f;
     [Range(0f, 1f)] [SerializeField] private float backAccessoryChance = 0.4f;
-    [Range(0f, 1f)] [SerializeField] private float handAccessoryChance = 0.2f;
     
     private Transform characterTransform;
     private string characterName;
@@ -217,17 +251,183 @@ public class CharacterAppearanceSystem
             }
         }
         
-        if (handAccessories != null && handAccessories.Length > 0)
+        // Left shoulder
+        if (leftShoulderAccessories != null && leftShoulderAccessories.Length > 0)
         {
-            if (!activeExclusions.HasFlag(AppearanceExclusions.HandAccessories) && 
-                UnityEngine.Random.value <= handAccessoryChance)
+            if (!activeExclusions.HasFlag(AppearanceExclusions.LeftShoulderAccessories) && 
+                UnityEngine.Random.value <= leftShoulderAccessoryChance)
             {
-                var selected = ActivateRandomModel(handAccessories, "Hand Accessory");
+                var selected = ActivateRandomModel(leftShoulderAccessories, "Left Shoulder Accessory");
                 if (selected != null) activeExclusions |= selected.exclusions;
             }
             else
             {
-                DeactivateAllInCategory(handAccessories); // Deactivate if excluded or not spawned
+                DeactivateAllInCategory(leftShoulderAccessories);
+            }
+        }
+        
+        // Right shoulder
+        if (rightShoulderAccessories != null && rightShoulderAccessories.Length > 0)
+        {
+            if (!activeExclusions.HasFlag(AppearanceExclusions.RightShoulderAccessories) && 
+                UnityEngine.Random.value <= rightShoulderAccessoryChance)
+            {
+                var selected = ActivateRandomModel(rightShoulderAccessories, "Right Shoulder Accessory");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(rightShoulderAccessories);
+            }
+        }
+        
+        // Left forearm
+        if (leftForearmAccessories != null && leftForearmAccessories.Length > 0)
+        {
+            if (!activeExclusions.HasFlag(AppearanceExclusions.LeftForearmAccessories) && 
+                UnityEngine.Random.value <= leftForearmAccessoryChance)
+            {
+                var selected = ActivateRandomModel(leftForearmAccessories, "Left Forearm Accessory");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(leftForearmAccessories);
+            }
+        }
+        
+        // Right forearm
+        if (rightForearmAccessories != null && rightForearmAccessories.Length > 0)
+        {
+            if (!activeExclusions.HasFlag(AppearanceExclusions.RightForearmAccessories) && 
+                UnityEngine.Random.value <= rightForearmAccessoryChance)
+            {
+                var selected = ActivateRandomModel(rightForearmAccessories, "Right Forearm Accessory");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(rightForearmAccessories);
+            }
+        }
+        
+        // Left hand
+        if (leftHandAccessories != null && leftHandAccessories.Length > 0)
+        {
+            if (!activeExclusions.HasFlag(AppearanceExclusions.LeftHandAccessories) && 
+                UnityEngine.Random.value <= leftHandAccessoryChance)
+            {
+                var selected = ActivateRandomModel(leftHandAccessories, "Left Hand Accessory");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(leftHandAccessories);
+            }
+        }
+        
+        // Right hand
+        if (rightHandAccessories != null && rightHandAccessories.Length > 0)
+        {
+            if (!activeExclusions.HasFlag(AppearanceExclusions.RightHandAccessories) && 
+                UnityEngine.Random.value <= rightHandAccessoryChance)
+            {
+                var selected = ActivateRandomModel(rightHandAccessories, "Right Hand Accessory");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(rightHandAccessories);
+            }
+        }
+        
+        // Left hip
+        if (leftHipAccessories != null && leftHipAccessories.Length > 0)
+        {
+            if (!activeExclusions.HasFlag(AppearanceExclusions.LeftHipAccessories) && 
+                UnityEngine.Random.value <= leftHipAccessoryChance)
+            {
+                var selected = ActivateRandomModel(leftHipAccessories, "Left Hip Accessory");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(leftHipAccessories);
+            }
+        }
+        
+        // Right hip
+        if (rightHipAccessories != null && rightHipAccessories.Length > 0)
+        {
+            if (!activeExclusions.HasFlag(AppearanceExclusions.RightHipAccessories) && 
+                UnityEngine.Random.value <= rightHipAccessoryChance)
+            {
+                var selected = ActivateRandomModel(rightHipAccessories, "Right Hip Accessory");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(rightHipAccessories);
+            }
+        }
+        
+        // Left calf
+        if (leftCalfAccessories != null && leftCalfAccessories.Length > 0)
+        {
+            if (!activeExclusions.HasFlag(AppearanceExclusions.LeftCalfAccessories) && 
+                UnityEngine.Random.value <= leftCalfAccessoryChance)
+            {
+                var selected = ActivateRandomModel(leftCalfAccessories, "Left Calf Accessory");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(leftCalfAccessories);
+            }
+        }
+        
+        // Right calf
+        if (rightCalfAccessories != null && rightCalfAccessories.Length > 0)
+        {
+            if (!activeExclusions.HasFlag(AppearanceExclusions.RightCalfAccessories) && 
+                UnityEngine.Random.value <= rightCalfAccessoryChance)
+            {
+                var selected = ActivateRandomModel(rightCalfAccessories, "Right Calf Accessory");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(rightCalfAccessories);
+            }
+        }
+        
+        // Left foot
+        if (leftFootAccessories != null && leftFootAccessories.Length > 0)
+        {
+            if (!activeExclusions.HasFlag(AppearanceExclusions.LeftFootAccessories) && 
+                UnityEngine.Random.value <= leftFootAccessoryChance)
+            {
+                var selected = ActivateRandomModel(leftFootAccessories, "Left Foot Accessory");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(leftFootAccessories);
+            }
+        }
+        
+        // Right foot
+        if (rightFootAccessories != null && rightFootAccessories.Length > 0)
+        {
+            if (!activeExclusions.HasFlag(AppearanceExclusions.RightFootAccessories) && 
+                UnityEngine.Random.value <= rightFootAccessoryChance)
+            {
+                var selected = ActivateRandomModel(rightFootAccessories, "Right Foot Accessory");
+                if (selected != null) activeExclusions |= selected.exclusions;
+            }
+            else
+            {
+                DeactivateAllInCategory(rightFootAccessories);
             }
         }        
         
@@ -378,8 +578,19 @@ public class CharacterAppearanceSystem
         DeactivateAllInCategory(hats);
         DeactivateAllInCategory(helmets);
         DeactivateAllInCategory(faceAccessories);
+        DeactivateAllInCategory(leftShoulderAccessories);
+        DeactivateAllInCategory(rightShoulderAccessories);
+        DeactivateAllInCategory(leftForearmAccessories);
+        DeactivateAllInCategory(rightForearmAccessories);
+        DeactivateAllInCategory(leftHandAccessories);
+        DeactivateAllInCategory(rightHandAccessories);
+        DeactivateAllInCategory(leftHipAccessories);
+        DeactivateAllInCategory(rightHipAccessories);
+        DeactivateAllInCategory(leftCalfAccessories);
+        DeactivateAllInCategory(rightCalfAccessories);
+        DeactivateAllInCategory(leftFootAccessories);
+        DeactivateAllInCategory(rightFootAccessories);
         DeactivateAllInCategory(backAccessories);
-        DeactivateAllInCategory(handAccessories);
         
         activeModels.Clear();
     }
@@ -426,13 +637,57 @@ public class CharacterAppearanceSystem
         {
             ActivateModelByName(faceAccessories, appearanceData.faceAccessoryName, "Face Accessory");
         }
+        if (!string.IsNullOrEmpty(appearanceData.leftShoulderAccessoryName))
+        {
+            ActivateModelByName(leftShoulderAccessories, appearanceData.leftShoulderAccessoryName, "Left Shoulder Accessory");
+        }
+        if (!string.IsNullOrEmpty(appearanceData.rightShoulderAccessoryName))
+        {
+            ActivateModelByName(rightShoulderAccessories, appearanceData.rightShoulderAccessoryName, "Right Shoulder Accessory");
+        }
+        if (!string.IsNullOrEmpty(appearanceData.leftForearmAccessoryName))
+        {
+            ActivateModelByName(leftForearmAccessories, appearanceData.leftForearmAccessoryName, "Left Forearm Accessory");
+        }
+        if (!string.IsNullOrEmpty(appearanceData.rightForearmAccessoryName))
+        {
+            ActivateModelByName(rightForearmAccessories, appearanceData.rightForearmAccessoryName, "Right Forearm Accessory");
+        }
+        if (!string.IsNullOrEmpty(appearanceData.leftHandAccessoryName))
+        {
+            ActivateModelByName(leftHandAccessories, appearanceData.leftHandAccessoryName, "Left Hand Accessory");
+        }
+        if (!string.IsNullOrEmpty(appearanceData.rightHandAccessoryName))
+        {
+            ActivateModelByName(rightHandAccessories, appearanceData.rightHandAccessoryName, "Right Hand Accessory");
+        }
+        if (!string.IsNullOrEmpty(appearanceData.leftHipAccessoryName))
+        {
+            ActivateModelByName(leftHipAccessories, appearanceData.leftHipAccessoryName, "Left Hip Accessory");
+        }
+        if (!string.IsNullOrEmpty(appearanceData.rightHipAccessoryName))
+        {
+            ActivateModelByName(rightHipAccessories, appearanceData.rightHipAccessoryName, "Right Hip Accessory");
+        }
+        if (!string.IsNullOrEmpty(appearanceData.leftCalfAccessoryName))
+        {
+            ActivateModelByName(leftCalfAccessories, appearanceData.leftCalfAccessoryName, "Left Calf Accessory");
+        }
+        if (!string.IsNullOrEmpty(appearanceData.rightCalfAccessoryName))
+        {
+            ActivateModelByName(rightCalfAccessories, appearanceData.rightCalfAccessoryName, "Right Calf Accessory");
+        }
+        if (!string.IsNullOrEmpty(appearanceData.leftFootAccessoryName))
+        {
+            ActivateModelByName(leftFootAccessories, appearanceData.leftFootAccessoryName, "Left Foot Accessory");
+        }
+        if (!string.IsNullOrEmpty(appearanceData.rightFootAccessoryName))
+        {
+            ActivateModelByName(rightFootAccessories, appearanceData.rightFootAccessoryName, "Right Foot Accessory");
+        }
         if (!string.IsNullOrEmpty(appearanceData.backAccessoryName))
         {
             ActivateModelByName(backAccessories, appearanceData.backAccessoryName, "Back Accessory");
-        }
-        if (!string.IsNullOrEmpty(appearanceData.handAccessoryName))
-        {
-            ActivateModelByName(handAccessories, appearanceData.handAccessoryName, "Hand Accessory");
         }
 
         // Apply saved materials
@@ -500,13 +755,57 @@ public class CharacterAppearanceSystem
             {
                 appearanceData.faceAccessoryName = modelName;
             }
+            else if (IsModelInArray(activeModel, leftShoulderAccessories))
+            {
+                appearanceData.leftShoulderAccessoryName = modelName;
+            }
+            else if (IsModelInArray(activeModel, rightShoulderAccessories))
+            {
+                appearanceData.rightShoulderAccessoryName = modelName;
+            }
+            else if (IsModelInArray(activeModel, leftForearmAccessories))
+            {
+                appearanceData.leftForearmAccessoryName = modelName;
+            }
+            else if (IsModelInArray(activeModel, rightForearmAccessories))
+            {
+                appearanceData.rightForearmAccessoryName = modelName;
+            }
+            else if (IsModelInArray(activeModel, leftHandAccessories))
+            {
+                appearanceData.leftHandAccessoryName = modelName;
+            }
+            else if (IsModelInArray(activeModel, rightHandAccessories))
+            {
+                appearanceData.rightHandAccessoryName = modelName;
+            }
+            else if (IsModelInArray(activeModel, leftHipAccessories))
+            {
+                appearanceData.leftHipAccessoryName = modelName;
+            }
+            else if (IsModelInArray(activeModel, rightHipAccessories))
+            {
+                appearanceData.rightHipAccessoryName = modelName;
+            }
+            else if (IsModelInArray(activeModel, leftCalfAccessories))
+            {
+                appearanceData.leftCalfAccessoryName = modelName;
+            }
+            else if (IsModelInArray(activeModel, rightCalfAccessories))
+            {
+                appearanceData.rightCalfAccessoryName = modelName;
+            }
+            else if (IsModelInArray(activeModel, leftFootAccessories))
+            {
+                appearanceData.leftFootAccessoryName = modelName;
+            }
+            else if (IsModelInArray(activeModel, rightFootAccessories))
+            {
+                appearanceData.rightFootAccessoryName = modelName;
+            }
             else if (IsModelInArray(activeModel, backAccessories))
             {
                 appearanceData.backAccessoryName = modelName;
-            }
-            else if (IsModelInArray(activeModel, handAccessories))
-            {
-                appearanceData.handAccessoryName = modelName;
             }
 
             // Get material names from the active model
@@ -635,18 +934,41 @@ public class CharacterAppearanceSystem
 public enum AppearanceExclusions
 {
     None = 0,
-    Hair = 1 << 0,              // Blocks hair models
-    Hats = 1 << 1,              // Blocks hats (casual headwear)
-    Helmets = 1 << 2,           // Blocks helmets (protective headwear)
-    FaceAccessories = 1 << 3,   // Blocks face accessories (glasses, masks, visors)
-    BackAccessories = 1 << 4,   // Blocks back accessories (backpacks, cloaks)
-    HandAccessories = 1 << 5,   // Blocks hand accessories (gloves, bracelets)
-    TopClothing = 1 << 6,       // Blocks top clothing (for full body suits)
-    BottomClothing = 1 << 7,    // Blocks bottom clothing (for full body suits)
-    Footwear = 1 << 8,          // Blocks footwear (for full body suits)
-    SkinMaterials = 1 << 9,     // Blocks skin material variation (for full coverage)
-    HairMaterials = 1 << 10,    // Blocks hair material variation
-    ClothingMaterials = 1 << 11 // Blocks clothing material variation
+    Hair = 1 << 0,                      // Blocks hair models
+    Hats = 1 << 1,                      // Blocks hats (casual headwear)
+    Helmets = 1 << 2,                   // Blocks helmets (protective headwear)
+    FaceAccessories = 1 << 3,           // Blocks face accessories (glasses, masks, visors)
+    LeftShoulderAccessories = 1 << 4,   // Blocks left shoulder accessories
+    RightShoulderAccessories = 1 << 5,  // Blocks right shoulder accessories
+    LeftForearmAccessories = 1 << 6,    // Blocks left forearm accessories
+    RightForearmAccessories = 1 << 7,   // Blocks right forearm accessories
+    LeftHandAccessories = 1 << 8,       // Blocks left hand accessories
+    RightHandAccessories = 1 << 9,      // Blocks right hand accessories
+    LeftHipAccessories = 1 << 10,       // Blocks left hip accessories
+    RightHipAccessories = 1 << 11,      // Blocks right hip accessories
+    LeftCalfAccessories = 1 << 12,      // Blocks left calf accessories
+    RightCalfAccessories = 1 << 13,     // Blocks right calf accessories
+    LeftFootAccessories = 1 << 14,      // Blocks left foot accessories
+    RightFootAccessories = 1 << 15,     // Blocks right foot accessories
+    BackAccessories = 1 << 16,          // Blocks back accessories (backpacks, cloaks)
+    TopClothing = 1 << 17,              // Blocks top clothing (for full body suits)
+    BottomClothing = 1 << 18,           // Blocks bottom clothing (for full body suits)
+    Footwear = 1 << 19,                 // Blocks footwear (for full body suits)
+    SkinMaterials = 1 << 20,            // Blocks skin material variation (for full coverage)
+    HairMaterials = 1 << 21,            // Blocks hair material variation
+    ClothingMaterials = 1 << 22,        // Blocks clothing material variation
+    
+    // Convenience combinations - Arms
+    AllShoulderAccessories = LeftShoulderAccessories | RightShoulderAccessories,
+    AllForearmAccessories = LeftForearmAccessories | RightForearmAccessories,
+    AllHandAccessories = LeftHandAccessories | RightHandAccessories,
+    AllArmAccessories = AllShoulderAccessories | AllForearmAccessories | AllHandAccessories,
+    
+    // Convenience combinations - Legs
+    AllHipAccessories = LeftHipAccessories | RightHipAccessories,
+    AllCalfAccessories = LeftCalfAccessories | RightCalfAccessories,
+    AllFootAccessories = LeftFootAccessories | RightFootAccessories,
+    AllLegAccessories = AllHipAccessories | AllCalfAccessories | AllFootAccessories
 }
 
 /// <summary>
@@ -684,8 +1006,19 @@ public class CharacterAppearanceData
     public string hatName;
     public string helmetName;
     public string faceAccessoryName;
+    public string leftShoulderAccessoryName;
+    public string rightShoulderAccessoryName;
+    public string leftForearmAccessoryName;
+    public string rightForearmAccessoryName;
+    public string leftHandAccessoryName;
+    public string rightHandAccessoryName;
+    public string leftHipAccessoryName;
+    public string rightHipAccessoryName;
+    public string leftCalfAccessoryName;
+    public string rightCalfAccessoryName;
+    public string leftFootAccessoryName;
+    public string rightFootAccessoryName;
     public string backAccessoryName;
-    public string handAccessoryName;
     public string skinMaterialName;
     public string hairMaterialName;
     public string clothingMaterialName;

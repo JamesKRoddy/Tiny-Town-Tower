@@ -1,6 +1,6 @@
 *****Current Work*****
 
-Basic robot attachments on the zombies for variation. Cont. w/ arms
+Basic robot attachments on the zombies for variation. Cont. w/ enemy needs arms, leg, waist also helmet might need work
 
 Setup zombie/drone meshes and gameobjects that should be enabled for different attacks
 

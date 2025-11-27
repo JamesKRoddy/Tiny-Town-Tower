@@ -179,17 +179,22 @@ public class AppearanceOptionDrawer : PropertyDrawer
         float spacing = 3f;
         
         // Define exclusion buttons with labels matching field names
-        var exclusionButtons = new[]
+        var exclusionButtons = new (AppearanceExclusions flag, string label)[]
         {
             (AppearanceExclusions.Hair, "Hair"),
             (AppearanceExclusions.Hats, "Hats"),
             (AppearanceExclusions.Helmets, "Helm"),
             (AppearanceExclusions.FaceAccessories, "Face"),
+            (AppearanceExclusions.AllShoulderAccessories, "Shldr"),
+            (AppearanceExclusions.AllForearmAccessories, "Forarm"),
+            (AppearanceExclusions.AllHandAccessories, "Hand"),
+            (AppearanceExclusions.AllHipAccessories, "Hip"),
+            (AppearanceExclusions.AllCalfAccessories, "Calf"),
+            (AppearanceExclusions.AllFootAccessories, "Foot"),
             (AppearanceExclusions.BackAccessories, "Back"),
-            (AppearanceExclusions.HandAccessories, "Hand"),
             (AppearanceExclusions.TopClothing, "TopCl"),
             (AppearanceExclusions.BottomClothing, "BotCl"),
-            (AppearanceExclusions.Footwear, "Foot")
+            (AppearanceExclusions.Footwear, "Ftwr")
         };
         
         Color originalBg = GUI.backgroundColor;

@@ -158,31 +158,72 @@ public class BulkAppearanceUtility : EditorWindow
             {
                 EditorGUILayout.LabelField("Model Options:", EditorStyles.miniBoldLabel);
                 EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button("Body Models", GUILayout.Height(30))) AddToArray("bodyModels");
-                if (GUILayout.Button("Hair Models", GUILayout.Height(30))) AddToArray("hairModels");
+                DrawArrayButton("Body Models", "bodyModels");
+                DrawArrayButton("Hair Models", "hairModels");
                 EditorGUILayout.EndHorizontal();
                 
                 EditorGUILayout.Space(3);
                 EditorGUILayout.LabelField("Clothing Options:", EditorStyles.miniBoldLabel);
                 EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button("Top Clothing", GUILayout.Height(30))) AddToArray("topClothing");
-                if (GUILayout.Button("Bottom Clothing", GUILayout.Height(30))) AddToArray("bottomClothing");
-                if (GUILayout.Button("Footwear", GUILayout.Height(30))) AddToArray("footwear");
+                DrawArrayButton("Top Clothing", "topClothing");
+                DrawArrayButton("Bottom Clothing", "bottomClothing");
+                DrawArrayButton("Footwear", "footwear");
                 EditorGUILayout.EndHorizontal();
                 
                 EditorGUILayout.Space(3);
                 EditorGUILayout.LabelField("Head Accessories:", EditorStyles.miniBoldLabel);
                 EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button("Hats", GUILayout.Height(30))) AddToArray("hats");
-                if (GUILayout.Button("Helmets", GUILayout.Height(30))) AddToArray("helmets");
-                if (GUILayout.Button("Face Accessories", GUILayout.Height(30))) AddToArray("faceAccessories");
+                DrawArrayButton("Hats", "hats");
+                DrawArrayButton("Helmets", "helmets");
+                DrawArrayButton("Face", "faceAccessories");
+                EditorGUILayout.EndHorizontal();
+                
+                EditorGUILayout.Space(3);
+                EditorGUILayout.LabelField("Shoulder Accessories:", EditorStyles.miniBoldLabel);
+                EditorGUILayout.BeginHorizontal();
+                DrawArrayButton("Left Shoulder", "leftShoulderAccessories");
+                DrawArrayButton("Right Shoulder", "rightShoulderAccessories");
+                EditorGUILayout.EndHorizontal();
+                
+                EditorGUILayout.Space(3);
+                EditorGUILayout.LabelField("Forearm Accessories:", EditorStyles.miniBoldLabel);
+                EditorGUILayout.BeginHorizontal();
+                DrawArrayButton("Left Forearm", "leftForearmAccessories");
+                DrawArrayButton("Right Forearm", "rightForearmAccessories");
+                EditorGUILayout.EndHorizontal();
+                
+                EditorGUILayout.Space(3);
+                EditorGUILayout.LabelField("Hand Accessories:", EditorStyles.miniBoldLabel);
+                EditorGUILayout.BeginHorizontal();
+                DrawArrayButton("Left Hand", "leftHandAccessories");
+                DrawArrayButton("Right Hand", "rightHandAccessories");
+                EditorGUILayout.EndHorizontal();
+                
+                EditorGUILayout.Space(3);
+                EditorGUILayout.LabelField("Hip Accessories:", EditorStyles.miniBoldLabel);
+                EditorGUILayout.BeginHorizontal();
+                DrawArrayButton("Left Hip", "leftHipAccessories");
+                DrawArrayButton("Right Hip", "rightHipAccessories");
+                EditorGUILayout.EndHorizontal();
+                
+                EditorGUILayout.Space(3);
+                EditorGUILayout.LabelField("Calf Accessories:", EditorStyles.miniBoldLabel);
+                EditorGUILayout.BeginHorizontal();
+                DrawArrayButton("Left Calf", "leftCalfAccessories");
+                DrawArrayButton("Right Calf", "rightCalfAccessories");
+                EditorGUILayout.EndHorizontal();
+                
+                EditorGUILayout.Space(3);
+                EditorGUILayout.LabelField("Foot Accessories:", EditorStyles.miniBoldLabel);
+                EditorGUILayout.BeginHorizontal();
+                DrawArrayButton("Left Foot", "leftFootAccessories");
+                DrawArrayButton("Right Foot", "rightFootAccessories");
                 EditorGUILayout.EndHorizontal();
                 
                 EditorGUILayout.Space(3);
                 EditorGUILayout.LabelField("Other Accessories:", EditorStyles.miniBoldLabel);
                 EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button("Back Accessories", GUILayout.Height(30))) AddToArray("backAccessories");
-                if (GUILayout.Button("Hand Accessories", GUILayout.Height(30))) AddToArray("handAccessories");
+                DrawArrayButton("Back", "backAccessories");
                 EditorGUILayout.EndHorizontal();
             }
         }
@@ -215,6 +256,42 @@ public class BulkAppearanceUtility : EditorWindow
         else
         {
             Debug.LogWarning("No GameObjects selected! Select objects in the hierarchy or project first.");
+        }
+    }
+    
+    /// <summary>
+    /// Get the current count of items in an appearance array
+    /// </summary>
+    private int GetArrayCount(string arrayFieldName)
+    {
+        if (targetComponent == null)
+            return 0;
+        
+        SerializedObject serializedObject = new SerializedObject(targetComponent);
+        SerializedProperty appearanceSystemProp = serializedObject.FindProperty("appearanceSystem");
+        
+        if (appearanceSystemProp == null)
+            return 0;
+        
+        SerializedProperty arrayProp = appearanceSystemProp.FindPropertyRelative(arrayFieldName);
+        
+        if (arrayProp == null)
+            return 0;
+        
+        return arrayProp.arraySize;
+    }
+    
+    /// <summary>
+    /// Draw a button with item count and handle click to add to array
+    /// </summary>
+    private void DrawArrayButton(string label, string arrayFieldName, float height = 30f)
+    {
+        int count = GetArrayCount(arrayFieldName);
+        string buttonText = count > 0 ? $"{label} ({count})" : label;
+        
+        if (GUILayout.Button(buttonText, GUILayout.Height(height)))
+        {
+            AddToArray(arrayFieldName);
         }
     }
     
