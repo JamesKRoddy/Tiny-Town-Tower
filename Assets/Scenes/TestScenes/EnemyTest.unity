@@ -437,7 +437,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2955381322329560363, guid: d03888463161ec940bcad4bda684adf8, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -461,7 +461,23 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1287946293633936085, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+      propertyPath: appearanceSystem.leftCalfAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1287946293633936085, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+      propertyPath: appearanceSystem.leftFootAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1287946293633936085, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
       propertyPath: appearanceSystem.leftHandAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1287946293633936085, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+      propertyPath: appearanceSystem.rightCalfAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1287946293633936085, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+      propertyPath: appearanceSystem.rightFootAccessoryChance
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1287946293633936085, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
@@ -477,11 +493,19 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1287946293633936085, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+      propertyPath: appearanceSystem.leftUpperLegAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1287946293633936085, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
       propertyPath: appearanceSystem.rightForearmAccessoryChance
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1287946293633936085, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
       propertyPath: appearanceSystem.rightShoulderAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1287946293633936085, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+      propertyPath: appearanceSystem.rightUpperLegAccessoryChance
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2985604360754162274, guid: 1905ec17cae70e440a4d722be3469249, type: 3}

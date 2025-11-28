@@ -47,9 +47,9 @@ public class CharacterAppearanceSystem
     [SerializeField] private AppearanceOption[] leftHandAccessories; // Left gloves, bracelets
     [SerializeField] private AppearanceOption[] rightHandAccessories; // Right gloves, bracelets
     
-    [Header("Hip Accessories")]
-    [SerializeField] private AppearanceOption[] leftHipAccessories; // Left hip pouches, holsters
-    [SerializeField] private AppearanceOption[] rightHipAccessories; // Right hip pouches, holsters
+    [Header("Upper Leg Accessories")]
+    [SerializeField] private AppearanceOption[] leftUpperLegAccessories; // Left upper leg pouches, holsters, thigh armor
+    [SerializeField] private AppearanceOption[] rightUpperLegAccessories; // Right upper leg pouches, holsters, thigh armor
     
     [Header("Calf Accessories")]
     [SerializeField] private AppearanceOption[] leftCalfAccessories; // Left shin guards, leg wraps
@@ -77,8 +77,8 @@ public class CharacterAppearanceSystem
     [Range(0f, 1f)] [SerializeField] private float rightForearmAccessoryChance = 0.25f;
     [Range(0f, 1f)] [SerializeField] private float leftHandAccessoryChance = 0.2f;
     [Range(0f, 1f)] [SerializeField] private float rightHandAccessoryChance = 0.2f;
-    [Range(0f, 1f)] [SerializeField] private float leftHipAccessoryChance = 0.25f;
-    [Range(0f, 1f)] [SerializeField] private float rightHipAccessoryChance = 0.25f;
+    [Range(0f, 1f)] [SerializeField] private float leftUpperLegAccessoryChance = 0.25f;
+    [Range(0f, 1f)] [SerializeField] private float rightUpperLegAccessoryChance = 0.25f;
     [Range(0f, 1f)] [SerializeField] private float leftCalfAccessoryChance = 0.2f;
     [Range(0f, 1f)] [SerializeField] private float rightCalfAccessoryChance = 0.2f;
     [Range(0f, 1f)] [SerializeField] private float leftFootAccessoryChance = 0.15f;
@@ -341,33 +341,33 @@ public class CharacterAppearanceSystem
             }
         }
         
-        // Left hip
-        if (leftHipAccessories != null && leftHipAccessories.Length > 0)
+        // Left upper leg
+        if (leftUpperLegAccessories != null && leftUpperLegAccessories.Length > 0)
         {
-            if (!activeExclusions.HasFlag(AppearanceExclusions.LeftHipAccessories) && 
-                UnityEngine.Random.value <= leftHipAccessoryChance)
+            if (!activeExclusions.HasFlag(AppearanceExclusions.LeftUpperLegAccessories) && 
+                UnityEngine.Random.value <= leftUpperLegAccessoryChance)
             {
-                var selected = ActivateRandomModel(leftHipAccessories, "Left Hip Accessory");
+                var selected = ActivateRandomModel(leftUpperLegAccessories, "Left Upper Leg Accessory");
                 if (selected != null) activeExclusions |= selected.exclusions;
             }
             else
             {
-                DeactivateAllInCategory(leftHipAccessories);
+                DeactivateAllInCategory(leftUpperLegAccessories);
             }
         }
         
-        // Right hip
-        if (rightHipAccessories != null && rightHipAccessories.Length > 0)
+        // Right upper leg
+        if (rightUpperLegAccessories != null && rightUpperLegAccessories.Length > 0)
         {
-            if (!activeExclusions.HasFlag(AppearanceExclusions.RightHipAccessories) && 
-                UnityEngine.Random.value <= rightHipAccessoryChance)
+            if (!activeExclusions.HasFlag(AppearanceExclusions.RightUpperLegAccessories) && 
+                UnityEngine.Random.value <= rightUpperLegAccessoryChance)
             {
-                var selected = ActivateRandomModel(rightHipAccessories, "Right Hip Accessory");
+                var selected = ActivateRandomModel(rightUpperLegAccessories, "Right Upper Leg Accessory");
                 if (selected != null) activeExclusions |= selected.exclusions;
             }
             else
             {
-                DeactivateAllInCategory(rightHipAccessories);
+                DeactivateAllInCategory(rightUpperLegAccessories);
             }
         }
         
@@ -584,8 +584,8 @@ public class CharacterAppearanceSystem
         DeactivateAllInCategory(rightForearmAccessories);
         DeactivateAllInCategory(leftHandAccessories);
         DeactivateAllInCategory(rightHandAccessories);
-        DeactivateAllInCategory(leftHipAccessories);
-        DeactivateAllInCategory(rightHipAccessories);
+        DeactivateAllInCategory(leftUpperLegAccessories);
+        DeactivateAllInCategory(rightUpperLegAccessories);
         DeactivateAllInCategory(leftCalfAccessories);
         DeactivateAllInCategory(rightCalfAccessories);
         DeactivateAllInCategory(leftFootAccessories);
@@ -661,13 +661,13 @@ public class CharacterAppearanceSystem
         {
             ActivateModelByName(rightHandAccessories, appearanceData.rightHandAccessoryName, "Right Hand Accessory");
         }
-        if (!string.IsNullOrEmpty(appearanceData.leftHipAccessoryName))
+        if (!string.IsNullOrEmpty(appearanceData.leftUpperLegAccessoryName))
         {
-            ActivateModelByName(leftHipAccessories, appearanceData.leftHipAccessoryName, "Left Hip Accessory");
+            ActivateModelByName(leftUpperLegAccessories, appearanceData.leftUpperLegAccessoryName, "Left Upper Leg Accessory");
         }
-        if (!string.IsNullOrEmpty(appearanceData.rightHipAccessoryName))
+        if (!string.IsNullOrEmpty(appearanceData.rightUpperLegAccessoryName))
         {
-            ActivateModelByName(rightHipAccessories, appearanceData.rightHipAccessoryName, "Right Hip Accessory");
+            ActivateModelByName(rightUpperLegAccessories, appearanceData.rightUpperLegAccessoryName, "Right Upper Leg Accessory");
         }
         if (!string.IsNullOrEmpty(appearanceData.leftCalfAccessoryName))
         {
@@ -779,13 +779,13 @@ public class CharacterAppearanceSystem
             {
                 appearanceData.rightHandAccessoryName = modelName;
             }
-            else if (IsModelInArray(activeModel, leftHipAccessories))
+            else if (IsModelInArray(activeModel, leftUpperLegAccessories))
             {
-                appearanceData.leftHipAccessoryName = modelName;
+                appearanceData.leftUpperLegAccessoryName = modelName;
             }
-            else if (IsModelInArray(activeModel, rightHipAccessories))
+            else if (IsModelInArray(activeModel, rightUpperLegAccessories))
             {
-                appearanceData.rightHipAccessoryName = modelName;
+                appearanceData.rightUpperLegAccessoryName = modelName;
             }
             else if (IsModelInArray(activeModel, leftCalfAccessories))
             {
@@ -944,8 +944,8 @@ public enum AppearanceExclusions
     RightForearmAccessories = 1 << 7,   // Blocks right forearm accessories
     LeftHandAccessories = 1 << 8,       // Blocks left hand accessories
     RightHandAccessories = 1 << 9,      // Blocks right hand accessories
-    LeftHipAccessories = 1 << 10,       // Blocks left hip accessories
-    RightHipAccessories = 1 << 11,      // Blocks right hip accessories
+    LeftUpperLegAccessories = 1 << 10,       // Blocks left upper leg accessories
+    RightUpperLegAccessories = 1 << 11,      // Blocks right upper leg accessories
     LeftCalfAccessories = 1 << 12,      // Blocks left calf accessories
     RightCalfAccessories = 1 << 13,     // Blocks right calf accessories
     LeftFootAccessories = 1 << 14,      // Blocks left foot accessories
@@ -965,10 +965,10 @@ public enum AppearanceExclusions
     AllArmAccessories = AllShoulderAccessories | AllForearmAccessories | AllHandAccessories,
     
     // Convenience combinations - Legs
-    AllHipAccessories = LeftHipAccessories | RightHipAccessories,
+    AllUpperLegAccessories = LeftUpperLegAccessories | RightUpperLegAccessories,
     AllCalfAccessories = LeftCalfAccessories | RightCalfAccessories,
     AllFootAccessories = LeftFootAccessories | RightFootAccessories,
-    AllLegAccessories = AllHipAccessories | AllCalfAccessories | AllFootAccessories
+    AllLegAccessories = AllUpperLegAccessories | AllCalfAccessories | AllFootAccessories
 }
 
 /// <summary>
@@ -1012,8 +1012,8 @@ public class CharacterAppearanceData
     public string rightForearmAccessoryName;
     public string leftHandAccessoryName;
     public string rightHandAccessoryName;
-    public string leftHipAccessoryName;
-    public string rightHipAccessoryName;
+    public string leftUpperLegAccessoryName;
+    public string rightUpperLegAccessoryName;
     public string leftCalfAccessoryName;
     public string rightCalfAccessoryName;
     public string leftFootAccessoryName;

@@ -188,7 +188,7 @@ public class AppearanceOptionDrawer : PropertyDrawer
             (AppearanceExclusions.AllShoulderAccessories, "Shldr"),
             (AppearanceExclusions.AllForearmAccessories, "Forarm"),
             (AppearanceExclusions.AllHandAccessories, "Hand"),
-            (AppearanceExclusions.AllHipAccessories, "Hip"),
+            (AppearanceExclusions.AllUpperLegAccessories, "ULeg"),
             (AppearanceExclusions.AllCalfAccessories, "Calf"),
             (AppearanceExclusions.AllFootAccessories, "Foot"),
             (AppearanceExclusions.BackAccessories, "Back"),

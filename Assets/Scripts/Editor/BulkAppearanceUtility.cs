@@ -200,10 +200,10 @@ public class BulkAppearanceUtility : EditorWindow
                 EditorGUILayout.EndHorizontal();
                 
                 EditorGUILayout.Space(3);
-                EditorGUILayout.LabelField("Hip Accessories:", EditorStyles.miniBoldLabel);
+                EditorGUILayout.LabelField("Upper Leg Accessories:", EditorStyles.miniBoldLabel);
                 EditorGUILayout.BeginHorizontal();
-                DrawArrayButton("Left Hip", "leftHipAccessories");
-                DrawArrayButton("Right Hip", "rightHipAccessories");
+                DrawArrayButton("Left Upper Leg", "leftUpperLegAccessories");
+                DrawArrayButton("Right Upper Leg", "rightUpperLegAccessories");
                 EditorGUILayout.EndHorizontal();
                 
                 EditorGUILayout.Space(3);

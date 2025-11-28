@@ -183,6 +183,27 @@ public class SettlerNPCEditor : HumanCharacterControllerEditor
             
             if (Application.isPlaying)
             {
+                EditorGUILayout.Space(5);
+                
+                // Randomize Appearance button
+                Color originalBg = GUI.backgroundColor;
+                GUI.backgroundColor = new Color(0.4f, 0.8f, 1f);
+                if (GUILayout.Button("🎲 Randomize Appearance", GUILayout.Height(25)))
+                {
+                    var appearanceSystem = settler.GetAppearanceSystem();
+                    if (appearanceSystem != null)
+                    {
+                        appearanceSystem.ClearCurrentAppearance();
+                        appearanceSystem.RandomizeAppearance();
+                        Debug.Log($"[SettlerNPCEditor] Randomized appearance for {settler.name}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[SettlerNPCEditor] Cannot randomize appearance - appearanceSystem is null on {settler.name}");
+                    }
+                }
+                GUI.backgroundColor = originalBg;
+                
                 EditorGUILayout.Space(3);
                 EditorGUILayout.HelpBox("Appearance and characteristics are managed at runtime", MessageType.Info);
             }
