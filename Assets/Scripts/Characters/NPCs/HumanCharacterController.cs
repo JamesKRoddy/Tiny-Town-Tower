@@ -1824,10 +1824,23 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     protected void UpdateAnimations()
     {
-        float maxSpeed = isDashing ? dashSpeed : moveMaxSpeed;
-        float currentSpeedNormalized = actualMovementSpeed / maxSpeed;
-
-        animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, currentSpeedNormalized);
+        // Use input magnitude for animation speed to prevent dips during direction changes
+        // The analog stick position reflects player intent better than actual velocity
+        float inputMagnitude = movementInput.magnitude;
+        
+        // Snap to zero when input is negligible to prevent lingering tiny values from damping
+        // This ensures footstep VFX stop immediately when the player releases the stick
+        if (inputMagnitude < 0.01f)
+        {
+            animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, 0f);
+        }
+        else
+        {
+            // Dampen the speed value for smoother blend tree transitions when moving
+            // dampTime controls how quickly the value reaches its target (lower = faster response)
+            float dampTime = 0.1f;
+            animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, inputMagnitude, dampTime, Time.deltaTime);
+        }
     }
 
     public virtual void PlayWorkAnimation(string animationName)
