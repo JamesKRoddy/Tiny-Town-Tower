@@ -479,11 +479,15 @@ public class CharacterAppearanceSystem
             selectedOption.model.SetActive(true);
             activeModels.Add(selectedOption.model);
             
-            // Apply random material variant if the model has the AppearanceMaterialVariants component
-            AppearanceMaterialVariants materialVariants = selectedOption.model.GetComponent<AppearanceMaterialVariants>();
-            if (materialVariants != null && materialVariants.VariantCount > 0)
+            // Apply random material variants if the model has AppearanceMaterialVariants components
+            // Supports multiple components for different material groups (e.g., shirt, pants, accessories)
+            AppearanceMaterialVariants[] materialVariantsArray = selectedOption.model.GetComponents<AppearanceMaterialVariants>();
+            foreach (AppearanceMaterialVariants materialVariants in materialVariantsArray)
             {
-                materialVariants.ApplyRandomVariant();
+                if (materialVariants != null && materialVariants.VariantCount > 0)
+                {
+                    materialVariants.ApplyRandomVariant();
+                }
             }
             
             return selectedOption;

@@ -58,8 +58,9 @@ public class AppearanceOptionDrawer : PropertyDrawer
         
         // Draw preview thumbnail
         GameObject model = modelProp.objectReferenceValue as GameObject;
-        AppearanceMaterialVariants materialVariants = null;
+        AppearanceMaterialVariants[] materialVariantsArray = null;
         int variantCount = 0;
+        int componentCount = 0;
         
         if (model != null)
         {
@@ -75,11 +76,13 @@ public class AppearanceOptionDrawer : PropertyDrawer
                 GUI.Box(previewRect, "...", EditorStyles.helpBox);
             }
             
-            // Check if the model has material variants
-            materialVariants = model.GetComponent<AppearanceMaterialVariants>();
-            if (materialVariants != null)
+            // Check if the model has material variants (supports multiple components)
+            materialVariantsArray = model.GetComponents<AppearanceMaterialVariants>();
+            componentCount = materialVariantsArray.Length;
+            foreach (var mv in materialVariantsArray)
             {
-                variantCount = materialVariants.VariantCount;
+                if (mv != null)
+                    variantCount += mv.VariantCount;
             }
         }
         else
@@ -89,7 +92,7 @@ public class AppearanceOptionDrawer : PropertyDrawer
         }
         
         // Draw variant info badge if present
-        if (materialVariants != null && variantCount > 0)
+        if (componentCount > 0 && variantCount > 0)
         {
             Rect badgeRect = new Rect(previewRect.x + 2, previewRect.yMax - 18, previewRect.width - 4, 16);
             
@@ -99,12 +102,13 @@ public class AppearanceOptionDrawer : PropertyDrawer
             GUI.Box(badgeRect, GUIContent.none, EditorStyles.helpBox);
             GUI.color = oldColor;
             
-            // Draw text
+            // Draw text - show component count if multiple, otherwise just total variants
             GUIStyle badgeStyle = new GUIStyle(EditorStyles.miniLabel);
             badgeStyle.alignment = TextAnchor.MiddleCenter;
             badgeStyle.normal.textColor = Color.white;
             badgeStyle.fontStyle = FontStyle.Bold;
-            GUI.Label(badgeRect, $"{variantCount} Mats", badgeStyle);
+            string badgeText = componentCount > 1 ? $"{componentCount}x{variantCount}" : $"{variantCount} Mats";
+            GUI.Label(badgeRect, badgeText, badgeStyle);
         }
         
         // Draw model field with label
