@@ -391,6 +391,70 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1474462271636038904, guid: d03888463161ec940bcad4bda684adf8, type: 3}
+      propertyPath: appearanceSystem.hatChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1474462271636038904, guid: d03888463161ec940bcad4bda684adf8, type: 3}
+      propertyPath: appearanceSystem.helmetChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1474462271636038904, guid: d03888463161ec940bcad4bda684adf8, type: 3}
+      propertyPath: appearanceSystem.backAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1474462271636038904, guid: d03888463161ec940bcad4bda684adf8, type: 3}
+      propertyPath: appearanceSystem.faceAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1474462271636038904, guid: d03888463161ec940bcad4bda684adf8, type: 3}
+      propertyPath: appearanceSystem.leftCalfAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1474462271636038904, guid: d03888463161ec940bcad4bda684adf8, type: 3}
+      propertyPath: appearanceSystem.leftFootAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1474462271636038904, guid: d03888463161ec940bcad4bda684adf8, type: 3}
+      propertyPath: appearanceSystem.leftHandAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1474462271636038904, guid: d03888463161ec940bcad4bda684adf8, type: 3}
+      propertyPath: appearanceSystem.rightCalfAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1474462271636038904, guid: d03888463161ec940bcad4bda684adf8, type: 3}
+      propertyPath: appearanceSystem.rightFootAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1474462271636038904, guid: d03888463161ec940bcad4bda684adf8, type: 3}
+      propertyPath: appearanceSystem.rightHandAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1474462271636038904, guid: d03888463161ec940bcad4bda684adf8, type: 3}
+      propertyPath: appearanceSystem.leftForearmAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1474462271636038904, guid: d03888463161ec940bcad4bda684adf8, type: 3}
+      propertyPath: appearanceSystem.leftShoulderAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1474462271636038904, guid: d03888463161ec940bcad4bda684adf8, type: 3}
+      propertyPath: appearanceSystem.leftUpperLegAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1474462271636038904, guid: d03888463161ec940bcad4bda684adf8, type: 3}
+      propertyPath: appearanceSystem.rightForearmAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1474462271636038904, guid: d03888463161ec940bcad4bda684adf8, type: 3}
+      propertyPath: appearanceSystem.rightShoulderAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1474462271636038904, guid: d03888463161ec940bcad4bda684adf8, type: 3}
+      propertyPath: appearanceSystem.rightUpperLegAccessoryChance
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2457625275812213561, guid: d03888463161ec940bcad4bda684adf8, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1.77
@@ -514,7 +578,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2985604360754162274, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4023079707919572210, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1138,6 +1202,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 5072915223331992258, guid: 535367c5dfd9de54fa7bc94c347ffe42, type: 3}
+      propertyPath: enableHeadTracking
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8073818550206588163, guid: 535367c5dfd9de54fa7bc94c347ffe42, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1.77
@@ -1184,7 +1252,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8868526359791272721, guid: 535367c5dfd9de54fa7bc94c347ffe42, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

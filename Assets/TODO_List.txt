@@ -1,8 +1,5 @@
 *****Current Work*****
 
-Basic robot attachments on the zombies for variation. Cont. w/ enemy needs arms, leg, waist also helmet might need work
-
-Setup zombie/drone meshes and gameobjects that should be enabled for different attacks
 
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones. Mutants! Characters in the PolygonApocalypseWasteland
 
@@ -31,6 +28,8 @@ Recruitable NPCs in roguelike section shouldn't wander, get tired/sick etc. They
 Clean up debug logs, also have to have a central debug manager to control what classes have enable logs enabled
 
 PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
+
+Setup zombie/drone meshes and gameobjects that should be enabled for different attacks
 
 ****** Bugs and refactoring:
 
