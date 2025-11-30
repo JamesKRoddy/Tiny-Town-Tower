@@ -1,6 +1,14 @@
 *****Current Work*****
 
 Keep going with this player/enemy weapon refactor
+TODO:
+Read the chats readme!
+Player weapons
+Inventory
+Picking up weapons
+Equipping them
+Damage to enemies
+Reflecting projectiles
 
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones. Mutants! Characters in the PolygonApocalypseWasteland, light mutant, heavy mutant
 
