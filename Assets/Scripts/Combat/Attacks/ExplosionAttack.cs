@@ -1,7 +1,7 @@
 using UnityEngine;
 using Managers;
 
-namespace Enemies.Attacks
+namespace Combat.Attacks
 {
     /// <summary>
     /// Explosion attack that deals area damage and may kill the attacker.
@@ -25,16 +25,16 @@ namespace Enemies.Attacks
     /// Use BOTH visual arrays for complete effect:
     /// 
     /// PERMANENT EQUIPMENT (attackEquipment):
-    /// - Create dynamite stick models as children of the enemy
+    /// - Create dynamite stick models as children of the character
     /// - Add them to "Equipment GameObjects" array
     /// - Keep them enabled in the scene
-    /// - Players see the dynamite and know this enemy explodes!
+    /// - Players see the dynamite and know this character explodes!
     /// 
     /// TEMPORARY EFFECTS (attackEffectObjects):
     /// - Create explosion trails, sparking fuse particles, glow effects
     /// - Add them to "Effect GameObjects" array
     /// - Start them disabled in the scene
-    /// - They'll light up/activate when the enemy is about to explode!
+    /// - They'll light up/activate when the character is about to explode!
     /// </summary>
     public class ExplosionAttack : AttackBase
     {
@@ -70,9 +70,9 @@ namespace Enemies.Attacks
             }
         }
 
-        public override void Initialize(EnemyBase enemy)
+        public override void Initialize(IAttackOwner attackOwner)
         {
-            base.Initialize(enemy);
+            base.Initialize(attackOwner);
             
             // Set default elemental damage for explosion attacks
             if (attackElement == AttackElement.NONE)
@@ -81,17 +81,16 @@ namespace Enemies.Attacks
             }
             
             // Calculate detonation range based on explosion radius
-            // This ensures the attacker gets close enough for the explosion to hit the target
             float detonationRange = explosionRadius * detonationDistanceFraction;
             maxRange = detonationRange;
             
             // Validate attack effect
             if (attackEffect == null || !attackEffect.IsValid())
             {
-                Debug.LogError("Attack effect (explosion) definition is not assigned or invalid on ExplosionAttack on " + enemy.gameObject.name);
+                Debug.LogError("Attack effect (explosion) definition is not assigned or invalid on ExplosionAttack on " + attackOwner.gameObject.name);
             }
             
-            Debug.Log($"[{enemy.gameObject.name}] ExplosionAttack initialized | DetonationRange: {detonationRange:F2} ({detonationDistanceFraction * 100}% of radius) | ExplosionRadius: {explosionRadius} | ExplosionDamage: {damage}");
+            Debug.Log($"[{attackOwner.gameObject.name}] ExplosionAttack initialized | DetonationRange: {detonationRange:F2} ({detonationDistanceFraction * 100}% of radius) | ExplosionRadius: {explosionRadius} | ExplosionDamage: {damage}");
         }
 
         public override bool CanAttack()
@@ -99,7 +98,7 @@ namespace Enemies.Attacks
             if (!base.CanAttack()) return false;
             if (hasExploded) return false;
             
-            float distanceToTarget = Vector3.Distance(enemy.transform.position, target.position);
+            float distanceToTarget = Vector3.Distance(OwnerTransform.position, target.position);
             
             // Can attack when close enough to target
             return distanceToTarget <= maxRange;
@@ -109,7 +108,7 @@ namespace Enemies.Attacks
         {
             base.StartAttack();
             
-            Debug.Log($"[{enemy.gameObject.name}] Explosion attack started | Target: {target.name} | Distance: {Vector3.Distance(enemy.transform.position, target.position):F2}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Explosion attack started | Target: {target.name} | Distance: {Vector3.Distance(OwnerTransform.position, target.position):F2}");
         }
 
         public override void OnAttack()
@@ -117,20 +116,20 @@ namespace Enemies.Attacks
             if (hasExploded) return;
             
             hasExploded = true;
-            Debug.Log($"[{enemy.gameObject.name}] Explosion triggered!");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Explosion triggered!");
             
             // Create instant damage area (explosion)
             int targetsDamaged = DamageUtils.CreateInstantDamageArea(
-                enemy.transform.position, 
+                OwnerTransform.position, 
                 explosionRadius, 
                 damage, 
                 damage * poiseDamageMultiplier, 
-                enemy.transform, 
+                OwnerTransform, 
                 attackElement, 
                 attackEffect?.effectDefinition
             );
             
-            Debug.Log($"[{enemy.gameObject.name}] Explosion executed | Damage: {damage} | Radius: {explosionRadius} | Targets: {targetsDamaged}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Explosion executed | Damage: {damage} | Radius: {explosionRadius} | Targets: {targetsDamaged}");
         }
 
         public override void OnAttackEnd()
@@ -138,11 +137,15 @@ namespace Enemies.Attacks
             base.OnAttackEnd();
             
             // Attacker dies after exploding
-            if (dieAfterExplosion && enemy != null)
+            if (dieAfterExplosion && owner != null)
             {
                 // Kill the attacker with environmental damage (no VFX needed for self-destruction)
-                var damageInfo = DamageInfo.Environmental(enemy.Health, playHitVFX: false);
-                enemy.TakeDamage(damageInfo);
+                var ownerDamageable = owner as IDamageable;
+                if (ownerDamageable != null)
+                {
+                    var damageInfo = DamageInfo.Environmental(ownerDamageable.Health, playHitVFX: false);
+                    ownerDamageable.TakeDamage(damageInfo);
+                }
             }
         }
 
@@ -176,24 +179,27 @@ namespace Enemies.Attacks
             
             // Create instant damage area (explosion)
             DamageUtils.CreateInstantDamageArea(
-                enemy.transform.position, 
+                OwnerTransform.position, 
                 explosionRadius, 
                 damage, 
                 damage * poiseDamageMultiplier, 
-                enemy.transform, 
+                OwnerTransform, 
                 attackElement, 
                 attackEffect?.effectDefinition
             );
             
             // Kill the attacker if configured to do so
-            if (dieAfterExplosion && enemy != null)
+            if (dieAfterExplosion && owner != null)
             {
-                // Kill the attacker with environmental damage (no VFX needed for self-destruction)
-                var damageInfo = DamageInfo.Environmental(enemy.Health, playHitVFX: false);
-                enemy.TakeDamage(damageInfo);
+                var ownerDamageable = owner as IDamageable;
+                if (ownerDamageable != null)
+                {
+                    var damageInfo = DamageInfo.Environmental(ownerDamageable.Health, playHitVFX: false);
+                    ownerDamageable.TakeDamage(damageInfo);
+                }
             }
             
-            Debug.Log($"[{enemy.gameObject.name}] Explosion force triggered!");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Explosion force triggered!");
         }
 
         public override bool ShouldRotateToAttack()
@@ -215,23 +221,23 @@ namespace Enemies.Attacks
 
         protected override void OnDrawGizmosSelected()
         {
-            if (enemy == null) return;
+            Transform drawTransform = OwnerTransform ?? transform;
             
             // Calculate detonation range for visualization
             float detonationRange = explosionRadius * detonationDistanceFraction;
             
             // Draw explosion radius (damage area) - red
             Gizmos.color = new Color(1f, 0f, 0f, 0.3f); // Semi-transparent red
-            Gizmos.DrawWireSphere(enemy.transform.position, explosionRadius);
+            Gizmos.DrawWireSphere(drawTransform.position, explosionRadius);
             
             // Draw detonation range (trigger distance) - yellow
             Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(enemy.transform.position, detonationRange);
-            Gizmos.DrawWireSphere(enemy.transform.position, detonationRange * 0.8f);
+            Gizmos.DrawWireSphere(drawTransform.position, detonationRange);
+            Gizmos.DrawWireSphere(drawTransform.position, detonationRange * 0.8f);
             
             // Draw explosion center
             Gizmos.color = new Color(1f, 0.5f, 0f); // Orange color
-            Gizmos.DrawWireSphere(enemy.transform.position + Vector3.up * 1.0f, 0.5f);
+            Gizmos.DrawWireSphere(drawTransform.position + Vector3.up * 1.0f, 0.5f);
         }
     }
 }

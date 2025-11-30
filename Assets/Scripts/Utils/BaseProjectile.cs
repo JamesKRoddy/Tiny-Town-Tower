@@ -337,19 +337,6 @@ public abstract class BaseProjectile : MonoBehaviour, IHittable
         return !isReflected && !hasHit;
     }
     
-    /// <summary>
-    /// Public method to reflect projectile when hit by player weapon
-    /// Called from DamageUtils.PerformProjectileReflectionDetection when melee weapon hits projectile
-    /// DEPRECATED: Use OnHit() via IHittable interface instead
-    /// </summary>
-    /// <param name="hitPoint">Position where the reflection occurred (for VFX)</param>
-    /// <param name="hitNormal">Normal vector at the hit point (for VFX)</param>
-    public virtual void ReflectByPlayer(Vector3 hitPoint = default, Vector3 hitNormal = default)
-    {
-        if (isReflected || hasHit) return; // Don't reflect if already reflected or hit
-        
-        OnReflected(hitPoint, hitNormal);
-    }
 
     /// <summary>
     /// Get the origin position (where projectile was launched from)

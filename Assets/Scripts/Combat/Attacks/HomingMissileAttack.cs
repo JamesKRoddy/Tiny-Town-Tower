@@ -1,7 +1,7 @@
 using UnityEngine;
 using Managers;
 
-namespace Enemies.Attacks
+namespace Combat.Attacks
 {
     /// <summary>
     /// Homing missile attack that fires projectiles which track targets for a duration.
@@ -10,10 +10,10 @@ namespace Enemies.Attacks
     /// The fired missile prefab should have a HomingMissile component attached to handle tracking.
     /// When the tracking duration expires or the missile hits something, it explodes.
     /// 
-    /// Perfect for drones, robots, or any enemy that needs smart projectiles.
+    /// Perfect for drones, robots, or any character that needs smart projectiles.
     /// 
     /// Usage:
-    /// 1. Attach this component to your enemy
+    /// 1. Attach this component to your character
     /// 2. Assign attackEffect to a missile prefab (must have HomingMissile component)
     /// 3. Assign hitEffect for explosion VFX
     /// 4. Configure tracking duration, turn speed, etc. in inspector
@@ -64,69 +64,69 @@ namespace Enemies.Attacks
         }
 
         /// <summary>
-        /// Override default projectile ranges so drones can fire at close range and pursue the player.
+        /// Override default projectile ranges so characters can fire at close range and pursue the target.
         /// </summary>
-        public override void Initialize(EnemyBase enemy)
+        public override void Initialize(IAttackOwner attackOwner)
         {
-            base.Initialize(enemy);
+            base.Initialize(attackOwner);
             
-            Debug.Log($"[{enemy.gameObject.name}] HomingMissileAttack initialized | Duration: {homingDuration}s | TurnSpeed: {turnSpeed}°/s");
+            Debug.Log($"[{attackOwner.gameObject.name}] HomingMissileAttack initialized | Duration: {homingDuration}s | TurnSpeed: {turnSpeed}°/s");
         }
 
         public override void OnAttack()
         {
-            Debug.Log($"[{enemy.gameObject.name}] ===== HOMING MISSILE ATTACK START =====");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] ===== HOMING MISSILE ATTACK START =====");
             
             if (target == null)
             {
-                Debug.LogWarning($"[{enemy.gameObject.name}] Homing missile attack called with no target!");
+                Debug.LogWarning($"[{OwnerTransform.gameObject.name}] Homing missile attack called with no target!");
                 return;
             }
             
-            Debug.Log($"[{enemy.gameObject.name}] Target: {target.name} | Position: {target.position}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Target: {target.name} | Position: {target.position}");
 
             if (attackEffect == null)
             {
-                Debug.LogError($"[{enemy.gameObject.name}] attackEffect is NULL!");
+                Debug.LogError($"[{OwnerTransform.gameObject.name}] attackEffect is NULL!");
                 return;
             }
             
             if (!attackEffect.IsValid())
             {
-                Debug.LogError($"[{enemy.gameObject.name}] attackEffect.IsValid() returned FALSE!");
+                Debug.LogError($"[{OwnerTransform.gameObject.name}] attackEffect.IsValid() returned FALSE!");
                 return;
             }
             
             if (attackEffect.effectDefinition == null)
             {
-                Debug.LogError($"[{enemy.gameObject.name}] attackEffect.effectDefinition is NULL!");
+                Debug.LogError($"[{OwnerTransform.gameObject.name}] attackEffect.effectDefinition is NULL!");
                 return;
             }
             
-            Debug.Log($"[{enemy.gameObject.name}] attackEffect validated | Name: {attackEffect.effectDefinition.name}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] attackEffect validated | Name: {attackEffect.effectDefinition.name}");
             
-            // Use attack origin if provided, otherwise use enemy position
-            Transform spawnTransform = attackOrigin != null ? attackOrigin : enemy.transform;
+            // Use attack origin if provided, otherwise use owner position
+            Transform spawnTransform = attackOrigin != null ? attackOrigin : OwnerTransform;
             Vector3 spawnPosition = spawnTransform.position + Vector3.up * projectileSpawnHeight;
             
-            Debug.Log($"[{enemy.gameObject.name}] Spawn Transform: {(attackOrigin != null ? attackOrigin.name : enemy.transform.name)} | Spawn Position: {spawnPosition} | Spawn Height Offset: {projectileSpawnHeight}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Spawn Transform: {(attackOrigin != null ? attackOrigin.name : OwnerTransform.name)} | Spawn Position: {spawnPosition} | Spawn Height Offset: {projectileSpawnHeight}");
             
             // Calculate launch direction from spawn position
             Vector3 launchDirection = (target.position - spawnPosition).normalized;
             float damageRadius = CalculateDamageRadius();
             
-            Debug.Log($"[{enemy.gameObject.name}] Launch Direction: {launchDirection} | Damage Radius: {damageRadius}");
-            Debug.Log($"[{enemy.gameObject.name}] Missile Parameters:");
-            Debug.Log($"[{enemy.gameObject.name}]   - Damage: {damage} | Poise: {poiseDamage} | Element: {attackElement}");
-            Debug.Log($"[{enemy.gameObject.name}]   - Speed: {projectileSpeed * missileSpeedMultiplier} (base: {projectileSpeed} * multiplier: {missileSpeedMultiplier})");
-            Debug.Log($"[{enemy.gameObject.name}]   - Duration: {homingDuration}s | Turn Speed: {turnSpeed}°/s | Explode On Timeout: {explodeOnTimeout}");
-            Debug.Log($"[{enemy.gameObject.name}]   - Create Damage Area: {createDamageAreaOnImpact} | Impact Duration: {impactDamageDuration}");
-            Debug.Log($"[{enemy.gameObject.name}]   - Use Trigger Based Damage: {useTriggerBasedDamage}");
-            Debug.Log($"[{enemy.gameObject.name}]   - Attacker: {(enemy != null ? enemy.gameObject.name : "NULL")}");
-            Debug.Log($"[{enemy.gameObject.name}]   - Hit Effect: {(hitEffect != null && hitEffect.IsValid() ? hitEffect.effectDefinition.name : "NULL")}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Launch Direction: {launchDirection} | Damage Radius: {damageRadius}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Missile Parameters:");
+            Debug.Log($"[{OwnerTransform.gameObject.name}]   - Damage: {damage} | Poise: {poiseDamage} | Element: {attackElement}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}]   - Speed: {projectileSpeed * missileSpeedMultiplier} (base: {projectileSpeed} * multiplier: {missileSpeedMultiplier})");
+            Debug.Log($"[{OwnerTransform.gameObject.name}]   - Duration: {homingDuration}s | Turn Speed: {turnSpeed}°/s | Explode On Timeout: {explodeOnTimeout}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}]   - Create Damage Area: {createDamageAreaOnImpact} | Impact Duration: {impactDamageDuration}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}]   - Use Trigger Based Damage: {useTriggerBasedDamage}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}]   - Attacker: {(owner != null ? owner.gameObject.name : "NULL")}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}]   - Hit Effect: {(hitEffect != null && hitEffect.IsValid() ? hitEffect.effectDefinition.name : "NULL")}");
             
             // Fire the missile using the utility (standardized like other projectile types)
-            Debug.Log($"[{enemy.gameObject.name}] Calling DamageUtils.FireProjectileWithEffect...");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Calling DamageUtils.FireProjectileWithEffect...");
             GameObject missile = DamageUtils.FireProjectileWithEffect(
                 spawnPosition,
                 launchDirection,
@@ -134,7 +134,7 @@ namespace Enemies.Attacks
                 target.position,
                 damage,
                 poiseDamage,
-                enemy.transform,
+                OwnerTransform,
                 attackElement,
                 attackEffect.effectDefinition,
                 hitEffect?.effectDefinition,
@@ -153,27 +153,27 @@ namespace Enemies.Attacks
             
             if (missile != null)
             {
-                Debug.Log($"[{enemy.gameObject.name}] ✅ MISSILE CREATED SUCCESSFULLY: {missile.name}");
+                Debug.Log($"[{OwnerTransform.gameObject.name}] ✅ MISSILE CREATED SUCCESSFULLY: {missile.name}");
                 
                 // Fire the start effect at the launch point when the missile is created (thruster flare, etc.)
                 if (startEffect != null && startEffect.IsValid())
                 {
-                    Debug.Log($"[{enemy.gameObject.name}] Playing start effect (muzzle flash)...");
+                    Debug.Log($"[{OwnerTransform.gameObject.name}] Playing start effect (muzzle flash)...");
                     PlayStartEffect(spawnPosition, launchDirection, Quaternion.LookRotation(launchDirection), spawnTransform);
                 }
                 else
                 {
-                    Debug.Log($"[{enemy.gameObject.name}] No start effect to play (startEffect is null or invalid)");
+                    Debug.Log($"[{OwnerTransform.gameObject.name}] No start effect to play (startEffect is null or invalid)");
                 }
                 
-                Debug.Log($"[{enemy.gameObject.name}] ✅ Homing missile fired from {spawnPosition} at {target.name} | Duration: {homingDuration}s");
+                Debug.Log($"[{OwnerTransform.gameObject.name}] ✅ Homing missile fired from {spawnPosition} at {target.name} | Duration: {homingDuration}s");
             }
             else
             {
-                Debug.LogError($"[{enemy.gameObject.name}] ❌ FAILED TO FIRE HOMING MISSILE! DamageUtils.FireProjectileWithEffect returned NULL!");
+                Debug.LogError($"[{OwnerTransform.gameObject.name}] ❌ FAILED TO FIRE HOMING MISSILE! DamageUtils.FireProjectileWithEffect returned NULL!");
             }
             
-            Debug.Log($"[{enemy.gameObject.name}] ===== HOMING MISSILE ATTACK END =====");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] ===== HOMING MISSILE ATTACK END =====");
         }
 
         /// <summary>
@@ -208,11 +208,11 @@ namespace Enemies.Attacks
         {
             base.OnDrawGizmosSelected();
             
-            if (enemy == null) return;
+            Transform drawTransform = OwnerTransform ?? transform;
             
             // Draw missile arc visualization (approximate)
             Gizmos.color = Color.magenta;
-            Vector3 startPos = enemy.transform.position + Vector3.up * projectileSpawnHeight;
+            Vector3 startPos = drawTransform.position + Vector3.up * projectileSpawnHeight;
             
             // Show spawn position
             Gizmos.color = Color.yellow;
@@ -223,10 +223,9 @@ namespace Enemies.Attacks
             for (int i = 0; i < 5; i++)
             {
                 float angle = (i - 2) * 15f; // -30 to +30 degrees
-                Vector3 direction = Quaternion.Euler(0, angle, 0) * enemy.transform.forward;
+                Vector3 direction = Quaternion.Euler(0, angle, 0) * drawTransform.forward;
                 Gizmos.DrawRay(startPos, direction * maxRange * 0.5f);
             }
         }
     }
 }
-

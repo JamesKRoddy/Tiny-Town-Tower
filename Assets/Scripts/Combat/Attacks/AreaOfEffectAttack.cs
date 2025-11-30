@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Enemies.Attacks
+namespace Combat.Attacks
 {
     /// <summary>
     /// Area of effect attack that creates a persistent damage zone.
@@ -44,9 +44,9 @@ namespace Enemies.Attacks
             }
         }
 
-        public override void Initialize(EnemyBase enemy)
+        public override void Initialize(IAttackOwner attackOwner)
         {
-            base.Initialize(enemy);
+            base.Initialize(attackOwner);
             
             // Set default elemental damage for area of effect attacks
             if (attackElement == AttackElement.NONE)
@@ -54,14 +54,14 @@ namespace Enemies.Attacks
                 attackElement = AttackElement.PHYSICAL;
             }
             
-            Debug.Log($"[{enemy.gameObject.name}] AreaOfEffectAttack initialized | Min: {minRange} | Max: {maxRange} | Radius: {aoeRadius} | Duration: {aoeDuration}");
+            Debug.Log($"[{attackOwner.gameObject.name}] AreaOfEffectAttack initialized | Min: {minRange} | Max: {maxRange} | Radius: {aoeRadius} | Duration: {aoeDuration}");
         }
 
         public override void OnAttack()
         {
             if (target == null)
             {
-                Debug.LogWarning($"[{enemy.gameObject.name}] Area of effect attack called with no target!");
+                Debug.LogWarning($"[{OwnerTransform.gameObject.name}] Area of effect attack called with no target!");
                 return;
             }
             
@@ -74,36 +74,36 @@ namespace Enemies.Attacks
                 aoeRadius, 
                 damagePerTick, 
                 poiseDamagePerTick, 
-                enemy.transform, 
+                OwnerTransform, 
                 attackElement, 
                 aoeDuration, 
                 damageInterval, 
                 attackEffect?.effectDefinition
             );
             
-            Debug.Log($"[{enemy.gameObject.name}] Area of effect attack executed | Position: {aoePosition} | Radius: {aoeRadius} | Duration: {aoeDuration}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Area of effect attack executed | Position: {aoePosition} | Radius: {aoeRadius} | Duration: {aoeDuration}");
         }
 
         protected override void OnDrawGizmosSelected()
         {
-            if (enemy == null) return;
+            Transform drawTransform = OwnerTransform ?? transform;
             
             // Draw attack range
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(enemy.transform.position, maxRange);
+            Gizmos.DrawWireSphere(drawTransform.position, maxRange);
             
             // Draw min/max distances
             Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(enemy.transform.position, minRange);
+            Gizmos.DrawWireSphere(drawTransform.position, minRange);
             Gizmos.color = Color.blue;
-            Gizmos.DrawWireSphere(enemy.transform.position, maxRange);
+            Gizmos.DrawWireSphere(drawTransform.position, maxRange);
             
             // Draw attack angle
-            Vector3 rightDir = Quaternion.Euler(0, attackAngleThreshold, 0) * enemy.transform.forward;
-            Vector3 leftDir = Quaternion.Euler(0, -attackAngleThreshold, 0) * enemy.transform.forward;
+            Vector3 rightDir = Quaternion.Euler(0, attackAngleThreshold, 0) * drawTransform.forward;
+            Vector3 leftDir = Quaternion.Euler(0, -attackAngleThreshold, 0) * drawTransform.forward;
             Gizmos.color = Color.cyan;
-            Gizmos.DrawRay(enemy.transform.position, rightDir * maxRange);
-            Gizmos.DrawRay(enemy.transform.position, leftDir * maxRange);
+            Gizmos.DrawRay(drawTransform.position, rightDir * maxRange);
+            Gizmos.DrawRay(drawTransform.position, leftDir * maxRange);
             
             // Draw area of effect radius
             if (target != null)

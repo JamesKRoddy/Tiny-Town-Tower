@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 
-namespace Enemies.Attacks
+namespace Combat.Attacks
 {
     /// <summary>
     /// Jump attack that launches the attacker into the air and lands with area damage.
@@ -24,7 +24,7 @@ namespace Enemies.Attacks
         public float finalJumpLockPercentage = 0.1f;
         [Tooltip("How fast the attacker rotates to face the target (degrees per second)")]
         [Range(90f, 720f)]
-        public float rotationSpeed = 360f;
+        public float jumpRotationSpeed = 360f;
 
         private Vector3 jumpStartPosition;
         private Vector3 jumpTargetPosition;
@@ -36,9 +36,9 @@ namespace Enemies.Attacks
         private float originalStoppingDistance;
         private NavMeshAgent agent;
 
-        public override void Initialize(EnemyBase enemy)
+        public override void Initialize(IAttackOwner attackOwner)
         {
-            base.Initialize(enemy);
+            base.Initialize(attackOwner);
             
             // Set default elemental damage for jump attacks
             if (attackElement == AttackElement.NONE)
@@ -47,7 +47,7 @@ namespace Enemies.Attacks
             }
             
             // Store the original stopping distance and agent reference
-            agent = enemy.GetComponent<NavMeshAgent>();
+            agent = attackOwner.transform.GetComponent<NavMeshAgent>();
             if (agent != null)
             {
                 originalStoppingDistance = agent.stoppingDistance;
@@ -60,7 +60,7 @@ namespace Enemies.Attacks
         public void StartJump()
         {
             // Don't jump if dead
-            if (enemy != null && enemy.Health <= 0) return;
+            if (owner != null && owner.Health <= 0) return;
             
             if (target == null)
             {
@@ -103,7 +103,7 @@ namespace Enemies.Attacks
             PlayStartEffect();
 
             // Disable NavMeshAgent and root motion during jump
-            if (enemy != null)
+            if (owner != null)
             {
                 if (agent != null)
                 {
@@ -111,10 +111,9 @@ namespace Enemies.Attacks
                 }
                 else
                 {
-                    Debug.LogWarning("[JumpAttack] No NavMeshAgent found on enemy");
+                    Debug.LogWarning("[JumpAttack] No NavMeshAgent found on owner");
                 }
 
-                var animator = enemy.GetComponent<Animator>();
                 if (animator != null)
                 {
                     wasRootMotionEnabled = animator.applyRootMotion;
@@ -123,7 +122,7 @@ namespace Enemies.Attacks
             }
             else
             {
-                Debug.LogWarning("[JumpAttack] Enemy reference is null");
+                Debug.LogWarning("[JumpAttack] Owner reference is null");
             }
         }
 
@@ -171,13 +170,12 @@ namespace Enemies.Attacks
 
             // Update rotation to face the target
             UpdateTargetRotation();
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, jumpRotationSpeed * Time.deltaTime);
 
             // Calculate the current position in the jump arc
             Vector3 currentPosition = Vector3.Lerp(jumpStartPosition, jumpTargetPosition, progress);
             
             // Add vertical movement using a single sine wave
-            // Using PI * progress gives us a full sine wave from 0 to 1
             currentPosition.y += Mathf.Sin(progress * Mathf.PI) * jumpHeight;
 
             // Apply the movement directly
@@ -188,7 +186,7 @@ namespace Enemies.Attacks
         {
             isJumping = false;
 
-            if (enemy != null && agent != null)
+            if (owner != null && agent != null)
             {
                 // First, ensure we're on the NavMesh
                 if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 5f, NavMesh.AllAreas))
@@ -222,25 +220,21 @@ namespace Enemies.Attacks
                 }
                 else
                 {
-                    Debug.LogWarning("[JumpAttack] Could not find valid NavMesh position for enemy");
+                    Debug.LogWarning("[JumpAttack] Could not find valid NavMesh position for owner");
                 }
 
-                var animator = enemy.GetComponent<Animator>();
                 if (animator != null)
                 {
                     animator.applyRootMotion = wasRootMotionEnabled;
                 }
-
-                // Note: Attack state reset is handled by ModularEnemy's attack system
-                // No need for manual AttackEnd() call - the modular system handles it
             }
             else
             {
-                Debug.LogWarning("[JumpAttack] Enemy or NavMeshAgent reference is null");
+                Debug.LogWarning("[JumpAttack] Owner or NavMeshAgent reference is null");
             }
 
             // Deal damage on landing
-            DamageUtils.CreateInstantDamageArea(transform.position, jumpRadius, damage, poiseDamage, enemy.transform, attackElement);
+            DamageUtils.CreateInstantDamageArea(transform.position, jumpRadius, damage, poiseDamage, OwnerTransform, attackElement);
             
             // Play attack effect on landing
             PlayAttackEffect(transform.position, Vector3.up);

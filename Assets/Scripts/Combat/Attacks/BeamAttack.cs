@@ -3,7 +3,7 @@ using Managers;
 using System.Collections;
 using PolygonArsenal;
 
-namespace Enemies.Attacks
+namespace Combat.Attacks
 {
     /// <summary>
     /// Continuous beam attack that deals damage over time while active.
@@ -54,9 +54,9 @@ namespace Enemies.Attacks
             }
         }
 
-        public override void Initialize(EnemyBase enemy)
+        public override void Initialize(IAttackOwner attackOwner)
         {
-            base.Initialize(enemy);
+            base.Initialize(attackOwner);
             
             // Set default elemental damage for beam attacks
             if (attackElement == AttackElement.NONE)
@@ -67,13 +67,13 @@ namespace Enemies.Attacks
             // Validate fire point
             if (beamFirePoint == null)
             {
-                Debug.LogWarning($"[{enemy.gameObject.name}] BeamAttack: Beam fire point not assigned! Please assign beamFirePoint.");
+                Debug.LogWarning($"[{attackOwner.gameObject.name}] BeamAttack: Beam fire point not assigned! Please assign beamFirePoint.");
             }
             
             // Initialize current look target to forward position
-            currentLookAtTarget = enemy.transform.position + enemy.transform.forward * 5f + Vector3.up;
+            currentLookAtTarget = attackOwner.transform.position + attackOwner.transform.forward * 5f + Vector3.up;
             
-            Debug.Log($"[{enemy.gameObject.name}] BeamAttack initialized | Max: {maxRange} | Damage: {damage} | DamageInterval: {damageInterval}");
+            Debug.Log($"[{attackOwner.gameObject.name}] BeamAttack initialized | Max: {maxRange} | Damage: {damage} | DamageInterval: {damageInterval}");
         }
 
         public override bool CanAttack()
@@ -85,7 +85,7 @@ namespace Enemies.Attacks
         }
 
         /// <summary>
-        /// Checks if the enemy is properly aligned for beam attack
+        /// Checks if the owner is properly aligned for beam attack
         /// </summary>
         private bool IsReadyForBeamAttack()
         {
@@ -100,28 +100,28 @@ namespace Enemies.Attacks
         }
 
         /// <summary>
-        /// Rotates enemy towards target with enhanced precision for beam attacks
+        /// Rotates owner towards target with enhanced precision for beam attacks
         /// </summary>
         public void RotateTowardsTargetForBeamAttack()
         {
             if (target == null) return;
             
             // Use centralized rotation utility with enhanced speed for beam attacks
-            NavigationUtils.RotateTowardsTargetForAction(enemy.transform, target, 2f, 2f, attackAngleThreshold, true);
+            NavigationUtils.RotateTowardsTargetForAction(OwnerTransform, target, 2f, 2f, attackAngleThreshold, true);
         }
 
         public override void StartAttack()
         {
             base.StartAttack();
             
-            Debug.Log($"[{enemy.gameObject.name}] Beam attack started | Target: {target.name} | Distance: {Vector3.Distance(enemy.transform.position, target.position):F2}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Beam attack started | Target: {target.name} | Distance: {Vector3.Distance(OwnerTransform.position, target.position):F2}");
         }
 
         public override void OnAttack()
         {
             if (target == null)
             {
-                Debug.LogWarning($"[{enemy.gameObject.name}] Beam attack called with no target!");
+                Debug.LogWarning($"[{OwnerTransform.gameObject.name}] Beam attack called with no target!");
                 return;
             }
             
@@ -133,7 +133,7 @@ namespace Enemies.Attacks
             // Start continuous damage checking
             beamDamageCoroutine = StartCoroutine(ContinuousBeamDamage());
             
-            Debug.Log($"[{enemy.gameObject.name}] Beam attack executed | Continuous damage started");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Beam attack executed | Continuous damage started");
         }
 
         public override void OnAttackEnd()
@@ -181,7 +181,7 @@ namespace Enemies.Attacks
         /// </summary>
         private IEnumerator ContinuousBeamDamage()
         {
-            while (isFiringBeam && enemy != null && enemy.isAttacking)
+            while (isFiringBeam && owner != null && owner.IsAttacking)
             {
                 // Check damage from fire point
                 CheckBeamDamageFromPoint();
@@ -206,10 +206,10 @@ namespace Enemies.Attacks
             {
                 // Check if hit object is damageable
                 IDamageable damageable = hit.collider.GetComponent<IDamageable>();
-                if (damageable != null && damageable.GetAllegiance() == Allegiance.FRIENDLY)
+                if (damageable != null && DamageUtils.IsValidTarget(DealerAllegiance, damageable))
                 {
                     // Deal damage with poise damage
-                    DamageUtils.DealDamageToTarget(damageable, damage, poiseDamage, enemy.transform, attackElement);
+                    DamageUtils.DealDamageToTarget(damageable, damage, poiseDamage, OwnerTransform, attackElement);
                     
                     // Play hit effect
                     PlayHitEffect(hit.point, hit.normal);
@@ -230,25 +230,25 @@ namespace Enemies.Attacks
         /// <param name="layerIndex">The IK layer index</param>
         public override void OnAnimatorIK(int layerIndex)
         {
-            if (enemy == null || animator == null) return;
+            if (owner == null || animator == null) return;
             
             // Only use head IK when we have a target and are not dead
-            if (target != null && enemy.Health > 0)
+            if (target != null && owner.Health > 0)
             {
                 // Calculate target position with Y offset
                 Vector3 targetPosition = target.position + Vector3.up;
                 
                 // Calculate direction from head to target
-                Vector3 directionToTarget = (targetPosition - enemy.transform.position).normalized;
+                Vector3 directionToTarget = (targetPosition - OwnerTransform.position).normalized;
                 
                 // Check if target is within head rotation limits
-                float angleToTarget = Vector3.Angle(enemy.transform.forward, directionToTarget);
+                float angleToTarget = Vector3.Angle(OwnerTransform.forward, directionToTarget);
                 if (angleToTarget <= maxHeadRotationAngle)
                 {
                     // Enable head IK
                     isHeadIKActive = true;
                     
-                    // Smoothly lerp the look-at target position to prevent snappy head movements
+                    // Smoothly lerp the look-at target position
                     currentLookAtTarget = Vector3.Lerp(currentLookAtTarget, targetPosition, headIKLerpSpeed * Time.deltaTime);
                     
                     currentIKWeight = Mathf.Lerp(currentIKWeight, headIKWeight, headIKLerpSpeed * Time.deltaTime);
@@ -281,11 +281,11 @@ namespace Enemies.Attacks
 
         protected override void OnDrawGizmosSelected()
         {
-            if (enemy == null) return;
+            Transform drawTransform = OwnerTransform ?? transform;
             
             // Draw attack range
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(enemy.transform.position, maxRange);
+            Gizmos.DrawWireSphere(drawTransform.position, maxRange);
             
             // Draw beam fire point
             if (beamFirePoint != null)
@@ -310,7 +310,7 @@ namespace Enemies.Attacks
             {
                 Gizmos.color = Color.green;
                 Gizmos.DrawWireSphere(currentLookAtTarget, 0.3f);
-                Gizmos.DrawLine(enemy.transform.position + Vector3.up * 1.5f, currentLookAtTarget);
+                Gizmos.DrawLine(drawTransform.position + Vector3.up * 1.5f, currentLookAtTarget);
             }
         }
     }

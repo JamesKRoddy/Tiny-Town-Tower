@@ -32,4 +32,14 @@ public class WeaponScriptableObj : ResourceScriptableObj
     
     [Tooltip("Duration of applied status effects (in seconds)")]
     public float statusEffectDuration = 5f;
+    
+    [Header("Projectile Deflection")]
+    [Tooltip("Can this weapon deflect/reflect projectiles?")]
+    public bool canDeflectProjectiles = true;
+    
+    [Tooltip("Detection range for projectile deflection (larger = more forgiving)")]
+    public float projectileDeflectionRange = 3f;
+    
+    [Tooltip("Height range for projectile deflection")]
+    public float projectileDeflectionHeight = 2f;
 }

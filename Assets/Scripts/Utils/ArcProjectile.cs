@@ -369,7 +369,7 @@ public class ArcProjectile : BaseProjectile
     }
 
     // ===== IHITTABLE IMPLEMENTATION =====
-    // OnHit, CanBeHit, and ReflectByPlayer are inherited from BaseProjectile
+    // OnHit and CanBeHit are inherited from BaseProjectile
     // Override OnReflected to handle arc-specific reflection behavior
     
     /// <summary>

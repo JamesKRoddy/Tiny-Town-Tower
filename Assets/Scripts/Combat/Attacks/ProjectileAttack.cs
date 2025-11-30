@@ -1,7 +1,7 @@
 using UnityEngine;
 using Managers;
 
-namespace Enemies.Attacks
+namespace Combat.Attacks
 {
     /// <summary>
     /// Projectile-based attack that fires projectiles at targets.
@@ -54,9 +54,9 @@ namespace Enemies.Attacks
         // Store the target position when attack begins
         private Vector3 attackTargetPosition;
 
-        public override void Initialize(EnemyBase enemy)
+        public override void Initialize(IAttackOwner attackOwner)
         {
-            base.Initialize(enemy);
+            base.Initialize(attackOwner);
             
             // Set default elemental damage for projectile attacks
             if (attackElement == AttackElement.NONE)
@@ -67,21 +67,15 @@ namespace Enemies.Attacks
             // Validate effects
             if (attackEffect == null || !attackEffect.IsValid())
             {
-                Debug.LogError("Attack effect (projectile) definition is not assigned or invalid on ProjectileAttack on " + enemy.gameObject.name);
+                Debug.LogError("Attack effect (projectile) definition is not assigned or invalid on ProjectileAttack on " + attackOwner.gameObject.name);
             }
             
-            Debug.Log($"[{enemy.gameObject.name}] ProjectileAttack initialized | Min: {minRange} | Max: {maxRange} | Damage: {damage}");
+            Debug.Log($"[{attackOwner.gameObject.name}] ProjectileAttack initialized | Min: {minRange} | Max: {maxRange} | Damage: {damage}");
         }
 
         public override void StartAttack()
         {
-            // Do everything the base does EXCEPT play the start effect
-            // The start effect should only play when the projectile is successfully created in OnAttack()
             base.StartAttack();
-            
-            // Cancel the start effect that was played by base.StartAttack()
-            // We'll play it in OnAttack() only when the projectile is successfully created
-            // (This prevents the muzzle flash from playing when no missile is spawned)
             
             // Store the target position when attack begins
             if (target != null)
@@ -89,30 +83,25 @@ namespace Enemies.Attacks
                 attackTargetPosition = target.position;
             }
             
-            Debug.Log($"[{enemy.gameObject.name}] Projectile attack started | Target: {target.name} | Distance: {Vector3.Distance(enemy.transform.position, target.position):F2}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Projectile attack started | Target: {target.name} | Distance: {Vector3.Distance(OwnerTransform.position, target.position):F2}");
         }
         
         /// <summary>
         /// Override to prevent start effect from playing in StartAttack()
         /// It will only play in OnAttack() when projectile is successfully created
-        /// When called with parameters (from OnAttack), actually play the effect
         /// </summary>
         protected override void PlayStartEffect(Vector3? position = null, Vector3? direction = null, Quaternion? rotation = null, Transform parent = null)
         {
             // Only play start effect if parameters are provided (meaning it's being called from OnAttack, not StartAttack)
-            // This prevents the muzzle flash from playing when the missile fails to spawn
             if (startEffect != null && startEffect.IsValid() && position.HasValue)
             {
-                // Use provided position/direction/rotation/parent if available, otherwise use defaults
                 Vector3 effectPos = position.Value;
                 Vector3 effectDir = direction.HasValue ? direction.Value : Vector3.forward;
                 Quaternion effectRot = rotation.HasValue ? rotation.Value : Quaternion.identity;
-                Transform effectParent = parent ?? attackOrigin ?? enemy?.transform;
+                Transform effectParent = parent ?? attackOrigin ?? OwnerTransform;
                 
-                // Play the effect at the specified location (muzzle flash at spawn position)
                 PlayEffectSpawnDataAtPosition(startEffect, startEffectDelay, effectParent, effectPos, effectDir, effectRot);
             }
-            // If no parameters provided (called from base.StartAttack()), do nothing
         }
         
         /// <summary>
@@ -122,14 +111,12 @@ namespace Enemies.Attacks
         {
             if (effectData == null || !effectData.IsValid()) return;
             
-            // Spawn at the specified world position with the specified rotation
             if (delay > 0)
             {
                 StartCoroutine(PlayEffectSpawnDataAtPositionDelayed(effectData, delay, parent, position, direction, rotation));
             }
             else
             {
-                // Use EffectManager to spawn at world position
                 EffectManager.Instance?.PlayEffect(position, direction, rotation, parent, effectData.effectDefinition);
             }
         }
@@ -147,40 +134,40 @@ namespace Enemies.Attacks
         {
             if (target == null)
             {
-                Debug.LogWarning($"[{enemy.gameObject.name}] Projectile attack called with no target!");
+                Debug.LogWarning($"[{OwnerTransform.gameObject.name}] Projectile attack called with no target!");
                 return;
             }
             
             // Always fire in the direction we were aiming when the attack started
-            Vector3 direction = (attackTargetPosition - enemy.transform.position).normalized;
+            Vector3 direction = (attackTargetPosition - OwnerTransform.position).normalized;
             
             // Calculate damage radius based on settings
             float damageRadius = CalculateDamageRadius();
             bool useTriggerDetection = (damageRadius == 0f); // Special value indicates trigger-based detection
             
-                // Fire the projectile using the utility
-                GameObject projectile = DamageUtils.FireProjectileWithEffect(
-                    enemy.transform.position + Vector3.up * projectileSpawnHeight,
-                    direction,
-                    Quaternion.LookRotation(direction),
-                    attackTargetPosition,
-                    damage,
-                    poiseDamage,
-                    enemy.transform,
-                    attackElement,
-                    attackEffect?.effectDefinition,
-                    hitEffect?.effectDefinition,
-                    createDamageAreaOnImpact,
-                    damageRadius,
-                    impactDamageDuration,
-                    useTriggerDetection,
-                    ProjectileType.ARC,
-                    projectileSpeed,          // Pass projectile speed from component
-                    projectileMaxHeight,      // Pass max height from component
-                    explodeOnAnyHit: explodeOnAnyHit  // Control explosion behavior (default false)
-                );
+            // Fire the projectile using the utility
+            GameObject projectile = DamageUtils.FireProjectileWithEffect(
+                OwnerTransform.position + Vector3.up * projectileSpawnHeight,
+                direction,
+                Quaternion.LookRotation(direction),
+                attackTargetPosition,
+                damage,
+                poiseDamage,
+                OwnerTransform,
+                attackElement,
+                attackEffect?.effectDefinition,
+                hitEffect?.effectDefinition,
+                createDamageAreaOnImpact,
+                damageRadius,
+                impactDamageDuration,
+                useTriggerDetection,
+                ProjectileType.ARC,
+                projectileSpeed,
+                projectileMaxHeight,
+                explodeOnAnyHit: explodeOnAnyHit
+            );
             
-            Debug.Log($"[{enemy.gameObject.name}] Projectile attack executed | Projectile fired towards: {attackTargetPosition} | Damage: {damage} | Radius: {damageRadius}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Projectile attack executed | Projectile fired towards: {attackTargetPosition} | Damage: {damage} | Radius: {damageRadius}");
         }
 
         /// <summary>
@@ -201,63 +188,58 @@ namespace Enemies.Attacks
                 
                 if (effectPrefab != null)
                 {
-                // Check for damage area components that can handle OnTriggerEnter
-                // This will find DamageArea or any class that inherits from it (like ZombieVomitPool)
-                var damageArea = effectPrefab.GetComponent<DamageArea>();
-                if (damageArea == null)
-                {
-                    damageArea = effectPrefab.GetComponentInChildren<DamageArea>();
-                }
-                
-                // If we found a damage area component, return 0 to indicate trigger-based detection
-                if (damageArea != null)
-                {
-                    Debug.Log($"[{enemy.gameObject.name}] Using trigger-based damage detection with {damageArea.GetType().Name} component");
-                    return 0f; // Special value to indicate trigger-based detection
-                }
-                
-                // Check for other trigger-capable components
-                var triggerComponent = effectPrefab.GetComponent<Collider>();
-                if (triggerComponent == null)
-                {
-                    triggerComponent = effectPrefab.GetComponentInChildren<Collider>();
-                }
-                
-                if (triggerComponent != null && triggerComponent.isTrigger)
-                {
-                    Debug.Log($"[{enemy.gameObject.name}] Found trigger collider, but no DamageArea component. Using fallback radius.");
+                    var damageArea = effectPrefab.GetComponent<DamageArea>();
+                    if (damageArea == null)
+                    {
+                        damageArea = effectPrefab.GetComponentInChildren<DamageArea>();
+                    }
+                    
+                    if (damageArea != null)
+                    {
+                        Debug.Log($"[{OwnerTransform.gameObject.name}] Using trigger-based damage detection with {damageArea.GetType().Name} component");
+                        return 0f; // Special value to indicate trigger-based detection
+                    }
+                    
+                    var triggerComponent = effectPrefab.GetComponent<Collider>();
+                    if (triggerComponent == null)
+                    {
+                        triggerComponent = effectPrefab.GetComponentInChildren<Collider>();
+                    }
+                    
+                    if (triggerComponent != null && triggerComponent.isTrigger)
+                    {
+                        Debug.Log($"[{OwnerTransform.gameObject.name}] Found trigger collider, but no DamageArea component. Using fallback radius.");
                     }
                 }
             }
 
-            // Fallback to radius-based detection
-            Debug.Log($"[{enemy.gameObject.name}] No trigger-capable damage component found in impact effect '{hitEffect?.effectDefinition?.name}', using fallback radius: {fallbackDamageRadius}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] No trigger-capable damage component found in impact effect '{hitEffect?.effectDefinition?.name}', using fallback radius: {fallbackDamageRadius}");
             return fallbackDamageRadius;
         }
 
 
         protected override void OnDrawGizmosSelected()
         {
-            if (enemy == null) return;
+            Transform drawTransform = OwnerTransform ?? transform;
             
             // Draw min attack range
             Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(enemy.transform.position, minRange);
+            Gizmos.DrawWireSphere(drawTransform.position, minRange);
             
             // Draw max attack range
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(enemy.transform.position, maxRange);
+            Gizmos.DrawWireSphere(drawTransform.position, maxRange);
             
             // Draw attack angle
-            Vector3 rightDir = Quaternion.Euler(0, attackAngleThreshold, 0) * enemy.transform.forward;
-            Vector3 leftDir = Quaternion.Euler(0, -attackAngleThreshold, 0) * enemy.transform.forward;
+            Vector3 rightDir = Quaternion.Euler(0, attackAngleThreshold, 0) * drawTransform.forward;
+            Vector3 leftDir = Quaternion.Euler(0, -attackAngleThreshold, 0) * drawTransform.forward;
             Gizmos.color = Color.cyan;
-            Gizmos.DrawRay(enemy.transform.position, rightDir * maxRange);
-            Gizmos.DrawRay(enemy.transform.position, leftDir * maxRange);
+            Gizmos.DrawRay(drawTransform.position, rightDir * maxRange);
+            Gizmos.DrawRay(drawTransform.position, leftDir * maxRange);
             
             // Draw projectile spawn height
             Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(enemy.transform.position + Vector3.up * projectileSpawnHeight, 0.5f);
+            Gizmos.DrawWireSphere(drawTransform.position + Vector3.up * projectileSpawnHeight, 0.5f);
         }
     }
 }

@@ -3,20 +3,26 @@ using Managers;
 using System.Collections;
 using System;
 
-namespace Enemies
+namespace Combat
 {
     /// <summary>
-    /// Base class for all enemy attack components.
-    /// Contains common attack properties and functionality shared between all modular enemies.
+    /// Base class for all attack components.
+    /// Contains common attack properties and functionality shared between all characters.
+    /// 
+    /// UNIFIED ATTACK SYSTEM:
+    /// This class works with any character type via IAttackOwner interface:
+    /// - Enemies (EnemyBase, ModularEnemy)
+    /// - NPCs (SettlerNPC with weapons)
+    /// - Player-controlled characters
     /// 
     /// VISUAL SYSTEM (2 Arrays):
     /// This class supports two types of visual elements:
     /// 
     /// 1. PERMANENT EQUIPMENT (attackEquipment):
-    ///    - Always visible equipment that shows what the enemy has
+    ///    - Always visible equipment that shows what the character has
     ///    - Examples: dynamite sticks, guns, swords, rocket launchers
     ///    - Stays ENABLED all the time
-    ///    - Lets players see enemy capabilities at a glance
+    ///    - Lets players see character capabilities at a glance
     /// 
     /// 2. TEMPORARY EFFECTS (attackEffectObjects):
     ///    - Visual effects that appear only during attacks
@@ -58,7 +64,7 @@ namespace Enemies
         public float poiseDamage = 15f;
         [Tooltip("Attack type ID for animator parameter (0 = default attack)")]
         public int attackType = 0;
-        [Tooltip("Optional transform to use as the attack origin. If not set, will use the enemy's transform.")]
+        [Tooltip("Optional transform to use as the attack origin. If not set, will use the owner's transform.")]
         public Transform attackOrigin;
         [Tooltip("Allow NavMeshAgent to drive rotation during attack (useful for tracking moving targets)")]
         public bool allowRotationDuringAttack = false;
@@ -75,7 +81,7 @@ namespace Enemies
         public EffectSpawnData startEffect;
         [Tooltip("Delay in seconds before playing the start effect")]
         public float startEffectDelay = 0f;
-        [Tooltip("Effect played when the enemy attacks")]
+        [Tooltip("Effect played when the character attacks")]
         public EffectSpawnData attackEffect;
         [Tooltip("Delay in seconds before playing the attack effect")]
         public float attackEffectDelay = 0f;
@@ -104,12 +110,12 @@ namespace Enemies
 
         [Header("Attack Visual Equipment")]
         [Tooltip("Permanent equipment GameObjects that are ALWAYS visible.\n\n" +
-                 "These show what attack the enemy has:\n" +
+                 "These show what attack the character has:\n" +
                  "• Dynamite sticks for ExplosionAttack\n" +
                  "• Gun model for ProjectileAttack\n" +
                  "• Sword/weapon for melee attacks\n" +
                  "• Rocket launcher for missile attacks\n\n" +
-                 "These stay enabled all the time so players can see the enemy's capabilities.")]
+                 "These stay enabled all the time so players can see the character's capabilities.")]
         public GameObject[] attackEquipment;
         
         [Tooltip("Temporary effect GameObjects that are ENABLED during attacks only.\n\n" +
@@ -123,10 +129,13 @@ namespace Enemies
 
         /// <summary>
         /// Time when this attack was last executed (used for cooldown calculations)
-        /// Made public so EnemyBase can check actual cooldown status
+        /// Made public so owner can check actual cooldown status
         /// </summary>
         public float lastAttackTime;
-        protected EnemyBase enemy;
+        
+        // Owner reference - works with any character type
+        protected IAttackOwner owner;
+        
         protected Animator animator;
         protected Transform target;
         private bool hasValidAnimator;
@@ -134,13 +143,23 @@ namespace Enemies
         // Public property for external access
         public Transform Target => target;
         
+        // Owner accessor for derived classes
+        protected IAttackOwner Owner => owner;
+        
+        // Owner transform helper
+        protected Transform OwnerTransform => owner?.transform ?? transform;
+        
         // IDamageDealer implementation
         public float BaseDamage => damage;
         public float PoiseDamage => poiseDamage;
         public AttackElement ElementType => attackElement;
         public int ElementalDamageBonus => elementalDamageBonus;
-        public Transform DamageSource => attackOrigin != null ? attackOrigin : enemy?.transform;
-        public Allegiance DealerAllegiance => Allegiance.HOSTILE; // Enemy attacks are hostile
+        public Transform DamageSource => attackOrigin != null ? attackOrigin : OwnerTransform;
+        
+        /// <summary>
+        /// Allegiance determined by owner
+        /// </summary>
+        public Allegiance DealerAllegiance => owner?.GetAllegiance() ?? Allegiance.NEUTRAL;
 
         [Tooltip("VFX for the start of the attack")]
         private EffectPlayer startEffectPlayer;
@@ -178,22 +197,30 @@ namespace Enemies
         }
 
         /// <summary>
-        /// Initialize the attack with the enemy reference
+        /// Initialize the attack with any IAttackOwner (NPCs, players, enemies)
         /// </summary>
-        /// <param name="enemy">The enemy that owns this attack</param>
-        public virtual void Initialize(EnemyBase enemy)
+        /// <param name="attackOwner">The character that owns this attack</param>
+        public virtual void Initialize(IAttackOwner attackOwner)
         {
-            this.enemy = enemy;
-            this.animator = enemy.GetComponent<Animator>();
-            this.target = enemy.NavMeshTarget;
+            this.owner = attackOwner;
+            this.animator = attackOwner.OwnerAnimator;
+            this.target = attackOwner.AttackTarget;
             
-            // If no attack origin is set, use the enemy's transform
+            // If no attack origin is set, use the owner's transform
             if (attackOrigin == null)
             {
-                attackOrigin = enemy.transform;
+                attackOrigin = attackOwner.transform;
             }
 
-            // Initialize effect players - convert EffectSpawnData to EffectDefinition for EffectPlayer
+            // Initialize effect players
+            InitializeEffectPlayers();
+        }
+        
+        /// <summary>
+        /// Initialize effect players
+        /// </summary>
+        private void InitializeEffectPlayers()
+        {
             startEffectPlayer = new EffectPlayer(this, startEffect?.effectDefinition, startEffectDelay);
             attackEffectPlayer = new EffectPlayer(this, attackEffect?.effectDefinition, attackEffectDelay);
             hitEffectPlayer = new EffectPlayer(this, hitEffect?.effectDefinition, hitEffectDelay);
@@ -206,20 +233,18 @@ namespace Enemies
         /// <returns>True if the attack can be used</returns>
         public virtual bool CanAttack()
         {
-            if (target == null || enemy == null) return false;
-            if (enemy.Health <= 0) return false;
+            if (target == null || owner == null) return false;
+            if (owner.Health <= 0) return false;
             
             // Use obstacle-aware range check for targets with NavMesh obstacles (like buildings)
-            // This ensures enemies can attack buildings even though they can't path directly to the center
-            bool inRange = DamageUtils.IsInRangeWithObstacles(enemy.transform.position, target, minRange, maxRange);
+            bool inRange = DamageUtils.IsInRangeWithObstacles(OwnerTransform.position, target, minRange, maxRange);
             bool cooldownReady = DamageUtils.IsCooldownReady(lastAttackTime, cooldown);
             
             // For ranged attacks (attacks with minimum range > 0), check line of sight
-            // Melee attacks don't need line of sight since they're close-range
             bool hasLineOfSight = true;
             if (minRange > 0) // Ranged attack
             {
-                hasLineOfSight = enemy.HasLineOfSight(target.position);
+                hasLineOfSight = owner.HasLineOfSight(target.position);
             }
             
             return inRange && cooldownReady && hasLineOfSight;
@@ -234,11 +259,11 @@ namespace Enemies
 
             lastAttackTime = Time.time;
             
-            // Mark enemy as attacking
-            enemy.isAttacking = true;
-            
-            // Note: Rotation during attack is now handled by UpdateDuringAttack() using Quaternion.Lerp
-            // This approach doesn't conflict with NavMeshAgent rotation settings
+            // Mark owner as attacking
+            if (owner != null)
+            {
+                owner.IsAttacking = true;
+            }
             
             // Enable temporary attack effect objects
             EnableAttackEffectObjects();
@@ -250,7 +275,7 @@ namespace Enemies
             if (useAnimatorTiming && hasValidAnimator)
             {
                 // Animator-driven: trigger animation, animator events will call AttackWarning/Attack/AttackEnd
-                if (enemy != null && animator != null)
+                if (owner != null && animator != null)
                 {
                     animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, attackType);
                     animator.SetTrigger(attackTrigger);
@@ -268,7 +293,8 @@ namespace Enemies
         /// </summary>
         private IEnumerator ExecuteAttackTimeline()
         {
-            Debug.Log($"[{enemy?.gameObject.name}] Timeline attack started | Warning: {warningDelay}s, Attack: {attackDelay}s, End: {attackEndDelay}s");
+            string ownerName = owner?.gameObject.name ?? "Unknown";
+            Debug.Log($"[{ownerName}] Timeline attack started | Warning: {warningDelay}s, Attack: {attackDelay}s, End: {attackEndDelay}s");
             
             // Wait for warning delay, then show warning
             if (warningDelay > 0)
@@ -276,10 +302,10 @@ namespace Enemies
                 yield return new WaitForSeconds(warningDelay);
             }
             
-            Debug.Log($"[{enemy?.gameObject.name}] Timeline: Calling AttackWarning");
-            if (enemy != null)
+            Debug.Log($"[{ownerName}] Timeline: Calling AttackWarning");
+            if (owner != null)
             {
-                enemy.AttackWarning();
+                owner.AttackWarning();
             }
             
             // Wait for attack delay (from start, not from warning)
@@ -289,12 +315,12 @@ namespace Enemies
                 yield return new WaitForSeconds(remainingDelay);
             }
             
-            Debug.Log($"[{enemy?.gameObject.name}] Timeline: Executing Attack");
+            Debug.Log($"[{ownerName}] Timeline: Executing Attack");
             // Execute the actual attack
             OnAttack();
-            if (enemy != null)
+            if (owner != null)
             {
-                enemy.Attack();
+                owner.Attack();
             }
             
             // Wait for end delay (from start, not from attack)
@@ -304,7 +330,7 @@ namespace Enemies
                 yield return new WaitForSeconds(remainingDelay);
             }
             
-            Debug.Log($"[{enemy?.gameObject.name}] Timeline: Calling AttackEnd");
+            Debug.Log($"[{ownerName}] Timeline: Calling AttackEnd");
             // End the attack
             OnAttackEnd();
         }
@@ -315,8 +341,7 @@ namespace Enemies
         public virtual void UpdateDuringAttack()
         {
             // If rotation is allowed during attack, manually rotate towards target using Quaternion.Lerp
-            // This works regardless of whether the NavMeshAgent is moving or stopped
-            if (allowRotationDuringAttack && enemy != null && target != null)
+            if (allowRotationDuringAttack && owner != null && target != null)
             {
                 // Safety check: Skip if target was destroyed during attack
                 if (target.gameObject == null || !target.gameObject.activeInHierarchy)
@@ -325,7 +350,7 @@ namespace Enemies
                 }
                 
                 // Calculate direction to target
-                Vector3 directionToTarget = (target.position - enemy.transform.position).normalized;
+                Vector3 directionToTarget = (target.position - OwnerTransform.position).normalized;
                 directionToTarget.y = 0; // Keep rotation on horizontal plane
                 
                 if (directionToTarget != Vector3.zero)
@@ -333,11 +358,11 @@ namespace Enemies
                     // Calculate target rotation
                     Quaternion targetRotation = Quaternion.LookRotation(directionToTarget);
                     
-                    // Smoothly rotate towards target using enemy's rotation speed
-                    enemy.transform.rotation = Quaternion.Lerp(
-                        enemy.transform.rotation, 
+                    // Smoothly rotate towards target using owner's rotation speed
+                    OwnerTransform.rotation = Quaternion.Lerp(
+                        OwnerTransform.rotation, 
                         targetRotation, 
-                        enemy.rotationSpeed * Time.deltaTime
+                        owner.OwnerRotationSpeed * Time.deltaTime
                     );
                 }
             }
@@ -359,20 +384,17 @@ namespace Enemies
         /// </summary>
         public virtual void OnAttackEnd()
         {
-            // Mark enemy as no longer attacking
-            if (enemy != null)
+            // Mark owner as no longer attacking
+            if (owner != null)
             {
-                enemy.isAttacking = false;
+                owner.IsAttacking = false;
             }
             
             // Reset animation parameters
-            if (enemy != null && animator != null && animator.runtimeAnimatorController != null)
+            if (owner != null && animator != null && animator.runtimeAnimatorController != null)
             {
                 animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, 0);
             }
-            
-            // Note: NavMeshAgent rotation is handled by EnemyBase.EndAttack()
-            // Manual rotation during attack doesn't interfere with it
             
             // Disable temporary attack effect objects
             DisableAttackEffectObjects();
@@ -391,7 +413,7 @@ namespace Enemies
         }
 
         /// <summary>
-        /// Check if the enemy should rotate towards target before attacking
+        /// Check if the owner should rotate towards target before attacking
         /// </summary>
         /// <returns>True if rotation is needed</returns>
         public virtual bool ShouldRotateToAttack()
@@ -402,18 +424,18 @@ namespace Enemies
         }
 
         /// <summary>
-        /// Check if the enemy is properly facing the target for this attack
+        /// Check if the owner is properly facing the target for this attack
         /// </summary>
         /// <returns>True if properly aligned</returns>
         protected virtual bool IsReadyToAttack()
         {
             if (target == null) return false;
             
-            return NavigationUtils.IsFacingTarget(enemy.transform, target, attackAngleThreshold, true);
+            return NavigationUtils.IsFacingTarget(OwnerTransform, target, attackAngleThreshold, true);
         }
 
         /// <summary>
-        /// Update the target reference (called when enemy finds a new target)
+        /// Update the target reference (called when owner finds a new target)
         /// </summary>
         public virtual void UpdateTarget(Transform newTarget)
         {
@@ -427,7 +449,7 @@ namespace Enemies
         protected virtual float CalculateEffectiveAttackDistance()
         {
             if (target == null) return maxRange;
-            return NavigationUtils.CalculateEffectiveReachDistance(enemy.transform.position, target, maxRange, 1f);
+            return NavigationUtils.CalculateEffectiveReachDistance(OwnerTransform.position, target, maxRange, 1f);
         }
 
         /// <summary>
@@ -437,7 +459,7 @@ namespace Enemies
         protected virtual bool IsTargetInRange()
         {
             if (target == null) return false;
-            return DamageUtils.IsInRangeWithObstacles(enemy.transform.position, target, minRange, maxRange);
+            return DamageUtils.IsInRangeWithObstacles(OwnerTransform.position, target, minRange, maxRange);
         }
 
         /// <summary>
@@ -447,7 +469,7 @@ namespace Enemies
         public virtual bool IsTargetTooClose()
         {
             if (target == null) return false;
-            return DamageUtils.IsTooClose(enemy.transform.position, target.position, minRange);
+            return DamageUtils.IsTooClose(OwnerTransform.position, target.position, minRange);
         }
 
         /// <summary>
@@ -457,12 +479,12 @@ namespace Enemies
         public virtual bool IsTargetTooFar()
         {
             if (target == null) return false;
-            return DamageUtils.IsTooFar(enemy.transform.position, target.position, maxRange);
+            return DamageUtils.IsTooFar(OwnerTransform.position, target.position, maxRange);
         }
 
         /// <summary>
         /// Called by Unity for IK (Inverse Kinematics) updates
-        /// Override in child classes to implement attack-specific IK behavior (e.g., head tracking)
+        /// Override in child classes to implement attack-specific IK behavior
         /// </summary>
         /// <param name="layerIndex">The IK layer index</param>
         public virtual void OnAnimatorIK(int layerIndex)
@@ -480,7 +502,7 @@ namespace Enemies
         }
         
         /// <summary>
-        /// Deal damage to a target with custom damage amounts (IDamageDealer interface implementation)
+        /// Deal damage to a target with custom damage amounts
         /// </summary>
         /// <param name="target">The target to damage</param>
         /// <param name="damageAmount">Custom damage amount</param>
@@ -498,13 +520,10 @@ namespace Enemies
         /// <param name="position">Center position of the damage area</param>
         protected virtual void DealDamageInRadius(float radius, float damageAmount, Vector3 position)
         {
-            // Use the attack origin's position if provided, otherwise use the given position
             Vector3 attackPosition = attackOrigin != null ? attackOrigin.position : position;
             
-            // Use the unified damage system
             int targetsDamaged = DamageUtils.DealDamageInRadius(this, attackPosition, radius, damageAmount, poiseDamage);
             
-            // Play hit effect for each target (simplified - could be enhanced to track individual hit points)
             if (targetsDamaged > 0)
             {
                 PlayHitEffect(attackPosition, Vector3.up);
@@ -514,12 +533,6 @@ namespace Enemies
         /// <summary>
         /// Play an effect with optional delay
         /// </summary>
-        /// <param name="effect">Effect to play</param>
-        /// <param name="delay">Delay before playing</param>
-        /// <param name="position">Position to play at</param>
-        /// <param name="direction">Direction for the effect</param>
-        /// <param name="rotation">Rotation for the effect</param>
-        /// <param name="parent">Parent transform for the effect</param>
         protected virtual void PlayEffect(EffectDefinition effect, float delay, Vector3 position, Vector3 direction, Quaternion rotation, Transform parent = null)
         {
             if (effect != null)
@@ -538,7 +551,7 @@ namespace Enemies
         /// <summary>
         /// Coroutine to play an effect after a delay
         /// </summary>
-        private System.Collections.IEnumerator PlayEffectDelayed(EffectDefinition effect, float delay, Vector3 position, Vector3 direction, Quaternion rotation, Transform parent)
+        private IEnumerator PlayEffectDelayed(EffectDefinition effect, float delay, Vector3 position, Vector3 direction, Quaternion rotation, Transform parent)
         {
             yield return new WaitForSeconds(delay);
             if (effect != null)
@@ -554,7 +567,7 @@ namespace Enemies
         {
             if (startEffect != null && startEffect.IsValid())
             {
-                PlayEffectSpawnData(startEffect, startEffectDelay, attackOrigin ?? enemy?.transform);
+                PlayEffectSpawnData(startEffect, startEffectDelay, attackOrigin ?? OwnerTransform);
             }
         }
 
@@ -565,7 +578,7 @@ namespace Enemies
         {
             if (attackEffect != null && attackEffect.IsValid())
             {
-                PlayEffectSpawnData(attackEffect, attackEffectDelay, attackOrigin ?? enemy?.transform);
+                PlayEffectSpawnData(attackEffect, attackEffectDelay, attackOrigin ?? OwnerTransform);
             }
         }
 
@@ -576,7 +589,7 @@ namespace Enemies
         {
             if (hitEffect != null && hitEffect.IsValid())
             {
-                PlayEffectSpawnData(hitEffect, hitEffectDelay, attackOrigin ?? enemy?.transform);
+                PlayEffectSpawnData(hitEffect, hitEffectDelay, attackOrigin ?? OwnerTransform);
             }
         }
 
@@ -587,7 +600,7 @@ namespace Enemies
         {
             if (endEffect != null && endEffect.IsValid())
             {
-                PlayEffectSpawnData(endEffect, endEffectDelay, attackOrigin ?? enemy?.transform);
+                PlayEffectSpawnData(endEffect, endEffectDelay, attackOrigin ?? OwnerTransform);
             }
         }
         

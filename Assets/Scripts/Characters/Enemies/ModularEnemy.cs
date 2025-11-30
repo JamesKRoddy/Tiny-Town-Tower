@@ -3,7 +3,8 @@ using UnityEngine.AI;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Enemies.Attacks;
+using Combat;
+using Combat.Attacks;
 
 namespace Enemies
 {

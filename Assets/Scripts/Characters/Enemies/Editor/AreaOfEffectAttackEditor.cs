@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEditor;
-using Enemies.Attacks;
+using Combat.Attacks;
 
 namespace Enemies.Editor
 {

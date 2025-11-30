@@ -509,28 +509,6 @@ public class HomingProjectile : BaseProjectile
         Debug.Log($"[HomingProjectile] {gameObject.name} reflected by player, returning to origin at {GetOriginPosition()} | Speed increased to {speed} (1.5x original)");
     }
 
-    /// <summary>
-    /// Override to call private ReflectProjectile method which handles direction reversal and tracking stop
-    /// </summary>
-    public override void ReflectByPlayer(Vector3 hitPoint = default, Vector3 hitNormal = default)
-    {
-        if (isReflected || hasHit) return; // Don't reflect if already reflected or hit
-        
-        // Play reflection VFX if hit point/normal provided
-        if (hitPoint != default && hitNormal != default)
-        {
-            CharacterCombat.PlayReflectionVFX(hitPoint, hitNormal);
-        }
-        else
-        {
-            // Use projectile position as fallback
-            Vector3 fallbackHitPoint = transform.position;
-            Vector3 fallbackHitNormal = -transform.forward;
-            CharacterCombat.PlayReflectionVFX(fallbackHitPoint, fallbackHitNormal);
-        }
-        
-        ReflectProjectile();
-        }
 }
 
 

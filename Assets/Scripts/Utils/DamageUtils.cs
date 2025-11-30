@@ -1,5 +1,5 @@
 using UnityEngine;
-using Enemies;
+using Combat;
 using Managers;
 using System.Linq;
 
@@ -981,57 +981,24 @@ public static class DamageUtils
             if (hitTargets != null && hitTargets.Contains(hit.collider))
                 continue;
             
-            // Check for projectiles first (player can reflect projectiles with melee weapon)
-            BaseProjectile projectile = hit.collider.GetComponent<BaseProjectile>();
-            if (projectile != null)
+            // Check for hittable objects (projectiles, props, etc.) via IHittable interface
+            IHittable hittable = hit.collider.GetComponent<IHittable>();
+            if (hittable != null && hittable.CanBeHit())
             {
-                // Use projectile's transform position (BoxCast hit.point may be unreliable)
-                Vector3 hitPoint = projectile.transform.position;
+                // Use hit collider's transform position (BoxCast hit.point may be unreliable)
+                Vector3 hitPoint = hit.collider.transform.position;
                 
-                // Calculate hit normal - direction from weapon origin to projectile
+                // Calculate hit normal - direction from weapon origin to target
                 Vector3 hitNormal = (hitPoint - origin).normalized;
                 if (hitNormal == Vector3.zero)
                 {
-                    // Fallback: use opposite of projectile's forward direction
-                    hitNormal = -projectile.transform.forward;
+                    // Fallback: use opposite of target's forward direction
+                    hitNormal = -hit.collider.transform.forward;
                 }
                 
-                // Reflect the projectile back to its origin
-                projectile.ReflectByPlayer();
-                
-                // Play reflection VFX at the projectile position
-                CharacterCombat.PlayReflectionVFX(hitPoint, hitNormal);
-                
-                // Track this target
-                if (hitTargets != null)
-                {
-                    hitTargets.Add(hit.collider);
-                }
-                
-                targetsHit++;
-                continue;
-            }
-            
-            // Check for ArcProjectile (doesn't inherit from BaseProjectile)
-            ArcProjectile arcProjectile = hit.collider.GetComponent<ArcProjectile>();
-            if (arcProjectile != null)
-            {
-                // Use projectile's transform position (BoxCast hit.point may be unreliable)
-                Vector3 hitPoint = arcProjectile.transform.position;
-                
-                // Calculate hit normal - direction from weapon origin to projectile
-                Vector3 hitNormal = (hitPoint - origin).normalized;
-                if (hitNormal == Vector3.zero)
-                {
-                    // Fallback: use opposite of projectile's forward direction
-                    hitNormal = -arcProjectile.transform.forward;
-                }
-                
-                // Reflect the projectile back to its origin
-                arcProjectile.ReflectByPlayer();
-                
-                // Play reflection VFX at the projectile position
-                CharacterCombat.PlayReflectionVFX(hitPoint, hitNormal);
+                // Create HitInfo and call OnHit via IHittable interface
+                var hitInfo = new HitInfo(hitPoint, hitNormal, dealer.DamageSource, dealer.BaseDamage, dealer);
+                hittable.OnHit(hitInfo);
                 
                 // Track this target
                 if (hitTargets != null)
@@ -1616,35 +1583,33 @@ public static class DamageUtils
             }
         }
         
-        // Apply status effects for weapons
-        if (dealer is WeaponBase weaponBase)
+        // Apply status effects for WeaponAttack
+        if (dealer is Combat.Attacks.WeaponAttack weaponAttack)
         {
-            ApplyWeaponStatusEffects(weaponBase, target);
-        }
-        
-        // Trigger camera shake for player weapons
-        if (dealer is WeaponBase)
-        {
+            ApplyWeaponAttackStatusEffects(weaponAttack, target);
+            // Trigger camera shake for player weapons
             TriggerHitCameraShake(dealer.DamageSource);
         }
     }
     
     /// <summary>
-    /// Apply status effects from weapon
+    /// Apply status effects from WeaponAttack
     /// </summary>
-    private static void ApplyWeaponStatusEffects(WeaponBase weapon, IDamageable target)
+    private static void ApplyWeaponAttackStatusEffects(Combat.Attacks.WeaponAttack weaponAttack, IDamageable target)
     {
-        if (weapon.PossibleStatusEffects == null || weapon.PossibleStatusEffects.Length == 0) return;
-        if (weapon.StatusEffectChance <= 0f) return;
+        WeaponScriptableObj weaponData = weaponAttack.WeaponData;
+        if (weaponData == null) return;
+        if (weaponData.possibleStatusEffects == null || weaponData.possibleStatusEffects.Length == 0) return;
+        if (weaponData.statusEffectChance <= 0f) return;
         
         // Check if status effect should be applied
-        if (Random.Range(0f, 1f) <= weapon.StatusEffectChance)
+        if (Random.Range(0f, 1f) <= weaponData.statusEffectChance)
         {
             // Select a random status effect from possible effects
-            StatusEffectType selectedEffect = weapon.PossibleStatusEffects[Random.Range(0, weapon.PossibleStatusEffects.Length)];
+            StatusEffectType selectedEffect = weaponData.possibleStatusEffects[Random.Range(0, weaponData.possibleStatusEffects.Length)];
             
             // Apply the status effect
-            ApplyStatusEffect(target, selectedEffect, weapon.StatusEffectDuration);
+            ApplyStatusEffect(target, selectedEffect, weaponData.statusEffectDuration);
         }
     }
     
@@ -1695,10 +1660,21 @@ public static class DamageUtils
     /// <param name="target">The target to check</param>
     /// <param name="dealer">The damage dealer</param>
     /// <returns>True if this dealer can damage this target</returns>
-    private static bool IsValidTarget(IDamageable target, IDamageDealer dealer)
+    public static bool IsValidTarget(IDamageable target, IDamageDealer dealer)
+    {
+        return IsValidTarget(dealer.DealerAllegiance, target);
+    }
+    
+    /// <summary>
+    /// Allegiance-based damage targeting rules overload.
+    /// Use this when you have an Allegiance directly instead of an IDamageDealer.
+    /// </summary>
+    /// <param name="dealerAllegiance">The allegiance of the damage dealer</param>
+    /// <param name="target">The target to check</param>
+    /// <returns>True if this allegiance can damage this target</returns>
+    public static bool IsValidTarget(Allegiance dealerAllegiance, IDamageable target)
     {
         Allegiance targetAllegiance = target.GetAllegiance();
-        Allegiance dealerAllegiance = dealer.DealerAllegiance;
         
         // Rule 1: NEVER damage NEUTRAL entities (quest NPCs, invulnerable objects)
         if (targetAllegiance == Allegiance.NEUTRAL)

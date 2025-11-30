@@ -3,6 +3,10 @@ using UnityEngine;
 /// <summary>
 /// Unified combat mutation that can modify damage, attack speed, poise damage, and elemental damage
 /// Configure values on the mutation prefab to create different combat enhancement variants
+/// 
+/// WEAPON SYSTEM:
+/// - Uses WeaponAttack component for applying modifiers
+/// - Works with the unified AttackBase system
 /// </summary>
 public class CombatMutation : BaseMutationEffect
 {
@@ -32,22 +36,22 @@ public class CombatMutation : BaseMutationEffect
         if (!isActive) return;
 
         ActiveInstances++;
-        ApplyWeaponModifiers();
+        ApplyWeaponModifiersInternal();
     }
 
     protected override void RemoveEffect()
     {
         ActiveInstances--;
-        ApplyWeaponModifiers();
+        ApplyWeaponModifiersInternal();
     }
 
-    private void ApplyWeaponModifiers()
+    private void ApplyWeaponModifiersInternal()
     {
-        if (characterInventory?.equippedWeaponBase == null) return;
+        if (characterInventory?.weaponAttack == null) return;
 
         if (ActiveInstances > 0)
         {
-            characterInventory.equippedWeaponBase.ApplyMutationMultipliers(
+            characterInventory.weaponAttack.ApplyMutationMultipliers(
                 damageMultiplier, 
                 poiseDamageMultiplier,
                 attackSpeedMultiplier, 
@@ -57,7 +61,7 @@ public class CombatMutation : BaseMutationEffect
         }
         else
         {
-            characterInventory.equippedWeaponBase.RestoreOriginalStats();
+            characterInventory.weaponAttack.RestoreOriginalStats();
         }
     }
 
@@ -96,4 +100,3 @@ public class CombatMutation : BaseMutationEffect
         return description.TrimEnd('\n');
     }
 }
-

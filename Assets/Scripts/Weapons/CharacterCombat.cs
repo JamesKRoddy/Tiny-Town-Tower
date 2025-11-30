@@ -3,6 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using Managers;
 
+/// <summary>
+/// Handles combat VFX for characters (players/NPCs).
+/// Routes attack and dash VFX based on weapon element and attack direction.
+/// 
+/// WEAPON SYSTEM:
+/// - Uses WeaponScriptableObj for weapon data (element, stats)
+/// - VFX are based on weapon element, not weapon class type
+/// - Works with the unified AttackBase/WeaponAttack system
+/// </summary>
 public class CharacterCombat : MonoBehaviour
 {
     private CharacterInventory characterInventory;
@@ -104,9 +113,13 @@ public class CharacterCombat : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Play attack VFX for the specified direction
+    /// Called from animation events
+    /// </summary>
     public void AttackVFX(int attackDirection)
     {
-        WeaponScriptableObj equippedWeapon = characterInventory.equippedWeaponScriptObj;
+        WeaponScriptableObj equippedWeapon = characterInventory?.equippedWeaponScriptObj;
 
         if (equippedWeapon == null)
         {
@@ -114,54 +127,16 @@ public class CharacterCombat : MonoBehaviour
             return;
         }
 
-        WeaponBase weaponBase = characterInventory.equippedWeaponBase;
-
-        if (weaponBase == null)
-        {
-            Debug.LogWarning("No weapon base found on equipped weapon!");
-            return;
-        }
-
-        switch (weaponBase)
-        {
-            case MeleeWeapon meleeWeapon:
-                PlayMeleeAttackVFX((MeleeAttackDirection)attackDirection, meleeWeapon);
-                break;
-
-            case RangedWeapon rangedWeapon:
-                RangedAttackVFX(rangedWeapon);
-                break;
-
-            case ThrowableWeapon throwableWeaponVFX:
-                ThrowableWeaponVFX(throwableWeaponVFX);
-                break;
-
-            default:
-                Debug.LogWarning($"{equippedWeapon.objectName} is of an unsupported weapon type!");
-                break;
-        }
+        // Play melee attack VFX based on weapon element
+        PlayMeleeAttackVFX((MeleeAttackDirection)attackDirection, equippedWeapon);
     }    
 
-    private void RangedAttackVFX(RangedWeapon rangedWeapon)
-    {
-        // TODO: Implement ranged weapon VFX
-        // This should be similar to MeleeAttackVFX but for ranged weapons
-        // You'll need to create a RangedAttackVFX prefab with appropriate particle systems
-        Debug.LogWarning("Ranged weapon VFX not implemented yet!");
-    }
-
-    private void ThrowableWeaponVFX(ThrowableWeapon throwableWeaponVFX)
-    {
-        // TODO: Implement throwable weapon VFX
-        // This should be similar to MeleeAttackVFX but for throwable weapons
-        // You'll need to create a ThrowableAttackVFX prefab with appropriate particle systems
-        Debug.LogWarning("Throwable weapon VFX not implemented yet!");
-    }
-
+    /// <summary>
+    /// Stop any active attack
+    /// </summary>
     public void StopAttacking()
     {
-        if (characterInventory.equippedWeaponBase != null)
-            characterInventory.equippedWeaponBase.StopUse();
+        characterInventory?.StopWeapon();
     }
 
     public void DashVFX()
@@ -173,8 +148,8 @@ public class CharacterCombat : MonoBehaviour
     /// Plays melee attack VFX for the specified direction and element
     /// </summary>
     /// <param name="attackDirection">Direction of the melee attack</param>
-    /// <param name="meleeWeapon">The melee weapon being used</param>
-    private void PlayMeleeAttackVFX(MeleeAttackDirection attackDirection, MeleeWeapon meleeWeapon)
+    /// <param name="weaponData">The weapon data for element lookup</param>
+    private void PlayMeleeAttackVFX(MeleeAttackDirection attackDirection, WeaponScriptableObj weaponData)
     {
         if (!directionTransformMap.TryGetValue(attackDirection, out var directionTransform))
         {
@@ -182,9 +157,11 @@ public class CharacterCombat : MonoBehaviour
             return;
         }
 
-        if (!meleeElementEffectMap.TryGetValue(meleeWeapon.WeaponData.weaponElement, out var elementEffect) || elementEffect.meleeEffect == null)
+        AttackElement weaponElement = weaponData?.weaponElement ?? AttackElement.PHYSICAL;
+        
+        if (!meleeElementEffectMap.TryGetValue(weaponElement, out var elementEffect) || elementEffect.meleeEffect == null)
         {
-            Debug.LogWarning($"[CharacterCombat] No melee effect found for element: {meleeWeapon.WeaponData.weaponElement}");
+            Debug.LogWarning($"[CharacterCombat] No melee effect found for element: {weaponElement}");
             return;
         }
 
@@ -200,7 +177,8 @@ public class CharacterCombat : MonoBehaviour
         // Apply attack speed to particle systems if effect was created
         if (effectInstance != null)
         {
-            ApplyAttackSpeedToEffect(effectInstance, meleeWeapon.GetCurrentAttackSpeed());
+            float attackSpeed = characterInventory?.GetCurrentAttackSpeed() ?? weaponData?.attackSpeed ?? 1f;
+            ApplyAttackSpeedToEffect(effectInstance, attackSpeed);
         }
     }
 

@@ -1,10 +1,13 @@
 using UnityEngine;
 
-namespace Enemies.Attacks
+namespace Combat.Attacks
 {
     /// <summary>
     /// Used for all attacks that directly call their damage through animation events and collision detection.
     /// Good for melee combat, punches, claws, etc.
+    /// 
+    /// This is the base class for weapon-based attacks (WeaponAttack) and can be used
+    /// by any character type that implements IAttackOwner.
     /// </summary>
     public class AnimationAttack : AttackBase
     {
@@ -39,9 +42,12 @@ namespace Enemies.Attacks
             }
         }
 
-        public override void Initialize(EnemyBase enemy)
+        /// <summary>
+        /// Initialize with IAttackOwner
+        /// </summary>
+        public override void Initialize(IAttackOwner attackOwner)
         {
-            base.Initialize(enemy);
+            base.Initialize(attackOwner);
             
             // Set default elemental damage for close range attacks
             if (attackElement == AttackElement.NONE)
@@ -49,14 +55,16 @@ namespace Enemies.Attacks
                 attackElement = AttackElement.PHYSICAL;
             }
             
-            Debug.Log($"[{enemy.gameObject.name}] CloseRangeAttack initialized | Min: {minRange} | Max: {maxRange} | Radius: {attackRadius} | Damage: {damage}");
+            Debug.Log($"[{attackOwner.gameObject.name}] AnimationAttack initialized | Min: {minRange} | Max: {maxRange} | Radius: {attackRadius} | Damage: {damage}");
         }
 
         public override void OnAttack()
         {
+            base.OnAttack();
+            
             if (target == null)
             {
-                Debug.LogWarning($"[{enemy.gameObject.name}] Close range attack called with no target!");
+                Debug.LogWarning($"[{OwnerTransform.gameObject.name}] Close range attack called with no target!");
                 return;
             }
             
@@ -69,43 +77,26 @@ namespace Enemies.Attacks
             }
             
             // Validate attack conditions
-            float distanceToTarget = Vector3.Distance(enemy.transform.position, target.position);
-            float effectiveDistance = NavigationUtils.CalculateEffectiveReachDistance(enemy.transform.position, target, currentAttackRange, 1f);
+            float distanceToTarget = Vector3.Distance(OwnerTransform.position, target.position);
+            float effectiveDistance = NavigationUtils.CalculateEffectiveReachDistance(OwnerTransform.position, target, currentAttackRange, 1f);
             
             if (distanceToTarget > effectiveDistance)
             {
-                Debug.LogWarning($"[{enemy.gameObject.name}] Close range attack failed - target out of range | Distance: {distanceToTarget:F2} | Effective: {effectiveDistance:F2}");
+                Debug.LogWarning($"[{OwnerTransform.gameObject.name}] Close range attack failed - target out of range | Distance: {distanceToTarget:F2} | Effective: {effectiveDistance:F2}");
                 return;
             }
             
             // Check angle validation
             if (!IsReadyToAttack())
             {
-                Debug.LogWarning($"[{enemy.gameObject.name}] Close range attack failed - not facing target");
+                Debug.LogWarning($"[{OwnerTransform.gameObject.name}] Close range attack failed - not facing target");
                 return;
             }
             
-            // Debug: Check what's in the attack radius
-            Collider[] hitColliders = Physics.OverlapSphere(enemy.transform.position, attackRadius, targetLayer);
-            Debug.Log($"[{enemy.gameObject.name}] Attack radius check: Found {hitColliders.Length} colliders");
-            
-            foreach (var collider in hitColliders)
-            {
-                IDamageable damageable = collider.GetComponent<IDamageable>();
-                if (damageable != null)
-                {
-                    Debug.Log($"[{enemy.gameObject.name}] Found damageable: {collider.name} | Allegiance: {damageable.GetAllegiance()}");
-                }
-                else
-                {
-                    Debug.Log($"[{enemy.gameObject.name}] Found non-damageable: {collider.name}");
-                }
-            }
-            
             // Deal damage in radius (exclude self to prevent self-damage)
-            int targetsDamaged = DamageUtils.DealDamageInRadius(enemy.transform.position, attackRadius, damage, poiseDamage, enemy.transform, attackElement, targetLayer, excludeSelf: true);
+            int targetsDamaged = DamageUtils.DealDamageInRadius(OwnerTransform.position, attackRadius, damage, poiseDamage, OwnerTransform, attackElement, targetLayer, excludeSelf: true);
             
-            Debug.Log($"[{enemy.gameObject.name}] Close range attack executed | Damage: {damage} | Radius: {attackRadius} | Targets: {targetsDamaged}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Close range attack executed | Damage: {damage} | Radius: {attackRadius} | Targets: {targetsDamaged}");
         }
 
         public override float GetCurrentAttackRange()
@@ -118,28 +109,28 @@ namespace Enemies.Attacks
 
         protected override void OnDrawGizmosSelected()
         {
-            if (enemy == null) return;
+            Transform drawTransform = OwnerTransform ?? transform;
             
             // Draw attack range
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(enemy.transform.position, maxRange);
+            Gizmos.DrawWireSphere(drawTransform.position, maxRange);
             
             // Draw attack radius
             Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(enemy.transform.position, attackRadius);
+            Gizmos.DrawWireSphere(drawTransform.position, attackRadius);
             
             // Draw min/max distances
             Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(enemy.transform.position, minRange);
+            Gizmos.DrawWireSphere(drawTransform.position, minRange);
             Gizmos.color = Color.blue;
-            Gizmos.DrawWireSphere(enemy.transform.position, maxRange);
+            Gizmos.DrawWireSphere(drawTransform.position, maxRange);
             
             // Draw attack angle
-            Vector3 rightDir = Quaternion.Euler(0, attackAngleThreshold, 0) * enemy.transform.forward;
-            Vector3 leftDir = Quaternion.Euler(0, -attackAngleThreshold, 0) * enemy.transform.forward;
+            Vector3 rightDir = Quaternion.Euler(0, attackAngleThreshold, 0) * drawTransform.forward;
+            Vector3 leftDir = Quaternion.Euler(0, -attackAngleThreshold, 0) * drawTransform.forward;
             Gizmos.color = Color.cyan;
-            Gizmos.DrawRay(enemy.transform.position, rightDir * maxRange);
-            Gizmos.DrawRay(enemy.transform.position, leftDir * maxRange);
+            Gizmos.DrawRay(drawTransform.position, rightDir * maxRange);
+            Gizmos.DrawRay(drawTransform.position, leftDir * maxRange);
         }
     }
 }

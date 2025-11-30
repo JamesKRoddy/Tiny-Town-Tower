@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
 
-namespace Enemies.Attacks
+namespace Combat.Attacks
 {
     /// <summary>
     /// Splitting attack that spawns smaller enemies when triggered.
@@ -63,6 +63,11 @@ namespace Enemies.Attacks
         /// Track if this enemy has already split to prevent multiple splits
         /// </summary>
         private bool hasSplit = false;
+        
+        /// <summary>
+        /// Cached MonoBehaviour for coroutines (owner may not be a MonoBehaviour)
+        /// </summary>
+        private MonoBehaviour coroutineRunner;
 
         #endregion
 
@@ -77,13 +82,15 @@ namespace Enemies.Attacks
             {
                 attackType = 4; // Explosion attack type
             }
+            
+            coroutineRunner = this;
         }
 
-        public override void Initialize(EnemyBase enemy)
+        public override void Initialize(IAttackOwner attackOwner)
         {
-            base.Initialize(enemy);
+            base.Initialize(attackOwner);
             
-            Debug.Log($"[{enemy.gameObject.name}] SplittingAttack initialized | SplitCount: {splitCount} | SpawnPrefab: {smallEnemyPrefab?.name ?? "None"}");
+            Debug.Log($"[{attackOwner.gameObject.name}] SplittingAttack initialized | SplitCount: {splitCount} | SpawnPrefab: {smallEnemyPrefab?.name ?? "None"}");
         }
 
         #endregion
@@ -102,7 +109,7 @@ namespace Enemies.Attacks
             if (!hasSplit && ShouldSplit())
             {
                 hasSplit = true;
-                enemy.StartCoroutine(SpawnSmallEnemiesCoroutine());
+                coroutineRunner.StartCoroutine(SpawnSmallEnemiesCoroutine());
             }
         }
 
@@ -118,7 +125,7 @@ namespace Enemies.Attacks
             if (!hasSplit && ShouldSplit())
             {
                 hasSplit = true;
-                enemy.StartCoroutine(SpawnSmallEnemiesCoroutine());
+                coroutineRunner.StartCoroutine(SpawnSmallEnemiesCoroutine());
             }
         }
 
@@ -134,17 +141,17 @@ namespace Enemies.Attacks
             // Don't split if no prefab assigned
             if (smallEnemyPrefab == null)
             {
-                Debug.LogWarning($"[{enemy.gameObject.name}] No small enemy prefab assigned, cannot split!");
+                Debug.LogWarning($"[{OwnerTransform.gameObject.name}] No small enemy prefab assigned, cannot split!");
                 return false;
             }
             
             // Don't split if too small
-            float currentScale = enemy.transform.localScale.x;
+            float currentScale = OwnerTransform.localScale.x;
             float nextScale = currentScale * splitScaleMultiplier;
             
             if (nextScale < minSplitSize)
             {
-                Debug.Log($"[{enemy.gameObject.name}] Too small to split (current: {currentScale}, next: {nextScale}, min: {minSplitSize})");
+                Debug.Log($"[{OwnerTransform.gameObject.name}] Too small to split (current: {currentScale}, next: {nextScale}, min: {minSplitSize})");
                 return false;
             }
             
@@ -156,7 +163,7 @@ namespace Enemies.Attacks
         /// </summary>
         private IEnumerator SpawnSmallEnemiesCoroutine()
         {
-            Debug.Log($"[{enemy.gameObject.name}] Starting split spawn coroutine, waiting {spawnDelay} seconds...");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Starting split spawn coroutine, waiting {spawnDelay} seconds...");
             
             // Wait for explosion animation to play
             yield return new WaitForSeconds(spawnDelay);
@@ -164,7 +171,7 @@ namespace Enemies.Attacks
             // Play split effect (in addition to explosion effect)
             if (splitEffect != null && splitEffect.IsValid())
             {
-                splitEffect.SpawnEffect(enemy.transform);
+                splitEffect.SpawnEffect(OwnerTransform);
             }
             
             // Spawn smaller enemies
@@ -173,7 +180,7 @@ namespace Enemies.Attacks
                 SpawnSmallEnemy(i);
             }
             
-            Debug.Log($"[{enemy.gameObject.name}] Split complete, spawned {splitCount} smaller enemies");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Split complete, spawned {splitCount} smaller enemies");
         }
 
         /// <summary>
@@ -184,7 +191,7 @@ namespace Enemies.Attacks
             // Calculate spawn position in a circle around the split position
             float angle = (360f / splitCount) * index;
             Vector3 offset = Quaternion.Euler(0, angle, 0) * Vector3.forward * spawnRadius;
-            Vector3 spawnPosition = enemy.transform.position + offset;
+            Vector3 spawnPosition = OwnerTransform.position + offset;
             
             // Try to find a valid NavMesh position
             NavMeshHit hit;
@@ -194,40 +201,41 @@ namespace Enemies.Attacks
             }
             else
             {
-                Debug.LogWarning($"[{enemy.gameObject.name}] Could not find valid NavMesh position for small enemy {index}, using original position");
+                Debug.LogWarning($"[{OwnerTransform.gameObject.name}] Could not find valid NavMesh position for small enemy {index}, using original position");
             }
             
             // Spawn the small enemy
-            GameObject smallEnemy = Object.Instantiate(smallEnemyPrefab, spawnPosition, enemy.transform.rotation);
+            GameObject smallEnemy = Object.Instantiate(smallEnemyPrefab, spawnPosition, OwnerTransform.rotation);
             
             // Scale down the spawned enemy
-            float newScale = enemy.transform.localScale.x * splitScaleMultiplier;
+            float newScale = OwnerTransform.localScale.x * splitScaleMultiplier;
             smallEnemy.transform.localScale = Vector3.one * newScale;
             
-            // Get the EnemyBase component to modify health and damage
-            EnemyBase enemyBase = smallEnemy.GetComponent<EnemyBase>();
-            if (enemyBase != null)
+            // Get the IDamageable to modify health
+            IDamageable damageable = smallEnemy.GetComponent<IDamageable>();
+            if (damageable != null)
             {
-                // Reduce health
-                enemyBase.MaxHealth = enemy.MaxHealth * splitHealthMultiplier;
-                enemyBase.Health = enemyBase.MaxHealth;
-                
-                // Reduce damage for all attacks
-                AttackBase[] attacks = smallEnemy.GetComponents<AttackBase>();
-                foreach (var attack in attacks)
-                {
-                    attack.damage *= splitDamageMultiplier;
-                    attack.poiseDamage *= splitDamageMultiplier;
-                }
-                
-                Debug.Log($"[{enemy.gameObject.name}] Spawned small enemy {index} with health: {enemyBase.Health}, scale: {newScale}");
+                // Reduce health based on owner's health
+                float ownerMaxHealth = owner?.Health ?? 100f;
+                damageable.MaxHealth = ownerMaxHealth * splitHealthMultiplier;
+                damageable.Health = damageable.MaxHealth;
             }
+            
+            // Reduce damage for all attacks
+            AttackBase[] attacks = smallEnemy.GetComponents<AttackBase>();
+            foreach (var attack in attacks)
+            {
+                attack.damage *= splitDamageMultiplier;
+                attack.poiseDamage *= splitDamageMultiplier;
+            }
+            
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Spawned small enemy {index} with scale: {newScale}");
             
             // If the spawned enemy also has SplittingAttack, it can split again (if large enough)
             SplittingAttack splittingComponent = smallEnemy.GetComponent<SplittingAttack>();
             if (splittingComponent != null)
             {
-                Debug.Log($"[{enemy.gameObject.name}] Small enemy {index} can also split (scale check will determine if it actually does)");
+                Debug.Log($"[{OwnerTransform.gameObject.name}] Small enemy {index} can also split (scale check will determine if it actually does)");
             }
         }
 
@@ -242,11 +250,11 @@ namespace Enemies.Attacks
         {
             base.OnDrawGizmosSelected();
             
-            if (enemy == null) return;
+            Transform drawTransform = OwnerTransform ?? transform;
             
             // Draw split spawn radius
             Gizmos.color = Color.cyan;
-            Gizmos.DrawWireSphere(enemy.transform.position, spawnRadius);
+            Gizmos.DrawWireSphere(drawTransform.position, spawnRadius);
             
             // Draw spawn positions
             Gizmos.color = Color.green;
@@ -254,7 +262,7 @@ namespace Enemies.Attacks
             {
                 float angle = (360f / splitCount) * i;
                 Vector3 offset = Quaternion.Euler(0, angle, 0) * Vector3.forward * spawnRadius;
-                Vector3 spawnPosition = enemy.transform.position + offset;
+                Vector3 spawnPosition = drawTransform.position + offset;
                 Gizmos.DrawWireSphere(spawnPosition, 0.5f);
             }
         }
@@ -262,4 +270,3 @@ namespace Enemies.Attacks
         #endregion
     }
 }
-

@@ -6,7 +6,7 @@ namespace Enemies.Editor
     /// <summary>
     /// Custom editor for ProjectileAttack to provide organized inspector
     /// </summary>
-    [CustomEditor(typeof(Attacks.ProjectileAttack))]
+    [CustomEditor(typeof(Combat.Attacks.ProjectileAttack))]
     public class ProjectileAttackEditor : AttackBaseEditor
     {
         private SerializedProperty projectileSpawnHeight;

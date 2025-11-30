@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 4414347660094320}
   - component: {fileID: 33982281698477818}
   - component: {fileID: 23701813266748794}
-  - component: {fileID: 3900027119135190507}
   - component: {fileID: 7117711518300575220}
   m_Layer: 0
   m_Name: SM_Prop_Sign_Stop_01
@@ -88,24 +87,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &3900027119135190507
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1033860218315092}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ab88769945a338e4ba17395c13195ca5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  targetLayer:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  boxCastDistance: 2
-  boxSize: {x: 2.5, y: 1.5, z: 2}
-  boxOffset: {x: 0, y: 1, z: -0.5}
 --- !u!64 &7117711518300575220
 MeshCollider:
   m_ObjectHideFlags: 0

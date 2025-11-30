@@ -7,7 +7,7 @@ namespace Enemies.Editor
     /// Custom editor for HomingMissileAttack to provide organized inspector
     /// Inherits from ProjectileAttackEditor to reuse projectile settings
     /// </summary>
-    [CustomEditor(typeof(Attacks.HomingMissileAttack))]
+    [CustomEditor(typeof(Combat.Attacks.HomingMissileAttack))]
     public class HomingMissileAttackEditor : ProjectileAttackEditor
     {
         private SerializedProperty homingDuration;

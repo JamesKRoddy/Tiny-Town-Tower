@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using Enemies;
 using Enemies.Editor;
+using Combat;
 
 /// <summary>
 /// Custom inspector for HumanoidEnemy with organized sections similar to SettlerNPCEditor.

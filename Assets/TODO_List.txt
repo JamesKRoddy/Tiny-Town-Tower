@@ -1,7 +1,8 @@
 *****Current Work*****
 
+Keep going with this player/enemy weapon refactor
 
-Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones. Mutants! Characters in the PolygonApocalypseWasteland
+Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones. Mutants! Characters in the PolygonApocalypseWasteland, light mutant, heavy mutant
 
 Setup a massive boss like the hydra in hades
 

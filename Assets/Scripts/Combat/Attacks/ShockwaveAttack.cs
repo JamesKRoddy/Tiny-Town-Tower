@@ -1,7 +1,7 @@
 using UnityEngine;
 using Managers;
 
-namespace Enemies.Attacks
+namespace Combat.Attacks
 {
     /// <summary>
     /// Shockwave attack that creates a circular wave of damage expanding outward.
@@ -41,9 +41,9 @@ namespace Enemies.Attacks
             }
         }
 
-        public override void Initialize(EnemyBase enemy)
+        public override void Initialize(IAttackOwner attackOwner)
         {
-            base.Initialize(enemy);
+            base.Initialize(attackOwner);
             
             // Set default elemental damage for shockwave attacks
             if (attackElement == AttackElement.NONE)
@@ -51,21 +51,21 @@ namespace Enemies.Attacks
                 attackElement = AttackElement.PHYSICAL;
             }
             
-            Debug.Log($"[{enemy.gameObject.name}] ShockwaveAttack initialized | MaxRadius: {maxShockwaveRadius} | Damage: {damage}");
+            Debug.Log($"[{attackOwner.gameObject.name}] ShockwaveAttack initialized | MaxRadius: {maxShockwaveRadius} | Damage: {damage}");
         }
 
         public override void OnAttack()
         {
             if (target == null)
             {
-                Debug.LogWarning($"[{enemy.gameObject.name}] Shockwave attack called with no target!");
+                Debug.LogWarning($"[{OwnerTransform.gameObject.name}] Shockwave attack called with no target!");
                 return;
             }
             
             // Create the shockwave effect
             CreateShockwave();
             
-            Debug.Log($"[{enemy.gameObject.name}] Shockwave attack executed | Radius: {maxShockwaveRadius} | Damage: {damage}");
+            Debug.Log($"[{OwnerTransform.gameObject.name}] Shockwave attack executed | Radius: {maxShockwaveRadius} | Damage: {damage}");
         }
 
         /// <summary>
@@ -73,7 +73,7 @@ namespace Enemies.Attacks
         /// </summary>
         private void CreateShockwave()
         {
-            Vector3 shockwaveCenter = enemy.transform.position;
+            Vector3 shockwaveCenter = OwnerTransform.position;
             
             // Play attack effect if provided
             PlayAttackEffect(shockwaveCenter, Vector3.up);
@@ -113,9 +113,9 @@ namespace Enemies.Attacks
                     {
                         // Deal damage to the target
                         IDamageable damageable = collider.GetComponent<IDamageable>();
-                        if (damageable != null && damageable.GetAllegiance() == Allegiance.FRIENDLY)
+                        if (damageable != null && DamageUtils.IsValidTarget(DealerAllegiance, damageable))
                         {
-                            DamageUtils.DealDamageToTarget(damageable, damage, poiseDamage, enemy.transform, attackElement);
+                            DamageUtils.DealDamageToTarget(damageable, damage, poiseDamage, OwnerTransform, attackElement);
                             hitTargets.Add(collider);
                         }
                     }
@@ -127,22 +127,22 @@ namespace Enemies.Attacks
 
         protected override void OnDrawGizmosSelected()
         {
-            if (enemy == null) return;
+            Transform drawTransform = OwnerTransform ?? transform;
             
             // Draw attack range
             Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(enemy.transform.position, maxRange);
+            Gizmos.DrawWireSphere(drawTransform.position, maxRange);
             
             // Draw shockwave radius
             Gizmos.color = new Color(1f, 0.5f, 0f); // Orange color
-            Gizmos.DrawWireSphere(enemy.transform.position, maxShockwaveRadius);
+            Gizmos.DrawWireSphere(drawTransform.position, maxShockwaveRadius);
             
             // Draw attack angle
-            Vector3 rightDir = Quaternion.Euler(0, attackAngleThreshold, 0) * enemy.transform.forward;
-            Vector3 leftDir = Quaternion.Euler(0, -attackAngleThreshold, 0) * enemy.transform.forward;
+            Vector3 rightDir = Quaternion.Euler(0, attackAngleThreshold, 0) * drawTransform.forward;
+            Vector3 leftDir = Quaternion.Euler(0, -attackAngleThreshold, 0) * drawTransform.forward;
             Gizmos.color = Color.cyan;
-            Gizmos.DrawRay(enemy.transform.position, rightDir * maxRange);
-            Gizmos.DrawRay(enemy.transform.position, leftDir * maxRange);
+            Gizmos.DrawRay(drawTransform.position, rightDir * maxRange);
+            Gizmos.DrawRay(drawTransform.position, leftDir * maxRange);
         }
     }
 }

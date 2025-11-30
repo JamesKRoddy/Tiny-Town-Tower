@@ -8,6 +8,10 @@ using Managers;
 /// - Footstep events: Works for all characters with IDamageable
 /// - Combat events: Only used by player/NPCs with CharacterCombat and CharacterInventory
 /// - Work events: Only used by Settlers with assigned work tasks
+/// 
+/// WEAPON SYSTEM:
+/// - Uses CharacterInventory.UseWeapon() / StopWeapon() for attack execution
+/// - Works with the unified AttackBase/WeaponAttack system
 /// </summary>
 public class CharacterAnimationEvents : MonoBehaviour
 {
@@ -88,21 +92,27 @@ public class CharacterAnimationEvents : MonoBehaviour
     }
 
     /// <summary>
-    /// Called from animator, enables the weapon hitbox for melee weapons
+    /// Called from animator, triggers weapon attack (damage frame)
+    /// Uses the new CharacterInventory.UseWeapon() which works with WeaponAttack
     /// </summary>
     public void UseWeapon()
     {
         if (inventory != null && inventory.equippedWeaponScriptObj != null)
-            inventory.equippedWeaponBase.Use();
+        {
+            inventory.UseWeapon();
+        }
     }
 
     /// <summary>
-    /// Called from animator, disables the weapon hitbox for melee weapons
+    /// Called from animator, ends weapon attack
+    /// Uses the new CharacterInventory.StopWeapon() which works with WeaponAttack
     /// </summary>
     public void StopWeapon()
     {
         if (inventory != null && inventory.equippedWeaponScriptObj != null)
-            inventory.equippedWeaponBase.StopUse();
+        {
+            inventory.StopWeapon();
+        }
     }
     
     /// <summary>

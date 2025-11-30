@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using Managers;
+using Combat;
 
 namespace Enemies
 {
@@ -46,7 +47,7 @@ namespace Enemies
     /// </summary>
     [RequireComponent(typeof(NavMeshAgent))]
     [RequireComponent(typeof(Animator))]
-    public class EnemyBase : MonoBehaviour, IDamageable, IStatusEffectTarget
+    public class EnemyBase : MonoBehaviour, IDamageable, IStatusEffectTarget, IAttackOwner
     {
         #region Constants
         
@@ -206,6 +207,53 @@ namespace Enemies
         public float LastHitTime { get; set; } = -999f;
         public float LastHitPoiseDamage { get; set; } = 0f;
 
+        #endregion
+        
+        #region IAttackOwner Implementation
+        
+        /// <summary>
+        /// IAttackOwner: The animator component for attack animations
+        /// </summary>
+        public Animator OwnerAnimator => animator;
+        
+        /// <summary>
+        /// IAttackOwner: Current attack target
+        /// </summary>
+        public Transform AttackTarget => navMeshTarget;
+        
+        /// <summary>
+        /// IAttackOwner: NavMeshAgent for movement
+        /// </summary>
+        public NavMeshAgent OwnerNavMeshAgent => agent;
+        
+        /// <summary>
+        /// IAttackOwner: Rotation speed for turning
+        /// </summary>
+        public float OwnerRotationSpeed => rotationSpeed;
+        
+        /// <summary>
+        /// IAttackOwner: Whether currently attacking
+        /// </summary>
+        bool IAttackOwner.IsAttacking
+        {
+            get => isAttacking;
+            set => isAttacking = value;
+        }
+        
+        /// <summary>
+        /// IAttackOwner: Check line of sight (explicit interface implementation)
+        /// Delegates to the existing HasLineOfSight method with default height
+        /// </summary>
+        bool IAttackOwner.HasLineOfSight(Vector3 targetPosition)
+        {
+            return HasLineOfSight(targetPosition, 1.5f);
+        }
+        
+        /// <summary>
+        /// IAttackOwner: Whether using root motion
+        /// </summary>
+        bool IAttackOwner.UseRootMotion => useRootMotion;
+        
         #endregion
 
         #region Private Fields - Targeting & Movement

@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 7564822533289628977}
   - component: {fileID: 6068767149425789225}
   - component: {fileID: 2552395668649674711}
-  - component: {fileID: 3642089895917114959}
   - component: {fileID: 6929266320389235032}
   m_Layer: 0
   m_Name: SM_Wep_Bat_01
@@ -88,24 +87,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &3642089895917114959
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6242529188225862484}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ab88769945a338e4ba17395c13195ca5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  targetLayer:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  boxCastDistance: 2
-  boxSize: {x: 2, y: 1, z: 2}
-  boxOffset: {x: 0, y: 1, z: -0.75}
 --- !u!64 &6929266320389235032
 MeshCollider:
   m_ObjectHideFlags: 0

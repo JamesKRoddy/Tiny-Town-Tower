@@ -1,5 +1,5 @@
-using UnityEngine;
 using Enemies;
+using UnityEngine;
 
 /// <summary>
 /// Utility class for handling root motion collision detection and adjustment.

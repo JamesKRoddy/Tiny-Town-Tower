@@ -1,11 +1,19 @@
 using UnityEngine;
+using Combat.Attacks;
 
+/// <summary>
+/// Base class for mutation effects.
+/// 
+/// WEAPON SYSTEM:
+/// - Uses WeaponAttack component for applying mutation effects
+/// - Subscribes to weapon changes via CharacterInventory
+/// </summary>
 public abstract class BaseMutationEffect : MonoBehaviour, IPickupableItem
 {
     protected bool isActive = false;
     protected GeneticMutationObj mutationData;
     protected CharacterInventory characterInventory;
-    private WeaponBase currentWeapon;
+    private WeaponAttack currentWeaponAttack;
 
     // Abstract property that derived classes must implement
     protected abstract int ActiveInstances { get; set; }
@@ -35,8 +43,8 @@ public abstract class BaseMutationEffect : MonoBehaviour, IPickupableItem
         {
             // Subscribe to weapon changes
             characterInventory.OnWeaponEquipped += HandleWeaponChange;
-            // Apply effect to currently equipped weapon
-            currentWeapon = characterInventory.equippedWeaponBase;
+            // Apply effect to currently equipped weapon attack
+            currentWeaponAttack = characterInventory.weaponAttack;
             ApplyEffect();
         }
     }
@@ -51,7 +59,7 @@ public abstract class BaseMutationEffect : MonoBehaviour, IPickupableItem
         }
         RemoveEffect();
         characterInventory = null;
-        currentWeapon = null;
+        currentWeaponAttack = null;
     }
 
     protected abstract void ApplyEffect();
@@ -62,8 +70,8 @@ public abstract class BaseMutationEffect : MonoBehaviour, IPickupableItem
     {
         if (!isActive) return;
 
-        // Get the new weapon instance
-        currentWeapon = characterInventory.equippedWeaponBase;
+        // Get the WeaponAttack component
+        currentWeaponAttack = characterInventory?.weaponAttack;
         
         // Apply effects to the new weapon
         ApplyEffect();
@@ -72,21 +80,39 @@ public abstract class BaseMutationEffect : MonoBehaviour, IPickupableItem
     // Helper method to apply mutation multipliers to the current weapon
     protected void ApplyWeaponModifiers(float damageMultiplier = 1f, float attackSpeedMultiplier = 1f)
     {
-        if (currentWeapon == null) return;
+        if (currentWeaponAttack == null) return;
 
         if (ActiveInstances > 0)
         {
-            currentWeapon.ApplyMutationMultipliers(damageMultiplier, attackSpeedMultiplier, ActiveInstances);
+            currentWeaponAttack.ApplyMutationMultipliers(damageMultiplier, 1f, attackSpeedMultiplier, 1f, ActiveInstances);
         }
         else
         {
-            currentWeapon.RestoreOriginalStats();
+            currentWeaponAttack.RestoreOriginalStats();
+        }
+    }
+    
+    // Helper method to apply mutation multipliers with all parameters
+    protected void ApplyWeaponModifiers(float damageMultiplier, float poiseDamageMultiplier, float attackSpeedMultiplier, float elementalDamageMultiplier)
+    {
+        if (currentWeaponAttack == null) return;
+
+        if (ActiveInstances > 0)
+        {
+            currentWeaponAttack.ApplyMutationMultipliers(damageMultiplier, poiseDamageMultiplier, attackSpeedMultiplier, elementalDamageMultiplier, ActiveInstances);
+        }
+        else
+        {
+            currentWeaponAttack.RestoreOriginalStats();
         }
     }
 
     // Public property to access mutation data
     public GeneticMutationObj MutationData => mutationData;
+    
+    // Protected accessor for current weapon attack
+    protected WeaponAttack CurrentWeaponAttack => currentWeaponAttack;
 
     // Abstract method that derived classes must implement to return their stats description
     public abstract string GetStatsDescription();
-} 
+}

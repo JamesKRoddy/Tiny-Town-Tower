@@ -9,7 +9,7 @@ using Enemies;
 using UnityEditor;
 #endif
 
-public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
+public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable, IAttackOwner
 {
     [Header("Character Type")]
     [SerializeField] protected CharacterType characterType = CharacterType.HUMAN_MALE_1;
@@ -176,6 +176,78 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public Vector3 LastHitOrigin { get; set; } = Vector3.zero;
     public float LastHitTime { get; set; } = -999f;
     public float LastHitPoiseDamage { get; set; } = 0f;
+
+    #region IAttackOwner Implementation
+    
+    /// <summary>
+    /// IAttackOwner: The animator component for attack animations
+    /// </summary>
+    public Animator OwnerAnimator => animator;
+    
+    /// <summary>
+    /// IAttackOwner: Current attack target (players typically don't have a fixed target)
+    /// Override in player controller to return current aimed target
+    /// </summary>
+    public Transform AttackTarget => null; // Player attacks based on input direction, not fixed target
+    
+    /// <summary>
+    /// IAttackOwner: NavMeshAgent for movement (may be disabled for player-controlled)
+    /// </summary>
+    public NavMeshAgent OwnerNavMeshAgent => agent;
+    
+    /// <summary>
+    /// IAttackOwner: Rotation speed for turning
+    /// </summary>
+    public float OwnerRotationSpeed => rotationSpeed;
+    
+    /// <summary>
+    /// IAttackOwner: Whether currently attacking
+    /// </summary>
+    bool IAttackOwner.IsAttacking
+    {
+        get => isAttacking;
+        set => isAttacking = value;
+    }
+    
+    /// <summary>
+    /// IAttackOwner: Whether using root motion (players typically use root motion for attacks)
+    /// </summary>
+    public bool UseRootMotion => animator != null && animator.applyRootMotion;
+    
+    /// <summary>
+    /// Check if the character has line of sight to a target position
+    /// </summary>
+    /// <param name="targetPosition">The position to check visibility to</param>
+    /// <returns>True if there's clear line of sight</returns>
+    public bool HasLineOfSight(Vector3 targetPosition)
+    {
+        Vector3 origin = transform.position + Vector3.up * 1.5f; // Eye height
+        Vector3 direction = (targetPosition - origin).normalized;
+        float distance = Vector3.Distance(origin, targetPosition);
+        
+        // Check for obstacles between us and target
+        if (Physics.Raycast(origin, direction, out RaycastHit hit, distance))
+        {
+            // If we hit something before reaching the target, no line of sight
+            if (hit.distance < distance - 0.1f)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /// <summary>
+    /// Called when an attack warning phase begins (for visual/audio feedback)
+    /// Players typically don't use attack warnings, but NPCs using this controller might
+    /// </summary>
+    public virtual void AttackWarning()
+    {
+        // Players don't typically show attack warnings
+        // Override in NPC subclasses if needed
+    }
+    
+    #endregion
 
     protected virtual void Awake()
     {
@@ -512,10 +584,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     private void UpdateAnimationSpeed()
     {
-        if (characterInventory.equippedWeaponBase != null)
+        if (characterInventory.equippedWeaponScriptObj != null)
         {
             // Update the speed of all attack animations in the Attacking Layer
-            animator.SetFloat(GameConstants.AnimatorParams.AttackSpeedHash, characterInventory.equippedWeaponBase.GetCurrentAttackSpeed());
+            animator.SetFloat(GameConstants.AnimatorParams.AttackSpeedHash, characterInventory.GetCurrentAttackSpeed());
         }
     }
 
