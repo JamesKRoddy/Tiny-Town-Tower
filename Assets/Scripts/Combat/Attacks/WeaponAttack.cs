@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Weapons;
 
 namespace Combat.Attacks
 {
@@ -11,7 +12,8 @@ namespace Combat.Attacks
     /// 1. Add WeaponAttack component to character
     /// 2. Assign a WeaponScriptableObj to define weapon stats
     /// 3. Assign weaponHolder transform (e.g., hand bone)
-    /// 4. Add WeaponCollider component to weapon prefab with trigger collider
+    /// 4. (Optional) Add WeaponCollider component to weapon prefab with trigger collider
+    ///    - If not present, a collider will be created automatically
     /// 5. The weapon will handle damage via collider and projectile deflection via BoxCast
     /// 
     /// FEATURES:
@@ -19,11 +21,12 @@ namespace Combat.Attacks
     /// - Spawns weapon model at specified holder transform
     /// - Collider-based damage detection (accurate, follows animation)
     /// - BoxCast-based projectile deflection (forgiving, easy to hit)
+    /// - Automatic collider setup if not present on prefab
     /// - Supports mutation multipliers for scaling stats
     /// - Works with any IAttackOwner (players, NPCs, enemies)
     /// 
     /// HIT DETECTION:
-    /// - Damage: WeaponCollider component on weapon prefab (trigger collider)
+    /// - Damage: WeaponCollider component on weapon prefab (auto-created if missing)
     /// - Projectile Deflection: Simple BoxCast in front of character (more forgiving)
     /// </summary>
     public class WeaponAttack : AnimationAttack
@@ -187,17 +190,81 @@ namespace Combat.Attacks
             spawnedWeaponModel.transform.localPosition = weaponPositionOffset;
             spawnedWeaponModel.transform.localRotation = Quaternion.Euler(weaponRotationOffset);
             
-            // Find WeaponCollider component for accurate hit detection
+            // Find or create WeaponCollider component for accurate hit detection
             weaponCollider = spawnedWeaponModel.GetComponentInChildren<WeaponCollider>();
+            if (weaponCollider == null)
+            {
+                // Try to create WeaponCollider automatically
+                weaponCollider = SetupWeaponColliderAutomatically();
+            }
+            
             if (weaponCollider != null)
             {
                 weaponCollider.Initialize(this);
-                Debug.Log($"[{OwnerTransform?.gameObject.name}] Spawned weapon with collider-based detection: {weaponData.objectName}");
+                Debug.Log($"[{OwnerTransform?.gameObject.name}] Weapon equipped with collider-based detection: {weaponData.objectName}");
             }
             else
             {
-                Debug.LogWarning($"[{OwnerTransform?.gameObject.name}] No WeaponCollider found on weapon prefab! Add WeaponCollider component with trigger collider for accurate hit detection.");
+                Debug.LogWarning($"[{OwnerTransform?.gameObject.name}] Failed to setup WeaponCollider! Weapon may not deal damage properly.");
             }
+        }
+        
+        /// <summary>
+        /// Automatically setup WeaponCollider if not present on the weapon prefab
+        /// </summary>
+        private WeaponCollider SetupWeaponColliderAutomatically()
+        {
+            if (spawnedWeaponModel == null)
+            {
+                Debug.LogError("[WeaponAttack] Cannot setup collider - no spawned weapon model!");
+                return null;
+            }
+            
+            // Look for existing colliders on the weapon or its children
+            Collider existingCollider = spawnedWeaponModel.GetComponentInChildren<Collider>();
+            GameObject colliderObject = null;
+            
+            if (existingCollider != null)
+            {
+                // Use existing collider's GameObject
+                colliderObject = existingCollider.gameObject;
+                Debug.Log($"[WeaponAttack] Found existing collider on {colliderObject.name}, adding WeaponCollider component");
+                
+                // Ensure it's a trigger
+                if (!existingCollider.isTrigger)
+                {
+                    existingCollider.isTrigger = true;
+                    Debug.Log($"[WeaponAttack] Set existing collider to trigger mode");
+                }
+            }
+            else
+            {
+                // No collider exists, create a new GameObject with collider
+                colliderObject = new GameObject("WeaponHitbox");
+                colliderObject.transform.SetParent(spawnedWeaponModel.transform, false);
+                colliderObject.transform.localPosition = Vector3.zero;
+                colliderObject.transform.localRotation = Quaternion.identity;
+                
+                // Add a capsule collider (good default for most weapons)
+                CapsuleCollider capsule = colliderObject.AddComponent<CapsuleCollider>();
+                capsule.isTrigger = true;
+                capsule.radius = 0.1f;
+                capsule.height = 1.0f; // Adjust based on weapon size
+                capsule.direction = 2; // Z-axis (usually weapon forward)
+                capsule.center = new Vector3(0, 0, 0.5f); // Offset forward
+                
+                Debug.Log($"[WeaponAttack] Created automatic weapon hitbox with CapsuleCollider. You may want to adjust the collider size in the prefab.");
+            }
+            
+            // Add WeaponCollider component
+            WeaponCollider weaponCol = colliderObject.GetComponent<WeaponCollider>();
+            if (weaponCol == null)
+            {
+                weaponCol = colliderObject.AddComponent<WeaponCollider>();
+                Debug.Log($"[WeaponAttack] Added WeaponCollider component to {colliderObject.name}");
+            }
+            
+            return weaponCol;
         }
 
         #endregion

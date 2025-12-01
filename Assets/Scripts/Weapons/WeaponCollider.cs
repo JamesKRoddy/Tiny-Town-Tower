@@ -8,11 +8,15 @@ namespace Weapons
     /// Attach this to a weapon model's collider to enable accurate hit detection.
     /// The collider should be slightly larger than the weapon mesh and set as a trigger.
     /// 
-    /// SETUP:
+    /// SETUP (Manual - Recommended):
     /// 1. Add a trigger collider to your weapon prefab (Capsule/Box Collider with "Is Trigger" enabled)
     /// 2. Add this component to the same GameObject as the collider
     /// 3. The collider should be on a child of the weapon holder (so it moves with animations)
     /// 4. Make sure the weapon is on an appropriate layer (e.g., "Weapon" layer)
+    /// 
+    /// AUTOMATIC SETUP:
+    /// If not present, WeaponAttack will automatically create a basic collider and add this component.
+    /// However, manually setting up the collider allows you to fine-tune its shape and size.
     /// 
     /// USAGE:
     /// WeaponAttack will automatically find this component and enable/disable it during attacks.
