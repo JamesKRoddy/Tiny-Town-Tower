@@ -133,17 +133,38 @@ public class CharacterInventory : MonoBehaviour
             return;
         }
         
+        Debug.Log($"[CharacterInventory] {gameObject.name} equipping weapon: {weaponScriptableObj.objectName}");
+        
         // Unequip the currently equipped weapon
         UnequipCurrentWeapon();
         
-        // Spawn the weapon visual model
-        spawnedWeaponModel = Instantiate(weaponScriptableObj.prefab, weaponHolder);
         equippedWeaponScriptObj = weaponScriptableObj;
 
-        // Configure WeaponAttack component if available
-        if (weaponAttack != null)
+        // Configure WeaponAttack component - it will spawn the weapon model with collider setup
+        if (weaponAttack != null && weaponHolder != null)
         {
-            weaponAttack.SetWeaponData(weaponScriptableObj);
+            Debug.Log($"[CharacterInventory] Calling SetWeaponData with holder: {weaponHolder.name}");
+            weaponAttack.SetWeaponData(weaponScriptableObj, weaponHolder);
+            
+            // Store reference to spawned model from WeaponAttack
+            spawnedWeaponModel = weaponAttack.SpawnedWeaponModel;
+            
+            if (spawnedWeaponModel != null)
+            {
+                Debug.Log($"[CharacterInventory] Weapon successfully equipped! Model: {spawnedWeaponModel.name}");
+            }
+            else
+            {
+                Debug.LogWarning($"[CharacterInventory] Weapon spawned but SpawnedWeaponModel is null!");
+            }
+        }
+        else if (weaponAttack == null)
+        {
+            Debug.LogError($"[CharacterInventory] No WeaponAttack component found on {gameObject.name}! Cannot equip weapon.");
+        }
+        else if (weaponHolder == null)
+        {
+            Debug.LogError($"[CharacterInventory] No weaponHolder assigned on {gameObject.name}! Cannot equip weapon.");
         }
 
         // Handle weapon-specific animation setup

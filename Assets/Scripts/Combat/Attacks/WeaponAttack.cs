@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using Weapons;
 
 namespace Combat.Attacks
 {
@@ -8,34 +7,43 @@ namespace Combat.Attacks
     /// Attack component that uses a WeaponScriptableObj to define weapon stats and appearance.
     /// This is the unified weapon system that replaces WeaponBase for component-based weapons.
     /// 
-    /// USAGE:
+    /// USAGE (Standalone - for enemies, simple NPCs):
     /// 1. Add WeaponAttack component to character
-    /// 2. Assign a WeaponScriptableObj to define weapon stats
-    /// 3. Assign weaponHolder transform (e.g., hand bone)
-    /// 4. (Optional) Add WeaponCollider component to weapon prefab with trigger collider
-    ///    - If not present, a collider will be created automatically
-    /// 5. The weapon will handle damage via collider and projectile deflection via BoxCast
+    /// 2. Assign weaponData (WeaponScriptableObj) in inspector
+    /// 3. Assign weaponHolder transform (e.g., hand bone) in inspector
+    /// 4. Weapon will automatically spawn and set up on Start()
+    /// 
+    /// USAGE (With CharacterInventory - for players, complex NPCs):
+    /// 1. Add WeaponAttack component to character
+    /// 2. CharacterInventory will call SetWeaponData() to equip weapons at runtime
+    /// 3. Leave weaponData empty in inspector (will be set by inventory)
+    /// 
+    /// OPTIONAL:
+    /// - Add MeleeWeaponHitbox component to weapon prefab with trigger collider for precise control
+    /// - If not present, collider and Rigidbody will be created automatically
+    /// - MeleeWeaponHitbox automatically configures physics for collision detection
     /// 
     /// FEATURES:
     /// - Uses WeaponScriptableObj for damage, poise, element
     /// - Spawns weapon model at specified holder transform
     /// - Collider-based damage detection (accurate, follows animation)
     /// - BoxCast-based projectile deflection (forgiving, easy to hit)
-    /// - Automatic collider setup if not present on prefab
+    /// - Automatic collider and Rigidbody setup if not present on prefab
     /// - Supports mutation multipliers for scaling stats
+    /// - Works standalone OR with CharacterInventory
     /// - Works with any IAttackOwner (players, NPCs, enemies)
     /// 
     /// HIT DETECTION:
-    /// - Damage: WeaponCollider component on weapon prefab (auto-created if missing)
+    /// - Damage: MeleeWeaponHitbox component on weapon prefab (auto-created with Rigidbody if missing)
     /// - Projectile Deflection: Simple BoxCast in front of character (more forgiving)
     /// </summary>
     public class WeaponAttack : AnimationAttack
     {
         [Header("Weapon Configuration")]
-        [Tooltip("The weapon data defining stats, appearance, and element")]
+        [Tooltip("The weapon data defining stats, appearance, and element. Assign in inspector for standalone use, or leave empty if using CharacterInventory (will be set at runtime).")]
         [SerializeField] private WeaponScriptableObj weaponData;
         
-        [Tooltip("Transform where the weapon model should be spawned (e.g., hand bone)")]
+        [Tooltip("Transform where the weapon model should be spawned (e.g., hand bone). Required for standalone use, optional if CharacterInventory provides it.")]
         [SerializeField] private Transform weaponHolder;
         
         [Tooltip("Offset position for weapon model relative to holder")]
@@ -43,6 +51,11 @@ namespace Combat.Attacks
         
         [Tooltip("Offset rotation for weapon model relative to holder")]
         [SerializeField] private Vector3 weaponRotationOffset = Vector3.zero;
+        
+        [Header("Hitbox Configuration")]
+        [Tooltip("Capsule collider direction for auto-generated hitboxes: 0=X-axis (side-to-side), 1=Y-axis (up/down - typical for swords/bats), 2=Z-axis (forward/back - spears/lances)")]
+        [Range(0, 2)]
+        [SerializeField] private int hitboxDirection = 1; // Default to Y-axis (up/down)
 
         [Header("Mutation Support")]
         [Tooltip("Current damage multiplier from mutations")]
@@ -59,7 +72,7 @@ namespace Combat.Attacks
 
         // Runtime state
         private GameObject spawnedWeaponModel;
-        private WeaponCollider weaponCollider; // Collider-based damage detection
+        private MeleeWeaponHitbox weaponHitbox; // Collider-based damage detection
         private HashSet<Collider> projectileHitTargets = new HashSet<Collider>(); // Only for projectile deflection
         private bool isWeaponActive = false;
         
@@ -105,6 +118,22 @@ namespace Combat.Attacks
                 attackType = 3; // Weapon attack type
             }
         }
+        
+        /// <summary>
+        /// Start is called before the first frame update
+        /// If weaponData and weaponHolder are assigned in inspector, set up the weapon automatically
+        /// This allows WeaponAttack to work standalone without CharacterInventory
+        /// </summary>
+        private void Start()
+        {
+            // If weapon data is assigned in inspector but not spawned yet, set it up
+            if (weaponData != null && weaponHolder != null && spawnedWeaponModel == null)
+            {
+                Debug.Log($"[WeaponAttack] {gameObject.name} has weapon assigned in inspector, setting up automatically");
+                ApplyWeaponData();
+                SpawnWeaponModel();
+            }
+        }
 
         /// <summary>
         /// Initialize with IAttackOwner and optionally set weapon data
@@ -113,11 +142,15 @@ namespace Combat.Attacks
         {
             base.Initialize(attackOwner);
             
-            // Apply weapon data if available
-            ApplyWeaponData();
-            
-            // Spawn weapon model if holder is set
-            SpawnWeaponModel();
+            // Only spawn weapon if not already spawned from inspector setup
+            if (weaponData != null && spawnedWeaponModel == null)
+            {
+                // Apply weapon data if available
+                ApplyWeaponData();
+                
+                // Spawn weapon model if holder is set
+                SpawnWeaponModel();
+            }
             
             Debug.Log($"[{attackOwner.gameObject.name}] WeaponAttack initialized | Weapon: {(weaponData != null ? weaponData.objectName : "None")} | Damage: {GetEffectiveDamage()} | Poise: {GetEffectivePoiseDamage()}");
         }
@@ -125,18 +158,36 @@ namespace Combat.Attacks
         /// <summary>
         /// Set weapon data at runtime (e.g., when equipping a new weapon)
         /// </summary>
-        public void SetWeaponData(WeaponScriptableObj newWeaponData)
+        public void SetWeaponData(WeaponScriptableObj newWeaponData, Transform holder = null)
         {
+            if (newWeaponData == null)
+            {
+                Debug.LogWarning($"[WeaponAttack] SetWeaponData called with null weapon data on {gameObject.name}");
+                return;
+            }
+            
             // Destroy old weapon model
             if (spawnedWeaponModel != null)
             {
+                Debug.Log($"[WeaponAttack] Destroying old weapon model: {spawnedWeaponModel.name}");
                 Destroy(spawnedWeaponModel);
                 spawnedWeaponModel = null;
-                weaponCollider = null;
+                weaponHitbox = null;
             }
             
             weaponData = newWeaponData;
             originalValuesStored = false;
+            
+            // Update weapon holder if provided
+            if (holder != null)
+            {
+                weaponHolder = holder;
+                Debug.Log($"[WeaponAttack] Weapon holder set to: {weaponHolder.name}");
+            }
+            else if (weaponHolder == null)
+            {
+                Debug.LogWarning($"[WeaponAttack] No weapon holder provided and weaponHolder is null! Weapon will not spawn.");
+            }
             
             ApplyWeaponData();
             SpawnWeaponModel();
@@ -177,7 +228,23 @@ namespace Combat.Attacks
         /// </summary>
         private void SpawnWeaponModel()
         {
-            if (weaponData == null || weaponData.prefab == null || weaponHolder == null) return;
+            if (weaponData == null)
+            {
+                Debug.LogWarning($"[WeaponAttack] Cannot spawn weapon - weaponData is null on {gameObject.name}");
+                return;
+            }
+            
+            if (weaponData.prefab == null)
+            {
+                Debug.LogWarning($"[WeaponAttack] Cannot spawn weapon - prefab is null on weaponData '{weaponData.objectName}'");
+                return;
+            }
+            
+            if (weaponHolder == null)
+            {
+                Debug.LogError($"[WeaponAttack] Cannot spawn weapon - weaponHolder is null on {gameObject.name}! Assign weaponHolder in inspector or pass it via SetWeaponData().");
+                return;
+            }
             
             // Destroy existing model
             if (spawnedWeaponModel != null)
@@ -190,81 +257,59 @@ namespace Combat.Attacks
             spawnedWeaponModel.transform.localPosition = weaponPositionOffset;
             spawnedWeaponModel.transform.localRotation = Quaternion.Euler(weaponRotationOffset);
             
-            // Find or create WeaponCollider component for accurate hit detection
-            weaponCollider = spawnedWeaponModel.GetComponentInChildren<WeaponCollider>();
-            if (weaponCollider == null)
+            // Find or create MeleeWeaponHitbox component for accurate hit detection
+            weaponHitbox = spawnedWeaponModel.GetComponentInChildren<MeleeWeaponHitbox>();
+            if (weaponHitbox == null)
             {
-                // Try to create WeaponCollider automatically
-                weaponCollider = SetupWeaponColliderAutomatically();
+                // Try to create MeleeWeaponHitbox automatically
+                weaponHitbox = SetupWeaponHitboxAutomatically();
             }
             
-            if (weaponCollider != null)
+            if (weaponHitbox != null)
             {
-                weaponCollider.Initialize(this);
-                Debug.Log($"[{OwnerTransform?.gameObject.name}] Weapon equipped with collider-based detection: {weaponData.objectName}");
+                weaponHitbox.Initialize(this);
+                Debug.Log($"[{OwnerTransform?.gameObject.name}] Weapon equipped with melee hitbox: {weaponData.objectName}");
             }
             else
             {
-                Debug.LogWarning($"[{OwnerTransform?.gameObject.name}] Failed to setup WeaponCollider! Weapon may not deal damage properly.");
+                Debug.LogWarning($"[{OwnerTransform?.gameObject.name}] Failed to setup MeleeWeaponHitbox! Weapon will not deal damage.");
             }
         }
         
         /// <summary>
-        /// Automatically setup WeaponCollider if not present on the weapon prefab
+        /// Automatically setup MeleeWeaponHitbox if not present on the weapon prefab
+        /// Delegates to PhysicsUtils to handle all the complex setup logic
         /// </summary>
-        private WeaponCollider SetupWeaponColliderAutomatically()
+        private MeleeWeaponHitbox SetupWeaponHitboxAutomatically()
         {
             if (spawnedWeaponModel == null)
             {
-                Debug.LogError("[WeaponAttack] Cannot setup collider - no spawned weapon model!");
+                Debug.LogError("[WeaponAttack] Cannot setup hitbox - no spawned weapon model!");
                 return null;
             }
             
-            // Look for existing colliders on the weapon or its children
-            Collider existingCollider = spawnedWeaponModel.GetComponentInChildren<Collider>();
-            GameObject colliderObject = null;
+            // Use PhysicsUtils to setup the hitbox child properly (handles parenting issues)
+            GameObject hitboxObject = PhysicsUtils.SetupWeaponHitboxChild(
+                spawnedWeaponModel,
+                capsuleDirection: hitboxDirection,
+                debugName: $"weapon '{weaponData.objectName}'"
+            );
             
-            if (existingCollider != null)
+            if (hitboxObject == null)
             {
-                // Use existing collider's GameObject
-                colliderObject = existingCollider.gameObject;
-                Debug.Log($"[WeaponAttack] Found existing collider on {colliderObject.name}, adding WeaponCollider component");
-                
-                // Ensure it's a trigger
-                if (!existingCollider.isTrigger)
-                {
-                    existingCollider.isTrigger = true;
-                    Debug.Log($"[WeaponAttack] Set existing collider to trigger mode");
-                }
-            }
-            else
-            {
-                // No collider exists, create a new GameObject with collider
-                colliderObject = new GameObject("WeaponHitbox");
-                colliderObject.transform.SetParent(spawnedWeaponModel.transform, false);
-                colliderObject.transform.localPosition = Vector3.zero;
-                colliderObject.transform.localRotation = Quaternion.identity;
-                
-                // Add a capsule collider (good default for most weapons)
-                CapsuleCollider capsule = colliderObject.AddComponent<CapsuleCollider>();
-                capsule.isTrigger = true;
-                capsule.radius = 0.1f;
-                capsule.height = 1.0f; // Adjust based on weapon size
-                capsule.direction = 2; // Z-axis (usually weapon forward)
-                capsule.center = new Vector3(0, 0, 0.5f); // Offset forward
-                
-                Debug.Log($"[WeaponAttack] Created automatic weapon hitbox with CapsuleCollider. You may want to adjust the collider size in the prefab.");
+                Debug.LogError($"[WeaponAttack] Failed to setup hitbox for weapon '{weaponData.objectName}'");
+                return null;
             }
             
-            // Add WeaponCollider component
-            WeaponCollider weaponCol = colliderObject.GetComponent<WeaponCollider>();
-            if (weaponCol == null)
+            // Add MeleeWeaponHitbox component (it will handle Rigidbody setup in its Awake())
+            MeleeWeaponHitbox hitbox = hitboxObject.GetComponent<MeleeWeaponHitbox>();
+            if (hitbox == null)
             {
-                weaponCol = colliderObject.AddComponent<WeaponCollider>();
-                Debug.Log($"[WeaponAttack] Added WeaponCollider component to {colliderObject.name}");
+                hitbox = hitboxObject.AddComponent<MeleeWeaponHitbox>();
+                Debug.Log($"[WeaponAttack] Added MeleeWeaponHitbox to: {hitboxObject.name}");
             }
             
-            return weaponCol;
+            return hitbox;
         }
 
         #endregion
@@ -280,14 +325,18 @@ namespace Combat.Attacks
             // Call base to play effects
             base.OnAttack();
             
-            // Enable weapon collider for damage detection
-            if (weaponCollider != null)
+            // Enable weapon hitbox for damage detection
+            if (weaponHitbox != null)
             {
-                weaponCollider.EnableCollider();
+                weaponHitbox.EnableCollider();
+                Debug.Log($"[{OwnerTransform?.gameObject.name}] MeleeWeaponHitbox enabled for attack!");
             }
             else
             {
-                Debug.LogWarning($"[{OwnerTransform.gameObject.name}] No WeaponCollider available! Weapon will not deal damage.");
+                Debug.LogWarning($"[{OwnerTransform?.gameObject.name}] No MeleeWeaponHitbox available! Weapon will not deal damage. " +
+                    $"SpawnedWeaponModel: {(spawnedWeaponModel != null ? spawnedWeaponModel.name : "NULL")}, " +
+                    $"WeaponData: {(weaponData != null ? weaponData.objectName : "NULL")}, " +
+                    $"WeaponHolder: {(weaponHolder != null ? weaponHolder.name : "NULL")}");
             }
             
             // Check for projectile deflection (separate from damage)
@@ -301,10 +350,10 @@ namespace Combat.Attacks
         {
             isWeaponActive = false;
             
-            // Disable weapon collider
-            if (weaponCollider != null)
+            // Disable weapon hitbox
+            if (weaponHitbox != null)
             {
-                weaponCollider.DisableCollider();
+                weaponHitbox.DisableCollider();
             }
             
             base.OnAttackEnd();

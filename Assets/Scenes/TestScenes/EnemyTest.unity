@@ -723,6 +723,7 @@ MonoBehaviour:
   weaponHolder: {fileID: 0}
   weaponPositionOffset: {x: 0, y: 0, z: 0}
   weaponRotationOffset: {x: 0, y: 0, z: 0}
+  hitboxDirection: 1
   currentDamageMultiplier: 1
   currentPoiseDamageMultiplier: 1
   currentAttackSpeedMultiplier: 1
