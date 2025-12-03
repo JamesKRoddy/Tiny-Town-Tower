@@ -2,7 +2,7 @@
 
 Keep going with this player/enemy weapon refactor
 TODO:
-Weapon animations, 2 hand vs 1 handed, have to check how this is being defined, have to see how this will work with enemies
+Weapon animations, 2 hand vs 1 handed, Add them into their own sub state machines, have to check how this is being defined, have to see how this will work with enemies
 Reflecting projectiles
 Knockback animations when the player is damaged are not working
 
