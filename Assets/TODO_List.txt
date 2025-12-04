@@ -3,8 +3,7 @@
 Keep going with this player/enemy weapon refactor
 TODO:
 Weapon animations, 2 hand vs 1 handed, Add them into their own sub state machines, have to check how this is being defined, have to see how this will work with enemies
-Reflecting projectiles
-Knockback animations when the player is damaged are not working
+
 
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones. Mutants! Characters in the PolygonApocalypseWasteland, light mutant, heavy mutant
 
@@ -39,6 +38,8 @@ Setup zombie/drone meshes and gameobjects that should be enabled for different a
 ****** Bugs and refactoring:
 
 Vomit pools are not damaging the player
+
+Knockback animations when the player is damaged are possibly not working, might just be a poise break issue
 
 ****** Errors:
 
