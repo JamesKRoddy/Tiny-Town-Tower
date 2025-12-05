@@ -1155,7 +1155,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   functionCalls:
   - componentTypeName: Enemies.Zombie
-    functionName: EndAttack
+    functionName: AttackEnd
     callOnEnter: 1
     callOnExit: 0
     callOnUpdate: 0

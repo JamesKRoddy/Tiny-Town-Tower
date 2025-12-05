@@ -1869,10 +1869,26 @@ namespace Enemies
         /// <summary>
         /// IAttackOwner: Called when the attack animation ends
         /// This is the standardized animation event method for all characters
+        /// Handles all attack cleanup (animator state, movement, rotation)
         /// </summary>
         public virtual void AttackEnd()
         {
-            EndAttack();
+            // Reset animator state
+            if (HasValidAnimator())
+            {
+                animator.SetBool(GameConstants.AnimatorParams.AttackHash, false);
+            }
+            
+            // Reset attack state
+            isAttacking = false;
+            isRotatingToAttack = false;
+            
+            // Resume rotation after attack
+            if (useRootMotion && agent != null)
+            {
+                agent.updateRotation = true;
+            }
+            // For non-root motion, rotation will resume automatically in update logic
         }
 
         protected virtual void BeginAttackSequence()
@@ -1893,26 +1909,6 @@ namespace Enemies
             // For non-root motion, rotation will be prevented in the update logic by checking isAttacking
         }
 
-        /// <summary>
-        /// Called by the animator to end the attack sequence
-        /// </summary>
-        public virtual void EndAttack()
-        {
-            if (HasValidAnimator())
-            {
-                animator.SetBool(GameConstants.AnimatorParams.AttackHash, false);
-            }
-            
-            isAttacking = false;
-            isRotatingToAttack = false; // Reset rotation state
-
-            // Resume rotation after attack
-            if (useRootMotion)
-            {
-                agent.updateRotation = true;
-            }
-            // For non-root motion, rotation will resume automatically in update logic
-        }
 
         /// <summary>
         /// Unified method to handle all types of damage using DamageInfo struct

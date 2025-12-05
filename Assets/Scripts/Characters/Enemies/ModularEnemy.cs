@@ -418,14 +418,8 @@ namespace Enemies
                     if (attack.ShouldExecuteImmediately())
                     {
                         attack.OnAttack();
-                        attack.OnAttackEnd();
-                        
-                        // Clear attack state immediately
-                        currentAttack = null;
-                        isExecutingAttack = false;
-                        
-                        // Resume normal movement/logic without waiting for animation events
-                        EndAttack();
+                        // AttackEnd() will call attack.OnAttackEnd() and do all cleanup
+                        AttackEnd();
                         return;
                     }
                     
@@ -456,14 +450,8 @@ namespace Enemies
             if (attack.ShouldExecuteImmediately())
             {
                 attack.OnAttack();
-                attack.OnAttackEnd();
-                
-                // Clear attack state immediately
-                currentAttack = null;
-                isExecutingAttack = false;
-                
-                // Resume normal movement/logic without waiting for animation events
-                EndAttack();
+                // AttackEnd() will call attack.OnAttackEnd() and do all cleanup
+                AttackEnd();
                 return;
             }
             
@@ -484,28 +472,6 @@ namespace Enemies
             }
         }
 
-        public override void EndAttack()
-        {
-            base.EndAttack();
-            
-            // Notify EnemyManager that attack is complete
-            if (Managers.EnemyManager.Instance != null)
-            {
-                Managers.EnemyManager.Instance.NotifyAttackComplete(this);
-            }
-            
-            // Resume movement after attack
-            if (agent != null && agent.isOnNavMesh)
-            {
-                agent.isStopped = false;
-                
-                // For non-root motion, reset to original speed
-                if (!useRootMotion)
-                {
-                    agent.speed = originalSpeed;
-                }
-            }
-        }
 
         /// <summary>
         /// Called by animator events to trigger attack damage
@@ -527,29 +493,55 @@ namespace Enemies
         /// <summary>
         /// Called by animator events to end attack (if animation events are set up)
         /// STANDARDIZED: Animation events should call this method at the end of the attack animation
-        /// If not using animation events, this can be called manually or via timer
+        /// This is the public interface method from IAttackOwner
+        /// Also called internally for immediate execution attacks (no animation events)
         /// </summary>
-        public void AttackEnd()
+        public override void AttackEnd()
         {
-            Debug.Log($"[{gameObject.name}] 🏁 AttackEnd() called by animation event | CurrentAttack: {(currentAttack != null ? currentAttack.GetType().Name : "NULL")}");
+            Debug.Log($"[{gameObject.name}] 🏁 AttackEnd() called | CurrentAttack: {(currentAttack != null ? currentAttack.GetType().Name : "NULL")}");
+            
+            // End the current attack component (if not already ended)
             if (currentAttack != null)
             {
                 currentAttack.OnAttackEnd();
                 currentAttack = null;
-            }
-            else
-            {
-                EndAttack();
             }
             
             // Reset attack type to 0 (default)
             if (HasValidAnimator())
             {
                 animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, 0);
+                animator.SetBool(GameConstants.AnimatorParams.AttackHash, false);
             }
             
-            // Allow new attacks to be selected
+            // Reset attack state
+            isAttacking = false;
+            isRotatingToAttack = false;
             isExecutingAttack = false;
+            
+            // Resume rotation after attack
+            if (useRootMotion && agent != null)
+            {
+                agent.updateRotation = true;
+            }
+            
+            // Notify EnemyManager that attack is complete
+            if (Managers.EnemyManager.Instance != null)
+            {
+                Managers.EnemyManager.Instance.NotifyAttackComplete(this);
+            }
+            
+            // Resume movement after attack
+            if (agent != null && agent.isOnNavMesh)
+            {
+                agent.isStopped = false;
+                
+                // For non-root motion, reset to original speed
+                if (!useRootMotion)
+                {
+                    agent.speed = originalSpeed;
+                }
+            }
         }
 
         /// <summary>
