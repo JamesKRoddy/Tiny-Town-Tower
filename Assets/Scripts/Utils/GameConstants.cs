@@ -163,10 +163,16 @@ public static class GameConstants
         public const string FootstepRight = "FootstepRight";
         public const string Footstep = "Footstep";
 
-        // Combat events
+        // Combat events - STANDARDIZED names for all characters (NPCs and Enemies)
         public const string AttackVFX = "AttackVFX";
-        public const string UseWeapon = "UseWeapon";
-        public const string StopWeapon = "StopWeapon";
+        public const string Attack = "Attack";           // Standardized: Execute damage on animation frame
+        public const string AttackEnd = "AttackEnd";     // Standardized: End attack animation
+        
+        // DEPRECATED: Use Attack and AttackEnd instead
+        [System.Obsolete("Use Attack instead")]
+        public const string UseWeapon = "Attack";
+        [System.Obsolete("Use AttackEnd instead")]
+        public const string StopWeapon = "AttackEnd";
 
         // Work/Task events
         public const string PlayTaskAnimationEffect = "PlayTaskAnimationEffect";
@@ -198,8 +204,10 @@ public static class GameConstants
         public static bool IsCombatEvent(string eventName)
         {
             return eventName == AttackVFX || 
-                   eventName == UseWeapon || 
-                   eventName == StopWeapon;
+                   eventName == Attack || 
+                   eventName == AttackEnd ||
+                   eventName == UseWeapon ||  // Deprecated, but still check for backwards compatibility
+                   eventName == StopWeapon;   // Deprecated, but still check for backwards compatibility
         }
 
         /// <summary>
@@ -219,11 +227,11 @@ public static class GameConstants
         }
 
         /// <summary>
-        /// Get all combat event names
+        /// Get all combat event names (standardized)
         /// </summary>
         public static string[] GetCombatEventNames()
         {
-            return new[] { AttackVFX, UseWeapon, StopWeapon };
+            return new[] { AttackVFX, Attack, AttackEnd };
         }
 
         /// <summary>
@@ -246,10 +254,10 @@ public static class GameConstants
                 FootstepRight,
                 Footstep,
                 
-                // Combat
+                // Combat (standardized)
                 AttackVFX,
-                UseWeapon,
-                StopWeapon,
+                Attack,
+                AttackEnd,
                 
                 // Work
                 PlayTaskAnimationEffect

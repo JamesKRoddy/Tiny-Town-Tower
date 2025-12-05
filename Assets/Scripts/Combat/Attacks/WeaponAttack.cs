@@ -145,11 +145,11 @@ namespace Combat.Attacks
             // Only spawn weapon if not already spawned from inspector setup
             if (weaponData != null && spawnedWeaponModel == null)
             {
-                // Apply weapon data if available
-                ApplyWeaponData();
-                
-                // Spawn weapon model if holder is set
-                SpawnWeaponModel();
+            // Apply weapon data if available
+            ApplyWeaponData();
+            
+            // Spawn weapon model if holder is set
+            SpawnWeaponModel();
             }
             
             Debug.Log($"[{attackOwner.gameObject.name}] WeaponAttack initialized | Weapon: {(weaponData != null ? weaponData.objectName : "None")} | Damage: {GetEffectiveDamage()} | Poise: {GetEffectivePoiseDamage()}");
@@ -161,7 +161,7 @@ namespace Combat.Attacks
         public void SetWeaponData(WeaponScriptableObj newWeaponData, Transform holder = null)
         {
             if (newWeaponData == null)
-            {
+        {
                 Debug.LogWarning($"[WeaponAttack] SetWeaponData called with null weapon data on {gameObject.name}");
                 return;
             }

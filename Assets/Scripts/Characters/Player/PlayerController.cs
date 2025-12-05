@@ -315,7 +315,7 @@ public class PlayerController : MonoBehaviour, IControllerInput
     {
         if (_possessedNPC != null)
         {
-            _possessedNPC.Attack();
+            _possessedNPC.InitiateAttack();
         }
     }
 

@@ -711,7 +711,6 @@ GameObject:
   - component: {fileID: 4521413630554356895}
   - component: {fileID: 1642315922267150981}
   - component: {fileID: 865813623137836336}
-  - component: {fileID: 506023768571128916}
   - component: {fileID: 6150023108025577922}
   - component: {fileID: 2700677688428301997}
   - component: {fileID: 6988115495219620664}
@@ -785,50 +784,6 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &506023768571128916
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3498937984024521076}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cd0aeaed6c68bbe4b9a4fd883e382915, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  characterType: 201
-  useRootMotion: 1
-  stoppingDistance: 1.5
-  rotationSpeed: 10
-  movementSpeed: 3.5
-  acceleration: 8
-  angularSpeed: 120
-  obstacleBoundsOffset: 1
-  rootMotionMultiplier: 1
-  showCollisionDebug: 0
-  enableCooldownMovement: 1
-  cooldownMovementMinDistance: 2
-  cooldownMovementMaxDistance: 4
-  cooldownMovementMinDuration: 1
-  cooldownMovementMaxDuration: 3
-  enableHeadTracking: 1
-  headTrackingWeight: 0.8
-  headTrackingRotationWeight: 0.5
-  headTrackingLerpSpeed: 3
-  maxHeadTrackingAngle: 60
-  headTrackingDistance: 15
-  health: 100
-  maxHealth: 100
-  poise: 50
-  maxPoise: 50
-  poiseRecoveryRate: 10
-  poiseRecoveryDelay: 2
-  animator: {fileID: 0}
-  isAttacking: 0
-  resistances: []
-  bossHealthBarPrefab: {fileID: 0}
-  attacks: []
 --- !u!114 &6150023108025577922
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -841,6 +796,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ff8a937cd8a28d4895a0996e1f6f54c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  attackDescription: 
   minRange: 0
   maxRange: 5
   attackAngleThreshold: 30
@@ -884,8 +840,13 @@ MonoBehaviour:
     parentToTransform: 0
     durationOverride: 0
   endEffectDelay: 0
+  useAnimatorTiming: 1
   attackTrigger: Attack
-  attackGameObjects: []
+  warningDelay: 0.3
+  attackDelay: 0.6
+  attackEndDelay: 1
+  attackEquipment: []
+  attackEffectObjects: []
   lastAttackTime: 0
   attackRadius: 1.5
   targetLayer:
@@ -904,6 +865,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6954cf813090a8f4da8ef65214157664, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  attackDescription: 
   minRange: 0
   maxRange: 5
   attackAngleThreshold: 180
@@ -947,8 +909,13 @@ MonoBehaviour:
     parentToTransform: 0
     durationOverride: 0
   endEffectDelay: 0
+  useAnimatorTiming: 1
   attackTrigger: Attack
-  attackGameObjects: []
+  warningDelay: 0.3
+  attackDelay: 0.6
+  attackEndDelay: 1
+  attackEquipment: []
+  attackEffectObjects: []
   lastAttackTime: 0
   maxShockwaveRadius: 10
   shockwaveSpeed: 15
@@ -965,6 +932,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 220a8623ef166e34ba6a3f56eec614ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  attackDescription: 
   minRange: 0
   maxRange: 5
   attackAngleThreshold: 30
@@ -1008,15 +976,20 @@ MonoBehaviour:
     parentToTransform: 0
     durationOverride: 0
   endEffectDelay: 0
+  useAnimatorTiming: 1
   attackTrigger: Attack
-  attackGameObjects: []
+  warningDelay: 0.3
+  attackDelay: 0.6
+  attackEndDelay: 1
+  attackEquipment: []
+  attackEffectObjects: []
   lastAttackTime: 0
   jumpRadius: 3
   jumpHeight: 5
   jumpDuration: 1
   predictionFactor: 0.5
   finalJumpLockPercentage: 0.1
-  rotationSpeed: 360
+  jumpRotationSpeed: 360
 --- !u!1 &3544621238500329224
 GameObject:
   m_ObjectHideFlags: 0

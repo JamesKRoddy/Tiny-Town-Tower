@@ -375,7 +375,7 @@ public class AnimationEventHelper : EditorWindow
         
         // Quick setup
         EditorGUILayout.LabelField("Quick Setup (All Combat Events)", EditorStyles.boldLabel);
-        EditorGUILayout.HelpBox("Adds AttackVFX, UseWeapon, and StopWeapon in correct order", MessageType.Info);
+        EditorGUILayout.HelpBox("Adds AttackVFX, Attack, and AttackEnd in correct order (standardized for all characters)", MessageType.Info);
         
         GUI.backgroundColor = Color.cyan;
         if (GUILayout.Button("Quick Setup: Fast Attack\n(VFX: 0.2, Active: 0.25-0.45)", GUILayout.Height(35)))
@@ -612,8 +612,8 @@ public class AnimationEventHelper : EditorWindow
         float startTime = CalculateEventTime(weaponStartFrame);
         float endTime = CalculateEventTime(weaponEndFrame);
         
-        AddEvent(GameConstants.AnimationEvents.UseWeapon, startTime);
-        AddEvent(GameConstants.AnimationEvents.StopWeapon, endTime);
+        AddEvent(GameConstants.AnimationEvents.Attack, startTime);
+        AddEvent(GameConstants.AnimationEvents.AttackEnd, endTime);
         
         SaveAndLog($"Added weapon hitbox events:\n  Start: {startTime:F3}s\n  End: {endTime:F3}s");
     }
@@ -879,10 +879,10 @@ public class AnimationEventHelper : EditorWindow
                     attackVfxFrame = useNormalizedTime ? normalizedTime : frameNumber;
                     attackDirection = evt.intParameter;
                     break;
-                case "UseWeapon":
+                case "Attack":  // Standardized name
                     weaponStartFrame = useNormalizedTime ? normalizedTime : frameNumber;
                     break;
-                case "StopWeapon":
+                case "AttackEnd":  // Standardized name
                     weaponEndFrame = useNormalizedTime ? normalizedTime : frameNumber;
                     break;
                 case "PlayTaskAnimationEffect":

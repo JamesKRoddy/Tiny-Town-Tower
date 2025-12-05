@@ -6,11 +6,12 @@ using Managers;
 /// <summary>
 /// Handles animation events for all character types (NPCs, Settlers, and Enemies)
 /// - Footstep events: Works for all characters with IDamageable
-/// - Combat events: Only used by player/NPCs with CharacterCombat and CharacterInventory
+/// - Combat events: Standardized Attack() / AttackEnd() methods work for all characters
 /// - Work events: Only used by Settlers with assigned work tasks
 /// 
 /// WEAPON SYSTEM:
-/// - Uses CharacterInventory.UseWeapon() / StopWeapon() for attack execution
+/// - STANDARDIZED: Animation events should call Attack() and AttackEnd()
+/// - Routes to IAttackOwner interface methods (works for NPCs and Enemies)
 /// - Works with the unified AttackBase/WeaponAttack system
 /// </summary>
 public class CharacterAnimationEvents : MonoBehaviour
@@ -93,25 +94,29 @@ public class CharacterAnimationEvents : MonoBehaviour
 
     /// <summary>
     /// Called from animator, triggers weapon attack (damage frame)
-    /// Uses the new CharacterInventory.UseWeapon() which works with WeaponAttack
+    /// STANDARDIZED: This method works for both NPCs and Enemies via IAttackOwner interface
+    /// Animation events should call this method on the damage frame
     /// </summary>
-    public void UseWeapon()
+    public void Attack()
     {
-        if (inventory != null && inventory.equippedWeaponScriptObj != null)
+        if (controller != null)
         {
-            inventory.UseWeapon();
+            // Call the standardized IAttackOwner.Attack() method
+            controller.Attack();
         }
     }
 
     /// <summary>
     /// Called from animator, ends weapon attack
-    /// Uses the new CharacterInventory.StopWeapon() which works with WeaponAttack
+    /// STANDARDIZED: This method works for both NPCs and Enemies via IAttackOwner interface
+    /// Animation events should call this method at the end of the attack animation
     /// </summary>
-    public void StopWeapon()
+    public void AttackEnd()
     {
-        if (inventory != null && inventory.equippedWeaponScriptObj != null)
+        if (controller != null)
         {
-            inventory.StopWeapon();
+            // Call the standardized IAttackOwner.AttackEnd() method
+            controller.AttackEnd();
         }
     }
     

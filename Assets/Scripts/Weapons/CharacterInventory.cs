@@ -137,7 +137,7 @@ public class CharacterInventory : MonoBehaviour
         
         // Unequip the currently equipped weapon
         UnequipCurrentWeapon();
-        
+
         equippedWeaponScriptObj = weaponScriptableObj;
 
         // Configure WeaponAttack component - it will spawn the weapon model with collider setup
@@ -189,8 +189,8 @@ public class CharacterInventory : MonoBehaviour
                 spawnedWeaponModel = null;
             }
             else if (weaponHolder != null && weaponHolder.childCount > 0)
-            {
-                Destroy(weaponHolder.GetChild(0).gameObject);
+        {
+            Destroy(weaponHolder.GetChild(0).gameObject);
             }
             
             equippedWeaponScriptObj = null;
@@ -217,7 +217,7 @@ public class CharacterInventory : MonoBehaviour
     }
 
     private void HandleWeaponType(WeaponAnimationType animationType)
-    {
+        {
         // Set up animations based on weapon type
         var controller = GetComponent<HumanCharacterController>();
         if (controller != null)

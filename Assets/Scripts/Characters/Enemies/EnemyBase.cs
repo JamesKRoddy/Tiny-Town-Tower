@@ -1866,6 +1866,15 @@ namespace Enemies
             Debug.LogWarning($"Attack not overridden for {gameObject.name}");
         }
 
+        /// <summary>
+        /// IAttackOwner: Called when the attack animation ends
+        /// This is the standardized animation event method for all characters
+        /// </summary>
+        public virtual void AttackEnd()
+        {
+            EndAttack();
+        }
+
         protected virtual void BeginAttackSequence()
         {
             if (HasValidAnimator())
@@ -1887,11 +1896,11 @@ namespace Enemies
         /// <summary>
         /// Called by the animator to end the attack sequence
         /// </summary>
-        protected virtual void EndAttack()
+        public virtual void EndAttack()
         {
             if (HasValidAnimator())
-        {
-            animator.SetBool(GameConstants.AnimatorParams.AttackHash, false);
+            {
+                animator.SetBool(GameConstants.AnimatorParams.AttackHash, false);
             }
             
             isAttacking = false;

@@ -499,7 +499,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         movementInput = new Vector3(movement.x, 0, movement.z);
     }
 
-    public void Attack()
+    /// <summary>
+    /// Initiate an attack (called by player input or AI decision)
+    /// Sets animator parameters to start attack animation
+    /// </summary>
+    public void InitiateAttack()
     {
         if (!isDashing && !isVaulting && !isPushing && !isClimbing && !isClimbLanding && characterInventory.equippedWeaponScriptObj != null)
         {
@@ -511,6 +515,33 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             {
                 animator.applyRootMotion = true;
             }
+        }
+    }
+    
+    /// <summary>
+    /// IAttackOwner: Called when attack animation reaches damage frame
+    /// This is the standardized animation event method for all characters
+    /// Animation events should call this method to execute damage
+    /// </summary>
+    public void Attack()
+    {
+        // Execute the actual weapon attack damage
+        if (characterInventory != null)
+        {
+            characterInventory.UseWeapon();
+        }
+    }
+    
+    /// <summary>
+    /// IAttackOwner: Called when attack animation ends
+    /// This is the standardized animation event method for all characters
+    /// Animation events should call this method to clean up after attack
+    /// </summary>
+    public void AttackEnd()
+    {
+        if (characterInventory != null)
+        {
+            characterInventory.StopWeapon();
         }
     }
 

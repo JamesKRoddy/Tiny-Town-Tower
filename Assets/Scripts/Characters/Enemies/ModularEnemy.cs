@@ -449,6 +449,7 @@ namespace Enemies
             // Execute the attack (no rotation needed)
             isExecutingAttack = true;
             attackExecutionStartTime = Time.time;
+            Debug.Log($"[{gameObject.name}] Executing attack: {attack.GetType().Name} | HasAnimator: {HasValidAnimator()} | UseAnimatorTiming: {attack.useAnimatorTiming}");
             attack.StartAttack();
             
             // For enemies without valid animators (like drones) execute immediately
@@ -483,7 +484,7 @@ namespace Enemies
             }
         }
 
-        protected override void EndAttack()
+        public override void EndAttack()
         {
             base.EndAttack();
             
@@ -508,9 +509,11 @@ namespace Enemies
 
         /// <summary>
         /// Called by animator events to trigger attack damage
+        /// STANDARDIZED: Animation events should call this method on the damage frame
         /// </summary>
         public override void Attack()
         {
+            Debug.Log($"[{gameObject.name}] 🎯 Attack() called by animation event | CurrentAttack: {(currentAttack != null ? currentAttack.GetType().Name : "NULL")}");
             if (currentAttack != null)
             {
                 currentAttack.OnAttack();
@@ -523,10 +526,12 @@ namespace Enemies
 
         /// <summary>
         /// Called by animator events to end attack (if animation events are set up)
+        /// STANDARDIZED: Animation events should call this method at the end of the attack animation
         /// If not using animation events, this can be called manually or via timer
         /// </summary>
         public void AttackEnd()
         {
+            Debug.Log($"[{gameObject.name}] 🏁 AttackEnd() called by animation event | CurrentAttack: {(currentAttack != null ? currentAttack.GetType().Name : "NULL")}");
             if (currentAttack != null)
             {
                 currentAttack.OnAttackEnd();

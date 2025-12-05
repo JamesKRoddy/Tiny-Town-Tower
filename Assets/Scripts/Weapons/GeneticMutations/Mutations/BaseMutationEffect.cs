@@ -115,4 +115,4 @@ public abstract class BaseMutationEffect : MonoBehaviour, IPickupableItem
 
     // Abstract method that derived classes must implement to return their stats description
     public abstract string GetStatsDescription();
-}
+} 

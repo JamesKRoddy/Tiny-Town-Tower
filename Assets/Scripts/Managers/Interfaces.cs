@@ -72,7 +72,11 @@ public interface IPossessable
     void OnUnpossess();
     void PossessedUpdate();
     void Movement(Vector3 movement);
-    void Attack();
+    /// <summary>
+    /// Initiate an attack (called by player input)
+    /// This starts the attack animation, actual damage is executed via IAttackOwner.Attack() animation event
+    /// </summary>
+    void InitiateAttack();
     void Dash();
     WeaponScriptableObj GetEquipped();
     void EquipWeapon(WeaponScriptableObj weapon);

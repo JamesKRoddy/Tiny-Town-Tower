@@ -81,8 +81,15 @@ public interface IAttackOwner
     
     /// <summary>
     /// Called when the actual attack damage frame occurs
+    /// This is the standardized animation event method for all characters
     /// </summary>
     void Attack();
+    
+    /// <summary>
+    /// Called when the attack animation ends
+    /// This is the standardized animation event method for all characters
+    /// </summary>
+    void AttackEnd();
 }
 
 /// <summary>

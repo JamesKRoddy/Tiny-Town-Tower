@@ -277,8 +277,13 @@ namespace Combat
                 // Animator-driven: trigger animation, animator events will call AttackWarning/Attack/AttackEnd
                 if (owner != null && animator != null)
                 {
+                    Debug.Log($"[{owner.gameObject.name}] 🎬 StartAttack() - Triggering animator | AttackType: {attackType} | Trigger: {attackTrigger}");
                     animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, attackType);
                     animator.SetTrigger(attackTrigger);
+                }
+                else
+                {
+                    Debug.LogWarning($"[{owner?.gameObject.name ?? "Unknown"}] StartAttack() - Cannot trigger animation: owner={owner != null}, animator={animator != null}");
                 }
             }
             else
