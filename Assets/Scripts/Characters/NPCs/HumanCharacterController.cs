@@ -332,6 +332,32 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             animator.applyRootMotion = false;
         }
+        
+        // Initialize all attack components (like WeaponAttack)
+        InitializeAttackComponents();
+    }
+    
+    /// <summary>
+    /// Initialize all attack components on this character (e.g., WeaponAttack)
+    /// This assigns the animator and other references needed for attacks to function
+    /// </summary>
+    private void InitializeAttackComponents()
+    {
+        var attackComponents = GetComponents<Combat.AttackBase>();
+        
+        foreach (var attack in attackComponents)
+        {
+            if (attack != null)
+            {
+                attack.Initialize(this);
+                Debug.Log($"[{gameObject.name}] Initialized attack component: {attack.GetType().Name}");
+            }
+        }
+        
+        if (attackComponents.Length > 0)
+        {
+            Debug.Log($"[{gameObject.name}] HumanCharacterController initialized with {attackComponents.Length} attack component(s)");
+        }
     }
 
     public virtual void PossessedUpdate()
@@ -613,11 +639,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public void EquipWeapon(WeaponScriptableObj weapon)
     {
         characterInventory.EquipWeapon(weapon);
-    }
-    public void EquipMeleeWeapon(int equipped)
-    {
-        animator.SetInteger(GameConstants.AnimatorParams.WeaponTypeHash, equipped);
-        UpdateAnimationSpeed();
     }
 
     private void UpdateAnimationSpeed()

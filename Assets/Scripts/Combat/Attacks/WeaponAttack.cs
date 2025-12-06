@@ -132,17 +132,22 @@ namespace Combat.Attacks
         {
             base.Initialize(attackOwner);
             
-            // Only spawn weapon if not already spawned from inspector setup
+            // Only spawn weapon if not already spawned from inspector setup or CharacterInventory.Start()
             if (weaponData != null && spawnedWeaponModel == null)
             {
-            // Apply weapon data if available
-            ApplyWeaponData();
+                // Apply weapon data if available
+                ApplyWeaponData();
+                
+                // Spawn weapon model if holder is set
+                SpawnWeaponModel();
+            }
             
-            // Spawn weapon model if holder is set
-            SpawnWeaponModel();
-            
-            // Update animator weapon type
-            UpdateAnimatorWeaponType();
+            // Always update animator weapon type if weapon is equipped (even if already spawned)
+            // This ensures animator is updated now that we have the animator reference
+            // (SetWeaponData may have been called before Initialize, when animator was null)
+            if (weaponData != null)
+            {
+                UpdateAnimatorWeaponType();
             }
             
             Debug.Log($"[{attackOwner.gameObject.name}] WeaponAttack initialized | Weapon: {(weaponData != null ? weaponData.objectName : "None")} | Damage: {GetEffectiveDamage()} | Poise: {GetEffectivePoiseDamage()}");
@@ -307,14 +312,22 @@ namespace Combat.Attacks
         /// </summary>
         private void UpdateAnimatorWeaponType()
         {
-            if (weaponData == null || animator == null)
+            Debug.Log($"[{OwnerTransform?.gameObject.name ?? gameObject.name}] Updating animator WeaponType to {weaponData.animationType}");
+            if (weaponData == null)
             {
+                Debug.LogWarning($"[{OwnerTransform?.gameObject.name ?? gameObject.name}] No weapon data to update WeaponType");
+                return;
+            }
+            if (animator == null)
+            {
+                Debug.LogWarning($"[{OwnerTransform?.gameObject.name ?? gameObject.name}] No animator to update WeaponType");
                 return;
             }
             
             // Check if the animator has the WeaponType parameter
             if (animator.runtimeAnimatorController == null)
             {
+                Debug.LogWarning($"[{OwnerTransform?.gameObject.name ?? gameObject.name}] No animator runtime controller to update WeaponType");
                 return;
             }
             
