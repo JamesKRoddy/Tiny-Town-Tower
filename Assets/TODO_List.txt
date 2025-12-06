@@ -1,8 +1,9 @@
 *****Current Work*****
 
-Keep going with this player/enemy weapon refactor
+Mutants still not attacking the player
+Have to use the light attack trigger in animator
+Have to check how the attacking trigger will be set and if it will work for combos
 TODO:
-Weapon animations, 2 hand vs 1 handed, Add them into their own sub state machines, have to check how this is being defined, have to see how this will work with enemies
 
 
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones. Mutants! Characters in the PolygonApocalypseWasteland, light mutant, heavy mutant

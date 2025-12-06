@@ -17,7 +17,6 @@ using Managers;
 public class CharacterAnimationEvents : MonoBehaviour
 {
     private CharacterCombat combat;
-    private HumanCharacterController controller;
     private CharacterInventory inventory;
     private int workLayerIndex;
 
@@ -25,6 +24,9 @@ public class CharacterAnimationEvents : MonoBehaviour
     
     // Footstep system
     private IDamageable damageable; // To get character type
+    
+    // Attack owner interface (works for both players and enemies since HumanCharacterController implements IAttackOwner)
+    private IAttackOwner attackOwner;
     
     [Header("Footstep Settings")]
     [Tooltip("Enable to see debug information about footstep detection")]
@@ -50,9 +52,26 @@ public class CharacterAnimationEvents : MonoBehaviour
     public void Setup(CharacterCombat characterCombat =  null, HumanCharacterController characterController = null, CharacterInventory characterInventory = null)
     {
         combat = characterCombat;
-        controller = characterController;
         inventory = characterInventory;
-        animator = controller?.Animator;
+        
+        // Set attackOwner from controller (HumanCharacterController implements IAttackOwner)
+        if (characterController != null)
+        {
+            attackOwner = characterController;
+            animator = characterController.Animator;
+        }
+        else
+        {
+            // For enemies, get IAttackOwner directly
+            attackOwner = GetComponent<IAttackOwner>();
+            animator = attackOwner?.OwnerAnimator;
+        }
+        
+        // Fallback: get animator directly if not set
+        if (animator == null)
+        {
+            animator = GetComponent<Animator>();
+        }
 
         if (animator != null)
         {
@@ -78,6 +97,12 @@ public class CharacterAnimationEvents : MonoBehaviour
         {
             damageable = GetComponent<IDamageable>();
         }
+        // Get IAttackOwner if not set via Setup
+        if (attackOwner == null)
+        {
+            // Get IAttackOwner directly
+            attackOwner = GetComponent<IAttackOwner>();
+        }
     }
 
     #region Animation Events
@@ -99,10 +124,23 @@ public class CharacterAnimationEvents : MonoBehaviour
     /// </summary>
     public void Attack()
     {
-        if (controller != null)
+        // Use IAttackOwner interface (works for both players and enemies)
+        if (attackOwner != null)
         {
-            // Call the standardized IAttackOwner.Attack() method
-            controller.Attack();
+            attackOwner.Attack();
+        }
+        else
+        {
+            // Fallback: try to get it on the fly
+            attackOwner = GetComponent<IAttackOwner>();
+            if (attackOwner != null)
+            {
+                attackOwner.Attack();
+            }
+            else
+            {
+                Debug.LogWarning($"[CharacterAnimationEvents] {gameObject.name} - Attack() called but no IAttackOwner found!");
+            }
         }
     }
 
@@ -113,10 +151,23 @@ public class CharacterAnimationEvents : MonoBehaviour
     /// </summary>
     public void AttackEnd()
     {
-        if (controller != null)
+        // Use IAttackOwner interface (works for both players and enemies)
+        if (attackOwner != null)
         {
-            // Call the standardized IAttackOwner.AttackEnd() method
-            controller.AttackEnd();
+            attackOwner.AttackEnd();
+        }
+        else
+        {
+            // Fallback: try to get it on the fly
+            attackOwner = GetComponent<IAttackOwner>();
+            if (attackOwner != null)
+            {
+                attackOwner.AttackEnd();
+            }
+            else
+            {
+                Debug.LogWarning($"[CharacterAnimationEvents] {gameObject.name} - AttackEnd() called but no IAttackOwner found!");
+            }
         }
     }
     
@@ -190,7 +241,7 @@ public class CharacterAnimationEvents : MonoBehaviour
         // If string is empty, get TaskAnimation from the current WorkTask
         if (string.IsNullOrEmpty(taskAnimationEnum))
         {
-            if (controller != null && controller is SettlerNPC settler)
+            if (attackOwner != null && attackOwner is SettlerNPC settler)
             {
                 var workTask = settler.GetAssignedWork();
                 if (workTask != null)
