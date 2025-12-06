@@ -203,23 +203,6 @@ namespace Combat.Attacks
             poiseDamage = weaponData.poiseDamage;
             attackElement = weaponData.weaponElement;
             elementalDamageBonus = weaponData.elementalDamageBonus;
-            
-            // Update attack range based on weapon reach if not customized
-            // Check if range is still at default (either 1.5f from AnimationAttack or 5f from AttackBase)
-            if (maxRange <= 1.5f || (maxRange == 5f && weaponData.projectileDeflectionRange > 0))
-            {
-                // Use weapon's deflection range as approximate max range, or use a reasonable default
-                if (weaponData.projectileDeflectionRange > 0)
-                {
-                    maxRange = weaponData.projectileDeflectionRange;
-                }
-                else
-                {
-                    // Fallback: use weapon reach or default to 2.5f for melee weapons
-                    maxRange = 2.5f;
-                }
-                Debug.Log($"[WeaponAttack] {gameObject.name} - Set maxRange to {maxRange} from weapon data");
-            }
         }
 
         /// <summary>

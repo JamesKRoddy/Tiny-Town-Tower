@@ -172,6 +172,42 @@ public class CharacterAnimationEvents : MonoBehaviour
     }
     
     /// <summary>
+    /// Enables root motion on the animator
+    /// Call this from animation events or state machine behaviors when you want animations to drive movement
+    /// Typically called at the start of attack animations or special movement animations
+    /// </summary>
+    public void EnableRootMotion()
+    {
+        if (animator != null)
+        {
+            animator.applyRootMotion = true;
+            Debug.Log($"[CharacterAnimationEvents] {gameObject.name} - Root motion ENABLED (applyRootMotion = {animator.applyRootMotion})");
+        }
+        else
+        {
+            Debug.LogWarning($"[CharacterAnimationEvents] {gameObject.name} - EnableRootMotion() called but no Animator found!");
+        }
+    }
+    
+    /// <summary>
+    /// Disables root motion on the animator
+    /// Call this from animation events or state machine behaviors when you want script-based movement
+    /// Typically called at the end of attack animations or when returning to normal movement
+    /// </summary>
+    public void DisableRootMotion()
+    {
+        if (animator != null)
+        {
+            animator.applyRootMotion = false;
+            Debug.Log($"[CharacterAnimationEvents] {gameObject.name} - Root motion DISABLED (applyRootMotion = {animator.applyRootMotion})");
+        }
+        else
+        {
+            Debug.LogWarning($"[CharacterAnimationEvents] {gameObject.name} - DisableRootMotion() called but no Animator found!");
+        }
+    }
+    
+    /// <summary>
     /// Called from walk/run animations for LEFT foot
     /// Uses humanoid IK to get accurate foot position
     /// Add this as an Animation Event in your walk/run animations at the frame where the left foot touches ground

@@ -502,19 +502,18 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     /// <summary>
     /// Initiate an attack (called by player input or AI decision)
     /// Sets animator parameters to start attack animation
+    /// NOTE: Root motion is now controlled by animation events (EnableRootMotion/DisableRootMotion)
     /// </summary>
-    public void InitiateAttack()
+    public void InitiateAttack(int attackType)
     {
         if (!isDashing && !isVaulting && !isPushing && !isClimbing && !isClimbLanding && characterInventory.equippedWeaponScriptObj != null)
         {
             isAttacking = true;
-            animator.SetBool(GameConstants.AnimatorParams.LightAttackHash, true);
+            animator.SetTrigger(GameConstants.AnimatorParams.Attack);
+            animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, attackType);
             
-            // Enable root motion for attack animations
-            if (animator != null)
-            {
-                animator.applyRootMotion = true;
-            }
+            // Root motion is now controlled by animation events/state behaviors
+            // Call EnableRootMotion() from your attack animation events or state machine behavior
         }
     }
     
@@ -536,20 +535,28 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     /// IAttackOwner: Called when attack animation ends
     /// This is the standardized animation event method for all characters
     /// Animation events should call this method to clean up after attack
+    /// NOTE: Root motion is now controlled by animation events (EnableRootMotion/DisableRootMotion)
     /// </summary>
     public void AttackEnd()
     {
+        // Clear attack state
+        isAttacking = false;
+        
+        // Stop weapon attack through inventory
         if (characterInventory != null)
         {
             characterInventory.StopWeapon();
         }
+        
+        // Root motion is now controlled by animation events/state behaviors
+        // Call DisableRootMotion() from your attack animation exit events or state machine behavior
     }
 
     public void Dash()
     {
         if (!isDashing && !isVaulting && !isPushing && !isClimbing && !isClimbLanding && Time.time > dashCooldownTime && Time.time > vaultCooldownTime && movementInput.magnitude > 0.1f)
         {
-            StopAttacking(); // Ensure player stops attacking when dashing
+            AttackEnd(); // Ensure player stops attacking when dashing
 
             if (CanVault(out RaycastHit hitInfo, out ObstacleType obstacleType))
             {
@@ -622,20 +629,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         }
     }
 
-    //Called from animator state class CombatAnimationState
-    public void StopAttacking()
-    {
-        isAttacking = false;
-        if(characterCombat != null)
-            characterCombat.StopAttacking();
-        
-        // Disable root motion after attack completes
-        if (animator != null)
-        {
-            animator.applyRootMotion = false;
-        }
-    }
-
     #endregion
 
     #region Dash
@@ -660,7 +653,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         currentDirection = movementInput.normalized; // Initialize dash direction based on input
         animator.SetTrigger(GameConstants.AnimatorParams.IsDashingHash);
 
-        // Disable root motion during dash
+        // Disable root motion during dash (dash is script-controlled, not animation-driven)
         if (animator != null)
         {
             animator.applyRootMotion = false;
@@ -776,7 +769,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         vaultStartPosition = transform.position; // Store starting position for lerp
         currentVaultDirection = (vaultTargetPosition - transform.position).normalized; // Initialize vault direction
         
-        // Disable root motion during vault
+        // Disable root motion during vault (vault is script-controlled, not animation-driven)
         if (animator != null)
         {
             animator.applyRootMotion = false;
@@ -837,7 +830,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // This ensures we land perfectly on the platform surface
         climbExactFinalPosition = CalculateExactClimbFinalPosition();
         
-        // Disable root motion during climb
+        // Disable root motion during climb (climb is script-controlled, not animation-driven)
         if (animator != null)
         {
             animator.applyRootMotion = false;
@@ -868,11 +861,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Reset gravity velocity when finishing climb to prevent immediate falling
         ResetGravityVelocity();
         
-        // Re-enable root motion
-        if (animator != null)
-        {
-            animator.applyRootMotion = true;
-        }
+        // Root motion stays disabled - it's only enabled by animation events when needed
     }
 
     #endregion
@@ -922,7 +911,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 // Stop player movement while pushing
                 targetMovement = Vector3.zero;
                 
-                // Disable root motion during push
+                // Disable root motion during push (push is script-controlled, not animation-driven)
                 if (animator != null)
                 {
                     animator.applyRootMotion = false;
@@ -969,7 +958,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         currentPushTarget = null;
         animator.SetBool(GameConstants.AnimatorParams.IsPushingHash, false);
         
-        // Ensure root motion is disabled after push
+        // Ensure root motion is disabled after push (it should already be disabled, but be explicit)
         if (animator != null)
         {
             animator.applyRootMotion = false;
@@ -1374,28 +1363,36 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Get the root motion delta from the animator
         Vector3 rootMotionDelta = animator.deltaPosition;
         
-        // If there's no movement from root motion, don't do anything
+        // Combine root motion with gravity if enabled
+        // This allows characters to fall while performing root motion attacks
+        if (enableGravity && characterController != null && characterController.enabled)
+        {
+            // Calculate gravity movement
+            Vector3 gravityMovement = Vector3.zero;
+            ApplyGravityMovement(ref gravityMovement);
+            
+            // Combine horizontal root motion with vertical gravity
+            rootMotionDelta.x += gravityMovement.x;
+            rootMotionDelta.y += gravityMovement.y;
+            rootMotionDelta.z += gravityMovement.z;
+        }
+        
+        // If there's no movement after combining root motion + gravity, don't do anything
         if (rootMotionDelta.magnitude < 0.001f)
         {
             return;
         }
 
-        // Use the centralized root motion utility
-        LayerMask collisionLayers = GetCombinedObstacleLayers();
-        collisionLayers |= (1 << 8); // Add enemy layer
-        
-        bool movementApplied = RootMotionUtils.ApplyRootMotion(
-            transform, 
-            rootMotionDelta, 
-            null, // No NavMeshAgent for HumanCharacterController
-            collisionLayers, 
-            null, // No specific target to maintain distance from
-            0.2f, // Standard safe distance
-            false // Debug logging disabled for NPCs
-        );
-        
-        // If movement was blocked, character stays in place
-        // This prevents the character from moving through walls and pushing enemies during attack animations
+        // Apply the combined movement using CharacterController
+        if (characterController != null && characterController.enabled)
+        {
+            characterController.Move(rootMotionDelta);
+        }
+        else
+        {
+            // Fallback: direct transform movement (for AI-controlled without CharacterController)
+            transform.position += rootMotionDelta;
+        }
     }
 
     #endregion
@@ -1443,6 +1440,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     protected void MoveCharacter()
     {
+        
         if (isPushing)
         {
             // When pushing, follow the object's movement and maintain offset
@@ -1550,7 +1548,45 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             
             float speed = baseSpeed * movementMultiplier;
             float currentRotationSpeed = (isAttacking || isDamaged) ? attackRotationSpeed : rotationSpeed;
+            
+            // PRIMARY CHECK: If root motion is enabled, block ALL input movement
+            // Root motion animations control movement, but we still allow rotation for aiming
+            if (animator != null && animator.applyRootMotion)
+            {
+                // OnAnimatorMove() handles ALL movement (including gravity) when root motion is enabled
+                // We do NOTHING with movement here - only allow rotation
+                
+                // Allow rotation for attack aiming
+                if (movementInput != Vector3.zero)
+                {
+                    Quaternion targetRotation = Quaternion.LookRotation(movementInput);
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
+                }
+                
+                return; // Skip all movement logic - OnAnimatorMove() handles movement
+            }
+            
+            // SECONDARY CHECK: If damaged (but root motion disabled), also block input movement
+            // Damaged state prevents all movement, but allow rotation so player can see hit direction
+            if (isDamaged)
+            {
+                // Apply gravity when damaged (root motion is disabled in damaged state)
+                Vector3 gravityMovement = Vector3.zero;
+                ApplyGravityMovement(ref gravityMovement);
+                characterController.Move(gravityMovement);
+                
+                // Allow rotation to maintain control feel
+                if (movementInput != Vector3.zero)
+                {
+                    Quaternion targetRotation = Quaternion.LookRotation(movementInput);
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
+                }
+                
+                return; // Skip all movement logic - damaged state prevents movement
+            }
 
+            // At this point, root motion is disabled and we're not damaged - normal movement is allowed
+            
             // If dashing, smoothly change direction
             if (isDashing)
             {
@@ -1731,21 +1767,18 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 }
 
                 // Apply movement with CharacterController (handles collision automatically)
-                if (!isAttacking && !isDamaged) // Only move if not attacking or damaged
-                {
-                    // Apply gravity to movement vector
-                    ApplyGravityMovement(ref targetMovement);
-                    
-                    // Use CharacterController.Move() for automatic collision handling
-                    // No need for IsObstacleInPath check - CharacterController handles it!
-                    characterController.Move(targetMovement);
-                    }
+                // Note: isAttacking and isDamaged are already handled above with early return
+                // Apply gravity to movement vector
+                ApplyGravityMovement(ref targetMovement);
+                
+                // Use CharacterController.Move() for automatic collision handling
+                characterController.Move(targetMovement);
 
-                    // Rotate player towards the input direction
-                    if (movementInput != Vector3.zero && !isVaulting)
-                    {
-                        Quaternion targetRotation = Quaternion.LookRotation(movementInput);
-                        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
+                // Rotate player towards the input direction
+                if (movementInput != Vector3.zero && !isVaulting)
+                {
+                    Quaternion targetRotation = Quaternion.LookRotation(movementInput);
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
                 }
             }
         } // End of else if (!isClimbing) block

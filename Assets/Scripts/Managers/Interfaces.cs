@@ -76,7 +76,7 @@ public interface IPossessable
     /// Initiate an attack (called by player input)
     /// This starts the attack animation, actual damage is executed via IAttackOwner.Attack() animation event
     /// </summary>
-    void InitiateAttack();
+    void InitiateAttack(int attackType); // 1 = Light Attack, 2 = Heavy Attack, 3 = Special Attack etc.
     void Dash();
     WeaponScriptableObj GetEquipped();
     void EquipWeapon(WeaponScriptableObj weapon);

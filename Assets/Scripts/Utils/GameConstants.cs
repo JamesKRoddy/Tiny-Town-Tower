@@ -58,7 +58,6 @@ public static class GameConstants
         public const string IsEating = "IsEating";
 
         // Bools
-        public const string LightAttack = "LightAttack";
         public const string IsPushing = "IsPushing";
 
         // Floats
@@ -89,7 +88,6 @@ public static class GameConstants
         public static readonly int KnockbackHash = Animator.StringToHash(Knockback);
         public static readonly int DeadHash = Animator.StringToHash(Dead);
         public static readonly int IsEatingHash = Animator.StringToHash(IsEating);
-        public static readonly int LightAttackHash = Animator.StringToHash(LightAttack);
         public static readonly int IsPushingHash = Animator.StringToHash(IsPushing);
     }
     #endregion

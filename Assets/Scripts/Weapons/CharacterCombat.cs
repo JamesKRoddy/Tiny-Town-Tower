@@ -131,14 +131,6 @@ public class CharacterCombat : MonoBehaviour
         PlayMeleeAttackVFX((MeleeAttackDirection)attackDirection, equippedWeapon);
     }    
 
-    /// <summary>
-    /// Stop any active attack
-    /// </summary>
-    public void StopAttacking()
-    {
-        characterInventory?.StopWeapon();
-    }
-
     public void DashVFX()
     {
         PlayDashVFX(PlayerInventory.Instance.dashElement);

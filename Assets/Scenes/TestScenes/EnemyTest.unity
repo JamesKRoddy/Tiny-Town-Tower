@@ -660,6 +660,10 @@ PrefabInstance:
       propertyPath: appearanceSystem.rightUpperLegAccessoryChance
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2254817619120094739, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+      propertyPath: debugFootsteps
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2985604360754162274, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
       propertyPath: m_Name
       value: Test_Character_Player_NPC
@@ -3383,7 +3387,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5292425652148227738, guid: 18cbcb9e137ea1548bf5d1b24e74094e, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

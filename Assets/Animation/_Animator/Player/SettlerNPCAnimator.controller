@@ -962,7 +962,7 @@ AnimatorStateTransition:
   - m_ConditionMode: 1
     m_ConditionEvent: Attack
     m_EventTreshold: 0
-  - m_ConditionMode: 3
+  - m_ConditionMode: 6
     m_ConditionEvent: AttackType
     m_EventTreshold: 1
   m_DstStateMachine: {fileID: 0}
@@ -1708,7 +1708,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   functionCalls:
   - componentTypeName: HumanCharacterController
-    functionName: StopAttacking
+    functionName: AttackEnd
+    callOnEnter: 1
+    callOnExit: 0
+    callOnUpdate: 0
+  - componentTypeName: CharacterAnimationEvents
+    functionName: EnableRootMotion
+    callOnEnter: 0
+    callOnExit: 1
+    callOnUpdate: 0
+  - componentTypeName: CharacterAnimationEvents
+    functionName: DisableRootMotion
     callOnEnter: 1
     callOnExit: 0
     callOnUpdate: 0
@@ -2170,12 +2180,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   functionCalls:
   - componentTypeName: HumanCharacterController
-    functionName: StopAttacking
+    functionName: AttackEnd
+    callOnEnter: 1
+    callOnExit: 0
+    callOnUpdate: 0
+  - componentTypeName: CharacterAnimationEvents
+    functionName: EnableRootMotion
+    callOnEnter: 0
+    callOnExit: 1
+    callOnUpdate: 0
+  - componentTypeName: CharacterAnimationEvents
+    functionName: DisableRootMotion
     callOnEnter: 1
     callOnExit: 0
     callOnUpdate: 0
   parameterModifications:
-  - parameterName: LightAttack
+  - parameterName: Attack
     parameterType: 4
     boolValue: 0
     intValue: 0
