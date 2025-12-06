@@ -1,8 +1,7 @@
 *****Current Work*****
 
-Mutants still not attacking the player
-Have to use the light attack trigger in animator
-Have to check how the attacking trigger will be set and if it will work for combos
+Get enemies to use the rotation speed multiplier in the animation parameters
+See if 2 handed weapons work with mutants
 TODO:
 
 
