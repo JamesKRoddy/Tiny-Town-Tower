@@ -107,17 +107,6 @@ namespace Combat.Attacks
         #endregion
 
         #region Initialization
-
-        protected override void Awake()
-        {
-            base.Awake();
-            
-            // Override attack type for weapon attacks
-            if (attackType == 0 || attackType == 1) // Default or generic melee
-            {
-                attackType = 3; // Weapon attack type
-            }
-        }
         
         /// <summary>
         /// Start is called before the first frame update

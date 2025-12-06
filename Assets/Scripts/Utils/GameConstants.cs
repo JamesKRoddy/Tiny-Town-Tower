@@ -79,7 +79,7 @@ public static class GameConstants
         public static readonly int HitDirectionYHash = Animator.StringToHash(HitDirectionY);
         public static readonly int EquippedHash = Animator.StringToHash(Equipped);
         public static readonly int DamageTypeHash = Animator.StringToHash(DamageType);
-        public static readonly int AttackTypeHash = Animator.StringToHash(AttackType);
+        public static readonly int AttackTypeHash = Animator.StringToHash(AttackType); // Used by AI and Player for the attack type, for players it can be 1 = Light Attack, 2 = Heavy Attack, 3 = Special Attack etc.
         public static readonly int AttackHash = Animator.StringToHash(Attack);
         public static readonly int IsDashingHash = Animator.StringToHash(IsDashing);
         public static readonly int IsVaultingHash = Animator.StringToHash(IsVaulting);

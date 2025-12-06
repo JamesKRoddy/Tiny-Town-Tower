@@ -381,8 +381,19 @@ namespace Enemies
             if (attack == null) return;
             
             // Check if attack needs rotation first
-            if (attack.ShouldRotateToAttack())
+            bool needsRotation = attack.ShouldRotateToAttack();
+            Debug.Log($"[{gameObject.name}] ExecuteAttack | NeedsRotation: {needsRotation} | Distance: {(navMeshTarget != null ? Vector3.Distance(transform.position, navMeshTarget.position).ToString("F2") : "N/A")}");
+            
+            if (needsRotation)
             {
+                // Hard-stop movement while rotating so we don't keep circling
+                if (agent != null && agent.isOnNavMesh)
+                {
+                    agent.isStopped = true;
+                    agent.velocity = Vector3.zero;
+                    agent.updateRotation = true;
+                }
+
                 // Handle rotation for specific attack types
                 if (attack is BeamAttack beamAttack)
                 {
@@ -392,26 +403,33 @@ namespace Enemies
                 else
                 {
                     // Use generic rotation
-                    RotateTowardsTargetForAttack();
+                    bool rotationComplete = RotateTowardsTargetForAttack();
+                    Debug.Log($"[{gameObject.name}] Rotating towards target | Complete: {rotationComplete}");
                 }
                 
                 // After rotation, check if we're now ready to attack
                 if (!attack.ShouldRotateToAttack())
                 {
+                    Debug.Log($"[{gameObject.name}] Rotation complete, requesting attack permission");
+                    
                     // Rotation complete, now try to execute the attack
                     // Request permission from EnemyManager before attacking
                     if (Managers.EnemyManager.Instance != null)
                     {
                         if (!Managers.EnemyManager.Instance.RequestAttackPermission(this))
                         {
+                            Debug.Log($"[{gameObject.name}] Attack permission DENIED");
                             // Permission denied, keep circling and try again next frame
                             return;
                         }
                     }
                     
+                    Debug.Log($"[{gameObject.name}] Attack permission GRANTED, executing attack");
+                    
                     // Permission granted, execute attack
                     isExecutingAttack = true;
                     attackExecutionStartTime = Time.time;
+                    Debug.Log($"[{gameObject.name}] 🎬 StartAttack() called | AttackType: {attack.GetType().Name}");
                     attack.StartAttack();
                     
                     // For enemies without valid animators (like drones) execute immediately
@@ -426,24 +444,33 @@ namespace Enemies
                     // Update base class attack time for cooldown movement system
                     lastAttackTime = Time.time;
                 }
+                else
+                {
+                    Debug.Log($"[{gameObject.name}] Still needs rotation, trying again next frame");
+                }
                 // If still need rotation, we'll try again next frame
                 return;
             }
             
             // No rotation needed, request permission and execute
+            Debug.Log($"[{gameObject.name}] No rotation needed, requesting attack permission");
+            
             if (Managers.EnemyManager.Instance != null)
             {
                 if (!Managers.EnemyManager.Instance.RequestAttackPermission(this))
                 {
+                    Debug.Log($"[{gameObject.name}] Attack permission DENIED");
                     // Permission denied, keep circling and try again next frame
                     return;
                 }
             }
             
+            Debug.Log($"[{gameObject.name}] Attack permission GRANTED, executing attack");
+            
             // Execute the attack (no rotation needed)
             isExecutingAttack = true;
             attackExecutionStartTime = Time.time;
-            Debug.Log($"[{gameObject.name}] Executing attack: {attack.GetType().Name} | HasAnimator: {HasValidAnimator()} | UseAnimatorTiming: {attack.useAnimatorTiming}");
+            Debug.Log($"[{gameObject.name}] 🎬 StartAttack() called | AttackType: {attack.GetType().Name} | HasAnimator: {HasValidAnimator()} | UseAnimatorTiming: {attack.useAnimatorTiming}");
             attack.StartAttack();
             
             // For enemies without valid animators (like drones) execute immediately

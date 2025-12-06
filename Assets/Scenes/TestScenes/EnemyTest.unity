@@ -266,14 +266,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf69c9a3bd862ed4e83fc904c17616a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attackDescription: 
+  attackDescription: Light attack with weapon
   minRange: 0
   maxRange: 5
   attackAngleThreshold: 30
   cooldown: 2
   damage: 10
   poiseDamage: 15
-  attackType: 0
+  attackType: 1
   attackOrigin: {fileID: 0}
   allowRotationDuringAttack: 0
   attackElement: 0

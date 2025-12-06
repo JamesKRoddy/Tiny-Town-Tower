@@ -81,15 +81,32 @@ namespace Enemies
             // Don't rotate if dead
             if (Health <= 0) return false;
             
+            // Use attack-specific angle threshold if available
+            float angleThreshold = MELEE_ATTACK_ANGLE_THRESHOLD;
+            var current = GetCurrentAttack();
+            if (current != null)
+            {
+                angleThreshold = Mathf.Max(angleThreshold, current.attackAngleThreshold);
+            }
+            
+            // Calculate current angle for debugging
+            Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
+            directionToTarget.y = 0;
+            float currentAngle = Vector3.Angle(transform.forward, directionToTarget);
+            Debug.Log($"[{gameObject.name}] RotateTowardsTargetForAttack | CurrentAngle: {currentAngle:F1}° | Threshold: {angleThreshold}° | Agent.isStopped: {agent.isStopped}");
+            
             // Use NavigationUtils for sophisticated rotation with humanoid-specific angle threshold
-            return NavigationUtils.RotateTowardsTargetForAction(
+            bool rotationComplete = NavigationUtils.RotateTowardsTargetForAction(
                 transform, 
                 navMeshTarget, 
                 rotationSpeed, 
                 2f, // heightOffset
-                MELEE_ATTACK_ANGLE_THRESHOLD, 
+                angleThreshold, 
                 true // lockMovementDuringRotation
             );
+            
+            Debug.Log($"[{gameObject.name}] Rotation complete: {rotationComplete}");
+            return rotationComplete;
         }
         
         #endregion

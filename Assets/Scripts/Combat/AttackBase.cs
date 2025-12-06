@@ -274,6 +274,16 @@ namespace Combat
             // Choose between animator-driven or timeline-driven attack
             if (useAnimatorTiming && hasValidAnimator)
             {
+                // Ensure required animator parameters exist; otherwise log error and abort
+                bool hasAttackType = AnimatorHasParameter(animator, GameConstants.AnimatorParams.AttackTypeHash, AnimatorControllerParameterType.Int);
+                bool hasAttackTrigger = AnimatorHasParameter(animator, Animator.StringToHash(attackTrigger), AnimatorControllerParameterType.Trigger);
+
+                if (!hasAttackType || !hasAttackTrigger)
+                {
+                    Debug.LogError($"[{owner?.gameObject.name ?? "Unknown"}] StartAttack() - Missing animator params (AttackType:{hasAttackType}, Trigger:{hasAttackTrigger}). Attack aborted; please add these parameters to the animator.");
+                    return;
+                }
+
                 // Animator-driven: trigger animation, animator events will call AttackWarning/Attack/AttackEnd
                 if (owner != null && animator != null)
                 {
@@ -338,6 +348,22 @@ namespace Combat
             Debug.Log($"[{ownerName}] Timeline: Calling AttackEnd");
             // End the attack
             OnAttackEnd();
+        }
+
+        /// <summary>
+        /// Check if the animator has a parameter of given hash and type
+        /// </summary>
+        private bool AnimatorHasParameter(Animator anim, int hash, AnimatorControllerParameterType type)
+        {
+            if (anim == null || anim.runtimeAnimatorController == null) return false;
+            foreach (var param in anim.parameters)
+            {
+                if (param.nameHash == hash && param.type == type)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /// <summary>
