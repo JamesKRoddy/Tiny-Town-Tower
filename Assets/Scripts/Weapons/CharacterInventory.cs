@@ -141,6 +141,7 @@ public class CharacterInventory : MonoBehaviour
         equippedWeaponScriptObj = weaponScriptableObj;
 
         // Configure WeaponAttack component - it will spawn the weapon model with collider setup
+        // WeaponAttack.SetWeaponData() now handles ALL weapon setup including animator updates
         if (weaponAttack != null && weaponHolder != null)
         {
             Debug.Log($"[CharacterInventory] Calling SetWeaponData with holder: {weaponHolder.name}");
@@ -167,8 +168,7 @@ public class CharacterInventory : MonoBehaviour
             Debug.LogError($"[CharacterInventory] No weaponHolder assigned on {gameObject.name}! Cannot equip weapon.");
         }
 
-        // Handle weapon-specific animation setup
-        HandleWeaponType(weaponScriptableObj.animationType);
+        // Note: Weapon-specific animation setup (animator WeaponType parameter) is now handled by WeaponAttack.SetWeaponData()
 
         // Determine if this is player inventory or NPC inventory
         bool isPlayerInventory = this is PlayerInventory;
@@ -216,15 +216,8 @@ public class CharacterInventory : MonoBehaviour
         return true;
     }
 
-    private void HandleWeaponType(WeaponAnimationType animationType)
-        {
-        // Set up animations based on weapon type
-        var controller = GetComponent<HumanCharacterController>();
-        if (controller != null)
-        {
-            controller.EquipMeleeWeapon((int)animationType);
-        }
-    }
+    // Removed HandleWeaponType() - weapon type animator updates are now handled centrally in WeaponAttack.SetWeaponData()
+    // This ensures all characters (NPCs, enemies, players) get the correct animator parameter updates
     
     /// <summary>
     /// Called by animation events to trigger weapon use

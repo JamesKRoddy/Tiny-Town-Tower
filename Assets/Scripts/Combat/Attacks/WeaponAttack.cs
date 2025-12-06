@@ -121,6 +121,7 @@ namespace Combat.Attacks
                 Debug.Log($"[WeaponAttack] {gameObject.name} has weapon assigned in inspector, setting up automatically");
                 ApplyWeaponData();
                 SpawnWeaponModel();
+                UpdateAnimatorWeaponType();
             }
         }
 
@@ -139,6 +140,9 @@ namespace Combat.Attacks
             
             // Spawn weapon model if holder is set
             SpawnWeaponModel();
+            
+            // Update animator weapon type
+            UpdateAnimatorWeaponType();
             }
             
             Debug.Log($"[{attackOwner.gameObject.name}] WeaponAttack initialized | Weapon: {(weaponData != null ? weaponData.objectName : "None")} | Damage: {GetEffectiveDamage()} | Poise: {GetEffectivePoiseDamage()}");
@@ -146,6 +150,7 @@ namespace Combat.Attacks
 
         /// <summary>
         /// Set weapon data at runtime (e.g., when equipping a new weapon)
+        /// This is the central method for equipping weapons - handles all setup including animator updates
         /// </summary>
         public void SetWeaponData(WeaponScriptableObj newWeaponData, Transform holder = null)
         {
@@ -180,6 +185,7 @@ namespace Combat.Attacks
             
             ApplyWeaponData();
             SpawnWeaponModel();
+            UpdateAnimatorWeaponType();
         }
 
         /// <summary>
@@ -292,6 +298,48 @@ namespace Combat.Attacks
             }
             
             return hitbox;
+        }
+        
+        /// <summary>
+        /// Update the animator's WeaponType parameter based on the equipped weapon's animation type
+        /// This ensures the animator uses the correct animation set for the weapon (one-handed, two-handed, etc.)
+        /// Works for all character types: NPCs (via HumanCharacterController), enemies, and players
+        /// </summary>
+        private void UpdateAnimatorWeaponType()
+        {
+            if (weaponData == null || animator == null)
+            {
+                return;
+            }
+            
+            // Check if the animator has the WeaponType parameter
+            if (animator.runtimeAnimatorController == null)
+            {
+                return;
+            }
+            
+            // Check if the parameter exists
+            bool hasParameter = false;
+            foreach (var param in animator.parameters)
+            {
+                if (param.nameHash == GameConstants.AnimatorParams.WeaponTypeHash && param.type == AnimatorControllerParameterType.Int)
+                {
+                    hasParameter = true;
+                    break;
+                }
+            }
+            
+            if (!hasParameter)
+            {
+                Debug.LogWarning($"[WeaponAttack] {OwnerTransform?.gameObject.name ?? gameObject.name} - Animator does not have WeaponType parameter! Weapon will not animate correctly.");
+                // Silently fail if the parameter doesn't exist (not all characters may have it)
+                return;
+            }
+            
+            // Update the animator parameter with the weapon's animation type
+            int weaponTypeInt = (int)weaponData.animationType;
+            animator.SetInteger(GameConstants.AnimatorParams.WeaponTypeHash, weaponTypeInt);
+            Debug.Log($"[WeaponAttack] {OwnerTransform?.gameObject.name ?? gameObject.name} - Updated animator WeaponType to {weaponData.animationType} ({weaponTypeInt})");
         }
 
         #endregion
