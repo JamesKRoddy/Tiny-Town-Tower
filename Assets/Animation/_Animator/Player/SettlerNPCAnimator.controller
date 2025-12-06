@@ -87,6 +87,20 @@ AnimatorStateTransition:
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 1
+--- !u!114 &-8379766463201756076
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33440e54b6d69df42b148162d1315857, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  functionCalls: []
+  parameterModifications: []
 --- !u!1102 &-8321758944200708928
 AnimatorState:
   serializedVersion: 6
@@ -125,7 +139,9 @@ AnimatorState:
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: 4850429937971338964}
-  m_StateMachineBehaviours: []
+  m_StateMachineBehaviours:
+  - {fileID: -8379766463201756076}
+  - {fileID: -213186407224645262}
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -291,7 +307,8 @@ AnimatorState:
   - {fileID: -3598220038284896838}
   - {fileID: -791955277399800478}
   - {fileID: -3383621280282393339}
-  m_StateMachineBehaviours: []
+  m_StateMachineBehaviours:
+  - {fileID: -2085092045017187204}
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -582,6 +599,32 @@ AnimatorStateTransition:
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 1
+--- !u!114 &-5090422426444105024
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33440e54b6d69df42b148162d1315857, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  functionCalls: []
+  parameterModifications:
+  - parameterName: RotationSpeedMultiplier
+    parameterType: 2
+    boolValue: 0
+    intValue: 0
+    floatValue: 0
+    useRandom: 0
+    randomMinValue: 0
+    randomMaxValue: 0
+    randomMaxInclusive: 0
+    modifyOnEnter: 1
+    modifyOnExit: 0
+    modifyOnUpdate: 0
 --- !u!114 &-4908308863800018648
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -784,7 +827,8 @@ AnimatorState:
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: 4606800161410706095}
-  m_StateMachineBehaviours: []
+  m_StateMachineBehaviours:
+  - {fileID: 5303406207824900375}
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -1068,6 +1112,32 @@ AnimatorStateTransition:
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 1
+--- !u!114 &-2549491490874888077
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33440e54b6d69df42b148162d1315857, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  functionCalls: []
+  parameterModifications:
+  - parameterName: RotationSpeedMultiplier
+    parameterType: 2
+    boolValue: 0
+    intValue: 0
+    floatValue: 0
+    useRandom: 0
+    randomMinValue: 0
+    randomMaxValue: 0
+    randomMaxInclusive: 0
+    modifyOnEnter: 1
+    modifyOnExit: 0
+    modifyOnUpdate: 0
 --- !u!1101 &-2479710601348176834
 AnimatorStateTransition:
   m_ObjectHideFlags: 1
@@ -1093,6 +1163,32 @@ AnimatorStateTransition:
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 1
+--- !u!114 &-2085092045017187204
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33440e54b6d69df42b148162d1315857, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  functionCalls: []
+  parameterModifications:
+  - parameterName: RotationSpeedMultiplier
+    parameterType: 2
+    boolValue: 0
+    intValue: 0
+    floatValue: 1
+    useRandom: 0
+    randomMinValue: 0
+    randomMaxValue: 0
+    randomMaxInclusive: 0
+    modifyOnEnter: 1
+    modifyOnExit: 0
+    modifyOnUpdate: 0
 --- !u!1101 &-2057386110064994484
 AnimatorStateTransition:
   m_ObjectHideFlags: 1
@@ -1244,6 +1340,32 @@ AnimatorStateTransition:
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 1
+--- !u!114 &-213186407224645262
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33440e54b6d69df42b148162d1315857, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  functionCalls: []
+  parameterModifications:
+  - parameterName: RotationSpeedMultiplier
+    parameterType: 2
+    boolValue: 0
+    intValue: 0
+    floatValue: 0
+    useRandom: 0
+    randomMinValue: 0
+    randomMaxValue: 0
+    randomMaxInclusive: 0
+    modifyOnEnter: 1
+    modifyOnExit: 0
+    modifyOnUpdate: 0
 --- !u!91 &9100000
 AnimatorController:
   m_ObjectHideFlags: 0
@@ -1254,6 +1376,12 @@ AnimatorController:
   serializedVersion: 5
   m_AnimatorParameters:
   - m_Name: Speed
+    m_Type: 1
+    m_DefaultFloat: 0
+    m_DefaultInt: 0
+    m_DefaultBool: 0
+    m_Controller: {fileID: 9100000}
+  - m_Name: RotationSpeedMultiplier
     m_Type: 1
     m_DefaultFloat: 0
     m_DefaultInt: 0
@@ -1436,7 +1564,8 @@ AnimatorState:
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: -5094116662677669946}
-  m_StateMachineBehaviours: []
+  m_StateMachineBehaviours:
+  - {fileID: -5090422426444105024}
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -1610,6 +1739,32 @@ AnimatorStateTransition:
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 1
+--- !u!114 &1445070004562926435
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33440e54b6d69df42b148162d1315857, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  functionCalls: []
+  parameterModifications:
+  - parameterName: RotationSpeedMultiplier
+    parameterType: 2
+    boolValue: 0
+    intValue: 0
+    floatValue: 0.5
+    useRandom: 0
+    randomMinValue: 0
+    randomMaxValue: 0
+    randomMaxInclusive: 0
+    modifyOnEnter: 1
+    modifyOnExit: 0
+    modifyOnUpdate: 0
 --- !u!1102 &1727169110210175999
 AnimatorState:
   serializedVersion: 6
@@ -1623,7 +1778,8 @@ AnimatorState:
   m_Transitions:
   - {fileID: -3848703946797463452}
   - {fileID: 6856298550771112122}
-  m_StateMachineBehaviours: []
+  m_StateMachineBehaviours:
+  - {fileID: 2029802963824775390}
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -1653,7 +1809,8 @@ AnimatorState:
   - {fileID: 6484559098598090154}
   - {fileID: -4728773635074366331}
   - {fileID: 1247591398949776903}
-  m_StateMachineBehaviours: []
+  m_StateMachineBehaviours:
+  - {fileID: 1445070004562926435}
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -1694,6 +1851,30 @@ AnimatorState:
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
   m_TimeParameter: 
+--- !u!114 &2029802963824775390
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33440e54b6d69df42b148162d1315857, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  functionCalls:
+  - componentTypeName: CharacterAnimationEvents
+    functionName: ResetRotationSpeedMultiplier
+    callOnEnter: 1
+    callOnExit: 0
+    callOnUpdate: 0
+    parameterType: 0
+    intParameter: 0
+    floatParameter: 0
+    boolParameter: 0
+    stringParameter: 
+  parameterModifications: []
 --- !u!114 &2492791592890672481
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1712,16 +1893,31 @@ MonoBehaviour:
     callOnEnter: 1
     callOnExit: 0
     callOnUpdate: 0
+    parameterType: 0
+    intParameter: 0
+    floatParameter: 0
+    boolParameter: 0
+    stringParameter: 
   - componentTypeName: CharacterAnimationEvents
     functionName: EnableRootMotion
     callOnEnter: 0
     callOnExit: 1
     callOnUpdate: 0
+    parameterType: 0
+    intParameter: 0
+    floatParameter: 0
+    boolParameter: 0
+    stringParameter: 
   - componentTypeName: CharacterAnimationEvents
     functionName: DisableRootMotion
     callOnEnter: 1
     callOnExit: 0
     callOnUpdate: 0
+    parameterType: 0
+    intParameter: 0
+    floatParameter: 0
+    boolParameter: 0
+    stringParameter: 
   parameterModifications:
   - parameterName: LightAttack
     parameterType: 4
@@ -1734,6 +1930,30 @@ MonoBehaviour:
     randomMaxInclusive: 1
     modifyOnEnter: 1
     modifyOnExit: 0
+    modifyOnUpdate: 0
+  - parameterName: RotationSpeedMultiplier
+    parameterType: 2
+    boolValue: 0
+    intValue: 0
+    floatValue: 1
+    useRandom: 0
+    randomMinValue: 0
+    randomMaxValue: 1
+    randomMaxInclusive: 1
+    modifyOnEnter: 1
+    modifyOnExit: 0
+    modifyOnUpdate: 0
+  - parameterName: RotationSpeedMultiplier
+    parameterType: 2
+    boolValue: 0
+    intValue: 0
+    floatValue: 0.1
+    useRandom: 0
+    randomMinValue: 0
+    randomMaxValue: 1
+    randomMaxInclusive: 1
+    modifyOnEnter: 0
+    modifyOnExit: 1
     modifyOnUpdate: 0
 --- !u!206 &2881246091369077939
 BlendTree:
@@ -2184,16 +2404,31 @@ MonoBehaviour:
     callOnEnter: 1
     callOnExit: 0
     callOnUpdate: 0
+    parameterType: 0
+    intParameter: 0
+    floatParameter: 0
+    boolParameter: 0
+    stringParameter: 
   - componentTypeName: CharacterAnimationEvents
     functionName: EnableRootMotion
     callOnEnter: 0
     callOnExit: 1
     callOnUpdate: 0
+    parameterType: 0
+    intParameter: 0
+    floatParameter: 0
+    boolParameter: 0
+    stringParameter: 
   - componentTypeName: CharacterAnimationEvents
     functionName: DisableRootMotion
     callOnEnter: 1
     callOnExit: 0
     callOnUpdate: 0
+    parameterType: 0
+    intParameter: 0
+    floatParameter: 0
+    boolParameter: 0
+    stringParameter: 
   parameterModifications:
   - parameterName: Attack
     parameterType: 4
@@ -2204,6 +2439,56 @@ MonoBehaviour:
     randomMinValue: 0
     randomMaxValue: 1
     randomMaxInclusive: 1
+    modifyOnEnter: 1
+    modifyOnExit: 0
+    modifyOnUpdate: 0
+  - parameterName: RotationSpeedMultiplier
+    parameterType: 2
+    boolValue: 0
+    intValue: 0
+    floatValue: 1
+    useRandom: 0
+    randomMinValue: 0
+    randomMaxValue: 1
+    randomMaxInclusive: 1
+    modifyOnEnter: 1
+    modifyOnExit: 0
+    modifyOnUpdate: 0
+  - parameterName: RotationSpeedMultiplier
+    parameterType: 2
+    boolValue: 0
+    intValue: 0
+    floatValue: 0.2
+    useRandom: 0
+    randomMinValue: 0
+    randomMaxValue: 1
+    randomMaxInclusive: 1
+    modifyOnEnter: 0
+    modifyOnExit: 1
+    modifyOnUpdate: 0
+--- !u!114 &5303406207824900375
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33440e54b6d69df42b148162d1315857, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  functionCalls: []
+  parameterModifications:
+  - parameterName: RotationSpeedMultiplier
+    parameterType: 2
+    boolValue: 0
+    intValue: 0
+    floatValue: 0
+    useRandom: 0
+    randomMinValue: 0
+    randomMaxValue: 0
+    randomMaxInclusive: 0
     modifyOnEnter: 1
     modifyOnExit: 0
     modifyOnUpdate: 0
@@ -2305,6 +2590,11 @@ MonoBehaviour:
     callOnEnter: 1
     callOnExit: 0
     callOnUpdate: 0
+    parameterType: 0
+    intParameter: 0
+    floatParameter: 0
+    boolParameter: 0
+    stringParameter: 
   parameterModifications: []
 --- !u!1107 &6206271126497889406
 AnimatorStateMachine:
@@ -2686,7 +2976,8 @@ AnimatorState:
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: -4225214202278377409}
-  m_StateMachineBehaviours: []
+  m_StateMachineBehaviours:
+  - {fileID: -2549491490874888077}
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1

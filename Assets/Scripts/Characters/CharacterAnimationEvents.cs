@@ -206,7 +206,7 @@ public class CharacterAnimationEvents : MonoBehaviour
             Debug.LogWarning($"[CharacterAnimationEvents] {gameObject.name} - DisableRootMotion() called but no Animator found!");
         }
     }
-    
+        
     /// <summary>
     /// Called from walk/run animations for LEFT foot
     /// Uses humanoid IK to get accurate foot position

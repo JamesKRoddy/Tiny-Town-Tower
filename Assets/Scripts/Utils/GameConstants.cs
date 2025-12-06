@@ -63,6 +63,7 @@ public static class GameConstants
         // Floats
         public const string Speed = "Speed";
         public const string AttackSpeed = "AttackSpeed";
+        public const string RotationSpeedMultiplier = "RotationSpeedMultiplier";
         public const string HitDirectionX = "HitDirectionX";
         public const string HitDirectionY = "HitDirectionY";
 
@@ -74,6 +75,7 @@ public static class GameConstants
         // Hash IDs for performance (prevents string lookups every frame)
         public static readonly int SpeedHash = Animator.StringToHash(Speed);
         public static readonly int AttackSpeedHash = Animator.StringToHash(AttackSpeed);
+        public static readonly int RotationSpeedMultiplierHash = Animator.StringToHash(RotationSpeedMultiplier);
         public static readonly int HitDirectionXHash = Animator.StringToHash(HitDirectionX);
         public static readonly int HitDirectionYHash = Animator.StringToHash(HitDirectionY);
         public static readonly int WeaponTypeHash = Animator.StringToHash(WeaponType);

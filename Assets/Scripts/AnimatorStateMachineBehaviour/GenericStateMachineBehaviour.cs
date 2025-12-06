@@ -12,6 +12,16 @@ public class GenericStateMachineBehaviour : StateMachineBehaviour
         public bool callOnEnter = true;
         public bool callOnExit = false;
         public bool callOnUpdate = false;
+        
+        // Method parameter support
+        public enum ParameterType { None, Int, Float, Bool, String }
+        public ParameterType parameterType = ParameterType.None;
+        
+        // Parameter values
+        public int intParameter;
+        public float floatParameter;
+        public bool boolParameter;
+        public string stringParameter;
     }
 
     [Serializable]
@@ -78,13 +88,48 @@ public class GenericStateMachineBehaviour : StateMachineBehaviour
                 continue;
             }
 
-            // Get the method
-            cachedMethods[i] = componentType.GetMethod(call.functionName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            if (cachedMethods[i] == null)
+            // Get the method - try to find method with or without parameters
+            MethodInfo method = null;
+            
+            // First, try to find method based on parameter type
+            if (call.parameterType != FunctionCall.ParameterType.None)
             {
-                Debug.LogWarning($"Method {call.functionName} not found on component {call.componentTypeName}");
+                Type[] parameterTypes = null;
+                switch (call.parameterType)
+                {
+                    case FunctionCall.ParameterType.Int:
+                        parameterTypes = new Type[] { typeof(int) };
+                        break;
+                    case FunctionCall.ParameterType.Float:
+                        parameterTypes = new Type[] { typeof(float) };
+                        break;
+                    case FunctionCall.ParameterType.Bool:
+                        parameterTypes = new Type[] { typeof(bool) };
+                        break;
+                    case FunctionCall.ParameterType.String:
+                        parameterTypes = new Type[] { typeof(string) };
+                        break;
+                }
+                
+                if (parameterTypes != null)
+                {
+                    method = componentType.GetMethod(call.functionName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, parameterTypes, null);
+                }
+            }
+            
+            // If not found with parameters, try without parameters (for backwards compatibility)
+            if (method == null)
+            {
+                method = componentType.GetMethod(call.functionName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            }
+            
+            if (method == null)
+            {
+                Debug.LogWarning($"Method {call.functionName} not found on component {call.componentTypeName} with the specified parameter type");
                 continue;
             }
+            
+            cachedMethods[i] = method;
         }
     }
 
@@ -104,7 +149,28 @@ public class GenericStateMachineBehaviour : StateMachineBehaviour
             {
                 try
                 {
-                    cachedMethods[i].Invoke(cachedComponents[i], null);
+                    // Prepare parameters based on parameter type
+                    object[] parameters = null;
+                    if (call.parameterType != FunctionCall.ParameterType.None)
+                    {
+                        switch (call.parameterType)
+                        {
+                            case FunctionCall.ParameterType.Int:
+                                parameters = new object[] { call.intParameter };
+                                break;
+                            case FunctionCall.ParameterType.Float:
+                                parameters = new object[] { call.floatParameter };
+                                break;
+                            case FunctionCall.ParameterType.Bool:
+                                parameters = new object[] { call.boolParameter };
+                                break;
+                            case FunctionCall.ParameterType.String:
+                                parameters = new object[] { call.stringParameter };
+                                break;
+                        }
+                    }
+                    
+                    cachedMethods[i].Invoke(cachedComponents[i], parameters);
                 }
                 catch (Exception e)
                 {

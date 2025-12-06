@@ -21,7 +21,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public float dashSpeed => currentStats.dashSpeed; // Speed during a dash
     public float dashCooldown => currentStats.dashCooldown; // Cooldown time between dashes
     
-    [SerializeField] private float attackRotationSpeed = 360f; // Speed at which the player rotates while attacking
     [SerializeField] private float dashDuration = 0.2f; // How long a dash lasts
     public float vaultDuration = 0.4f; // How long a vault lasts
     public float vaultCooldown = 0.3f; // Short cooldown between vaults to prevent rapid firing
@@ -648,6 +647,42 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             // Update the speed of all attack animations in the Attacking Layer
             animator.SetFloat(GameConstants.AnimatorParams.AttackSpeedHash, characterInventory.GetCurrentAttackSpeed());
         }
+    }
+
+    /// <summary>
+    /// Get the current rotation speed, applying animator-controlled multiplier
+    /// Rotation speed multiplier is controlled by CharacterAnimationEvents via GenericStateMachineBehaviour
+    /// This allows rotation speed to be controlled per animation state, similar to how root motion is controlled
+    /// </summary>
+    /// <returns>Current rotation speed with animator multiplier applied</returns>
+    private float GetCurrentRotationSpeed()
+    {
+        float baseRotSpeed = rotationSpeed;
+        
+        // Get rotation speed multiplier from animator (controlled by CharacterAnimationEvents)
+        // Defaults to 1.0 if parameter doesn't exist (for backwards compatibility)
+        float rotationMultiplier = 1.0f;
+        if (animator != null && animator.isActiveAndEnabled)
+        {
+            // Check if the parameter exists before reading it
+            bool hasParameter = false;
+            foreach (var param in animator.parameters)
+            {
+                if (param.nameHash == GameConstants.AnimatorParams.RotationSpeedMultiplierHash && param.type == AnimatorControllerParameterType.Float)
+                {
+                    hasParameter = true;
+                    break;
+                }
+            }
+            
+            if (hasParameter)
+            {
+                rotationMultiplier = animator.GetFloat(GameConstants.AnimatorParams.RotationSpeedMultiplierHash);
+            }
+        }
+        
+        // Apply multiplier to base rotation speed
+        return baseRotSpeed * rotationMultiplier;
     }
 
     #endregion
@@ -1568,7 +1603,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             }
             
             float speed = baseSpeed * movementMultiplier;
-            float currentRotationSpeed = (isAttacking || isDamaged) ? attackRotationSpeed : rotationSpeed;
+            float currentRotationSpeed = GetCurrentRotationSpeed();
             
             // PRIMARY CHECK: If root motion is enabled, block ALL input movement
             // Root motion animations control movement, but we still allow rotation for aiming
