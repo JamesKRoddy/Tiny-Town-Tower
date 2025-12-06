@@ -616,7 +616,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     }
     public void EquipMeleeWeapon(int equipped)
     {
-        animator.SetInteger(GameConstants.AnimatorParams.EquippedHash, equipped);
+        animator.SetInteger(GameConstants.AnimatorParams.WeaponTypeHash, equipped);
         UpdateAnimationSpeed();
     }
 
