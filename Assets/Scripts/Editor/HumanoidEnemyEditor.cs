@@ -96,12 +96,20 @@ public class HumanoidEnemyEditor : EnemyBaseEditor
                 }
                 GUI.backgroundColor = originalBg;
                 
-                // Show current appearance info
-                var currentAppearance = enemy.GetCurrentAppearanceData();
-                if (currentAppearance != null)
+                // Show current appearance info (only if character is active in hierarchy)
+                if (enemy.gameObject.activeInHierarchy)
+                {
+                    var currentAppearance = enemy.GetCurrentAppearanceData();
+                    if (currentAppearance != null)
+                    {
+                        EditorGUILayout.Space(3);
+                        EditorGUILayout.HelpBox("Appearance is active and managed at runtime", MessageType.Info);
+                    }
+                }
+                else
                 {
                     EditorGUILayout.Space(3);
-                    EditorGUILayout.HelpBox("Appearance is active and managed at runtime", MessageType.Info);
+                    EditorGUILayout.HelpBox("Character is disabled in hierarchy", MessageType.Warning);
                 }
             }
             else
