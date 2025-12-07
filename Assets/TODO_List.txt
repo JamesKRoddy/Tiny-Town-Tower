@@ -4,7 +4,6 @@ Get enemies to use the rotation speed multiplier in the animation parameters
 See if 2 handed weapons work with mutants
 TODO:
 
-
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones. Mutants! Characters in the PolygonApocalypseWasteland, light mutant, heavy mutant
 
 Setup a massive boss like the hydra in hades

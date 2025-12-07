@@ -35,9 +35,11 @@ namespace Enemies
     /// - Non-root motion: NavMesh agent drives both movement and turning
     /// 
     /// ROOT MOTION CONFIGURATION:
-    /// - Set useRootMotion = true for pure animation-driven movement
-    /// - Agent calculates paths and handles rotation, animation controls speed/movement
-    /// - Character follows animation exactly, staying on NavMesh
+    /// - Set useRootMotion = true in inspector for initial root motion setting
+    /// - Root motion is controlled at runtime by animation events (EnableRootMotion/DisableRootMotion)
+    /// - CharacterAnimationEvents.EnableRootMotion() / DisableRootMotion() control animator.applyRootMotion
+    /// - Agent calculates paths and handles rotation, animation controls speed/movement when root motion is active
+    /// - Character follows animation exactly, staying on NavMesh when root motion is enabled
     /// - Excellent animation quality with natural movement patterns
     /// 
     /// ANIMATION PARAMETERS:
@@ -70,7 +72,8 @@ namespace Enemies
         [SerializeField] protected CharacterType characterType = CharacterType.ZOMBIE_MELEE;
 
         [Header("Movement Settings")]
-        [SerializeField] public bool useRootMotion = false; // Made public for attack components
+        [Tooltip("Initial root motion setting. Can be changed at runtime by animation events (EnableRootMotion/DisableRootMotion).")]
+        [SerializeField] public bool useRootMotion = false; // Initial/default value, runtime controlled by animator.applyRootMotion
         [SerializeField] protected float stoppingDistance = 1.0f;
         [SerializeField] public float rotationSpeed = 10f; // Only used for non-root motion, made public for attack components
         [SerializeField] protected float movementSpeed = 3.5f;
@@ -250,9 +253,28 @@ namespace Enemies
         }
         
         /// <summary>
-        /// IAttackOwner: Whether using root motion
+        /// IAttackOwner: Whether using root motion (checks animator.applyRootMotion at runtime)
         /// </summary>
-        bool IAttackOwner.UseRootMotion => useRootMotion;
+        bool IAttackOwner.UseRootMotion => IsUsingRootMotion;
+        
+        /// <summary>
+        /// Gets whether root motion is currently active.
+        /// This checks animator.applyRootMotion at runtime, which is controlled by animation events
+        /// (EnableRootMotion/DisableRootMotion in CharacterAnimationEvents).
+        /// </summary>
+        protected bool IsUsingRootMotion
+        {
+            get
+            {
+                // Check animator.applyRootMotion as the source of truth (set by animation events)
+                if (animator != null)
+                {
+                    return animator.applyRootMotion;
+                }
+                // Fallback to useRootMotion if animator not available
+                return useRootMotion;
+            }
+        }
         
         #endregion
 
@@ -302,6 +324,20 @@ namespace Enemies
             if (Mathf.Approximately(maxPoise, 50f)) // Check if using default value
             {
                 ApplyCharacterTypePoiseConfig();
+            }
+            
+            // Initialize root motion from useRootMotion setting
+            // This sets the initial state, but animation events can change it at runtime
+            if (animator != null)
+            {
+                animator.applyRootMotion = useRootMotion;
+            }
+            
+            // Ensure CharacterAnimationEvents is set up (it auto-initializes in Awake, but verify)
+            var animationEvents = GetComponent<CharacterAnimationEvents>();
+            if (animationEvents == null)
+            {
+                Debug.LogWarning($"[{gameObject.name}] No CharacterAnimationEvents component found. Root motion control via animation events will not work.");
             }
             
             // Register with EnemyManager for group coordination
@@ -413,7 +449,7 @@ namespace Enemies
                 // Validate position is on NavMesh
                 if (NavMesh.SamplePosition(newPosition, out NavMeshHit hit, 2f, NavMesh.AllAreas))
                 {
-                    if (useRootMotion)
+                    if (IsUsingRootMotion)
                     {
                         transform.position = hit.position;
                     }
@@ -428,7 +464,7 @@ namespace Enemies
         // This method is called by the Animator when root motion is being applied
         protected virtual void OnAnimatorMove()
         {
-            if (!useRootMotion || Health <= 0 || !agent.isOnNavMesh) 
+            if (!IsUsingRootMotion || Health <= 0 || !agent.isOnNavMesh) 
             {
                 return;
             }
@@ -488,7 +524,8 @@ namespace Enemies
             agent.angularSpeed = angularSpeed;
             agent.updateUpAxis = false;
             
-            // Configure for root motion if enabled
+            // Configure for root motion if enabled (check initial setting)
+            // Note: This is initial setup. At runtime, IsUsingRootMotion checks animator.applyRootMotion
             if (useRootMotion)
             {
                 agent.updatePosition = false;  // Root motion drives position
@@ -545,6 +582,10 @@ namespace Enemies
                 Debug.LogWarning($"Enemy {gameObject.name} could not be placed on NavMesh at spawn position {transform.position}");
                 // If we can't place on NavMesh, disable root motion
                 useRootMotion = false;
+                if (animator != null)
+                {
+                    animator.applyRootMotion = false; // Disable root motion at runtime
+                }
                 SetupNavMeshAgent(); // Reconfigure agent without root motion
             }
         }
@@ -680,7 +721,7 @@ namespace Enemies
                         bool atStrategicPosition = distanceToStrategicPos < 1.5f;
                         
                         // For root motion, handle stopping
-                        if (useRootMotion)
+                        if (IsUsingRootMotion)
                         {
                             // Only stop when actually attacking
                             bool shouldStop = (isAttacking || isRotatingToAttack);
@@ -707,7 +748,7 @@ namespace Enemies
                         agent.SetDestination(targetDestination);
                         
                         // For root motion zombies, check if we should stop the agent
-                        if (useRootMotion)
+                        if (IsUsingRootMotion)
                         {
                             // Stop agent when at optimal distance or during attack phases
                             bool shouldStop = (distanceToTarget <= optimalStoppingDistance) || isAttacking || isRotatingToAttack;
@@ -852,7 +893,7 @@ namespace Enemies
                         bool atStrategicPosition = distanceToStrategicPos < 1.5f;
                         
                         // For root motion zombies, handle stopping
-                        if (useRootMotion)
+                        if (IsUsingRootMotion)
                         {
                             // Only stop when actually attacking or rotating to attack
                             // Allow movement to strategic position even when at attack range
@@ -892,7 +933,7 @@ namespace Enemies
                         agent.SetDestination(targetDestination);
                         
                         // For root motion zombies, check if we should stop the agent
-                        if (useRootMotion)
+                        if (IsUsingRootMotion)
                         {
                             // Stop agent when at optimal distance or during attack phases
                             bool shouldStop = (distanceToTarget <= optimalStoppingDistance) || isAttacking || isRotatingToAttack;
@@ -935,7 +976,7 @@ namespace Enemies
             
             // For root motion, let Unity handle rotation automatically
             // For non-root motion, manually handle rotation
-            if (!useRootMotion)
+            if (!IsUsingRootMotion)
             {
                 UpdateRotation();
             }
@@ -1301,6 +1342,12 @@ namespace Enemies
             return animator != null && animator.runtimeAnimatorController != null;
         }
 
+        /// <summary>
+        /// Update animator parameters based on movement state
+        /// FIX: Now handles the case where agent is stopped for rotation but should maintain animation speed
+        /// Previous issue: When enemies rotated to attack, agent.velocity was set to zero,
+        /// causing animator speed to drop to 0 and freeze. If rotation failed, enemy stayed frozen.
+        /// </summary>
         private void UpdateAnimationParameters()
         {
             if (!HasValidAnimator()) return;
@@ -1308,6 +1355,14 @@ namespace Enemies
             // Calculate normalized speed based on agent velocity
             float velocity = agent.velocity.magnitude;
             float normalizedSpeed = Mathf.Clamp01(velocity / movementSpeed);
+            
+            // Special case: If rotating to attack, maintain a minimum speed for animation
+            // This prevents the animator from freezing when the agent is stopped for rotation
+            // The enemy appears to be "shuffling" or "adjusting stance" while rotating, which looks natural
+            if (isRotatingToAttack && normalizedSpeed < 0.3f)
+            {
+                normalizedSpeed = 0.3f; // Maintain a walking speed during rotation
+            }
             
             // Set Speed parameter (0-1 range) based on normalized velocity
             animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, normalizedSpeed);
@@ -1457,7 +1512,7 @@ namespace Enemies
                 // For root motion, only check if we haven't moved physically
                 // For non-root motion, also check agent velocity
                 bool isStuck = distanceMoved < stuckThreshold;
-                if (!useRootMotion)
+                if (!IsUsingRootMotion)
                 {
                     isStuck = isStuck && agent.velocity.magnitude < MOVEMENT_VELOCITY_THRESHOLD;
                 }
@@ -1884,7 +1939,7 @@ namespace Enemies
             isRotatingToAttack = false;
             
             // Resume rotation after attack
-            if (useRootMotion && agent != null)
+            if (IsUsingRootMotion && agent != null)
             {
                 agent.updateRotation = true;
             }
@@ -1902,7 +1957,7 @@ namespace Enemies
             isRotatingToAttack = false; // Stop rotation phase
 
             // Stop rotation completely during attacks for both root motion and non-root motion
-            if (useRootMotion)
+            if (IsUsingRootMotion)
             {
                 agent.updateRotation = false;
             }

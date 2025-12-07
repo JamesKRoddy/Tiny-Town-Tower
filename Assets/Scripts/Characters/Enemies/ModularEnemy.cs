@@ -31,6 +31,7 @@ namespace Enemies
         private float lastAttackSwitchTime;
         private bool isExecutingAttack = false;
         private float attackExecutionStartTime;
+        private float rotationStartTime; // Track when rotation phase started
         protected float originalSpeed;
 
         /// <summary>
@@ -117,7 +118,8 @@ namespace Enemies
         protected override void Awake()
         {
             // Note: useRootMotion should be set by derived classes (Zombie, Robot, Drone, etc.)
-            // before calling base.Awake() to ensure proper NavMeshAgent configuration
+            // before calling base.Awake() to ensure proper NavMeshAgent configuration.
+            // At runtime, root motion is controlled by animation events (EnableRootMotion/DisableRootMotion).
             base.Awake();
             originalSpeed = agent.speed; // Store original speed
             
@@ -172,6 +174,60 @@ namespace Enemies
         /// </summary>
         private void HandleModularAttackLogic()
         {
+            // Auto-reset rotation if it's been stuck too long or conditions changed
+            // FIX: This prevents enemies from getting stuck in infinite rotation loops
+            // which would cause animator.speed to stay at 0 forever
+            if (isRotatingToAttack)
+            {
+                bool shouldAbandonRotation = false;
+                string abandonReason = "";
+                
+                float timeSinceRotationStart = Time.time - rotationStartTime;
+                
+                // Check timeout (2 seconds)
+                if (timeSinceRotationStart > 2.0f)
+                {
+                    shouldAbandonRotation = true;
+                    abandonReason = $"timeout after {timeSinceRotationStart:F2}s";
+                }
+                // Check if target moved too far or angle is extreme (check every frame during rotation)
+                else if (navMeshTarget != null && currentAttack != null)
+                {
+                    float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
+                    Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
+                    directionToTarget.y = 0;
+                    float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
+                    
+                    float attackMaxRange = currentAttack.maxRange;
+                    float maxRotationDistance = attackMaxRange + 5f;
+                    const float MAX_ROTATION_ANGLE = 90f;
+                    
+                    if (distanceToTarget > maxRotationDistance)
+                    {
+                        shouldAbandonRotation = true;
+                        abandonReason = $"target too far ({distanceToTarget:F1} > {maxRotationDistance:F1})";
+                    }
+                    else if (angleToTarget > MAX_ROTATION_ANGLE)
+                    {
+                        shouldAbandonRotation = true;
+                        abandonReason = $"angle too extreme ({angleToTarget:F1}° > {MAX_ROTATION_ANGLE}°)";
+                    }
+                }
+                
+                // Abandon rotation if any condition met
+                if (shouldAbandonRotation)
+                {
+                    Debug.LogWarning($"[{gameObject.name}] Abandoning rotation: {abandonReason} - resuming movement");
+                    isRotatingToAttack = false;
+                    
+                    // Resume movement
+                    if (agent != null && agent.isOnNavMesh)
+                    {
+                        agent.isStopped = false;
+                    }
+                }
+            }
+            
             // Auto-reset isExecutingAttack if it's been too long (fallback for missing animation events)
             if (isExecutingAttack)
             {
@@ -386,6 +442,41 @@ namespace Enemies
             
             if (needsRotation)
             {
+                // Set rotation state flag for animation system (if not already set)
+                // FIX: This flag tells UpdateAnimationParameters() to maintain minimum speed
+                // even when agent.velocity is zero, preventing animator freeze during rotation
+                if (!isRotatingToAttack)
+                {
+                    isRotatingToAttack = true;
+                    rotationStartTime = Time.time; // Start rotation timer for timeout safety
+                }
+                
+                // SMART ROTATION ABANDONMENT:
+                // Check if target has moved too far or angle is too extreme - if so, give up rotation and resume movement
+                float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
+                Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
+                directionToTarget.y = 0; // Flatten to horizontal plane
+                float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
+                
+                // Get attack's max range for distance check
+                float attackMaxRange = attack.maxRange;
+                float maxRotationDistance = attackMaxRange + 5f; // Allow 5 units beyond max range
+                const float MAX_ROTATION_ANGLE = 90f; // If target is more than 90 degrees off, just move instead
+                
+                // If target is too far or angle is too extreme, abandon rotation and resume movement
+                if (distanceToTarget > maxRotationDistance || angleToTarget > MAX_ROTATION_ANGLE)
+                {
+                    Debug.Log($"[{gameObject.name}] Abandoning rotation - Distance: {distanceToTarget:F1} > {maxRotationDistance:F1} OR Angle: {angleToTarget:F1}° > {MAX_ROTATION_ANGLE}° - resuming movement");
+                    isRotatingToAttack = false;
+                    
+                    // Resume movement towards target
+                    if (agent != null && agent.isOnNavMesh)
+                    {
+                        agent.isStopped = false;
+                    }
+                    return; // Exit and let normal movement pathfinding take over
+                }
+                
                 // Hard-stop movement while rotating so we don't keep circling
                 if (agent != null && agent.isOnNavMesh)
                 {
@@ -411,6 +502,9 @@ namespace Enemies
                 if (!attack.ShouldRotateToAttack())
                 {
                     Debug.Log($"[{gameObject.name}] Rotation complete, requesting attack permission");
+                    
+                    // Clear rotation flag
+                    isRotatingToAttack = false;
                     
                     // Rotation complete, now try to execute the attack
                     // Request permission from EnemyManager before attacking
@@ -547,7 +641,7 @@ namespace Enemies
             isExecutingAttack = false;
             
             // Resume rotation after attack
-            if (useRootMotion && agent != null)
+            if (IsUsingRootMotion && agent != null)
             {
                 agent.updateRotation = true;
             }
@@ -564,7 +658,7 @@ namespace Enemies
                 agent.isStopped = false;
                 
                 // For non-root motion, reset to original speed
-                if (!useRootMotion)
+                if (!IsUsingRootMotion)
                 {
                     agent.speed = originalSpeed;
                 }

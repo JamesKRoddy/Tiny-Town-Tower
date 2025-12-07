@@ -1888,7 +1888,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   functionCalls:
-  - componentTypeName: HumanCharacterController
+  - componentTypeName: IAttackOwner
     functionName: AttackEnd
     callOnEnter: 1
     callOnExit: 0
@@ -1919,7 +1919,7 @@ MonoBehaviour:
     boolParameter: 0
     stringParameter: 
   parameterModifications:
-  - parameterName: LightAttack
+  - parameterName: Attack
     parameterType: 4
     boolValue: 0
     intValue: 0

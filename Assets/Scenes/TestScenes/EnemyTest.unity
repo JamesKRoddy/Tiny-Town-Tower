@@ -723,7 +723,7 @@ PrefabInstance:
     - target: {fileID: 8320294776751182447, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
       propertyPath: equippedWeaponScriptObj
       value: 
-      objectReference: {fileID: 11400000, guid: e6fde83523c7216478e945d81aedf237, type: 2}
+      objectReference: {fileID: 11400000, guid: 803ccc51f5b041e4a98af60cea5903d7, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
