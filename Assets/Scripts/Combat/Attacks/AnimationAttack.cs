@@ -40,6 +40,13 @@ namespace Combat.Attacks
             {
                 attackAngleThreshold = 45f; // Close range attacks are more forgiving with angle
             }
+            
+            // Set default cooldown range for melee attacks (faster than special attacks)
+            if (Mathf.Approximately(minCooldown, 2f) && Mathf.Approximately(maxCooldown, 4f)) // Only set if using defaults
+            {
+                minCooldown = 1.5f;  // Minimum cooldown for quick melee
+                maxCooldown = 3f;    // Maximum cooldown for variety
+            }
         }
 
         /// <summary>

@@ -272,7 +272,7 @@ AnimatorStateMachine:
     m_Position: {x: 560, y: 120, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -5603959840870623445}
-    m_Position: {x: 910, y: 290, z: 0}
+    m_Position: {x: 940, y: 290, z: 0}
   m_ChildStateMachines:
   - serializedVersion: 1
     m_StateMachine: {fileID: -6729453884628999776}
@@ -738,6 +738,12 @@ AnimatorController:
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
+  - m_Name: RotationSpeedMultiplier
+    m_Type: 1
+    m_DefaultFloat: 0
+    m_DefaultInt: 0
+    m_DefaultBool: 0
+    m_Controller: {fileID: 9100000}
   - m_Name: Attack
     m_Type: 9
     m_DefaultFloat: 0
@@ -1159,7 +1165,56 @@ MonoBehaviour:
     callOnEnter: 1
     callOnExit: 0
     callOnUpdate: 0
-  parameterModifications: []
+    parameterType: 0
+    intParameter: 0
+    floatParameter: 0
+    boolParameter: 0
+    stringParameter: 
+  - componentTypeName: CharacterAnimationEvents
+    functionName: DisableRootMotion
+    callOnEnter: 1
+    callOnExit: 0
+    callOnUpdate: 0
+    parameterType: 0
+    intParameter: 0
+    floatParameter: 0
+    boolParameter: 0
+    stringParameter: 
+  - componentTypeName: CharacterAnimationEvents
+    functionName: EnableRootMotion
+    callOnEnter: 0
+    callOnExit: 1
+    callOnUpdate: 0
+    parameterType: 0
+    intParameter: 0
+    floatParameter: 0
+    boolParameter: 0
+    stringParameter: 
+  parameterModifications:
+  - parameterName: RotationSpeedMultiplier
+    parameterType: 2
+    boolValue: 0
+    intValue: 0
+    floatValue: 0.5
+    useRandom: 0
+    randomMinValue: 0
+    randomMaxValue: 0
+    randomMaxInclusive: 0
+    modifyOnEnter: 0
+    modifyOnExit: 1
+    modifyOnUpdate: 0
+  - parameterName: RotationSpeedMultiplier
+    parameterType: 2
+    boolValue: 0
+    intValue: 0
+    floatValue: 1
+    useRandom: 0
+    randomMinValue: 0
+    randomMaxValue: 0
+    randomMaxInclusive: 0
+    modifyOnEnter: 1
+    modifyOnExit: 0
+    modifyOnUpdate: 0
 --- !u!1102 &5216184195131600885
 AnimatorState:
   serializedVersion: 6

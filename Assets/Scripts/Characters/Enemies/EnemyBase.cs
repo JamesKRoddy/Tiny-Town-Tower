@@ -127,6 +127,9 @@ namespace Enemies
         protected float damage;
         protected float lastAttackTime = -999f;
         
+        // Smoothed speed for animator to prevent oscillation
+        private float smoothedSpeed = 0f;
+        
         // Back-away state management
         private bool isBackingAway = false;
         private float backAwayStartTime = 0f;
@@ -259,14 +262,15 @@ namespace Enemies
         
         /// <summary>
         /// Gets whether root motion is currently active.
-        /// This checks animator.applyRootMotion at runtime, which is controlled by animation events
-        /// (EnableRootMotion/DisableRootMotion in CharacterAnimationEvents).
+        /// READ-ONLY: This property only reads the current root motion state from the animator.
+        /// Root motion is controlled entirely by CharacterAnimationEvents via animation events
+        /// (EnableRootMotion/DisableRootMotion). This property should never be used to SET root motion.
         /// </summary>
         protected bool IsUsingRootMotion
         {
             get
             {
-                // Check animator.applyRootMotion as the source of truth (set by animation events)
+                // Check animator.applyRootMotion as the source of truth (set by CharacterAnimationEvents)
                 if (animator != null)
                 {
                     return animator.applyRootMotion;
@@ -326,18 +330,28 @@ namespace Enemies
                 ApplyCharacterTypePoiseConfig();
             }
             
-            // Initialize root motion from useRootMotion setting
-            // This sets the initial state, but animation events can change it at runtime
-            if (animator != null)
-            {
-                animator.applyRootMotion = useRootMotion;
-            }
+            // Root motion is now controlled entirely by CharacterAnimationEvents via animation events
+            // The useRootMotion field is only used as an initial hint for NavMeshAgent setup
+            // Animation events (EnableRootMotion/DisableRootMotion) control runtime behavior
             
             // Ensure CharacterAnimationEvents is set up (it auto-initializes in Awake, but verify)
             var animationEvents = GetComponent<CharacterAnimationEvents>();
             if (animationEvents == null)
             {
-                Debug.LogWarning($"[{gameObject.name}] No CharacterAnimationEvents component found. Root motion control via animation events will not work.");
+                Debug.LogWarning($"[{gameObject.name}] No CharacterAnimationEvents component found. Root motion and rotation speed control via animation events will not work.");
+            }
+            else
+            {
+                // Initialize root motion state via CharacterAnimationEvents
+                // This ensures consistent initialization through the centralized system
+                if (useRootMotion)
+                {
+                    animationEvents.EnableRootMotion();
+                }
+                else
+                {
+                    animationEvents.DisableRootMotion();
+                }
             }
             
             // Register with EnemyManager for group coordination
@@ -462,8 +476,12 @@ namespace Enemies
         }
 
         // This method is called by the Animator when root motion is being applied
+        // Root motion is controlled entirely by CharacterAnimationEvents via animation events
+        // This method only applies root motion when it's enabled by the animation system
         protected virtual void OnAnimatorMove()
         {
+            // Only apply root motion if it's enabled by animation events
+            // Don't check isAttacking - let animation events control root motion state
             if (!IsUsingRootMotion || Health <= 0 || !agent.isOnNavMesh) 
             {
                 return;
@@ -580,11 +598,12 @@ namespace Enemies
             else
             {
                 Debug.LogWarning($"Enemy {gameObject.name} could not be placed on NavMesh at spawn position {transform.position}");
-                // If we can't place on NavMesh, disable root motion
+                // If we can't place on NavMesh, disable root motion via CharacterAnimationEvents
                 useRootMotion = false;
-                if (animator != null)
+                var animationEvents = GetComponent<CharacterAnimationEvents>();
+                if (animationEvents != null)
                 {
-                    animator.applyRootMotion = false; // Disable root motion at runtime
+                    animationEvents.DisableRootMotion();
                 }
                 SetupNavMeshAgent(); // Reconfigure agent without root motion
             }
@@ -617,365 +636,78 @@ namespace Enemies
             return 0f;
         }
 
+        /// <summary>
+        /// SIMPLIFIED: Core movement logic - always move towards target unless attacking.
+        /// Let NavMeshAgent handle pathfinding, rotation, and obstacle avoidance.
+        /// </summary>
         protected virtual void UpdateMovement()
         {
-            // Handle cooldown movement for ranged enemies (this takes priority over regular movement)
+            // Handle cooldown movement for ranged enemies (takes priority)
             UpdateCooldownMovement();
-            
-            // If we're moving during cooldown, don't let regular movement override it
             if (isMovingDuringCooldown)
             {
-                return; // Skip ALL regular movement logic
+                UpdateAnimationParameters();
+                return;
             }
             
-            // If no target, try to find one first
+            // If no target, find one
             if (navMeshTarget == null)
             {
                 FindNewTarget();
-                if (navMeshTarget == null)
-                {
-                    // Still no target, can't move
-                    return;
-                }
+                if (navMeshTarget == null) return;
             }
             
-            float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
-            float optimalStoppingDistance = CalculateOptimalStoppingDistance();
-            float minAttackDistance = GetMinimumAttackDistance();
-            
-            // Only use back-away logic for enemies with a minimum attack distance (ranged enemies)
-            if (minAttackDistance > 0)
+            // If attacking, stop movement
+            if (isAttacking)
             {
-                // Check if we should initiate or continue backing away
-                bool currentlyTooClose = distanceToTarget < minAttackDistance;
-                float timeSinceBackAwayStart = Time.time - backAwayStartTime;
-                
-                // Debug logging for back-away system
-                if (showCollisionDebug && Time.frameCount % 60 == 0) // Log once per second at 60fps
+                if (agent != null && agent.isOnNavMesh && !agent.isStopped)
                 {
-                    Debug.Log($"[{gameObject.name}] BackAway State | isBackingAway: {isBackingAway} | Distance: {distanceToTarget:F2} | " +
-                             $"MinAttackDist: {minAttackDistance:F2} | OptimalStop: {optimalStoppingDistance:F2} | " +
-                             $"TooClose: {currentlyTooClose} | TimeSinceStart: {timeSinceBackAwayStart:F2}");
+                    agent.isStopped = true;
+                    agent.velocity = Vector3.zero;
                 }
-                
-                // State machine for backing away
-                if (isBackingAway)
-                {
-                    // Continue backing away until duration expires AND we're beyond minimum attack distance
-                    if (timeSinceBackAwayStart < BACK_AWAY_DURATION || distanceToTarget < minAttackDistance)
-                    {
-                        // Keep backing away to optimal distance (which should be >= minAttackDistance)
-                        Vector3 directionAway = (transform.position - navMeshTarget.position).normalized;
-                        Vector3 backAwayPoint = navMeshTarget.position + directionAway * (optimalStoppingDistance + 1f);
-                        
-                        UnityEngine.AI.NavMeshHit hit;
-                        if (UnityEngine.AI.NavMesh.SamplePosition(backAwayPoint, out hit, 5f, UnityEngine.AI.NavMesh.AllAreas))
-                        {
-                            agent.SetDestination(hit.position);
-                            agent.isStopped = false;
-                        }
-                    }
-                    else
-                    {
-                        // Done backing away - now beyond minimum attack distance
-                        Debug.Log($"[{gameObject.name}] Finished backing away - Distance: {distanceToTarget:F2} >= MinDist: {minAttackDistance:F2}");
-                        isBackingAway = false;
-                    }
-                }
-                else if (currentlyTooClose && timeSinceBackAwayStart > BACK_AWAY_COOLDOWN)
-                {
-                    // Initiate new back-away
-                    Debug.Log($"[{gameObject.name}] Starting back-away - Distance: {distanceToTarget:F2} < MinDist: {minAttackDistance:F2}");
-                    isBackingAway = true;
-                    backAwayStartTime = Time.time;
-                    
-                    // Calculate back-away destination
-                    Vector3 directionAway = (transform.position - navMeshTarget.position).normalized;
-                    Vector3 backAwayPoint = navMeshTarget.position + directionAway * (optimalStoppingDistance + 1f);
-                    
-                    UnityEngine.AI.NavMeshHit hit;
-                    if (UnityEngine.AI.NavMesh.SamplePosition(backAwayPoint, out hit, 5f, UnityEngine.AI.NavMesh.AllAreas))
-                    {
-                        agent.SetDestination(hit.position);
-                        agent.isStopped = false;
-                    }
-                }
-                else
-                {
-                    // Normal movement - check for strategic position from EnemyManager (based on role)
-                    Vector3 strategicPosition = Vector3.zero;
-                    if (Managers.EnemyManager.Instance != null)
-                    {
-                        strategicPosition = Managers.EnemyManager.Instance.GetStrategicPosition(this);
-                    }
-                    
-                    // Prefer strategic position if available
-                    if (strategicPosition != Vector3.zero)
-                    {
-                        float distanceToStrategicPos = Vector3.Distance(transform.position, strategicPosition);
-                        
-                        // Use strategic position for movement
-                        agent.SetDestination(strategicPosition);
-                        
-                        // Check if we're at strategic position
-                        bool atStrategicPosition = distanceToStrategicPos < 1.5f;
-                        
-                        // For root motion, handle stopping
-                        if (IsUsingRootMotion)
-                        {
-                            // Only stop when actually attacking
-                            bool shouldStop = (isAttacking || isRotatingToAttack);
-                            
-                            if (shouldStop)
-                            {
-                                if (!agent.isStopped)
-                                {
-                                    agent.isStopped = true;
-                                    agent.velocity = Vector3.zero;
-                                }
-                            }
-                            else if (agent.isStopped && !atStrategicPosition)
-                            {
-                                agent.isStopped = false;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // No strategic position, move toward target
-                        // For buildings with NavMeshObstacle, use distributed positions to avoid clustering
-                        Vector3 targetDestination = GetDistributedDestination(navMeshTarget, optimalStoppingDistance);
-                        agent.SetDestination(targetDestination);
-                        
-                        // For root motion zombies, check if we should stop the agent
-                        if (IsUsingRootMotion)
-                        {
-                            // Stop agent when at optimal distance or during attack phases
-                            bool shouldStop = (distanceToTarget <= optimalStoppingDistance) || isAttacking || isRotatingToAttack;
-                            
-                            if (shouldStop)
-                            {
-                                if (!agent.isStopped)
-                                {
-                                    if (showCollisionDebug)
-                                    {
-                                        Debug.Log($"[{gameObject.name}] Stopping agent - Distance: {distanceToTarget:F2} <= Optimal: {optimalStoppingDistance:F2} | " +
-                                                 $"isAttacking: {isAttacking} | isRotating: {isRotatingToAttack}");
-                                    }
-                                    agent.isStopped = true;
-                                    agent.velocity = Vector3.zero;
-                                }
-                            }
-                            else
-                            {
-                                // Resume movement when out of optimal distance
-                                if (agent.isStopped)
-                                {
-                                    if (showCollisionDebug)
-                                    {
-                                        Debug.Log($"[{gameObject.name}] Resuming agent - Distance: {distanceToTarget:F2} > Optimal: {optimalStoppingDistance:F2}");
-                                    }
-                                    agent.isStopped = false;
-                                }
-                            }
-                        }
-                    }
-                }
+                UpdateAnimationParameters();
+                return;
+            }
+            
+            // Always allow movement and rotation
+            if (agent != null && agent.isOnNavMesh)
+            {
+                agent.isStopped = false;
+                agent.updateRotation = true;
+            }
+            
+            // Get destination (strategic position if available, otherwise target)
+            Vector3 destination;
+            Vector3 strategicPosition = Vector3.zero;
+            if (Managers.EnemyManager.Instance != null)
+            {
+                strategicPosition = Managers.EnemyManager.Instance.GetStrategicPosition(this);
+            }
+            
+            if (strategicPosition != Vector3.zero)
+            {
+                destination = strategicPosition;
             }
             else
             {
-                // Melee enemy (no minimum attack distance) - use coordinated movement with pack roles
-                
-                // ─────────────────────────────────────────────────────────────────────────────────
-                // COOLDOWN BEHAVIOR: Stop moving when in attack range but waiting for cooldown
-                // Prevents enemies from running around/circling player while waiting to attack
-                // ─────────────────────────────────────────────────────────────────────────────────
-                bool inRangeButOnCooldown = false;
-                bool inRangeButNoLOS = false;
-                
-                // Check all attacks to determine movement behavior
-                // Uses obstacle-aware range checking for consistency with AttackBase.CanAttack()
-                var attackComponents = GetComponents<AttackBase>();
-                foreach (var attack in attackComponents)
-                {
-                    if (attack != null && attack.enabled)
-                    {
-                        // Check if in range using obstacle-aware logic (handles buildings with NavMeshObstacle)
-                        bool inRange = DamageUtils.IsInRangeWithObstacles(transform.position, navMeshTarget, attack.minRange, attack.maxRange);
-                        
-                        if (inRange)
-                        {
-                            bool cooldownReady = DamageUtils.IsCooldownReady(attack.lastAttackTime, attack.cooldown);
-                            
-                            if (!cooldownReady)
-                            {
-                                inRangeButOnCooldown = true;
-                                if (showCollisionDebug)
-                                {
-                                    Debug.Log($"[{gameObject.name}] Attack {attack.GetType().Name} on cooldown");
-                                }
-                            }
-                            else if (attack.minRange > 0) // Ranged attack
-                            {
-                                // In range and cooldown ready, so check if LOS is blocking
-                                if (!HasLineOfSight(navMeshTarget.position))
-                                {
-                                    inRangeButNoLOS = true;
-                                    if (showCollisionDebug)
-                                    {
-                                        Debug.Log($"[{gameObject.name}] Attack {attack.GetType().Name} blocked by LOS - need to reposition");
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // If in range but on actual cooldown, stay still (don't circle or move around)
-                if (inRangeButOnCooldown && !isAttacking)
-                {
-                    if (!agent.isStopped)
-                    {
-                        if (showCollisionDebug)
-                        {
-                            Debug.Log($"[{gameObject.name}] Stopping - in attack range but on cooldown");
-                        }
-                        agent.isStopped = true;
-                        agent.velocity = Vector3.zero;
-                    }
-                }
-                // If in range but no LOS, try to reposition to get a clear shot
-                else if (inRangeButNoLOS && !isAttacking)
-                {
-                    // Try to find a position with clear LOS
-                    Vector3 repositionTarget = FindPositionWithLineOfSight();
-                    
-                    if (repositionTarget != Vector3.zero)
-                    {
-                        agent.SetDestination(repositionTarget);
-                        if (agent.isStopped)
-                        {
-                            if (showCollisionDebug)
-                            {
-                                Debug.Log($"[{gameObject.name}] Repositioning to find clear line of sight");
-                            }
-                            agent.isStopped = false;
-                        }
-                    }
-                    else
-                    {
-                        // Can't find a good position, just move towards target to get closer
-                        agent.SetDestination(navMeshTarget.position);
-                        if (agent.isStopped)
-                        {
-                            agent.isStopped = false;
-                        }
-                    }
-                }
-                else
-                {
-                    // Check for strategic position from EnemyManager (based on role: chaser/interceptor/wanderer)
-                    Vector3 strategicPosition = Vector3.zero;
-                    if (Managers.EnemyManager.Instance != null)
-                    {
-                        strategicPosition = Managers.EnemyManager.Instance.GetStrategicPosition(this);
-                    }
-                    
-                    // Prefer strategic position if available
-                    if (strategicPosition != Vector3.zero)
-                    {
-                        float distanceToStrategicPos = Vector3.Distance(transform.position, strategicPosition);
-                        
-                        // Use strategic position for movement
-                        agent.SetDestination(strategicPosition);
-                        
-                        // Check if we're at strategic position
-                        bool atStrategicPosition = distanceToStrategicPos < 1.5f;
-                        
-                        // For root motion zombies, handle stopping
-                        if (IsUsingRootMotion)
-                        {
-                            // Only stop when actually attacking or rotating to attack
-                            // Allow movement to strategic position even when at attack range
-                            bool shouldStop = (isAttacking || isRotatingToAttack);
-                            
-                            if (shouldStop)
-                            {
-                                if (!agent.isStopped)
-                                {
-                                    if (showCollisionDebug)
-                                    {
-                                        Debug.Log($"[{gameObject.name}] Stopping for attack - isAttacking: {isAttacking} | isRotating: {isRotatingToAttack}");
-                                    }
-                                    agent.isStopped = true;
-                                    agent.velocity = Vector3.zero;
-                                }
-                            }
-                            else
-                            {
-                                // Keep moving unless at exact strategic position
-                                if (agent.isStopped && !atStrategicPosition)
-                                {
-                                    if (showCollisionDebug)
-                                    {
-                                        Debug.Log($"[{gameObject.name}] Resuming movement to strategic position");
-                                    }
-                                    agent.isStopped = false;
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // No strategic position assigned, move toward target
-                        // For buildings with NavMeshObstacle, use distributed positions to avoid clustering
-                        Vector3 targetDestination = GetDistributedDestination(navMeshTarget, optimalStoppingDistance);
-                        agent.SetDestination(targetDestination);
-                        
-                        // For root motion zombies, check if we should stop the agent
-                        if (IsUsingRootMotion)
-                        {
-                            // Stop agent when at optimal distance or during attack phases
-                            bool shouldStop = (distanceToTarget <= optimalStoppingDistance) || isAttacking || isRotatingToAttack;
-                            
-                            if (shouldStop)
-                            {
-                                if (!agent.isStopped)
-                                {
-                                    if (showCollisionDebug)
-                                    {
-                                        Debug.Log($"[{gameObject.name}] Stopping agent - Distance: {distanceToTarget:F2} <= Optimal: {optimalStoppingDistance:F2} | " +
-                                                 $"isAttacking: {isAttacking} | isRotating: {isRotatingToAttack}");
-                                    }
-                                    agent.isStopped = true;
-                                    agent.velocity = Vector3.zero;
-                                }
-                            }
-                            else
-                            {
-                                // Resume movement when out of optimal distance
-                                if (agent.isStopped)
-                                {
-                                    if (showCollisionDebug)
-                                    {
-                                        Debug.Log($"[{gameObject.name}] Resuming agent - Distance: {distanceToTarget:F2} > Optimal: {optimalStoppingDistance:F2}");
-                                    }
-                                    agent.isStopped = false;
-                                }
-                            }
-                        }
-                    }
-                }
+                // Use distributed destination for buildings, direct position for characters
+                float optimalStoppingDistance = CalculateOptimalStoppingDistance();
+                destination = GetDistributedDestination(navMeshTarget, optimalStoppingDistance);
+            }
+            
+            // Set destination and let NavMeshAgent handle the rest
+            if (agent != null && agent.isOnNavMesh)
+            {
+                agent.SetDestination(destination);
             }
             
             // Update animation parameters
             UpdateAnimationParameters();
             
-            // Check if we're stuck (not moving towards target)
+            // Check if stuck
             CheckIfStuck();
             
-            // For root motion, let Unity handle rotation automatically
-            // For non-root motion, manually handle rotation
+            // For non-root motion, handle rotation manually
             if (!IsUsingRootMotion)
             {
                 UpdateRotation();
@@ -1344,28 +1076,23 @@ namespace Enemies
 
         /// <summary>
         /// Update animator parameters based on movement state
-        /// FIX: Now handles the case where agent is stopped for rotation but should maintain animation speed
-        /// Previous issue: When enemies rotated to attack, agent.velocity was set to zero,
-        /// causing animator speed to drop to 0 and freeze. If rotation failed, enemy stayed frozen.
+        /// Uses smoothed speed to prevent oscillation when NavMeshAgent velocity fluctuates.
         /// </summary>
         private void UpdateAnimationParameters()
         {
             if (!HasValidAnimator()) return;
             
-            // Calculate normalized speed based on agent velocity
+            // Calculate target normalized speed based on agent velocity
             float velocity = agent.velocity.magnitude;
-            float normalizedSpeed = Mathf.Clamp01(velocity / movementSpeed);
+            float targetSpeed = Mathf.Clamp01(velocity / movementSpeed);
             
-            // Special case: If rotating to attack, maintain a minimum speed for animation
-            // This prevents the animator from freezing when the agent is stopped for rotation
-            // The enemy appears to be "shuffling" or "adjusting stance" while rotating, which looks natural
-            if (isRotatingToAttack && normalizedSpeed < 0.3f)
-            {
-                normalizedSpeed = 0.3f; // Maintain a walking speed during rotation
-            }
+            // Smooth the speed transition to prevent oscillation
+            // Use faster smoothing when accelerating, slower when decelerating for more natural feel
+            float smoothTime = targetSpeed > smoothedSpeed ? 0.1f : 0.2f;
+            smoothedSpeed = Mathf.Lerp(smoothedSpeed, targetSpeed, Time.deltaTime / smoothTime);
             
-            // Set Speed parameter (0-1 range) based on normalized velocity
-            animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, normalizedSpeed);
+            // Set Speed parameter (0-1 range) with smoothed value
+            animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, smoothedSpeed);
         }
 
         private void UpdateRotation()
@@ -1373,7 +1100,39 @@ namespace Enemies
             if (navMeshTarget == null) return;
             
             // Use centralized rotation utility
-            NavigationUtils.HandleMovementRotation(transform, navMeshTarget, agent.velocity, rotationSpeed, MOVEMENT_VELOCITY_THRESHOLD);
+            NavigationUtils.HandleMovementRotation(
+                transform, 
+                navMeshTarget, 
+                agent.velocity, 
+                GetRotationSpeedWithAnimatorMultiplier(), 
+                MOVEMENT_VELOCITY_THRESHOLD);
+        }
+
+        /// <summary>
+        /// Gets rotation speed, applying the animator-controlled multiplier when available.
+        /// READ-ONLY: This method only reads the rotation speed multiplier from the animator.
+        /// The multiplier is controlled by CharacterAnimationEvents.SetRotationSpeedMultiplier() via animation events.
+        /// </summary>
+        protected float GetRotationSpeedWithAnimatorMultiplier()
+        {
+            float baseRotSpeed = rotationSpeed;
+            float multiplier = 1f;
+
+            if (animator != null && animator.isActiveAndEnabled)
+            {
+                // Only read if the parameter exists to avoid warnings
+                foreach (var param in animator.parameters)
+                {
+                    if (param.nameHash == GameConstants.AnimatorParams.RotationSpeedMultiplierHash &&
+                        param.type == AnimatorControllerParameterType.Float)
+                    {
+                        multiplier = animator.GetFloat(GameConstants.AnimatorParams.RotationSpeedMultiplierHash);
+                        break;
+                    }
+                }
+            }
+
+            return baseRotSpeed * multiplier;
         }
 
         /// <summary>
@@ -1742,21 +1501,28 @@ namespace Enemies
         }
 
         /// <summary>
-        /// Rotates towards target with enhanced speed for attack preparation.
+        /// Rotates towards target aggressively for attack preparation.
+        /// SIMPLIFIED: Just rotates towards target, returns true when facing target.
         /// Virtual so derived classes (like HumanoidEnemy) can customize rotation behavior.
         /// </summary>
         /// <returns>True if rotation is complete and ready to attack</returns>
         protected virtual bool RotateTowardsTargetForAttack()
         {
-            if (navMeshTarget == null) return false;
-            
-            // Don't rotate if dead
-            if (Health <= 0) 
-            {
-                return false;
-            }
+            if (navMeshTarget == null || Health <= 0) return false;
 
-            return NavigationUtils.RotateTowardsTargetForAction(transform, navMeshTarget, rotationSpeed, ROTATION_TOWARDS_TARGET_SPEED_MULTIPLIER, ATTACK_READY_ANGLE_THRESHOLD, true);
+            // Aggressive rotation - always rotate towards target
+            Vector3 direction = (navMeshTarget.position - transform.position).normalized;
+            direction.y = 0;
+            
+            if (direction.sqrMagnitude < 0.0001f) return true;
+            
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            float rotationSpeed = GetRotationSpeedWithAnimatorMultiplier() * ROTATION_TOWARDS_TARGET_SPEED_MULTIPLIER;
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            
+            // Check if we're facing the target (within threshold)
+            float angle = Quaternion.Angle(transform.rotation, targetRotation);
+            return angle <= ATTACK_READY_ANGLE_THRESHOLD;
         }
 
         /// <summary>
@@ -2083,11 +1849,13 @@ namespace Enemies
             // Play death animation
             if (HasValidAnimator())
             {
-                Debug.Log($"[{gameObject.name}] Setting death animation and disabling root motion. applyRootMotion before: {animator.applyRootMotion}");
                 animator.SetTrigger(GameConstants.AnimatorParams.DeadHash);
-                // Disable root motion to prevent dead zombies from rotating
-                animator.applyRootMotion = false;
-                Debug.Log($"[{gameObject.name}] applyRootMotion after: {animator.applyRootMotion}");
+                // Disable root motion via CharacterAnimationEvents to prevent dead zombies from rotating
+                var animationEvents = GetComponent<CharacterAnimationEvents>();
+                if (animationEvents != null)
+                {
+                    animationEvents.DisableRootMotion();
+                }
             }
             
             // Disable components

@@ -270,7 +270,8 @@ MonoBehaviour:
   minRange: 0
   maxRange: 5
   attackAngleThreshold: 30
-  cooldown: 0.5
+  minCooldown: 0
+  maxCooldown: 0.5
   damage: 10
   poiseDamage: 15
   attackType: 1
@@ -662,7 +663,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2254817619120094739, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
       propertyPath: debugFootsteps
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2985604360754162274, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
       propertyPath: m_Name
@@ -753,7 +754,8 @@ MonoBehaviour:
   minRange: 0
   maxRange: 5
   attackAngleThreshold: 30
-  cooldown: 2
+  minCooldown: 2
+  maxCooldown: 4
   damage: 10
   poiseDamage: 15
   attackType: 0
@@ -899,6 +901,26 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 4ccf925186967ce40854f5bafde66a7f, type: 3}
   m_PrefabInstance: {fileID: 7974933427049504389}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &773507586 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3498937984024521076, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+  m_PrefabInstance: {fileID: 5274672988417113480}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &773507594
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 773507586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cdfbceb3c91a894d88c2ce9d8d2e34b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  debugFootsteps: 0
+  surfaceDetectionDistance: 1
+  taskEffects: []
 --- !u!4 &1092484957 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3917110413430893265, guid: 9bb212af9f792714683c70aadc99245f, type: 3}
@@ -2757,10 +2779,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 2700677688428301997, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: attackEffect
-      value: 
-      objectReference: {fileID: 11400000, guid: f67d8cac14b3bd64eb6ca922af912f97, type: 2}
     - target: {fileID: 3498937984024521076, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_Name
       value: ZombieBoss_Brawler
@@ -2810,25 +2828,60 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6150023108025577922, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: startEffect
-      value: 
-      objectReference: {fileID: 11400000, guid: fcf79a6a167279b4eae818ba6f5238fa, type: 2}
+      propertyPath: maxCooldown
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 6150023108025577922, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: attackEffect
+      propertyPath: minCooldown
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6150023108025577922, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: attackDescription
+      value: Punching attack
+      objectReference: {fileID: 0}
+    - target: {fileID: 6988115495219620664, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: maxRange
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 6988115495219620664, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: minRange
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6988115495219620664, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: jumpHeight
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 6988115495219620664, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: maxCooldown
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 6988115495219620664, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: minCooldown
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6988115495219620664, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: jumpDuration
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6988115495219620664, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: endEffect.effectDefinition
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 6988115495219620664, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: endEffect
+      propertyPath: attackEffect.effectDefinition
       value: 
       objectReference: {fileID: 11400000, guid: 7f3b9784e46c47e4faedf0ac585c4f17, type: 2}
-    - target: {fileID: 6988115495219620664, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: startEffect
-      value: 
-      objectReference: {fileID: 11400000, guid: 34dd8713150ee7c4b93e486ac20fed3a, type: 2}
+    - target: {fileID: 7853458022586684219, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      propertyPath: useRootMotion
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3498937984024521076, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+      insertIndex: 3
+      addedObject: {fileID: 773507594}
   m_SourcePrefab: {fileID: 100100000, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
 --- !u!4 &5467606974015904342
 Transform:
@@ -3387,7 +3440,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5292425652148227738, guid: 18cbcb9e137ea1548bf5d1b24e74094e, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

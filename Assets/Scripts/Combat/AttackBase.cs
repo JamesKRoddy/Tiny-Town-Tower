@@ -56,8 +56,10 @@ namespace Combat
         public float maxRange = 5f;
         [Tooltip("Maximum angle deviation for attacks (degrees)")]
         public float attackAngleThreshold = 30f;
-        [Tooltip("Cooldown in seconds between attacks of this type")]
-        public float cooldown = 2f;
+        [Tooltip("Minimum cooldown in seconds between attacks of this type")]
+        public float minCooldown = 2f;
+        [Tooltip("Maximum cooldown in seconds between attacks of this type (adds variety)")]
+        public float maxCooldown = 4f;
         [Tooltip("Base damage dealt by this attack")]
         public float damage = 10f;
         [Tooltip("Poise damage dealt by this attack")]
@@ -132,6 +134,17 @@ namespace Combat
         /// Made public so owner can check actual cooldown status
         /// </summary>
         public float lastAttackTime;
+        
+        /// <summary>
+        /// Time when this attack will be available next (uses random cooldown between min/max)
+        /// </summary>
+        private float nextAvailableTime = -999f;
+        
+        /// <summary>
+        /// Backwards-compatible cooldown property (returns average of min/max cooldown)
+        /// Used by external systems that still reference 'cooldown'
+        /// </summary>
+        public float cooldown => (minCooldown + maxCooldown) / 2f;
         
         // Owner reference - works with any character type
         protected IAttackOwner owner;
@@ -238,7 +251,9 @@ namespace Combat
             
             // Use obstacle-aware range check for targets with NavMesh obstacles (like buildings)
             bool inRange = DamageUtils.IsInRangeWithObstacles(OwnerTransform.position, target, minRange, maxRange);
-            bool cooldownReady = DamageUtils.IsCooldownReady(lastAttackTime, cooldown);
+            
+            // Check if cooldown is ready using nextAvailableTime (includes random cooldown variation)
+            bool cooldownReady = Time.time >= nextAvailableTime;
             
             // For ranged attacks (attacks with minimum range > 0), check line of sight
             bool hasLineOfSight = true;
@@ -258,6 +273,10 @@ namespace Combat
             hasValidAnimator = animator != null && animator.runtimeAnimatorController != null;
 
             lastAttackTime = Time.time;
+            
+            // Calculate next available time with random cooldown variation (adds unpredictability)
+            float randomCooldown = UnityEngine.Random.Range(minCooldown, maxCooldown);
+            nextAvailableTime = lastAttackTime + randomCooldown;
             
             // Mark owner as attacking
             if (owner != null)

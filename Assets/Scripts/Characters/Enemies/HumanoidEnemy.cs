@@ -76,10 +76,7 @@ namespace Enemies
         /// <returns>True if rotation is complete and ready to attack</returns>
         protected override bool RotateTowardsTargetForAttack()
         {
-            if (navMeshTarget == null) return false;
-            
-            // Don't rotate if dead
-            if (Health <= 0) return false;
+            if (navMeshTarget == null || Health <= 0) return false;
             
             // Use attack-specific angle threshold if available
             float angleThreshold = MELEE_ATTACK_ANGLE_THRESHOLD;
@@ -89,24 +86,19 @@ namespace Enemies
                 angleThreshold = Mathf.Max(angleThreshold, current.attackAngleThreshold);
             }
             
-            // Calculate current angle for debugging
-            Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
-            directionToTarget.y = 0;
-            float currentAngle = Vector3.Angle(transform.forward, directionToTarget);
-            Debug.Log($"[{gameObject.name}] RotateTowardsTargetForAttack | CurrentAngle: {currentAngle:F1}° | Threshold: {angleThreshold}° | Agent.isStopped: {agent.isStopped}");
+            // Aggressive rotation - use base class implementation with custom threshold
+            Vector3 direction = (navMeshTarget.position - transform.position).normalized;
+            direction.y = 0;
             
-            // Use NavigationUtils for sophisticated rotation with humanoid-specific angle threshold
-            bool rotationComplete = NavigationUtils.RotateTowardsTargetForAction(
-                transform, 
-                navMeshTarget, 
-                rotationSpeed, 
-                2f, // heightOffset
-                angleThreshold, 
-                true // lockMovementDuringRotation
-            );
+            if (direction.sqrMagnitude < 0.0001f) return true;
             
-            Debug.Log($"[{gameObject.name}] Rotation complete: {rotationComplete}");
-            return rotationComplete;
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            float rotationSpeed = GetRotationSpeedWithAnimatorMultiplier() * ROTATION_TOWARDS_TARGET_SPEED_MULTIPLIER;
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            
+            // Check if we're facing the target (within threshold)
+            float angle = Quaternion.Angle(transform.rotation, targetRotation);
+            return angle <= angleThreshold;
         }
         
         #endregion

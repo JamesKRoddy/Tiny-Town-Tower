@@ -1863,17 +1863,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33440e54b6d69df42b148162d1315857, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  functionCalls:
-  - componentTypeName: CharacterAnimationEvents
-    functionName: ResetRotationSpeedMultiplier
-    callOnEnter: 1
-    callOnExit: 0
-    callOnUpdate: 0
-    parameterType: 0
-    intParameter: 0
-    floatParameter: 0
-    boolParameter: 0
-    stringParameter: 
+  functionCalls: []
   parameterModifications: []
 --- !u!114 &2492791592890672481
 MonoBehaviour:

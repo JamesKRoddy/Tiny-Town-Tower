@@ -31,7 +31,6 @@ namespace Enemies
         private float lastAttackSwitchTime;
         private bool isExecutingAttack = false;
         private float attackExecutionStartTime;
-        private float rotationStartTime; // Track when rotation phase started
         protected float originalSpeed;
 
         /// <summary>
@@ -171,70 +170,20 @@ namespace Enemies
 
         /// <summary>
         /// Handle attack selection and execution using modular attack components
+        /// SIMPLIFIED: Prioritizes movement over rotation. Only stops to attack when ready.
         /// </summary>
         private void HandleModularAttackLogic()
         {
-            // Auto-reset rotation if it's been stuck too long or conditions changed
-            // FIX: This prevents enemies from getting stuck in infinite rotation loops
-            // which would cause animator.speed to stay at 0 forever
-            if (isRotatingToAttack)
-            {
-                bool shouldAbandonRotation = false;
-                string abandonReason = "";
-                
-                float timeSinceRotationStart = Time.time - rotationStartTime;
-                
-                // Check timeout (2 seconds)
-                if (timeSinceRotationStart > 2.0f)
-                {
-                    shouldAbandonRotation = true;
-                    abandonReason = $"timeout after {timeSinceRotationStart:F2}s";
-                }
-                // Check if target moved too far or angle is extreme (check every frame during rotation)
-                else if (navMeshTarget != null && currentAttack != null)
-                {
-                    float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
-                    Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
-                    directionToTarget.y = 0;
-                    float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
-                    
-                    float attackMaxRange = currentAttack.maxRange;
-                    float maxRotationDistance = attackMaxRange + 5f;
-                    const float MAX_ROTATION_ANGLE = 90f;
-                    
-                    if (distanceToTarget > maxRotationDistance)
-                    {
-                        shouldAbandonRotation = true;
-                        abandonReason = $"target too far ({distanceToTarget:F1} > {maxRotationDistance:F1})";
-                    }
-                    else if (angleToTarget > MAX_ROTATION_ANGLE)
-                    {
-                        shouldAbandonRotation = true;
-                        abandonReason = $"angle too extreme ({angleToTarget:F1}° > {MAX_ROTATION_ANGLE}°)";
-                    }
-                }
-                
-                // Abandon rotation if any condition met
-                if (shouldAbandonRotation)
-                {
-                    Debug.LogWarning($"[{gameObject.name}] Abandoning rotation: {abandonReason} - resuming movement");
-                    isRotatingToAttack = false;
-                    
-                    // Resume movement
-                    if (agent != null && agent.isOnNavMesh)
-                    {
-                        agent.isStopped = false;
-                    }
-                }
-            }
-            
             // Auto-reset isExecutingAttack if it's been too long (fallback for missing animation events)
             if (isExecutingAttack)
             {
                 float timeSinceAttackStart = Time.time - attackExecutionStartTime;
                 if (timeSinceAttackStart > 3.0f) // 3 second timeout for attack execution
                 {
-                    Debug.Log($"[{gameObject.name}] Auto-resetting stuck attack execution after timeout ({timeSinceAttackStart:F2}s)");
+                    if (showCollisionDebug)
+                    {
+                        Debug.Log($"[{gameObject.name}] Auto-resetting stuck attack execution after timeout ({timeSinceAttackStart:F2}s)");
+                    }
                     isExecutingAttack = false;
                     if (currentAttack != null)
                     {
@@ -257,8 +206,7 @@ namespace Enemies
                     // For beam attacks, continue rotating towards target during attack
                     if (currentAttack is BeamAttack beamAttack)
                     {
-                        // Use the generic rotation method from AttackBase
-                        NavigationUtils.RotateTowardsTargetForAction(transform, navMeshTarget, rotationSpeed, 2f, beamAttack.attackAngleThreshold, true);
+                        NavigationUtils.RotateTowardsTargetForAction(transform, navMeshTarget, GetRotationSpeedWithAnimatorMultiplier(), 2f, beamAttack.attackAngleThreshold, true);
                     }
                     
                     return;
@@ -279,6 +227,13 @@ namespace Enemies
             
             if (availableAttacks.Count == 0)
             {
+                // No attack available - keep moving to close the gap
+                isRotatingToAttack = false;
+                if (agent != null && agent.isOnNavMesh)
+                {
+                    agent.isStopped = false;
+                    agent.updateRotation = true;
+                }
                 currentAttack = null;
                 return;
             }
@@ -296,17 +251,11 @@ namespace Enemies
                 
                 currentAttack = selectedAttack;
                 lastAttackSwitchTime = Time.time;
-                
-                Debug.Log($"[{gameObject.name}] Switched to attack: {currentAttack.GetType().Name}");
             }
 
             // Execute current attack
             if (currentAttack != null)
             {
-                if (showCollisionDebug)
-                {
-                    Debug.Log($"[{gameObject.name}] Executing attack: {currentAttack.GetType().Name} | Distance: {Vector3.Distance(transform.position, navMeshTarget.position):F2} | NeedsRotation: {currentAttack.ShouldRotateToAttack()}");
-                }
                 ExecuteAttack(currentAttack);
             }
         }
@@ -334,24 +283,10 @@ namespace Enemies
             
             foreach (var attack in attackComponents)
             {
-                if (attack != null && attack.enabled)
+                if (attack != null && attack.enabled && attack.CanAttack())
                 {
-                    bool canAttack = attack.CanAttack();
-                    if (showCollisionDebug && !canAttack)
-                    {
-                        Debug.Log($"[{gameObject.name}] Attack {attack.GetType().Name} not available - CanAttack: {canAttack}");
-                    }
-                    
-                    if (canAttack)
-                    {
-                        available.Add(attack);
-                    }
+                    available.Add(attack);
                 }
-            }
-            
-            if (showCollisionDebug)
-            {
-                Debug.Log($"[{gameObject.name}] Available attacks: {available.Count}/{attackComponents.Length}");
             }
             
             return available;
@@ -387,6 +322,7 @@ namespace Enemies
 
         /// <summary>
         /// Select attack based on distance to target
+        /// When multiple attacks are equally suitable, randomly picks one for variety
         /// </summary>
         private AttackBase SelectByDistance(List<AttackBase> availableAttacks)
         {
@@ -394,10 +330,12 @@ namespace Enemies
             
             float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
             
-            // Find the attack with range closest to current distance
-            AttackBase bestAttack = null;
+            // Find all attacks within tolerance of the best distance match
+            List<AttackBase> bestAttacks = new List<AttackBase>();
             float bestDifference = float.MaxValue;
+            const float TOLERANCE = 0.5f; // Attacks within 0.5 units difference are considered equally good
             
+            // First pass: find the best difference
             foreach (var attack in availableAttacks)
             {
                 float attackRange = attack.GetCurrentAttackRange();
@@ -406,15 +344,34 @@ namespace Enemies
                 if (difference < bestDifference)
                 {
                     bestDifference = difference;
-                    bestAttack = attack;
                 }
             }
             
-            return bestAttack ?? availableAttacks[0];
+            // Second pass: collect all attacks within tolerance of best
+            foreach (var attack in availableAttacks)
+            {
+                float attackRange = attack.GetCurrentAttackRange();
+                float difference = Mathf.Abs(attackRange - distanceToTarget);
+                
+                if (difference <= bestDifference + TOLERANCE)
+                {
+                    bestAttacks.Add(attack);
+                }
+            }
+            
+            // Randomly select from equally good options for variety
+            if (bestAttacks.Count > 0)
+            {
+                int randomIndex = Random.Range(0, bestAttacks.Count);
+                return bestAttacks[randomIndex];
+            }
+            
+            return availableAttacks[0];
         }
 
         /// <summary>
         /// Select attack based on rotation requirements
+        /// Prefers attacks that don't need rotation, randomly picks from equally good options
         /// </summary>
         private AttackBase SelectByRotation(List<AttackBase> availableAttacks)
         {
@@ -422,156 +379,42 @@ namespace Enemies
             var noRotationAttacks = availableAttacks.Where(a => !a.ShouldRotateToAttack()).ToList();
             if (noRotationAttacks.Count > 0)
             {
-                return noRotationAttacks[0];
+                // Randomly select from attacks that don't need rotation for variety
+                int randomIndex = Random.Range(0, noRotationAttacks.Count);
+                return noRotationAttacks[randomIndex];
             }
             
-            // If all require rotation, use the first one
-            return availableAttacks[0];
+            // If all require rotation, randomly pick one
+            int fallbackIndex = Random.Range(0, availableAttacks.Count);
+            return availableAttacks[fallbackIndex];
         }
 
         /// <summary>
-        /// Execute the selected attack
+        /// SIMPLIFIED: Execute attack if it's available. Let attack system handle all validation.
+        /// Don't check angles or distances here - AttackBase.CanAttack() already did that.
         /// </summary>
         private void ExecuteAttack(AttackBase attack)
         {
-            if (attack == null) return;
+            if (attack == null || navMeshTarget == null) return;
             
-            // Check if attack needs rotation first
-            bool needsRotation = attack.ShouldRotateToAttack();
-            Debug.Log($"[{gameObject.name}] ExecuteAttack | NeedsRotation: {needsRotation} | Distance: {(navMeshTarget != null ? Vector3.Distance(transform.position, navMeshTarget.position).ToString("F2") : "N/A")}");
-            
-            if (needsRotation)
-            {
-                // Set rotation state flag for animation system (if not already set)
-                // FIX: This flag tells UpdateAnimationParameters() to maintain minimum speed
-                // even when agent.velocity is zero, preventing animator freeze during rotation
-                if (!isRotatingToAttack)
-                {
-                    isRotatingToAttack = true;
-                    rotationStartTime = Time.time; // Start rotation timer for timeout safety
-                }
-                
-                // SMART ROTATION ABANDONMENT:
-                // Check if target has moved too far or angle is too extreme - if so, give up rotation and resume movement
-                float distanceToTarget = Vector3.Distance(transform.position, navMeshTarget.position);
-                Vector3 directionToTarget = (navMeshTarget.position - transform.position).normalized;
-                directionToTarget.y = 0; // Flatten to horizontal plane
-                float angleToTarget = Vector3.Angle(transform.forward, directionToTarget);
-                
-                // Get attack's max range for distance check
-                float attackMaxRange = attack.maxRange;
-                float maxRotationDistance = attackMaxRange + 5f; // Allow 5 units beyond max range
-                const float MAX_ROTATION_ANGLE = 90f; // If target is more than 90 degrees off, just move instead
-                
-                // If target is too far or angle is too extreme, abandon rotation and resume movement
-                if (distanceToTarget > maxRotationDistance || angleToTarget > MAX_ROTATION_ANGLE)
-                {
-                    Debug.Log($"[{gameObject.name}] Abandoning rotation - Distance: {distanceToTarget:F1} > {maxRotationDistance:F1} OR Angle: {angleToTarget:F1}° > {MAX_ROTATION_ANGLE}° - resuming movement");
-                    isRotatingToAttack = false;
-                    
-                    // Resume movement towards target
-                    if (agent != null && agent.isOnNavMesh)
-                    {
-                        agent.isStopped = false;
-                    }
-                    return; // Exit and let normal movement pathfinding take over
-                }
-                
-                // Hard-stop movement while rotating so we don't keep circling
-                if (agent != null && agent.isOnNavMesh)
-                {
-                    agent.isStopped = true;
-                    agent.velocity = Vector3.zero;
-                    agent.updateRotation = true;
-                }
-
-                // Handle rotation for specific attack types
-                if (attack is BeamAttack beamAttack)
-                {
-                    // Use the generic rotation method from AttackBase
-                    NavigationUtils.RotateTowardsTargetForAction(transform, navMeshTarget, rotationSpeed, 2f, beamAttack.attackAngleThreshold, true);
-                }
-                else
-                {
-                    // Use generic rotation
-                    bool rotationComplete = RotateTowardsTargetForAttack();
-                    Debug.Log($"[{gameObject.name}] Rotating towards target | Complete: {rotationComplete}");
-                }
-                
-                // After rotation, check if we're now ready to attack
-                if (!attack.ShouldRotateToAttack())
-                {
-                    Debug.Log($"[{gameObject.name}] Rotation complete, requesting attack permission");
-                    
-                    // Clear rotation flag
-                    isRotatingToAttack = false;
-                    
-                    // Rotation complete, now try to execute the attack
-                    // Request permission from EnemyManager before attacking
-                    if (Managers.EnemyManager.Instance != null)
-                    {
-                        if (!Managers.EnemyManager.Instance.RequestAttackPermission(this))
-                        {
-                            Debug.Log($"[{gameObject.name}] Attack permission DENIED");
-                            // Permission denied, keep circling and try again next frame
-                            return;
-                        }
-                    }
-                    
-                    Debug.Log($"[{gameObject.name}] Attack permission GRANTED, executing attack");
-                    
-                    // Permission granted, execute attack
-                    isExecutingAttack = true;
-                    attackExecutionStartTime = Time.time;
-                    Debug.Log($"[{gameObject.name}] 🎬 StartAttack() called | AttackType: {attack.GetType().Name}");
-                    attack.StartAttack();
-                    
-                    // For enemies without valid animators (like drones) execute immediately
-                    if (attack.ShouldExecuteImmediately())
-                    {
-                        attack.OnAttack();
-                        // AttackEnd() will call attack.OnAttackEnd() and do all cleanup
-                        AttackEnd();
-                        return;
-                    }
-                    
-                    // Update base class attack time for cooldown movement system
-                    lastAttackTime = Time.time;
-                }
-                else
-                {
-                    Debug.Log($"[{gameObject.name}] Still needs rotation, trying again next frame");
-                }
-                // If still need rotation, we'll try again next frame
-                return;
-            }
-            
-            // No rotation needed, request permission and execute
-            Debug.Log($"[{gameObject.name}] No rotation needed, requesting attack permission");
-            
+            // Request attack permission
             if (Managers.EnemyManager.Instance != null)
             {
                 if (!Managers.EnemyManager.Instance.RequestAttackPermission(this))
                 {
-                    Debug.Log($"[{gameObject.name}] Attack permission DENIED");
-                    // Permission denied, keep circling and try again next frame
-                    return;
+                    return; // Permission denied
                 }
             }
             
-            Debug.Log($"[{gameObject.name}] Attack permission GRANTED, executing attack");
-            
-            // Execute the attack (no rotation needed)
+            // Execute the attack - movement will be stopped by BeginAttackSequence()
             isExecutingAttack = true;
             attackExecutionStartTime = Time.time;
-            Debug.Log($"[{gameObject.name}] 🎬 StartAttack() called | AttackType: {attack.GetType().Name} | HasAnimator: {HasValidAnimator()} | UseAnimatorTiming: {attack.useAnimatorTiming}");
             attack.StartAttack();
             
             // For enemies without valid animators (like drones) execute immediately
             if (attack.ShouldExecuteImmediately())
             {
                 attack.OnAttack();
-                // AttackEnd() will call attack.OnAttackEnd() and do all cleanup
                 AttackEnd();
                 return;
             }
@@ -600,12 +443,11 @@ namespace Enemies
         /// </summary>
         public override void Attack()
         {
-            Debug.Log($"[{gameObject.name}] 🎯 Attack() called by animation event | CurrentAttack: {(currentAttack != null ? currentAttack.GetType().Name : "NULL")}");
             if (currentAttack != null)
             {
                 currentAttack.OnAttack();
             }
-            else
+            else if (showCollisionDebug)
             {
                 Debug.LogWarning($"[{gameObject.name}] Attack called but no current attack is active");
             }
@@ -619,8 +461,6 @@ namespace Enemies
         /// </summary>
         public override void AttackEnd()
         {
-            Debug.Log($"[{gameObject.name}] 🏁 AttackEnd() called | CurrentAttack: {(currentAttack != null ? currentAttack.GetType().Name : "NULL")}");
-            
             // End the current attack component (if not already ended)
             if (currentAttack != null)
             {

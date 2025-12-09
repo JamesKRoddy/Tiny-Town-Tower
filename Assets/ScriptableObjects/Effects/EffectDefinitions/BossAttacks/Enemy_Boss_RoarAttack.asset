@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8ccf30521a69cb741ad56958e7173ea0, type: 3}
-  m_Name: Enemy_Boss_RoarHit
+  m_Name: Enemy_Boss_RoarAttack
   m_EditorClassIdentifier: 
   prefabs:
   - prefab: {fileID: 1159970587636746, guid: 07148c8ec1315044cacab39dff250f3f, type: 3}

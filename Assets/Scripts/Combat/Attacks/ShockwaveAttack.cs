@@ -39,6 +39,13 @@ namespace Combat.Attacks
             {
                 attackAngleThreshold = 15f; // Shockwave attacks need moderate aiming
             }
+            
+            // Set default cooldown range for shockwave attacks (powerful attack = longer cooldown)
+            if (Mathf.Approximately(minCooldown, 2f) && Mathf.Approximately(maxCooldown, 4f)) // Only set if using defaults
+            {
+                minCooldown = 4f;  // Minimum cooldown for powerful shockwave
+                maxCooldown = 7f;  // Maximum cooldown for variety
+            }
         }
 
         public override void Initialize(IAttackOwner attackOwner)

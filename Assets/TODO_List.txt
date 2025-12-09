@@ -1,10 +1,12 @@
 *****Current Work*****
 
-Get enemies to use the rotation speed multiplier in the animation parameters
-See if 2 handed weapons work with mutants
+Boss attack fixes need to test and to make sure its randomly selecting different attacks
+
+Mutants! Characters in the PolygonApocalypseWasteland, light mutant, heavy mutant (use an animator variant)
+
 TODO:
 
-Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones. Mutants! Characters in the PolygonApocalypseWasteland, light mutant, heavy mutant
+Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones. 
 
 Setup a massive boss like the hydra in hades
 

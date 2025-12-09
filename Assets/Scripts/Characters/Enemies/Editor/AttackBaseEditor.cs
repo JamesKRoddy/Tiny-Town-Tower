@@ -15,6 +15,8 @@ namespace Enemies.Editor
         private SerializedProperty poiseDamage;
         private SerializedProperty attackElement;
         private SerializedProperty cooldown;
+        private SerializedProperty minCooldown;
+        private SerializedProperty maxCooldown;
         private SerializedProperty minRange;
         private SerializedProperty maxRange;
         private SerializedProperty attackAngleThreshold;
@@ -36,6 +38,7 @@ namespace Enemies.Editor
         private SerializedProperty attackDelay;
         private SerializedProperty attackEndDelay;
         private SerializedProperty allowRotationDuringAttack;
+        private SerializedProperty attackOrigin;
 
         private bool showRangeSettings = true;
         private bool showDamageSettings = true;
@@ -51,6 +54,8 @@ namespace Enemies.Editor
             poiseDamage = serializedObject.FindProperty("poiseDamage");
             attackElement = serializedObject.FindProperty("attackElement");
             cooldown = serializedObject.FindProperty("cooldown");
+            minCooldown = serializedObject.FindProperty("minCooldown");
+            maxCooldown = serializedObject.FindProperty("maxCooldown");
             minRange = serializedObject.FindProperty("minRange");
             maxRange = serializedObject.FindProperty("maxRange");
             attackAngleThreshold = serializedObject.FindProperty("attackAngleThreshold");
@@ -71,6 +76,7 @@ namespace Enemies.Editor
             attackDelay = serializedObject.FindProperty("attackDelay");
             attackEndDelay = serializedObject.FindProperty("attackEndDelay");
             allowRotationDuringAttack = serializedObject.FindProperty("allowRotationDuringAttack");
+            attackOrigin = serializedObject.FindProperty("attackOrigin");
         }
 
         public override void OnInspectorGUI()
@@ -302,10 +308,13 @@ namespace Enemies.Editor
                 "attackDelay",
                 "attackEndDelay",
                 "allowRotationDuringAttack",
-                "cooldown", 
+                "cooldown",
+                "minCooldown",
+                "maxCooldown", 
                 "minRange", 
                 "maxRange", 
-                "attackAngleThreshold", 
+                "attackAngleThreshold",
+                "attackOrigin",
                 "attackEquipment",
                 "attackEffectObjects",
                 "startEffect",
@@ -382,14 +391,42 @@ namespace Enemies.Editor
             }
             EditorGUILayout.Space(5);
             
-            // Timing settings
-            EditorGUILayout.LabelField("Timing Settings", EditorStyles.boldLabel);
-            if (cooldown != null)
+            // Cooldown settings with min/max range
+            EditorGUILayout.LabelField("Cooldown Settings", EditorStyles.boldLabel);
+            if (minCooldown != null && maxCooldown != null)
             {
-                // Ensure non-negative values
-                float cooldownVal = cooldown.floatValue;
-                cooldownVal = Mathf.Max(0f, EditorGUILayout.FloatField("Cooldown", cooldownVal));
-                cooldown.floatValue = cooldownVal;
+                float minVal = minCooldown.floatValue;
+                float maxVal = maxCooldown.floatValue;
+                
+                // Min/Max slider for cooldown range
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.PrefixLabel("Cooldown Range");
+                EditorGUILayout.MinMaxSlider(ref minVal, ref maxVal, 0f, 20f);
+                EditorGUILayout.EndHorizontal();
+                
+                // Ensure valid values (min <= max, both >= 0)
+                minVal = Mathf.Max(0f, minVal);
+                maxVal = Mathf.Max(minVal, maxVal); // Ensure max >= min
+                
+                minCooldown.floatValue = minVal;
+                maxCooldown.floatValue = maxVal;
+                
+                // Individual fields for precise editing
+                minCooldown.floatValue = Mathf.Max(0f, EditorGUILayout.FloatField("Min Cooldown", minCooldown.floatValue));
+                maxCooldown.floatValue = Mathf.Max(minCooldown.floatValue, EditorGUILayout.FloatField("Max Cooldown", maxCooldown.floatValue));
+                
+                // Show average cooldown for reference
+                float avgCooldown = (minCooldown.floatValue + maxCooldown.floatValue) / 2f;
+                EditorGUILayout.HelpBox($"Average cooldown: {avgCooldown:F2}s (randomly selected between {minCooldown.floatValue:F2}s and {maxCooldown.floatValue:F2}s)", MessageType.Info);
+            }
+            EditorGUILayout.Space(5);
+            
+            // Attack origin setting
+            if (attackOrigin != null)
+            {
+                EditorGUILayout.LabelField("Attack Origin", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(attackOrigin, new GUIContent("Attack Origin Transform", "Optional transform to use as the attack origin. If not set, will use the owner's transform."));
+                EditorGUILayout.Space(5);
             }
             
             // Draw the visual graphics
