@@ -2,7 +2,44 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Used for buildings in the roguelite section of the game
+/// Used for buildings in the roguelite section of the game.
+/// 
+/// BOSS SYSTEM INTEGRATION:
+/// This scriptable object now supports boss encounters at the end of buildings.
+/// 
+/// HOW IT WORKS:
+/// 1. Configure boss spawn chance (0-100%) in the inspector
+/// 2. Add BossScriptableObj references to the possibleBosses array
+/// 3. Each BossScriptableObj contains:
+///    - The boss enemy prefab (with EnemyBase component)
+///    - The boss room parent prefab (BossRoomParent - a complete building section for the boss fight)
+///    - Difficulty requirements and spawn weight
+/// 4. During building generation, the system:
+///    - Rolls for boss spawn based on bossSpawnChance
+///    - Selects a boss using weighted random selection from suitable bosses
+///    - Instantiates the boss's BossRoomParent as the final building section
+///    - The BossRoomParent generates its own room layout and spawns the boss
+/// 
+/// BOSS ROOM ARCHITECTURE:
+/// - Boss rooms are NOT just single room prefabs - they are complete building parents (BossRoomParent)
+/// - Each boss room can have multiple sub-rooms for a complex arena
+/// - BossRoomParent inherits from RogueLiteRoomParent and uses the same room generation system
+/// - The boss spawns at a designated "BossSpawnPoint" transform within the boss room parent
+/// 
+/// SETUP STEPS:
+/// 1. Create a Building Parent prefab with BossRoomParent component (not just RogueLiteRoomParent)
+/// 2. Add "BossSpawnPoint" transform to define where the boss spawns
+/// 3. Configure room spawn points as normal for the boss arena
+/// 4. Create RoomParentDataScriptableObj (Right-click > Create > Scriptable Objects > Roguelite > RoomParentDataScriptableObj)
+///    - Assign the BossRoomParent prefab (which has spawn points configured)
+///    - Add room prefabs that can spawn in the arena
+///    - (Room count is determined by spawn points in the prefab)
+/// 5. Create BossScriptableObj assets (Right-click > Create > Scriptable Objects > Roguelite > Enemies > BossScriptableObj)
+///    - Assign boss enemy prefab
+///    - Assign RoomParentDataScriptableObj
+///    - Configure difficulty, loot table, etc.
+/// 6. Add BossScriptableObj references to this building data's possibleBosses array
+/// 7. Adjust bossSpawnChance as needed (default: 75%)
 /// </summary>
 
 [CreateAssetMenu(fileName = "BuildingDataScriptableObj", menuName = "Scriptable Objects/Roguelite/BuildingDataScriptableObj")]
@@ -27,6 +64,13 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     [SerializeField] private NPCScriptableObj[] buildingNPCs;
     [SerializeField] private bool autoSpawnNPCs = true;
     [SerializeField, Range(0f, 100f)] private float npcSpawnChance = 75f; // 75% chance to spawn an NPC per spawn point
+
+    [Header("Boss Configuration")]
+    [Tooltip("List of possible bosses that can spawn at the end of this building type. Each boss has its own room and difficulty requirements.")]
+    [SerializeField] private BossScriptableObj[] possibleBosses;
+    [SerializeField, Range(0f, 100f)] private float bossSpawnChance = 75f; // 75% chance to spawn a boss at the end by default
+    [Tooltip("If true, the final room will always be a boss room when a boss spawns. Recommended for proper boss encounter flow.")]
+    [SerializeField] private bool guaranteeBossAsEndRoom = true;
 
     [Header("Room Settings")]
     public int minRoomCount = 3;
@@ -335,6 +379,139 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     public void SetExtenderSpawnChance(float chance)
     {
         extenderSpawnChance = Mathf.Clamp(chance, 0f, 100f);
+    }
+
+    /// <summary>
+    /// Check if a boss should spawn based on spawn chance
+    /// </summary>
+    public bool ShouldSpawnBoss()
+    {
+        if (possibleBosses == null || possibleBosses.Length == 0)
+        {
+            return false;
+        }
+
+        float roll = Random.Range(0f, 100f);
+        bool shouldSpawn = roll < bossSpawnChance;
+        Debug.Log($"[ShouldSpawnBoss] Roll: {roll:F1}, Chance: {bossSpawnChance:F1}, Result: {shouldSpawn}");
+        return shouldSpawn;
+    }
+
+    /// <summary>
+    /// Get a boss for the current difficulty level using weighted random selection
+    /// Returns null if no suitable boss is found
+    /// </summary>
+    public BossScriptableObj GetBossForDifficulty(int difficulty)
+    {
+        if (possibleBosses == null || possibleBosses.Length == 0)
+        {
+            Debug.LogWarning($"[GetBossForDifficulty] No bosses configured for building: {buildingType} in {name}");
+            return null;
+        }
+
+        // Find all suitable bosses based on difficulty
+        List<BossScriptableObj> suitableBosses = new List<BossScriptableObj>();
+        List<int> weights = new List<int>();
+        
+        foreach (var boss in possibleBosses)
+        {
+            if (boss != null && boss.CanSpawnAtDifficulty(difficulty))
+            {
+                suitableBosses.Add(boss);
+                weights.Add(boss.GetSpawnWeight());
+            }
+        }
+
+        // If no suitable bosses found, return null
+        if (suitableBosses.Count == 0)
+        {
+            Debug.LogWarning($"[GetBossForDifficulty] No suitable bosses found for difficulty: {difficulty} for building: {buildingType} in {name}");
+            return null;
+        }
+
+        // Select boss using weighted random selection
+        int totalWeight = 0;
+        foreach (int weight in weights)
+        {
+            totalWeight += weight;
+        }
+
+        int randomValue = Random.Range(0, totalWeight);
+        int currentWeight = 0;
+
+        for (int i = 0; i < suitableBosses.Count; i++)
+        {
+            currentWeight += weights[i];
+            if (randomValue < currentWeight)
+            {
+                Debug.Log($"[GetBossForDifficulty] Selected boss: {suitableBosses[i].bossName} for difficulty {difficulty}");
+                return suitableBosses[i];
+            }
+        }
+
+        // Fallback to first suitable boss (should never reach here)
+        Debug.Log($"[GetBossForDifficulty] Fallback to first boss: {suitableBosses[0].bossName}");
+        return suitableBosses[0];
+    }
+
+    /// <summary>
+    /// Get the boss room data for a specific boss
+    /// Returns the RoomParentDataScriptableObj which contains the room parent prefab and room configuration
+    /// </summary>
+    public RoomParentDataScriptableObj GetBossRoomData(BossScriptableObj boss)
+    {
+        if (boss == null)
+        {
+            Debug.LogError($"[GetBossRoomData] Boss is null!");
+            return null;
+        }
+
+        if (boss.bossRoomData == null)
+        {
+            Debug.LogError($"[GetBossRoomData] Boss room data is null for boss: {boss.bossName}");
+            return null;
+        }
+        
+        if (!boss.bossRoomData.IsValid())
+        {
+            Debug.LogError($"[GetBossRoomData] Boss room data is invalid for boss: {boss.bossName}");
+            return null;
+        }
+
+        Debug.Log($"[GetBossRoomData] Retrieved boss room data for: {boss.bossName}");
+        return boss.bossRoomData;
+    }
+
+    /// <summary>
+    /// Get all possible bosses for this building type
+    /// </summary>
+    public BossScriptableObj[] GetPossibleBosses()
+    {
+        return possibleBosses ?? new BossScriptableObj[0];
+    }
+
+    /// <summary>
+    /// Get the boss spawn chance (0-100%)
+    /// </summary>
+    public float GetBossSpawnChance()
+    {
+        return bossSpawnChance;
+    }
+
+    /// <summary>
+    /// Set the boss spawn chance (0-100%)
+    /// </summary>
+    public void SetBossSpawnChance(float chance)
+    {
+        bossSpawnChance = Mathf.Clamp(chance, 0f, 100f);
+    }
+
+    /// <summary>
+    /// Check if boss should always be the final room when spawned
+    /// </summary>
+    public bool ShouldGuaranteeBossAsEndRoom()
+    {
+        return guaranteeBossAsEndRoom;
     }
 }
 

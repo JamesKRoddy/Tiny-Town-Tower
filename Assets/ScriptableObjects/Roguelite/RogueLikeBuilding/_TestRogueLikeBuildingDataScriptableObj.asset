@@ -58,5 +58,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ff84a74ffbac90849b0eb152033e7ac8, type: 2}
   autoSpawnNPCs: 1
   npcSpawnChance: 100
+  possibleBosses:
+  - {fileID: 11400000, guid: afe52d592b607fe448ad960af21da6e3, type: 2}
+  bossSpawnChance: 75
+  guaranteeBossAsEndRoom: 1
   minRoomCount: 1
   maxRoomCount: 3

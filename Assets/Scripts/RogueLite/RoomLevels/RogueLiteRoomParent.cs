@@ -98,7 +98,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
     }
 
-    public void GenerateRandomRooms(RogueLikeBuildingDataScriptableObj buildingScriptableObj)
+    public virtual void GenerateRandomRooms(RogueLikeBuildingDataScriptableObj buildingScriptableObj)
     {
         if (buildingScriptableObj == null)
         {
@@ -362,7 +362,7 @@ public class RogueLiteRoomParent : MonoBehaviour
                 Debug.Log($"[HierarchicalPlacement] Processing spawn {spawnIndex} ({spawnType}) - allowExtenders: {allowExtenders}, currentExtenders: {extendersPlaced}");
             }
             
-            // Get room, considering extender count and allowing extenders only for original spawn points
+            // Get room considering extender count and allowing extenders only for original spawn points
             GameObject roomPrefab = buildingScriptableObj.GetBuildingRoom(currentDifficulty, extendersPlaced, allowExtenders);
             
             // Use dynamic spawn points list
@@ -1545,7 +1545,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
     }
 
-    private void OnDrawGizmos()
+    protected virtual void OnDrawGizmos()
     {
         if (!showDirectionArrows) return;
 

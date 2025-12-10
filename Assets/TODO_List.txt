@@ -1,12 +1,12 @@
 *****Current Work*****
 
-Boss attack fixes need to test and to make sure its randomly selecting different attacks
 
-Mutants! Characters in the PolygonApocalypseWasteland, light mutant, heavy mutant (use an animator variant)
 
 TODO:
 
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones. 
+
+Mutants! Characters in the PolygonApocalypseWasteland, light mutant, heavy mutant (use an animator variant)
 
 Setup a massive boss like the hydra in hades
 
@@ -17,6 +17,8 @@ Create the scriptable obj and prefabs for: Genetic mutations, weapons, world obj
 Spawning a boss at the end 
 
 ****** Next work:
+
+Difficulty manager setup, really have to look at how thats going to work
 
 Charge up attacks by holding down buttons
 

@@ -711,6 +711,7 @@ GameObject:
   - component: {fileID: 4521413630554356895}
   - component: {fileID: 1642315922267150981}
   - component: {fileID: 865813623137836336}
+  - component: {fileID: 4943562179298723733}
   - component: {fileID: 7853458022586684219}
   - component: {fileID: 6150023108025577922}
   - component: {fileID: 2700677688428301997}
@@ -785,6 +786,21 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &4943562179298723733
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3498937984024521076}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cdfbceb3c91a894d88c2ce9d8d2e34b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  debugFootsteps: 0
+  surfaceDetectionDistance: 1
+  taskEffects: []
 --- !u!114 &7853458022586684219
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -798,7 +814,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   characterType: 201
-  useRootMotion: 0
+  useRootMotion: 1
   stoppingDistance: 1
   rotationSpeed: 10
   movementSpeed: 3.5
@@ -842,11 +858,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ff8a937cd8a28d4895a0996e1f6f54c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attackDescription: 
+  attackDescription: Punching attack
   minRange: 0
   maxRange: 5
   attackAngleThreshold: 30
-  cooldown: 2
+  minCooldown: 1
+  maxCooldown: 3
   damage: 10
   poiseDamage: 15
   attackType: 1
@@ -915,7 +932,8 @@ MonoBehaviour:
   minRange: 0
   maxRange: 5
   attackAngleThreshold: 180
-  cooldown: 2
+  minCooldown: 2
+  maxCooldown: 4
   damage: 10
   poiseDamage: 15
   attackType: 2
@@ -979,10 +997,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   attackDescription: 
-  minRange: 0
-  maxRange: 5
+  minRange: 5
+  maxRange: 20
   attackAngleThreshold: 30
-  cooldown: 2
+  minCooldown: 5
+  maxCooldown: 10
   damage: 10
   poiseDamage: 15
   attackType: 3
@@ -999,7 +1018,7 @@ MonoBehaviour:
     durationOverride: 0
   startEffectDelay: 0
   attackEffect:
-    effectDefinition: {fileID: 0}
+    effectDefinition: {fileID: 11400000, guid: 7f3b9784e46c47e4faedf0ac585c4f17, type: 2}
     spawnPoint: {fileID: 0}
     positionOffset: {x: 0, y: 0, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
@@ -1015,7 +1034,7 @@ MonoBehaviour:
     durationOverride: 0
   hitEffectDelay: 0
   endEffect:
-    effectDefinition: {fileID: 11400000, guid: 7f3b9784e46c47e4faedf0ac585c4f17, type: 2}
+    effectDefinition: {fileID: 0}
     spawnPoint: {fileID: 0}
     positionOffset: {x: 0, y: 0, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
@@ -1031,7 +1050,7 @@ MonoBehaviour:
   attackEffectObjects: []
   lastAttackTime: 0
   jumpRadius: 3
-  jumpHeight: 5
+  jumpHeight: 10
   jumpDuration: 1
   predictionFactor: 0.5
   finalJumpLockPercentage: 0.1

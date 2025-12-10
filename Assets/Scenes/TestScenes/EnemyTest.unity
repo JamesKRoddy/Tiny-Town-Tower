@@ -901,26 +901,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 4ccf925186967ce40854f5bafde66a7f, type: 3}
   m_PrefabInstance: {fileID: 7974933427049504389}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &773507586 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3498937984024521076, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-  m_PrefabInstance: {fileID: 5274672988417113480}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &773507594
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 773507586}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8cdfbceb3c91a894d88c2ce9d8d2e34b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  debugFootsteps: 0
-  surfaceDetectionDistance: 1
-  taskEffects: []
 --- !u!4 &1092484957 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3917110413430893265, guid: 9bb212af9f792714683c70aadc99245f, type: 3}
@@ -2783,10 +2763,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: ZombieBoss_Brawler
       objectReference: {fileID: 0}
-    - target: {fileID: 3498937984024521076, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 4521413630554356895, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -2860,10 +2836,6 @@ PrefabInstance:
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 6988115495219620664, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      propertyPath: jumpDuration
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6988115495219620664, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
       propertyPath: endEffect.effectDefinition
       value: 
       objectReference: {fileID: 0}
@@ -2878,10 +2850,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 3498937984024521076, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
-      insertIndex: 3
-      addedObject: {fileID: 773507594}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
 --- !u!4 &5467606974015904342
 Transform:
@@ -3440,7 +3409,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5292425652148227738, guid: 18cbcb9e137ea1548bf5d1b24e74094e, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
