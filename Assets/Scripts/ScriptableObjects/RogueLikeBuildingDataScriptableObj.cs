@@ -112,7 +112,7 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     /// Get a building room, considering extenders, friendly rooms, and hostile rooms based on spawn chances
     /// This method is used by the room placement system to select appropriate rooms
     /// </summary>
-    public GameObject GetBuildingRoom(int difficulty, int currentExtenderCount = 0, bool allowExtenders = true)
+    public virtual GameObject GetBuildingRoom(int difficulty, int currentExtenderCount = 0, bool allowExtenders = true)
     {
         // Check if we should try to spawn an extender first
         if (allowExtenders && extenderRooms.Count > 0 && currentExtenderCount < maxExtendersPerBuilding)
@@ -223,7 +223,7 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     /// <summary>
     /// Get a room extender
     /// </summary>
-    public GameObject GetExtenderRoom(int difficulty)
+    public virtual GameObject GetExtenderRoom(int difficulty)
     {
         // Find all suitable extender rooms based on difficulty
         List<BuildingRooms> suitableExtenderRooms = new List<BuildingRooms>();
@@ -302,7 +302,7 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     /// </summary>
     /// <param name="difficulty">Current difficulty level</param>
     /// <param name="includeExtenders">Whether to include room extenders in the list</param>
-    public GameObject[] GetAllRooms(int difficulty, bool includeExtenders = true)
+    public virtual GameObject[] GetAllRooms(int difficulty, bool includeExtenders = true)
     {
         List<GameObject> allRooms = new List<GameObject>();
         
@@ -360,7 +360,7 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     /// <summary>
     /// Get the maximum number of extenders allowed per building
     /// </summary>
-    public int GetMaxExtendersPerBuilding()
+    public virtual int GetMaxExtendersPerBuilding()
     {
         return maxExtendersPerBuilding;
     }
@@ -368,7 +368,7 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     /// <summary>
     /// Get the extender spawn chance (0-100%)
     /// </summary>
-    public float GetExtenderSpawnChance()
+    public virtual float GetExtenderSpawnChance()
     {
         return extenderSpawnChance;
     }

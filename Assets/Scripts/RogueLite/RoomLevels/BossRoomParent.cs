@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using Managers;
 
@@ -260,33 +261,48 @@ internal class RoomDataWrapper : RogueLikeBuildingDataScriptableObj
     public void Initialize(RoomParentDataScriptableObj data)
     {
         roomData = data;
+        Debug.Log($"[RoomDataWrapper] Initialized with room data: {(data != null ? data.name : "NULL")}");
+        
+        // Initialize base class lists to prevent null reference errors
+        // Even though we override the methods, initialize these for safety
+        buildingRooms = new List<BuildingRooms>();
+        friendlyRooms = new List<BuildingRooms>();
+        extenderRooms = new List<BuildingRooms>();
+        buildingParents = new List<BuildingParents>();
         
         // Note: Room count is determined by spawn points in the room parent prefab,
         // not by configuration values. The system fills all available spawn points.
     }
     
     // Override GetBuildingRoom to use custom room data
-    public new GameObject GetBuildingRoom(int difficulty, int currentExtenderCount = 0, bool allowExtenders = true)
+    public override GameObject GetBuildingRoom(int difficulty, int currentExtenderCount = 0, bool allowExtenders = true)
     {
-        if (roomData == null) return null;
-        return roomData.GetRoom(difficulty, currentExtenderCount, allowExtenders);
+        Debug.Log($"[RoomDataWrapper] GetBuildingRoom called - roomData is {(roomData != null ? "valid" : "NULL")}");
+        if (roomData == null)
+        {
+            Debug.LogError("[RoomDataWrapper] roomData is null in GetBuildingRoom!");
+            return null;
+        }
+        GameObject room = roomData.GetRoom(difficulty, currentExtenderCount, allowExtenders);
+        Debug.Log($"[RoomDataWrapper] Returning room: {(room != null ? room.name : "NULL")}");
+        return room;
     }
     
     // Override GetAllRooms to use custom room data
-    public new GameObject[] GetAllRooms(int difficulty, bool includeExtenders = true)
+    public override GameObject[] GetAllRooms(int difficulty, bool includeExtenders = true)
     {
         if (roomData == null) return new GameObject[0];
         return roomData.GetAllRooms(difficulty, includeExtenders);
     }
     
     // Override extender methods
-    public new int GetMaxExtendersPerBuilding()
+    public override int GetMaxExtendersPerBuilding()
     {
         if (roomData == null) return 0;
         return roomData.GetMaxExtenders();
     }
     
-    public new float GetExtenderSpawnChance()
+    public override float GetExtenderSpawnChance()
     {
         if (roomData == null) return 0f;
         return roomData.GetExtenderSpawnChance();
