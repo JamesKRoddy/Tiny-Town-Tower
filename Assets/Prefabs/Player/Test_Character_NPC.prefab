@@ -1877,6 +1877,7 @@ GameObject:
   - component: {fileID: 4085220502539234452}
   - component: {fileID: -8929434300327028580}
   - component: {fileID: 2837077326474312093}
+  - component: {fileID: 488557007364499839}
   m_Layer: 9
   m_Name: Test_Character_NPC
   m_TagString: Untagged
@@ -2034,7 +2035,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   characterType: 101
-  attackRotationSpeed: 120
   dashDuration: 0.4
   vaultDuration: 0.4
   vaultCooldown: 0.3
@@ -2078,7 +2078,7 @@ MonoBehaviour:
     rotationSpeed: 0
     dashSpeed: 0
     dashCooldown: 0
-  health: 100
+  health: 10000
   damageCooldown: 0.5
   poise: 40
   poiseRecoveryRate: 8
@@ -2915,19 +2915,19 @@ MonoBehaviour:
     hatChance: 0.3
     helmetChance: 0.2
     faceAccessoryChance: 0.15
-    leftShoulderAccessoryChance: 0.25
-    rightShoulderAccessoryChance: 0.25
-    leftForearmAccessoryChance: 0.25
-    rightForearmAccessoryChance: 0.25
-    leftHandAccessoryChance: 0.2
-    rightHandAccessoryChance: 0.2
-    leftUpperLegAccessoryChance: 0.25
-    rightUpperLegAccessoryChance: 0.25
-    leftCalfAccessoryChance: 0.2
-    rightCalfAccessoryChance: 0.2
-    leftFootAccessoryChance: 0.15
-    rightFootAccessoryChance: 0.15
-    backAccessoryChance: 0.5
+    leftShoulderAccessoryChance: 1
+    rightShoulderAccessoryChance: 1
+    leftForearmAccessoryChance: 1
+    rightForearmAccessoryChance: 1
+    leftHandAccessoryChance: 1
+    rightHandAccessoryChance: 1
+    leftUpperLegAccessoryChance: 1
+    rightUpperLegAccessoryChance: 1
+    leftCalfAccessoryChance: 1
+    rightCalfAccessoryChance: 1
+    leftFootAccessoryChance: 1
+    rightFootAccessoryChance: 1
+    backAccessoryChance: 1
   initializationContext: 0
   hasBeenInitialized: 0
   currentStamina: 100
@@ -3031,8 +3031,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   equippedWeaponScriptObj: {fileID: 0}
-  equippedWeaponBase: {fileID: 0}
   weaponHolder: {fileID: 7917017974883900754}
+  weaponAttack: {fileID: 488557007364499839}
   inventoryList: []
 --- !u!114 &593422880817215953
 MonoBehaviour:
@@ -3172,6 +3172,85 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b037ef5d5b05fc34db6532d811e9c5ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &488557007364499839
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2985604360754162274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf69c9a3bd862ed4e83fc904c17616a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attackDescription: 
+  minRange: 0
+  maxRange: 5
+  attackAngleThreshold: 30
+  minCooldown: 2
+  maxCooldown: 4
+  damage: 10
+  poiseDamage: 15
+  attackType: 0
+  attackOrigin: {fileID: 0}
+  allowRotationDuringAttack: 0
+  attackElement: 0
+  elementalDamageBonus: 0
+  startEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
+  startEffectDelay: 0
+  attackEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
+  attackEffectDelay: 0
+  hitEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
+  hitEffectDelay: 0
+  endEffect:
+    effectDefinition: {fileID: 0}
+    spawnPoint: {fileID: 0}
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    parentToTransform: 0
+    durationOverride: 0
+  endEffectDelay: 0
+  useAnimatorTiming: 1
+  attackTrigger: Attack
+  warningDelay: 0.3
+  attackDelay: 0.6
+  attackEndDelay: 1
+  attackEquipment: []
+  attackEffectObjects: []
+  lastAttackTime: 0
+  attackRadius: 1.5
+  targetLayer:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  buildingAttackRange: 5
+  weaponData: {fileID: 0}
+  weaponHolder: {fileID: 0}
+  weaponPositionOffset: {x: 0, y: 0, z: 0}
+  weaponRotationOffset: {x: 0, y: 0, z: 0}
+  hitboxDirection: 1
+  currentDamageMultiplier: 1
+  currentPoiseDamageMultiplier: 1
+  currentAttackSpeedMultiplier: 1
+  currentElementalDamageMultiplier: 1
 --- !u!1 &3087533824835336267
 GameObject:
   m_ObjectHideFlags: 0

@@ -119,11 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &147390759 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2985604360754162274, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
-  m_PrefabInstance: {fileID: 611666874}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &164481933
 GameObject:
   m_ObjectHideFlags: 0
@@ -661,17 +656,9 @@ PrefabInstance:
       propertyPath: appearanceSystem.rightUpperLegAccessoryChance
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 2254817619120094739, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
-      propertyPath: debugFootsteps
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 2985604360754162274, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
       propertyPath: m_Name
       value: Test_Character_Player_NPC
-      objectReference: {fileID: 0}
-    - target: {fileID: 2985604360754162274, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
-      propertyPath: m_IsActive
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4023079707919572210, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
       propertyPath: m_LocalPosition.x
@@ -718,105 +705,30 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 611666892}
     - target: {fileID: 8320294776751182447, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
-      propertyPath: equippedWeaponBase
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 8320294776751182447, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
       propertyPath: equippedWeaponScriptObj
       value: 
       objectReference: {fileID: 11400000, guid: 803ccc51f5b041e4a98af60cea5903d7, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 2985604360754162274, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 611666892}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
 --- !u!4 &611666875 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4023079707919572210, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
   m_PrefabInstance: {fileID: 611666874}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &611666892
+--- !u!114 &611666892 stripped
 MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 488557007364499839, guid: 1905ec17cae70e440a4d722be3469249, type: 3}
+  m_PrefabInstance: {fileID: 611666874}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 147390759}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cf69c9a3bd862ed4e83fc904c17616a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attackDescription: 
-  minRange: 0
-  maxRange: 5
-  attackAngleThreshold: 30
-  minCooldown: 2
-  maxCooldown: 4
-  damage: 10
-  poiseDamage: 15
-  attackType: 0
-  attackOrigin: {fileID: 0}
-  allowRotationDuringAttack: 0
-  attackElement: 0
-  elementalDamageBonus: 0
-  startEffect:
-    effectDefinition: {fileID: 0}
-    spawnPoint: {fileID: 0}
-    positionOffset: {x: 0, y: 0, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-    parentToTransform: 0
-    durationOverride: 0
-  startEffectDelay: 0
-  attackEffect:
-    effectDefinition: {fileID: 0}
-    spawnPoint: {fileID: 0}
-    positionOffset: {x: 0, y: 0, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-    parentToTransform: 0
-    durationOverride: 0
-  attackEffectDelay: 0
-  hitEffect:
-    effectDefinition: {fileID: 0}
-    spawnPoint: {fileID: 0}
-    positionOffset: {x: 0, y: 0, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-    parentToTransform: 0
-    durationOverride: 0
-  hitEffectDelay: 0
-  endEffect:
-    effectDefinition: {fileID: 0}
-    spawnPoint: {fileID: 0}
-    positionOffset: {x: 0, y: 0, z: 0}
-    rotationOffset: {x: 0, y: 0, z: 0}
-    parentToTransform: 0
-    durationOverride: 0
-  endEffectDelay: 0
-  useAnimatorTiming: 1
-  attackTrigger: Attack
-  warningDelay: 0.3
-  attackDelay: 0.6
-  attackEndDelay: 1
-  attackEquipment: []
-  attackEffectObjects: []
-  lastAttackTime: 0
-  attackRadius: 1.5
-  targetLayer:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  buildingAttackRange: 5
-  weaponData: {fileID: 0}
-  weaponHolder: {fileID: 0}
-  weaponPositionOffset: {x: 0, y: 0, z: 0}
-  weaponRotationOffset: {x: 0, y: 0, z: 0}
-  hitboxDirection: 1
-  currentDamageMultiplier: 1
-  currentPoiseDamageMultiplier: 1
-  currentAttackSpeedMultiplier: 1
-  currentElementalDamageMultiplier: 1
 --- !u!1 &697773649
 GameObject:
   m_ObjectHideFlags: 0

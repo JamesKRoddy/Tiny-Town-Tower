@@ -20,7 +20,7 @@ MonoBehaviour:
   isUnlocked: 1
   prefab: {fileID: 6242529188225862484, guid: 4be9664411af89841a88d59a92bc8d84, type: 3}
   animationType: 1
-  damage: 10
+  damage: 100
   poiseDamage: 5
   attackSpeed: 1
   weaponElement: 1
@@ -29,3 +29,6 @@ MonoBehaviour:
   possibleStatusEffects: 
   statusEffectChance: 0.1
   statusEffectDuration: 5
+  canDeflectProjectiles: 1
+  projectileDeflectionRange: 3
+  projectileDeflectionHeight: 2
