@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Managers;
+using Enemies;
 
 /// <summary>
 /// Specialized room parent for boss encounters.
@@ -44,6 +45,7 @@ public class BossRoomParent : RogueLiteRoomParent
     // Boss reference set by the building generation system
     private BossScriptableObj assignedBoss = null;
     private GameObject spawnedBossInstance = null;
+    private EnemyBase bossEnemyComponent = null;
     
     /// <summary>
     /// Set the boss that will spawn in this room
@@ -53,6 +55,17 @@ public class BossRoomParent : RogueLiteRoomParent
     {
         assignedBoss = boss;
         Debug.Log($"[BossRoomParent] Boss assigned: {(boss != null ? boss.bossName : "None")}");
+    }
+    
+    /// <summary>
+    /// Cleanup - unsubscribe from boss death event
+    /// </summary>
+    private void OnDestroy()
+    {
+        if (bossEnemyComponent != null)
+        {
+            bossEnemyComponent.OnDeath -= OnBossDefeated;
+        }
     }
     
     /// <summary>
@@ -161,6 +174,20 @@ public class BossRoomParent : RogueLiteRoomParent
         
         // Instantiate the boss
         spawnedBossInstance = Instantiate(assignedBoss.bossPrefab, spawnPosition, spawnRotation, transform);
+
+        spawnedBossInstance.AddComponent<BossHealthBarController>();
+        
+        // Subscribe to boss death event to unlock doors
+        bossEnemyComponent = spawnedBossInstance.GetComponent<EnemyBase>();
+        if (bossEnemyComponent != null)
+        {
+            bossEnemyComponent.OnDeath += OnBossDefeated;
+            Debug.Log($"[BossRoomParent] Subscribed to boss death event");
+        }
+        else
+        {
+            Debug.LogError($"[BossRoomParent] Boss prefab does not have EnemyBase component!");
+        }
         
         Debug.Log($"[BossRoomParent] ✓ Successfully spawned boss '{assignedBoss.bossName}' at position {spawnPosition}");
         
@@ -170,8 +197,25 @@ public class BossRoomParent : RogueLiteRoomParent
             PlayBossIntroduction();
         }
         
-        // Optional: Lock entrance doors until boss is defeated
+        // Lock entrance doors until boss is defeated
         LockEntranceDoors();
+    }
+    
+    /// <summary>
+    /// Called when the boss is defeated - unlocks doors and triggers victory state
+    /// </summary>
+    private void OnBossDefeated()
+    {
+        Debug.Log($"[BossRoomParent] Boss '{assignedBoss.bossName}' defeated!");
+        
+        // Unlock doors so player can progress
+        UnlockEntranceDoors();
+        
+        // Notify the roguelite system that the encounter is complete
+        if (RogueLiteManager.Instance != null)
+        {
+            RogueLiteManager.Instance.SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
+        }
     }
     
     /// <summary>
@@ -187,7 +231,7 @@ public class BossRoomParent : RogueLiteRoomParent
     
     /// <summary>
     /// Lock entrance doors so player can't leave during boss fight
-    /// Doors will unlock when boss is defeated (handled by enemy death events)
+    /// Doors will unlock when boss is defeated (handled by OnBossDefeated)
     /// </summary>
     private void LockEntranceDoors()
     {
@@ -200,6 +244,23 @@ public class BossRoomParent : RogueLiteRoomParent
                 door.doorType = DoorStatus.LOCKED;
                 // TODO: Add visual locked effect (chains, barrier, etc.)
                 Debug.Log($"[BossRoomParent] Locked entrance door for boss fight");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Unlock entrance doors after boss is defeated
+    /// </summary>
+    private void UnlockEntranceDoors()
+    {
+        var doors = GetComponentsInChildren<RogueLikeRoomDoor>();
+        foreach (var door in doors)
+        {
+            if (door.doorType == DoorStatus.LOCKED)
+            {
+                // Re-enable as entrance door
+                door.doorType = DoorStatus.ENTRANCE;
+                Debug.Log($"[BossRoomParent] Unlocked entrance door after boss defeat");
             }
         }
     }

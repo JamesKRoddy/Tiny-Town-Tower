@@ -711,11 +711,13 @@ GameObject:
   - component: {fileID: 4521413630554356895}
   - component: {fileID: 1642315922267150981}
   - component: {fileID: 865813623137836336}
+  - component: {fileID: 2674989063355818921}
   - component: {fileID: 4943562179298723733}
   - component: {fileID: 7853458022586684219}
   - component: {fileID: 6150023108025577922}
   - component: {fileID: 2700677688428301997}
   - component: {fileID: 6988115495219620664}
+  - component: {fileID: -459824348483483636}
   m_Layer: 8
   m_Name: Boss_Zombie_Brawler
   m_TagString: Enemy
@@ -786,6 +788,29 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!136 &2674989063355818921
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3498937984024521076}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Height: 1.82
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.97, z: 0}
 --- !u!114 &4943562179298723733
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -876,7 +901,7 @@ MonoBehaviour:
     spawnPoint: {fileID: 8384904350946220507}
     positionOffset: {x: 0, y: 0, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
-    parentToTransform: 0
+    parentToTransform: 1
     durationOverride: 0
   startEffectDelay: 0
   attackEffect:
@@ -1055,6 +1080,18 @@ MonoBehaviour:
   predictionFactor: 0.5
   finalJumpLockPercentage: 0.1
   jumpRotationSpeed: 360
+--- !u!114 &-459824348483483636
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3498937984024521076}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9a41e21f2e181f459d4c0697cf2f6a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &3544621238500329224
 GameObject:
   m_ObjectHideFlags: 0

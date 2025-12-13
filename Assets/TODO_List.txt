@@ -1,5 +1,10 @@
 *****Current Work*****
 
+Boss rooms:
+
+Bosses health bar has to show up
+Make sure we can damage the boss and add in knockback from poise damage
+Make sure when the boss dies we get back to the overworld after exiting the boss room
 
 
 TODO:
@@ -7,8 +12,6 @@ TODO:
 Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones. 
 
 Mutants! Characters in the PolygonApocalypseWasteland, light mutant, heavy mutant (use an animator variant)
-
-Setup a massive boss like the hydra in hades
 
 ****** Tomorrow work:
 
@@ -88,6 +91,7 @@ Finalise the difficulty system making enemies faster, more damage, more health, 
 
 Story
 Are you looking after the npcs or are you really using them to gain some sort of directive, the idea of whos really in control?
+Find gate decryption keys that can be decrypted at the base to open dorrs around the overworld. These open new areas and short cuts
 
 Enemies
 Slower animations for injured enemies
@@ -95,6 +99,9 @@ Enemies throw other enemies at the player
 Occationally enemies with really low health will try to flee from the player
 Ghost enemies that you need to destroy a machine in order to damage them
 Gimic boss fights based around some feature like eg. breaking pipes that buff the enemy or something
+Boss spawner that spawns in enemies to help it fight
+Setup a massive boss like the hydra in hades
+Mine traps that explode on the player or enemies walking over them
 
 Mutations
 One that shows enemies life bars
@@ -120,6 +127,7 @@ Implement water and thirst mechanics, water buildings etc.
 
 Weapons:
 All weapons should have versions from lvl 1 to 5 all originating from the same scriptable obj
+A skateboard
 
 NPC Characteristics
 Strong back-able to carry more resources and higher inventory
