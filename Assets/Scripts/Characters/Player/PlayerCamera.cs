@@ -155,18 +155,21 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
         if (target == null)
             return;
 
+        // FIXED ISOMETRIC ROTATION - never changes, always consistent for input calculations
+        // This ensures transform.eulerAngles.y is ALWAYS the same value (cameraYAngle)
+        transform.rotation = Quaternion.Euler(45f, cameraYAngle, 0f);
+
         // Calculate the rotated offset based on the camera Y angle
         Quaternion yRotation = Quaternion.Euler(0, cameraYAngle, 0);
         Vector3 rotatedOffset = yRotation * offset;
         
-        // Smoothly interpolate the camera's position to the target position + rotated offset
+        // OPTION 1: Instant follow (best for input consistency)
         Vector3 targetPosition = target.position + rotatedOffset;
-        transform.position = Vector3.Lerp(transform.position, targetPosition, followSpeed * Time.deltaTime);
-
-        // Make the camera look at the target
-        Vector3 lookDirection = target.position - transform.position;
-        Quaternion targetRotation = Quaternion.LookRotation(lookDirection);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        transform.position = targetPosition;
+        
+        // OPTION 2: Very fast lerp (smooth but still responsive) - UNCOMMENT if you want slight smoothing
+        // Vector3 targetPosition = target.position + rotatedOffset;
+        // transform.position = Vector3.Lerp(transform.position, targetPosition, 20f * Time.deltaTime);
     }
 
     private void HandleCameraPanning()
@@ -199,26 +202,62 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
     }
 
     /// <summary>
-    /// Transforms input coordinates to world coordinates accounting for camera angle
+    /// ===== REBUILT INPUT SYSTEM =====
+    /// Convert 2D stick input to 3D world movement.
+    /// 
+    /// THE PROBLEM:
+    /// Controllers give inconsistent magnitude (0.81-1.06) around the edge due to hardware variance.
+    /// 
+    /// THE FIX (Hades-style):
+    /// If stick magnitude > 0.85, treat it as FULL EXTENSION (1.0) in that direction.
+    /// This gives consistent full-speed movement regardless of controller variance.
+    /// </summary>
+    public Vector3 ConvertStickInputToWorldMovement(Vector2 stickInput)
+    {
+        // STEP 1: Handle stick magnitude variance (Hades-style)
+        float inputMagnitude = stickInput.magnitude;
+        
+        if (inputMagnitude < 0.01f)
+        {
+            return Vector3.zero; // No input
+        }
+        
+        // If stick is pushed past 75%, treat it as full extension
+        // This compensates for controller hardware variance (some angles give 0.82, some give 1.06)
+        // Threshold at 0.75 catches even badly-calibrated controllers at diagonals
+        float normalizedMagnitude = inputMagnitude;
+        if (inputMagnitude > 0.75f)
+        {
+            normalizedMagnitude = 1.0f; // Snap to full speed
+        }
+        else if (inputMagnitude < 0.2f)
+        {
+            return Vector3.zero; // Dead zone
+        }
+        else
+        {
+            // Remap [0.2, 0.75] → [0, 1.0] for smooth acceleration
+            normalizedMagnitude = (inputMagnitude - 0.2f) / (0.75f - 0.2f);
+        }
+        
+        // STEP 2: Rotate input by camera's Y-axis only (ignore camera pitch)
+        Vector2 normalizedStick = stickInput.normalized;
+        Vector3 input3D = new Vector3(normalizedStick.x, 0, normalizedStick.y);
+        
+        float cameraYaw = transform.eulerAngles.y;
+        Quaternion yawRotation = Quaternion.Euler(0, cameraYaw, 0);
+        Vector3 worldDirection = yawRotation * input3D;
+        
+        // STEP 3: Apply the normalized magnitude
+        return worldDirection * normalizedMagnitude;
+    }
+    
+    /// <summary>
+    /// Legacy method for camera panning
     /// </summary>
     public Vector3 TransformInputToWorldCoordinates(Vector3 inputVector)
     {
-        // Get the camera's forward and right directions relative to the ground plane
-        Vector3 cameraForward = transform.forward;
-        Vector3 cameraRight = transform.right;
-        
-        // Project these directions onto the ground plane (Y = 0)
-        cameraForward.y = 0;
-        cameraRight.y = 0;
-        cameraForward.Normalize();
-        cameraRight.Normalize();
-        
-        // Transform the input: 
-        // - inputVector.z (forward/back on stick) maps to camera forward direction
-        // - inputVector.x (left/right on stick) maps to camera right direction
-        Vector3 transformedInput = cameraRight * inputVector.x + cameraForward * inputVector.z;
-        
-        return transformedInput;
+        return ConvertStickInputToWorldMovement(new Vector2(inputVector.x, inputVector.z));
     }
 
     // Method to get the work detection point's position

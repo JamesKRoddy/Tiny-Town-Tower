@@ -300,14 +300,19 @@ public class PlayerController : MonoBehaviour, IControllerInput
         PlayerUIManager.Instance.pauseMenu.OpenMenu();
     }
 
+    /// <summary>
+    /// REBUILT INPUT SYSTEM - Simple and clean
+    /// 1. Get raw 2D stick input (x, y)
+    /// 2. Convert to 3D world space accounting for camera rotation
+    /// 3. Send to character
+    /// </summary>
     private void HandleLeftJoystick(Vector2 input)
     {
         if(_possessedNPC != null && PlayerInput.Instance.CurrentControlType != PlayerControlType.IN_CONVERSATION)
         {
-            // Transform input coordinates to account for camera angle
-            Vector3 rawInput = new Vector3(input.x, 0, input.y);
-            Vector3 transformedInput = playerCamera.TransformInputToWorldCoordinates(rawInput);
-            _possessedNPC.Movement(transformedInput);
+            // Convert 2D stick input to 3D world movement
+            Vector3 worldMovement = playerCamera.ConvertStickInputToWorldMovement(input);
+            _possessedNPC.Movement(worldMovement);
         }
     }
 

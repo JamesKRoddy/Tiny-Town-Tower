@@ -1592,7 +1592,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 return;
             }
             
-            float inputMagnitude = movementInput.magnitude;
+            // ===== REBUILT MOVEMENT SYSTEM =====
+            // movementInput already contains BOTH direction AND magnitude from camera transform
+            // Don't separate them - just use the vector as-is!
+            
             float baseSpeed = isDashing ? dashSpeed : moveMaxSpeed;
             
             // Reduce movement speed when falling due to gravity
@@ -1701,12 +1704,14 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             else
             {
                 // Regular movement behavior when not dashing
-                Vector3 targetMovement = movementInput.normalized * speed * inputMagnitude * Time.deltaTime;
+                // movementInput contains direction AND magnitude - just scale by speed!
+                Vector3 targetMovement = movementInput * speed * Time.deltaTime;
 
                 // Enhanced obstacle detection for automatic navigation
-                if (autoNavigateObstacles && inputMagnitude > 0.1f)
+                if (autoNavigateObstacles && movementInput.magnitude > 0.1f)
                 {
-                    ObstacleType obstacleType = AnalyzeObstacle(movementInput.normalized, out RaycastHit obstacleInfo);
+                    Vector3 moveDirection = movementInput.normalized;
+                    ObstacleType obstacleType = AnalyzeObstacle(moveDirection, out RaycastHit obstacleInfo);
                     
                     switch (obstacleType)
                     {
@@ -1719,7 +1724,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                             if (Time.time > vaultCooldownTime)
                             {
                                 currentVaultType = obstacleType; // Store vault type for animation
-                                CalculateVaultTargetEnhanced(obstacleInfo, movementInput.normalized);
+                                CalculateVaultTargetEnhanced(obstacleInfo, moveDirection);
                                 
                                 if (isVaultTargetSafe)
                                 {
@@ -1729,7 +1734,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                                 else
                                 {
                                     // Vault is unsafe, check if we can climb instead
-                                    float obstacleHeight = AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point);
+                                    float obstacleHeight = AnalyzeObstacleHeight(moveDirection, obstacleInfo.point);
                                     
                                     if (obstacleHeight <= maxClimbHeight)
                                     {
@@ -1760,10 +1765,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                             // Implement rolling under animation for lower obstacles
                             if (Time.time > vaultCooldownTime)
                             {
-                                if (AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point) <= maxVaultHeight)
+                                if (AnalyzeObstacleHeight(moveDirection, obstacleInfo.point) <= maxVaultHeight)
                                 {
                                     currentVaultType = obstacleType; // Store vault type for animation
-                                    CalculateVaultTargetEnhanced(obstacleInfo, movementInput.normalized);
+                                    CalculateVaultTargetEnhanced(obstacleInfo, moveDirection);
                                     
                                     if (isVaultTargetSafe)
                                     {
@@ -1788,7 +1793,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                             // Wall that can be climbed - automatically start climbing
                             if (Time.time > climbCooldownTime)
                             {
-                                float obstacleHeight = AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point);
+                                float obstacleHeight = AnalyzeObstacleHeight(moveDirection, obstacleInfo.point);
                                 CalculateClimbTarget(obstacleInfo, obstacleHeight);
                                 StartClimb();
                                 return; // Exit early since we're now climbing
@@ -1812,7 +1817,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                             
                         case ObstacleType.Pushable:
                             // Handle pushing logic
-                            HandlePushing(obstacleInfo, movementInput.normalized, ref targetMovement);
+                            HandlePushing(obstacleInfo, moveDirection, ref targetMovement);
                             break;
                             
                         case ObstacleType.None:
@@ -2016,23 +2021,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     protected void UpdateAnimations()
     {
-        // Use input magnitude for animation speed to prevent dips during direction changes
-        // The analog stick position reflects player intent better than actual velocity
-        float inputMagnitude = movementInput.magnitude;
+        // REBUILT: Simple animation speed based on input magnitude
+        float inputMagnitude = Mathf.Clamp01(movementInput.magnitude);
         
-        // Snap to zero when input is negligible to prevent lingering tiny values from damping
-        // This ensures footstep VFX stop immediately when the player releases the stick
-        if (inputMagnitude < 0.01f)
-        {
-            animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, 0f);
-        }
-        else
-        {
-            // Dampen the speed value for smoother blend tree transitions when moving
-            // dampTime controls how quickly the value reaches its target (lower = faster response)
-            float dampTime = 0.1f;
-            animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, inputMagnitude, dampTime, Time.deltaTime);
-        }
+        // Set animator speed directly - NO damping for instant response (Hades-style)
+        animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, inputMagnitude);
     }
 
     public virtual void PlayWorkAnimation(string animationName)

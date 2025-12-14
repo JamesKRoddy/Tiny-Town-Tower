@@ -2,10 +2,7 @@
 
 Boss rooms:
 
-Bosses health bar has to show up
-Make sure we can damage the boss and add in knockback from poise damage
 Make sure when the boss dies we get back to the overworld after exiting the boss room
-
 
 TODO:
 
