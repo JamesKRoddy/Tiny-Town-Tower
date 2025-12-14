@@ -230,7 +230,7 @@ public class BossRoomParent : RogueLiteRoomParent
     }
     
     /// <summary>
-    /// Lock entrance doors so player can't leave during boss fight
+    /// Lock all doors so player can't leave during boss fight
     /// Doors will unlock when boss is defeated (handled by OnBossDefeated)
     /// </summary>
     private void LockEntranceDoors()
@@ -238,18 +238,14 @@ public class BossRoomParent : RogueLiteRoomParent
         var doors = GetComponentsInChildren<RogueLikeRoomDoor>();
         foreach (var door in doors)
         {
-            if (door.doorType == DoorStatus.ENTRANCE)
-            {
-                // Set door to locked status - prevents player from leaving during boss fight
-                door.doorType = DoorStatus.LOCKED;
-                // TODO: Add visual locked effect (chains, barrier, etc.)
-                Debug.Log($"[BossRoomParent] Locked entrance door for boss fight");
-            }
+            // Lock all doors during boss fight
+            door.doorType = DoorStatus.LOCKED;
+            Debug.Log($"[BossRoomParent] Locked door for boss fight");
         }
     }
     
     /// <summary>
-    /// Unlock entrance doors after boss is defeated
+    /// Unlock doors after boss is defeated - player can now return to camp
     /// </summary>
     private void UnlockEntranceDoors()
     {
@@ -258,9 +254,10 @@ public class BossRoomParent : RogueLiteRoomParent
         {
             if (door.doorType == DoorStatus.LOCKED)
             {
-                // Re-enable as entrance door
-                door.doorType = DoorStatus.ENTRANCE;
-                Debug.Log($"[BossRoomParent] Unlocked entrance door after boss defeat");
+                // Unlock door and set it to exit to overworld/camp
+                door.doorType = DoorStatus.UNLOCKED;
+                door.SetExitToOverworld(true);
+                Debug.Log($"[BossRoomParent] Unlocked door - now exits to overworld after boss defeat");
             }
         }
     }

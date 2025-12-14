@@ -1415,38 +1415,31 @@ public class RogueLiteRoomParent : MonoBehaviour
             invalidDoors.Clear();
         }
 
-        // Assign a random door from valid doors as the EXIT (entrance from previous room)
-        int exitIndex = Random.Range(0, validDoors.Count);
-        playerSpawnPoint = validDoors[exitIndex].playerSpawn;
-        validDoors[exitIndex].doorType = DoorStatus.EXIT;
+        // Assign a random door as the player spawn door (locked - can't go back)
+        int spawnDoorIndex = Random.Range(0, validDoors.Count);
+        playerSpawnPoint = validDoors[spawnDoorIndex].playerSpawn;
+        validDoors[spawnDoorIndex].doorType = DoorStatus.LOCKED;
+        validDoors[spawnDoorIndex].SetAsSpawnDoor(true); // Mark as spawn door - stays locked forever
 
-        // Store the exit door for potential connections
-        RogueLikeRoomDoor exitDoor = validDoors[exitIndex];
-        validDoors.RemoveAt(exitIndex);
+        // Store the spawn door
+        RogueLikeRoomDoor spawnDoor = validDoors[spawnDoorIndex];
+        validDoors.RemoveAt(spawnDoorIndex);
 
-        // Select 1-3 doors to be ENTRANCE doors (from remaining valid doors)
-        // Ensure we have at least 1 entrance door
-        int entranceDoorsCount = Mathf.Clamp(Random.Range(1, 4), 1, Mathf.Max(1, validDoors.Count));
+        // Select 1-3 doors to be progression doors (initially locked, unlock when waves cleared)
+        // These doors will be assigned target rooms by the building manager when player enters them
+        int progressionDoorsCount = Mathf.Clamp(Random.Range(1, 4), 1, Mathf.Max(1, validDoors.Count));
 
-        for (int i = 0; i < entranceDoorsCount; i++)
+        for (int i = 0; i < progressionDoorsCount; i++)
         {
             if (validDoors.Count == 0) break; // Safety check
 
             int randomIndex = Random.Range(0, validDoors.Count);
-            validDoors[randomIndex].doorType = DoorStatus.ENTRANCE;
+            // Start as LOCKED (will unlock when waves clear since isSpawnDoor = false)
+            validDoors[randomIndex].doorType = DoorStatus.LOCKED;
+            validDoors[randomIndex].SetAsSpawnDoor(false); // Not spawn door - will unlock after waves clear
             
-            // Connect this entrance door to the exit door
-            if (exitDoor != null)
-            {
-                // Forward connection: entrance door -> previous room
-                validDoors[randomIndex].targetRoom = exitDoor.GetComponentInParent<RogueLiteRoomParent>();
-                validDoors[randomIndex].targetSpawnPoint = exitDoor.playerSpawn;
-
-                // Backward connection: exit door -> this room
-                exitDoor.targetRoom = this;
-                exitDoor.targetSpawnPoint = validDoors[randomIndex].playerSpawn;
-            }
-
+            // targetRoom will be set by RogueLikeBuildingManager when player enters this door
+            
             validDoors.RemoveAt(randomIndex);
         }
 

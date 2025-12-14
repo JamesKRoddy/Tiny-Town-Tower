@@ -4,8 +4,17 @@ using Managers;
 public class RogueLikeRoomDoor : RogueLiteDoor
 {
     [Header("Target Room")]
+    [Tooltip("The NEXT room this door leads to (forward progression only, no backtracking)")]
     public RogueLiteRoomParent targetRoom;
+    [Tooltip("Where the player spawns in the target room")]
     public Transform targetSpawnPoint;
+    
+    [Header("Door Behavior")]
+    [Tooltip("If true, this door exits to the overworld/camp instead of entering a new room")]
+    [SerializeField] private bool exitToOverworld = false;
+    
+    [Tooltip("If true, this is the door the player entered from - stays locked to prevent backtracking")]
+    [SerializeField] private bool isSpawnDoor = false;
 
     [Header("Spawn Validation")]
     [Tooltip("Radius to check for obstacles at spawn point")]
@@ -44,11 +53,34 @@ public class RogueLikeRoomDoor : RogueLiteDoor
     {
         parentRoom = room;
     }
+    
+    /// <summary>
+    /// Set whether this door exits to the overworld when used
+    /// </summary>
+    public void SetExitToOverworld(bool shouldExit)
+    {
+        exitToOverworld = shouldExit;
+    }
+    
+    /// <summary>
+    /// Mark this door as the spawn door (where player entered from) - stays locked to prevent backtracking
+    /// </summary>
+    public void SetAsSpawnDoor(bool isSpawn)
+    {
+        isSpawnDoor = isSpawn;
+    }
 
     private void OnEnemySetupStateChanged(EnemySetupState state)
     {
         if(state == EnemySetupState.ALL_WAVES_CLEARED)
         {
+            // Unlock all locked doors EXCEPT the spawn door (prevents backtracking)
+            if (doorType == DoorStatus.LOCKED && !isSpawnDoor)
+            {
+                doorType = DoorStatus.UNLOCKED;
+                isLocked = false; // Update the cached locked state!
+                Debug.Log($"[RogueLikeRoomDoor] Unlocked progression door '{gameObject.name}' after clearing waves");
+            }
             ShowDoorEffects();
         }
         else
@@ -59,16 +91,26 @@ public class RogueLikeRoomDoor : RogueLiteDoor
 
     public override void OnDoorEntered()
     {
-        if (isLocked) 
+        // Only allow interaction if door is unlocked
+        if (doorType == DoorStatus.LOCKED) 
         {
+            Debug.Log($"[RogueLikeRoomDoor] Door '{gameObject.name}' is locked - cannot enter");
             return;
         }
 
-        if (doorType == DoorStatus.ENTRANCE)
+        Debug.Log($"[RogueLikeRoomDoor] Entering door '{gameObject.name}' (exitToOverworld: {exitToOverworld})");
+
+        // Check if this door should exit to overworld (boss room completion, etc.)
+        if (exitToOverworld)
         {
+            // Return to camp/overworld with inventory
+            RogueLiteManager.Instance.ReturnToCamp(true);
+        }
+        else
+        {
+            // Enter the next room
             RogueLiteManager.Instance.EnterRoomWithTransition(this);
         }
-        // EXIT doors are locked - no return to previous room functionality
     }
 
     public override bool CanInteract()
@@ -76,24 +118,21 @@ public class RogueLikeRoomDoor : RogueLiteDoor
         EnemySetupState currentState = RogueLiteManager.Instance.GetEnemySetupState();
         bool wavesCleared = currentState == EnemySetupState.ALL_WAVES_CLEARED;
         bool baseCanInteract = base.CanInteract();
-        bool notExitDoor = doorType != DoorStatus.EXIT;
+        bool doorUnlocked = doorType == DoorStatus.UNLOCKED;
         
-        return wavesCleared && baseCanInteract && notExitDoor;
+        // Door can be used when waves are cleared AND door is unlocked
+        return wavesCleared && baseCanInteract && doorUnlocked;
     }
 
     public override string GetInteractionText()
     {
-        switch (doorType)
+        if (doorType == DoorStatus.LOCKED)
         {
-            case DoorStatus.LOCKED:
-                return "Door Locked";
-            case DoorStatus.ENTRANCE:
-                return "Enter Room";
-            case DoorStatus.EXIT:
-                return "Exit Locked";
-            default:
-                return "INVALID";
+            return "Door Locked";
         }
+        
+        // Unlocked doors show different text based on their purpose
+        return exitToOverworld ? "Return to Camp" : "Enter Room";
     }
 
     /// <summary>

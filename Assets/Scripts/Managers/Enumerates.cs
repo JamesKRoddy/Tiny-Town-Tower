@@ -244,9 +244,8 @@ public enum WallType
 
 public enum DoorStatus
 {
-    LOCKED, //Door is locked unable to pass through
-    ENTRANCE, //Door opens, the player can paass through when the level is cleared
-    EXIT //Door the player spawns infront of, moves back to previous room
+    LOCKED,   // Door is locked, cannot pass through
+    UNLOCKED  // Door is unlocked, can pass through to next room or exit
 }
 
 // =========================

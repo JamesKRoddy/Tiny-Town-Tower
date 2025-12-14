@@ -357,6 +357,11 @@ public class PlayerInventory : CharacterInventory, IControllerInput
                     Debug.Log($"[PlayerInventory] Unpossessed player from {settler.name} and assigned work task {workTask.GetType().Name}");
                 }
                 break;
+            case RogueLiteDoor door:
+                // Doors handle their own logic in OnDoorEntered() which is called by Interact()
+                // No additional handling needed here
+                Debug.Log($"[PlayerInventory] Door interaction handled: {door.gameObject.name}");
+                break;
             default:
                 Debug.Log($"<color=red> Unhandled interaction</color> result type: {result.GetType().Name}");
                 break;

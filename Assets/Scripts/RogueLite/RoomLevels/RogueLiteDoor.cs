@@ -35,19 +35,8 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
     // Draw a gizmo arrow to show the door's local forward direction
     private void OnDrawGizmos()
     {
-        // Set the color based on the door type
-        switch (doorType)
-        {
-            case DoorStatus.ENTRANCE:
-                Gizmos.color = Color.green;
-                break;
-            case DoorStatus.EXIT:
-                Gizmos.color = Color.blue;
-                break;
-            case DoorStatus.LOCKED:
-                Gizmos.color = Color.red;
-                break;
-        }
+        // Set color: Red for locked, Green for unlocked
+        Gizmos.color = (doorType == DoorStatus.LOCKED) ? Color.red : Color.green;
 
         // Draw an arrow indicating the forward direction
         Vector3 forward = transform.forward * 2f; // Adjust arrow length
@@ -71,39 +60,24 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
 
     public virtual bool CanInteract()
     {
-        switch (doorType)
-        {
-            case DoorStatus.LOCKED:
-                return false;
-            case DoorStatus.ENTRANCE:
-                return true;
-            case DoorStatus.EXIT:
-                return true;
-            default:
-                return false;
-        }
+        return doorType == DoorStatus.UNLOCKED;
     }
 
     public virtual string GetInteractionText()
     {
-        switch (doorType)
-        {
-            case DoorStatus.LOCKED:
-                return "Door Locked";
-            case DoorStatus.ENTRANCE:
-                return "Enter";
-            case DoorStatus.EXIT:
-                return "Exit";
-            default:
-                return "INVALID";
-        }
+        return doorType == DoorStatus.LOCKED ? "Door Locked" : "Open Door";
     }
 
     protected virtual void ShowDoorEffects()
     {
-        if (lockedDoorEffect != null) lockedDoorEffect.SetActive(doorType == DoorStatus.LOCKED);
-        if (nextRoomDoorEffect != null) nextRoomDoorEffect.SetActive(doorType == DoorStatus.ENTRANCE);
-        if (previousRoomDoorEffect != null) previousRoomDoorEffect.SetActive(doorType == DoorStatus.EXIT);
+        bool isLocked = doorType == DoorStatus.LOCKED;
+        bool isUnlocked = doorType == DoorStatus.UNLOCKED;
+        
+        if (lockedDoorEffect != null) lockedDoorEffect.SetActive(isLocked);
+        if (nextRoomDoorEffect != null) nextRoomDoorEffect.SetActive(isUnlocked);
+        
+        // previousRoomDoorEffect is deprecated (no longer used)
+        if (previousRoomDoorEffect != null) previousRoomDoorEffect.SetActive(false);
     }
 
     protected virtual void HideDoorEffects()
