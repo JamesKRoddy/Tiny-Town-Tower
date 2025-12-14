@@ -105,7 +105,6 @@ public class SettlerNPCEditor : HumanCharacterControllerEditor
         
         // Movement & Navigation
         DrawColoredSection("🏃 Movement & Navigation", () => {
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("attackRotationSpeed"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("dashDuration"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("vaultDuration"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("vaultCooldown"));

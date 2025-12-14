@@ -1615,11 +1615,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 // OnAnimatorMove() handles ALL movement (including gravity) when root motion is enabled
                 // We do NOTHING with movement here - only allow rotation
                 
-                // Allow rotation for attack aiming
-                if (movementInput != Vector3.zero)
+                // Allow rotation for attack aiming (use normalized direction)
+                if (movementInput.sqrMagnitude > 0.01f)
                 {
-                    Quaternion targetRotation = Quaternion.LookRotation(movementInput);
-                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
+                    Vector3 rotationDirection = movementInput.normalized;
+                    Quaternion targetRotation = Quaternion.LookRotation(rotationDirection);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
                 }
                 
                 return; // Skip all movement logic - OnAnimatorMove() handles movement
@@ -1634,11 +1635,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 ApplyGravityMovement(ref gravityMovement);
                 characterController.Move(gravityMovement);
                 
-                // Allow rotation to maintain control feel
-                if (movementInput != Vector3.zero)
+                // Allow rotation to maintain control feel (use normalized direction)
+                if (movementInput.sqrMagnitude > 0.01f)
                 {
-                    Quaternion targetRotation = Quaternion.LookRotation(movementInput);
-                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
+                    Vector3 rotationDirection = movementInput.normalized;
+                    Quaternion targetRotation = Quaternion.LookRotation(rotationDirection);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
                 }
                 
                 return; // Skip all movement logic - damaged state prevents movement
@@ -1696,9 +1698,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                     // Use CharacterController.Move() for proper collision handling
                     characterController.Move(targetMovement);
 
-                    // Rotate player towards the current direction
-                    Quaternion targetRotation = Quaternion.LookRotation(currentDirection);
-                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
+                    // Rotate player towards the current direction (use normalized)
+                    Vector3 rotationDirection = currentDirection.normalized;
+                    Quaternion targetRotation = Quaternion.LookRotation(rotationDirection);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
                 }
             }
             else
@@ -1835,11 +1838,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 // Use CharacterController.Move() for automatic collision handling
                 characterController.Move(targetMovement);
 
-                // Rotate player towards the input direction
-                if (movementInput != Vector3.zero && !isVaulting)
+                // Rotate player towards the input direction (use NORMALIZED direction to avoid snapping from magnitude changes)
+                if (movementInput.sqrMagnitude > 0.01f && !isVaulting)
                 {
-                    Quaternion targetRotation = Quaternion.LookRotation(movementInput);
-                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
+                    Vector3 rotationDirection = movementInput.normalized; // Pure direction, ignore magnitude
+                    Quaternion targetRotation = Quaternion.LookRotation(rotationDirection);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
                 }
             }
         } // End of else if (!isClimbing) block
