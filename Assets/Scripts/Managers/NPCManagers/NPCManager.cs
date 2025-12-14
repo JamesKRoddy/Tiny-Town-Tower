@@ -115,16 +115,25 @@ namespace Managers
                 CampManager.Instance.RemoveNPC(npc, isDead);
                 OnNPCCountChanged?.Invoke(TotalNPCs);
                 
-                // Check if all NPCs are lost
+                // Check if all NPCs are lost (but NOT during scene transitions!)
                 if (TotalNPCs == 0)
                 {
                     Debug.LogWarning("[NPCManager] All NPCs have been lost!");
                     OnAllNPCsLost?.Invoke();
                     
-                    // Trigger game restart if GameStartManager exists
-                    if (GameStartManager.Instance != null)
+                    // Don't trigger restart during scene transitions - NPCs will be loaded from save
+                    GameMode currentGameMode = GameManager.Instance != null ? GameManager.Instance.CurrentGameMode : GameMode.NONE;
+                    bool isTransitioning = PlayerInput.Instance != null && 
+                                          PlayerInput.Instance.CurrentControlType == PlayerControlType.TRANSITION;
+                    
+                    if (GameStartManager.Instance != null && !isTransitioning && currentGameMode == GameMode.CAMP)
                     {
+                        Debug.Log("[NPCManager] Triggering game restart (not in transition, in camp mode)");
                         GameStartManager.Instance.TriggerGameRestart();
+                    }
+                    else
+                    {
+                        Debug.Log("[NPCManager] Skipping restart trigger - in transition or loading");
                     }
                 }
             }

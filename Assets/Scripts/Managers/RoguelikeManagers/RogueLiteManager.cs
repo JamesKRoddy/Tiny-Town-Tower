@@ -117,9 +117,15 @@ namespace Managers
             transitionCoroutine = StartCoroutine(EnterRoomSequence(door));
         }
 
+        /// <summary>
+        /// Return directly to camp (used by death menu, etc.)
+        /// For normal building/boss completion, use ExitedBuilding() instead
+        /// </summary>
         public void ReturnToCamp(bool keepInventory)
         {
-            if(keepInventory)
+            Debug.Log($"[RogueLiteManager] ReturnToCamp called (keepInventory: {keepInventory})");
+            
+            if(keepInventory && PlayerController.Instance != null)
             {
                 var npcInventory = PlayerController.Instance.GetCharacterInventory().GetFullInventory();
                 PlayerInventory.Instance.AddItem(npcInventory);
@@ -137,6 +143,15 @@ namespace Managers
                     }
                 }
             }
+            
+            // CRITICAL: Unpossess the roguelite NPC BEFORE scene transition
+            // This prevents the "all NPCs lost" check from triggering when the NPC is destroyed
+            if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null)
+            {
+                Debug.Log($"[RogueLiteManager] Unpossessing NPC before returning to camp");
+                PlayerController.Instance.PossessNPC(null);
+            }
+            
             SceneTransitionManager.Instance.LoadScene(SceneNames.CampScene, GameMode.CAMP, false);
         }
 

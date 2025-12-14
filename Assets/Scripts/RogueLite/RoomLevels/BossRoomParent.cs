@@ -245,7 +245,7 @@ public class BossRoomParent : RogueLiteRoomParent
     }
     
     /// <summary>
-    /// Unlock doors after boss is defeated - player can now return to camp
+    /// Unlock doors after boss is defeated - player can now exit to overworld
     /// </summary>
     private void UnlockEntranceDoors()
     {
@@ -254,10 +254,10 @@ public class BossRoomParent : RogueLiteRoomParent
         {
             if (door.doorType == DoorStatus.LOCKED)
             {
-                // Unlock door and set it to exit to overworld/camp
+                // Unlock door and set it to exit to overworld (like finishing a building)
                 door.doorType = DoorStatus.UNLOCKED;
                 door.SetExitToOverworld(true);
-                Debug.Log($"[BossRoomParent] Unlocked door - now exits to overworld after boss defeat");
+                Debug.Log($"[BossRoomParent] Unlocked door - now exits to overworld (boss defeated)");
             }
         }
     }

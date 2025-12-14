@@ -100,11 +100,12 @@ public class RogueLikeRoomDoor : RogueLiteDoor
 
         Debug.Log($"[RogueLikeRoomDoor] Entering door '{gameObject.name}' (exitToOverworld: {exitToOverworld})");
 
-        // Check if this door should exit to overworld (boss room completion, etc.)
+        // Check if this door should exit to overworld (boss room completion, building end, etc.)
         if (exitToOverworld)
         {
-            // Return to camp/overworld with inventory
-            RogueLiteManager.Instance.ReturnToCamp(true);
+            // Exit to overworld (like finishing a building)
+            // Player keeps their NPC and inventory - still in ROGUE_LITE mode
+            RogueLiteManager.Instance.OverworldManager.ExitedBuilding();
         }
         else
         {
@@ -132,7 +133,7 @@ public class RogueLikeRoomDoor : RogueLiteDoor
         }
         
         // Unlocked doors show different text based on their purpose
-        return exitToOverworld ? "Return to Camp" : "Enter Room";
+        return exitToOverworld ? "Exit to Overworld" : "Enter Room";
     }
 
     /// <summary>
