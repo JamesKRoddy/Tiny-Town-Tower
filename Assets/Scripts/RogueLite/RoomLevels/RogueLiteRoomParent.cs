@@ -1434,19 +1434,22 @@ public class RogueLiteRoomParent : MonoBehaviour
             if (validDoors.Count == 0) break; // Safety check
 
             int randomIndex = Random.Range(0, validDoors.Count);
-            // Start as LOCKED (will unlock when waves clear since isSpawnDoor = false)
+            // Start as LOCKED (will unlock when waves clear)
             validDoors[randomIndex].doorType = DoorStatus.LOCKED;
-            validDoors[randomIndex].SetAsSpawnDoor(false); // Not spawn door - will unlock after waves clear
-            
+            validDoors[randomIndex].SetAsSpawnDoor(false); // Not spawn door
+            validDoors[randomIndex].SetAsProgressionDoor(true); // THIS door unlocks after waves clear
+
             // targetRoom will be set by RogueLikeBuildingManager when player enters this door
-            
+
             validDoors.RemoveAt(randomIndex);
         }
 
         // Set remaining valid doors as LOCKED and optionally deactivate them
+        // These are NOT progression doors - they won't unlock after waves
         foreach (var door in validDoors)
         {
             door.doorType = DoorStatus.LOCKED;
+            door.SetAsProgressionDoor(false); // NOT a progression door - stays locked
             
             // 75% chance to deactivate locked doors
             if (Random.Range(0f, 1f) < 0.75f)

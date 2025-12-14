@@ -15,6 +15,9 @@ public class RogueLikeRoomDoor : RogueLiteDoor
     
     [Tooltip("If true, this is the door the player entered from - stays locked to prevent backtracking")]
     [SerializeField] private bool isSpawnDoor = false;
+    
+    [Tooltip("If true, this door unlocks after clearing waves (progression door)")]
+    [SerializeField] private bool isProgressionDoor = false;
 
     [Header("Spawn Validation")]
     [Tooltip("Radius to check for obstacles at spawn point")]
@@ -69,13 +72,21 @@ public class RogueLikeRoomDoor : RogueLiteDoor
     {
         isSpawnDoor = isSpawn;
     }
+    
+    /// <summary>
+    /// Mark this door as a progression door (unlocks after clearing waves)
+    /// </summary>
+    public void SetAsProgressionDoor(bool isProgression)
+    {
+        isProgressionDoor = isProgression;
+    }
 
     private void OnEnemySetupStateChanged(EnemySetupState state)
     {
         if(state == EnemySetupState.ALL_WAVES_CLEARED)
         {
-            // Unlock all locked doors EXCEPT the spawn door (prevents backtracking)
-            if (doorType == DoorStatus.LOCKED && !isSpawnDoor)
+            // Only unlock PROGRESSION doors (spawn door stays locked, inactive doors stay locked)
+            if (doorType == DoorStatus.LOCKED && isProgressionDoor && !isSpawnDoor)
             {
                 doorType = DoorStatus.UNLOCKED;
                 isLocked = false; // Update the cached locked state!
