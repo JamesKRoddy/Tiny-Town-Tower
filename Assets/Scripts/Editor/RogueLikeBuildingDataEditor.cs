@@ -25,16 +25,18 @@ public class RogueLikeBuildingDataEditor : Editor
         // Hostile Rooms
         DrawColoredSection("⚔️ Hostile Rooms", () => {
             EditorGUILayout.PropertyField(serializedObject.FindProperty("buildingRooms"));
-            EditorGUILayout.LabelField($"Total Hostile Rooms: {buildingData.buildingRooms.Count}", EditorStyles.miniLabel);
+            int hostileRoomCount = buildingData.buildingRooms != null ? buildingData.buildingRooms.Count : 0;
+            EditorGUILayout.LabelField($"Total Hostile Rooms: {hostileRoomCount}", EditorStyles.miniLabel);
         }, new Color(1f, 0.8f, 0.8f, 0.3f)); // Light red
         
         // Friendly Rooms
         DrawColoredSection("🏠 Friendly Rooms", () => {
             EditorGUILayout.PropertyField(serializedObject.FindProperty("friendlyRooms"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("friendlyRoomSpawnChance"));
-            EditorGUILayout.LabelField($"Total Friendly Rooms: {buildingData.friendlyRooms.Count}", EditorStyles.miniLabel);
+            int friendlyRoomCount = buildingData.friendlyRooms != null ? buildingData.friendlyRooms.Count : 0;
+            EditorGUILayout.LabelField($"Total Friendly Rooms: {friendlyRoomCount}", EditorStyles.miniLabel);
             
-            if (buildingData.friendlyRooms.Count > 0)
+            if (friendlyRoomCount > 0)
             {
                 EditorGUILayout.HelpBox($"Friendly rooms have a {buildingData.GetFriendlyRoomSpawnChance()}% chance to spawn instead of hostile rooms.", MessageType.Info);
             }
@@ -45,9 +47,10 @@ public class RogueLikeBuildingDataEditor : Editor
             EditorGUILayout.PropertyField(serializedObject.FindProperty("extenderRooms"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("extenderSpawnChance"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("maxExtendersPerBuilding"));
-            EditorGUILayout.LabelField($"Total Extender Rooms: {buildingData.extenderRooms.Count}", EditorStyles.miniLabel);
+            int extenderRoomCount = buildingData.extenderRooms != null ? buildingData.extenderRooms.Count : 0;
+            EditorGUILayout.LabelField($"Total Extender Rooms: {extenderRoomCount}", EditorStyles.miniLabel);
             
-            if (buildingData.extenderRooms.Count > 0)
+            if (extenderRoomCount > 0)
             {
                 EditorGUILayout.HelpBox("Room extenders add additional spawn points to expand the building. They have a chance to spawn up to the maximum limit per building.", MessageType.Info);
             }
@@ -106,10 +109,14 @@ public class RogueLikeBuildingDataEditor : Editor
             EditorGUILayout.Space(3);
             
             // Room counts
+            int hostileCount = buildingData.buildingRooms != null ? buildingData.buildingRooms.Count : 0;
+            int friendlyCount = buildingData.friendlyRooms != null ? buildingData.friendlyRooms.Count : 0;
+            int extenderCount = buildingData.extenderRooms != null ? buildingData.extenderRooms.Count : 0;
+            
             EditorGUILayout.LabelField("Room Configuration:", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField($"  • Hostile Rooms: {buildingData.buildingRooms.Count}");
-            EditorGUILayout.LabelField($"  • Friendly Rooms: {buildingData.friendlyRooms.Count} ({buildingData.GetFriendlyRoomSpawnChance()}% spawn chance)");
-            EditorGUILayout.LabelField($"  • Extender Rooms: {buildingData.extenderRooms.Count} ({buildingData.GetExtenderSpawnChance()}% spawn chance, max {buildingData.GetMaxExtendersPerBuilding()})");
+            EditorGUILayout.LabelField($"  • Hostile Rooms: {hostileCount}");
+            EditorGUILayout.LabelField($"  • Friendly Rooms: {friendlyCount} ({buildingData.GetFriendlyRoomSpawnChance()}% spawn chance)");
+            EditorGUILayout.LabelField($"  • Extender Rooms: {extenderCount} ({buildingData.GetExtenderSpawnChance()}% spawn chance, max {buildingData.GetMaxExtendersPerBuilding()})");
             EditorGUILayout.LabelField($"  • Room Count Range: {buildingData.minRoomCount} - {buildingData.maxRoomCount}");
             
             EditorGUILayout.Space(3);

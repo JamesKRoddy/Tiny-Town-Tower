@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e98e12f7ce584454ba68051d765e4446, type: 3}
+  m_Name: Apt_Building_01
+  m_EditorClassIdentifier: 
+  buildingType: 0
+  buildingEntrance: {fileID: 7293222387086168936, guid: f1d3ae6fc99eddb44b9ff190f65bed41, type: 3}
+  buildingParents:
+  - buildingParent: {fileID: 4291513209875685915, guid: 3245c2e4d5fa4804bb2be40e849acaf8, type: 3}
+    difficulty: 0
+    excludeFromTesting: 0
+  buildingRooms:
+  - buildingRoom: {fileID: 7999516764851876728, guid: 2a8478ab642c06d48aba4bd835e6b81f, type: 3}
+    difficulty: 0
+    excludeFromTesting: 0
+  - buildingRoom: {fileID: 7191290224953330021, guid: a66d4ee5c55c753498182f27a88c63af, type: 3}
+    difficulty: 0
+    excludeFromTesting: 0
+  - buildingRoom: {fileID: 6209474498292431663, guid: 07e24424eeecc8a4eb5ecfb83dba9451, type: 3}
+    difficulty: 0
+    excludeFromTesting: 0
+  - buildingRoom: {fileID: 2979286777223168146, guid: 247a9c0bcdcf77b469f54832066576cc, type: 3}
+    difficulty: 0
+    excludeFromTesting: 0
+  friendlyRooms: []
+  friendlyRoomSpawnChance: 15
+  extenderRooms: []
+  extenderSpawnChance: 30
+  maxExtendersPerBuilding: 2
+  buildingNPCs: []
+  autoSpawnNPCs: 1
+  npcSpawnChance: 75
+  possibleBosses: []
+  bossSpawnChance: 75
+  guaranteeBossAsEndRoom: 1
+  minRoomCount: 3
+  maxRoomCount: 5

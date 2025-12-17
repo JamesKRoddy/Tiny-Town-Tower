@@ -273,6 +273,29 @@ public abstract class RogueLiteRoom : MonoBehaviour
     public bool GetBoundsCalculated() => boundsCalculated;
     public Collider[] GetRoomColliders() => roomColliders;
     
+    /// <summary>
+    /// Draw an arrow gizmo to show position and rotation for parent connection
+    /// </summary>
+    private void DrawConnectionArrow(Vector3 position, Vector3 forward, float length)
+    {
+        // Draw the main arrow shaft
+        Vector3 arrowEnd = position + forward * length;
+        Gizmos.DrawLine(position, arrowEnd);
+        
+        // Draw arrow head
+        float arrowHeadLength = length * 0.3f;
+        Vector3 right = Vector3.Cross(forward, Vector3.up).normalized;
+        
+        Vector3 arrowHeadRight = arrowEnd - forward * arrowHeadLength + right * arrowHeadLength * 0.5f;
+        Vector3 arrowHeadLeft = arrowEnd - forward * arrowHeadLength - right * arrowHeadLength * 0.5f;
+        
+        Gizmos.DrawLine(arrowEnd, arrowHeadRight);
+        Gizmos.DrawLine(arrowEnd, arrowHeadLeft);
+        
+        // Draw a small sphere at the base for better visibility
+        Gizmos.DrawWireSphere(position, 0.3f);
+    }
+    
     #if UNITY_EDITOR
     [UnityEditor.MenuItem("CONTEXT/RogueLiteRoom/Recalculate Bounds")]
     private static void RecalculateBounds(UnityEditor.MenuCommand command)
@@ -313,9 +336,9 @@ public abstract class RogueLiteRoom : MonoBehaviour
     {
         if (!showRoomBounds) return;
 
-        // Always draw a basic gizmo to show the room exists
+        // Draw an arrow to show position and rotation for matching with parent
         Gizmos.color = RoomType == RogueLikeRoomType.FRIENDLY ? Color.green : Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, 1f);
+        DrawConnectionArrow(transform.position, transform.forward, 2f);
         
         // Try to calculate bounds if not done yet (works in both edit and play mode)
         if (!boundsCalculated)

@@ -4,9 +4,14 @@ Boss rooms:
 
 Start making over world
 
+Building apt rooms
+Paths into other apts can be broken walls
+Material randomizer, one that just does each (used for beds, rugs, bookshelves etc.) a setting that randomises all to the same value, eg waals, floors etc.
+Another type of randomizer where one has to be selected from a pool eg. doors/ windows
+
 TODO:
 
-Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones. 
+Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones. Zombie that screams and messes up the players camera/controls
 
 Mutants! Characters in the PolygonApocalypseWasteland, light mutant, heavy mutant (use an animator variant)
 
@@ -86,6 +91,7 @@ Finalise the difficulty system making enemies faster, more damage, more health, 
 
 Story
 First mission is to restore power to the main city gate so you can enter the suburbs. This requires finding a fuel cell (received from a boss in the starting area).
+Different sections branch off from eachother. Can require backtracking to open previously locked areas.
 3rd area restoring a fast travel train to take you to the different parts.
 Are you looking after the npcs or are you really using them to gain some sort of directive, the idea of whos really in control?
 Find gate decryption keys that can be decrypted at the base to open dorrs around the overworld. These open new areas and short cuts
