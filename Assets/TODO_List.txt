@@ -2,7 +2,7 @@
 
 Boss rooms:
 
-Make sure when the boss dies we get back to the overworld after exiting the boss room
+Start making over world
 
 TODO:
 
@@ -13,8 +13,6 @@ Mutants! Characters in the PolygonApocalypseWasteland, light mutant, heavy mutan
 ****** Tomorrow work:
 
 Create the scriptable obj and prefabs for: Genetic mutations, weapons, world objects etc.
-
-Spawning a boss at the end 
 
 ****** Next work:
 
@@ -87,8 +85,13 @@ Finalise the difficulty system making enemies faster, more damage, more health, 
 *****Ideas*****
 
 Story
+First mission is to restore power to the main city gate so you can enter the suburbs. This requires finding a fuel cell (received from a boss in the starting area).
+3rd area restoring a fast travel train to take you to the different parts.
 Are you looking after the npcs or are you really using them to gain some sort of directive, the idea of whos really in control?
 Find gate decryption keys that can be decrypted at the base to open dorrs around the overworld. These open new areas and short cuts
+
+Overworld
+Split it into different sections, each having their own shortcuts and secrets. Train station is always at the starting area. This just makes it easier to construct and define different sections and aesthetics.
 
 Enemies
 Slower animations for injured enemies
@@ -118,7 +121,7 @@ The projectile reflection technique thats used by baseprojectiles when they are 
 Can have a MeleeWeapon.projectileBoxSizeMultiplier increase to increase the chance of reflecting projectiles
 Heavy hitter-ability to break rubble to open new paths
 
-Buildings:
+Camp Buildings:
 An alarm that will alert NPCs of an incoming zombie attack
 Implement water and thirst mechanics, water buildings etc.
 
@@ -131,4 +134,6 @@ Strong back-able to carry more resources and higher inventory
 Quick-Faster movement
 strong-base damage increase
 
+Roguelike buildings
+Roguelike doors that open into a different building type. So a room could be an outdoor ally then that leads into a different building
 
