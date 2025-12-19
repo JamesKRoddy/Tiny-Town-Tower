@@ -5,9 +5,7 @@ Boss rooms:
 Start making over world
 
 Building apt rooms
-Paths into other apts can be broken walls
-Material randomizer, one that just does each (used for beds, rugs, bookshelves etc.) a setting that randomises all to the same value, eg waals, floors etc.
-Another type of randomizer where one has to be selected from a pool eg. doors/ windows
+Enemies not spawning currently (check nav mesh) also since we are no longer back tracking through buildings just delete previous rooms/entrances
 
 TODO:
 
