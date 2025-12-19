@@ -1,6 +1,27 @@
 using UnityEngine;
 using Managers;
 
+/// <summary>
+/// Door types that determine both visual appearance and unlock behavior
+/// </summary>
+public enum RogueLiteDoorType
+{
+    /// <summary>
+    /// Where player entered from. Shows wall with hole but stays LOCKED forever (no backtracking).
+    /// </summary>
+    SPAWN,
+    
+    /// <summary>
+    /// Exit to next room. Shows wall with hole, starts LOCKED, unlocks when enemies are defeated.
+    /// </summary>
+    PROGRESSION,
+    
+    /// <summary>
+    /// Dead end / blocked path. Shows solid wall, permanently LOCKED forever.
+    /// </summary>
+    DEAD_END
+}
+
 public class RogueLikeRoomDoor : RogueLiteDoor
 {
     [Header("Target Room")]
@@ -9,15 +30,20 @@ public class RogueLikeRoomDoor : RogueLiteDoor
     [Tooltip("Where the player spawns in the target room")]
     public Transform targetSpawnPoint;
     
+    [Header("Door Type")]
+    [Tooltip("SPAWN = entry point (locked, shows hole)\nPROGRESSION = exit (unlocks after enemies, shows hole)\nDEAD_END = blocked (locked forever, shows solid wall)")]
+    [SerializeField] private RogueLiteDoorType rogueLiteDoorType = RogueLiteDoorType.PROGRESSION;
+    
     [Header("Door Behavior")]
     [Tooltip("If true, this door exits to the overworld/camp instead of entering a new room")]
     [SerializeField] private bool exitToOverworld = false;
+
+    [Header("Door Models - REQUIRED")]
+    [Tooltip("Model shown for SPAWN and PROGRESSION doors (wall with hole/opening)")]
+    [SerializeField] private GameObject progressionDoorModel;
     
-    [Tooltip("If true, this is the door the player entered from - stays locked to prevent backtracking")]
-    [SerializeField] private bool isSpawnDoor = false;
-    
-    [Tooltip("If true, this door unlocks after clearing waves (progression door)")]
-    [SerializeField] private bool isProgressionDoor = false;
+    [Tooltip("Model shown for DEAD_END doors (solid wall/blocked)")]
+    [SerializeField] private GameObject deadEndModel;
 
     [Header("Spawn Validation")]
     [Tooltip("Radius to check for obstacles at spawn point")]
@@ -27,17 +53,17 @@ public class RogueLikeRoomDoor : RogueLiteDoor
     [Tooltip("Number of positions to check in a circle pattern")]
     [SerializeField] private int searchPositions = 8;
     [Tooltip("Layers to check for obstacles")]
-    [SerializeField] private LayerMask obstacleLayer = ~0; // All layers by default
+    [SerializeField] private LayerMask obstacleLayer = ~0;
 
     [Header("Door Placement Validation")]
-    [Tooltip("Distance behind the door to check for floor (opposite side from player spawn)")]
+    [Tooltip("Distance behind the door to check for floor")]
     [SerializeField] private float floorCheckDistance = 1f;
     [Tooltip("Radius for floor detection raycast")]
     [SerializeField] private float floorCheckRadius = 0.5f;
     [Tooltip("Maximum downward distance to check for floor")]
     [SerializeField] private float floorRaycastDistance = 2f;
     [Tooltip("Layer mask for floor detection")]
-    [SerializeField] private LayerMask floorLayer = ~0; // All layers by default
+    [SerializeField] private LayerMask floorLayer = ~0;
 
     private RogueLiteRoom parentRoom;
 
@@ -45,9 +71,13 @@ public class RogueLikeRoomDoor : RogueLiteDoor
     {
         base.Start();
         
+        // Apply door models based on type
+        ApplyDoorType();
+        
+        // Subscribe to enemy state changes
         RogueLiteManager.Instance.OnEnemySetupStateChanged += OnEnemySetupStateChanged;
         
-        // Check current state immediately in case it already changed before this door was ready
+        // Check current state immediately
         EnemySetupState currentState = RogueLiteManager.Instance.GetEnemySetupState();
         OnEnemySetupStateChanged(currentState);
     }
@@ -58,39 +88,75 @@ public class RogueLikeRoomDoor : RogueLiteDoor
     }
     
     /// <summary>
+    /// Sets the door type and updates visuals accordingly.
+    /// Call this during room setup to configure the door.
+    /// </summary>
+    public void SetDoorType(RogueLiteDoorType type)
+    {
+        rogueLiteDoorType = type;
+        ApplyDoorType();
+        Debug.Log($"[Door] '{gameObject.name}' set to {type}");
+    }
+    
+    /// <summary>
+    /// Gets the current door type
+    /// </summary>
+    public RogueLiteDoorType GetDoorType()
+    {
+        return rogueLiteDoorType;
+    }
+    
+    /// <summary>
+    /// Applies the door type - sets models and lock state
+    /// </summary>
+    private void ApplyDoorType()
+    {
+        // All doors start LOCKED
+        doorType = DoorStatus.LOCKED;
+        isLocked = true;
+        
+        // Set models based on door type
+        // SPAWN and PROGRESSION show the progression model (wall with hole)
+        // DEAD_END shows the dead end model (solid wall)
+        bool showProgressionModel = (rogueLiteDoorType == RogueLiteDoorType.SPAWN || 
+                                     rogueLiteDoorType == RogueLiteDoorType.PROGRESSION);
+        bool showDeadEndModel = (rogueLiteDoorType == RogueLiteDoorType.DEAD_END);
+        
+        if (progressionDoorModel != null)
+        {
+            progressionDoorModel.SetActive(showProgressionModel);
+        }
+        
+        if (deadEndModel != null)
+        {
+            deadEndModel.SetActive(showDeadEndModel);
+        }
+        
+        // Log warning if models aren't assigned
+        if (progressionDoorModel == null && deadEndModel == null)
+        {
+            Debug.LogWarning($"[Door] '{gameObject.name}' has no model references! Assign progressionDoorModel and deadEndModel in prefab.");
+        }
+    }
+    
+    /// <summary>
     /// Set whether this door exits to the overworld when used
     /// </summary>
     public void SetExitToOverworld(bool shouldExit)
     {
         exitToOverworld = shouldExit;
     }
-    
-    /// <summary>
-    /// Mark this door as the spawn door (where player entered from) - stays locked to prevent backtracking
-    /// </summary>
-    public void SetAsSpawnDoor(bool isSpawn)
-    {
-        isSpawnDoor = isSpawn;
-    }
-    
-    /// <summary>
-    /// Mark this door as a progression door (unlocks after clearing waves)
-    /// </summary>
-    public void SetAsProgressionDoor(bool isProgression)
-    {
-        isProgressionDoor = isProgression;
-    }
 
     private void OnEnemySetupStateChanged(EnemySetupState state)
     {
-        if(state == EnemySetupState.ALL_WAVES_CLEARED)
+        if (state == EnemySetupState.ALL_WAVES_CLEARED)
         {
-            // Only unlock PROGRESSION doors (spawn door stays locked, inactive doors stay locked)
-            if (doorType == DoorStatus.LOCKED && isProgressionDoor && !isSpawnDoor)
+            // Only PROGRESSION doors unlock when enemies are cleared
+            if (rogueLiteDoorType == RogueLiteDoorType.PROGRESSION)
             {
                 doorType = DoorStatus.UNLOCKED;
-                isLocked = false; // Update the cached locked state!
-                Debug.Log($"[RogueLikeRoomDoor] Unlocked progression door '{gameObject.name}' after clearing waves");
+                isLocked = false;
+                Debug.Log($"[Door] '{gameObject.name}' UNLOCKED (enemies cleared)");
             }
             ShowDoorEffects();
         }
@@ -102,25 +168,20 @@ public class RogueLikeRoomDoor : RogueLiteDoor
 
     public override void OnDoorEntered()
     {
-        // Only allow interaction if door is unlocked
         if (doorType == DoorStatus.LOCKED) 
         {
-            Debug.Log($"[RogueLikeRoomDoor] Door '{gameObject.name}' is locked - cannot enter");
+            Debug.Log($"[Door] '{gameObject.name}' is locked - cannot enter");
             return;
         }
 
-        Debug.Log($"[RogueLikeRoomDoor] Entering door '{gameObject.name}' (exitToOverworld: {exitToOverworld})");
+        Debug.Log($"[Door] Entering '{gameObject.name}' (exitToOverworld: {exitToOverworld})");
 
-        // Check if this door should exit to overworld (boss room completion, building end, etc.)
         if (exitToOverworld)
         {
-            // Exit to overworld (like finishing a building)
-            // Player keeps their NPC and inventory - still in ROGUE_LITE mode
             RogueLiteManager.Instance.OverworldManager.ExitedBuilding();
         }
         else
         {
-            // Enter the next room
             RogueLiteManager.Instance.EnterRoomWithTransition(this);
         }
     }
@@ -129,29 +190,24 @@ public class RogueLikeRoomDoor : RogueLiteDoor
     {
         EnemySetupState currentState = RogueLiteManager.Instance.GetEnemySetupState();
         bool wavesCleared = currentState == EnemySetupState.ALL_WAVES_CLEARED;
-        bool baseCanInteract = base.CanInteract();
         bool doorUnlocked = doorType == DoorStatus.UNLOCKED;
         
-        // Door can be used when waves are cleared AND door is unlocked
-        return wavesCleared && baseCanInteract && doorUnlocked;
+        return wavesCleared && doorUnlocked;
     }
 
     public override string GetInteractionText()
     {
         if (doorType == DoorStatus.LOCKED)
         {
-            return "Door Locked";
+            return rogueLiteDoorType == RogueLiteDoorType.DEAD_END ? "Blocked" : "Door Locked";
         }
         
-        // Unlocked doors show different text based on their purpose
         return exitToOverworld ? "Exit to Overworld" : "Enter Room";
     }
 
     /// <summary>
     /// Gets a valid spawn position, checking if the target spawn point is blocked.
-    /// If blocked, searches for a nearby clear position.
     /// </summary>
-    /// <returns>A clear spawn position, or the original position if no obstacles found</returns>
     public Vector3 GetValidSpawnPosition()
     {
         if (targetSpawnPoint == null)
@@ -162,7 +218,6 @@ public class RogueLikeRoomDoor : RogueLiteDoor
 
         Vector3 targetPosition = targetSpawnPoint.position;
 
-        // Check if the target spawn point is clear
         if (IsPositionClear(targetPosition))
         {
             return targetPosition;
@@ -170,7 +225,6 @@ public class RogueLikeRoomDoor : RogueLiteDoor
 
         Debug.LogWarning($"Spawn point at {gameObject.name} is blocked! Searching for clear position...");
 
-        // Search for a clear position in a circular pattern
         Vector3 clearPosition = FindClearPosition(targetPosition);
         
         if (clearPosition != Vector3.zero)
@@ -179,20 +233,14 @@ public class RogueLikeRoomDoor : RogueLiteDoor
             return clearPosition;
         }
 
-        // If no clear position found, return original position and log error
         Debug.LogError($"Could not find clear spawn position near {gameObject.name}! Using original position anyway.");
         return targetPosition;
     }
 
-    /// <summary>
-    /// Checks if a position is clear of obstacles
-    /// </summary>
     private bool IsPositionClear(Vector3 position)
     {
-        // Check for colliders at the position
         Collider[] colliders = Physics.OverlapSphere(position, spawnCheckRadius, obstacleLayer);
         
-        // Filter out trigger colliders as they shouldn't block spawning
         foreach (Collider col in colliders)
         {
             if (!col.isTrigger)
@@ -204,13 +252,9 @@ public class RogueLikeRoomDoor : RogueLiteDoor
         return true;
     }
 
-    /// <summary>
-    /// Searches for a clear position in a circular pattern around the target position
-    /// </summary>
     private Vector3 FindClearPosition(Vector3 centerPosition)
     {
-        // Try positions in expanding circles
-        int rings = 3; // Number of rings to search
+        int rings = 3;
         float ringSpacing = maxSearchDistance / rings;
 
         for (int ring = 1; ring <= rings; ring++)
@@ -237,14 +281,12 @@ public class RogueLikeRoomDoor : RogueLiteDoor
             }
         }
 
-        return Vector3.zero; // No clear position found
+        return Vector3.zero;
     }
 
     /// <summary>
-    /// Validates if this door has a valid floor behind it (opposite side from player spawn).
-    /// This prevents doors on walls in the middle of rooms from being enabled.
+    /// Validates if this door has a valid floor behind it.
     /// </summary>
-    /// <returns>True if there's a valid floor behind the door, false otherwise</returns>
     public bool HasValidFloorBehindDoor()
     {
         if (playerSpawn == null)
@@ -253,75 +295,91 @@ public class RogueLikeRoomDoor : RogueLiteDoor
             return false;
         }
 
-        // Calculate the direction from player spawn to door (this is the "forward" direction)
         Vector3 doorPosition = transform.position;
         Vector3 spawnPosition = playerSpawn.position;
         Vector3 doorToSpawn = (spawnPosition - doorPosition).normalized;
-
-        // Calculate position behind the door (opposite from player spawn)
         Vector3 behindDoorPosition = doorPosition - (doorToSpawn * floorCheckDistance);
         
-        // Perform a spherecast downward to check for floor
         RaycastHit hit;
-        Vector3 rayStart = behindDoorPosition + Vector3.up * 0.5f; // Start slightly above to account for door height
+        Vector3 rayStart = behindDoorPosition + Vector3.up * 0.5f;
         
         if (Physics.SphereCast(rayStart, floorCheckRadius, Vector3.down, out hit, floorRaycastDistance, floorLayer))
         {
-            // Check if we hit a non-trigger collider (actual floor)
             if (!hit.collider.isTrigger)
             {
                 return true;
             }
         }
 
-        Debug.LogWarning($"Door {gameObject.name} at {doorPosition} has no valid floor behind it! " +
-                        $"Check position: {behindDoorPosition}, Ray start: {rayStart}");
+        Debug.LogWarning($"Door {gameObject.name} at {doorPosition} has no valid floor behind it!");
         return false;
     }
 
     /// <summary>
-    /// Draws debug gizmos to visualize spawn point validation
+    /// Always visible gizmo showing door type
     /// </summary>
+    private void OnDrawGizmos()
+    {
+        Vector3 pos = transform.position + Vector3.up * 2f;
+        
+        // Color based on door type
+        switch (rogueLiteDoorType)
+        {
+            case RogueLiteDoorType.SPAWN:
+                Gizmos.color = Color.blue;
+                break;
+            case RogueLiteDoorType.PROGRESSION:
+                Gizmos.color = Color.green;
+                break;
+            case RogueLiteDoorType.DEAD_END:
+                Gizmos.color = Color.red;
+                break;
+        }
+        
+        // Draw a cube above the door
+        Gizmos.DrawCube(pos, Vector3.one * 0.5f);
+        Gizmos.DrawWireCube(pos, Vector3.one * 0.6f);
+        
+        // Draw arrow pointing in door's forward direction
+        Vector3 arrowStart = transform.position + Vector3.up * 0.5f;
+        Vector3 arrowEnd = arrowStart + transform.forward * 1.5f;
+        Gizmos.DrawLine(arrowStart, arrowEnd);
+        Gizmos.DrawSphere(arrowEnd, 0.15f);
+    }
+
     private void OnDrawGizmosSelected()
     {
-        if (targetSpawnPoint == null) return;
-
-        Vector3 spawnPos = targetSpawnPoint.position;
-
-        // Draw the spawn check radius
-        Gizmos.color = IsPositionClear(spawnPos) ? Color.green : Color.red;
-        Gizmos.DrawWireSphere(spawnPos, spawnCheckRadius);
-
-        // Draw the search area
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(spawnPos, maxSearchDistance);
-
-        // Draw search positions
-        Gizmos.color = Color.cyan;
-        int rings = 3;
-        float ringSpacing = maxSearchDistance / rings;
-
-        for (int ring = 1; ring <= rings; ring++)
+        // Draw door type label using Handles (requires UnityEditor)
+        #if UNITY_EDITOR
+        Vector3 labelPos = transform.position + Vector3.up * 2.8f;
+        string label = rogueLiteDoorType.ToString();
+        
+        GUIStyle style = new GUIStyle();
+        style.normal.textColor = rogueLiteDoorType switch
         {
-            float currentRadius = ring * ringSpacing;
-            
-            for (int i = 0; i < searchPositions; i++)
-            {
-                float angle = (360f / searchPositions) * i;
-                float radians = angle * Mathf.Deg2Rad;
-                
-                Vector3 offset = new Vector3(
-                    Mathf.Cos(radians) * currentRadius,
-                    0,
-                    Mathf.Sin(radians) * currentRadius
-                );
-                
-                Vector3 testPosition = spawnPos + offset;
-                Gizmos.DrawWireSphere(testPosition, 0.2f);
-            }
+            RogueLiteDoorType.SPAWN => Color.cyan,
+            RogueLiteDoorType.PROGRESSION => Color.green,
+            RogueLiteDoorType.DEAD_END => Color.red,
+            _ => Color.white
+        };
+        style.fontSize = 14;
+        style.fontStyle = FontStyle.Bold;
+        style.alignment = TextAnchor.MiddleCenter;
+        
+        UnityEditor.Handles.Label(labelPos, label, style);
+        #endif
+        
+        // Draw spawn check
+        if (targetSpawnPoint != null)
+        {
+            Vector3 spawnPos = targetSpawnPoint.position;
+            Gizmos.color = IsPositionClear(spawnPos) ? Color.green : Color.red;
+            Gizmos.DrawWireSphere(spawnPos, spawnCheckRadius);
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(spawnPos, maxSearchDistance);
         }
 
-        // Draw floor validation check
+        // Draw floor validation
         if (playerSpawn != null)
         {
             Vector3 doorPosition = transform.position;
@@ -330,18 +388,10 @@ public class RogueLikeRoomDoor : RogueLiteDoor
             Vector3 behindDoorPosition = doorPosition - (doorToSpawn * floorCheckDistance);
             Vector3 rayStart = behindDoorPosition + Vector3.up * 0.5f;
 
-            // Draw the check position
             bool hasFloor = HasValidFloorBehindDoor();
             Gizmos.color = hasFloor ? Color.green : Color.red;
             Gizmos.DrawWireSphere(behindDoorPosition, floorCheckRadius);
-            
-            // Draw the raycast line
-            Gizmos.color = hasFloor ? new Color(0, 1, 0, 0.5f) : new Color(1, 0, 0, 0.5f);
             Gizmos.DrawLine(rayStart, rayStart + Vector3.down * floorRaycastDistance);
-            
-            // Draw arrow pointing to check position
-            Gizmos.color = Color.blue;
-            Gizmos.DrawLine(doorPosition, behindDoorPosition);
         }
     }
 
@@ -352,4 +402,4 @@ public class RogueLikeRoomDoor : RogueLiteDoor
             RogueLiteManager.Instance.OnEnemySetupStateChanged -= OnEnemySetupStateChanged;
         }
     }
-} 
+}

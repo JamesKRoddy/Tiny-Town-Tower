@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e98e12f7ce584454ba68051d765e4446, type: 3}
   m_Name: Apt_Building_01
   m_EditorClassIdentifier: 
-  buildingType: 0
+  buildingType: 12
   buildingEntrance: {fileID: 7293222387086168936, guid: f1d3ae6fc99eddb44b9ff190f65bed41, type: 3}
   buildingParents:
   - buildingParent: {fileID: 4291513209875685915, guid: 3245c2e4d5fa4804bb2be40e849acaf8, type: 3}

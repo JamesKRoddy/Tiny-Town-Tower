@@ -8,7 +8,6 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
     [Header("Door Settings")]
     public DoorStatus doorType;
     public Transform playerSpawn;
-    [SerializeField] protected GameObject lockedDoorEffect;
     [SerializeField] protected GameObject nextRoomDoorEffect;
     [SerializeField] protected GameObject previousRoomDoorEffect;
 
@@ -70,10 +69,8 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
 
     protected virtual void ShowDoorEffects()
     {
-        bool isLocked = doorType == DoorStatus.LOCKED;
         bool isUnlocked = doorType == DoorStatus.UNLOCKED;
         
-        if (lockedDoorEffect != null) lockedDoorEffect.SetActive(isLocked);
         if (nextRoomDoorEffect != null) nextRoomDoorEffect.SetActive(isUnlocked);
         
         // previousRoomDoorEffect is deprecated (no longer used)
@@ -82,7 +79,6 @@ public class RogueLiteDoor : MonoBehaviour, IInteractive<RogueLiteDoor>, IIntera
 
     protected virtual void HideDoorEffects()
     {
-        if (lockedDoorEffect != null) lockedDoorEffect.SetActive(false);
         if (nextRoomDoorEffect != null) nextRoomDoorEffect.SetActive(false);
         if (previousRoomDoorEffect != null) previousRoomDoorEffect.SetActive(false);
     }

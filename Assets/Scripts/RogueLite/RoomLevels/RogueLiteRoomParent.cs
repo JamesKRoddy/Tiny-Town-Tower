@@ -1491,11 +1491,13 @@ public class RogueLiteRoomParent : MonoBehaviour
 
         if (allDoors.Count == 0)
         {
-            Debug.LogWarning("[RogueLiteRoomParent] No doors found to setup!");
+            Debug.LogWarning("[SetupDoors] No doors found!");
             return;
         }
 
-        // Filter out doors that don't have valid floors behind them
+        Debug.Log($"[SetupDoors] Found {allDoors.Count} total doors");
+
+        // Separate doors into valid (have floor behind) and invalid
         List<RogueLikeRoomDoor> validDoors = new List<RogueLikeRoomDoor>();
         List<RogueLikeRoomDoor> invalidDoors = new List<RogueLikeRoomDoor>();
 
@@ -1508,68 +1510,67 @@ public class RogueLiteRoomParent : MonoBehaviour
             else
             {
                 invalidDoors.Add(door);
-                Debug.Log($"[SetupDoors] Door {door.gameObject.name} excluded - no valid floor behind it");
             }
         }
 
-        // CRITICAL FIX: If we don't have enough valid doors for EXIT + at least 1 ENTRANCE, use all doors
-        // We need minimum 2 doors: 1 for EXIT (player spawn) and 1 for ENTRANCE (exit to next room)
+        // Fallback: if not enough valid doors, use all doors
         if (validDoors.Count < 2)
         {
-            Debug.LogWarning($"[RogueLiteRoomParent] Only {validDoors.Count} valid doors found (need 2+ for EXIT and ENTRANCE)! Using all {allDoors.Count} doors as fallback.");
-            validDoors = allDoors;
+            Debug.LogWarning($"[SetupDoors] Only {validDoors.Count} valid doors. Using all {allDoors.Count} as fallback.");
+            validDoors = new List<RogueLikeRoomDoor>(allDoors);
             invalidDoors.Clear();
         }
 
-        // Assign a random door as the player spawn door (locked - can't go back)
-        int spawnDoorIndex = Random.Range(0, validDoors.Count);
-        playerSpawnPoint = validDoors[spawnDoorIndex].playerSpawn;
-        validDoors[spawnDoorIndex].doorType = DoorStatus.LOCKED;
-        validDoors[spawnDoorIndex].SetAsSpawnDoor(true); // Mark as spawn door - stays locked forever
+        // ============================================
+        // STEP 1: Pick ONE door as SPAWN (player entry)
+        // Shows wall with hole, but stays LOCKED forever
+        // ============================================
+        int spawnIndex = Random.Range(0, validDoors.Count);
+        RogueLikeRoomDoor spawnDoor = validDoors[spawnIndex];
+        spawnDoor.SetDoorType(RogueLiteDoorType.SPAWN);
+        playerSpawnPoint = spawnDoor.playerSpawn;
+        validDoors.RemoveAt(spawnIndex);
+        Debug.Log($"[SetupDoors] SPAWN door: {spawnDoor.gameObject.name}");
 
-        // Store the spawn door
-        RogueLikeRoomDoor spawnDoor = validDoors[spawnDoorIndex];
-        validDoors.RemoveAt(spawnDoorIndex);
+        // ============================================
+        // STEP 2: Pick 1+ doors as PROGRESSION (exits)
+        // Shows wall with hole, unlocks when enemies cleared
+        // ============================================
+        // Always have at least 1 progression door
+        // Try to leave at least 1 door as DEAD_END if we have 3+ doors
+        int maxProgression = validDoors.Count > 2 ? validDoors.Count - 1 : validDoors.Count;
+        int progressionCount = Mathf.Clamp(Random.Range(1, 4), 1, maxProgression);
+        
+        Debug.Log($"[SetupDoors] Selecting {progressionCount} PROGRESSION doors from {validDoors.Count} remaining");
 
-        // Select 1-3 doors to be progression doors (initially locked, unlock when waves cleared)
-        // These doors will be assigned target rooms by the building manager when player enters them
-        int progressionDoorsCount = Mathf.Clamp(Random.Range(1, 4), 1, Mathf.Max(1, validDoors.Count));
-
-        for (int i = 0; i < progressionDoorsCount; i++)
+        for (int i = 0; i < progressionCount && validDoors.Count > 0; i++)
         {
-            if (validDoors.Count == 0) break; // Safety check
-
-            int randomIndex = Random.Range(0, validDoors.Count);
-            // Start as LOCKED (will unlock when waves clear)
-            validDoors[randomIndex].doorType = DoorStatus.LOCKED;
-            validDoors[randomIndex].SetAsSpawnDoor(false); // Not spawn door
-            validDoors[randomIndex].SetAsProgressionDoor(true); // THIS door unlocks after waves clear
-
-            // targetRoom will be set by RogueLikeBuildingManager when player enters this door
-
-            validDoors.RemoveAt(randomIndex);
+            int idx = Random.Range(0, validDoors.Count);
+            RogueLikeRoomDoor progressionDoor = validDoors[idx];
+            progressionDoor.SetDoorType(RogueLiteDoorType.PROGRESSION);
+            validDoors.RemoveAt(idx);
+            Debug.Log($"[SetupDoors] PROGRESSION door: {progressionDoor.gameObject.name}");
         }
 
-        // Set remaining valid doors as LOCKED and optionally deactivate them
-        // These are NOT progression doors - they won't unlock after waves
+        // ============================================
+        // STEP 3: Remaining valid doors become DEAD_END
+        // Shows solid wall, permanently locked
+        // ============================================
+        Debug.Log($"[SetupDoors] Setting {validDoors.Count} doors as DEAD_END");
         foreach (var door in validDoors)
         {
-            door.doorType = DoorStatus.LOCKED;
-            door.SetAsProgressionDoor(false); // NOT a progression door - stays locked
-            
-            // 75% chance to deactivate locked doors
-            if (Random.Range(0f, 1f) < 0.75f)
-            {
-                door.gameObject.SetActive(false);
-            }
+            door.SetDoorType(RogueLiteDoorType.DEAD_END);
+            Debug.Log($"[SetupDoors] DEAD_END door: {door.gameObject.name}");
         }
 
-        // Deactivate all invalid doors (those without proper floors)
+        // ============================================
+        // STEP 4: Invalid doors (no floor) become DEAD_END
+        // ============================================
+        Debug.Log($"[SetupDoors] Setting {invalidDoors.Count} invalid doors as DEAD_END");
         foreach (var door in invalidDoors)
         {
-            door.doorType = DoorStatus.LOCKED;
-            door.gameObject.SetActive(false);
-            Debug.Log($"[SetupDoors] Deactivated invalid door: {door.gameObject.name}");
+            door.SetDoorType(RogueLiteDoorType.DEAD_END);
+            Debug.Log($"[SetupDoors] DEAD_END (invalid): {door.gameObject.name}");
         }
     }
 

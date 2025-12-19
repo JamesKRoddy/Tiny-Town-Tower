@@ -2826,6 +2826,10 @@ PrefabInstance:
       propertyPath: 'universalElementalEffects.Array.data[0].impactEffects.Array.data[0]'
       value: 
       objectReference: {fileID: 11400000, guid: 3cbd6347900155e489f00fba0e6c94fd, type: 2}
+    - target: {fileID: 8102012326405835519, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: 'rogueLikeBuildingDataScriptableObjs.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 82ae0dcbe3b081c4e9c64f35411497c9, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
