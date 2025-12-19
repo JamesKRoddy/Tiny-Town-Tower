@@ -1,5 +1,85 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+
+/// <summary>
+/// Defines a required room group for building generation.
+/// Each group has its own pool of room prefabs that MUST spawn.
+/// 
+/// Example uses:
+/// - "Every building must have at least 1 hallway"
+/// - "Apartments must have at least 2 bedrooms"
+/// 
+/// SPAWN ORDER:
+/// 1. Required rooms spawn first (from each group's prefab pool)
+/// 2. Friendly room chance is checked
+/// 3. Remaining slots fill with random rooms
+/// </summary>
+[System.Serializable]
+public class RequiredRoomGroup
+{
+    [Tooltip("Display name for this group (for inspector clarity)")]
+    public string groupName = "Required Room";
+    
+    [Tooltip("Room prefabs that can be used to fulfill this requirement")]
+    public GameObject[] roomPrefabs;
+    
+    [Tooltip("Number of rooms from this group that MUST spawn")]
+    [Min(1)] public int requiredCount = 1;
+    
+    [Tooltip("Maximum number of rooms from this group that CAN spawn (0 = unlimited after required)")]
+    [Min(0)] public int maxCount = 0;
+    
+    /// <summary>
+    /// Check if more rooms from this group need to be spawned to meet the requirement
+    /// </summary>
+    public bool NeedsMore(int currentCount)
+    {
+        return currentCount < requiredCount;
+    }
+    
+    /// <summary>
+    /// Check if we can spawn more rooms from this group (after meeting requirement)
+    /// </summary>
+    public bool CanSpawnMore(int currentCount)
+    {
+        return maxCount == 0 || currentCount < maxCount;
+    }
+    
+    /// <summary>
+    /// Check if the requirement is satisfied
+    /// </summary>
+    public bool IsSatisfied(int currentCount)
+    {
+        return currentCount >= requiredCount;
+    }
+    
+    /// <summary>
+    /// Get a random room prefab from this group
+    /// </summary>
+    public GameObject GetRandomRoom()
+    {
+        if (roomPrefabs == null || roomPrefabs.Length == 0)
+        {
+            return null;
+        }
+        return roomPrefabs[Random.Range(0, roomPrefabs.Length)];
+    }
+    
+    /// <summary>
+    /// Get count of valid (non-null) prefabs
+    /// </summary>
+    public int GetValidPrefabCount()
+    {
+        if (roomPrefabs == null) return 0;
+        int count = 0;
+        foreach (var prefab in roomPrefabs)
+        {
+            if (prefab != null) count++;
+        }
+        return count;
+    }
+}
 
 /// <summary>
 /// Used for buildings in the roguelite section of the game.
@@ -75,6 +155,10 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     [Header("Room Settings")]
     public int minRoomCount = 3;
     public int maxRoomCount = 5;
+    
+    [Header("Required Room Groups")]
+    [Tooltip("Define groups of rooms that MUST spawn in every building. Higher priority groups spawn first.")]
+    public List<RequiredRoomGroup> requiredRoomGroups = new List<RequiredRoomGroup>();
 
     public int GetMaxRoomsForDifficulty(int difficulty)
     {
@@ -82,6 +166,118 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
         int scaledMax = Mathf.RoundToInt(maxRoomCount * (1 + (difficulty * 0.1f))); // 10% increase per difficulty level
         return Mathf.Clamp(scaledMax, minRoomCount, maxRoomCount);
     }
+    
+    #region Required Room Groups
+    
+    /// <summary>
+    /// Get the required room groups that have valid prefabs
+    /// </summary>
+    public List<RequiredRoomGroup> GetAvailableRequiredGroups()
+    {
+        var availableGroups = requiredRoomGroups
+            .Where(g => g != null && g.GetValidPrefabCount() > 0)
+            .ToList();
+        return availableGroups;
+    }
+    
+    /// <summary>
+    /// Get the total number of required rooms across all groups
+    /// </summary>
+    public int GetTotalRequiredRoomCount(int difficulty)
+    {
+        int total = 0;
+        foreach (var group in requiredRoomGroups)
+        {
+            if (group != null && group.GetValidPrefabCount() > 0)
+            {
+                total += group.requiredCount;
+            }
+        }
+        return total;
+    }
+    
+    /// <summary>
+    /// Get a room from a required group based on spawn state.
+    /// Returns null if no required rooms need to be spawned.
+    /// </summary>
+    /// <param name="difficulty">Current difficulty level</param>
+    /// <param name="groupSpawnCounts">Dictionary tracking how many rooms have spawned per group index</param>
+    /// <param name="spawnedGroupIndex">Output: The index of the group the room was selected from</param>
+    public GameObject GetRequiredRoom(int difficulty, Dictionary<int, int> groupSpawnCounts, out int spawnedGroupIndex)
+    {
+        spawnedGroupIndex = -1;
+        
+        for (int i = 0; i < requiredRoomGroups.Count; i++)
+        {
+            var group = requiredRoomGroups[i];
+            if (group == null || group.GetValidPrefabCount() == 0) continue;
+            
+            // Get current spawn count for this group
+            int currentCount = groupSpawnCounts.ContainsKey(i) ? groupSpawnCounts[i] : 0;
+            
+            // Check if this group needs more rooms
+            if (group.NeedsMore(currentCount))
+            {
+                GameObject room = group.GetRandomRoom();
+                if (room != null)
+                {
+                    spawnedGroupIndex = i;
+                    Debug.Log($"[GetRequiredRoom] Selected '{room.name}' from required group '{group.groupName}' " +
+                             $"(count: {currentCount + 1}/{group.requiredCount})");
+                    return room;
+                }
+            }
+        }
+        
+        return null;
+    }
+    
+    /// <summary>
+    /// Check if all required room groups have been satisfied
+    /// </summary>
+    public bool AreAllRequirementsSatisfied(int difficulty, Dictionary<int, int> groupSpawnCounts)
+    {
+        for (int i = 0; i < requiredRoomGroups.Count; i++)
+        {
+            var group = requiredRoomGroups[i];
+            if (group == null || group.GetValidPrefabCount() == 0) continue;
+            
+            int currentCount = groupSpawnCounts.ContainsKey(i) ? groupSpawnCounts[i] : 0;
+            if (!group.IsSatisfied(currentCount))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /// <summary>
+    /// Check if a room prefab belongs to any required group
+    /// </summary>
+    public bool IsRoomInRequiredGroup(GameObject roomPrefab, out int groupIndex)
+    {
+        groupIndex = -1;
+        if (roomPrefab == null) return false;
+        
+        for (int i = 0; i < requiredRoomGroups.Count; i++)
+        {
+            var group = requiredRoomGroups[i];
+            if (group == null || group.roomPrefabs == null) continue;
+            
+            foreach (var prefab in group.roomPrefabs)
+            {
+                if (prefab == roomPrefab)
+                {
+                    groupIndex = i;
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    #endregion
 
     public GameObject GetBuildingParent(int difficulty)
     {

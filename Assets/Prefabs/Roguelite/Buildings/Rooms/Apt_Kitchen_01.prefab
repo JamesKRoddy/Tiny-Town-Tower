@@ -26,7 +26,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071099, z: -0, w: -0.7071037}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.99, y: 1, z: 0.99}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1275482780324111481}
@@ -256,7 +256,7 @@ MonoBehaviour:
   chests: []
   roomBounds:
     m_Center: {x: -0.007596016, y: 1.5438508, z: 5.011846}
-    m_Extent: {x: 6.120186, y: 2.5681112, z: 6.12439}
+    m_Extent: {x: 6.120186, y: 2.568111, z: 6.12439}
   autoCalculateBounds: 1
   boundsPadding: 2
   showRoomBounds: 1

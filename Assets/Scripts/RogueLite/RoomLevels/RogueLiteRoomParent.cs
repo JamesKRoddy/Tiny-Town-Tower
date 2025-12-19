@@ -300,10 +300,14 @@ public class RogueLiteRoomParent : MonoBehaviour
         return overlapPercentage;
     }
 
+    // Track spawn counts for required room groups during building generation
+    private Dictionary<int, int> requiredGroupSpawnCounts = new Dictionary<int, int>();
+    
     /// <summary>
     /// Intelligently place rooms at all spawn points
     /// Prioritizes collision-free placement over filling every spawn point
     /// Supports room extenders that add additional spawn points dynamically
+    /// Now also handles required room groups that must spawn first
     /// </summary>
     private void HierarchicalRoomPlacement(RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty)
     {
@@ -317,13 +321,25 @@ public class RogueLiteRoomParent : MonoBehaviour
         dynamicSpawnPoints.Clear();
         dynamicSpawnPoints.AddRange(roomTransforms);
         
+        // Reset required group spawn counts for this building
+        requiredGroupSpawnCounts.Clear();
+        
         int originalSpawnCount = dynamicSpawnPoints.Count;
+        int totalRequiredRooms = buildingScriptableObj.GetTotalRequiredRoomCount(currentDifficulty);
+        
+        if (totalRequiredRooms > 0)
+        {
+            Debug.Log($"[HierarchicalPlacement] Building has {totalRequiredRooms} required room(s) to spawn");
+        }
 
         List<int> availableSpawnIndices = new List<int>();
         for (int i = 0; i < dynamicSpawnPoints.Count; i++)
         {
             availableSpawnIndices.Add(i);
         }
+        
+        // Shuffle the spawn indices so rooms don't always spawn in the same order
+        ShuffleList(availableSpawnIndices);
 
         // Add loop protection - dynamically adjust max iterations as new spawns are added
         int iterations = 0;
@@ -362,14 +378,30 @@ public class RogueLiteRoomParent : MonoBehaviour
                 Debug.Log($"[HierarchicalPlacement] Processing spawn {spawnIndex} ({spawnType}) - allowExtenders: {allowExtenders}, currentExtenders: {extendersPlaced}");
             }
             
-            // Get room considering extender count and allowing extenders only for original spawn points
-            GameObject roomPrefab = buildingScriptableObj.GetBuildingRoom(currentDifficulty, extendersPlaced, allowExtenders);
+            // First, check if there are required rooms that still need to be spawned
+            GameObject roomPrefab = null;
+            int spawnedGroupIndex = -1;
+            
+            if (!buildingScriptableObj.AreAllRequirementsSatisfied(currentDifficulty, requiredGroupSpawnCounts))
+            {
+                // Get a room from the required groups
+                roomPrefab = buildingScriptableObj.GetRequiredRoom(currentDifficulty, requiredGroupSpawnCounts, out spawnedGroupIndex);
+            }
+            
+            // If no required room (or all requirements satisfied), use normal room selection
+            if (roomPrefab == null)
+            {
+                roomPrefab = buildingScriptableObj.GetBuildingRoom(currentDifficulty, extendersPlaced, allowExtenders);
+            }
             
             // Use dynamic spawn points list
             Transform targetTransform = dynamicSpawnPoints[spawnIndex];
             
+            bool placedSuccessfully = false;
+            
             if (GuaranteedRoomPlacement(targetTransform, roomPrefab, buildingScriptableObj, currentDifficulty, $"Room {spawnIndex}", originalSpawnCount))
             {
+                placedSuccessfully = true;
                 availableSpawnIndices.RemoveAt(0);
                 if (ShowCollisionDebug)
                     Debug.Log($"[HierarchicalPlacement] Successfully placed room at spawn {spawnIndex}");
@@ -381,6 +413,7 @@ public class RogueLiteRoomParent : MonoBehaviour
                 
                 if (placed)
                 {
+                    placedSuccessfully = true;
                     availableSpawnIndices.RemoveAt(0);
                     if (ShowCollisionDebug)
                         Debug.Log($"[HierarchicalPlacement] Placed valid room at spawn {spawnIndex} after retry");
@@ -390,6 +423,7 @@ public class RogueLiteRoomParent : MonoBehaviour
                     // No room fits within tolerance - find and place the room with MINIMUM overlap
                     if (PlaceRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty, originalSpawnCount))
                     {
+                        placedSuccessfully = true;
                         availableSpawnIndices.RemoveAt(0);
                         Debug.LogWarning($"[HierarchicalPlacement] Placed room with minimum overlap at spawn {spawnIndex} (exceeded tolerance but best option)");
                     }
@@ -398,6 +432,32 @@ public class RogueLiteRoomParent : MonoBehaviour
                         // Should never happen, but handle gracefully
                         Debug.LogError($"[HierarchicalPlacement] Failed to place any room at spawn {spawnIndex}!");
                         availableSpawnIndices.RemoveAt(0);
+                    }
+                }
+            }
+            
+            // Track required group spawn counts after successful placement
+            if (placedSuccessfully && placedRoomsBySpawnIndex.ContainsKey(spawnIndex))
+            {
+                var placedRoomData = placedRoomsBySpawnIndex[spawnIndex];
+                if (placedRoomData.originalPrefab != null)
+                {
+                    // Check if the placed room belongs to a required group
+                    int placedGroupIndex;
+                    if (buildingScriptableObj.IsRoomInRequiredGroup(placedRoomData.originalPrefab, out placedGroupIndex))
+                    {
+                        if (!requiredGroupSpawnCounts.ContainsKey(placedGroupIndex))
+                        {
+                            requiredGroupSpawnCounts[placedGroupIndex] = 0;
+                        }
+                        requiredGroupSpawnCounts[placedGroupIndex]++;
+                        
+                        var groups = buildingScriptableObj.requiredRoomGroups;
+                        if (placedGroupIndex < groups.Count)
+                        {
+                            Debug.Log($"[HierarchicalPlacement] Required group '{groups[placedGroupIndex].groupName}' count: " +
+                                     $"{requiredGroupSpawnCounts[placedGroupIndex]}/{groups[placedGroupIndex].requiredCount}");
+                        }
                     }
                 }
             }
@@ -500,6 +560,36 @@ public class RogueLiteRoomParent : MonoBehaviour
         {
             string extenderInfo = extenderSpawns > 0 ? $" ({originalSpawnCount} original + {extenderSpawns} from extenders)" : "";
             Debug.Log($"[HierarchicalPlacement] ✓ Successfully placed all {placedCount} rooms{extenderInfo}");
+        }
+        
+        // Report required room group satisfaction
+        if (buildingScriptableObj.requiredRoomGroups != null && buildingScriptableObj.requiredRoomGroups.Count > 0)
+        {
+            Debug.Log($"[HierarchicalPlacement] Required Room Group Summary:");
+            bool allSatisfied = true;
+            
+            for (int i = 0; i < buildingScriptableObj.requiredRoomGroups.Count; i++)
+            {
+                var group = buildingScriptableObj.requiredRoomGroups[i];
+                if (group == null) continue;
+                
+                int spawnedCount = requiredGroupSpawnCounts.ContainsKey(i) ? requiredGroupSpawnCounts[i] : 0;
+                bool satisfied = group.IsSatisfied(spawnedCount);
+                string status = satisfied ? "✓" : "✗";
+                
+                Debug.Log($"  {status} '{group.groupName}': {spawnedCount}/{group.requiredCount} spawned" +
+                         $"{(group.maxCount > 0 ? $" (max: {group.maxCount})" : "")}");
+                
+                if (!satisfied)
+                {
+                    allSatisfied = false;
+                }
+            }
+            
+            if (!allSatisfied)
+            {
+                Debug.LogWarning($"[HierarchicalPlacement] ⚠️ Not all required room groups were satisfied!");
+            }
         }
     }
 
@@ -1805,6 +1895,25 @@ public class RogueLiteRoomParent : MonoBehaviour
                     Debug.Log($"    Bounds: center={bounds.center}, size={bounds.size}");
                 }
             }
+        }
+    }
+    
+    #endregion
+    
+    #region Utility Methods
+    
+    /// <summary>
+    /// Shuffle a list using Fisher-Yates algorithm
+    /// </summary>
+    private void ShuffleList<T>(List<T> list)
+    {
+        int n = list.Count;
+        for (int i = n - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            T temp = list[i];
+            list[i] = list[j];
+            list[j] = temp;
         }
     }
     

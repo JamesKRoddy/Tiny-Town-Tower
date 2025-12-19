@@ -155,8 +155,8 @@ MonoBehaviour:
   doors: []
   chests: []
   roomBounds:
-    m_Center: {x: 0.000034809113, y: 1.4950942, z: 5.380545}
-    m_Extent: {x: 6.1278167, y: 2.5345035, z: 6.5915556}
+    m_Center: {x: 0.000036239624, y: 1.5028714, z: 5.0166984}
+    m_Extent: {x: 6.0765386, y: 2.5267262, z: 6.227709}
   autoCalculateBounds: 1
   boundsPadding: 2
   showRoomBounds: 1
@@ -296,8 +296,8 @@ Transform:
   m_GameObject: {fileID: 8615054228156404884}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7071099, z: -0, w: -0.7071037}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0.0000019478, y: 0, z: 0.21786}
+  m_LocalScale: {x: 0.99, y: 1, z: 0.99}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5229534695624770700}
@@ -1984,7 +1984,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4215803768097706, guid: a4cfa970df863e442812f7072fbb60cb, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 4.917
+      value: 4.813
       objectReference: {fileID: 0}
     - target: {fileID: 4215803768097706, guid: a4cfa970df863e442812f7072fbb60cb, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1992,7 +1992,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4215803768097706, guid: a4cfa970df863e442812f7072fbb60cb, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 4.94
+      value: 4.871
       objectReference: {fileID: 0}
     - target: {fileID: 4215803768097706, guid: a4cfa970df863e442812f7072fbb60cb, type: 3}
       propertyPath: m_LocalRotation.w
