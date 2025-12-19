@@ -130,9 +130,19 @@ public abstract class RogueLiteRoom : MonoBehaviour
     }
     
     /// <summary>
-    /// Calculate bounds for testing without modifying the original roomBounds field
+    /// Calculate bounds for testing without modifying the original roomBounds field.
+    /// Uses default rotation (no rotation applied).
     /// </summary>
     public Bounds CalculateTestBounds(Vector3 testPosition)
+    {
+        return CalculateTestBounds(testPosition, Quaternion.identity);
+    }
+    
+    /// <summary>
+    /// Calculate bounds for testing without modifying the original roomBounds field.
+    /// Accounts for rotation by calculating the axis-aligned bounding box of the rotated colliders.
+    /// </summary>
+    public Bounds CalculateTestBounds(Vector3 testPosition, Quaternion testRotation)
     {
         // Refresh colliders in case they changed
         var testColliders = GetComponentsInChildren<Collider>();
@@ -142,8 +152,9 @@ public abstract class RogueLiteRoom : MonoBehaviour
             return new Bounds(testPosition, Vector3.one * 10f);
         }
         
-        // Calculate the offset from the room's current position to the test position
-        Vector3 positionOffset = testPosition - transform.position;
+        // Calculate the rotation difference from current to test rotation
+        Quaternion currentRotation = transform.rotation;
+        Quaternion rotationDelta = testRotation * Quaternion.Inverse(currentRotation);
         
         Bounds bounds = new Bounds();
         bool boundsInitialized = false;
@@ -152,18 +163,33 @@ public abstract class RogueLiteRoom : MonoBehaviour
         {
             if (collider == null || !collider.enabled) continue;
             
-            // Get the collider's bounds and offset them to the test position
+            // Get the collider's current world bounds
             Bounds colliderBounds = collider.bounds;
-            colliderBounds.center += positionOffset;
+            
+            // Get the collider's position relative to this room's transform
+            Vector3 relativeCenter = colliderBounds.center - transform.position;
+            
+            // Apply rotation to the relative center
+            Vector3 rotatedRelativeCenter = rotationDelta * relativeCenter;
+            
+            // Calculate the new center at the test position
+            Vector3 newCenter = testPosition + rotatedRelativeCenter;
+            
+            // For the size, we need to account for the rotation of the bounding box
+            // The AABB size changes when rotated because it must stay axis-aligned
+            Vector3 size = colliderBounds.size;
+            Vector3 rotatedSize = CalculateRotatedAABBSize(size, rotationDelta);
+            
+            Bounds rotatedBounds = new Bounds(newCenter, rotatedSize);
             
             if (!boundsInitialized)
             {
-                bounds = colliderBounds;
+                bounds = rotatedBounds;
                 boundsInitialized = true;
             }
             else
             {
-                bounds.Encapsulate(colliderBounds);
+                bounds.Encapsulate(rotatedBounds);
             }
         }
         
@@ -171,6 +197,42 @@ public abstract class RogueLiteRoom : MonoBehaviour
         bounds.Expand(boundsPadding);
         
         return bounds;
+    }
+    
+    /// <summary>
+    /// Calculate the size of an axis-aligned bounding box after rotation.
+    /// When a box is rotated, its AABB must grow to encompass all rotated corners.
+    /// </summary>
+    private Vector3 CalculateRotatedAABBSize(Vector3 originalSize, Quaternion rotation)
+    {
+        // Half extents of the original box
+        Vector3 halfExtents = originalSize * 0.5f;
+        
+        // The 8 corners of the original box (relative to center)
+        Vector3[] corners = new Vector3[8]
+        {
+            new Vector3(-halfExtents.x, -halfExtents.y, -halfExtents.z),
+            new Vector3(-halfExtents.x, -halfExtents.y,  halfExtents.z),
+            new Vector3(-halfExtents.x,  halfExtents.y, -halfExtents.z),
+            new Vector3(-halfExtents.x,  halfExtents.y,  halfExtents.z),
+            new Vector3( halfExtents.x, -halfExtents.y, -halfExtents.z),
+            new Vector3( halfExtents.x, -halfExtents.y,  halfExtents.z),
+            new Vector3( halfExtents.x,  halfExtents.y, -halfExtents.z),
+            new Vector3( halfExtents.x,  halfExtents.y,  halfExtents.z)
+        };
+        
+        // Rotate each corner and find the new AABB
+        Vector3 min = Vector3.positiveInfinity;
+        Vector3 max = Vector3.negativeInfinity;
+        
+        foreach (Vector3 corner in corners)
+        {
+            Vector3 rotatedCorner = rotation * corner;
+            min = Vector3.Min(min, rotatedCorner);
+            max = Vector3.Max(max, rotatedCorner);
+        }
+        
+        return max - min;
     }
     
     /// <summary>
@@ -193,7 +255,12 @@ public abstract class RogueLiteRoom : MonoBehaviour
         if (otherRoom == null) return false;
         
         Bounds thisBounds = GetWorldBounds();
-        thisBounds.center = thisPosition;
+        
+        // Calculate the offset between the room's transform and its bounds center
+        Vector3 boundsOffset = thisBounds.center - transform.position;
+        
+        // Apply this offset to the new position
+        thisBounds.center = thisPosition + boundsOffset;
         
         Bounds otherBounds = otherRoom.GetWorldBounds();
         
@@ -221,7 +288,12 @@ public abstract class RogueLiteRoom : MonoBehaviour
     public bool WouldOverlapWith(Bounds otherBounds, Vector3 thisPosition)
     {
         Bounds thisBounds = GetWorldBounds();
-        thisBounds.center = thisPosition;
+        
+        // Calculate the offset between the room's transform and its bounds center
+        Vector3 boundsOffset = thisBounds.center - transform.position;
+        
+        // Apply this offset to the new position
+        thisBounds.center = thisPosition + boundsOffset;
         
         // Allow some overlap for connections
         if (thisBounds.Intersects(otherBounds))

@@ -194,7 +194,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     // Removed old InstantiateRoom and FindValidRoomPosition methods
     // These have been replaced by the new HierarchicalRoomPlacement system
 
-    private bool WouldRoomOverlapAtPosition(RogueLiteRoom roomToTest, Vector3 position)
+    private bool WouldRoomOverlapAtPosition(RogueLiteRoom roomToTest, Vector3 position, Quaternion rotation)
     {
         if (roomToTest == null)
         {
@@ -202,8 +202,8 @@ public class RogueLiteRoomParent : MonoBehaviour
             return true; // Fail safe - consider it as overlapping
         }
 
-        // Use the new CalculateTestBounds method that doesn't modify the original prefab
-        Bounds testBounds = roomToTest.CalculateTestBounds(position);
+        // Use the new CalculateTestBounds method that accounts for rotation
+        Bounds testBounds = roomToTest.CalculateTestBounds(position, rotation);
         
         if (ShowCollisionDebug)
         {
@@ -471,8 +471,8 @@ public class RogueLiteRoomParent : MonoBehaviour
                         {
                             // Skip extenders for emergency fill to avoid infinite recursion
                             if (room.GetComponent<RoomExtender>() != null) continue;
-                            
-                            float overlap = CalculateMaxOverlapForRoom(room, dynamicSpawnPoints[emptyIndex].position);
+
+                            float overlap = CalculateMaxOverlapForRoom(room, dynamicSpawnPoints[emptyIndex].position, dynamicSpawnPoints[emptyIndex].rotation);
                             if (overlap < minOverlap)
                             {
                                 minOverlap = overlap;
@@ -607,7 +607,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         bool isExtender = extenderComponent != null;
         
         // Check if room would fit without conflicts
-        if (!WouldRoomOverlapAtPosition(roomPrefab.GetComponent<RogueLiteRoom>(), targetTransform.position))
+        if (!WouldRoomOverlapAtPosition(roomPrefab.GetComponent<RogueLiteRoom>(), targetTransform.position, targetTransform.rotation))
         {
             // No conflicts - place the room directly
             return PlaceRoomAtSpawn(spawnIndex, roomPrefab, debugName);
@@ -647,7 +647,7 @@ public class RogueLiteRoomParent : MonoBehaviour
                 swapAttempts++;
                 
                 // Conflict resolved, try placing the original room again
-                if (!WouldRoomOverlapAtPosition(roomPrefab.GetComponent<RogueLiteRoom>(), targetTransform.position))
+                if (!WouldRoomOverlapAtPosition(roomPrefab.GetComponent<RogueLiteRoom>(), targetTransform.position, targetTransform.rotation))
                 {
                     return PlaceRoomAtSpawn(spawnIndex, roomPrefab, debugName + " (After Swap)");
                 }
@@ -690,9 +690,9 @@ public class RogueLiteRoomParent : MonoBehaviour
             RogueLiteRoom roomComponent = roomPrefab.GetComponent<RogueLiteRoom>();
             if (roomComponent == null) continue;
 
-            float overlapVolume = CalculateMaxOverlapForRoom(roomPrefab, targetTransform.position);
+            float overlapVolume = CalculateMaxOverlapForRoom(roomPrefab, targetTransform.position, targetTransform.rotation);
             roomOptions.Add((roomPrefab, overlapVolume));
-            
+
             string selectionMarker = "";
             if (overlapVolume < minOverlapVolume)
             {
@@ -780,8 +780,8 @@ public class RogueLiteRoomParent : MonoBehaviour
             if (roomComponent == null) continue;
 
             // Check if room fits with minimal overlap
-            float overlapVolume = CalculateMaxOverlapForRoom(roomPrefab, targetTransform.position);
-            
+            float overlapVolume = CalculateMaxOverlapForRoom(roomPrefab, targetTransform.position, targetTransform.rotation);
+
             if (overlapVolume <= maxAcceptableOverlapVolume)
             {
                 validRooms.Add((roomPrefab, overlapVolume));
@@ -832,10 +832,10 @@ public class RogueLiteRoomParent : MonoBehaviour
         foreach (var roomPrefab in allRooms)
         {
             if (roomPrefab == null) continue;
-            
-            float maxOverlap = CalculateMaxOverlapForRoom(roomPrefab, targetTransform.position);
+
+            float maxOverlap = CalculateMaxOverlapForRoom(roomPrefab, targetTransform.position, targetTransform.rotation);
             roomOptions.Add((roomPrefab, maxOverlap));
-            
+
             if (maxOverlap < minOverlap)
             {
                 minOverlap = maxOverlap;
@@ -862,13 +862,13 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// Returns raw intersection volume - smaller is better.
     /// This naturally favors smaller rooms and rooms with minimal physical overlap.
     /// </summary>
-    private float CalculateMaxOverlapForRoom(GameObject roomPrefab, Vector3 position)
+    private float CalculateMaxOverlapForRoom(GameObject roomPrefab, Vector3 position, Quaternion rotation)
     {
         RogueLiteRoom testRoom = roomPrefab.GetComponent<RogueLiteRoom>();
         if (testRoom == null) return float.MaxValue;
 
-        // Use the new CalculateTestBounds method that doesn't modify the original prefab
-        Bounds testBounds = testRoom.CalculateTestBounds(position);
+        // Use the new CalculateTestBounds method that accounts for rotation
+        Bounds testBounds = testRoom.CalculateTestBounds(position, rotation);
 
         float maxIntersectionVolume = 0f;
         
@@ -909,26 +909,42 @@ public class RogueLiteRoomParent : MonoBehaviour
                     Vector3 intersectionSize = intersectionMax - intersectionMin;
                     float intersectionVolume = intersectionSize.x * intersectionSize.y * intersectionSize.z;
                     
-                    // Check if this intersection is near any spawn point (where overlap is expected for connections)
+                    // Check if this intersection is SPECIFICALLY between the two spawn points (for doorway connections)
+                    // Only ignore overlap if it's directly on the line between this spawn and the existing room's spawn
                     Vector3 intersectionCenter = (intersectionMin + intersectionMax) * 0.5f;
-                    bool nearSpawnPoint = false;
+                    bool isConnectionOverlap = false;
                     
-                    foreach (Transform spawnPoint in dynamicSpawnPoints)
+                    // Get the spawn point positions for both rooms
+                    Vector3 thisSpawnPosition = position; // Current room being placed
+                    Vector3 existingSpawnPosition = roomData.roomObject.transform.position; // Existing room's position
+                    
+                    // Check if the intersection is approximately on the line between the two spawns
+                    Vector3 spawnToSpawn = existingSpawnPosition - thisSpawnPosition;
+                    float spawnDistance = spawnToSpawn.magnitude;
+                    
+                    if (spawnDistance > 0.1f) // Avoid division by zero
                     {
-                        float distanceToSpawn = Vector3.Distance(intersectionCenter, spawnPoint.position);
-                        if (distanceToSpawn <= spawnPointExclusionRadius)
+                        // Project intersection center onto the line between spawns
+                        Vector3 spawnDirection = spawnToSpawn / spawnDistance;
+                        Vector3 toIntersection = intersectionCenter - thisSpawnPosition;
+                        float projectionLength = Vector3.Dot(toIntersection, spawnDirection);
+                        Vector3 projectionPoint = thisSpawnPosition + spawnDirection * projectionLength;
+                        
+                        // Check if intersection is close to the line and between the spawn points
+                        float distanceFromLine = Vector3.Distance(intersectionCenter, projectionPoint);
+                        bool onConnectionLine = distanceFromLine <= spawnPointExclusionRadius;
+                        bool betweenSpawns = projectionLength >= 0 && projectionLength <= spawnDistance;
+                        
+                        isConnectionOverlap = onConnectionLine && betweenSpawns;
+                        
+                        if (ShowCollisionDebug && isConnectionOverlap)
                         {
-                            nearSpawnPoint = true;
-                            if (ShowCollisionDebug)
-                            {
-                                Debug.Log($"[OverlapCalc]     OVERLAP NEAR SPAWN POINT (distance: {distanceToSpawn:F1} <= {spawnPointExclusionRadius:F1}) - IGNORED for connection");
-                            }
-                            break;
+                            Debug.Log($"[OverlapCalc]     OVERLAP ON CONNECTION LINE (dist from line: {distanceFromLine:F1} <= {spawnPointExclusionRadius:F1}) - IGNORED for doorway");
                         }
                     }
                     
-                    // Only count overlap if it's NOT near a spawn point
-                    if (!nearSpawnPoint)
+                    // Only count overlap if it's NOT a connection overlap
+                    if (!isConnectionOverlap)
                     {
                         if (ShowCollisionDebug)
                         {
@@ -1266,7 +1282,7 @@ public class RogueLiteRoomParent : MonoBehaviour
             
             // Test if the alternative room would work at this position
             Transform targetTransform = dynamicSpawnPoints[spawnIndex];
-            if (!WouldRoomOverlapAtPosition(alternativeRoom.GetComponent<RogueLiteRoom>(), targetTransform.position))
+            if (!WouldRoomOverlapAtPosition(alternativeRoom.GetComponent<RogueLiteRoom>(), targetTransform.position, targetTransform.rotation))
             {
                 // Swap successful
                 if (PlaceRoomAtSpawn(spawnIndex, alternativeRoom, $"Swapped to alternative"))
@@ -1291,7 +1307,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
 
         // Check for collisions if requested
-        if (checkCollisions && WouldRoomOverlapAtPosition(roomPrefab.GetComponent<RogueLiteRoom>(), targetTransform.position))
+        if (checkCollisions && WouldRoomOverlapAtPosition(roomPrefab.GetComponent<RogueLiteRoom>(), targetTransform.position, targetTransform.rotation))
         {
             Debug.Log($"[RoomPlacement] {debugName} would overlap at {targetTransform.position} - trying next option");
             return false;

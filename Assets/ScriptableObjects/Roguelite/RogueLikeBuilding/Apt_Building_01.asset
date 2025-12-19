@@ -31,6 +31,9 @@ MonoBehaviour:
   - buildingRoom: {fileID: 2979286777223168146, guid: 247a9c0bcdcf77b469f54832066576cc, type: 3}
     difficulty: 0
     excludeFromTesting: 0
+  - buildingRoom: {fileID: 7999516764851876728, guid: 10b25b23c2f25d64f8386c21d768bc0b, type: 3}
+    difficulty: 0
+    excludeFromTesting: 0
   friendlyRooms: []
   friendlyRoomSpawnChance: 15
   extenderRooms: []
