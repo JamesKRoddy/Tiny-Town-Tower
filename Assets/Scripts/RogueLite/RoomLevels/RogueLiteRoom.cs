@@ -56,6 +56,20 @@ public abstract class RogueLiteRoom : MonoBehaviour
             chest.SetupChest(GameManager.Instance.DifficultyManager.GetCurrentRoomDifficulty());
         }
         
+        // Randomize props
+        var propRandomizers = GetComponentsInChildren<PropRandomizer>();
+        foreach (var propRandomizer in propRandomizers)
+        {
+            propRandomizer.RandomizeProps();
+        }
+        
+        // Randomize materials
+        var materialManager = GetComponent<RoomMaterialManager>();
+        if (materialManager != null)
+        {
+            materialManager.RandomizeAllMaterials();
+        }
+        
         // Call abstract method for room-specific setup
         OnRoomSetup();
     }
