@@ -27,10 +27,12 @@ public class PropRandomizer : MonoBehaviour
                 }
 
                 // Ensure NavMeshObstacle with carving is present
-                var obstacle = child.GetComponent<UnityEngine.AI.NavMeshObstacle>();
-                if (obstacle == null)
-                    obstacle = child.gameObject.AddComponent<UnityEngine.AI.NavMeshObstacle>();
-                obstacle.carving = true;
+                if(child.gameObject.GetComponent<Collider>() != null){
+                    var obstacle = child.GetComponent<UnityEngine.AI.NavMeshObstacle>();
+                    if (obstacle == null)
+                        obstacle = child.gameObject.AddComponent<UnityEngine.AI.NavMeshObstacle>();
+                    obstacle.carving = true;
+                }
             }
         }
     }
