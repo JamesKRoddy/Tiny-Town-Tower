@@ -5,7 +5,7 @@ public class PropRandomizer : MonoBehaviour
     [Header("Randomization Settings")]
     [Range(0, 1)] public float enableChance = 0.5f; // Chance of enabling each prop
 
-    private string physicsLayer = "ObstacleLayer";
+    private string physicsLayer = GameConstants.Layers.Default;
 
     public void RandomizeProps()
     {

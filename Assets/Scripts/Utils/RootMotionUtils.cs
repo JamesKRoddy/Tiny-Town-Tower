@@ -194,7 +194,7 @@ public static class RootMotionUtils
         }
 
         // Use default collision layers if none provided
-        LayerMask layers = collisionLayers ?? LayerMask.GetMask("Default", "ObstacleLayer");
+        LayerMask layers = collisionLayers ?? GameConstants.Layers.ObstacleCollisionMask;
         
         // Check for collisions and get adjusted movement
         Vector3 adjustedRootMotion = CheckRootMotionCollision(

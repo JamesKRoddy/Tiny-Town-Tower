@@ -2040,7 +2040,7 @@ MonoBehaviour:
   vaultCooldown: 0.3
   obstacleLayers:
   - serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 1
   - serializedVersion: 2
     m_Bits: 256
   capsuleCastRadius: 0.2

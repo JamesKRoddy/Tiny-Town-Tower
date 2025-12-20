@@ -498,7 +498,7 @@ namespace Enemies
             }
 
             // Use the centralized root motion utility
-            LayerMask collisionLayers = LayerMask.GetMask("Default", "ObstacleLayer");
+            LayerMask collisionLayers = GameConstants.Layers.ObstacleCollisionMask;
             
             // Determine minimum distance based on attack state and recent attack history
             // Keep zombie within attack range (0-1.5f) by preventing getting too close

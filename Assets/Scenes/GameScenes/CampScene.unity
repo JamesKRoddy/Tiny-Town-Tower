@@ -515,7 +515,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   characterType: 101
-  attackRotationSpeed: 360
   dashDuration: 0.2
   vaultDuration: 0.4
   vaultCooldown: 0.3
@@ -568,20 +567,45 @@ MonoBehaviour:
     equippedCcharacteristics: []
   appearanceSystem:
     bodyModels: []
-    headModels: []
     hairModels: []
     topClothing: []
     bottomClothing: []
     footwear: []
-    headAccessories: []
+    hats: []
+    helmets: []
+    faceAccessories: []
+    leftShoulderAccessories: []
+    rightShoulderAccessories: []
+    leftForearmAccessories: []
+    rightForearmAccessories: []
+    leftHandAccessories: []
+    rightHandAccessories: []
+    leftUpperLegAccessories: []
+    rightUpperLegAccessories: []
+    leftCalfAccessories: []
+    rightCalfAccessories: []
+    leftFootAccessories: []
+    rightFootAccessories: []
     backAccessories: []
-    handAccessories: []
     skinMaterials: []
     hairMaterials: []
     clothingMaterials: []
-    headAccessoryChance: 0.3
+    hatChance: 0.3
+    helmetChance: 0.2
+    faceAccessoryChance: 0.15
+    leftShoulderAccessoryChance: 0.25
+    rightShoulderAccessoryChance: 0.25
+    leftForearmAccessoryChance: 0.25
+    rightForearmAccessoryChance: 0.25
+    leftHandAccessoryChance: 0.2
+    rightHandAccessoryChance: 0.2
+    leftUpperLegAccessoryChance: 0.25
+    rightUpperLegAccessoryChance: 0.25
+    leftCalfAccessoryChance: 0.2
+    rightCalfAccessoryChance: 0.2
+    leftFootAccessoryChance: 0.15
+    rightFootAccessoryChance: 0.15
     backAccessoryChance: 0.4
-    handAccessoryChance: 0.2
   initializationContext: 0
   hasBeenInitialized: 0
   currentStamina: 100
@@ -601,7 +625,6 @@ MonoBehaviour:
   starvationThreshold: 10
   workSpeedMultiplier: 1
   noFoodCooldown: 10
-  isSick: 0
   baseSicknessChance: 0.001
   sicknessCheckInterval: 5
   baseSicknessDurationInGameHours: 6
@@ -683,6 +706,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8cdfbceb3c91a894d88c2ce9d8d2e34b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debugFootsteps: 0
+  surfaceDetectionDistance: 1
   taskEffects: []
 --- !u!1001 &456970721
 PrefabInstance:
@@ -769,7 +794,7 @@ GameObject:
   - component: {fileID: 687816101}
   - component: {fileID: 687816100}
   - component: {fileID: 687816099}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Plane
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1520,7 +1545,7 @@ GameObject:
   - component: {fileID: 1500761279}
   - component: {fileID: 1500761278}
   - component: {fileID: 1500761277}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Cube (3)
   m_TagString: Vaultable
   m_Icon: {fileID: 0}
@@ -1628,7 +1653,7 @@ GameObject:
   - component: {fileID: 1570439097}
   - component: {fileID: 1570439096}
   - component: {fileID: 1570439095}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Cube
   m_TagString: Vaultable
   m_Icon: {fileID: 0}
@@ -1809,7 +1834,7 @@ MonoBehaviour:
   m_Center: {x: 0, y: 2, z: 0}
   m_LayerMask:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 1
   m_UseGeometry: 1
   m_DefaultArea: 0
   m_GenerateLinks: 0
@@ -1983,6 +2008,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1915334674}
     m_Modifications:
+    - target: {fileID: 2131949111579387115, guid: 3839ae5da0c21474ea629b368f4ccfa3, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4309233454298186322, guid: 3839ae5da0c21474ea629b368f4ccfa3, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5570598761542495843, guid: 3839ae5da0c21474ea629b368f4ccfa3, type: 3}
       propertyPath: m_Name
       value: ObstacleBlockedByWall
@@ -2105,67 +2138,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 68689ac79c54bfc41a7a4c101b215d0e, type: 3}
---- !u!1001 &7298901179448090774
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 5979949113929886864, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 1.77
-      objectReference: {fileID: 0}
-    - target: {fileID: 5979949113929886864, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -0.00000047683716
-      objectReference: {fileID: 0}
-    - target: {fileID: 5979949113929886864, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -5.04
-      objectReference: {fileID: 0}
-    - target: {fileID: 5979949113929886864, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5979949113929886864, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5979949113929886864, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5979949113929886864, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5979949113929886864, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5979949113929886864, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5979949113929886864, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6477775522615659138, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
-      propertyPath: m_Name
-      value: BasicZombie
-      objectReference: {fileID: 0}
-    - target: {fileID: 6477775522615659138, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 7dfbccfb4298a2c40ac4b756e10fd596, type: 3}
 --- !u!1001 &8948532463693818168
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2230,7 +2202,6 @@ SceneRoots:
   - {fileID: 202420343}
   - {fileID: 832575519}
   - {fileID: 2115934330}
-  - {fileID: 7298901179448090774}
   - {fileID: 412939986}
   - {fileID: 1915334674}
   - {fileID: 2769032608674028835}
