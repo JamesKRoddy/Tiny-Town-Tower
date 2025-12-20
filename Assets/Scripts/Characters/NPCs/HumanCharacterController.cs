@@ -89,7 +89,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     }
 
     [Header("Input and Movement State")]
-    protected Vector3 movementInput; // Stores the current movement input
+    protected Vector3 movementInput; // Stores the current movement input (smoothed)
+    private Vector3 rawMovementInput; // Raw input before smoothing
+    private Vector3 smoothedInputVelocity; // Used by SmoothDamp for smooth input transitions
+    [SerializeField] private float inputSmoothTime = 0.05f; // Time to smooth input transitions (lower = more responsive, higher = smoother)
     private bool isDashing = false; // Whether the player is currently dashing
     private bool isVaulting = false; // Whether the player is currently vaulting
     private bool isPushing = false; // Whether the player is currently pushing an object
@@ -385,6 +388,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             }
         }
         
+        // Smooth the movement input to prevent micro-oscillations
+        SmoothMovementInput();
+        
         HandleDash();
         UpdatePoiseRecovery(); // Update poise recovery
         MoveCharacter();
@@ -521,7 +527,27 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void Movement(Vector3 movement)
     {
-        movementInput = new Vector3(movement.x, 0, movement.z);
+        // Store raw input for smoothing
+        rawMovementInput = new Vector3(movement.x, 0, movement.z);
+    }
+    
+    /// <summary>
+    /// Smooths the raw movement input to prevent micro-oscillations and jitter.
+    /// Called in PossessedUpdate before movement is applied.
+    /// </summary>
+    private void SmoothMovementInput()
+    {
+        // If input is near zero, snap to zero to prevent drifting
+        if (rawMovementInput.sqrMagnitude < 0.01f)
+        {
+            movementInput = Vector3.zero;
+            smoothedInputVelocity = Vector3.zero;
+            return;
+        }
+        
+        // Use SmoothDamp for natural, frame-rate independent smoothing
+        // This filters out micro-oscillations while maintaining responsiveness
+        movementInput = Vector3.SmoothDamp(movementInput, rawMovementInput, ref smoothedInputVelocity, inputSmoothTime);
     }
 
     /// <summary>
@@ -1616,11 +1642,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 // We do NOTHING with movement here - only allow rotation
                 
                 // Allow rotation for attack aiming (use normalized direction)
+                // Using RotateTowards for frame-rate independent rotation (degrees per second)
                 if (movementInput.sqrMagnitude > 0.01f)
                 {
                     Vector3 rotationDirection = movementInput.normalized;
                     Quaternion targetRotation = Quaternion.LookRotation(rotationDirection);
-                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * 100f * Time.deltaTime);
                 }
                 
                 return; // Skip all movement logic - OnAnimatorMove() handles movement
@@ -1636,11 +1663,12 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 characterController.Move(gravityMovement);
                 
                 // Allow rotation to maintain control feel (use normalized direction)
+                // Using RotateTowards for frame-rate independent rotation (degrees per second)
                 if (movementInput.sqrMagnitude > 0.01f)
                 {
                     Vector3 rotationDirection = movementInput.normalized;
                     Quaternion targetRotation = Quaternion.LookRotation(rotationDirection);
-                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * 100f * Time.deltaTime);
                 }
                 
                 return; // Skip all movement logic - damaged state prevents movement
@@ -1699,9 +1727,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                     characterController.Move(targetMovement);
 
                     // Rotate player towards the current direction (use normalized)
+                    // Using RotateTowards for frame-rate independent rotation (degrees per second)
                     Vector3 rotationDirection = currentDirection.normalized;
                     Quaternion targetRotation = Quaternion.LookRotation(rotationDirection);
-                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * 100f * Time.deltaTime);
                 }
             }
             else
@@ -1839,11 +1868,13 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 characterController.Move(targetMovement);
 
                 // Rotate player towards the input direction (use NORMALIZED direction to avoid snapping from magnitude changes)
+                // Using RotateTowards for frame-rate independent rotation (degrees per second)
                 if (movementInput.sqrMagnitude > 0.01f && !isVaulting)
                 {
                     Vector3 rotationDirection = movementInput.normalized; // Pure direction, ignore magnitude
                     Quaternion targetRotation = Quaternion.LookRotation(rotationDirection);
-                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
+                    // RotateTowards uses degrees per second, making it frame-rate independent
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * 100f * Time.deltaTime);
                 }
             }
         } // End of else if (!isClimbing) block

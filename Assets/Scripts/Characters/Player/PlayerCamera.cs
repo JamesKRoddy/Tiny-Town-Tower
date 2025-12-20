@@ -207,48 +207,60 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
     /// 
     /// THE PROBLEM:
     /// Controllers give inconsistent magnitude (0.81-1.06) around the edge due to hardware variance.
+    /// Diagonals (45°, 135°, etc.) often report lower magnitudes than cardinal directions.
     /// 
     /// THE FIX (Hades-style):
-    /// If stick magnitude > 0.85, treat it as FULL EXTENSION (1.0) in that direction.
-    /// This gives consistent full-speed movement regardless of controller variance.
+    /// - Dead zone handled by Input System StickDeadzone processor (0.125 min)
+    /// - If stick magnitude > 0.7, treat it as FULL EXTENSION (1.0) in that direction.
+    /// - Use smooth magnitude transition to avoid popping
     /// </summary>
     public Vector3 ConvertStickInputToWorldMovement(Vector2 stickInput)
     {
-        // STEP 1: Handle stick magnitude variance (Hades-style)
         float inputMagnitude = stickInput.magnitude;
         
-        if (inputMagnitude < 0.01f)
+        // Dead zone is now handled by Input System's StickDeadzone processor
+        // But keep a small threshold for safety
+        if (inputMagnitude < 0.05f)
         {
             return Vector3.zero; // No input
         }
         
-        // If stick is pushed past 75%, treat it as full extension
-        // This compensates for controller hardware variance (some angles give 0.82, some give 1.06)
-        // Threshold at 0.75 catches even badly-calibrated controllers at diagonals
-        float normalizedMagnitude = inputMagnitude;
-        if (inputMagnitude > 0.75f)
+        // STEP 1: Handle stick magnitude variance (Hades-style)
+        // Lower threshold to 0.7 to catch more diagonal cases where controllers underreport
+        // Use smooth transition instead of hard snap for values near the threshold
+        float normalizedMagnitude;
+        
+        const float fullSpeedThreshold = 0.7f;
+        const float minActiveThreshold = 0.1f;
+        
+        if (inputMagnitude >= fullSpeedThreshold)
         {
-            normalizedMagnitude = 1.0f; // Snap to full speed
+            // Full speed - snap to 1.0 for consistent movement
+            normalizedMagnitude = 1.0f;
         }
-        else if (inputMagnitude < 0.2f)
+        else if (inputMagnitude < minActiveThreshold)
         {
-            return Vector3.zero; // Dead zone
+            return Vector3.zero; // Below active threshold
         }
         else
         {
-            // Remap [0.2, 0.75] → [0, 1.0] for smooth acceleration
-            normalizedMagnitude = (inputMagnitude - 0.2f) / (0.75f - 0.2f);
+            // Smooth remap from [minActiveThreshold, fullSpeedThreshold] → [0, 1.0]
+            normalizedMagnitude = (inputMagnitude - minActiveThreshold) / (fullSpeedThreshold - minActiveThreshold);
+            // Apply a slight curve for more natural acceleration feel
+            normalizedMagnitude = normalizedMagnitude * normalizedMagnitude; // Quadratic ease-in
         }
         
-        // STEP 2: Rotate input by camera's Y-axis only (ignore camera pitch)
-        Vector2 normalizedStick = stickInput.normalized;
-        Vector3 input3D = new Vector3(normalizedStick.x, 0, normalizedStick.y);
+        // STEP 2: Get the direction (already normalized by Input System's NormalizeVector2 processor)
+        // But normalize again to be safe in case raw values slip through
+        Vector2 stickDirection = inputMagnitude > 0.001f ? stickInput / inputMagnitude : Vector2.zero;
+        Vector3 input3D = new Vector3(stickDirection.x, 0, stickDirection.y);
         
+        // STEP 3: Rotate input by camera's Y-axis only (ignore camera pitch)
         float cameraYaw = transform.eulerAngles.y;
         Quaternion yawRotation = Quaternion.Euler(0, cameraYaw, 0);
         Vector3 worldDirection = yawRotation * input3D;
         
-        // STEP 3: Apply the normalized magnitude
+        // STEP 4: Apply the normalized magnitude
         return worldDirection * normalizedMagnitude;
     }
     

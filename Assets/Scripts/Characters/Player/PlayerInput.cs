@@ -1,7 +1,6 @@
 using UnityEngine;
 using System;
-using UnityEngine.InputSystem.LowLevel;
-using static UnityEditor.Searcher.SearcherWindow.Alignment;
+using UnityEngine.InputSystem;
 using System.Collections;
 using Managers;
 using UnityEngine.EventSystems;
@@ -68,6 +67,10 @@ public class PlayerInput : MonoBehaviour
     #endregion
 
     #region Input Settings
+    [Header("New Input System")]
+    [SerializeField] private InputActionAsset inputActions;
+    private InputAction _moveAction;
+    
     [Header("Quick Access Keys")]
     [SerializeField] private KeyCode quickSaveKey = KeyCode.F5;
     [SerializeField] private KeyCode quickLoadKey = KeyCode.F9;
@@ -86,7 +89,18 @@ public class PlayerInput : MonoBehaviour
     private void Awake()
     {
         InitializeSingleton();
+        InitializeInputActions();
         SubscribeToGameManager();
+    }
+    
+    private void OnEnable()
+    {
+        _moveAction?.Enable();
+    }
+    
+    private void OnDisable()
+    {
+        _moveAction?.Disable();
     }
 
     private void OnDestroy()
@@ -178,6 +192,22 @@ public class PlayerInput : MonoBehaviour
     #endregion
 
     #region Private Methods
+    private void InitializeInputActions()
+    {
+        if (inputActions == null)
+        {
+            Debug.LogWarning("[PlayerInput] InputActionAsset not assigned! Left joystick will not work.");
+            return;
+        }
+        
+        _moveAction = inputActions.FindActionMap("Player")?.FindAction("Move");
+        
+        if (_moveAction == null)
+        {
+            Debug.LogWarning("[PlayerInput] Move action not found in InputActionAsset!");
+        }
+    }
+    
     private void InitializeSingleton()
     {
         if (_instance != null && _instance != this)
@@ -397,7 +427,10 @@ public class PlayerInput : MonoBehaviour
 
     private void ProcessJoystickInput()
     {
-        Vector2 leftJoystick = new Vector2(Input.GetAxis(GameConstants.InputAxes.Horizontal), Input.GetAxis(GameConstants.InputAxes.Vertical));
+        // Left joystick now uses the new Input System
+        Vector2 leftJoystick = _moveAction?.ReadValue<Vector2>() ?? Vector2.zero;
+        
+        // Right joystick still uses old Input Manager (for now)
         Vector2 rightJoystick = new Vector2(Input.GetAxis(GameConstants.InputAxes.RightStickHorizontal), Input.GetAxis(GameConstants.InputAxes.RightStickVertical));
         
         OnLeftJoystick?.Invoke(leftJoystick);
