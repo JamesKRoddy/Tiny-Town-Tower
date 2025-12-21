@@ -6,7 +6,9 @@ Start making over world
 
 Building apt rooms
 Since we are no longer back tracking through buildings just delete previous rooms/entrances
-Movement on player still needs work feels weird
+Remove some of the obstacles from the rooms, too tight of a space for boxes
+Able to jump through walls too easily when vaulting over counters
+Convert fully to the new control system
 
 TODO:
 
