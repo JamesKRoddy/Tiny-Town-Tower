@@ -5,10 +5,9 @@ Boss rooms:
 Start making over world
 
 Building apt rooms
-Since we are no longer back tracking through buildings just delete previous rooms/entrances
 Remove some of the obstacles from the rooms, too tight of a space for boxes
 Able to jump through walls too easily when vaulting over counters
-Convert fully to the new control system
+
 
 TODO:
 
@@ -21,6 +20,8 @@ Mutants! Characters in the PolygonApocalypseWasteland, light mutant, heavy mutan
 Create the scriptable obj and prefabs for: Genetic mutations, weapons, world objects etc.
 
 ****** Next work:
+
+Convert fully to the new control system
 
 Difficulty manager setup, really have to look at how thats going to work
 

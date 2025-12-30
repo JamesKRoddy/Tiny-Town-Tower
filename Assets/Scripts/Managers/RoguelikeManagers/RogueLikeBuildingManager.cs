@@ -251,30 +251,37 @@ namespace Managers
             return true;
         }
 
-        public void ReturnToPreviousRoom(RogueLikeRoomDoor rogueLiteDoor)
+        /// <summary>
+        /// Destroys the previous room/entrance. Called during fade out before spawning a new room.
+        /// </summary>
+        public void DestroyPreviousRoom()
         {
-            if (rogueLiteDoor.targetRoom == null)
+            if (currentRoomParent != null)
             {
-                Debug.LogError("Door has no target room set!");
-                return;
+                Debug.Log($"[RogueLikeBuildingManager] Destroying previous room: {currentRoomParent.name}");
+                
+                // Remove from tracking dictionaries
+                Vector3 positionToRemove = currentRoomParent.transform.position;
+                if (spawnedRooms.ContainsKey(positionToRemove))
+                {
+                    spawnedRooms.Remove(positionToRemove);
+                }
+                
+                // Remove from placed rooms list
+                placedRooms.RemoveAll(r => r.roomObject == currentRoomParent);
+                
+                // Destroy the room GameObject
+                Destroy(currentRoomParent);
+                currentRoomParent = null;
+                currentRoomParentComponent = null;
             }
-
-            // Set the target room as the current room
-            currentRoomParent = rogueLiteDoor.targetRoom.gameObject;
             
-            // Setup the player at the target spawn point
-            if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null)
+            // Also destroy the building entrance if it exists (first room transition)
+            if (instantiatedBuildingEntrance != null)
             {
-                if (rogueLiteDoor.targetSpawnPoint != null)
-                {
-                    // Use validated spawn position to avoid spawning into obstacles
-                    Vector3 validSpawnPosition = rogueLiteDoor.GetValidSpawnPosition();
-                    PlayerController.Instance._possessedNPC.GetTransform().position = validSpawnPosition;
-                }
-                else
-                {
-                    SetupPlayer(PlayerController.Instance._possessedNPC.GetTransform());
-                }
+                Debug.Log($"[RogueLikeBuildingManager] Destroying building entrance: {instantiatedBuildingEntrance.name}");
+                Destroy(instantiatedBuildingEntrance);
+                instantiatedBuildingEntrance = null;
             }
         }
 
