@@ -6,7 +6,6 @@ Start making over world
 
 Building apt rooms
 Remove some of the obstacles from the rooms, too tight of a space for boxes
-Able to jump through walls too easily when vaulting over counters
 
 
 TODO:

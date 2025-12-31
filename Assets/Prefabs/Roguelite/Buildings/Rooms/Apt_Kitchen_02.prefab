@@ -182,7 +182,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 44453711d5ec708469f283223f3c3c90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enableChance: 0.75
+  enableChance: 0.2
 --- !u!1 &4831869372706879903
 GameObject:
   m_ObjectHideFlags: 0
@@ -283,8 +283,8 @@ MonoBehaviour:
   doors: []
   chests: []
   roomBounds:
-    m_Center: {x: -0.30046368, y: 1.4616816, z: 4.9885287}
-    m_Extent: {x: 6.362788, y: 2.546682, z: 6.0999475}
+    m_Center: {x: -0.30046368, y: 1.3183118, z: 4.9885287}
+    m_Extent: {x: 6.362788, y: 2.6900518, z: 6.0999475}
   autoCalculateBounds: 1
   boundsPadding: 2
   showRoomBounds: 1

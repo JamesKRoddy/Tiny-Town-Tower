@@ -39,7 +39,6 @@ namespace Managers
         private RogueLiteRoomParent currentRoomParentComponent;
         private int currentMaxRooms;
         private Vector3 lastPlayerSpawnPoint;
-        private float minRoomSpacing = 20f;
         private Dictionary<Vector3, GameObject> spawnedRooms = new Dictionary<Vector3, GameObject>();
         private List<RoomPlacementData> placedRooms = new List<RoomPlacementData>();
 

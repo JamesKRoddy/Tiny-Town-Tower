@@ -1165,6 +1165,28 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             var effectiveVaultType = currentObstacleComponent.GetEffectiveVaultType();
             
+            // For vault/roll types, still check for walls behind before committing
+            if (effectiveVaultType == ObstacleVaultBehavior.VaultAnimationType.Vault || 
+                effectiveVaultType == ObstacleVaultBehavior.VaultAnimationType.Roll)
+            {
+                // Check if there's a wall directly behind the obstacle
+                if (IsWallDirectlyBehindObstacle(obstacleInfo.point, direction, obstacleInfo.collider))
+                {
+                    // Wall behind - try to climb instead if height allows
+                    float componentObstacleHeight = AnalyzeObstacleHeight(direction, obstacleInfo.point);
+                    if (componentObstacleHeight <= maxClimbHeight)
+                    {
+                        Vector3 climbTopPosition = new Vector3(obstacleInfo.point.x, transform.position.y + componentObstacleHeight + 0.1f, obstacleInfo.point.z);
+                        if (IsClimbPathSafe(transform.position, climbTopPosition))
+                        {
+                            return ObstacleType.Climb;
+                        }
+                    }
+                    // Can't climb either - block the vault
+                    return ObstacleType.Block;
+                }
+            }
+            
             // Map component vault type to our ObstacleType enum
             switch (effectiveVaultType)
             {
@@ -1195,15 +1217,25 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             Vector3 proposedVaultTarget = obstacleInfo.point + direction.normalized * vaultOffset;
             Vector3 vaultTargetPosition = new Vector3(proposedVaultTarget.x, transform.position.y, proposedVaultTarget.z);
             
-            // If vault path is unsafe and obstacle is within climbing range, suggest climbing
-            if (!IsVaultPathSafe(transform.position, vaultTargetPosition) && obstacleHeight <= maxClimbHeight)
+            // ENHANCED CHECK: Also check for walls directly behind the obstacle
+            // This catches walls that might be missed by the standard path check
+            bool hasWallBehind = IsWallDirectlyBehindObstacle(obstacleInfo.point, direction, obstacleInfo.collider);
+            
+            // If vault path is unsafe OR there's a wall behind, and obstacle is within climbing range, suggest climbing
+            if ((hasWallBehind || !IsVaultPathSafe(transform.position, vaultTargetPosition)) && obstacleHeight <= maxClimbHeight)
             {
                 // Additional check: ensure there's a clear area on top to climb onto
                 Vector3 climbTopPosition = new Vector3(obstacleInfo.point.x, transform.position.y + obstacleHeight + 0.1f, obstacleInfo.point.z);
-                if (IsVaultPathSafe(transform.position, climbTopPosition))
+                if (IsClimbPathSafe(transform.position, climbTopPosition))
                 {
                     return ObstacleType.Climb;
                 }
+            }
+            
+            // If there's a wall behind and we can't climb, block the vault entirely
+            if (hasWallBehind)
+            {
+                return ObstacleType.Block;
             }
             
             return ObstacleType.Vault; // Default to vault for all vaultable heights
@@ -1378,6 +1410,105 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     }
 
     /// <summary>
+    /// Checks if there's a wall directly behind the obstacle that would block vaulting.
+    /// This is a more aggressive check specifically for walls immediately behind vaultable objects.
+    /// </summary>
+    /// <param name="obstaclePoint">The hit point on the obstacle</param>
+    /// <param name="direction">The direction the player is moving</param>
+    /// <param name="obstacleCollider">The collider of the obstacle being vaulted (to ignore it)</param>
+    /// <returns>True if there's a wall behind that would block vaulting</returns>
+    private bool IsWallDirectlyBehindObstacle(Vector3 obstaclePoint, Vector3 direction, Collider obstacleCollider)
+    {
+        // Check multiple points behind the obstacle at different heights to detect walls
+        float[] checkHeights = { 0.3f, 0.6f, 1.0f, 1.4f }; // Check at different heights above ground
+        float checkDistance = vaultOffset * 1.5f; // Check a bit further than the vault would land
+        float checkRadius = capsuleCastRadius * 0.5f;
+        
+        Vector3 baseCheckPos = obstaclePoint + direction.normalized * 0.1f; // Start just past the obstacle surface
+        
+        foreach (float height in checkHeights)
+        {
+            Vector3 checkOrigin = new Vector3(baseCheckPos.x, transform.position.y + height, baseCheckPos.z);
+            
+            // Raycast forward from just past the obstacle to detect walls
+            if (Physics.SphereCast(checkOrigin, checkRadius, direction.normalized, out RaycastHit hit, checkDistance, GetCombinedObstacleLayers()))
+            {
+                // Ignore the obstacle we're trying to vault over
+                if (obstacleCollider != null && hit.collider == obstacleCollider)
+                {
+                    continue;
+                }
+                
+                // Found a wall or obstacle behind - check if it's actually blocking
+                // (not just ground or something below vault height)
+                float hitHeightAboveGround = hit.point.y - transform.position.y;
+                if (hitHeightAboveGround > 0.2f)
+                {
+                    // This is a wall at player height, vaulting would go through it
+                    return true;
+                }
+            }
+        }
+        
+        // Also do a full capsule check at the proposed landing position
+        Vector3 landingPos = obstaclePoint + direction.normalized * vaultOffset;
+        Vector3 capsuleBottom = new Vector3(landingPos.x, transform.position.y + 0.3f, landingPos.z);
+        Vector3 capsuleTop = new Vector3(landingPos.x, transform.position.y + humanCollider.bounds.size.y - 0.1f, landingPos.z);
+        
+        Collider[] overlaps = Physics.OverlapCapsule(capsuleBottom, capsuleTop, capsuleCastRadius * 0.7f, GetCombinedObstacleLayers());
+        foreach (Collider col in overlaps)
+        {
+            // Ignore the obstacle we're vaulting over
+            if (obstacleCollider != null && col == obstacleCollider)
+            {
+                continue;
+            }
+            
+            // Found something at the landing position
+            return true;
+        }
+        
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if a new vault direction would be safe during mid-vault directional adjustments.
+    /// This prevents players from steering into walls while vaulting.
+    /// </summary>
+    /// <param name="currentPos">Current player position</param>
+    /// <param name="targetPos">Proposed target position with the new direction</param>
+    /// <returns>True if the direction is safe, false if it would lead through a wall</returns>
+    private bool IsVaultDirectionSafe(Vector3 currentPos, Vector3 targetPos)
+    {
+        Vector3 pathDirection = (targetPos - currentPos).normalized;
+        float pathDistance = Vector3.Distance(currentPos, targetPos);
+        
+        if (pathDistance < 0.01f) return true; // No movement, always safe
+        
+        // Check at chest height to avoid ground collision issues
+        Vector3 checkOrigin = currentPos + Vector3.up * (vaultHeight * 0.5f);
+        float checkRadius = capsuleCastRadius * 0.7f;
+        
+        if (Physics.SphereCast(checkOrigin, checkRadius, pathDirection, out RaycastHit hit, pathDistance, GetCombinedObstacleLayers()))
+        {
+            // Ignore the obstacle we're currently vaulting over
+            if (currentObstacleCollider != null && hit.collider == currentObstacleCollider)
+            {
+                return true;
+            }
+            
+            // Check if collision is at vault height (not ground)
+            float hitHeight = hit.point.y - currentPos.y;
+            if (hitHeight > 0.2f && hitHeight < humanCollider.bounds.size.y)
+            {
+                return false; // Would hit a wall
+            }
+        }
+        
+        return true;
+    }
+
+    /// <summary>
     /// Checks if a climb path to the target position is safe (specifically for climbing)
     /// </summary>
     /// <param name="startPos">Starting position (ground level)</param>
@@ -1549,11 +1680,22 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         else if (isVaulting)
         {
             // Allow slight directional control during vault, similar to dash
+            // But only allow adjustments that don't lead through walls
             if (movementInput.magnitude > 0.1f)
             {
-                currentVaultDirection = Vector3.Lerp(currentVaultDirection, movementInput.normalized, vaultTurnSpeed * Time.deltaTime);
-                currentVaultDirection.y = 0; // Keep vault direction horizontal
-                currentVaultDirection = currentVaultDirection.normalized;
+                Vector3 proposedDirection = Vector3.Lerp(currentVaultDirection, movementInput.normalized, vaultTurnSpeed * Time.deltaTime);
+                proposedDirection.y = 0; // Keep vault direction horizontal
+                proposedDirection = proposedDirection.normalized;
+                
+                // Only allow the direction change if it doesn't lead through a wall
+                float vaultDistance = Vector3.Distance(vaultStartPosition, vaultTargetPosition);
+                Vector3 proposedTarget = vaultStartPosition + proposedDirection * vaultDistance;
+                proposedTarget.y = vaultStartPosition.y;
+                
+                if (IsVaultDirectionSafe(transform.position, proposedTarget))
+                {
+                    currentVaultDirection = proposedDirection;
+                }
             }
 
             // Time-based vault movement with directional control
@@ -1562,12 +1704,48 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             vaultProgress = Mathf.Clamp01(vaultProgress); // Ensure progress stays between 0 and 1
             
             // Calculate movement based on adjusted direction and progress
-            float vaultDistance = Vector3.Distance(vaultStartPosition, vaultTargetPosition);
-            Vector3 adjustedTarget = vaultStartPosition + currentVaultDirection * vaultDistance;
+            float vaultDistance2 = Vector3.Distance(vaultStartPosition, vaultTargetPosition);
+            Vector3 adjustedTarget = vaultStartPosition + currentVaultDirection * vaultDistance2;
             adjustedTarget.y = vaultStartPosition.y; // Keep at same Y level
             
-            // Lerp position from start to adjusted target based on progress
-            transform.position = Vector3.Lerp(vaultStartPosition, adjustedTarget, vaultProgress);
+            // Calculate the next position we want to move to
+            Vector3 nextPosition = Vector3.Lerp(vaultStartPosition, adjustedTarget, vaultProgress);
+            
+            // Real-time collision check: prevent moving through walls during vault
+            Vector3 currentPos = transform.position;
+            Vector3 moveDirection = (nextPosition - currentPos).normalized;
+            float moveDistance = Vector3.Distance(currentPos, nextPosition);
+            
+            // Perform a spherecast to check for wall collisions along the movement path
+            bool hitWall = false;
+            Vector3 safePosition = nextPosition;
+            
+            if (moveDistance > 0.001f)
+            {
+                // Check at chest height to avoid ground detection issues
+                Vector3 checkOrigin = currentPos + Vector3.up * (vaultHeight * 0.5f);
+                float checkRadius = capsuleCastRadius * 0.9f; // Slightly smaller to avoid getting stuck
+                
+                if (Physics.SphereCast(checkOrigin, checkRadius, moveDirection, out RaycastHit wallHit, moveDistance, GetCombinedObstacleLayers()))
+                {
+                    // Check if the hit object is NOT the obstacle we're vaulting over
+                    if (currentObstacleCollider == null || wallHit.collider != currentObstacleCollider)
+                    {
+                        // Also check if the collision is at our height level (not ground)
+                        float hitHeight = wallHit.point.y - currentPos.y;
+                        if (hitHeight > 0.2f && hitHeight < humanCollider.bounds.size.y)
+                        {
+                            // Hit a wall! Stop short of it
+                            hitWall = true;
+                            float safeDistance = Mathf.Max(0, wallHit.distance - checkRadius - 0.05f);
+                            safePosition = currentPos + moveDirection * safeDistance;
+                        }
+                    }
+                }
+            }
+            
+            // Apply the position (either safe or the original next position)
+            transform.position = safePosition;
 
             // Rotate player towards the current vault direction
             if (currentVaultDirection.magnitude > 0.1f)
@@ -1576,10 +1754,13 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
             }
 
-            // End vault when duration is complete
-            if (Time.time >= vaultTime)
+            // End vault when duration is complete OR if we hit a wall
+            if (Time.time >= vaultTime || hitWall)
             {
-                transform.position = adjustedTarget; // Snap to final adjusted position
+                if (!hitWall)
+                {
+                    transform.position = adjustedTarget; // Snap to final adjusted position only if not blocked
+                }
                 FinishVault();
             }
         }
