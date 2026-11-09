@@ -1,11 +1,8 @@
 *****Current Work*****
 
-Boss rooms:
+Shader so player can be seen through objects
+Resources to spawn in roguelite
 
-Start making over world
-
-Building apt rooms
-Remove some of the obstacles from the rooms, too tight of a space for boxes
 
 
 TODO:
@@ -24,13 +21,7 @@ Convert fully to the new control system
 
 Difficulty manager setup, really have to look at how thats going to work
 
-Charge up attacks by holding down buttons
-
-Ladders for the player to reach secret areas
-
 Have to test turrets using the new damage system
-
-Sweet spot for attack animations which grant extra bonus damage/effects
 
 VFX for player, npc, attacks, hits, status effects etc.
 
@@ -41,6 +32,10 @@ Clean up debug logs, also have to have a central debug manager to control what c
 PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
 
 Setup zombie/drone meshes and gameobjects that should be enabled for different attacks
+
+Create more room/building prefabs
+
+Filling out sound and VFX
 
 ****** Bugs and refactoring:
 
@@ -61,18 +56,17 @@ Time of day
 
 ******Stuff for later******
 
+Charge up attacks by holding down buttons
+
+Ladders for the player to reach secret areas
+
+Sweet spot for attack animations which grant extra bonus damage/effects
 
 NPCs have to use toilets, need to figure out timers for when they need it
 
 Repairing buildings: wait until damage is finished
 
 SaveLoadManager, have to implement saving/loading research, player data?, other player data for camp?, building data, cleaness and electricity, manager data? (? just means the ai put TODO there but not sure exactly what it means or what data is needed)
-
-Filling out the overworld, having more options of buildings to select.
-
-Create more room/building prefabs
-
-Filling out sound and VFX
 
 Status effects, adding sleep, work etc effects to npcs Also damage ones like fire electric, poison etc. Effects for work task buildings (camp fire smoke etc.)
 
