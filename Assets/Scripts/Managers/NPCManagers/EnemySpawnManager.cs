@@ -97,11 +97,19 @@ namespace Managers
             {
                 Debug.Log("[EnemySpawnManager] In ROGUE_LITE mode, checking room type");
                 
-                // Check if the current room parent is friendly - if so, skip enemy spawning
+                // Check if the current room parent is friendly or a boss room - if so, skip enemy spawning
                 if (RogueLiteManager.Instance.BuildingManager.CurrentRoomParentComponent != null)
                 {
                     var roomParentComponent = RogueLiteManager.Instance.BuildingManager.CurrentRoomParentComponent;
                     Debug.Log($"[EnemySpawnManager] Room parent component found, room type: {roomParentComponent.RoomType}");
+                    
+                    // Check if this is a boss room - boss spawns its own enemy, skip regular spawning
+                    if (roomParentComponent is BossRoomParent)
+                    {
+                        Debug.Log("[EnemySpawnManager] Room is BOSS ROOM, skipping regular enemy spawning (boss spawns separately)");
+                        // Don't set ALL_WAVES_CLEARED yet - let the boss fight handle that
+                        return;
+                    }
                     
                     if (roomParentComponent != null && roomParentComponent.RoomType == RogueLikeRoomType.FRIENDLY)
                     {

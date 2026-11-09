@@ -123,7 +123,8 @@ public class EffectSpawnData
             rotation,
             parent,
             effectDefinition,
-            duration
+            intensity: 1f,
+            duration: duration
         );
     }
 }

@@ -13,10 +13,13 @@ MonoBehaviour:
   m_Name: Death_DefaultZombie
   m_EditorClassIdentifier: Assembly-CSharp:Managers:EffectDefinition
   prefabs:
-  - {fileID: 1277154925287174, guid: 3b517eddec185dd4a830743a742ad00b, type: 3}
+  - prefab: {fileID: 1277154925287174, guid: 3b517eddec185dd4a830743a742ad00b, type: 3}
+    delay: 0
   sounds:
-  - {fileID: 8300000, guid: 48213131877f5f54ca9e34324c75f030, type: 3}
-  - {fileID: 8300000, guid: 1d624cfddd15f7a469ed51e691d559a9, type: 3}
+  - clip: {fileID: 8300000, guid: 48213131877f5f54ca9e34324c75f030, type: 3}
+    delay: 0
+  - clip: {fileID: 8300000, guid: 1d624cfddd15f7a469ed51e691d559a9, type: 3}
+    delay: 0
   minPitch: 0.9
   maxPitch: 1.1
   volume: 1

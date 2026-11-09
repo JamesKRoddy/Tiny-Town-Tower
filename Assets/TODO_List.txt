@@ -1,44 +1,47 @@
 *****Current Work*****
 
-Remove all read me files
+Shader so player can be seen through objects
+Resources to spawn in roguelite
 
-Create a new branch
+
+
+TODO:
+
+Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones. Zombie that screams and messes up the players camera/controls
+
+Mutants! Characters in the PolygonApocalypseWasteland, light mutant, heavy mutant (use an animator variant)
 
 ****** Tomorrow work:
 
-PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
+Create the scriptable obj and prefabs for: Genetic mutations, weapons, world objects etc.
 
 ****** Next work:
 
-VFX and sounds for footsteps
+Convert fully to the new control system
 
-Charge up attacks by holding down buttons
-
-Ladders for the player to reach secret areas
+Difficulty manager setup, really have to look at how thats going to work
 
 Have to test turrets using the new damage system
 
-Sweet spot for attack animations which grant extra bonus damage/effects
-
-Custom inspectors for NPC and their components, enemies, managers that need it
-
-Create the scriptable obj and prefabs for: Genetic mutations, weapons, world objects etc.
-
 VFX for player, npc, attacks, hits, status effects etc.
-
-UI refactor, try to reuse buttons, place in graphics to use for the real ui in the game
-
-Setup some new enemies: Zombie that when its killed splits into smaller enemies. Different types of robots and drones.
 
 Recruitable NPCs in roguelike section shouldn't wander, get tired/sick etc. They should just hang out until the player talks to them. Have to create an animation state to just have idle animations
 
-Situation when the last npc dies in the game, you load back to the camp. A length of time passes and more npcs stumble across your camp. The punishment for this is that during this time the camp will be messy, buildings will be damaged or completely broken. You do still get to keep all of your research though.
-
 Clean up debug logs, also have to have a central debug manager to control what classes have enable logs enabled
+
+PlayerUIManager ShowFloatingText, I dunno if we will even use this but its basically just text floating over npcs/building/enemies etc that we can add in
+
+Setup zombie/drone meshes and gameobjects that should be enabled for different attacks
+
+Create more room/building prefabs
+
+Filling out sound and VFX
 
 ****** Bugs and refactoring:
 
+Vomit pools are not damaging the player
 
+Knockback animations when the player is damaged are possibly not working, might just be a poise break issue
 
 ****** Errors:
 
@@ -53,18 +56,17 @@ Time of day
 
 ******Stuff for later******
 
+Charge up attacks by holding down buttons
+
+Ladders for the player to reach secret areas
+
+Sweet spot for attack animations which grant extra bonus damage/effects
 
 NPCs have to use toilets, need to figure out timers for when they need it
 
 Repairing buildings: wait until damage is finished
 
 SaveLoadManager, have to implement saving/loading research, player data?, other player data for camp?, building data, cleaness and electricity, manager data? (? just means the ai put TODO there but not sure exactly what it means or what data is needed)
-
-Filling out the overworld, having more options of buildings to select.
-
-Create more room/building prefabs
-
-Filling out sound and VFX
 
 Status effects, adding sleep, work etc effects to npcs Also damage ones like fire electric, poison etc. Effects for work task buildings (camp fire smoke etc.)
 
@@ -83,7 +85,14 @@ Finalise the difficulty system making enemies faster, more damage, more health, 
 *****Ideas*****
 
 Story
+First mission is to restore power to the main city gate so you can enter the suburbs. This requires finding a fuel cell (received from a boss in the starting area).
+Different sections branch off from eachother. Can require backtracking to open previously locked areas.
+3rd area restoring a fast travel train to take you to the different parts.
 Are you looking after the npcs or are you really using them to gain some sort of directive, the idea of whos really in control?
+Find gate decryption keys that can be decrypted at the base to open dorrs around the overworld. These open new areas and short cuts
+
+Overworld
+Split it into different sections, each having their own shortcuts and secrets. Train station is always at the starting area. This just makes it easier to construct and define different sections and aesthetics.
 
 Enemies
 Slower animations for injured enemies
@@ -91,24 +100,41 @@ Enemies throw other enemies at the player
 Occationally enemies with really low health will try to flee from the player
 Ghost enemies that you need to destroy a machine in order to damage them
 Gimic boss fights based around some feature like eg. breaking pipes that buff the enemy or something
+Boss spawner that spawns in enemies to help it fight
+Setup a massive boss like the hydra in hades
+Mine traps that explode on the player or enemies walking over them
 
 Mutations
 One that shows enemies life bars
 Increase poise damage
 Increase players poise
 Be able to hit ghost enemies without destroying machine
+One the player is damaged it send out an elemental shockwave dealing damage to all close enemies with high poise damage to give them a break to get away
 
 Research
 Unlock vaulting and dash for roguelike to increase movement options
 Strength that allows you to push heavier objects to open new areas
+Being able to carry more inventory during rogulike
 Vaulting over obstacles
 Vaulting over enemies?
 Unlock better weapons avalible at the start of runs
+The projectile reflection technique thats used by baseprojectiles when they are hit by DamageUtoils.PerformBoxCastDamage. First level reflects it away from the player, second level it travel back towards the enemy that shot it.
+Can have a MeleeWeapon.projectileBoxSizeMultiplier increase to increase the chance of reflecting projectiles
+Heavy hitter-ability to break rubble to open new paths
 
-Buildings:
+Camp Buildings:
 An alarm that will alert NPCs of an incoming zombie attack
 Implement water and thirst mechanics, water buildings etc.
 
 Weapons:
 All weapons should have versions from lvl 1 to 5 all originating from the same scriptable obj
+A skateboard
+
+NPC Characteristics
+Strong back-able to carry more resources and higher inventory
+Quick-Faster movement
+strong-base damage increase
+
+Roguelike buildings
+Roguelike doors that open into a different building type. So a room could be an outdoor ally then that leads into a different building
 

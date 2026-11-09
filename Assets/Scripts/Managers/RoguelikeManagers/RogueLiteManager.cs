@@ -117,9 +117,15 @@ namespace Managers
             transitionCoroutine = StartCoroutine(EnterRoomSequence(door));
         }
 
+        /// <summary>
+        /// Return directly to camp (used by death menu, etc.)
+        /// For normal building/boss completion, use ExitedBuilding() instead
+        /// </summary>
         public void ReturnToCamp(bool keepInventory)
         {
-            if(keepInventory)
+            Debug.Log($"[RogueLiteManager] ReturnToCamp called (keepInventory: {keepInventory})");
+            
+            if(keepInventory && PlayerController.Instance != null)
             {
                 var npcInventory = PlayerController.Instance.GetCharacterInventory().GetFullInventory();
                 PlayerInventory.Instance.AddItem(npcInventory);
@@ -137,39 +143,16 @@ namespace Managers
                     }
                 }
             }
-            SceneTransitionManager.Instance.LoadScene(SceneNames.CampScene, GameMode.CAMP, false);
-        }
-
-        public void ReturnToPreviousRoom(RogueLikeRoomDoor door)
-        {
-            if (transitionCoroutine != null)
-            {
-                StopCoroutine(transitionCoroutine);
-            }
-            transitionCoroutine = StartCoroutine(ReturnToPreviousRoomSequence(door));
-        }
-
-        private IEnumerator ReturnToPreviousRoomSequence(RogueLikeRoomDoor door)
-        {
-            // 1. Fade in
-            yield return PlayerUIManager.Instance.transitionMenu.FadeIn();
             
-            // 2. Setup room
-            buildingManager.ReturnToPreviousRoom(door);
-
-            // 3. Move Player
-            SetEnemySetupState(EnemySetupState.PRE_ENEMY_SPAWNING);
-                    
-            // 4. Short pause for camera transition
-            yield return new WaitForSeconds(0.5f);
-
-            // 5. Fade out
-            yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
-
-            //6. Dont spawn enemies
-            SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
-
-            transitionCoroutine = null;
+            // CRITICAL: Unpossess the roguelite NPC BEFORE scene transition
+            // This prevents the "all NPCs lost" check from triggering when the NPC is destroyed
+            if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null)
+            {
+                Debug.Log($"[RogueLiteManager] Unpossessing NPC before returning to camp");
+                PlayerController.Instance.PossessNPC(null);
+            }
+            
+            SceneTransitionManager.Instance.LoadScene(SceneNames.CampScene, GameMode.CAMP, false);
         }
 
         private Coroutine transitionCoroutine;
@@ -213,7 +196,10 @@ namespace Managers
             // 1. Fade in
             yield return PlayerUIManager.Instance.transitionMenu.FadeIn();
             
-            // 2. Setup room
+            // 2. Destroy previous room/entrance during fade (before spawning new room)
+            buildingManager.DestroyPreviousRoom();
+            
+            // 3. Setup room
             SetEnemySetupState(EnemySetupState.WAVE_START);
             bool roomEntered = buildingManager.EnterRoomCheck(door);
 
@@ -224,19 +210,19 @@ namespace Managers
                 yield break;
             }
 
-            // 3. Move Player
+            // 4. Move Player
             SetEnemySetupState(EnemySetupState.PRE_ENEMY_SPAWNING);
                         
-            // 4. Short pause for camera transition
+            // 5. Short pause for camera transition
             yield return new WaitForSeconds(0.5f);
 
-            // 5. Fade out
+            // 6. Fade out
             yield return PlayerUIManager.Instance.transitionMenu.FadeOut();
 
-            // 6. Wait for NavMesh to be ready before spawning enemies
+            // 7. Wait for NavMesh to be ready before spawning enemies
             yield return StartCoroutine(WaitForNavMeshReady());
 
-            // 7. Check if this is a friendly room - if so, skip enemy spawning entirely
+            // 8. Check if this is a friendly room - if so, skip enemy spawning entirely
             if (buildingManager.CurrentRoomParentComponent.RoomType == RogueLikeRoomType.FRIENDLY)
             {
                 SetEnemySetupState(EnemySetupState.ALL_WAVES_CLEARED);
@@ -244,10 +230,10 @@ namespace Managers
                 yield break;
             }
 
-            // 8. Spawn enemies (only for hostile rooms)
+            // 9. Spawn enemies (only for hostile rooms)
             SetEnemySetupState(EnemySetupState.ENEMY_SPAWN_START);
 
-            // 9. Finish spawning enemies
+            // 10. Finish spawning enemies
             SetEnemySetupState(EnemySetupState.ENEMIES_SPAWNED);
 
             transitionCoroutine = null;

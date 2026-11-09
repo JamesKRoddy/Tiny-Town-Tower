@@ -244,9 +244,8 @@ public enum WallType
 
 public enum DoorStatus
 {
-    LOCKED, //Door is locked unable to pass through
-    ENTRANCE, //Door opens, the player can paass through when the level is cleared
-    EXIT //Door the player spawns infront of, moves back to previous room
+    LOCKED,   // Door is locked, cannot pass through
+    UNLOCKED  // Door is unlocked, can pass through to next room or exit
 }
 
 // =========================
@@ -360,6 +359,7 @@ public enum CharacterType
     ZOMBIE_MELEE = 201,
     ZOMBIE_SPITTER = 202,
     ZOMBIE_TANK = 203,
+    ZOMBIE_SPLITTING = 204,
 
     // Category 3: Machine Types (3xx)
     MACHINE_DRONE = 301,
@@ -460,5 +460,37 @@ public enum FloatingTextType
     Warning,
     Error,
     Success
+}
+
+/// <summary>
+/// Types of projectile behaviors
+/// Used to determine which projectile component to attach when spawning projectiles
+/// </summary>
+public enum ProjectileType
+{
+    /// <summary>
+    /// No projectile behavior (static effect or instant hit)
+    /// </summary>
+    NONE = 0,
+    
+    /// <summary>
+    /// Straight line projectile with constant velocity
+    /// </summary>
+    STRAIGHT = 1,
+    
+    /// <summary>
+    /// Arcing projectile that follows a parabolic trajectory
+    /// </summary>
+    ARC = 2,
+    
+    /// <summary>
+    /// Homing projectile that tracks a target
+    /// </summary>
+    HOMING = 3,
+    
+    /// <summary>
+    /// Ballistic projectile affected by gravity
+    /// </summary>
+    BALLISTIC = 4
 }
 

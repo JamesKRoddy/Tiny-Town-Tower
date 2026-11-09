@@ -1,0 +1,225 @@
+================================================================================
+                    ANIMATION EVENT CONSTANTS - LOCATION UPDATE
+================================================================================
+
+CHANGE SUMMARY:
+---------------
+All animation event constants have been moved to your centralized GameConstants.cs
+file to keep everything in one place, following your existing project structure.
+
+================================================================================
+                              NEW LOCATION
+================================================================================
+
+FILE:
+  Assets/Scripts/Utils/GameConstants.cs
+
+SECTION:
+  #region Animation Events
+  public static class AnimationEvents
+  {
+      // Your animation event constants here
+  }
+  #endregion
+
+This follows the same pattern as your other constants:
+  - Tags
+  - Layers
+  - AnimatorParams
+  - InputAxes
+  - InputButtons
+  - ShaderProperties
+  - AnimationEvents (NEW!)
+
+================================================================================
+                              HOW TO USE
+================================================================================
+
+EXAMPLE USAGE:
+
+// Footstep events
+string leftFoot = GameConstants.AnimationEvents.FootstepLeft;
+string rightFoot = GameConstants.AnimationEvents.FootstepRight;
+
+// Combat events
+string attackVfx = GameConstants.AnimationEvents.AttackVFX;
+string useWeapon = GameConstants.AnimationEvents.UseWeapon;
+string stopWeapon = GameConstants.AnimationEvents.StopWeapon;
+
+// Attack directions
+int horizontalLeft = GameConstants.AnimationEvents.AttackDirection.HorizontalLeft;
+int verticalDown = GameConstants.AnimationEvents.AttackDirection.VerticalDown;
+
+// Utility methods
+if (GameConstants.AnimationEvents.IsFootstepEvent(eventName))
+{
+    // Handle footstep
+}
+
+if (GameConstants.AnimationEvents.IsCombatEvent(eventName))
+{
+    // Handle combat
+}
+
+// Get all event names
+string[] allFootsteps = GameConstants.AnimationEvents.GetFootstepEventNames();
+string[] allCombat = GameConstants.AnimationEvents.GetCombatEventNames();
+string[] allEvents = GameConstants.AnimationEvents.GetAllEventNames();
+
+================================================================================
+                              WHAT CHANGED
+================================================================================
+
+BEFORE:
+-------
+Constants were in: Assets/Scripts/Constants/AnimationEventNames.cs
+Usage: AnimationEventNames.FOOTSTEP_LEFT
+
+AFTER:
+------
+Constants are in: Assets/Scripts/Utils/GameConstants.cs
+Usage: GameConstants.AnimationEvents.FootstepLeft
+
+CHANGES:
+--------
+1. Moved from AnimationEventNames to GameConstants.AnimationEvents
+2. Naming convention changed to PascalCase (FootstepLeft vs FOOTSTEP_LEFT)
+3. Attack directions now nested: GameConstants.AnimationEvents.AttackDirection
+4. All utility methods preserved (IsFootstepEvent, GetAllEventNames, etc.)
+5. Follows your existing GameConstants pattern
+
+================================================================================
+                              FILES UPDATED
+================================================================================
+
+MODIFIED:
+---------
+✓ Assets/Scripts/Utils/GameConstants.cs
+  - Added #region Animation Events section
+  - All animation event constants now here
+
+✓ Assets/Scripts/Editor/AnimationEventHelper.cs
+  - Updated to use GameConstants.AnimationEvents
+  - All references updated
+
+✓ Assets/ANIMATION_EVENT_HELPER_GUIDE.txt
+  - Documentation updated with new location
+
+DELETED:
+--------
+✗ Assets/Scripts/Constants/AnimationEventNames.cs
+  - No longer needed, merged into GameConstants
+
+================================================================================
+                              WHY THIS CHANGE?
+================================================================================
+
+BENEFITS:
+---------
+1. Single source of truth for all constants
+2. Consistent with your existing project structure
+3. Easy to find - everything is in GameConstants
+4. Follows your naming conventions
+5. No need to remember multiple constant files
+6. Better organization and maintainability
+
+YOUR EXISTING PATTERN:
+----------------------
+You already had:
+  - GameConstants.Tags.Enemy
+  - GameConstants.Layers.Weapon
+  - GameConstants.AnimatorParams.Speed
+  - GameConstants.InputAxes.Horizontal
+  - GameConstants.ShaderProperties.Mode
+
+Now you also have:
+  - GameConstants.AnimationEvents.FootstepLeft
+  - GameConstants.AnimationEvents.AttackVFX
+  - GameConstants.AnimationEvents.AttackDirection.HorizontalLeft
+
+All consistent! All in one place!
+
+================================================================================
+                              NO CODE CHANGES NEEDED
+================================================================================
+
+The Animation Event Helper tool has been automatically updated to use the new
+location. You don't need to change any existing code unless you were directly
+referencing AnimationEventNames (which was just created, so unlikely).
+
+If you do have any code referencing the old location, simply:
+
+Find:    AnimationEventNames.FOOTSTEP_LEFT
+Replace: GameConstants.AnimationEvents.FootstepLeft
+
+Find:    AttackDirections.HORIZONTAL_LEFT
+Replace: GameConstants.AnimationEvents.AttackDirection.HorizontalLeft
+
+================================================================================
+                              INTELLISENSE SUPPORT
+================================================================================
+
+With everything in GameConstants, you get better IntelliSense:
+
+Type: GameConstants.
+  → Shows all constant categories (Tags, Layers, AnimatorParams, etc.)
+
+Type: GameConstants.AnimationEvents.
+  → Shows all animation events (FootstepLeft, AttackVFX, etc.)
+
+Type: GameConstants.AnimationEvents.AttackDirection.
+  → Shows all attack directions (HorizontalLeft, VerticalDown, etc.)
+
+Type: GameConstants.AnimationEvents.Is
+  → Shows helper methods (IsFootstepEvent, IsCombatEvent, etc.)
+
+================================================================================
+                              QUICK REFERENCE
+================================================================================
+
+AVAILABLE CONSTANTS:
+
+Footsteps:
+  GameConstants.AnimationEvents.FootstepLeft
+  GameConstants.AnimationEvents.FootstepRight
+  GameConstants.AnimationEvents.Footstep
+
+Combat:
+  GameConstants.AnimationEvents.AttackVFX
+  GameConstants.AnimationEvents.UseWeapon
+  GameConstants.AnimationEvents.StopWeapon
+
+Work:
+  GameConstants.AnimationEvents.PlayTaskAnimationEffect
+
+Attack Directions:
+  GameConstants.AnimationEvents.AttackDirection.HorizontalLeft (0)
+  GameConstants.AnimationEvents.AttackDirection.HorizontalRight (1)
+  GameConstants.AnimationEvents.AttackDirection.VerticalDown (2)
+  GameConstants.AnimationEvents.AttackDirection.VerticalUp (3)
+
+Utility Methods:
+  GameConstants.AnimationEvents.IsFootstepEvent(string)
+  GameConstants.AnimationEvents.IsCombatEvent(string)
+  GameConstants.AnimationEvents.IsWorkEvent(string)
+  GameConstants.AnimationEvents.GetFootstepEventNames()
+  GameConstants.AnimationEvents.GetCombatEventNames()
+  GameConstants.AnimationEvents.GetWorkEventNames()
+  GameConstants.AnimationEvents.GetAllEventNames()
+
+================================================================================
+                              SUMMARY
+================================================================================
+
+✓ All animation event constants moved to GameConstants.cs
+✓ Follows your existing project structure
+✓ Single location for all constants
+✓ Better organization and discoverability
+✓ Tool automatically updated
+✓ No breaking changes
+✓ Full IntelliSense support
+
+Everything is now centralized in GameConstants.cs where it belongs!
+
+================================================================================
+

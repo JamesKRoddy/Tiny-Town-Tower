@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEditor;
-using Enemies.Attacks;
+using Combat;
+using Combat.Attacks;
 
 
 namespace Enemies.Editor
@@ -14,10 +15,14 @@ namespace Enemies.Editor
         private SerializedProperty poiseDamage;
         private SerializedProperty attackElement;
         private SerializedProperty cooldown;
+        private SerializedProperty minCooldown;
+        private SerializedProperty maxCooldown;
         private SerializedProperty minRange;
         private SerializedProperty maxRange;
         private SerializedProperty attackAngleThreshold;
-        private SerializedProperty attackGameObjects;
+        private SerializedProperty attackDescription;
+        private SerializedProperty attackEquipment;
+        private SerializedProperty attackEffectObjects;
         private SerializedProperty startEffect;
         private SerializedProperty attackEffect;
         private SerializedProperty hitEffect;
@@ -27,25 +32,35 @@ namespace Enemies.Editor
         private SerializedProperty hitEffectDelay;
         private SerializedProperty endEffectDelay;
         private SerializedProperty elementalDamageBonus;
+        private SerializedProperty useAnimatorTiming;
         private SerializedProperty attackTrigger;
+        private SerializedProperty warningDelay;
+        private SerializedProperty attackDelay;
+        private SerializedProperty attackEndDelay;
         private SerializedProperty allowRotationDuringAttack;
+        private SerializedProperty attackOrigin;
 
         private bool showRangeSettings = true;
         private bool showDamageSettings = true;
         private bool showEffectSettings = true;
         private bool showVisualizationSettings = true;
+        private bool showTimingSettings = true;
 
         protected virtual void OnEnable()
         {
+            attackDescription = serializedObject.FindProperty("attackDescription");
             attackType = serializedObject.FindProperty("attackType");
             damage = serializedObject.FindProperty("damage");
             poiseDamage = serializedObject.FindProperty("poiseDamage");
             attackElement = serializedObject.FindProperty("attackElement");
             cooldown = serializedObject.FindProperty("cooldown");
+            minCooldown = serializedObject.FindProperty("minCooldown");
+            maxCooldown = serializedObject.FindProperty("maxCooldown");
             minRange = serializedObject.FindProperty("minRange");
             maxRange = serializedObject.FindProperty("maxRange");
             attackAngleThreshold = serializedObject.FindProperty("attackAngleThreshold");
-            attackGameObjects = serializedObject.FindProperty("attackGameObjects");
+            attackEquipment = serializedObject.FindProperty("attackEquipment");
+            attackEffectObjects = serializedObject.FindProperty("attackEffectObjects");
             startEffect = serializedObject.FindProperty("startEffect");
             attackEffect = serializedObject.FindProperty("attackEffect");
             hitEffect = serializedObject.FindProperty("hitEffect");
@@ -55,8 +70,13 @@ namespace Enemies.Editor
             hitEffectDelay = serializedObject.FindProperty("hitEffectDelay");
             endEffectDelay = serializedObject.FindProperty("endEffectDelay");
             elementalDamageBonus = serializedObject.FindProperty("elementalDamageBonus");
+            useAnimatorTiming = serializedObject.FindProperty("useAnimatorTiming");
             attackTrigger = serializedObject.FindProperty("attackTrigger");
+            warningDelay = serializedObject.FindProperty("warningDelay");
+            attackDelay = serializedObject.FindProperty("attackDelay");
+            attackEndDelay = serializedObject.FindProperty("attackEndDelay");
             allowRotationDuringAttack = serializedObject.FindProperty("allowRotationDuringAttack");
+            attackOrigin = serializedObject.FindProperty("attackOrigin");
         }
 
         public override void OnInspectorGUI()
@@ -65,8 +85,47 @@ namespace Enemies.Editor
 
             // Header
             EditorGUILayout.Space(5);
-            EditorGUILayout.LabelField(target.GetType().Name, EditorStyles.boldLabel);
+            GUIStyle headerStyle = new GUIStyle(EditorStyles.boldLabel);
+            headerStyle.fontSize = 14;
+            EditorGUILayout.LabelField(target.GetType().Name, headerStyle);
             EditorGUILayout.Space(5);
+            
+            // Attack Description Section
+            if (attackDescription != null)
+            {
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                
+                EditorGUILayout.LabelField("Attack Description", EditorStyles.boldLabel);
+                
+                // Show the description text area
+                EditorGUILayout.PropertyField(attackDescription, GUIContent.none);
+                
+                // If there's a description, show it nicely formatted
+                if (!string.IsNullOrWhiteSpace(attackDescription.stringValue))
+                {
+                    EditorGUILayout.Space(3);
+                    GUIStyle descriptionStyle = new GUIStyle(EditorStyles.wordWrappedLabel);
+                    descriptionStyle.fontSize = 11;
+                    descriptionStyle.normal.textColor = new Color(0.8f, 0.9f, 1f);
+                    descriptionStyle.padding = new RectOffset(10, 10, 5, 5);
+                    
+                    EditorGUILayout.BeginVertical(GUI.skin.box);
+                    EditorGUILayout.LabelField(attackDescription.stringValue, descriptionStyle);
+                    EditorGUILayout.EndVertical();
+                }
+                else
+                {
+                    EditorGUILayout.HelpBox(
+                        "Add a custom description to document this attack.\n\n" +
+                        "Example:\n" +
+                        "\"Close-range melee attack with 2m range. Triggers when enemy is within striking distance. " +
+                        "Use attackType=1 for animation override.\"",
+                        MessageType.None);
+                }
+                
+                EditorGUILayout.EndVertical();
+                EditorGUILayout.Space(5);
+            }
 
             // Attack Type
             if (attackType != null) EditorGUILayout.PropertyField(attackType);
@@ -90,13 +149,63 @@ namespace Enemies.Editor
             if (elementalDamageBonus != null) EditorGUILayout.PropertyField(elementalDamageBonus);
             EditorGUILayout.Space(5);
 
-            // Animation Settings
-            EditorGUILayout.LabelField("Animation Settings", EditorStyles.boldLabel);
-            if (attackTrigger != null) EditorGUILayout.PropertyField(attackTrigger);
-            if (allowRotationDuringAttack != null) 
+            // Attack Timing Settings - Show either Animation or Timeline based on toggle
+            showTimingSettings = EditorGUILayout.BeginFoldoutHeaderGroup(showTimingSettings, "Attack Timing");
+            if (showTimingSettings)
             {
-                EditorGUILayout.PropertyField(allowRotationDuringAttack, new GUIContent("Allow Rotation During Attack", "Enable NavMeshAgent rotation during attack (useful for tracking moving targets)"));
+                EditorGUI.indentLevel++;
+                
+                // Toggle between animator and timeline
+                if (useAnimatorTiming != null)
+                {
+                    EditorGUILayout.PropertyField(useAnimatorTiming, new GUIContent("Use Animator Timing", "Use animator events to trigger attack phases. If false, uses timeline delays."));
+                }
+                
+                EditorGUILayout.Space(3);
+                
+                // Show appropriate settings based on timing mode
+                if (useAnimatorTiming != null && useAnimatorTiming.boolValue)
+                {
+                    // Animator-based timing
+                    EditorGUILayout.LabelField("Animator Settings", EditorStyles.miniBoldLabel);
+                    if (attackTrigger != null) 
+                    {
+                        EditorGUILayout.PropertyField(attackTrigger, new GUIContent("Attack Trigger", "Animator trigger parameter name"));
+                    }
+                    EditorGUILayout.HelpBox("Attack phases (Warning/Attack/End) are triggered by animation events.", MessageType.Info);
+                }
+                else
+                {
+                    // Timeline-based timing
+                    EditorGUILayout.LabelField("Timeline Settings", EditorStyles.miniBoldLabel);
+                    if (warningDelay != null)
+                    {
+                        EditorGUILayout.PropertyField(warningDelay, new GUIContent("Warning Delay", "Time before AttackWarning is called (visual indicator)"));
+                    }
+                    if (attackDelay != null)
+                    {
+                        EditorGUILayout.PropertyField(attackDelay, new GUIContent("Attack Delay", "Time before Attack is executed (damage dealing)"));
+                    }
+                    if (attackEndDelay != null)
+                    {
+                        EditorGUILayout.PropertyField(attackEndDelay, new GUIContent("End Delay", "Time before AttackEnd is called (cleanup)"));
+                    }
+                    
+                    // Visual timeline
+                    DrawTimelineVisualization();
+                }
+                
+                EditorGUILayout.Space(3);
+                
+                // Common settings
+                if (allowRotationDuringAttack != null) 
+                {
+                    EditorGUILayout.PropertyField(allowRotationDuringAttack, new GUIContent("Allow Rotation During Attack", "Enable rotation tracking during attack"));
+                }
+                
+                EditorGUI.indentLevel--;
             }
+            EditorGUILayout.EndFoldoutHeaderGroup();
             EditorGUILayout.Space(5);
 
             // Attack Visualization Settings - All visualization controls in one place
@@ -134,31 +243,80 @@ namespace Enemies.Editor
                 EditorGUILayout.Space(5);
             }
 
-            // Game Objects - simple and clean
-            if (attackGameObjects != null)
+            // Attack Visual System Section
+            EditorGUILayout.Space(5);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            
+            EditorGUILayout.LabelField("Attack Visual System", EditorStyles.boldLabel);
+            EditorGUILayout.Space(3);
+            
+            // Permanent Equipment
+            EditorGUILayout.LabelField("Permanent Equipment (Always Visible)", EditorStyles.miniBoldLabel);
+            EditorGUILayout.HelpBox(
+                "Equipment that's ALWAYS visible to show what attack this enemy has.\n\n" +
+                "Examples:\n" +
+                "• Dynamite sticks → ExplosionAttack\n" +
+                "• Gun model → ProjectileAttack\n" +
+                "• Sword/weapon → Melee attacks\n" +
+                "• Rocket launcher → Missile attacks",
+                MessageType.Info);
+            
+            if (attackEquipment != null)
             {
-                EditorGUILayout.Space(5);
-                EditorGUILayout.PropertyField(attackGameObjects, new GUIContent("Attack Game Objects"), true);
-                EditorGUILayout.Space(5);
+                EditorGUILayout.PropertyField(attackEquipment, new GUIContent("Equipment GameObjects"), true);
             }
+            
+            EditorGUILayout.Space(5);
+            
+            // Temporary Effects
+            EditorGUILayout.LabelField("Temporary Effects (During Attacks Only)", EditorStyles.miniBoldLabel);
+            EditorGUILayout.HelpBox(
+                "Effects that appear ONLY during attacks.\n\n" +
+                "Examples:\n" +
+                "• Weapon trails (sword trails, smoke)\n" +
+                "• Muzzle flashes\n" +
+                "• Charge effects (glowing particles)\n" +
+                "• Attack telegraphs (warning indicators)\n\n" +
+                "Start these objects disabled in the scene!",
+                MessageType.Info);
+            
+            if (attackEffectObjects != null)
+            {
+                EditorGUILayout.PropertyField(attackEffectObjects, new GUIContent("Effect GameObjects"), true);
+            }
+            
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.Space(5);
+
+            // Draw child class specific settings (like projectile settings) - always visible
+            DrawChildSpecificSettings();
 
             // Note: Specific attack types (like CloseRangeAttack) will add their own visualizations
 
             // Draw child class properties
             DrawPropertiesExcluding(serializedObject, 
-                "m_Script", 
+                "m_Script",
+                "attackDescription",
                 "attackType", 
                 "damage", 
                 "poiseDamage", 
                 "attackElement", 
                 "elementalDamageBonus",
+                "useAnimatorTiming",
                 "attackTrigger",
+                "warningDelay",
+                "attackDelay",
+                "attackEndDelay",
                 "allowRotationDuringAttack",
-                "cooldown", 
+                "cooldown",
+                "minCooldown",
+                "maxCooldown", 
                 "minRange", 
                 "maxRange", 
-                "attackAngleThreshold", 
-                "attackGameObjects",
+                "attackAngleThreshold",
+                "attackOrigin",
+                "attackEquipment",
+                "attackEffectObjects",
                 "startEffect",
                 "startEffectDelay",
                 "attackEffect",
@@ -178,7 +336,20 @@ namespace Enemies.Editor
                 "useTriggerBasedDamage",
                 "fallbackDamageRadius",
                 "projectileEffect",
-                "impactEffect");
+                "impactEffect",
+                "homingDuration",
+                "turnSpeed",
+                "explodeOnTimeout",
+                "missileSpeedMultiplier",
+                // BeamAttack specific properties
+                "beamHitLayers",
+                "damageInterval",
+                "beamFirePoint",
+                "beamVisual",
+                "headIKWeight",
+                "headIKRotationWeight",
+                "headIKLerpSpeed",
+                "maxHeadRotationAngle");
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -220,18 +391,43 @@ namespace Enemies.Editor
             }
             EditorGUILayout.Space(5);
             
-            // Timing settings
-            EditorGUILayout.LabelField("Timing Settings", EditorStyles.boldLabel);
-            if (cooldown != null)
+            // Cooldown settings with min/max range
+            EditorGUILayout.LabelField("Cooldown Settings", EditorStyles.boldLabel);
+            if (minCooldown != null && maxCooldown != null)
             {
-                // Ensure non-negative values
-                float cooldownVal = cooldown.floatValue;
-                cooldownVal = Mathf.Max(0f, EditorGUILayout.FloatField("Cooldown", cooldownVal));
-                cooldown.floatValue = cooldownVal;
+                float minVal = minCooldown.floatValue;
+                float maxVal = maxCooldown.floatValue;
+                
+                // Min/Max slider for cooldown range
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.PrefixLabel("Cooldown Range");
+                EditorGUILayout.MinMaxSlider(ref minVal, ref maxVal, 0f, 20f);
+                EditorGUILayout.EndHorizontal();
+                
+                // Ensure valid values (min <= max, both >= 0)
+                minVal = Mathf.Max(0f, minVal);
+                maxVal = Mathf.Max(minVal, maxVal); // Ensure max >= min
+                
+                minCooldown.floatValue = minVal;
+                maxCooldown.floatValue = maxVal;
+                
+                // Individual fields for precise editing
+                minCooldown.floatValue = Mathf.Max(0f, EditorGUILayout.FloatField("Min Cooldown", minCooldown.floatValue));
+                maxCooldown.floatValue = Mathf.Max(minCooldown.floatValue, EditorGUILayout.FloatField("Max Cooldown", maxCooldown.floatValue));
+                
+                // Show average cooldown for reference
+                float avgCooldown = (minCooldown.floatValue + maxCooldown.floatValue) / 2f;
+                EditorGUILayout.HelpBox($"Average cooldown: {avgCooldown:F2}s (randomly selected between {minCooldown.floatValue:F2}s and {maxCooldown.floatValue:F2}s)", MessageType.Info);
             }
+            EditorGUILayout.Space(5);
             
-            // Call child class specific settings
-            DrawChildSpecificSettings();
+            // Attack origin setting
+            if (attackOrigin != null)
+            {
+                EditorGUILayout.LabelField("Attack Origin", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(attackOrigin, new GUIContent("Attack Origin Transform", "Optional transform to use as the attack origin. If not set, will use the owner's transform."));
+                EditorGUILayout.Space(5);
+            }
             
             // Draw the visual graphics
             EditorGUILayout.Space(5);
@@ -324,6 +520,60 @@ namespace Enemies.Editor
         protected virtual void DrawChildSpecificSettings()
         {
             // Override in child classes to add specific settings
+        }
+        
+        /// <summary>
+        /// Draw a visual timeline showing attack phases
+        /// </summary>
+        protected virtual void DrawTimelineVisualization()
+        {
+            if (warningDelay == null || attackDelay == null || attackEndDelay == null) return;
+            
+            float warning = warningDelay.floatValue;
+            float attack = attackDelay.floatValue;
+            float end = attackEndDelay.floatValue;
+            float totalTime = Mathf.Max(end, 0.1f);
+            
+            EditorGUILayout.Space(5);
+            EditorGUILayout.LabelField("Timeline Preview", EditorStyles.miniLabel);
+            
+            // Draw timeline bar
+            Rect timelineRect = GUILayoutUtility.GetRect(0, 40, GUILayout.ExpandWidth(true));
+            timelineRect.x += 5;
+            timelineRect.width -= 10;
+            
+            // Background
+            EditorGUI.DrawRect(timelineRect, new Color(0.2f, 0.2f, 0.2f, 0.8f));
+            
+            // Calculate positions
+            float warningPos = (warning / totalTime) * timelineRect.width;
+            float attackPos = (attack / totalTime) * timelineRect.width;
+            float endPos = timelineRect.width;
+            
+            // Draw phases
+            Rect startRect = new Rect(timelineRect.x, timelineRect.y, warningPos, timelineRect.height);
+            Rect warningRect = new Rect(timelineRect.x + warningPos, timelineRect.y, attackPos - warningPos, timelineRect.height);
+            Rect attackRect = new Rect(timelineRect.x + attackPos, timelineRect.y, endPos - attackPos, timelineRect.height);
+            
+            EditorGUI.DrawRect(startRect, new Color(0.3f, 0.3f, 0.3f, 0.8f)); // Start phase (dark gray)
+            EditorGUI.DrawRect(warningRect, new Color(1f, 0.8f, 0f, 0.6f));    // Warning phase (yellow)
+            EditorGUI.DrawRect(attackRect, new Color(1f, 0.3f, 0.3f, 0.6f));   // Attack phase (red)
+            
+            // Labels
+            GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
+            labelStyle.fontSize = 9;
+            labelStyle.normal.textColor = Color.white;
+            labelStyle.alignment = TextAnchor.MiddleCenter;
+            
+            if (warningPos > 30) GUI.Label(startRect, "Start", labelStyle);
+            if (attackPos - warningPos > 40) GUI.Label(warningRect, $"Warning\n{warning:F2}s", labelStyle);
+            if (endPos - attackPos > 40) GUI.Label(attackRect, $"Attack\n{attack:F2}s", labelStyle);
+            
+            // Time marker at bottom
+            labelStyle.fontSize = 8;
+            labelStyle.alignment = TextAnchor.UpperRight;
+            GUI.Label(new Rect(timelineRect.x + timelineRect.width - 50, timelineRect.y + timelineRect.height + 2, 50, 12), 
+                     $"End: {end:F2}s", labelStyle);
         }
 
     }

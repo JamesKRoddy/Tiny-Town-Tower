@@ -105,7 +105,6 @@ public class SettlerNPCEditor : HumanCharacterControllerEditor
         
         // Movement & Navigation
         DrawColoredSection("🏃 Movement & Navigation", () => {
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("attackRotationSpeed"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("dashDuration"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("vaultDuration"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("vaultCooldown"));
@@ -171,6 +170,43 @@ public class SettlerNPCEditor : HumanCharacterControllerEditor
             EditorGUILayout.PropertyField(serializedObject.FindProperty("initializationContext"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("hasBeenInitialized"));
         }, new Color(0.9f, 0.9f, 0.8f, 0.3f)); // Light yellow tint
+        
+        // Appearance System
+        DrawColoredSection("🎨 Appearance System", () => {
+            // Preview size slider
+            AppearanceOptionDrawer.DrawPreviewSizeSlider();
+            EditorGUILayout.Space(5);
+            
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("appearanceSystem"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("characteristicSystem"));
+            
+            if (Application.isPlaying)
+            {
+                EditorGUILayout.Space(5);
+                
+                // Randomize Appearance button
+                Color originalBg = GUI.backgroundColor;
+                GUI.backgroundColor = new Color(0.4f, 0.8f, 1f);
+                if (GUILayout.Button("🎲 Randomize Appearance", GUILayout.Height(25)))
+                {
+                    var appearanceSystem = settler.GetAppearanceSystem();
+                    if (appearanceSystem != null)
+                    {
+                        appearanceSystem.ClearCurrentAppearance();
+                        appearanceSystem.RandomizeAppearance();
+                        Debug.Log($"[SettlerNPCEditor] Randomized appearance for {settler.name}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[SettlerNPCEditor] Cannot randomize appearance - appearanceSystem is null on {settler.name}");
+                    }
+                }
+                GUI.backgroundColor = originalBg;
+                
+                EditorGUILayout.Space(3);
+                EditorGUILayout.HelpBox("Appearance and characteristics are managed at runtime", MessageType.Info);
+            }
+        }, new Color(0.8f, 0.9f, 1f, 0.3f)); // Light blue tint
         
         // Stamina System
         DrawColoredSection("⚡ Stamina System", () => {

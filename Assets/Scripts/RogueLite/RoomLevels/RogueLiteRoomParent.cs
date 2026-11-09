@@ -98,7 +98,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
     }
 
-    public void GenerateRandomRooms(RogueLikeBuildingDataScriptableObj buildingScriptableObj)
+    public virtual void GenerateRandomRooms(RogueLikeBuildingDataScriptableObj buildingScriptableObj)
     {
         if (buildingScriptableObj == null)
         {
@@ -194,7 +194,7 @@ public class RogueLiteRoomParent : MonoBehaviour
     // Removed old InstantiateRoom and FindValidRoomPosition methods
     // These have been replaced by the new HierarchicalRoomPlacement system
 
-    private bool WouldRoomOverlapAtPosition(RogueLiteRoom roomToTest, Vector3 position)
+    private bool WouldRoomOverlapAtPosition(RogueLiteRoom roomToTest, Vector3 position, Quaternion rotation)
     {
         if (roomToTest == null)
         {
@@ -202,8 +202,8 @@ public class RogueLiteRoomParent : MonoBehaviour
             return true; // Fail safe - consider it as overlapping
         }
 
-        // Use the new CalculateTestBounds method that doesn't modify the original prefab
-        Bounds testBounds = roomToTest.CalculateTestBounds(position);
+        // Use the new CalculateTestBounds method that accounts for rotation
+        Bounds testBounds = roomToTest.CalculateTestBounds(position, rotation);
         
         if (ShowCollisionDebug)
         {
@@ -300,10 +300,14 @@ public class RogueLiteRoomParent : MonoBehaviour
         return overlapPercentage;
     }
 
+    // Track spawn counts for required room groups during building generation
+    private Dictionary<int, int> requiredGroupSpawnCounts = new Dictionary<int, int>();
+    
     /// <summary>
     /// Intelligently place rooms at all spawn points
     /// Prioritizes collision-free placement over filling every spawn point
     /// Supports room extenders that add additional spawn points dynamically
+    /// Now also handles required room groups that must spawn first
     /// </summary>
     private void HierarchicalRoomPlacement(RogueLikeBuildingDataScriptableObj buildingScriptableObj, int currentDifficulty)
     {
@@ -317,13 +321,25 @@ public class RogueLiteRoomParent : MonoBehaviour
         dynamicSpawnPoints.Clear();
         dynamicSpawnPoints.AddRange(roomTransforms);
         
+        // Reset required group spawn counts for this building
+        requiredGroupSpawnCounts.Clear();
+        
         int originalSpawnCount = dynamicSpawnPoints.Count;
+        int totalRequiredRooms = buildingScriptableObj.GetTotalRequiredRoomCount(currentDifficulty);
+        
+        if (totalRequiredRooms > 0)
+        {
+            Debug.Log($"[HierarchicalPlacement] Building has {totalRequiredRooms} required room(s) to spawn");
+        }
 
         List<int> availableSpawnIndices = new List<int>();
         for (int i = 0; i < dynamicSpawnPoints.Count; i++)
         {
             availableSpawnIndices.Add(i);
         }
+        
+        // Shuffle the spawn indices so rooms don't always spawn in the same order
+        ShuffleList(availableSpawnIndices);
 
         // Add loop protection - dynamically adjust max iterations as new spawns are added
         int iterations = 0;
@@ -362,14 +378,30 @@ public class RogueLiteRoomParent : MonoBehaviour
                 Debug.Log($"[HierarchicalPlacement] Processing spawn {spawnIndex} ({spawnType}) - allowExtenders: {allowExtenders}, currentExtenders: {extendersPlaced}");
             }
             
-            // Get room, considering extender count and allowing extenders only for original spawn points
-            GameObject roomPrefab = buildingScriptableObj.GetBuildingRoom(currentDifficulty, extendersPlaced, allowExtenders);
+            // First, check if there are required rooms that still need to be spawned
+            GameObject roomPrefab = null;
+            int spawnedGroupIndex = -1;
+            
+            if (!buildingScriptableObj.AreAllRequirementsSatisfied(currentDifficulty, requiredGroupSpawnCounts))
+            {
+                // Get a room from the required groups
+                roomPrefab = buildingScriptableObj.GetRequiredRoom(currentDifficulty, requiredGroupSpawnCounts, out spawnedGroupIndex);
+            }
+            
+            // If no required room (or all requirements satisfied), use normal room selection
+            if (roomPrefab == null)
+            {
+                roomPrefab = buildingScriptableObj.GetBuildingRoom(currentDifficulty, extendersPlaced, allowExtenders);
+            }
             
             // Use dynamic spawn points list
             Transform targetTransform = dynamicSpawnPoints[spawnIndex];
             
+            bool placedSuccessfully = false;
+            
             if (GuaranteedRoomPlacement(targetTransform, roomPrefab, buildingScriptableObj, currentDifficulty, $"Room {spawnIndex}", originalSpawnCount))
             {
+                placedSuccessfully = true;
                 availableSpawnIndices.RemoveAt(0);
                 if (ShowCollisionDebug)
                     Debug.Log($"[HierarchicalPlacement] Successfully placed room at spawn {spawnIndex}");
@@ -381,6 +413,7 @@ public class RogueLiteRoomParent : MonoBehaviour
                 
                 if (placed)
                 {
+                    placedSuccessfully = true;
                     availableSpawnIndices.RemoveAt(0);
                     if (ShowCollisionDebug)
                         Debug.Log($"[HierarchicalPlacement] Placed valid room at spawn {spawnIndex} after retry");
@@ -390,6 +423,7 @@ public class RogueLiteRoomParent : MonoBehaviour
                     // No room fits within tolerance - find and place the room with MINIMUM overlap
                     if (PlaceRoomWithMinimumOverlap(spawnIndex, buildingScriptableObj, currentDifficulty, originalSpawnCount))
                     {
+                        placedSuccessfully = true;
                         availableSpawnIndices.RemoveAt(0);
                         Debug.LogWarning($"[HierarchicalPlacement] Placed room with minimum overlap at spawn {spawnIndex} (exceeded tolerance but best option)");
                     }
@@ -398,6 +432,32 @@ public class RogueLiteRoomParent : MonoBehaviour
                         // Should never happen, but handle gracefully
                         Debug.LogError($"[HierarchicalPlacement] Failed to place any room at spawn {spawnIndex}!");
                         availableSpawnIndices.RemoveAt(0);
+                    }
+                }
+            }
+            
+            // Track required group spawn counts after successful placement
+            if (placedSuccessfully && placedRoomsBySpawnIndex.ContainsKey(spawnIndex))
+            {
+                var placedRoomData = placedRoomsBySpawnIndex[spawnIndex];
+                if (placedRoomData.originalPrefab != null)
+                {
+                    // Check if the placed room belongs to a required group
+                    int placedGroupIndex;
+                    if (buildingScriptableObj.IsRoomInRequiredGroup(placedRoomData.originalPrefab, out placedGroupIndex))
+                    {
+                        if (!requiredGroupSpawnCounts.ContainsKey(placedGroupIndex))
+                        {
+                            requiredGroupSpawnCounts[placedGroupIndex] = 0;
+                        }
+                        requiredGroupSpawnCounts[placedGroupIndex]++;
+                        
+                        var groups = buildingScriptableObj.requiredRoomGroups;
+                        if (placedGroupIndex < groups.Count)
+                        {
+                            Debug.Log($"[HierarchicalPlacement] Required group '{groups[placedGroupIndex].groupName}' count: " +
+                                     $"{requiredGroupSpawnCounts[placedGroupIndex]}/{groups[placedGroupIndex].requiredCount}");
+                        }
                     }
                 }
             }
@@ -471,8 +531,8 @@ public class RogueLiteRoomParent : MonoBehaviour
                         {
                             // Skip extenders for emergency fill to avoid infinite recursion
                             if (room.GetComponent<RoomExtender>() != null) continue;
-                            
-                            float overlap = CalculateMaxOverlapForRoom(room, dynamicSpawnPoints[emptyIndex].position);
+
+                            float overlap = CalculateMaxOverlapForRoom(room, dynamicSpawnPoints[emptyIndex].position, dynamicSpawnPoints[emptyIndex].rotation);
                             if (overlap < minOverlap)
                             {
                                 minOverlap = overlap;
@@ -500,6 +560,36 @@ public class RogueLiteRoomParent : MonoBehaviour
         {
             string extenderInfo = extenderSpawns > 0 ? $" ({originalSpawnCount} original + {extenderSpawns} from extenders)" : "";
             Debug.Log($"[HierarchicalPlacement] ✓ Successfully placed all {placedCount} rooms{extenderInfo}");
+        }
+        
+        // Report required room group satisfaction
+        if (buildingScriptableObj.requiredRoomGroups != null && buildingScriptableObj.requiredRoomGroups.Count > 0)
+        {
+            Debug.Log($"[HierarchicalPlacement] Required Room Group Summary:");
+            bool allSatisfied = true;
+            
+            for (int i = 0; i < buildingScriptableObj.requiredRoomGroups.Count; i++)
+            {
+                var group = buildingScriptableObj.requiredRoomGroups[i];
+                if (group == null) continue;
+                
+                int spawnedCount = requiredGroupSpawnCounts.ContainsKey(i) ? requiredGroupSpawnCounts[i] : 0;
+                bool satisfied = group.IsSatisfied(spawnedCount);
+                string status = satisfied ? "✓" : "✗";
+                
+                Debug.Log($"  {status} '{group.groupName}': {spawnedCount}/{group.requiredCount} spawned" +
+                         $"{(group.maxCount > 0 ? $" (max: {group.maxCount})" : "")}");
+                
+                if (!satisfied)
+                {
+                    allSatisfied = false;
+                }
+            }
+            
+            if (!allSatisfied)
+            {
+                Debug.LogWarning($"[HierarchicalPlacement] ⚠️ Not all required room groups were satisfied!");
+            }
         }
     }
 
@@ -607,7 +697,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         bool isExtender = extenderComponent != null;
         
         // Check if room would fit without conflicts
-        if (!WouldRoomOverlapAtPosition(roomPrefab.GetComponent<RogueLiteRoom>(), targetTransform.position))
+        if (!WouldRoomOverlapAtPosition(roomPrefab.GetComponent<RogueLiteRoom>(), targetTransform.position, targetTransform.rotation))
         {
             // No conflicts - place the room directly
             return PlaceRoomAtSpawn(spawnIndex, roomPrefab, debugName);
@@ -647,7 +737,7 @@ public class RogueLiteRoomParent : MonoBehaviour
                 swapAttempts++;
                 
                 // Conflict resolved, try placing the original room again
-                if (!WouldRoomOverlapAtPosition(roomPrefab.GetComponent<RogueLiteRoom>(), targetTransform.position))
+                if (!WouldRoomOverlapAtPosition(roomPrefab.GetComponent<RogueLiteRoom>(), targetTransform.position, targetTransform.rotation))
                 {
                     return PlaceRoomAtSpawn(spawnIndex, roomPrefab, debugName + " (After Swap)");
                 }
@@ -690,9 +780,9 @@ public class RogueLiteRoomParent : MonoBehaviour
             RogueLiteRoom roomComponent = roomPrefab.GetComponent<RogueLiteRoom>();
             if (roomComponent == null) continue;
 
-            float overlapVolume = CalculateMaxOverlapForRoom(roomPrefab, targetTransform.position);
+            float overlapVolume = CalculateMaxOverlapForRoom(roomPrefab, targetTransform.position, targetTransform.rotation);
             roomOptions.Add((roomPrefab, overlapVolume));
-            
+
             string selectionMarker = "";
             if (overlapVolume < minOverlapVolume)
             {
@@ -780,8 +870,8 @@ public class RogueLiteRoomParent : MonoBehaviour
             if (roomComponent == null) continue;
 
             // Check if room fits with minimal overlap
-            float overlapVolume = CalculateMaxOverlapForRoom(roomPrefab, targetTransform.position);
-            
+            float overlapVolume = CalculateMaxOverlapForRoom(roomPrefab, targetTransform.position, targetTransform.rotation);
+
             if (overlapVolume <= maxAcceptableOverlapVolume)
             {
                 validRooms.Add((roomPrefab, overlapVolume));
@@ -832,10 +922,10 @@ public class RogueLiteRoomParent : MonoBehaviour
         foreach (var roomPrefab in allRooms)
         {
             if (roomPrefab == null) continue;
-            
-            float maxOverlap = CalculateMaxOverlapForRoom(roomPrefab, targetTransform.position);
+
+            float maxOverlap = CalculateMaxOverlapForRoom(roomPrefab, targetTransform.position, targetTransform.rotation);
             roomOptions.Add((roomPrefab, maxOverlap));
-            
+
             if (maxOverlap < minOverlap)
             {
                 minOverlap = maxOverlap;
@@ -862,13 +952,13 @@ public class RogueLiteRoomParent : MonoBehaviour
     /// Returns raw intersection volume - smaller is better.
     /// This naturally favors smaller rooms and rooms with minimal physical overlap.
     /// </summary>
-    private float CalculateMaxOverlapForRoom(GameObject roomPrefab, Vector3 position)
+    private float CalculateMaxOverlapForRoom(GameObject roomPrefab, Vector3 position, Quaternion rotation)
     {
         RogueLiteRoom testRoom = roomPrefab.GetComponent<RogueLiteRoom>();
         if (testRoom == null) return float.MaxValue;
 
-        // Use the new CalculateTestBounds method that doesn't modify the original prefab
-        Bounds testBounds = testRoom.CalculateTestBounds(position);
+        // Use the new CalculateTestBounds method that accounts for rotation
+        Bounds testBounds = testRoom.CalculateTestBounds(position, rotation);
 
         float maxIntersectionVolume = 0f;
         
@@ -909,26 +999,42 @@ public class RogueLiteRoomParent : MonoBehaviour
                     Vector3 intersectionSize = intersectionMax - intersectionMin;
                     float intersectionVolume = intersectionSize.x * intersectionSize.y * intersectionSize.z;
                     
-                    // Check if this intersection is near any spawn point (where overlap is expected for connections)
+                    // Check if this intersection is SPECIFICALLY between the two spawn points (for doorway connections)
+                    // Only ignore overlap if it's directly on the line between this spawn and the existing room's spawn
                     Vector3 intersectionCenter = (intersectionMin + intersectionMax) * 0.5f;
-                    bool nearSpawnPoint = false;
+                    bool isConnectionOverlap = false;
                     
-                    foreach (Transform spawnPoint in dynamicSpawnPoints)
+                    // Get the spawn point positions for both rooms
+                    Vector3 thisSpawnPosition = position; // Current room being placed
+                    Vector3 existingSpawnPosition = roomData.roomObject.transform.position; // Existing room's position
+                    
+                    // Check if the intersection is approximately on the line between the two spawns
+                    Vector3 spawnToSpawn = existingSpawnPosition - thisSpawnPosition;
+                    float spawnDistance = spawnToSpawn.magnitude;
+                    
+                    if (spawnDistance > 0.1f) // Avoid division by zero
                     {
-                        float distanceToSpawn = Vector3.Distance(intersectionCenter, spawnPoint.position);
-                        if (distanceToSpawn <= spawnPointExclusionRadius)
+                        // Project intersection center onto the line between spawns
+                        Vector3 spawnDirection = spawnToSpawn / spawnDistance;
+                        Vector3 toIntersection = intersectionCenter - thisSpawnPosition;
+                        float projectionLength = Vector3.Dot(toIntersection, spawnDirection);
+                        Vector3 projectionPoint = thisSpawnPosition + spawnDirection * projectionLength;
+                        
+                        // Check if intersection is close to the line and between the spawn points
+                        float distanceFromLine = Vector3.Distance(intersectionCenter, projectionPoint);
+                        bool onConnectionLine = distanceFromLine <= spawnPointExclusionRadius;
+                        bool betweenSpawns = projectionLength >= 0 && projectionLength <= spawnDistance;
+                        
+                        isConnectionOverlap = onConnectionLine && betweenSpawns;
+                        
+                        if (ShowCollisionDebug && isConnectionOverlap)
                         {
-                            nearSpawnPoint = true;
-                            if (ShowCollisionDebug)
-                            {
-                                Debug.Log($"[OverlapCalc]     OVERLAP NEAR SPAWN POINT (distance: {distanceToSpawn:F1} <= {spawnPointExclusionRadius:F1}) - IGNORED for connection");
-                            }
-                            break;
+                            Debug.Log($"[OverlapCalc]     OVERLAP ON CONNECTION LINE (dist from line: {distanceFromLine:F1} <= {spawnPointExclusionRadius:F1}) - IGNORED for doorway");
                         }
                     }
                     
-                    // Only count overlap if it's NOT near a spawn point
-                    if (!nearSpawnPoint)
+                    // Only count overlap if it's NOT a connection overlap
+                    if (!isConnectionOverlap)
                     {
                         if (ShowCollisionDebug)
                         {
@@ -1266,7 +1372,7 @@ public class RogueLiteRoomParent : MonoBehaviour
             
             // Test if the alternative room would work at this position
             Transform targetTransform = dynamicSpawnPoints[spawnIndex];
-            if (!WouldRoomOverlapAtPosition(alternativeRoom.GetComponent<RogueLiteRoom>(), targetTransform.position))
+            if (!WouldRoomOverlapAtPosition(alternativeRoom.GetComponent<RogueLiteRoom>(), targetTransform.position, targetTransform.rotation))
             {
                 // Swap successful
                 if (PlaceRoomAtSpawn(spawnIndex, alternativeRoom, $"Swapped to alternative"))
@@ -1291,7 +1397,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
 
         // Check for collisions if requested
-        if (checkCollisions && WouldRoomOverlapAtPosition(roomPrefab.GetComponent<RogueLiteRoom>(), targetTransform.position))
+        if (checkCollisions && WouldRoomOverlapAtPosition(roomPrefab.GetComponent<RogueLiteRoom>(), targetTransform.position, targetTransform.rotation))
         {
             Debug.Log($"[RoomPlacement] {debugName} would overlap at {targetTransform.position} - trying next option");
             return false;
@@ -1385,11 +1491,13 @@ public class RogueLiteRoomParent : MonoBehaviour
 
         if (allDoors.Count == 0)
         {
-            Debug.LogWarning("[RogueLiteRoomParent] No doors found to setup!");
+            Debug.LogWarning("[SetupDoors] No doors found!");
             return;
         }
 
-        // Filter out doors that don't have valid floors behind them
+        Debug.Log($"[SetupDoors] Found {allDoors.Count} total doors");
+
+        // Separate doors into valid (have floor behind) and invalid
         List<RogueLikeRoomDoor> validDoors = new List<RogueLikeRoomDoor>();
         List<RogueLikeRoomDoor> invalidDoors = new List<RogueLikeRoomDoor>();
 
@@ -1402,72 +1510,67 @@ public class RogueLiteRoomParent : MonoBehaviour
             else
             {
                 invalidDoors.Add(door);
-                Debug.Log($"[SetupDoors] Door {door.gameObject.name} excluded - no valid floor behind it");
             }
         }
 
-        // CRITICAL FIX: If we don't have enough valid doors for EXIT + at least 1 ENTRANCE, use all doors
-        // We need minimum 2 doors: 1 for EXIT (player spawn) and 1 for ENTRANCE (exit to next room)
+        // Fallback: if not enough valid doors, use all doors
         if (validDoors.Count < 2)
         {
-            Debug.LogWarning($"[RogueLiteRoomParent] Only {validDoors.Count} valid doors found (need 2+ for EXIT and ENTRANCE)! Using all {allDoors.Count} doors as fallback.");
-            validDoors = allDoors;
+            Debug.LogWarning($"[SetupDoors] Only {validDoors.Count} valid doors. Using all {allDoors.Count} as fallback.");
+            validDoors = new List<RogueLikeRoomDoor>(allDoors);
             invalidDoors.Clear();
         }
 
-        // Assign a random door from valid doors as the EXIT (entrance from previous room)
-        int exitIndex = Random.Range(0, validDoors.Count);
-        playerSpawnPoint = validDoors[exitIndex].playerSpawn;
-        validDoors[exitIndex].doorType = DoorStatus.EXIT;
+        // ============================================
+        // STEP 1: Pick ONE door as SPAWN (player entry)
+        // Shows wall with hole, but stays LOCKED forever
+        // ============================================
+        int spawnIndex = Random.Range(0, validDoors.Count);
+        RogueLikeRoomDoor spawnDoor = validDoors[spawnIndex];
+        spawnDoor.SetDoorType(RogueLiteDoorType.SPAWN);
+        playerSpawnPoint = spawnDoor.playerSpawn;
+        validDoors.RemoveAt(spawnIndex);
+        Debug.Log($"[SetupDoors] SPAWN door: {spawnDoor.gameObject.name}");
 
-        // Store the exit door for potential connections
-        RogueLikeRoomDoor exitDoor = validDoors[exitIndex];
-        validDoors.RemoveAt(exitIndex);
+        // ============================================
+        // STEP 2: Pick 1+ doors as PROGRESSION (exits)
+        // Shows wall with hole, unlocks when enemies cleared
+        // ============================================
+        // Always have at least 1 progression door
+        // Try to leave at least 1 door as DEAD_END if we have 3+ doors
+        int maxProgression = validDoors.Count > 2 ? validDoors.Count - 1 : validDoors.Count;
+        int progressionCount = Mathf.Clamp(Random.Range(1, 4), 1, maxProgression);
+        
+        Debug.Log($"[SetupDoors] Selecting {progressionCount} PROGRESSION doors from {validDoors.Count} remaining");
 
-        // Select 1-3 doors to be ENTRANCE doors (from remaining valid doors)
-        // Ensure we have at least 1 entrance door
-        int entranceDoorsCount = Mathf.Clamp(Random.Range(1, 4), 1, Mathf.Max(1, validDoors.Count));
-
-        for (int i = 0; i < entranceDoorsCount; i++)
+        for (int i = 0; i < progressionCount && validDoors.Count > 0; i++)
         {
-            if (validDoors.Count == 0) break; // Safety check
-
-            int randomIndex = Random.Range(0, validDoors.Count);
-            validDoors[randomIndex].doorType = DoorStatus.ENTRANCE;
-            
-            // Connect this entrance door to the exit door
-            if (exitDoor != null)
-            {
-                // Forward connection: entrance door -> previous room
-                validDoors[randomIndex].targetRoom = exitDoor.GetComponentInParent<RogueLiteRoomParent>();
-                validDoors[randomIndex].targetSpawnPoint = exitDoor.playerSpawn;
-
-                // Backward connection: exit door -> this room
-                exitDoor.targetRoom = this;
-                exitDoor.targetSpawnPoint = validDoors[randomIndex].playerSpawn;
-            }
-
-            validDoors.RemoveAt(randomIndex);
+            int idx = Random.Range(0, validDoors.Count);
+            RogueLikeRoomDoor progressionDoor = validDoors[idx];
+            progressionDoor.SetDoorType(RogueLiteDoorType.PROGRESSION);
+            validDoors.RemoveAt(idx);
+            Debug.Log($"[SetupDoors] PROGRESSION door: {progressionDoor.gameObject.name}");
         }
 
-        // Set remaining valid doors as LOCKED and optionally deactivate them
+        // ============================================
+        // STEP 3: Remaining valid doors become DEAD_END
+        // Shows solid wall, permanently locked
+        // ============================================
+        Debug.Log($"[SetupDoors] Setting {validDoors.Count} doors as DEAD_END");
         foreach (var door in validDoors)
         {
-            door.doorType = DoorStatus.LOCKED;
-            
-            // 75% chance to deactivate locked doors
-            if (Random.Range(0f, 1f) < 0.75f)
-            {
-                door.gameObject.SetActive(false);
-            }
+            door.SetDoorType(RogueLiteDoorType.DEAD_END);
+            Debug.Log($"[SetupDoors] DEAD_END door: {door.gameObject.name}");
         }
 
-        // Deactivate all invalid doors (those without proper floors)
+        // ============================================
+        // STEP 4: Invalid doors (no floor) become DEAD_END
+        // ============================================
+        Debug.Log($"[SetupDoors] Setting {invalidDoors.Count} invalid doors as DEAD_END");
         foreach (var door in invalidDoors)
         {
-            door.doorType = DoorStatus.LOCKED;
-            door.gameObject.SetActive(false);
-            Debug.Log($"[SetupDoors] Deactivated invalid door: {door.gameObject.name}");
+            door.SetDoorType(RogueLiteDoorType.DEAD_END);
+            Debug.Log($"[SetupDoors] DEAD_END (invalid): {door.gameObject.name}");
         }
     }
 
@@ -1545,7 +1648,7 @@ public class RogueLiteRoomParent : MonoBehaviour
         }
     }
 
-    private void OnDrawGizmos()
+    protected virtual void OnDrawGizmos()
     {
         if (!showDirectionArrows) return;
 
@@ -1793,6 +1896,25 @@ public class RogueLiteRoomParent : MonoBehaviour
                     Debug.Log($"    Bounds: center={bounds.center}, size={bounds.size}");
                 }
             }
+        }
+    }
+    
+    #endregion
+    
+    #region Utility Methods
+    
+    /// <summary>
+    /// Shuffle a list using Fisher-Yates algorithm
+    /// </summary>
+    private void ShuffleList<T>(List<T> list)
+    {
+        int n = list.Count;
+        for (int i = n - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            T temp = list[i];
+            list[i] = list[j];
+            list[j] = temp;
         }
     }
     

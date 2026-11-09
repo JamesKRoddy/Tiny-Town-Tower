@@ -1,6 +1,7 @@
-using Managers;
 using UnityEngine;
-using Enemies;
+using Combat;
+using Managers;
+using System.Linq;
 
 /// <summary>
 /// Utility class for handling damage-related calculations and animations
@@ -524,12 +525,13 @@ public static class DamageUtils
                 continue;
             }
             
-            Allegiance allegiance = damageable.GetAllegiance();
-            Debug.Log($"[DamageUtils] Found damageable: {hitCollider.name}, Allegiance: {allegiance}");
+            Allegiance targetAllegiance = damageable.GetAllegiance();
+            Debug.Log($"[DamageUtils] Found damageable: {hitCollider.name}, Allegiance: {targetAllegiance}");
             
-            if (allegiance != Allegiance.FRIENDLY)
+            // Only skip NEUTRAL entities (protected quest NPCs, invulnerable objects)
+            if (targetAllegiance == Allegiance.NEUTRAL)
             {
-                Debug.Log($"[DamageUtils] Skipping {hitCollider.name} - not FRIENDLY allegiance");
+                Debug.Log($"[DamageUtils] Skipping {hitCollider.name} - NEUTRAL allegiance (protected)");
                 continue;
             }
             
@@ -620,7 +622,7 @@ public static class DamageUtils
         if (visualEffect != null)
         {
             GameObject visualObj = EffectManager.Instance.PlayEffect(position, Vector3.up, Quaternion.identity, 
-                damageAreaObj.transform, visualEffect, duration);
+                damageAreaObj.transform, visualEffect, duration: duration);
             
             if (visualObj != null)
             {
@@ -769,6 +771,188 @@ public static class DamageUtils
     // ===== HIT DETECTION UTILITIES =====
     
     /// <summary>
+    /// Perform a separate, larger OverlapBox specifically for detecting and hitting hittable objects (projectiles, props, etc).
+    /// This runs before the main damage box cast and uses OverlapBox for better detection of fast-moving objects.
+    /// </summary>
+    /// <param name="dealer">The damage dealer performing the attack</param>
+    /// <param name="center">Center point of the overlap box</param>
+    /// <param name="boxSize">Size of the box (full extents, not half extents)</param>
+    /// <param name="rotation">Rotation of the box</param>
+    /// <param name="hitTargets">HashSet to track already hit targets (prevents double-hitting)</param>
+    /// <returns>Number of hittable objects hit (e.g., projectiles reflected)</returns>
+    public static int PerformProjectileReflectionDetection(IDamageDealer dealer, Vector3 center, Vector3 boxSize,
+        Quaternion rotation, System.Collections.Generic.HashSet<Collider> hitTargets = null)
+    {
+        if (dealer == null) return 0;
+        
+        int objectsHit = 0;
+        
+        // Use OverlapBox for better detection of fast-moving objects (doesn't require continuous collision)
+        // Use QueryTriggerInteraction.Collide to detect trigger colliders (projectiles use triggers for player detection)
+        // Use half extents for OverlapBox
+        Collider[] colliders = Physics.OverlapBox(center, boxSize * 0.5f, rotation, -1, QueryTriggerInteraction.Collide);
+        
+        Debug.Log($"[DamageUtils] PerformProjectileReflectionDetection - Box center: {center} | Box size: {boxSize} | Box rotation: {rotation.eulerAngles} | Found {colliders.Length} colliders");
+        
+        // DIRECTLY check for ALL IHittable objects in scene (more reliable than Physics.OverlapBox for newly-spawned colliders)
+        IHittable[] allHittables = UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<IHittable>().ToArray();
+        if (allHittables.Length > 0)
+        {
+            Debug.Log($"[DamageUtils] Found {allHittables.Length} IHittable objects in scene:");
+            foreach (var hittable in allHittables)
+            {
+                if (hittable is MonoBehaviour mb && mb != null)
+                {
+                    float distance = Vector3.Distance(center, mb.transform.position);
+                    
+                    // Transform the position to the box's local space for accurate AABB check
+                    Vector3 localPos = Quaternion.Inverse(rotation) * (mb.transform.position - center);
+                    Vector3 halfExtents = boxSize * 0.5f;
+                    bool inBox = Mathf.Abs(localPos.x) <= halfExtents.x && 
+                                 Mathf.Abs(localPos.y) <= halfExtents.y && 
+                                 Mathf.Abs(localPos.z) <= halfExtents.z;
+                    
+                    Debug.Log($"[DamageUtils]   - {mb.gameObject.name} at {mb.transform.position} | Distance: {distance:F2}m | InBox: {inBox} | CanBeHit: {hittable.CanBeHit()}");
+                    
+                    // PROCESS IHittables that are in the box directly (bypasses Physics.OverlapBox issues with new colliders)
+                    if (inBox && hittable.CanBeHit())
+                    {
+                        // Skip if already hit
+                        Collider hittableCollider = mb.GetComponent<Collider>();
+                        if (hitTargets != null && hittableCollider != null && hitTargets.Contains(hittableCollider))
+                        {
+                            Debug.Log($"[DamageUtils] Skipping {mb.gameObject.name} - already hit this collider");
+                            continue;
+                        }
+                        
+                        // Calculate hit info
+                        Vector3 hitPoint = mb.transform.position;
+                        Vector3 hitNormal = (hitPoint - center).normalized;
+                        if (hitNormal == Vector3.zero)
+                        {
+                            hitNormal = -mb.transform.forward;
+                        }
+                        
+                        Debug.Log($"[DamageUtils] ✅ HITTING IHittable {mb.gameObject.name} directly at position {hitPoint}");
+                        
+                        // Create hit info and call OnHit
+                        var hitInfo = new HitInfo(hitPoint, hitNormal, dealer.DamageSource, dealer.BaseDamage, dealer);
+                        hittable.OnHit(hitInfo);
+                        
+                        // Mark as hit
+                        if (hitTargets != null && hittableCollider != null)
+                        {
+                            hitTargets.Add(hittableCollider);
+                        }
+                        
+                        objectsHit++;
+                    }
+                }
+            }
+        }
+        
+        // Log all detected colliders immediately
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            if (colliders[i] != null && colliders[i].gameObject != null)
+            {
+                Debug.Log($"[DamageUtils] Detected collider [{i}]: {colliders[i].gameObject.name} at {colliders[i].transform.position} | Layer: {LayerMask.LayerToName(colliders[i].gameObject.layer)} ({colliders[i].gameObject.layer}) | IsTrigger: {colliders[i].isTrigger}");
+            }
+        }
+        
+        foreach (Collider collider in colliders)
+        {
+            if (collider == null || collider.gameObject == null) continue;
+            
+            // Skip if we've already hit this collider
+            if (hitTargets != null && hitTargets.Contains(collider))
+            {
+                Debug.Log($"[DamageUtils] Skipping {collider.gameObject.name} - already hit");
+                continue;
+            }
+            
+            // Debug log what we found
+            Debug.Log($"[DamageUtils] Checking collider: {collider.gameObject.name} | Layer: {LayerMask.LayerToName(collider.gameObject.layer)} ({collider.gameObject.layer}) | IsTrigger: {collider.isTrigger}");
+            
+            // Check for IHittable interface (unified system for projectiles, props, etc.)
+            IHittable hittable = collider.GetComponent<IHittable>();
+            if (hittable != null)
+            {
+                Debug.Log($"[DamageUtils] Found IHittable on {collider.gameObject.name}!");
+                
+                if (!hittable.CanBeHit())
+                {
+                    Debug.Log($"[DamageUtils] IHittable {collider.gameObject.name} CanBeHit returned false - skipping");
+                    continue;
+                }
+                
+                // Calculate hit info
+                Vector3 hitPoint = collider.transform.position;
+                Vector3 hitNormal = (hitPoint - center).normalized;
+                if (hitNormal == Vector3.zero)
+                {
+                    // Fallback: use opposite of object's forward direction
+                    hitNormal = -collider.transform.forward;
+                }
+                
+                Debug.Log($"[DamageUtils] Hitting IHittable {collider.gameObject.name} at position {hitPoint}");
+                
+                // Create hit info and call OnHit
+                var hitInfo = new HitInfo(hitPoint, hitNormal, dealer.DamageSource, dealer.BaseDamage, dealer);
+                hittable.OnHit(hitInfo);
+                
+                // Track this target
+                if (hitTargets != null)
+                {
+                    hitTargets.Add(collider);
+                }
+                
+                objectsHit++;
+                continue;
+            }
+            
+            // Also check in parent in case collider is on a child object
+            IHittable hittableInParent = collider.GetComponentInParent<IHittable>();
+            if (hittableInParent != null)
+            {
+                Debug.Log($"[DamageUtils] Found IHittable in PARENT of {collider.gameObject.name}! Parent: {(hittableInParent as MonoBehaviour)?.gameObject.name ?? "Unknown"}");
+                
+                if (!hittableInParent.CanBeHit())
+                {
+                    Debug.Log($"[DamageUtils] IHittable parent CanBeHit returned false - skipping");
+                    continue;
+                }
+                
+                // Get the parent's transform for position
+                Transform parentTransform = (hittableInParent as MonoBehaviour)?.transform;
+                if (parentTransform != null)
+                {
+                    Vector3 hitPoint = parentTransform.position;
+                    Vector3 hitNormal = (hitPoint - center).normalized;
+                    if (hitNormal == Vector3.zero)
+                    {
+                        hitNormal = -parentTransform.forward;
+                    }
+                    
+                    Debug.Log($"[DamageUtils] Hitting IHittable (from parent) at position {hitPoint}");
+                    
+                    var hitInfo = new HitInfo(hitPoint, hitNormal, dealer.DamageSource, dealer.BaseDamage, dealer);
+                    hittableInParent.OnHit(hitInfo);
+                    
+                    if (hitTargets != null)
+                    {
+                    hitTargets.Add(collider);
+                    }
+                    
+                    objectsHit++;
+                }
+            }
+        }
+        
+        return objectsHit;
+    }
+    
+    /// <summary>
     /// Perform a box cast to detect and damage targets in an area
     /// </summary>
     /// <param name="dealer">The damage dealer performing the attack</param>
@@ -797,6 +981,36 @@ public static class DamageUtils
             if (hitTargets != null && hitTargets.Contains(hit.collider))
                 continue;
             
+            // Check for hittable objects (projectiles, props, etc.) via IHittable interface
+            IHittable hittable = hit.collider.GetComponent<IHittable>();
+            if (hittable != null && hittable.CanBeHit())
+            {
+                // Use hit collider's transform position (BoxCast hit.point may be unreliable)
+                Vector3 hitPoint = hit.collider.transform.position;
+                
+                // Calculate hit normal - direction from weapon origin to target
+                Vector3 hitNormal = (hitPoint - origin).normalized;
+                if (hitNormal == Vector3.zero)
+                {
+                    // Fallback: use opposite of target's forward direction
+                    hitNormal = -hit.collider.transform.forward;
+                }
+                
+                // Create HitInfo and call OnHit via IHittable interface
+                var hitInfo = new HitInfo(hitPoint, hitNormal, dealer.DamageSource, dealer.BaseDamage, dealer);
+                hittable.OnHit(hitInfo);
+                
+                // Track this target
+                if (hitTargets != null)
+                {
+                    hitTargets.Add(hit.collider);
+                }
+                
+                targetsHit++;
+                continue;
+            }
+            
+            // Check for damageable targets (enemies, etc.)
             IDamageable target = hit.collider.GetComponent<IDamageable>();
             if (target != null && IsValidTarget(target, dealer))
             {
@@ -1007,12 +1221,80 @@ public static class DamageUtils
     // ===== PROJECTILE UTILITIES =====
 
     /// <summary>
-    /// Fire a projectile with arc trajectory using an effect definition
+    /// Fire an arc projectile using parameter class (cleaner API)
+    /// </summary>
+    public static GameObject FireArcProjectile(Vector3 startPosition, Quaternion rotation, EffectDefinition projectileEffect, ArcProjectileParams parameters)
+    {
+        if (parameters == null)
+        {
+            Debug.LogError("[DamageUtils] ❌ ArcProjectileParams is NULL!");
+            return null;
+        }
+        
+        Vector3 direction = (parameters.targetPosition - startPosition).normalized;
+        if (direction == Vector3.zero) direction = Vector3.forward;
+        
+        return FireProjectileWithEffect(startPosition, direction, rotation, parameters.targetPosition,
+            parameters.damage, parameters.poiseDamage, parameters.attacker, parameters.element,
+            projectileEffect, parameters.impactEffect, parameters.createDamageArea,
+            parameters.damageAreaRadius, parameters.damageAreaDuration, parameters.useTriggerBasedDamage,
+            ProjectileType.ARC, parameters.speed, parameters.maxHeight, null, 0f, 0f, true,
+            parameters.armingDelay, parameters.explodeOnAnyHit);
+    }
+
+    /// <summary>
+    /// Fire a straight projectile using parameter class (cleaner API)
+    /// </summary>
+    public static GameObject FireStraightProjectile(Vector3 startPosition, Quaternion rotation, EffectDefinition projectileEffect, StraightProjectileParams parameters)
+    {
+        if (parameters == null)
+        {
+            Debug.LogError("[DamageUtils] ❌ StraightProjectileParams is NULL!");
+            return null;
+        }
+        
+        return FireProjectileWithEffect(startPosition, parameters.direction, rotation, Vector3.zero,
+            parameters.damage, parameters.poiseDamage, parameters.attacker, parameters.element,
+            projectileEffect, parameters.impactEffect, parameters.createDamageArea,
+            parameters.damageAreaRadius, parameters.damageAreaDuration, parameters.useTriggerBasedDamage,
+            ProjectileType.STRAIGHT, parameters.speed, 0f, null, 0f, 0f, true,
+            parameters.armingDelay, false);
+    }
+
+    /// <summary>
+    /// Fire a homing projectile using parameter class (cleaner API)
+    /// </summary>
+    public static GameObject FireHomingProjectile(Vector3 startPosition, Quaternion rotation, EffectDefinition projectileEffect, HomingProjectileParams parameters)
+    {
+        if (parameters == null)
+        {
+            Debug.LogError("[DamageUtils] ❌ HomingProjectileParams is NULL!");
+            return null;
+        }
+        
+        Vector3 direction = Vector3.forward;
+        if (parameters.targetTransform != null)
+        {
+            direction = (parameters.targetTransform.position - startPosition).normalized;
+        }
+        
+        return FireProjectileWithEffect(startPosition, direction, rotation, Vector3.zero,
+            parameters.damage, parameters.poiseDamage, parameters.attacker, parameters.element,
+            projectileEffect, parameters.impactEffect, parameters.createDamageArea,
+            parameters.damageAreaRadius, parameters.damageAreaDuration, parameters.useTriggerBasedDamage,
+            ProjectileType.HOMING, parameters.speed, 0f, parameters.targetTransform,
+            parameters.homingDuration, parameters.turnSpeed, parameters.explodeOnTimeout,
+            parameters.armingDelay, false);
+    }
+
+    /// <summary>
+    /// Fire a projectile using an effect definition and attach the specified projectile behavior
+    /// LEGACY METHOD: Consider using FireArcProjectile, FireStraightProjectile, or FireHomingProjectile for cleaner code
     /// </summary>
     /// <param name="startPosition">Starting position of the projectile</param>
     /// <param name="direction">Direction of the projectile</param>
     /// <param name="rotation">Rotation of the projectile</param>
-    /// <param name="targetPosition">Target position for the projectile</param>
+    /// <param name="targetPosition">Target position for the projectile (used by ARC type)</param>
     /// <param name="damage">Damage the projectile deals on impact</param>
     /// <param name="poiseDamage">Poise damage the projectile deals on impact</param>
     /// <param name="attacker">The attacker (for damage source tracking)</param>
@@ -1022,32 +1304,184 @@ public static class DamageUtils
     /// <param name="createDamageArea">Whether to create a damage area on impact</param>
     /// <param name="damageAreaRadius">Radius of the damage area (if createDamageArea is true)</param>
     /// <param name="damageAreaDuration">Duration of the damage area (if createDamageArea is true)</param>
+    /// <param name="useTriggerBasedDamage">Whether to use trigger-based damage detection</param>
+    /// <param name="projectileType">Type of projectile behavior to attach (STRAIGHT, ARC, HOMING, etc.)</param>
+    /// <param name="projectileSpeed">Speed of the projectile (default varies by type)</param>
+    /// <param name="projectileMaxHeight">Max height for arc projectiles (default 5f)</param>
+    /// <param name="targetTransform">Target Transform for homing projectiles (required for HOMING type)</param>
+    /// <param name="homingDuration">How long homing projectiles track the target (default 3f)</param>
+    /// <param name="turnSpeed">Turn speed for homing projectiles in degrees/second (default 180f)</param>
+    /// <param name="explodeOnTimeout">Whether homing projectiles explode when tracking expires (default true)</param>
+    /// <param name="armingDelay">Delay before projectile can cause damage, allowing time for reflection/dodge (default 0.2f)</param>
+    /// <param name="explodeOnAnyHit">If true, explode on any collision. If false, only explode on ground hit (default false for arc projectiles)</param>
     /// <returns>The spawned projectile GameObject</returns>
     public static GameObject FireProjectileWithEffect(Vector3 startPosition, Vector3 direction, Quaternion rotation,
         Vector3 targetPosition, float damage, float poiseDamage, Transform attacker, AttackElement element,
         EffectDefinition projectileEffect, EffectDefinition impactEffect = null, bool createDamageArea = false,
-        float damageAreaRadius = 0f, float damageAreaDuration = 5f, bool useTriggerBasedDamage = false)
+        float damageAreaRadius = 0f, float damageAreaDuration = 5f, bool useTriggerBasedDamage = false,
+        ProjectileType projectileType = ProjectileType.NONE, float projectileSpeed = 0f, float projectileMaxHeight = 5f,
+        Transform targetTransform = null, float homingDuration = 3f, float turnSpeed = 180f, bool explodeOnTimeout = true,
+        float armingDelay = 0.2f, bool explodeOnAnyHit = false)
     {
+        Debug.Log($"[DamageUtils] ===== FIRE PROJECTILE WITH EFFECT START =====");
+        Debug.Log($"[DamageUtils] Projectile Type: {projectileType} | Start Position: {startPosition} | Direction: {direction}");
+        Debug.Log($"[DamageUtils] Attacker: {(attacker != null ? attacker.name : "NULL")} | Damage: {damage} | Poise: {poiseDamage} | Element: {element}");
+        
         if (projectileEffect == null)
         {
-            Debug.LogError("Projectile effect definition is null!");
+            Debug.LogError("[DamageUtils] ❌ Projectile effect definition is NULL!");
             return null;
         }
+        
+        Debug.Log($"[DamageUtils] Projectile Effect Definition: {projectileEffect.name}");
+        
+        if (EffectManager.Instance == null)
+        {
+            Debug.LogError("[DamageUtils] ❌ EffectManager.Instance is NULL! Cannot spawn projectile effect.");
+            return null;
+        }
+        
+        Debug.Log($"[DamageUtils] EffectManager.Instance found, spawning projectile effect...");
         
         // Play the projectile effect and get the spawned GameObject
         GameObject projectileObj = EffectManager.Instance.PlayEffect(startPosition, direction, rotation, null, projectileEffect);
         
-        // Add projectile component to the spawned object
-        if (projectileObj != null)
+        if (projectileObj == null)
         {
-            ArcProjectile projectile = projectileObj.GetComponent<ArcProjectile>();
-            if (projectile == null)
+            Debug.LogError("[DamageUtils] ❌ EffectManager.Instance.PlayEffect() returned NULL! Failed to spawn projectile effect!");
+            Debug.LogError($"[DamageUtils]   - Effect Definition: {projectileEffect.name}");
+            Debug.LogError($"[DamageUtils]   - Start Position: {startPosition}");
+            Debug.LogError($"[DamageUtils]   - Effect Definition prefabs count: {(projectileEffect.prefabs != null ? projectileEffect.prefabs.Length.ToString() : "NULL")}");
+            if (projectileEffect.prefabs != null && projectileEffect.prefabs.Length > 0)
             {
-                projectile = projectileObj.AddComponent<ArcProjectile>();
+                Debug.LogError($"[DamageUtils]   - First prefab: {(projectileEffect.prefabs[0] != null && projectileEffect.prefabs[0].prefab != null ? projectileEffect.prefabs[0].prefab.name : "NULL")}");
             }
-            projectile.Initialize(targetPosition, damage, poiseDamage, attacker, element, 10f, 5f, 
-                impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage);
+            return null;
         }
+        
+        Debug.Log($"[DamageUtils] ✅ Projectile GameObject spawned: {projectileObj.name} | Active: {projectileObj.activeSelf}");
+        Debug.Log($"[DamageUtils] Projectile Position: {projectileObj.transform.position} | Rotation: {projectileObj.transform.rotation}");
+        
+        // Attach the appropriate projectile behavior based on type
+        switch (projectileType)
+        {
+            case ProjectileType.STRAIGHT:
+                {
+                    float speed = projectileSpeed > 0f ? projectileSpeed : 20f;
+                    StraightProjectile straightProj = projectileObj.GetComponent<StraightProjectile>();
+                    if (straightProj == null)
+                    {
+                        straightProj = projectileObj.AddComponent<StraightProjectile>();
+                    }
+                    
+                    // Create parameter class for cleaner initialization
+                    StraightProjectileParams straightParams = new StraightProjectileParams(
+                        direction, speed, damage, poiseDamage, attacker, element, impactEffect,
+                        createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage, armingDelay);
+                    straightProj.Initialize(straightParams);
+                }
+                break;
+                
+            case ProjectileType.ARC:
+                {
+                    float speed = projectileSpeed > 0f ? projectileSpeed : 10f;
+                    ArcProjectile arcProj = projectileObj.GetComponent<ArcProjectile>();
+                    if (arcProj == null)
+                    {
+                        arcProj = projectileObj.AddComponent<ArcProjectile>();
+                    }
+                    
+                    // Create parameter class for cleaner initialization
+                    ArcProjectileParams arcParams = new ArcProjectileParams(
+                        targetPosition, speed, projectileMaxHeight, damage, poiseDamage, attacker, element, impactEffect,
+                        createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage, armingDelay, explodeOnAnyHit);
+                    arcProj.Initialize(arcParams);
+                }
+                break;
+                
+            case ProjectileType.HOMING:
+                {
+                    Debug.Log($"[DamageUtils] Processing HOMING projectile type...");
+                    
+                    if (targetTransform == null)
+                    {
+                        Debug.LogWarning("[DamageUtils] ⚠️ HOMING projectile type requires a targetTransform parameter. Homing projectile may not track correctly.");
+                    }
+                    else
+                    {
+                        Debug.Log($"[DamageUtils] Target Transform: {targetTransform.name} | Position: {targetTransform.position}");
+                    }
+                    
+                    float speed = projectileSpeed > 0f ? projectileSpeed : 15f;
+                    Debug.Log($"[DamageUtils] Projectile Speed: {speed} (provided: {projectileSpeed})");
+                    
+                    HomingProjectile homingProj = projectileObj.GetComponent<HomingProjectile>();
+                    if (homingProj == null)
+                    {
+                        Debug.Log($"[DamageUtils] HomingProjectile component not found, adding...");
+                        homingProj = projectileObj.AddComponent<HomingProjectile>();
+                        if (homingProj == null)
+                        {
+                            Debug.LogError("[DamageUtils] ❌ Failed to add HomingProjectile component!");
+                            return null;
+                        }
+                        Debug.Log($"[DamageUtils] ✅ HomingProjectile component added");
+                    }
+                    else
+                    {
+                        Debug.Log($"[DamageUtils] HomingProjectile component already exists");
+                    }
+                    
+                    Debug.Log($"[DamageUtils] Initializing HomingProjectile with:");
+                    Debug.Log($"[DamageUtils]   - Target: {(targetTransform != null ? targetTransform.name : "NULL")}");
+                    Debug.Log($"[DamageUtils]   - Damage: {damage} | Poise: {poiseDamage} | Element: {element}");
+                    Debug.Log($"[DamageUtils]   - Speed: {speed} | Duration: {homingDuration}s | Turn Speed: {turnSpeed}°/s");
+                    Debug.Log($"[DamageUtils]   - Explode On Timeout: {explodeOnTimeout}");
+                    Debug.Log($"[DamageUtils]   - Create Damage Area: {createDamageArea} | Radius: {damageAreaRadius} | Duration: {damageAreaDuration}");
+                    Debug.Log($"[DamageUtils]   - Use Trigger Based: {useTriggerBasedDamage}");
+                    Debug.Log($"[DamageUtils]   - Impact Effect: {(impactEffect != null ? impactEffect.name : "NULL")}");
+                    
+                    try
+                    {
+                        // Create parameter class for cleaner initialization
+                        HomingProjectileParams homingParams = new HomingProjectileParams(
+                            targetTransform, speed, homingDuration, turnSpeed, explodeOnTimeout,
+                            damage, poiseDamage, attacker, element, impactEffect,
+                            createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage, armingDelay);
+                        homingProj.Initialize(homingParams);
+                        Debug.Log($"[DamageUtils] ✅ HomingProjectile.Initialize() completed successfully");
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError($"[DamageUtils] ❌ EXCEPTION during HomingProjectile.Initialize(): {e.Message}");
+                        Debug.LogError($"[DamageUtils] Stack Trace: {e.StackTrace}");
+                        return null;
+                    }
+                }
+                break;
+                
+            case ProjectileType.NONE:
+                // No projectile behavior - check if prefab already has one
+                ArcProjectile existingArc = projectileObj.GetComponent<ArcProjectile>();
+                if (existingArc != null)
+                {
+                    float speed = projectileSpeed > 0f ? projectileSpeed : 10f;
+                    existingArc.Initialize(targetPosition, damage, poiseDamage, attacker, element, speed, projectileMaxHeight,
+                        impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage, armingDelay);
+                }
+                
+                StraightProjectile existingStraight = projectileObj.GetComponent<StraightProjectile>();
+                if (existingStraight != null)
+                {
+                    float speed = projectileSpeed > 0f ? projectileSpeed : 20f;
+                    existingStraight.Initialize(direction, damage, poiseDamage, attacker, element, speed,
+                        impactEffect, createDamageArea, damageAreaRadius, damageAreaDuration, useTriggerBasedDamage, armingDelay);
+                }
+                break;
+        }
+        
+        Debug.Log($"[DamageUtils] ✅ Projectile setup complete. Returning: {(projectileObj != null ? projectileObj.name : "NULL")}");
+        Debug.Log($"[DamageUtils] ===== FIRE PROJECTILE WITH EFFECT END =====");
         
         return projectileObj;
     }
@@ -1149,35 +1583,33 @@ public static class DamageUtils
             }
         }
         
-        // Apply status effects for weapons
-        if (dealer is WeaponBase weaponBase)
+        // Apply status effects for WeaponAttack
+        if (dealer is Combat.Attacks.WeaponAttack weaponAttack)
         {
-            ApplyWeaponStatusEffects(weaponBase, target);
-        }
-        
-        // Trigger camera shake for player weapons
-        if (dealer is WeaponBase)
-        {
+            ApplyWeaponAttackStatusEffects(weaponAttack, target);
+            // Trigger camera shake for player weapons
             TriggerHitCameraShake(dealer.DamageSource);
         }
     }
     
     /// <summary>
-    /// Apply status effects from weapon
+    /// Apply status effects from WeaponAttack
     /// </summary>
-    private static void ApplyWeaponStatusEffects(WeaponBase weapon, IDamageable target)
+    private static void ApplyWeaponAttackStatusEffects(Combat.Attacks.WeaponAttack weaponAttack, IDamageable target)
     {
-        if (weapon.PossibleStatusEffects == null || weapon.PossibleStatusEffects.Length == 0) return;
-        if (weapon.StatusEffectChance <= 0f) return;
+        WeaponScriptableObj weaponData = weaponAttack.WeaponData;
+        if (weaponData == null) return;
+        if (weaponData.possibleStatusEffects == null || weaponData.possibleStatusEffects.Length == 0) return;
+        if (weaponData.statusEffectChance <= 0f) return;
         
         // Check if status effect should be applied
-        if (Random.Range(0f, 1f) <= weapon.StatusEffectChance)
+        if (Random.Range(0f, 1f) <= weaponData.statusEffectChance)
         {
             // Select a random status effect from possible effects
-            StatusEffectType selectedEffect = weapon.PossibleStatusEffects[Random.Range(0, weapon.PossibleStatusEffects.Length)];
+            StatusEffectType selectedEffect = weaponData.possibleStatusEffects[Random.Range(0, weaponData.possibleStatusEffects.Length)];
             
             // Apply the status effect
-            ApplyStatusEffect(target, selectedEffect, weapon.StatusEffectDuration);
+            ApplyStatusEffect(target, selectedEffect, weaponData.statusEffectDuration);
         }
     }
     
@@ -1228,10 +1660,21 @@ public static class DamageUtils
     /// <param name="target">The target to check</param>
     /// <param name="dealer">The damage dealer</param>
     /// <returns>True if this dealer can damage this target</returns>
-    private static bool IsValidTarget(IDamageable target, IDamageDealer dealer)
+    public static bool IsValidTarget(IDamageable target, IDamageDealer dealer)
+    {
+        return IsValidTarget(dealer.DealerAllegiance, target);
+    }
+    
+    /// <summary>
+    /// Allegiance-based damage targeting rules overload.
+    /// Use this when you have an Allegiance directly instead of an IDamageDealer.
+    /// </summary>
+    /// <param name="dealerAllegiance">The allegiance of the damage dealer</param>
+    /// <param name="target">The target to check</param>
+    /// <returns>True if this allegiance can damage this target</returns>
+    public static bool IsValidTarget(Allegiance dealerAllegiance, IDamageable target)
     {
         Allegiance targetAllegiance = target.GetAllegiance();
-        Allegiance dealerAllegiance = dealer.DealerAllegiance;
         
         // Rule 1: NEVER damage NEUTRAL entities (quest NPCs, invulnerable objects)
         if (targetAllegiance == Allegiance.NEUTRAL)

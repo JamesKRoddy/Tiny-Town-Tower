@@ -146,7 +146,7 @@ public class NPCSaveData
     public List<ResourceItemData> inventory = new List<ResourceItemData>();
     public WeaponData equippedWeapon;
     public string npcDataObjName; // Reference to NPCScriptableObj (for unique NPCs)
-    public NPCAppearanceData appearanceData; // NPC appearance information
+    public CharacterAppearanceData appearanceData; // NPC appearance information
     
     // Procedural settler data (for NPCs without NPCScriptableObj)
     public string settlerName;
@@ -179,9 +179,9 @@ public class RecruitedNPCSaveData
     public string settlerName;
     public int settlerAge;
     public string settlerDescription;
-    public NPCAppearanceData appearanceData;
+    public CharacterAppearanceData appearanceData;
     
-    public RecruitedNPCSaveData(string id, string name, int age, string description, NPCAppearanceData appearance)
+    public RecruitedNPCSaveData(string id, string name, int age, string description, CharacterAppearanceData appearance)
     {
         this.componentId = id;
         this.settlerName = name;
@@ -1033,7 +1033,7 @@ public class SaveLoadManager : MonoBehaviour
             var recruitedNPCData = new RecruitedNPCData(
                 settlerData,
                 recruitedNPCSaveData.componentId,
-                recruitedNPCSaveData.appearanceData ?? new NPCAppearanceData()
+                recruitedNPCSaveData.appearanceData ?? new CharacterAppearanceData()
             );
 
             // Restore to PlayerInventory

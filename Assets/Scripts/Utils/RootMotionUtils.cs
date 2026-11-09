@@ -1,5 +1,5 @@
-using UnityEngine;
 using Enemies;
+using UnityEngine;
 
 /// <summary>
 /// Utility class for handling root motion collision detection and adjustment.
@@ -194,7 +194,7 @@ public static class RootMotionUtils
         }
 
         // Use default collision layers if none provided
-        LayerMask layers = collisionLayers ?? LayerMask.GetMask("Default", "ObstacleLayer");
+        LayerMask layers = collisionLayers ?? GameConstants.Layers.ObstacleCollisionMask;
         
         // Check for collisions and get adjusted movement
         Vector3 adjustedRootMotion = CheckRootMotionCollision(

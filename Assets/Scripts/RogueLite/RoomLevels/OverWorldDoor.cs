@@ -187,16 +187,11 @@ public class OverWorldDoor : RogueLiteDoor
     // Override the interaction text to show difficulty
     public override string GetInteractionText()
     {
-        switch (doorType)
+        if (doorType == DoorStatus.LOCKED)
         {
-            case DoorStatus.LOCKED:
-                return "Door Locked";
-            case DoorStatus.ENTRANCE:
-                return $"Enter {buildingName} (Difficulty: {buildingDifficulty})";
-            case DoorStatus.EXIT:
-                return "Can't Go Back";
-            default:
-                return "INVALID";
+            return "Door Locked";
         }
+        
+        return $"Enter {buildingName} (Difficulty: {buildingDifficulty})";
     }
 } 

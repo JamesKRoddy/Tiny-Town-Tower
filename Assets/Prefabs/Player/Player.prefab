@@ -44,8 +44,8 @@ Camera:
   m_GameObject: {fileID: 1544991761442322683}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -154,10 +154,21 @@ MonoBehaviour:
   offset: {x: 0, y: 20, z: -20}
   followSpeed: 5
   rotationSpeed: 5
+  cameraYAngle: 30
   defaultTarget: {fileID: 8546775785345965943}
   panSpeed: 20
   workDetectionPoint: {fileID: 75000729290020838}
   workDetectionDistance: 3
+  defaultShakeDuration: 0.2
+  defaultShakeIntensity: 0.3
+  defaultShakeFrequency: 25
+  minDamageForShake: 5
+  maxDamageForFullShake: 50
+  maxDamageShakeIntensity: 1
+  hitEnemyIntensity: 0.15
+  hitEnemyDuration: 0.1
+  deathShakeIntensity: 0.8
+  deathShakeDuration: 0.5
 --- !u!1 &5876711139260302164
 GameObject:
   m_ObjectHideFlags: 0
@@ -238,6 +249,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e2434c58294ac18428d4e3d49852a163, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  inputActions: {fileID: 0}
+  quickSaveKey: 286
+  quickLoadKey: 290
 --- !u!114 &7394057616191428834
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -264,18 +278,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   equippedWeaponScriptObj: {fileID: 0}
-  equippedWeaponBase: {fileID: 0}
   weaponHolder: {fileID: 0}
+  weaponAttack: {fileID: 0}
   inventoryList:
   - resourceScriptableObj: {fileID: 11400000, guid: 9a2ee96a3b540424babd72eb01b5ce73, type: 2}
     count: 2
   interactionRange: 3
   boxCastSize: {x: 0.5, y: 0.5, z: 0.5}
+  sphereCastRadius: 0.8
+  showDebugVisualization: 0
   dashElement: 0
   maxMutationSlots: 9
   availableMutations:
   - mutation: {fileID: 11400000, guid: dad02435f22e6b14c80b9a7b3bcedc2e, type: 2}
     quantity: 2
+  recruitedNPCs: []
 --- !u!1001 &3235455507337582480
 PrefabInstance:
   m_ObjectHideFlags: 0

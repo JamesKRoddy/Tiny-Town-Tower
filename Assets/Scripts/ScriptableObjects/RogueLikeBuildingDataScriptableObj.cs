@@ -1,8 +1,125 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 /// <summary>
-/// Used for buildings in the roguelite section of the game
+/// Defines a required room group for building generation.
+/// Each group has its own pool of room prefabs that MUST spawn.
+/// 
+/// Example uses:
+/// - "Every building must have at least 1 hallway"
+/// - "Apartments must have at least 2 bedrooms"
+/// 
+/// SPAWN ORDER:
+/// 1. Required rooms spawn first (from each group's prefab pool)
+/// 2. Friendly room chance is checked
+/// 3. Remaining slots fill with random rooms
+/// </summary>
+[System.Serializable]
+public class RequiredRoomGroup
+{
+    [Tooltip("Display name for this group (for inspector clarity)")]
+    public string groupName = "Required Room";
+    
+    [Tooltip("Room prefabs that can be used to fulfill this requirement")]
+    public GameObject[] roomPrefabs;
+    
+    [Tooltip("Number of rooms from this group that MUST spawn")]
+    [Min(1)] public int requiredCount = 1;
+    
+    [Tooltip("Maximum number of rooms from this group that CAN spawn (0 = unlimited after required)")]
+    [Min(0)] public int maxCount = 0;
+    
+    /// <summary>
+    /// Check if more rooms from this group need to be spawned to meet the requirement
+    /// </summary>
+    public bool NeedsMore(int currentCount)
+    {
+        return currentCount < requiredCount;
+    }
+    
+    /// <summary>
+    /// Check if we can spawn more rooms from this group (after meeting requirement)
+    /// </summary>
+    public bool CanSpawnMore(int currentCount)
+    {
+        return maxCount == 0 || currentCount < maxCount;
+    }
+    
+    /// <summary>
+    /// Check if the requirement is satisfied
+    /// </summary>
+    public bool IsSatisfied(int currentCount)
+    {
+        return currentCount >= requiredCount;
+    }
+    
+    /// <summary>
+    /// Get a random room prefab from this group
+    /// </summary>
+    public GameObject GetRandomRoom()
+    {
+        if (roomPrefabs == null || roomPrefabs.Length == 0)
+        {
+            return null;
+        }
+        return roomPrefabs[Random.Range(0, roomPrefabs.Length)];
+    }
+    
+    /// <summary>
+    /// Get count of valid (non-null) prefabs
+    /// </summary>
+    public int GetValidPrefabCount()
+    {
+        if (roomPrefabs == null) return 0;
+        int count = 0;
+        foreach (var prefab in roomPrefabs)
+        {
+            if (prefab != null) count++;
+        }
+        return count;
+    }
+}
+
+/// <summary>
+/// Used for buildings in the roguelite section of the game.
+/// 
+/// BOSS SYSTEM INTEGRATION:
+/// This scriptable object now supports boss encounters at the end of buildings.
+/// 
+/// HOW IT WORKS:
+/// 1. Configure boss spawn chance (0-100%) in the inspector
+/// 2. Add BossScriptableObj references to the possibleBosses array
+/// 3. Each BossScriptableObj contains:
+///    - The boss enemy prefab (with EnemyBase component)
+///    - The boss room parent prefab (BossRoomParent - a complete building section for the boss fight)
+///    - Difficulty requirements and spawn weight
+/// 4. During building generation, the system:
+///    - Rolls for boss spawn based on bossSpawnChance
+///    - Selects a boss using weighted random selection from suitable bosses
+///    - Instantiates the boss's BossRoomParent as the final building section
+///    - The BossRoomParent generates its own room layout and spawns the boss
+/// 
+/// BOSS ROOM ARCHITECTURE:
+/// - Boss rooms are NOT just single room prefabs - they are complete building parents (BossRoomParent)
+/// - Each boss room can have multiple sub-rooms for a complex arena
+/// - BossRoomParent inherits from RogueLiteRoomParent and uses the same room generation system
+/// - The boss spawns at a designated "BossSpawnPoint" transform within the boss room parent
+/// 
+/// SETUP STEPS:
+/// 1. Create a Building Parent prefab with BossRoomParent component (not just RogueLiteRoomParent)
+/// 2. Add "BossSpawnPoint" transform to define where the boss spawns
+/// 3. Configure room spawn points as normal for the boss arena
+/// 4. Create RoomParentDataScriptableObj (Right-click > Create > Scriptable Objects > Roguelite > RoomParentDataScriptableObj)
+///    - Assign the BossRoomParent prefab (which has spawn points configured)
+///    - Add room prefabs that can spawn in the arena
+///    - (Room count is determined by spawn points in the prefab)
+/// 5. Create BossScriptableObj assets (Right-click > Create > Scriptable Objects > Roguelite > Enemies > BossScriptableObj)
+///    - Assign boss enemy prefab
+///    - Assign RoomParentDataScriptableObj
+///    - Configure difficulty, loot table, etc.
+/// 6. Add BossScriptableObj references to this building data's possibleBosses array
+/// 7. Adjust bossSpawnChance as needed (default: 75%)
 /// </summary>
 
 [CreateAssetMenu(fileName = "BuildingDataScriptableObj", menuName = "Scriptable Objects/Roguelite/BuildingDataScriptableObj")]
@@ -28,9 +145,20 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     [SerializeField] private bool autoSpawnNPCs = true;
     [SerializeField, Range(0f, 100f)] private float npcSpawnChance = 75f; // 75% chance to spawn an NPC per spawn point
 
+    [Header("Boss Configuration")]
+    [Tooltip("List of possible bosses that can spawn at the end of this building type. Each boss has its own room and difficulty requirements.")]
+    [SerializeField] private BossScriptableObj[] possibleBosses;
+    [SerializeField, Range(0f, 100f)] private float bossSpawnChance = 75f; // 75% chance to spawn a boss at the end by default
+    [Tooltip("If true, the final room will always be a boss room when a boss spawns. Recommended for proper boss encounter flow.")]
+    [SerializeField] private bool guaranteeBossAsEndRoom = true;
+
     [Header("Room Settings")]
     public int minRoomCount = 3;
     public int maxRoomCount = 5;
+    
+    [Header("Required Room Groups")]
+    [Tooltip("Define groups of rooms that MUST spawn in every building. Higher priority groups spawn first.")]
+    public List<RequiredRoomGroup> requiredRoomGroups = new List<RequiredRoomGroup>();
 
     public int GetMaxRoomsForDifficulty(int difficulty)
     {
@@ -38,6 +166,118 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
         int scaledMax = Mathf.RoundToInt(maxRoomCount * (1 + (difficulty * 0.1f))); // 10% increase per difficulty level
         return Mathf.Clamp(scaledMax, minRoomCount, maxRoomCount);
     }
+    
+    #region Required Room Groups
+    
+    /// <summary>
+    /// Get the required room groups that have valid prefabs
+    /// </summary>
+    public List<RequiredRoomGroup> GetAvailableRequiredGroups()
+    {
+        var availableGroups = requiredRoomGroups
+            .Where(g => g != null && g.GetValidPrefabCount() > 0)
+            .ToList();
+        return availableGroups;
+    }
+    
+    /// <summary>
+    /// Get the total number of required rooms across all groups
+    /// </summary>
+    public int GetTotalRequiredRoomCount(int difficulty)
+    {
+        int total = 0;
+        foreach (var group in requiredRoomGroups)
+        {
+            if (group != null && group.GetValidPrefabCount() > 0)
+            {
+                total += group.requiredCount;
+            }
+        }
+        return total;
+    }
+    
+    /// <summary>
+    /// Get a room from a required group based on spawn state.
+    /// Returns null if no required rooms need to be spawned.
+    /// </summary>
+    /// <param name="difficulty">Current difficulty level</param>
+    /// <param name="groupSpawnCounts">Dictionary tracking how many rooms have spawned per group index</param>
+    /// <param name="spawnedGroupIndex">Output: The index of the group the room was selected from</param>
+    public GameObject GetRequiredRoom(int difficulty, Dictionary<int, int> groupSpawnCounts, out int spawnedGroupIndex)
+    {
+        spawnedGroupIndex = -1;
+        
+        for (int i = 0; i < requiredRoomGroups.Count; i++)
+        {
+            var group = requiredRoomGroups[i];
+            if (group == null || group.GetValidPrefabCount() == 0) continue;
+            
+            // Get current spawn count for this group
+            int currentCount = groupSpawnCounts.ContainsKey(i) ? groupSpawnCounts[i] : 0;
+            
+            // Check if this group needs more rooms
+            if (group.NeedsMore(currentCount))
+            {
+                GameObject room = group.GetRandomRoom();
+                if (room != null)
+                {
+                    spawnedGroupIndex = i;
+                    Debug.Log($"[GetRequiredRoom] Selected '{room.name}' from required group '{group.groupName}' " +
+                             $"(count: {currentCount + 1}/{group.requiredCount})");
+                    return room;
+                }
+            }
+        }
+        
+        return null;
+    }
+    
+    /// <summary>
+    /// Check if all required room groups have been satisfied
+    /// </summary>
+    public bool AreAllRequirementsSatisfied(int difficulty, Dictionary<int, int> groupSpawnCounts)
+    {
+        for (int i = 0; i < requiredRoomGroups.Count; i++)
+        {
+            var group = requiredRoomGroups[i];
+            if (group == null || group.GetValidPrefabCount() == 0) continue;
+            
+            int currentCount = groupSpawnCounts.ContainsKey(i) ? groupSpawnCounts[i] : 0;
+            if (!group.IsSatisfied(currentCount))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /// <summary>
+    /// Check if a room prefab belongs to any required group
+    /// </summary>
+    public bool IsRoomInRequiredGroup(GameObject roomPrefab, out int groupIndex)
+    {
+        groupIndex = -1;
+        if (roomPrefab == null) return false;
+        
+        for (int i = 0; i < requiredRoomGroups.Count; i++)
+        {
+            var group = requiredRoomGroups[i];
+            if (group == null || group.roomPrefabs == null) continue;
+            
+            foreach (var prefab in group.roomPrefabs)
+            {
+                if (prefab == roomPrefab)
+                {
+                    groupIndex = i;
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    #endregion
 
     public GameObject GetBuildingParent(int difficulty)
     {
@@ -68,7 +308,7 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     /// Get a building room, considering extenders, friendly rooms, and hostile rooms based on spawn chances
     /// This method is used by the room placement system to select appropriate rooms
     /// </summary>
-    public GameObject GetBuildingRoom(int difficulty, int currentExtenderCount = 0, bool allowExtenders = true)
+    public virtual GameObject GetBuildingRoom(int difficulty, int currentExtenderCount = 0, bool allowExtenders = true)
     {
         // Check if we should try to spawn an extender first
         if (allowExtenders && extenderRooms.Count > 0 && currentExtenderCount < maxExtendersPerBuilding)
@@ -179,7 +419,7 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     /// <summary>
     /// Get a room extender
     /// </summary>
-    public GameObject GetExtenderRoom(int difficulty)
+    public virtual GameObject GetExtenderRoom(int difficulty)
     {
         // Find all suitable extender rooms based on difficulty
         List<BuildingRooms> suitableExtenderRooms = new List<BuildingRooms>();
@@ -258,7 +498,7 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     /// </summary>
     /// <param name="difficulty">Current difficulty level</param>
     /// <param name="includeExtenders">Whether to include room extenders in the list</param>
-    public GameObject[] GetAllRooms(int difficulty, bool includeExtenders = true)
+    public virtual GameObject[] GetAllRooms(int difficulty, bool includeExtenders = true)
     {
         List<GameObject> allRooms = new List<GameObject>();
         
@@ -316,7 +556,7 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     /// <summary>
     /// Get the maximum number of extenders allowed per building
     /// </summary>
-    public int GetMaxExtendersPerBuilding()
+    public virtual int GetMaxExtendersPerBuilding()
     {
         return maxExtendersPerBuilding;
     }
@@ -324,7 +564,7 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     /// <summary>
     /// Get the extender spawn chance (0-100%)
     /// </summary>
-    public float GetExtenderSpawnChance()
+    public virtual float GetExtenderSpawnChance()
     {
         return extenderSpawnChance;
     }
@@ -335,6 +575,139 @@ public class RogueLikeBuildingDataScriptableObj : ScriptableObject
     public void SetExtenderSpawnChance(float chance)
     {
         extenderSpawnChance = Mathf.Clamp(chance, 0f, 100f);
+    }
+
+    /// <summary>
+    /// Check if a boss should spawn based on spawn chance
+    /// </summary>
+    public bool ShouldSpawnBoss()
+    {
+        if (possibleBosses == null || possibleBosses.Length == 0)
+        {
+            return false;
+        }
+
+        float roll = Random.Range(0f, 100f);
+        bool shouldSpawn = roll < bossSpawnChance;
+        Debug.Log($"[ShouldSpawnBoss] Roll: {roll:F1}, Chance: {bossSpawnChance:F1}, Result: {shouldSpawn}");
+        return shouldSpawn;
+    }
+
+    /// <summary>
+    /// Get a boss for the current difficulty level using weighted random selection
+    /// Returns null if no suitable boss is found
+    /// </summary>
+    public BossScriptableObj GetBossForDifficulty(int difficulty)
+    {
+        if (possibleBosses == null || possibleBosses.Length == 0)
+        {
+            Debug.LogWarning($"[GetBossForDifficulty] No bosses configured for building: {buildingType} in {name}");
+            return null;
+        }
+
+        // Find all suitable bosses based on difficulty
+        List<BossScriptableObj> suitableBosses = new List<BossScriptableObj>();
+        List<int> weights = new List<int>();
+        
+        foreach (var boss in possibleBosses)
+        {
+            if (boss != null && boss.CanSpawnAtDifficulty(difficulty))
+            {
+                suitableBosses.Add(boss);
+                weights.Add(boss.GetSpawnWeight());
+            }
+        }
+
+        // If no suitable bosses found, return null
+        if (suitableBosses.Count == 0)
+        {
+            Debug.LogWarning($"[GetBossForDifficulty] No suitable bosses found for difficulty: {difficulty} for building: {buildingType} in {name}");
+            return null;
+        }
+
+        // Select boss using weighted random selection
+        int totalWeight = 0;
+        foreach (int weight in weights)
+        {
+            totalWeight += weight;
+        }
+
+        int randomValue = Random.Range(0, totalWeight);
+        int currentWeight = 0;
+
+        for (int i = 0; i < suitableBosses.Count; i++)
+        {
+            currentWeight += weights[i];
+            if (randomValue < currentWeight)
+            {
+                Debug.Log($"[GetBossForDifficulty] Selected boss: {suitableBosses[i].bossName} for difficulty {difficulty}");
+                return suitableBosses[i];
+            }
+        }
+
+        // Fallback to first suitable boss (should never reach here)
+        Debug.Log($"[GetBossForDifficulty] Fallback to first boss: {suitableBosses[0].bossName}");
+        return suitableBosses[0];
+    }
+
+    /// <summary>
+    /// Get the boss room data for a specific boss
+    /// Returns the RoomParentDataScriptableObj which contains the room parent prefab and room configuration
+    /// </summary>
+    public RoomParentDataScriptableObj GetBossRoomData(BossScriptableObj boss)
+    {
+        if (boss == null)
+        {
+            Debug.LogError($"[GetBossRoomData] Boss is null!");
+            return null;
+        }
+
+        if (boss.bossRoomData == null)
+        {
+            Debug.LogError($"[GetBossRoomData] Boss room data is null for boss: {boss.bossName}");
+            return null;
+        }
+        
+        if (!boss.bossRoomData.IsValid())
+        {
+            Debug.LogError($"[GetBossRoomData] Boss room data is invalid for boss: {boss.bossName}");
+            return null;
+        }
+
+        Debug.Log($"[GetBossRoomData] Retrieved boss room data for: {boss.bossName}");
+        return boss.bossRoomData;
+    }
+
+    /// <summary>
+    /// Get all possible bosses for this building type
+    /// </summary>
+    public BossScriptableObj[] GetPossibleBosses()
+    {
+        return possibleBosses ?? new BossScriptableObj[0];
+    }
+
+    /// <summary>
+    /// Get the boss spawn chance (0-100%)
+    /// </summary>
+    public float GetBossSpawnChance()
+    {
+        return bossSpawnChance;
+    }
+
+    /// <summary>
+    /// Set the boss spawn chance (0-100%)
+    /// </summary>
+    public void SetBossSpawnChance(float chance)
+    {
+        bossSpawnChance = Mathf.Clamp(chance, 0f, 100f);
+    }
+
+    /// <summary>
+    /// Check if boss should always be the final room when spawned
+    /// </summary>
+    public bool ShouldGuaranteeBossAsEndRoom()
+    {
+        return guaranteeBossAsEndRoom;
     }
 }
 

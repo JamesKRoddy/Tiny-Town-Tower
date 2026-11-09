@@ -31,7 +31,9 @@ ModelImporter:
       warnings that might lower retargeting quality:\nNote: Activate translation
       DOF on avatar to improve retargeting quality.\n\t'Ball_R' is inbetween humanoid
       transforms and has rotation animation that will be discarded.\n\t'Ball_L' is
-      inbetween humanoid transforms and has rotation animation that will be discarded.\n"
+      inbetween humanoid transforms and has rotation animation that will be discarded.\nEvent
+      FootstepLeft has a time (3.522667) outside the clip's valid range (0.000000..2.000000).
+      It will never be fired"
     animationRetargetingWarnings: 
     animationDoRetargetingWarnings: 0
     importAnimatedCustomProperties: 0
@@ -47,7 +49,7 @@ ModelImporter:
     - serializedVersion: 16
       name: zombie_aggro_Run_B_01
       takeName: zombie_aggro_Run_B_01
-      internalID: 0
+      internalID: -5153194218863063495
       firstFrame: 0
       lastFrame: 60
       wrapMode: 0
@@ -68,7 +70,35 @@ ModelImporter:
       mirror: 0
       bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
       curves: []
-      events: []
+      events:
+      - time: 0.27066666
+        functionName: FootstepRight
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0.1
+        intParameter: 0
+        messageOptions: 0
+      - time: 1.5513333
+        functionName: FootstepLeft
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0.1
+        intParameter: 0
+        messageOptions: 0
+      - time: 3.5226667
+        functionName: FootstepLeft
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0.1
+        intParameter: 0
+        messageOptions: 0
+      - time: 1.1756667
+        functionName: FootstepRight
+        data: 
+        objectReferenceParameter: {instanceID: 0}
+        floatParameter: 0.1
+        intParameter: 0
+        messageOptions: 0
       transformMask: []
       maskType: 3
       maskSource: {instanceID: 0}

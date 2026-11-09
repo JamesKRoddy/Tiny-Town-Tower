@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70e8cac197353df4e9ad4864b0623cef, type: 3}
+  m_Name: BossBrawler
+  m_EditorClassIdentifier: 
+  bossName: Brawler
+  bossDescription: Slow with heavy attacks
+  bossPrefab: {fileID: 3498937984024521076, guid: 6bcffa5c6bbad6346b9648107d30059c, type: 3}
+  bossRoomData: {fileID: 11400000, guid: 6b6e20c5d25542742b69f9c43b4c0ec1, type: 2}
+  minimumDifficulty: 0
+  spawnWeight: 100
+  excludeFromTesting: 0
+  bossLootTable: {fileID: 0}
+  guaranteedLoot: []
+  lootDropMultiplier: 2

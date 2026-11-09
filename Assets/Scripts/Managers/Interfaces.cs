@@ -1,5 +1,46 @@
 using UnityEngine;
 
+/// <summary>
+/// Information about a hit on an IHittable object
+/// Used for projectile reflection, environmental interactions, etc.
+/// </summary>
+public struct HitInfo
+{
+    public Vector3 HitPoint;      // Where the hit occurred
+    public Vector3 HitNormal;     // Normal at the hit point
+    public Transform Attacker;     // Who/what caused the hit
+    public float Force;           // Force of the hit (for physics reactions)
+    public IDamageDealer Dealer;  // The damage dealer (if applicable)
+    
+    public HitInfo(Vector3 hitPoint, Vector3 hitNormal, Transform attacker, float force = 0f, IDamageDealer dealer = null)
+    {
+        HitPoint = hitPoint;
+        HitNormal = hitNormal;
+        Attacker = attacker;
+        Force = force;
+        Dealer = dealer;
+    }
+}
+
+/// <summary>
+/// Interface for any object that can be hit and respond to hits
+/// Examples: projectiles (reflection), barrels (break), bells (ring), interactive props
+/// </summary>
+public interface IHittable
+{
+    /// <summary>
+    /// Called when this object is hit by a weapon or other source
+    /// </summary>
+    /// <param name="hitInfo">Information about the hit</param>
+    void OnHit(HitInfo hitInfo);
+    
+    /// <summary>
+    /// Check if this object can currently be hit
+    /// </summary>
+    /// <returns>True if the object can be hit right now</returns>
+    bool CanBeHit();
+}
+
 public interface IControllerInput
 {
     public void SetPlayerControlType(PlayerControlType controlType);
@@ -31,7 +72,11 @@ public interface IPossessable
     void OnUnpossess();
     void PossessedUpdate();
     void Movement(Vector3 movement);
-    void Attack();
+    /// <summary>
+    /// Initiate an attack (called by player input)
+    /// This starts the attack animation, actual damage is executed via IAttackOwner.Attack() animation event
+    /// </summary>
+    void InitiateAttack(int attackType); // 1 = Light Attack, 2 = Heavy Attack, 3 = Special Attack etc.
     void Dash();
     WeaponScriptableObj GetEquipped();
     void EquipWeapon(WeaponScriptableObj weapon);
@@ -74,6 +119,15 @@ public interface IDamageable
     // Elemental resistance system
     DamageResistance GetResistance(AttackElement damageType); // Get resistance level for a specific damage type
     float GetDamageMultiplier(AttackElement damageType); // Get damage multiplier for a specific damage type
+    
+    /// <summary>
+    /// Gets the target transform for VFX spawning and projectile targeting.
+    /// This is typically the mesh/model transform where visual effects should spawn.
+    /// For enemies with separate mesh objects (like drones), this returns the mesh transform.
+    /// Falls back to the main transform if no specific target is set.
+    /// </summary>
+    /// <returns>The transform to use for VFX and projectile targeting</returns>
+    Transform GetTargetTransform();
 }
 
 /// <summary>

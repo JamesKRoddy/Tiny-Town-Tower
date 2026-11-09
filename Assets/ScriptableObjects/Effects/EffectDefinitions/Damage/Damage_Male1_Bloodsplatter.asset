@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: Damage_Male1_Bloodsplatter
   m_EditorClassIdentifier: Assembly-CSharp:Managers:EffectDefinition
   prefabs:
-  - {fileID: 1362418652685942, guid: b369efb4abe69e044890b664115fab9e, type: 3}
-  - {fileID: 166404, guid: 78e1c8c5b281b8b439229473779ac9aa, type: 3}
+  - prefab: {fileID: 1362418652685942, guid: b369efb4abe69e044890b664115fab9e, type: 3}
+    delay: 0
+  - prefab: {fileID: 166404, guid: 78e1c8c5b281b8b439229473779ac9aa, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

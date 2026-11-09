@@ -9,7 +9,7 @@ using Enemies;
 using UnityEditor;
 #endif
 
-public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
+public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable, IAttackOwner
 {
     [Header("Character Type")]
     [SerializeField] protected CharacterType characterType = CharacterType.HUMAN_MALE_1;
@@ -21,7 +21,6 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public float dashSpeed => currentStats.dashSpeed; // Speed during a dash
     public float dashCooldown => currentStats.dashCooldown; // Cooldown time between dashes
     
-    [SerializeField] private float attackRotationSpeed = 360f; // Speed at which the player rotates while attacking
     [SerializeField] private float dashDuration = 0.2f; // How long a dash lasts
     public float vaultDuration = 0.4f; // How long a vault lasts
     public float vaultCooldown = 0.3f; // Short cooldown between vaults to prevent rapid firing
@@ -90,7 +89,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     }
 
     [Header("Input and Movement State")]
-    protected Vector3 movementInput; // Stores the current movement input
+    protected Vector3 movementInput; // Stores the current movement input (smoothed)
+    private Vector3 rawMovementInput; // Raw input before smoothing
+    private Vector3 smoothedInputVelocity; // Used by SmoothDamp for smooth input transitions
+    [SerializeField] private float inputSmoothTime = 0.05f; // Time to smooth input transitions (lower = more responsive, higher = smoother)
     private bool isDashing = false; // Whether the player is currently dashing
     private bool isVaulting = false; // Whether the player is currently vaulting
     private bool isPushing = false; // Whether the player is currently pushing an object
@@ -162,11 +164,92 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     public CharacterType CharacterType => characterType;
     
     public Allegiance GetAllegiance() => Allegiance.FRIENDLY;
+
+    /// <summary>
+    /// Gets the target transform for VFX spawning and projectile targeting.
+    /// Returns the main transform (characters typically use their root transform).
+    /// </summary>
+    public Transform GetTargetTransform()
+    {
+        return transform; // Characters use their root transform by default
+    }
     
     // IDamageable hit reaction tracking
     public Vector3 LastHitOrigin { get; set; } = Vector3.zero;
     public float LastHitTime { get; set; } = -999f;
     public float LastHitPoiseDamage { get; set; } = 0f;
+
+    #region IAttackOwner Implementation
+    
+    /// <summary>
+    /// IAttackOwner: The animator component for attack animations
+    /// </summary>
+    public Animator OwnerAnimator => animator;
+    
+    /// <summary>
+    /// IAttackOwner: Current attack target (players typically don't have a fixed target)
+    /// Override in player controller to return current aimed target
+    /// </summary>
+    public Transform AttackTarget => null; // Player attacks based on input direction, not fixed target
+    
+    /// <summary>
+    /// IAttackOwner: NavMeshAgent for movement (may be disabled for player-controlled)
+    /// </summary>
+    public NavMeshAgent OwnerNavMeshAgent => agent;
+    
+    /// <summary>
+    /// IAttackOwner: Rotation speed for turning
+    /// </summary>
+    public float OwnerRotationSpeed => rotationSpeed;
+    
+    /// <summary>
+    /// IAttackOwner: Whether currently attacking
+    /// </summary>
+    bool IAttackOwner.IsAttacking
+    {
+        get => isAttacking;
+        set => isAttacking = value;
+    }
+    
+    /// <summary>
+    /// IAttackOwner: Whether using root motion (players typically use root motion for attacks)
+    /// </summary>
+    public bool UseRootMotion => animator != null && animator.applyRootMotion;
+    
+    /// <summary>
+    /// Check if the character has line of sight to a target position
+    /// </summary>
+    /// <param name="targetPosition">The position to check visibility to</param>
+    /// <returns>True if there's clear line of sight</returns>
+    public bool HasLineOfSight(Vector3 targetPosition)
+    {
+        Vector3 origin = transform.position + Vector3.up * 1.5f; // Eye height
+        Vector3 direction = (targetPosition - origin).normalized;
+        float distance = Vector3.Distance(origin, targetPosition);
+        
+        // Check for obstacles between us and target
+        if (Physics.Raycast(origin, direction, out RaycastHit hit, distance))
+        {
+            // If we hit something before reaching the target, no line of sight
+            if (hit.distance < distance - 0.1f)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /// <summary>
+    /// Called when an attack warning phase begins (for visual/audio feedback)
+    /// Players typically don't use attack warnings, but NPCs using this controller might
+    /// </summary>
+    public virtual void AttackWarning()
+    {
+        // Players don't typically show attack warnings
+        // Override in NPC subclasses if needed
+    }
+    
+    #endregion
 
     protected virtual void Awake()
     {
@@ -251,6 +334,32 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             animator.applyRootMotion = false;
         }
+        
+        // Initialize all attack components (like WeaponAttack)
+        InitializeAttackComponents();
+    }
+    
+    /// <summary>
+    /// Initialize all attack components on this character (e.g., WeaponAttack)
+    /// This assigns the animator and other references needed for attacks to function
+    /// </summary>
+    private void InitializeAttackComponents()
+    {
+        var attackComponents = GetComponents<Combat.AttackBase>();
+        
+        foreach (var attack in attackComponents)
+        {
+            if (attack != null)
+            {
+                attack.Initialize(this);
+                Debug.Log($"[{gameObject.name}] Initialized attack component: {attack.GetType().Name}");
+            }
+        }
+        
+        if (attackComponents.Length > 0)
+        {
+            Debug.Log($"[{gameObject.name}] HumanCharacterController initialized with {attackComponents.Length} attack component(s)");
+        }
     }
 
     public virtual void PossessedUpdate()
@@ -278,6 +387,9 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 return;
             }
         }
+        
+        // Smooth the movement input to prevent micro-oscillations
+        SmoothMovementInput();
         
         HandleDash();
         UpdatePoiseRecovery(); // Update poise recovery
@@ -415,29 +527,87 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     public void Movement(Vector3 movement)
     {
-        movementInput = new Vector3(movement.x, 0, movement.z);
+        // Store raw input for smoothing
+        rawMovementInput = new Vector3(movement.x, 0, movement.z);
+    }
+    
+    /// <summary>
+    /// Smooths the raw movement input to prevent micro-oscillations and jitter.
+    /// Called in PossessedUpdate before movement is applied.
+    /// </summary>
+    private void SmoothMovementInput()
+    {
+        // If input is near zero, snap to zero to prevent drifting
+        if (rawMovementInput.sqrMagnitude < 0.01f)
+        {
+            movementInput = Vector3.zero;
+            smoothedInputVelocity = Vector3.zero;
+            return;
+        }
+        
+        // Use SmoothDamp for natural, frame-rate independent smoothing
+        // This filters out micro-oscillations while maintaining responsiveness
+        movementInput = Vector3.SmoothDamp(movementInput, rawMovementInput, ref smoothedInputVelocity, inputSmoothTime);
     }
 
-    public void Attack()
+    /// <summary>
+    /// Initiate an attack (called by player input or AI decision)
+    /// Sets animator parameters to start attack animation
+    /// NOTE: Root motion is now controlled by animation events (EnableRootMotion/DisableRootMotion)
+    /// </summary>
+    public void InitiateAttack(int attackType)
     {
         if (!isDashing && !isVaulting && !isPushing && !isClimbing && !isClimbLanding && characterInventory.equippedWeaponScriptObj != null)
         {
             isAttacking = true;
-            animator.SetBool(GameConstants.AnimatorParams.LightAttackHash, true);
+            animator.SetTrigger(GameConstants.AnimatorParams.Attack);
+            animator.SetInteger(GameConstants.AnimatorParams.AttackTypeHash, attackType);
             
-            // Enable root motion for attack animations
-            if (animator != null)
-            {
-                animator.applyRootMotion = true;
-            }
+            // Root motion is now controlled by animation events/state behaviors
+            // Call EnableRootMotion() from your attack animation events or state machine behavior
         }
+    }
+    
+    /// <summary>
+    /// IAttackOwner: Called when attack animation reaches damage frame
+    /// This is the standardized animation event method for all characters
+    /// Animation events should call this method to execute damage
+    /// </summary>
+    public void Attack()
+    {
+        // Execute the actual weapon attack damage
+        if (characterInventory != null)
+        {
+            characterInventory.UseWeapon();
+        }
+    }
+    
+    /// <summary>
+    /// IAttackOwner: Called when attack animation ends
+    /// This is the standardized animation event method for all characters
+    /// Animation events should call this method to clean up after attack
+    /// NOTE: Root motion is now controlled by animation events (EnableRootMotion/DisableRootMotion)
+    /// </summary>
+    public void AttackEnd()
+    {
+        // Clear attack state
+        isAttacking = false;
+        
+        // Stop weapon attack through inventory
+        if (characterInventory != null)
+        {
+            characterInventory.StopWeapon();
+        }
+        
+        // Root motion is now controlled by animation events/state behaviors
+        // Call DisableRootMotion() from your attack animation exit events or state machine behavior
     }
 
     public void Dash()
     {
         if (!isDashing && !isVaulting && !isPushing && !isClimbing && !isClimbLanding && Time.time > dashCooldownTime && Time.time > vaultCooldownTime && movementInput.magnitude > 0.1f)
         {
-            StopAttacking(); // Ensure player stops attacking when dashing
+            AttackEnd(); // Ensure player stops attacking when dashing
 
             if (CanVault(out RaycastHit hitInfo, out ObstacleType obstacleType))
             {
@@ -495,33 +665,50 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     {
         characterInventory.EquipWeapon(weapon);
     }
-    public void EquipMeleeWeapon(int equipped)
-    {
-        animator.SetInteger(GameConstants.AnimatorParams.EquippedHash, equipped);
-        UpdateAnimationSpeed();
-    }
 
     private void UpdateAnimationSpeed()
     {
-        if (characterInventory.equippedWeaponBase != null)
+        if (characterInventory.equippedWeaponScriptObj != null)
         {
             // Update the speed of all attack animations in the Attacking Layer
-            animator.SetFloat(GameConstants.AnimatorParams.AttackSpeedHash, characterInventory.equippedWeaponBase.GetCurrentAttackSpeed());
+            animator.SetFloat(GameConstants.AnimatorParams.AttackSpeedHash, characterInventory.GetCurrentAttackSpeed());
         }
     }
 
-    //Called from animator state class CombatAnimationState
-    public void StopAttacking()
+    /// <summary>
+    /// Get the current rotation speed, applying animator-controlled multiplier
+    /// Rotation speed multiplier is controlled by CharacterAnimationEvents via GenericStateMachineBehaviour
+    /// This allows rotation speed to be controlled per animation state, similar to how root motion is controlled
+    /// </summary>
+    /// <returns>Current rotation speed with animator multiplier applied</returns>
+    private float GetCurrentRotationSpeed()
     {
-        isAttacking = false;
-        if(characterCombat != null)
-            characterCombat.StopAttacking();
+        float baseRotSpeed = rotationSpeed;
         
-        // Disable root motion after attack completes
-        if (animator != null)
+        // Get rotation speed multiplier from animator (controlled by CharacterAnimationEvents)
+        // Defaults to 1.0 if parameter doesn't exist (for backwards compatibility)
+        float rotationMultiplier = 1.0f;
+        if (animator != null && animator.isActiveAndEnabled)
         {
-            animator.applyRootMotion = false;
+            // Check if the parameter exists before reading it
+            bool hasParameter = false;
+            foreach (var param in animator.parameters)
+            {
+                if (param.nameHash == GameConstants.AnimatorParams.RotationSpeedMultiplierHash && param.type == AnimatorControllerParameterType.Float)
+                {
+                    hasParameter = true;
+                    break;
+                }
+            }
+            
+            if (hasParameter)
+            {
+                rotationMultiplier = animator.GetFloat(GameConstants.AnimatorParams.RotationSpeedMultiplierHash);
+            }
         }
+        
+        // Apply multiplier to base rotation speed
+        return baseRotSpeed * rotationMultiplier;
     }
 
     #endregion
@@ -548,7 +735,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         currentDirection = movementInput.normalized; // Initialize dash direction based on input
         animator.SetTrigger(GameConstants.AnimatorParams.IsDashingHash);
 
-        // Disable root motion during dash
+        // Disable root motion during dash (dash is script-controlled, not animation-driven)
         if (animator != null)
         {
             animator.applyRootMotion = false;
@@ -664,7 +851,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         vaultStartPosition = transform.position; // Store starting position for lerp
         currentVaultDirection = (vaultTargetPosition - transform.position).normalized; // Initialize vault direction
         
-        // Disable root motion during vault
+        // Disable root motion during vault (vault is script-controlled, not animation-driven)
         if (animator != null)
         {
             animator.applyRootMotion = false;
@@ -725,7 +912,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // This ensures we land perfectly on the platform surface
         climbExactFinalPosition = CalculateExactClimbFinalPosition();
         
-        // Disable root motion during climb
+        // Disable root motion during climb (climb is script-controlled, not animation-driven)
         if (animator != null)
         {
             animator.applyRootMotion = false;
@@ -756,11 +943,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Reset gravity velocity when finishing climb to prevent immediate falling
         ResetGravityVelocity();
         
-        // Re-enable root motion
-        if (animator != null)
-        {
-            animator.applyRootMotion = true;
-        }
+        // Root motion stays disabled - it's only enabled by animation events when needed
     }
 
     #endregion
@@ -810,7 +993,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 // Stop player movement while pushing
                 targetMovement = Vector3.zero;
                 
-                // Disable root motion during push
+                // Disable root motion during push (push is script-controlled, not animation-driven)
                 if (animator != null)
                 {
                     animator.applyRootMotion = false;
@@ -857,7 +1040,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         currentPushTarget = null;
         animator.SetBool(GameConstants.AnimatorParams.IsPushingHash, false);
         
-        // Ensure root motion is disabled after push
+        // Ensure root motion is disabled after push (it should already be disabled, but be explicit)
         if (animator != null)
         {
             animator.applyRootMotion = false;
@@ -982,6 +1165,28 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         {
             var effectiveVaultType = currentObstacleComponent.GetEffectiveVaultType();
             
+            // For vault/roll types, still check for walls behind before committing
+            if (effectiveVaultType == ObstacleVaultBehavior.VaultAnimationType.Vault || 
+                effectiveVaultType == ObstacleVaultBehavior.VaultAnimationType.Roll)
+            {
+                // Check if there's a wall directly behind the obstacle
+                if (IsWallDirectlyBehindObstacle(obstacleInfo.point, direction, obstacleInfo.collider))
+                {
+                    // Wall behind - try to climb instead if height allows
+                    float componentObstacleHeight = AnalyzeObstacleHeight(direction, obstacleInfo.point);
+                    if (componentObstacleHeight <= maxClimbHeight)
+                    {
+                        Vector3 climbTopPosition = new Vector3(obstacleInfo.point.x, transform.position.y + componentObstacleHeight + 0.1f, obstacleInfo.point.z);
+                        if (IsClimbPathSafe(transform.position, climbTopPosition))
+                        {
+                            return ObstacleType.Climb;
+                        }
+                    }
+                    // Can't climb either - block the vault
+                    return ObstacleType.Block;
+                }
+            }
+            
             // Map component vault type to our ObstacleType enum
             switch (effectiveVaultType)
             {
@@ -1012,15 +1217,25 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             Vector3 proposedVaultTarget = obstacleInfo.point + direction.normalized * vaultOffset;
             Vector3 vaultTargetPosition = new Vector3(proposedVaultTarget.x, transform.position.y, proposedVaultTarget.z);
             
-            // If vault path is unsafe and obstacle is within climbing range, suggest climbing
-            if (!IsVaultPathSafe(transform.position, vaultTargetPosition) && obstacleHeight <= maxClimbHeight)
+            // ENHANCED CHECK: Also check for walls directly behind the obstacle
+            // This catches walls that might be missed by the standard path check
+            bool hasWallBehind = IsWallDirectlyBehindObstacle(obstacleInfo.point, direction, obstacleInfo.collider);
+            
+            // If vault path is unsafe OR there's a wall behind, and obstacle is within climbing range, suggest climbing
+            if ((hasWallBehind || !IsVaultPathSafe(transform.position, vaultTargetPosition)) && obstacleHeight <= maxClimbHeight)
             {
                 // Additional check: ensure there's a clear area on top to climb onto
                 Vector3 climbTopPosition = new Vector3(obstacleInfo.point.x, transform.position.y + obstacleHeight + 0.1f, obstacleInfo.point.z);
-                if (IsVaultPathSafe(transform.position, climbTopPosition))
+                if (IsClimbPathSafe(transform.position, climbTopPosition))
                 {
                     return ObstacleType.Climb;
                 }
+            }
+            
+            // If there's a wall behind and we can't climb, block the vault entirely
+            if (hasWallBehind)
+            {
+                return ObstacleType.Block;
             }
             
             return ObstacleType.Vault; // Default to vault for all vaultable heights
@@ -1195,6 +1410,105 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
     }
 
     /// <summary>
+    /// Checks if there's a wall directly behind the obstacle that would block vaulting.
+    /// This is a more aggressive check specifically for walls immediately behind vaultable objects.
+    /// </summary>
+    /// <param name="obstaclePoint">The hit point on the obstacle</param>
+    /// <param name="direction">The direction the player is moving</param>
+    /// <param name="obstacleCollider">The collider of the obstacle being vaulted (to ignore it)</param>
+    /// <returns>True if there's a wall behind that would block vaulting</returns>
+    private bool IsWallDirectlyBehindObstacle(Vector3 obstaclePoint, Vector3 direction, Collider obstacleCollider)
+    {
+        // Check multiple points behind the obstacle at different heights to detect walls
+        float[] checkHeights = { 0.3f, 0.6f, 1.0f, 1.4f }; // Check at different heights above ground
+        float checkDistance = vaultOffset * 1.5f; // Check a bit further than the vault would land
+        float checkRadius = capsuleCastRadius * 0.5f;
+        
+        Vector3 baseCheckPos = obstaclePoint + direction.normalized * 0.1f; // Start just past the obstacle surface
+        
+        foreach (float height in checkHeights)
+        {
+            Vector3 checkOrigin = new Vector3(baseCheckPos.x, transform.position.y + height, baseCheckPos.z);
+            
+            // Raycast forward from just past the obstacle to detect walls
+            if (Physics.SphereCast(checkOrigin, checkRadius, direction.normalized, out RaycastHit hit, checkDistance, GetCombinedObstacleLayers()))
+            {
+                // Ignore the obstacle we're trying to vault over
+                if (obstacleCollider != null && hit.collider == obstacleCollider)
+                {
+                    continue;
+                }
+                
+                // Found a wall or obstacle behind - check if it's actually blocking
+                // (not just ground or something below vault height)
+                float hitHeightAboveGround = hit.point.y - transform.position.y;
+                if (hitHeightAboveGround > 0.2f)
+                {
+                    // This is a wall at player height, vaulting would go through it
+                    return true;
+                }
+            }
+        }
+        
+        // Also do a full capsule check at the proposed landing position
+        Vector3 landingPos = obstaclePoint + direction.normalized * vaultOffset;
+        Vector3 capsuleBottom = new Vector3(landingPos.x, transform.position.y + 0.3f, landingPos.z);
+        Vector3 capsuleTop = new Vector3(landingPos.x, transform.position.y + humanCollider.bounds.size.y - 0.1f, landingPos.z);
+        
+        Collider[] overlaps = Physics.OverlapCapsule(capsuleBottom, capsuleTop, capsuleCastRadius * 0.7f, GetCombinedObstacleLayers());
+        foreach (Collider col in overlaps)
+        {
+            // Ignore the obstacle we're vaulting over
+            if (obstacleCollider != null && col == obstacleCollider)
+            {
+                continue;
+            }
+            
+            // Found something at the landing position
+            return true;
+        }
+        
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if a new vault direction would be safe during mid-vault directional adjustments.
+    /// This prevents players from steering into walls while vaulting.
+    /// </summary>
+    /// <param name="currentPos">Current player position</param>
+    /// <param name="targetPos">Proposed target position with the new direction</param>
+    /// <returns>True if the direction is safe, false if it would lead through a wall</returns>
+    private bool IsVaultDirectionSafe(Vector3 currentPos, Vector3 targetPos)
+    {
+        Vector3 pathDirection = (targetPos - currentPos).normalized;
+        float pathDistance = Vector3.Distance(currentPos, targetPos);
+        
+        if (pathDistance < 0.01f) return true; // No movement, always safe
+        
+        // Check at chest height to avoid ground collision issues
+        Vector3 checkOrigin = currentPos + Vector3.up * (vaultHeight * 0.5f);
+        float checkRadius = capsuleCastRadius * 0.7f;
+        
+        if (Physics.SphereCast(checkOrigin, checkRadius, pathDirection, out RaycastHit hit, pathDistance, GetCombinedObstacleLayers()))
+        {
+            // Ignore the obstacle we're currently vaulting over
+            if (currentObstacleCollider != null && hit.collider == currentObstacleCollider)
+            {
+                return true;
+            }
+            
+            // Check if collision is at vault height (not ground)
+            float hitHeight = hit.point.y - currentPos.y;
+            if (hitHeight > 0.2f && hitHeight < humanCollider.bounds.size.y)
+            {
+                return false; // Would hit a wall
+            }
+        }
+        
+        return true;
+    }
+
+    /// <summary>
     /// Checks if a climb path to the target position is safe (specifically for climbing)
     /// </summary>
     /// <param name="startPos">Starting position (ground level)</param>
@@ -1262,28 +1576,36 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         // Get the root motion delta from the animator
         Vector3 rootMotionDelta = animator.deltaPosition;
         
-        // If there's no movement from root motion, don't do anything
+        // Combine root motion with gravity if enabled
+        // This allows characters to fall while performing root motion attacks
+        if (enableGravity && characterController != null && characterController.enabled)
+        {
+            // Calculate gravity movement
+            Vector3 gravityMovement = Vector3.zero;
+            ApplyGravityMovement(ref gravityMovement);
+            
+            // Combine horizontal root motion with vertical gravity
+            rootMotionDelta.x += gravityMovement.x;
+            rootMotionDelta.y += gravityMovement.y;
+            rootMotionDelta.z += gravityMovement.z;
+        }
+        
+        // If there's no movement after combining root motion + gravity, don't do anything
         if (rootMotionDelta.magnitude < 0.001f)
         {
             return;
         }
 
-        // Use the centralized root motion utility
-        LayerMask collisionLayers = GetCombinedObstacleLayers();
-        collisionLayers |= (1 << 8); // Add enemy layer
-        
-        bool movementApplied = RootMotionUtils.ApplyRootMotion(
-            transform, 
-            rootMotionDelta, 
-            null, // No NavMeshAgent for HumanCharacterController
-            collisionLayers, 
-            null, // No specific target to maintain distance from
-            0.2f, // Standard safe distance
-            false // Debug logging disabled for NPCs
-        );
-        
-        // If movement was blocked, character stays in place
-        // This prevents the character from moving through walls and pushing enemies during attack animations
+        // Apply the combined movement using CharacterController
+        if (characterController != null && characterController.enabled)
+        {
+            characterController.Move(rootMotionDelta);
+        }
+        else
+        {
+            // Fallback: direct transform movement (for AI-controlled without CharacterController)
+            transform.position += rootMotionDelta;
+        }
     }
 
     #endregion
@@ -1331,6 +1653,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     protected void MoveCharacter()
     {
+        
         if (isPushing)
         {
             // When pushing, follow the object's movement and maintain offset
@@ -1357,11 +1680,22 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
         else if (isVaulting)
         {
             // Allow slight directional control during vault, similar to dash
+            // But only allow adjustments that don't lead through walls
             if (movementInput.magnitude > 0.1f)
             {
-                currentVaultDirection = Vector3.Lerp(currentVaultDirection, movementInput.normalized, vaultTurnSpeed * Time.deltaTime);
-                currentVaultDirection.y = 0; // Keep vault direction horizontal
-                currentVaultDirection = currentVaultDirection.normalized;
+                Vector3 proposedDirection = Vector3.Lerp(currentVaultDirection, movementInput.normalized, vaultTurnSpeed * Time.deltaTime);
+                proposedDirection.y = 0; // Keep vault direction horizontal
+                proposedDirection = proposedDirection.normalized;
+                
+                // Only allow the direction change if it doesn't lead through a wall
+                float vaultDistance = Vector3.Distance(vaultStartPosition, vaultTargetPosition);
+                Vector3 proposedTarget = vaultStartPosition + proposedDirection * vaultDistance;
+                proposedTarget.y = vaultStartPosition.y;
+                
+                if (IsVaultDirectionSafe(transform.position, proposedTarget))
+                {
+                    currentVaultDirection = proposedDirection;
+                }
             }
 
             // Time-based vault movement with directional control
@@ -1370,12 +1704,48 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             vaultProgress = Mathf.Clamp01(vaultProgress); // Ensure progress stays between 0 and 1
             
             // Calculate movement based on adjusted direction and progress
-            float vaultDistance = Vector3.Distance(vaultStartPosition, vaultTargetPosition);
-            Vector3 adjustedTarget = vaultStartPosition + currentVaultDirection * vaultDistance;
+            float vaultDistance2 = Vector3.Distance(vaultStartPosition, vaultTargetPosition);
+            Vector3 adjustedTarget = vaultStartPosition + currentVaultDirection * vaultDistance2;
             adjustedTarget.y = vaultStartPosition.y; // Keep at same Y level
             
-            // Lerp position from start to adjusted target based on progress
-            transform.position = Vector3.Lerp(vaultStartPosition, adjustedTarget, vaultProgress);
+            // Calculate the next position we want to move to
+            Vector3 nextPosition = Vector3.Lerp(vaultStartPosition, adjustedTarget, vaultProgress);
+            
+            // Real-time collision check: prevent moving through walls during vault
+            Vector3 currentPos = transform.position;
+            Vector3 moveDirection = (nextPosition - currentPos).normalized;
+            float moveDistance = Vector3.Distance(currentPos, nextPosition);
+            
+            // Perform a spherecast to check for wall collisions along the movement path
+            bool hitWall = false;
+            Vector3 safePosition = nextPosition;
+            
+            if (moveDistance > 0.001f)
+            {
+                // Check at chest height to avoid ground detection issues
+                Vector3 checkOrigin = currentPos + Vector3.up * (vaultHeight * 0.5f);
+                float checkRadius = capsuleCastRadius * 0.9f; // Slightly smaller to avoid getting stuck
+                
+                if (Physics.SphereCast(checkOrigin, checkRadius, moveDirection, out RaycastHit wallHit, moveDistance, GetCombinedObstacleLayers()))
+                {
+                    // Check if the hit object is NOT the obstacle we're vaulting over
+                    if (currentObstacleCollider == null || wallHit.collider != currentObstacleCollider)
+                    {
+                        // Also check if the collision is at our height level (not ground)
+                        float hitHeight = wallHit.point.y - currentPos.y;
+                        if (hitHeight > 0.2f && hitHeight < humanCollider.bounds.size.y)
+                        {
+                            // Hit a wall! Stop short of it
+                            hitWall = true;
+                            float safeDistance = Mathf.Max(0, wallHit.distance - checkRadius - 0.05f);
+                            safePosition = currentPos + moveDirection * safeDistance;
+                        }
+                    }
+                }
+            }
+            
+            // Apply the position (either safe or the original next position)
+            transform.position = safePosition;
 
             // Rotate player towards the current vault direction
             if (currentVaultDirection.magnitude > 0.1f)
@@ -1384,10 +1754,13 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
             }
 
-            // End vault when duration is complete
-            if (Time.time >= vaultTime)
+            // End vault when duration is complete OR if we hit a wall
+            if (Time.time >= vaultTime || hitWall)
             {
-                transform.position = adjustedTarget; // Snap to final adjusted position
+                if (!hitWall)
+                {
+                    transform.position = adjustedTarget; // Snap to final adjusted position only if not blocked
+                }
                 FinishVault();
             }
         }
@@ -1426,7 +1799,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 return;
             }
             
-            float inputMagnitude = movementInput.magnitude;
+            // ===== REBUILT MOVEMENT SYSTEM =====
+            // movementInput already contains BOTH direction AND magnitude from camera transform
+            // Don't separate them - just use the vector as-is!
+            
             float baseSpeed = isDashing ? dashSpeed : moveMaxSpeed;
             
             // Reduce movement speed when falling due to gravity
@@ -1437,8 +1813,50 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
             }
             
             float speed = baseSpeed * movementMultiplier;
-            float currentRotationSpeed = (isAttacking || isDamaged) ? attackRotationSpeed : rotationSpeed;
+            float currentRotationSpeed = GetCurrentRotationSpeed();
+            
+            // PRIMARY CHECK: If root motion is enabled, block ALL input movement
+            // Root motion animations control movement, but we still allow rotation for aiming
+            if (animator != null && animator.applyRootMotion)
+            {
+                // OnAnimatorMove() handles ALL movement (including gravity) when root motion is enabled
+                // We do NOTHING with movement here - only allow rotation
+                
+                // Allow rotation for attack aiming (use normalized direction)
+                // Using RotateTowards for frame-rate independent rotation (degrees per second)
+                if (movementInput.sqrMagnitude > 0.01f)
+                {
+                    Vector3 rotationDirection = movementInput.normalized;
+                    Quaternion targetRotation = Quaternion.LookRotation(rotationDirection);
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * 100f * Time.deltaTime);
+                }
+                
+                return; // Skip all movement logic - OnAnimatorMove() handles movement
+            }
+            
+            // SECONDARY CHECK: If damaged (but root motion disabled), also block input movement
+            // Damaged state prevents all movement, but allow rotation so player can see hit direction
+            if (isDamaged)
+            {
+                // Apply gravity when damaged (root motion is disabled in damaged state)
+                Vector3 gravityMovement = Vector3.zero;
+                ApplyGravityMovement(ref gravityMovement);
+                characterController.Move(gravityMovement);
+                
+                // Allow rotation to maintain control feel (use normalized direction)
+                // Using RotateTowards for frame-rate independent rotation (degrees per second)
+                if (movementInput.sqrMagnitude > 0.01f)
+                {
+                    Vector3 rotationDirection = movementInput.normalized;
+                    Quaternion targetRotation = Quaternion.LookRotation(rotationDirection);
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * 100f * Time.deltaTime);
+                }
+                
+                return; // Skip all movement logic - damaged state prevents movement
+            }
 
+            // At this point, root motion is disabled and we're not damaged - normal movement is allowed
+            
             // If dashing, smoothly change direction
             if (isDashing)
             {
@@ -1489,20 +1907,24 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                     // Use CharacterController.Move() for proper collision handling
                     characterController.Move(targetMovement);
 
-                    // Rotate player towards the current direction
-                    Quaternion targetRotation = Quaternion.LookRotation(currentDirection);
-                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
+                    // Rotate player towards the current direction (use normalized)
+                    // Using RotateTowards for frame-rate independent rotation (degrees per second)
+                    Vector3 rotationDirection = currentDirection.normalized;
+                    Quaternion targetRotation = Quaternion.LookRotation(rotationDirection);
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * 100f * Time.deltaTime);
                 }
             }
             else
             {
                 // Regular movement behavior when not dashing
-                Vector3 targetMovement = movementInput.normalized * speed * inputMagnitude * Time.deltaTime;
+                // movementInput contains direction AND magnitude - just scale by speed!
+                Vector3 targetMovement = movementInput * speed * Time.deltaTime;
 
                 // Enhanced obstacle detection for automatic navigation
-                if (autoNavigateObstacles && inputMagnitude > 0.1f)
+                if (autoNavigateObstacles && movementInput.magnitude > 0.1f)
                 {
-                    ObstacleType obstacleType = AnalyzeObstacle(movementInput.normalized, out RaycastHit obstacleInfo);
+                    Vector3 moveDirection = movementInput.normalized;
+                    ObstacleType obstacleType = AnalyzeObstacle(moveDirection, out RaycastHit obstacleInfo);
                     
                     switch (obstacleType)
                     {
@@ -1515,7 +1937,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                             if (Time.time > vaultCooldownTime)
                             {
                                 currentVaultType = obstacleType; // Store vault type for animation
-                                CalculateVaultTargetEnhanced(obstacleInfo, movementInput.normalized);
+                                CalculateVaultTargetEnhanced(obstacleInfo, moveDirection);
                                 
                                 if (isVaultTargetSafe)
                                 {
@@ -1525,7 +1947,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                                 else
                                 {
                                     // Vault is unsafe, check if we can climb instead
-                                    float obstacleHeight = AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point);
+                                    float obstacleHeight = AnalyzeObstacleHeight(moveDirection, obstacleInfo.point);
                                     
                                     if (obstacleHeight <= maxClimbHeight)
                                     {
@@ -1556,10 +1978,10 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                             // Implement rolling under animation for lower obstacles
                             if (Time.time > vaultCooldownTime)
                             {
-                                if (AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point) <= maxVaultHeight)
+                                if (AnalyzeObstacleHeight(moveDirection, obstacleInfo.point) <= maxVaultHeight)
                                 {
                                     currentVaultType = obstacleType; // Store vault type for animation
-                                    CalculateVaultTargetEnhanced(obstacleInfo, movementInput.normalized);
+                                    CalculateVaultTargetEnhanced(obstacleInfo, moveDirection);
                                     
                                     if (isVaultTargetSafe)
                                     {
@@ -1584,7 +2006,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                             // Wall that can be climbed - automatically start climbing
                             if (Time.time > climbCooldownTime)
                             {
-                                float obstacleHeight = AnalyzeObstacleHeight(movementInput.normalized, obstacleInfo.point);
+                                float obstacleHeight = AnalyzeObstacleHeight(moveDirection, obstacleInfo.point);
                                 CalculateClimbTarget(obstacleInfo, obstacleHeight);
                                 StartClimb();
                                 return; // Exit early since we're now climbing
@@ -1608,7 +2030,7 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                             
                         case ObstacleType.Pushable:
                             // Handle pushing logic
-                            HandlePushing(obstacleInfo, movementInput.normalized, ref targetMovement);
+                            HandlePushing(obstacleInfo, moveDirection, ref targetMovement);
                             break;
                             
                         case ObstacleType.None:
@@ -1619,21 +2041,21 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
                 }
 
                 // Apply movement with CharacterController (handles collision automatically)
-                if (!isAttacking && !isDamaged) // Only move if not attacking or damaged
-                {
-                    // Apply gravity to movement vector
-                    ApplyGravityMovement(ref targetMovement);
-                    
-                    // Use CharacterController.Move() for automatic collision handling
-                    // No need for IsObstacleInPath check - CharacterController handles it!
-                    characterController.Move(targetMovement);
-                    }
+                // Note: isAttacking and isDamaged are already handled above with early return
+                // Apply gravity to movement vector
+                ApplyGravityMovement(ref targetMovement);
+                
+                // Use CharacterController.Move() for automatic collision handling
+                characterController.Move(targetMovement);
 
-                    // Rotate player towards the input direction
-                    if (movementInput != Vector3.zero && !isVaulting)
-                    {
-                        Quaternion targetRotation = Quaternion.LookRotation(movementInput);
-                        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * Time.deltaTime);
+                // Rotate player towards the input direction (use NORMALIZED direction to avoid snapping from magnitude changes)
+                // Using RotateTowards for frame-rate independent rotation (degrees per second)
+                if (movementInput.sqrMagnitude > 0.01f && !isVaulting)
+                {
+                    Vector3 rotationDirection = movementInput.normalized; // Pure direction, ignore magnitude
+                    Quaternion targetRotation = Quaternion.LookRotation(rotationDirection);
+                    // RotateTowards uses degrees per second, making it frame-rate independent
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, currentRotationSpeed * 100f * Time.deltaTime);
                 }
             }
         } // End of else if (!isClimbing) block
@@ -1815,10 +2237,11 @@ public class HumanCharacterController : MonoBehaviour, IPossessable, IDamageable
 
     protected void UpdateAnimations()
     {
-        float maxSpeed = isDashing ? dashSpeed : moveMaxSpeed;
-        float currentSpeedNormalized = actualMovementSpeed / maxSpeed;
-
-        animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, currentSpeedNormalized);
+        // REBUILT: Simple animation speed based on input magnitude
+        float inputMagnitude = Mathf.Clamp01(movementInput.magnitude);
+        
+        // Set animator speed directly - NO damping for instant response (Hades-style)
+        animator.SetFloat(GameConstants.AnimatorParams.SpeedHash, inputMagnitude);
     }
 
     public virtual void PlayWorkAnimation(string animationName)

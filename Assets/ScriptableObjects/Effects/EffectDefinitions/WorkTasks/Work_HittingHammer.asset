@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: Work_HittingHammer
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 1643851402782444, guid: ea5f61d0cb4f3ba4086449c103b0a9df, type: 3}
-  - {fileID: 1348244303774095024, guid: e0724c87fbc01bb45a8dbaeff7071bdc, type: 3}
+  - prefab: {fileID: 1643851402782444, guid: ea5f61d0cb4f3ba4086449c103b0a9df, type: 3}
+    delay: 0
+  - prefab: {fileID: 1348244303774095024, guid: e0724c87fbc01bb45a8dbaeff7071bdc, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

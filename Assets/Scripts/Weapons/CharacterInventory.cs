@@ -2,20 +2,31 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-
-
+using Combat.Attacks;
 
 /// <summary>
 /// This is the NPCs characters inventory 
 /// 
-/// TODO once a player posesses an NPC items picked up are added to this inventory, once they return to base the items are added to the players inventory
+/// WEAPON SYSTEM:
+/// - Uses WeaponAttack component on the character for attack functionality
+/// - Weapon prefabs are now just visual models (no WeaponBase required)
+/// - WeaponScriptableObj defines stats, element, and visual prefab
+/// 
+/// TODO once a player posesses an NPC items picked up are added to this inventory, 
+/// once they return to base the items are added to the players inventory
 /// </summary>
 public class CharacterInventory : MonoBehaviour
 {
     [Header("Equipment")]
     public WeaponScriptableObj equippedWeaponScriptObj;
-    public WeaponBase equippedWeaponBase;
     public Transform weaponHolder; // Transform where the weapon will be instantiated
+    
+    [Header("Weapon Attack Component")]
+    [Tooltip("WeaponAttack component on this character (handles damage dealing)")]
+    public WeaponAttack weaponAttack;
+    
+    // The spawned weapon model (visual only)
+    private GameObject spawnedWeaponModel;
 
     [Header("Inventory")]
     [SerializeField]
@@ -26,6 +37,12 @@ public class CharacterInventory : MonoBehaviour
 
     public virtual void Start()
     {
+        // Get WeaponAttack component if not assigned
+        if (weaponAttack == null)
+        {
+            weaponAttack = GetComponent<WeaponAttack>();
+        }
+        
         if(equippedWeaponScriptObj != null)
         {
             EquipWeapon(equippedWeaponScriptObj);
@@ -115,20 +132,43 @@ public class CharacterInventory : MonoBehaviour
             Debug.LogWarning("Attempted to equip an invalid or null weapon scriptable object or prefab!");
             return;
         }
+        
+        Debug.Log($"[CharacterInventory] {gameObject.name} equipping weapon: {weaponScriptableObj.objectName}");
+        
         // Unequip the currently equipped weapon
         UnequipCurrentWeapon();
-        // Instantiate and equip the new weapon
-        GameObject weapon = Instantiate(weaponScriptableObj.prefab, weaponHolder);
-        equippedWeaponBase = weapon.GetComponent<WeaponBase>();
 
-        // Initialize the weapon with its data
-        equippedWeaponBase.Initialize(weaponScriptableObj);
-        equippedWeaponBase.OnEquipped(transform);
         equippedWeaponScriptObj = weaponScriptableObj;
 
-        // Handle weapon-specific setup
-        HandleWeaponType(weapon, weaponScriptableObj.animationType);
+        // Configure WeaponAttack component - it will spawn the weapon model with collider setup
+        // WeaponAttack.SetWeaponData() now handles ALL weapon setup including animator updates
+        if (weaponAttack != null && weaponHolder != null)
+        {
+            Debug.Log($"[CharacterInventory] Calling SetWeaponData with holder: {weaponHolder.name}");
+            weaponAttack.SetWeaponData(weaponScriptableObj, weaponHolder);
+            
+            // Store reference to spawned model from WeaponAttack
+            spawnedWeaponModel = weaponAttack.SpawnedWeaponModel;
+            
+            if (spawnedWeaponModel != null)
+            {
+                Debug.Log($"[CharacterInventory] Weapon successfully equipped! Model: {spawnedWeaponModel.name}");
+            }
+            else
+            {
+                Debug.LogWarning($"[CharacterInventory] Weapon spawned but SpawnedWeaponModel is null!");
+            }
+        }
+        else if (weaponAttack == null)
+        {
+            Debug.LogError($"[CharacterInventory] No WeaponAttack component found on {gameObject.name}! Cannot equip weapon.");
+        }
+        else if (weaponHolder == null)
+        {
+            Debug.LogError($"[CharacterInventory] No weaponHolder assigned on {gameObject.name}! Cannot equip weapon.");
+        }
 
+        // Note: Weapon-specific animation setup (animator WeaponType parameter) is now handled by WeaponAttack.SetWeaponData()
 
         // Determine if this is player inventory or NPC inventory
         bool isPlayerInventory = this is PlayerInventory;
@@ -140,11 +180,20 @@ public class CharacterInventory : MonoBehaviour
 
     private void UnequipCurrentWeapon()
     {
-        if (equippedWeaponScriptObj != null && weaponHolder.childCount > 0)
+        if (equippedWeaponScriptObj != null)
+        {
+            // Destroy spawned model
+            if (spawnedWeaponModel != null)
+            {
+                Destroy(spawnedWeaponModel);
+                spawnedWeaponModel = null;
+            }
+            else if (weaponHolder != null && weaponHolder.childCount > 0)
         {
             Destroy(weaponHolder.GetChild(0).gameObject);
+            }
+            
             equippedWeaponScriptObj = null;
-            equippedWeaponBase = null;
         }
     }
 
@@ -164,42 +213,44 @@ public class CharacterInventory : MonoBehaviour
             return false;
         }
 
-        GameObject prefab = weaponScriptableObj.prefab;
-
-        // Check for WeaponBase component
-        if (prefab.GetComponent<WeaponBase>() == null)
-        {
-            Debug.LogWarning($"WeaponBase component missing on prefab: {prefab.name}");
-            return false;
-        }
-
-        // Check for Collider component
-        if (prefab.GetComponent<Collider>() == null)
-        {
-            Debug.LogWarning($"Collider component missing on prefab: {prefab.name}");
-            return false;
-        }
-
         return true;
     }
 
-    private void HandleWeaponType(GameObject weapon, WeaponAnimationType animationType)
+    // Removed HandleWeaponType() - weapon type animator updates are now handled centrally in WeaponAttack.SetWeaponData()
+    // This ensures all characters (NPCs, enemies, players) get the correct animator parameter updates
+    
+    /// <summary>
+    /// Called by animation events to trigger weapon use
+    /// </summary>
+    public void UseWeapon()
     {
-        switch (equippedWeaponBase)
+        if (weaponAttack != null && equippedWeaponScriptObj != null)
         {
-            case MeleeWeapon meleeWeapon:
-                GetComponent<HumanCharacterController>().EquipMeleeWeapon((int)animationType);
-                break;
-            case RangedWeapon rangedWeapon:
-                Debug.LogError("TODO: Implement ranged weapon setup.");
-                break;
-            case ThrowableWeapon throwableWeapon:
-                Debug.LogError("TODO: Implement throwable weapon setup.");
-                break;
-            default:
-                Debug.LogWarning($"{weapon.name} is of an unsupported weapon type!");
-                break;
+            weaponAttack.OnAttack();
         }
+    }
+    
+    /// <summary>
+    /// Called by animation events to stop weapon use
+    /// </summary>
+    public void StopWeapon()
+    {
+        if (weaponAttack != null)
+        {
+            weaponAttack.OnAttackEnd();
+        }
+    }
+    
+    /// <summary>
+    /// Get current attack speed for animation timing
+    /// </summary>
+    public float GetCurrentAttackSpeed()
+    {
+        if (weaponAttack != null)
+        {
+            return weaponAttack.GetCurrentAttackSpeed();
+        }
+        return equippedWeaponScriptObj?.attackSpeed ?? 1f;
     }
 
     #endregion

@@ -39,7 +39,6 @@ namespace Managers
         private RogueLiteRoomParent currentRoomParentComponent;
         private int currentMaxRooms;
         private Vector3 lastPlayerSpawnPoint;
-        private float minRoomSpacing = 20f;
         private Dictionary<Vector3, GameObject> spawnedRooms = new Dictionary<Vector3, GameObject>();
         private List<RoomPlacementData> placedRooms = new List<RoomPlacementData>();
 
@@ -160,6 +159,13 @@ namespace Managers
             
             //Reached the end of the building check
             if(GameManager.Instance.DifficultyManager.GetCurrentRoomNumber() >= currentMaxRooms){
+                // Check if we should spawn a boss room instead of leaving
+                if (TrySpawnBossRoom(rogueLiteDoor))
+                {
+                    return true; // Boss room spawned, continue gameplay
+                }
+                
+                // No boss, leave the building
                 LeaveBuilding();
                 return false;
             }
@@ -172,31 +178,109 @@ namespace Managers
             
             return true;
         }
-
-        public void ReturnToPreviousRoom(RogueLikeRoomDoor rogueLiteDoor)
+        
+        /// <summary>
+        /// Attempt to spawn a boss room at the end of the building
+        /// Returns true if boss room was spawned, false otherwise
+        /// </summary>
+        private bool TrySpawnBossRoom(RogueLikeRoomDoor entranceDoor)
         {
-            if (rogueLiteDoor.targetRoom == null)
+            if (currentBuilding == null)
             {
-                Debug.LogError("Door has no target room set!");
-                return;
+                Debug.LogWarning("[RogueLikeBuildingManager] No current building data for boss spawn check");
+                return false;
             }
-
-            // Set the target room as the current room
-            currentRoomParent = rogueLiteDoor.targetRoom.gameObject;
             
-            // Setup the player at the target spawn point
-            if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null)
+            // Check if a boss should spawn
+            if (!currentBuilding.ShouldSpawnBoss())
             {
-                if (rogueLiteDoor.targetSpawnPoint != null)
+                Debug.Log("[RogueLikeBuildingManager] Boss spawn roll failed or no bosses configured");
+                return false;
+            }
+            
+            // Get a boss for the current difficulty
+            int difficulty = GameManager.Instance.DifficultyManager.GetCurrentWaveDifficulty();
+            BossScriptableObj boss = currentBuilding.GetBossForDifficulty(difficulty);
+            
+            if (boss == null)
+            {
+                Debug.LogWarning($"[RogueLikeBuildingManager] No suitable boss found for difficulty {difficulty}");
+                return false;
+            }
+            
+            // Get the boss room data
+            RoomParentDataScriptableObj bossRoomData = currentBuilding.GetBossRoomData(boss);
+            
+            if (bossRoomData == null || !bossRoomData.IsValid())
+            {
+                Debug.LogError($"[RogueLikeBuildingManager] Invalid boss room data for boss: {boss.bossName}");
+                return false;
+            }
+            
+            // Calculate position for boss room
+            Vector3 currentPosition = currentRoomParent != null ? currentRoomParent.transform.position : Vector3.zero;
+            Vector3 bossRoomPosition = CalculateNewRoomPosition(currentPosition, entranceDoor);
+            
+            // Instantiate the boss room parent
+            GameObject bossRoomParentPrefab = bossRoomData.roomParentPrefab;
+            GameObject bossRoomInstance = Instantiate(bossRoomParentPrefab, bossRoomPosition, Quaternion.identity);
+            
+            // Get the BossRoomParent component
+            BossRoomParent bossRoomParent = bossRoomInstance.GetComponent<BossRoomParent>();
+            
+            if (bossRoomParent == null)
+            {
+                Debug.LogError($"[RogueLikeBuildingManager] Boss room prefab does not have BossRoomParent component!");
+                Destroy(bossRoomInstance);
+                return false;
+            }
+            
+            // Set up the boss room
+            bossRoomParent.SetBoss(boss);
+            bossRoomParent.GenerateBossArena(bossRoomData, difficulty);
+            
+            // Update current room tracking
+            currentRoomParent = bossRoomInstance;
+            currentRoomParentComponent = bossRoomParent;
+            placedRooms.Add(new RoomPlacementData(bossRoomPosition, bossRoomInstance, new Bounds(bossRoomPosition, Vector3.one * 100f), null));
+            spawnedRooms[bossRoomPosition] = bossRoomInstance;
+            
+            Debug.Log($"[RogueLikeBuildingManager] ✓ Successfully spawned boss room for: {boss.bossName}");
+            
+            return true;
+        }
+
+        /// <summary>
+        /// Destroys the previous room/entrance. Called during fade out before spawning a new room.
+        /// </summary>
+        public void DestroyPreviousRoom()
+        {
+            if (currentRoomParent != null)
+            {
+                Debug.Log($"[RogueLikeBuildingManager] Destroying previous room: {currentRoomParent.name}");
+                
+                // Remove from tracking dictionaries
+                Vector3 positionToRemove = currentRoomParent.transform.position;
+                if (spawnedRooms.ContainsKey(positionToRemove))
                 {
-                    // Use validated spawn position to avoid spawning into obstacles
-                    Vector3 validSpawnPosition = rogueLiteDoor.GetValidSpawnPosition();
-                    PlayerController.Instance._possessedNPC.GetTransform().position = validSpawnPosition;
+                    spawnedRooms.Remove(positionToRemove);
                 }
-                else
-                {
-                    SetupPlayer(PlayerController.Instance._possessedNPC.GetTransform());
-                }
+                
+                // Remove from placed rooms list
+                placedRooms.RemoveAll(r => r.roomObject == currentRoomParent);
+                
+                // Destroy the room GameObject
+                Destroy(currentRoomParent);
+                currentRoomParent = null;
+                currentRoomParentComponent = null;
+            }
+            
+            // Also destroy the building entrance if it exists (first room transition)
+            if (instantiatedBuildingEntrance != null)
+            {
+                Debug.Log($"[RogueLikeBuildingManager] Destroying building entrance: {instantiatedBuildingEntrance.name}");
+                Destroy(instantiatedBuildingEntrance);
+                instantiatedBuildingEntrance = null;
             }
         }
 

@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Spawn_DefaultZombie
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 1337195765195705423, guid: cd8aa3225c878c2409b5265e8737222f, type: 3}
+  - prefab: {fileID: 1337195765195705423, guid: cd8aa3225c878c2409b5265e8737222f, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

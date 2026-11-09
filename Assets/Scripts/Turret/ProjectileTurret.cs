@@ -44,7 +44,8 @@ public class ProjectileTurret : BaseTurret
             createDamageAreaOnImpact,
             impactDamageRadius,
             impactDamageDuration,
-            false // Don't use trigger-based damage for turret projectiles
+            false, // Don't use trigger-based damage for turret projectiles
+            ProjectileType.STRAIGHT
         );
     }
 }

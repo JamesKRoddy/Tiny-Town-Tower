@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Dash_Basic
   m_EditorClassIdentifier: 
   prefabs:
-  - {fileID: 7685872902489874408, guid: 51473b08ddbf8a646ae5db23abaa0682, type: 3}
+  - prefab: {fileID: 7685872902489874408, guid: 51473b08ddbf8a646ae5db23abaa0682, type: 3}
+    delay: 0
   sounds: []
   minPitch: 0.9
   maxPitch: 1.1

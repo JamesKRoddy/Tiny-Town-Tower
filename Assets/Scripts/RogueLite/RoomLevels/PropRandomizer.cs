@@ -5,7 +5,7 @@ public class PropRandomizer : MonoBehaviour
     [Header("Randomization Settings")]
     [Range(0, 1)] public float enableChance = 0.5f; // Chance of enabling each prop
 
-    private string physicsLayer = "ObstacleLayer";
+    private string physicsLayer = GameConstants.Layers.Default;
 
     public void RandomizeProps()
     {
@@ -27,10 +27,12 @@ public class PropRandomizer : MonoBehaviour
                 }
 
                 // Ensure NavMeshObstacle with carving is present
-                var obstacle = child.GetComponent<UnityEngine.AI.NavMeshObstacle>();
-                if (obstacle == null)
-                    obstacle = child.gameObject.AddComponent<UnityEngine.AI.NavMeshObstacle>();
-                obstacle.carving = true;
+                if(child.gameObject.GetComponent<Collider>() != null){
+                    var obstacle = child.GetComponent<UnityEngine.AI.NavMeshObstacle>();
+                    if (obstacle == null)
+                        obstacle = child.gameObject.AddComponent<UnityEngine.AI.NavMeshObstacle>();
+                    obstacle.carving = true;
+                }
             }
         }
     }

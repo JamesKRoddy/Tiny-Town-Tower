@@ -3,6 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using Managers;
 
+/// <summary>
+/// Handles combat VFX for characters (players/NPCs).
+/// Routes attack and dash VFX based on weapon element and attack direction.
+/// 
+/// WEAPON SYSTEM:
+/// - Uses WeaponScriptableObj for weapon data (element, stats)
+/// - VFX are based on weapon element, not weapon class type
+/// - Works with the unified AttackBase/WeaponAttack system
+/// </summary>
 public class CharacterCombat : MonoBehaviour
 {
     private CharacterInventory characterInventory;
@@ -63,6 +72,10 @@ public class CharacterCombat : MonoBehaviour
     [Tooltip("Effect definitions for different elemental types for dash attacks")]
     [SerializeField] private DashElementalEffect[] dashElementalEffects = new DashElementalEffect[0];
 
+    [Header("Projectile Reflection VFX")]
+    [Tooltip("Effect definition for when projectiles are reflected by player")]
+    [SerializeField] private EffectDefinition projectileReflectionEffect;
+
     private Dictionary<MeleeAttackDirection, AttackDirectionTransform> directionTransformMap;
     private Dictionary<AttackElement, MeleeElementalEffect> meleeElementEffectMap;
     private Dictionary<AttackElement, DashElementalEffect> dashElementEffectMap;
@@ -100,9 +113,13 @@ public class CharacterCombat : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Play attack VFX for the specified direction
+    /// Called from animation events
+    /// </summary>
     public void AttackVFX(int attackDirection)
     {
-        WeaponScriptableObj equippedWeapon = characterInventory.equippedWeaponScriptObj;
+        WeaponScriptableObj equippedWeapon = characterInventory?.equippedWeaponScriptObj;
 
         if (equippedWeapon == null)
         {
@@ -110,55 +127,9 @@ public class CharacterCombat : MonoBehaviour
             return;
         }
 
-        WeaponBase weaponBase = characterInventory.equippedWeaponBase;
-
-        if (weaponBase == null)
-        {
-            Debug.LogWarning("No weapon base found on equipped weapon!");
-            return;
-        }
-
-        switch (weaponBase)
-        {
-            case MeleeWeapon meleeWeapon:
-                PlayMeleeAttackVFX((MeleeAttackDirection)attackDirection, meleeWeapon);
-                break;
-
-            case RangedWeapon rangedWeapon:
-                RangedAttackVFX(rangedWeapon);
-                break;
-
-            case ThrowableWeapon throwableWeaponVFX:
-                ThrowableWeaponVFX(throwableWeaponVFX);
-                break;
-
-            default:
-                Debug.LogWarning($"{equippedWeapon.objectName} is of an unsupported weapon type!");
-                break;
-        }
+        // Play melee attack VFX based on weapon element
+        PlayMeleeAttackVFX((MeleeAttackDirection)attackDirection, equippedWeapon);
     }    
-
-    private void RangedAttackVFX(RangedWeapon rangedWeapon)
-    {
-        // TODO: Implement ranged weapon VFX
-        // This should be similar to MeleeAttackVFX but for ranged weapons
-        // You'll need to create a RangedAttackVFX prefab with appropriate particle systems
-        Debug.LogWarning("Ranged weapon VFX not implemented yet!");
-    }
-
-    private void ThrowableWeaponVFX(ThrowableWeapon throwableWeaponVFX)
-    {
-        // TODO: Implement throwable weapon VFX
-        // This should be similar to MeleeAttackVFX but for throwable weapons
-        // You'll need to create a ThrowableAttackVFX prefab with appropriate particle systems
-        Debug.LogWarning("Throwable weapon VFX not implemented yet!");
-    }
-
-    public void StopAttacking()
-    {
-        if (characterInventory.equippedWeaponBase != null)
-            characterInventory.equippedWeaponBase.StopUse();
-    }
 
     public void DashVFX()
     {
@@ -169,8 +140,8 @@ public class CharacterCombat : MonoBehaviour
     /// Plays melee attack VFX for the specified direction and element
     /// </summary>
     /// <param name="attackDirection">Direction of the melee attack</param>
-    /// <param name="meleeWeapon">The melee weapon being used</param>
-    private void PlayMeleeAttackVFX(MeleeAttackDirection attackDirection, MeleeWeapon meleeWeapon)
+    /// <param name="weaponData">The weapon data for element lookup</param>
+    private void PlayMeleeAttackVFX(MeleeAttackDirection attackDirection, WeaponScriptableObj weaponData)
     {
         if (!directionTransformMap.TryGetValue(attackDirection, out var directionTransform))
         {
@@ -178,9 +149,11 @@ public class CharacterCombat : MonoBehaviour
             return;
         }
 
-        if (!meleeElementEffectMap.TryGetValue(meleeWeapon.WeaponData.weaponElement, out var elementEffect) || elementEffect.meleeEffect == null)
+        AttackElement weaponElement = weaponData?.weaponElement ?? AttackElement.PHYSICAL;
+        
+        if (!meleeElementEffectMap.TryGetValue(weaponElement, out var elementEffect) || elementEffect.meleeEffect == null)
         {
-            Debug.LogWarning($"[CharacterCombat] No melee effect found for element: {meleeWeapon.WeaponData.weaponElement}");
+            Debug.LogWarning($"[CharacterCombat] No melee effect found for element: {weaponElement}");
             return;
         }
 
@@ -196,7 +169,8 @@ public class CharacterCombat : MonoBehaviour
         // Apply attack speed to particle systems if effect was created
         if (effectInstance != null)
         {
-            ApplyAttackSpeedToEffect(effectInstance, meleeWeapon.GetCurrentAttackSpeed());
+            float attackSpeed = characterInventory?.GetCurrentAttackSpeed() ?? weaponData?.attackSpeed ?? 1f;
+            ApplyAttackSpeedToEffect(effectInstance, attackSpeed);
         }
     }
 
@@ -295,5 +269,62 @@ public class CharacterCombat : MonoBehaviour
         }
 
         Debug.Log("[CharacterCombat] VFX configuration validation complete.");
+    }
+
+    /// <summary>
+    /// Plays the projectile reflection VFX at the specified hit point
+    /// Called from DamageUtils when a projectile is reflected by player weapon
+    /// </summary>
+    /// <param name="hitPoint">Position where the reflection occurred (between weapon and projectile)</param>
+    /// <param name="hitNormal">Normal vector at the hit point (towards the weapon)</param>
+    public void PlayProjectileReflectionVFX(Vector3 hitPoint, Vector3 hitNormal)
+    {
+        if (projectileReflectionEffect == null)
+        {
+            Debug.LogWarning("[CharacterCombat] No projectile reflection effect configured!");
+            return;
+        }
+
+        // Calculate rotation to face away from the hit normal (towards the reflected direction)
+        Quaternion rotation = Quaternion.LookRotation(-hitNormal);
+        
+        // Spawn effect at the hit point
+        EffectManager.Instance?.PlayEffect(hitPoint, hitNormal, rotation, null, projectileReflectionEffect);
+    }
+
+    /// <summary>
+    /// Static method to play projectile reflection VFX from anywhere
+    /// Finds the currently possessed NPC's CharacterCombat component
+    /// </summary>
+    /// <param name="hitPoint">Position where the reflection occurred</param>
+    /// <param name="hitNormal">Normal vector at the hit point</param>
+    public static void PlayReflectionVFX(Vector3 hitPoint, Vector3 hitNormal)
+    {
+        // Try to get the currently possessed NPC's CharacterCombat
+        CharacterCombat characterCombat = null;
+        
+        if (PlayerController.Instance != null && PlayerController.Instance._possessedNPC != null)
+        {
+            Transform npcTransform = PlayerController.Instance._possessedNPC.GetTransform();
+            if (npcTransform != null)
+            {
+                characterCombat = npcTransform.GetComponent<CharacterCombat>();
+            }
+        }
+        
+        // If not found, try to find any CharacterCombat in the scene (fallback)
+        if (characterCombat == null)
+        {
+            characterCombat = FindFirstObjectByType<CharacterCombat>();
+        }
+        
+        if (characterCombat != null)
+        {
+            characterCombat.PlayProjectileReflectionVFX(hitPoint, hitNormal);
+        }
+        else
+        {
+            Debug.LogWarning("[CharacterCombat] Could not find CharacterCombat to play reflection VFX!");
+        }
     }
 }

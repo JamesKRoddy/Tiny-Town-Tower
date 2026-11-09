@@ -1,33 +1,50 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 namespace Enemies
 {
+    /// <summary>
+    /// UI component for displaying boss health bars.
+    /// This is a static UI element that should be placed in the scene (Canvas).
+    /// Uses singleton pattern since there can only be one boss health bar.
+    /// </summary>
     public class BossHealthBarUI : MonoBehaviour
     {
         [Header("UI References")]
         [SerializeField] private Slider healthSlider;
         [SerializeField] private Image healthFill;
-        [SerializeField] private Text bossNameText;
+        [SerializeField] private TMP_Text bossNameText;
 
-        private Boss boss;
-        private Camera mainCamera;
+        public static BossHealthBarUI Instance { get; private set; }
 
-        private void Start()
-        {
-            mainCamera = Camera.main;
+        public void Initialize(){
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
         }
 
-        public void Initialize(Boss boss)
+        /// <summary>
+        /// Initialize the boss health bar with boss name and health
+        /// </summary>
+        public void EnableBossHealthUI(string bossName, float currentHealth, float maxHealth)
         {
-            this.boss = boss;
+            gameObject.SetActive(true);
+            
             if (bossNameText != null)
             {
-                bossNameText.text = boss.gameObject.name;
+                bossNameText.text = bossName;
             }
-            UpdateHealth(boss.Health, boss.MaxHealth);
+            
+            UpdateHealth(currentHealth, maxHealth);
         }
 
+        /// <summary>
+        /// Update the health bar display
+        /// </summary>
         public void UpdateHealth(float currentHealth, float maxHealth)
         {
             if (healthSlider != null)
@@ -37,14 +54,12 @@ namespace Enemies
             }
         }
 
-        private void Update()
+        /// <summary>
+        /// Hide the boss health bar
+        /// </summary>
+        public void Hide()
         {
-            if (boss != null && mainCamera != null)
-            {
-                // Position the health bar above the boss
-                Vector3 screenPos = mainCamera.WorldToScreenPoint(boss.transform.position + Vector3.up * 3f);
-                transform.position = screenPos;
-            }
+            gameObject.SetActive(false);
         }
     }
 } 

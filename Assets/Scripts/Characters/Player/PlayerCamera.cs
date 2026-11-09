@@ -155,18 +155,21 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
         if (target == null)
             return;
 
+        // FIXED ISOMETRIC ROTATION - never changes, always consistent for input calculations
+        // This ensures transform.eulerAngles.y is ALWAYS the same value (cameraYAngle)
+        transform.rotation = Quaternion.Euler(45f, cameraYAngle, 0f);
+
         // Calculate the rotated offset based on the camera Y angle
         Quaternion yRotation = Quaternion.Euler(0, cameraYAngle, 0);
         Vector3 rotatedOffset = yRotation * offset;
         
-        // Smoothly interpolate the camera's position to the target position + rotated offset
+        // OPTION 1: Instant follow (best for input consistency)
         Vector3 targetPosition = target.position + rotatedOffset;
-        transform.position = Vector3.Lerp(transform.position, targetPosition, followSpeed * Time.deltaTime);
-
-        // Make the camera look at the target
-        Vector3 lookDirection = target.position - transform.position;
-        Quaternion targetRotation = Quaternion.LookRotation(lookDirection);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        transform.position = targetPosition;
+        
+        // OPTION 2: Very fast lerp (smooth but still responsive) - UNCOMMENT if you want slight smoothing
+        // Vector3 targetPosition = target.position + rotatedOffset;
+        // transform.position = Vector3.Lerp(transform.position, targetPosition, 20f * Time.deltaTime);
     }
 
     private void HandleCameraPanning()
@@ -199,26 +202,74 @@ public class PlayerCamera : MonoBehaviour, IControllerInput
     }
 
     /// <summary>
-    /// Transforms input coordinates to world coordinates accounting for camera angle
+    /// ===== REBUILT INPUT SYSTEM =====
+    /// Convert 2D stick input to 3D world movement.
+    /// 
+    /// THE PROBLEM:
+    /// Controllers give inconsistent magnitude (0.81-1.06) around the edge due to hardware variance.
+    /// Diagonals (45°, 135°, etc.) often report lower magnitudes than cardinal directions.
+    /// 
+    /// THE FIX (Hades-style):
+    /// - Dead zone handled by Input System StickDeadzone processor (0.125 min)
+    /// - If stick magnitude > 0.7, treat it as FULL EXTENSION (1.0) in that direction.
+    /// - Use smooth magnitude transition to avoid popping
+    /// </summary>
+    public Vector3 ConvertStickInputToWorldMovement(Vector2 stickInput)
+    {
+        float inputMagnitude = stickInput.magnitude;
+        
+        // Dead zone is now handled by Input System's StickDeadzone processor
+        // But keep a small threshold for safety
+        if (inputMagnitude < 0.05f)
+        {
+            return Vector3.zero; // No input
+        }
+        
+        // STEP 1: Handle stick magnitude variance (Hades-style)
+        // Lower threshold to 0.7 to catch more diagonal cases where controllers underreport
+        // Use smooth transition instead of hard snap for values near the threshold
+        float normalizedMagnitude;
+        
+        const float fullSpeedThreshold = 0.7f;
+        const float minActiveThreshold = 0.1f;
+        
+        if (inputMagnitude >= fullSpeedThreshold)
+        {
+            // Full speed - snap to 1.0 for consistent movement
+            normalizedMagnitude = 1.0f;
+        }
+        else if (inputMagnitude < minActiveThreshold)
+        {
+            return Vector3.zero; // Below active threshold
+        }
+        else
+        {
+            // Smooth remap from [minActiveThreshold, fullSpeedThreshold] → [0, 1.0]
+            normalizedMagnitude = (inputMagnitude - minActiveThreshold) / (fullSpeedThreshold - minActiveThreshold);
+            // Apply a slight curve for more natural acceleration feel
+            normalizedMagnitude = normalizedMagnitude * normalizedMagnitude; // Quadratic ease-in
+        }
+        
+        // STEP 2: Get the direction (already normalized by Input System's NormalizeVector2 processor)
+        // But normalize again to be safe in case raw values slip through
+        Vector2 stickDirection = inputMagnitude > 0.001f ? stickInput / inputMagnitude : Vector2.zero;
+        Vector3 input3D = new Vector3(stickDirection.x, 0, stickDirection.y);
+        
+        // STEP 3: Rotate input by camera's Y-axis only (ignore camera pitch)
+        float cameraYaw = transform.eulerAngles.y;
+        Quaternion yawRotation = Quaternion.Euler(0, cameraYaw, 0);
+        Vector3 worldDirection = yawRotation * input3D;
+        
+        // STEP 4: Apply the normalized magnitude
+        return worldDirection * normalizedMagnitude;
+    }
+    
+    /// <summary>
+    /// Legacy method for camera panning
     /// </summary>
     public Vector3 TransformInputToWorldCoordinates(Vector3 inputVector)
     {
-        // Get the camera's forward and right directions relative to the ground plane
-        Vector3 cameraForward = transform.forward;
-        Vector3 cameraRight = transform.right;
-        
-        // Project these directions onto the ground plane (Y = 0)
-        cameraForward.y = 0;
-        cameraRight.y = 0;
-        cameraForward.Normalize();
-        cameraRight.Normalize();
-        
-        // Transform the input: 
-        // - inputVector.z (forward/back on stick) maps to camera forward direction
-        // - inputVector.x (left/right on stick) maps to camera right direction
-        Vector3 transformedInput = cameraRight * inputVector.x + cameraForward * inputVector.z;
-        
-        return transformedInput;
+        return ConvertStickInputToWorldMovement(new Vector2(inputVector.x, inputVector.z));
     }
 
     // Method to get the work detection point's position

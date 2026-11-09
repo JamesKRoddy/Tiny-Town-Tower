@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
-using Enemies;
 using Managers;
+using Enemies;
 
 /// <summary>
 /// Base class for all turrets - now implements IDamageDealer for unified damage system

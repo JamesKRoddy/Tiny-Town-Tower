@@ -384,6 +384,12 @@ AnimatorController:
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}
+  - m_Name: RotationSpeedMultiplier
+    m_Type: 1
+    m_DefaultFloat: 0
+    m_DefaultInt: 0
+    m_DefaultBool: 0
+    m_Controller: {fileID: 9100000}
   - m_Name: Attack
     m_Type: 9
     m_DefaultFloat: 0
@@ -684,6 +690,74 @@ MonoBehaviour:
     modifyOnEnter: 0
     modifyOnExit: 1
     modifyOnUpdate: 0
+--- !u!114 &6323907528317128798
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33440e54b6d69df42b148162d1315857, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  functionCalls:
+  - componentTypeName: CharacterAnimationEvents
+    functionName: EnableRootMotion
+    callOnEnter: 1
+    callOnExit: 0
+    callOnUpdate: 0
+    parameterType: 0
+    intParameter: 0
+    floatParameter: 0
+    boolParameter: 0
+    stringParameter: 
+  - componentTypeName: CharacterAnimationEvents
+    functionName: DisableRootMotion
+    callOnEnter: 0
+    callOnExit: 1
+    callOnUpdate: 0
+    parameterType: 0
+    intParameter: 0
+    floatParameter: 0
+    boolParameter: 0
+    stringParameter: 
+  - componentTypeName: IAttackOwner
+    functionName: AttackEnd
+    callOnEnter: 1
+    callOnExit: 0
+    callOnUpdate: 0
+    parameterType: 0
+    intParameter: 0
+    floatParameter: 0
+    boolParameter: 0
+    stringParameter: 
+  parameterModifications:
+  - parameterName: RotationSpeedMultiplier
+    parameterType: 2
+    boolValue: 0
+    intValue: 0
+    floatValue: 1
+    useRandom: 0
+    randomMinValue: 0
+    randomMaxValue: 0
+    randomMaxInclusive: 0
+    modifyOnEnter: 1
+    modifyOnExit: 0
+    modifyOnUpdate: 0
+  - parameterName: RotationSpeedMultiplier
+    parameterType: 2
+    boolValue: 0
+    intValue: 0
+    floatValue: 0
+    useRandom: 0
+    randomMinValue: 0
+    randomMaxValue: 0
+    randomMaxInclusive: 0
+    modifyOnEnter: 1
+    modifyOnExit: 0
+    modifyOnUpdate: 0
 --- !u!1102 &6529065862893550437
 AnimatorState:
   serializedVersion: 6
@@ -768,7 +842,8 @@ AnimatorState:
   - {fileID: 2175972052262428824}
   - {fileID: 5228503216045913259}
   - {fileID: -1971778601944501240}
-  m_StateMachineBehaviours: []
+  m_StateMachineBehaviours:
+  - {fileID: 6323907528317128798}
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -831,6 +906,20 @@ AnimatorStateTransition:
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 1
+--- !u!114 &8909518390268740853
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33440e54b6d69df42b148162d1315857, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  functionCalls: []
+  parameterModifications: []
 --- !u!206 &9143665567805404752
 BlendTree:
   m_ObjectHideFlags: 1

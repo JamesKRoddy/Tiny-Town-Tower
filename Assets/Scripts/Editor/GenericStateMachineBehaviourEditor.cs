@@ -67,12 +67,45 @@ public class GenericStateMachineBehaviourEditor : Editor
         SerializedProperty callOnEnter = element.FindPropertyRelative("callOnEnter");
         SerializedProperty callOnExit = element.FindPropertyRelative("callOnExit");
         SerializedProperty callOnUpdate = element.FindPropertyRelative("callOnUpdate");
+        SerializedProperty parameterType = element.FindPropertyRelative("parameterType");
+        SerializedProperty intParameter = element.FindPropertyRelative("intParameter");
+        SerializedProperty floatParameter = element.FindPropertyRelative("floatParameter");
+        SerializedProperty boolParameter = element.FindPropertyRelative("boolParameter");
+        SerializedProperty stringParameter = element.FindPropertyRelative("stringParameter");
 
         EditorGUILayout.LabelField($"Function Call {index + 1}", EditorStyles.boldLabel);
         
         EditorGUILayout.PropertyField(componentTypeName, new GUIContent("Component Type"));
         EditorGUILayout.PropertyField(functionName, new GUIContent("Function Name"));
         
+        EditorGUILayout.PropertyField(parameterType, new GUIContent("Parameter Type"));
+        
+        // Show parameter value fields based on parameter type
+        GenericStateMachineBehaviour.FunctionCall.ParameterType paramType = 
+            (GenericStateMachineBehaviour.FunctionCall.ParameterType)parameterType.enumValueIndex;
+        
+        if (paramType != GenericStateMachineBehaviour.FunctionCall.ParameterType.None)
+        {
+            EditorGUILayout.LabelField("Parameter Value:", EditorStyles.miniBoldLabel);
+            switch (paramType)
+            {
+                case GenericStateMachineBehaviour.FunctionCall.ParameterType.Int:
+                    EditorGUILayout.PropertyField(intParameter, new GUIContent("Int Value"));
+                    break;
+                case GenericStateMachineBehaviour.FunctionCall.ParameterType.Float:
+                    EditorGUILayout.PropertyField(floatParameter, new GUIContent("Float Value"));
+                    break;
+                case GenericStateMachineBehaviour.FunctionCall.ParameterType.Bool:
+                    EditorGUILayout.PropertyField(boolParameter, new GUIContent("Bool Value"));
+                    break;
+                case GenericStateMachineBehaviour.FunctionCall.ParameterType.String:
+                    EditorGUILayout.PropertyField(stringParameter, new GUIContent("String Value"));
+                    break;
+            }
+        }
+        
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("When to Call:", EditorStyles.miniBoldLabel);
         EditorGUILayout.PropertyField(callOnEnter, new GUIContent("Call On Enter"));
         EditorGUILayout.PropertyField(callOnExit, new GUIContent("Call On Exit"));
         EditorGUILayout.PropertyField(callOnUpdate, new GUIContent("Call On Update"));

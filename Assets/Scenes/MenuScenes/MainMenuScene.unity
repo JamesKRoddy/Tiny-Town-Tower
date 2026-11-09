@@ -691,6 +691,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 102207026006429088, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
+      propertyPath: panSpeed
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 641597584739934553, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
+      propertyPath: inputActions
+      value: 
+      objectReference: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
     - target: {fileID: 1544991761442322683, guid: f4a4d7c1663054d47b12620f54ff7604, type: 3}
       propertyPath: m_IsActive
       value: 1
@@ -2783,6 +2791,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7451046357896141963, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: poolSize
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 7451046357896141963, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
       propertyPath: buildingHitEffects.Array.size
       value: 0
       objectReference: {fileID: 0}
@@ -2818,6 +2830,10 @@ PrefabInstance:
       propertyPath: 'universalElementalEffects.Array.data[0].impactEffects.Array.data[0]'
       value: 
       objectReference: {fileID: 11400000, guid: 3cbd6347900155e489f00fba0e6c94fd, type: 2}
+    - target: {fileID: 8102012326405835519, guid: 0cc5fc67be7135546b5a1c7e4f58ae4b, type: 3}
+      propertyPath: 'rogueLikeBuildingDataScriptableObjs.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 82ae0dcbe3b081c4e9c64f35411497c9, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

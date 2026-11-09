@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Enemies;
+using Combat;
 
 namespace Managers
 {
@@ -544,6 +545,38 @@ namespace Managers
                 return Vector3.zero;
             }
             
+            // Check if this enemy has melee attacks and should charge directly or hold back
+            if (enemy is ModularEnemy modularEnemy && HasMeleeAttack(modularEnemy))
+            {
+                // This enemy has melee attacks - manage engagement to avoid overwhelming player
+                // Count how many enemies are already close to the player (within engagement range)
+                int enemiesNearPlayer = CountEnemiesNearPlayer(6f); // Count within 6m
+                
+                // If too many enemies already engaging, make this one hold back at a waiting distance
+                if (enemiesNearPlayer > maxSimultaneousAttackers)
+                {
+                    // Return a waiting position further back (8-12m from player)
+                    Vector3 waitingPosition = CalculateWaitingPosition(enemy);
+                    
+                    if (showDebug && Time.frameCount % 120 == 0)
+                    {
+                        Debug.Log($"[EnemyManager] {enemy.gameObject.name} (melee) holding back - {enemiesNearPlayer} enemies already engaging (max: {maxSimultaneousAttackers})");
+                    }
+                    
+                    return waitingPosition;
+                }
+                else
+                {
+                    // Clear to engage - charge directly at the player (no flanking)
+                    if (showDebug && Time.frameCount % 120 == 0)
+                    {
+                        Debug.Log($"[EnemyManager] {enemy.gameObject.name} (melee) charging directly - {enemiesNearPlayer} enemies engaging (max: {maxSimultaneousAttackers})");
+                    }
+                    return Vector3.zero; // Vector3.zero tells EnemyBase to move directly to target
+                }
+            }
+            
+            // For ranged attackers and other enemies, use strategic positioning based on role
             EnemyRole role = enemyRoles[enemy];
             
             switch (role)
@@ -563,6 +596,84 @@ namespace Managers
                 default:
                     return Vector3.zero;
             }
+        }
+        
+        /// <summary>
+        /// Count how many enemies are within a certain distance of the player
+        /// </summary>
+        private int CountEnemiesNearPlayer(float distance)
+        {
+            if (lastPlayerPosition == Vector3.zero) return 0;
+            
+            int count = 0;
+            foreach (var enemy in activeEnemies)
+            {
+                if (enemy != null && enemy.Health > 0)
+                {
+                    float distToPlayer = Vector3.Distance(enemy.transform.position, lastPlayerPosition);
+                    if (distToPlayer < distance)
+                    {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+        
+        /// <summary>
+        /// Calculate a waiting position for enemies that should hold back
+        /// </summary>
+        private Vector3 CalculateWaitingPosition(EnemyBase enemy)
+        {
+            if (lastPlayerPosition == Vector3.zero) return Vector3.zero;
+            
+            // Calculate a position 8-12m from player, in a circle around them
+            Vector3 directionFromPlayer = (enemy.transform.position - lastPlayerPosition).normalized;
+            float waitingDistance = UnityEngine.Random.Range(8f, 12f);
+            Vector3 waitingPos = lastPlayerPosition + directionFromPlayer * waitingDistance;
+            
+            // Sample NavMesh
+            if (UnityEngine.AI.NavMesh.SamplePosition(waitingPos, out UnityEngine.AI.NavMeshHit hit, 10f, UnityEngine.AI.NavMesh.AllAreas))
+            {
+                return hit.position;
+            }
+            
+            // Fallback: just use the calculated position
+            return waitingPos;
+        }
+        
+        /// <summary>
+        /// Get the maximum attack range from a modular enemy's attack components
+        /// </summary>
+        private float GetMaxAttackRange(ModularEnemy enemy)
+        {
+            var attacks = enemy.GetComponents<AttackBase>();
+            float maxRange = 0f;
+            foreach (var attack in attacks)
+            {
+                if (attack != null && attack.maxRange > maxRange)
+                {
+                    maxRange = attack.maxRange;
+                }
+            }
+            return maxRange;
+        }
+        
+        /// <summary>
+        /// Check if enemy has any melee-range attacks (for determining movement behavior)
+        /// </summary>
+        private bool HasMeleeAttack(ModularEnemy enemy)
+        {
+            var attacks = enemy.GetComponents<AttackBase>();
+            foreach (var attack in attacks)
+            {
+                // Consider attacks with maxRange < 3m as melee
+                if (attack != null && attack.maxRange > 0 && attack.maxRange < 3f)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
         
         private Vector3 CalculateInterceptPosition(EnemyBase enemy)
